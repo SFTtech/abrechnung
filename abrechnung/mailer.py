@@ -184,7 +184,7 @@ class Mailer:
 
         for row in unsent_mails:
             self.send_email(
-                "it looks like you are forgot your password; how embarrasing.",
+                "it looks like you forgot your password; how embarrasing.",
                 "",
                 "To set a new one, visit",
                 "",
