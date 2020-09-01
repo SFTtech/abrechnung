@@ -1,0 +1,18 @@
+service:
+    url: "https://abrechnung.example.lol"
+    name: "SFT Kybernetik-Abrechnung 2.5a"
+
+database:
+    host: "localhost"
+    database: "abrechnung"
+    user: "abrechnung"
+    password: "Mb2.r5oHf-0t"
+
+email:
+    address: "abrechnung@example.lol"
+    host: "localhost"
+    port: 587
+    mode: "smtp-starttls"
+    auth:
+        "user": "abrechnung"
+        "pass": "Mb2.r5oHf-0t"

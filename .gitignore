@@ -1,3 +1,6 @@
+# project-specific
+/config.json
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
