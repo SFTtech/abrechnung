@@ -7,18 +7,10 @@ import smtplib
 
 import asyncpg
 
+from . import subcommand
 
-class Mailer:
-    @staticmethod
-    def argparse_register(subparser):
-        # mailer accepts no arguments
-        del subparser  # unused
 
-    @staticmethod
-    def argparse_validate(args, error_cb):
-        # no argument checking needed
-        del args, error_cb  # unused
-
+class Mailer(subcommand.SubCommand):
     def __init__(self, config):
         self.config = config
         self.events = asyncio.Queue()
@@ -79,17 +71,20 @@ class Mailer:
         await self.psql.close()
 
     def notification_callback(self, connection, pid, channel, payload):
+        """ runs whenever we get a psql notification """
         assert connection is self.psql
         del pid  # unused
         self.events.put_nowait((channel, payload))
 
     def terminate_callback(self, connection):
+        """ runs when the psql connection is closed """
         assert connection is self.psql
         print('psql connection closed')
         self.events.clear()
         self.events.put_nowait(StopIteration)
 
     async def log_callback(self, connection, message):
+        """ runs when psql sends a log message """
         assert connection is self.psql
         print(f'psql log message: {message}')
 
