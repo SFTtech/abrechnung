@@ -11,7 +11,7 @@ from . import subcommand
 
 
 class Mailer(subcommand.SubCommand):
-    def __init__(self, config):
+    def __init__(self, config, **args):
         self.config = config
         self.events = asyncio.Queue()
         self.psql = None

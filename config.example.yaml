@@ -3,10 +3,15 @@ service:
   name: "SFT Kybernetik-Abrechnung 2.5a"
 
 database:
-  host: "localhost"
-  database: "abrechnung"
+  host: null
   user: "abrechnung"
   password: "Mb2.r5oHf-0t"
+  dbname: "abrechnung"
+
+websocket:
+  host: "localhost"
+  port: 9048
+  id: default
 
 email:
   address: "abrechnung@example.lol"
