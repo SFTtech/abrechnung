@@ -10,23 +10,14 @@ License: GPLv3 or any later version
 
 from .subcommand import SubCommand
 
+import asyncio
 import json
 import logging
 import re
+import traceback
 
 import aiohttp.web
 import asyncpg
-
-
-"""
-in forwarderconfig uuid generieren
-
-create table connections(
-    id serial,
-    forwarderid text,
-    conn_started timestamptz
-);
-"""
 
 
 async def db_connect(cfg):
@@ -49,18 +40,21 @@ class SFTPGWS(SubCommand):
 
     @staticmethod
     def argparse_register(argparser):
-        pass
+        argparser.add_argument('--verbose', '-v', action='count', default=0)
 
     def __init__(self, config, **args):
         self.cfg = config
 
-        # map client_id -> websocket
-        self.open_connections = dict()
+        # map connection_id -> tx queue
+        self.tx_queues = dict()
 
-        # functions allowed to be called
-        self.function_whitelist = {
-            "test",
-        }
+        # map allowed function name -> (requires_connection_id, is_procedure)
+        self.function_whitelist = dict()
+
+        if args['verbose'] > 2:
+            logging.getLogger().setLevel(logging.DEBUG)
+        elif args['verbose'] > 1:
+            logging.getLogger().setLevel(logging.INFO)
 
     async def run(self):
         """
@@ -71,13 +65,16 @@ class SFTPGWS(SubCommand):
 
         async with db_pool.acquire() as conn:
             # register at db
-            channel_id = await conn.fetchval("SELECT forwarder_boot($1);",
+            channel_id = await conn.fetchval("select * from forwarder_boot($1);",
                                              self.cfg['websocket']['id'])
 
             logging.info(f'DB gave us channel_id {channel_id!r}')
 
             # one global channel for NOTIFY to this db-client
-            await conn.add_listener(channel_id, self.psql_message)
+            await conn.add_listener(channel_id, self.on_psql_notification)
+
+            for record in await conn.fetch("select * from get_allowed_functions();"):
+                self.function_whitelist[record[0]] = record[1], record[2]
 
             try:
                 app = aiohttp.web.Application()
@@ -91,17 +88,31 @@ class SFTPGWS(SubCommand):
                                            print=None)
             finally:
                 # deregister at db
-                await conn.execute("SELECT forwarder_stop($1);",
+                await conn.execute("select * from forwarder_stop($1);",
                                    self.cfg['websocket']['id'])
 
-    def psql_message(self, connection, pid, channel, payload):
+    def on_psql_notification(self, connection, pid, channel, payload):
         """
         this is called by psql to handle a notify.
         """
+        del connection, pid  # unused
 
-        # TODO notify relay to correct client
+        payload_json = json.loads(payload)
 
-        raise NotImplementedError()
+        connections = payload_json['connections']
+        for connection_id in self.tx_queues if connections == '*' else connections:
+            message = {
+                "type": "notification",
+                "event": payload_json["event"],
+                "args": payload_json["args"]
+                # TODO: support for connection_id-specific 'triggers' and 'count'
+            }
+            try:
+                self.tx_queues.get(connection_id).put_nowait(message)
+            except KeyError:
+                pass  # tx queue is no longer available
+            except asyncio.QueueFull:
+                logging.warning(f'[{connection_id}] tx queue full, skipping notification')
 
     async def handle_ws_connection(self, request):
         """
@@ -110,118 +121,138 @@ class SFTPGWS(SubCommand):
         ws = aiohttp.web.WebSocketResponse()
         await ws.prepare(request)
 
-        pool = request.app['pool']
-
-        async with pool.acquire() as connection:
-            # register the client at the db
-            client_id = await connection.fetchval(
-                "SELECT client_connected($1);",
+        # get a database connection
+        async with request.app['pool'].acquire() as connection:
+            # register the client connection at the db
+            connection_id = await connection.fetchval(
+                "select * from client_connected($1);",
                 self.cfg['websocket']['id']
             )
+            logging.info(f'[{connection_id}] connected')
 
-            self.open_connections[client_id] = ws
+            # create the tx queue and task
+            tx_queue = asyncio.Queue(maxsize=1000)
+            self.tx_queues[connection_id] = tx_queue
+            tx_task = asyncio.create_task(self.tx_task(ws, tx_queue))
 
             try:
                 async for msg in ws:
                     try:
-                        print(msg.data)
-                        response = await self.ws_message(connection, client_id,
-                                                         msg.data)
-                        await ws.send_str("".join((response, "\n")))
-
+                        msg_obj = json.loads(msg.data)
+                        response = await self.ws_message(connection, connection_id, msg_obj)
                     except Exception as exc:
-                        import traceback
                         traceback.print_exc()
-                        await ws.send_str(f"error in ws_message: {exc}\n")
+                        response = {
+                            'type': 'generic-error',
+                            'error-id': type(exc).__name__,
+                            'error': str(exc)
+                        }
 
+                    try:
+                        tx_queue.put_nowait(response)
+                    except asyncio.QueueFull:
+                        logging.error(f'[{connection_id}] tx queue full')
+                        break
             finally:
-                # deregister the websocket for notifications
-                del self.open_connections[client_id]
-                await connection.execute("SELECT client_disconnect($1);",
-                                         client_id)
+                # deregister the client connection
+                await connection.execute("call client_disconnected($1);", connection_id)
+                # stop the tx task
+                del self.tx_queues[connection_id]
+                tx_task.cancel()
+                await tx_task
+                logging.info(f'[{connection_id}] disconnected')
 
         return ws
 
-    async def ws_message(self, connection, client_id, msg_raw):
+    @staticmethod
+    async def tx_task(ws, tx_queue):
+        """
+        task for sending messages from a queue to a websocket connection
+        """
+        while True:
+            item = await tx_queue.get()
+            await asyncio.shield(ws.send_str(json.dumps(item) + '\n'))
+
+    async def ws_message(self, connection, connection_id, msg):
         """
         the websocket client sent a message. handle it.
         """
-        msg = json.loads(msg_raw)
-        msg_type = msg.get('type')
+        msg_type = msg['type']
 
         if msg_type == 'call':
             # call a sql function
 
-            call_id = msg.get('id')
-            func = msg.get('func')
-            args = msg.get('args')
+            call_id = msg['id']
+            func = msg['func']
+            args = msg['args']
 
-            # check if func is allowed:
-            if func not in self.function_whitelist:
-                return json.dumps({
-                    "type": "call-permission-error",
+            # check if func is allowed
+            try:
+                requires_connection_id, is_procedure = self.function_whitelist[func]
+            except KeyError:
+                return {
+                    "type": "call-error",
                     "id": call_id,
-                    "error": "permission denied",
-                })
+                    "error-id": "bad-function-name",
+                    "error": f"not a callable function: {func!r}",
+                }
 
             # construct the sql query
-            # SELECT $function($arg0, $arg1, ...);
-            qry_parts = [f"SELECT {func}("]
-
-            # arguments for psql
-            qry_args = []
+            if requires_connection_id:
+                args['connection_id'] = connection_id
 
             # argument variables for the function
             func_args = []
+            # arguments for psql
+            query_args = []
 
-            arg_id = 1
-            for name, value in args.items():
+            for arg_idx, (name, value) in enumerate(args.items()):
                 # we can't pass function argument names
                 # as $%d-parameter.
                 if not re.match(r"[a-zA-Z0-9_]+", name):
-                    return json.dumps({
-                        "type": "call-argument-error",
+                    return {
+                        "type": "call-error",
                         "id": call_id,
-                        "error": "argument name invalid",
-                    })
+                        "error-id": "bad-argument-name",
+                        "error": f"argument name invalid: {name!r}",
+                    }
 
-                func_args.append('%s := $%d' % (name, arg_id))
+                func_args.append(f'{name} := ${arg_idx + 1:d}')
+                query_args.append(value)
 
-                # perform value injections
-                if name == 'client_id':
-                    value = client_id
+            if is_procedure:
+                query = f"call {func}({', '.join(func_args)});"
+            else:
+                query = f"select * from {func}({', '.join(func_args)});"
 
-                qry_args.append(str(value))
-                arg_id += 1
-
-            qry_parts.append(", ".join(func_args))
-            qry_parts.append(');')
+            logging.info(f"[{connection_id}] \x1b[1m{query}\x1b[m {query_args!r}")
 
             try:
                 # perform the call!
-                qry = "".join(qry_parts)
-                print(f"RUN: {qry}")
-                recs = await connection.fetch(qry, *qry_args, timeout=10)
-
-                columns = tuple(dict(recs[0]).keys())
-                ret_recs = list()
-                for record in recs:
-                    ret_recs.append(tuple(record))
-
-                return json.dumps({
-                    "type": "call-result",
-                    "id": call_id,
-                    "columns": columns,
-                    "data": ret_recs,
-                })
-
-            except asyncpg.PostgresError as exc:
-                return json.dumps({
+                query_result = await connection.fetch(query, *query_args, timeout=10)
+            except asyncpg.RaiseError as exc:
+                # a specific error was raised in the db
+                error_id, error = exc.args[0].split(':', maxsplit=1)
+                return {
                     "type": "call-error",
                     "id": call_id,
-                    "error": str(exc),
-                    "error-cls": type(exc).__name__,
-                })
+                    "error-id": error_id,
+                    "error": error
+                }
+            except asyncpg.PostgresError as exc:
+                return {
+                    "type": "call-error",
+                    "id": call_id,
+                    "error-id": type(exc).__name__,
+                    "error": str(exc)
+                }
+
+            return {
+                "type": "call-result",
+                "id": call_id,
+                "columns": tuple(query_result[0].keys()) if query_result else [],
+                "data": [tuple(record) for record in query_result]
+            }
 
         elif msg_type == 'trigger':
             # set up redirect for notification to a function call

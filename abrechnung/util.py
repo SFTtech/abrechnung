@@ -21,7 +21,6 @@ def log_setup(setting, default=1):
     level = levels[factor]
 
     logging.basicConfig(level=level, format="[%(asctime)s] %(message)s")
-    logging.error("loglevel: %s", logging.getLevelName(level))
     logging.captureWarnings(True)
 
 
