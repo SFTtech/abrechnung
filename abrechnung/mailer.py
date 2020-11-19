@@ -3,6 +3,7 @@ import asyncio
 import email.message
 import itertools
 import json
+import logging
 import smtplib
 
 import asyncpg
@@ -16,6 +17,7 @@ class Mailer(subcommand.SubCommand):
         self.events = asyncio.Queue()
         self.psql = None
         self.mailer = None
+        self.logger = logging.getLogger(__name__)
 
         self.event_handlers = {
             ('email', 'user_registration'): self.on_user_registration_notification,
@@ -63,7 +65,7 @@ class Mailer(subcommand.SubCommand):
                 break
             handler = self.event_handlers.get(event)
             if handler is None:
-                print(f'unhandled event {event!r}')
+                self.logger.info(f'unhandled event {event!r}')
             else:
                 await handler()
 
@@ -79,17 +81,17 @@ class Mailer(subcommand.SubCommand):
     def terminate_callback(self, connection):
         """ runs when the psql connection is closed """
         assert connection is self.psql
-        print('psql connection closed')
+        self.logger.info('psql connection closed')
         self.events.clear()
         self.events.put_nowait(StopIteration)
 
     async def log_callback(self, connection, message):
         """ runs when psql sends a log message """
         assert connection is self.psql
-        print(f'psql log message: {message}')
+        self.logger.info(f'psql log message: {message}')
 
     def send_email(self, *text_lines, subject, language, dest_address, dest_name):
-        print(f"sending email to {dest_address}, subject: {subject}")
+        self.logger.info(f"sending email to {dest_address}, subject: {subject}")
 
         msg = email.message.EmailMessage()
 
@@ -127,7 +129,7 @@ class Mailer(subcommand.SubCommand):
         """)
 
         if not unsent_mails:
-            print("no user_registration mails are pending")
+            self.logger.info("no user_registration mails are pending")
 
         for row in unsent_mails:
             self.send_email(
@@ -175,7 +177,7 @@ class Mailer(subcommand.SubCommand):
         """)
 
         if not unsent_mails:
-            print("no user_password_recovery mails are pending")
+            self.logger.info("no user_password_recovery mails are pending")
 
         for row in unsent_mails:
             self.send_email(
@@ -224,7 +226,7 @@ class Mailer(subcommand.SubCommand):
         """)
 
         if not unsent_mails:
-            print("no user_email_update mails are pending")
+            self.logger.info("no user_email_update mails are pending")
 
         for row in unsent_mails:
             self.send_email(

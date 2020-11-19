@@ -51,10 +51,12 @@ class SFTPGWS(SubCommand):
         # map allowed function name -> (requires_connection_id, is_procedure)
         self.function_whitelist = dict()
 
+        self.logger = logging.getLogger(__name__)
+
         if args['verbose'] > 2:
-            logging.getLogger().setLevel(logging.DEBUG)
+            self.logger.setLevel(logging.DEBUG)
         elif args['verbose'] > 1:
-            logging.getLogger().setLevel(logging.INFO)
+            self.logger.setLevel(logging.INFO)
 
     async def run(self):
         """
@@ -68,7 +70,7 @@ class SFTPGWS(SubCommand):
             channel_id = await conn.fetchval("select * from forwarder_boot($1);",
                                              self.cfg['websocket']['id'])
 
-            logging.info(f'DB gave us channel_id {channel_id!r}')
+            self.logger.info(f'DB gave us channel_id {channel_id!r}')
 
             # one global channel for NOTIFY to this db-client
             await conn.add_listener(channel_id, self.on_psql_notification)
@@ -112,7 +114,7 @@ class SFTPGWS(SubCommand):
             except KeyError:
                 pass  # tx queue is no longer available
             except asyncio.QueueFull:
-                logging.warning(f'[{connection_id}] tx queue full, skipping notification')
+                self.logger.warning(f'[{connection_id}] tx queue full, skipping notification')
 
     async def handle_ws_connection(self, request):
         """
@@ -128,7 +130,7 @@ class SFTPGWS(SubCommand):
                 "select * from client_connected($1);",
                 self.cfg['websocket']['id']
             )
-            logging.info(f'[{connection_id}] connected')
+            self.logger.info(f'[{connection_id}] connected')
 
             # create the tx queue and task
             tx_queue = asyncio.Queue(maxsize=1000)
@@ -151,7 +153,7 @@ class SFTPGWS(SubCommand):
                     try:
                         tx_queue.put_nowait(response)
                     except asyncio.QueueFull:
-                        logging.error(f'[{connection_id}] tx queue full')
+                        self.logger.error(f'[{connection_id}] tx queue full')
                         break
             finally:
                 # deregister the client connection
@@ -160,7 +162,7 @@ class SFTPGWS(SubCommand):
                 del self.tx_queues[connection_id]
                 tx_task.cancel()
                 await tx_task
-                logging.info(f'[{connection_id}] disconnected')
+                self.logger.info(f'[{connection_id}] disconnected')
 
         return ws
 
@@ -225,7 +227,7 @@ class SFTPGWS(SubCommand):
             else:
                 query = f"select * from {func}({', '.join(func_args)});"
 
-            logging.info(f"[{connection_id}] \x1b[1m{query}\x1b[m {query_args!r}")
+            self.logger.info(f"[{connection_id}] \x1b[1m{query}\x1b[m {query_args!r}")
 
             try:
                 # perform the call!
