@@ -37,6 +37,13 @@ def main():
     from . import sftpgws
     add_subcommand('websocket', sftpgws.SFTPGWS)
 
+    from .dbtest import dbtest
+    add_subcommand('dbtest', dbtest.DBTest)
+
+    from . import psql
+    add_subcommand('psql', psql.PSQL)
+
+
     args = vars(cli.parse_args())
 
     # set up log level
