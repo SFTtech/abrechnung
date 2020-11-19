@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import asyncio
 import email.message
 import itertools
@@ -20,7 +19,7 @@ class Mailer(subcommand.SubCommand):
         self.logger = logging.getLogger(__name__)
 
         self.event_handlers = {
-            ('email', 'user_registration'): self.on_user_registration_notification,
+            ('email', 'pending_registration'): self.on_pending_registration_notification,
             ('email', 'user_password_recovery'): self.on_user_password_recovery_notification,
             ('email', 'update_notification'): self.on_user_email_update_notification,
         }
@@ -48,7 +47,7 @@ class Mailer(subcommand.SubCommand):
             user=self.config['database']['user'],
             password=self.config['database']['password'],
             host=self.config['database']['host'],
-            database=self.config['database']['database']
+            database=self.config['database']['dbname']
         )
         self.psql.add_termination_listener(self.terminate_callback)
         self.psql.add_log_listener(self.log_callback)
@@ -118,18 +117,18 @@ class Mailer(subcommand.SubCommand):
             f"    {self.config['service']['name']}"
         )
 
-    async def on_user_registration_notification(self):
+    async def on_pending_registration_notification(self):
         unsent_mails = await self.psql.fetch("""
             SELECT
                 email, username, language, token, valid_until
             FROM
-                user_registration
+                pending_registration
             WHERE
                 mail_sent is NULL;
         """)
 
         if not unsent_mails:
-            self.logger.info("no user_registration mails are pending")
+            self.logger.info("no pending_registration mails are pending")
 
         for row in unsent_mails:
             self.send_email(
@@ -149,7 +148,7 @@ class Mailer(subcommand.SubCommand):
 
             statement = await self.psql.prepare("""
                 UPDATE
-                    user_registration
+                    pending_registration
                 SET
                     mail_sent = NOW()
                 WHERE

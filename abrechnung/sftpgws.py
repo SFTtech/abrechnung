@@ -37,11 +37,6 @@ class SFTPGWS(SubCommand):
     """
     sft psql websocket gateway
     """
-
-    @staticmethod
-    def argparse_register(argparser):
-        argparser.add_argument('--verbose', '-v', action='count', default=0)
-
     def __init__(self, config, **args):
         self.cfg = config
 
@@ -140,8 +135,13 @@ class SFTPGWS(SubCommand):
             try:
                 async for msg in ws:
                     try:
-                        msg_obj = json.loads(msg.data)
-                        response = await self.ws_message(connection, connection_id, msg_obj)
+                        self.logger.info(f'[{connection_id}] unhandled websocket message {msg.type}, {msg.data}')
+                        if msg.type == aiohttp.WSMsgType.TEXT:
+                            msg_obj = json.loads(msg.data)
+                            response = await self.ws_message(connection, connection_id, msg_obj)
+                        else:
+                            self.logger.info(f'[{connection_id}] unhandled websocket message {msg.type}')
+                            continue
                     except Exception as exc:
                         traceback.print_exc()
                         response = {
@@ -149,7 +149,6 @@ class SFTPGWS(SubCommand):
                             'error-id': type(exc).__name__,
                             'error': str(exc)
                         }
-
                     try:
                         tx_queue.put_nowait(response)
                     except asyncio.QueueFull:

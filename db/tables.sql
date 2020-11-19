@@ -8,11 +8,36 @@ create table if not exists schema_version(
 );
 insert into schema_version (version) values (1) on conflict do nothing;
 
--- user account management
+-- websocket connections
+
+create table if not exists forwarder(
+    id text primary key,
+    notification_channel_number serial not null
+);
+
+-- tracking of active connections of users to websocket forwarders
+-- rows are added when somebody connects to a forwarder,
+-- and deleted when they disconnect again.
+create table if not exists connection(
+    id bigserial primary key,
+    forwarder text not null references forwarder(id) on delete cascade,
+    started timestamptz not null default now()
+);
+
+-- this table should be populated in the palce where functions are defined
+-- it contains a whitelist of functions that anybody can call publicly through
+-- the websocket forwarder
+create table if not exists allowed_function(
+    name text primary key,
+    requires_connection_id boolean not null default false,
+    is_procedure boolean not null default false
+);
+
+-- user accounts
 
 create table if not exists usr(
     id serial primary key,
-    email text not null,
+    email text unique not null,
     -- pgcrypto crypt
     password text not null,
     registered_at timestamptz not null default now(),
@@ -24,64 +49,58 @@ create table if not exists usr(
     -- registration is not completed yet
     pending boolean not null default true,
     -- user is allowed to upload files
-    can_upload_files boolean not null default true,
+    can_upload_files boolean not null default false,
     -- is deleted (users with commits can't be deleted)
+    -- sessions must be cleared if a user is marked deleted
     deleted boolean not null default false
 );
 
 create table if not exists pending_registration(
-    usr integer not null references usr(id) on delete cascade,
-    token uuid primary key,
+    usr integer not null unique references usr(id) on delete cascade,
+    token uuid primary key default ext.uuid_generate_v4(),
     -- gc should delete from usr where id=id if valid_until < now()
-    valid_until timestamptz not null,
+    valid_until timestamptz not null default now() + interval '1 hour',
     -- if not NULL, the registration confirmation mail has already been sent
-    mail_sent timestamptz
+    mail_sent timestamptz default null
 );
 
+-- holds entries only for users which are neither deleted nor pending
 create table if not exists pending_password_recovery(
-    usr integer not null references usr(id) on delete cascade,
-    token uuid primary key,
+    usr integer not null unique references usr(id) on delete cascade,
+    token uuid primary key default ext.uuid_generate_v4(),
     -- gc should delete rows where valid_until < now()
-    valid_until timestamptz not null,
+    valid_until timestamptz not null default now() + interval '1 hour',
     -- if not NULL, the password recovery mail has already been sent
-    mail_sent timestamptz
+    mail_sent timestamptz default null
 );
 
+-- holds entries only for users which are neither deleted nor pending
 create table if not exists pending_email_change(
-    usr integer not null references usr(id) on delete cascade,
-    token uuid primary key,
+    usr integer not null unique references usr(id) on delete cascade,
+    token uuid primary key default ext.uuid_generate_v4(),
     new_email text not null,
     -- gc should delete rows where valid_until < now()
-    valid_until timestamptz not null,
+    valid_until timestamptz not null default now() + interval '1 hour',
     -- if not NULL, the mail change email has already been sent
     mail_sent timestamptz
-);
-
--- active session management
-
--- tracking of active connections of users to websocket forwarders
--- rows are added when somebody connects to a forwarder,
--- and deleted when they disconnect again.
-create table if not exists connection(
-    id bigserial primary key,
-    forwarder_id uuid not null,
-    started timestamptz
 );
 
 -- tracking of login sessions
 -- authtokens authenticate users directly
 -- sessions can persist indefinitely and are typically bound to a certain client/device
+-- holds entries only for users which are neither deleted nor pending
 create table if not exists session(
     usr integer not null references usr(id) on delete cascade,
+    id serial primary key,
     -- authtoken
-    token uuid primary key,
+    token uuid unique default ext.uuid_generate_v4(),
     -- last time this session token has been used
     last_seen timestamptz not null default now(),
     -- informational session name, chosen when logging in
     name text not null,
     -- can and should be NULL for infinite validity
     -- gc should delete this row when valid_until < now()
-    valid_until timestamptz
+    valid_until timestamptz default null
 );
 
 -- media file hosting
@@ -90,6 +109,14 @@ create table if not exists hoster(
     id serial primary key,
     -- full URL to file with 'filename' hosted at this hoster: base_url + '/' + filename
     base_url text not null
+);
+
+-- tokens that allow users to upload files
+-- these are independent of session tokens for security reasons
+-- (file servers should not get access to session tokens)
+create table if not exists file_upload_token(
+    usr integer primary key references usr(id) on delete cascade,
+    token uuid unique not null default ext.uuid_generate_v4()
 );
 
 create table if not exists file(
@@ -141,9 +168,7 @@ create table if not exists grp (
 -- group authtokens can be used in place of a session token;
 -- they allow read-only access to a specific group, and nothing else.
 -- this can be used to share a group with a 3rd person who doesn't have an account.
--- anybody who holds a group authtoken can decide to join the group, which adds an
--- entry to group_membership (with only can_read = true).
-create table if not exists group_authtoken(
+create table if not exists group_authtoken (
     -- the group that the token grants access to
     grp integer references grp(id) on delete cascade,
     token uuid primary key,
@@ -153,7 +178,12 @@ create table if not exists group_authtoken(
     description text not null,
     -- can be NULL for infinite validity
     -- gc should delete this row when valid_until < now()
-    valid_until timestamptz
+    valid_until timestamptz,
+    granted_by integer not null references usr(id) on delete restrict,
+    -- if true, the group authtoken can be used to become a read-only
+    -- group member;
+    -- this is the only way to join a group apart from creating one.
+    is_invite bool default true
 );
 
 create table if not exists group_membership (
@@ -269,7 +299,7 @@ create table if not exists currency_history (
 
 -- a simple transaction, simply transferring balance from one account to another
 create table if not exists transaction (
-    grp integer references grp(id),
+    grp integer references grp(id) on delete cascade,
     id serial primary key
 );
 
