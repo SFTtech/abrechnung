@@ -1,6 +1,8 @@
 import React, {Component} from 'react';
-import { connect } from 'react-redux';
+import {connect} from 'react-redux';
+import PropTypes from 'prop-types';
 import {login} from "./authSlice";
+import {Redirect} from "react-router-dom";
 
 class Login extends Component {
     state = {
@@ -8,14 +10,24 @@ class Login extends Component {
         password: '',
     };
 
+    static propTypes = {
+        login: PropTypes.func.isRequired,
+        isAuthenticated: PropTypes.bool,
+    };
+
+
     onSubmit = (e) => {
         e.preventDefault();
-        this.props.login({username: this.state.username, password: this.state.password});
+        this.props.login(this.state.username, this.state.password);
     };
 
     onChange = (e) => this.setState({[e.target.name]: e.target.value});
 
     render() {
+        if (this.props.isAuthenticated) {
+            return <Redirect to="/"/>;
+        }
+
         const {username, password} = this.state;
         return (
             <div className="container">
@@ -59,7 +71,7 @@ class Login extends Component {
 }
 
 const mapStateToProps = (state) => ({
-    isAuthenticated: state.auth.isAuthenticated,
+    isAuthenticated: state.auth.status === 'authenticated',
 });
 
 export default connect(mapStateToProps, {login})(Login);

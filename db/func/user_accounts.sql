@@ -513,7 +513,7 @@ as $$
 declare
     usr integer;
 begin
-    select session_auth(get_user_info.authtoken) into locals.usr;
+    select session_auth(authtoken) into locals.usr;
     select
         usr.email, usr.registered_at, usr.username, usr.language, usr.admin, usr.can_upload_files
         into

@@ -9,6 +9,8 @@ export class SFTWebsocket {
         this.ws.onopen = this.onopen;
         this.ws.onclose = this.onclose;
         this.ws.onmessage = this.onmessage;
+
+        this.nextId = 0;
     }
 
     initWs = () => {
@@ -29,29 +31,28 @@ export class SFTWebsocket {
         console.log("WS Received message: ", msg);
 
         // TODO: message format validation
-        if (msg.type === "call-result") {
-            if (this.handlers.hasOwnProperty(msg.id)) {
-                this.handlers[msg.id](msg.data);
-                console.log("Called handler ", this.handlers[msg.id]);
-                delete this.handlers[msg.id]
-            } else {
-                console.log("Received call-result for unknown call id ", msg.id);
-            }
+        if (this.handlers.hasOwnProperty(msg.id)) {
+            this.handlers[msg.id](msg);
+            delete this.handlers[msg.id]
         }
     }
     send = (msg) => {
         this.ws.send(JSON.stringify(msg));
     }
-    call = (id, func, args, handler) => {
+    call = (func, args, handler) => {
+        // will return a promise that will be executed once the response arrives
         const msg = {
             type: "call",
             func: func,
             args: args,
-            id: id
+            id: this.nextId
         };
         console.log("WS Sending message with args: ", msg)
-        this.handlers[id] = handler;
+        this.handlers[msg.id] = handler;
         this.ws.send(JSON.stringify(msg));
+        this.nextId++;
+
+        return new Promise((resolve, reject) => {})
     }
 }
 

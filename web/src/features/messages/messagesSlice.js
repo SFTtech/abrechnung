@@ -7,17 +7,18 @@ export const messageSlice = createSlice({
         status: 0
     },
     reducers: {
-        createMessage: (state, msg) => {
-            state.msg = msg;
+        createMessage: (state, action) => {
+            state.msg = action.payload.msg;
+            state.status = 200;
         },
-        error: (state, msg, status) => {
-            state.msg = msg;
-            state.status = status
+        createError: (state, action) => {
+            state.msg = action.payload.msg;
+            state.status = action.payload.status
         },
     },
 });
 
-export const { createMessage, error } = messageSlice.actions;
+export const { createMessage, createError } = messageSlice.actions;
 
 
 export default messageSlice.reducer;
