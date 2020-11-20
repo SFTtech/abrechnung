@@ -7,17 +7,24 @@ sft psql websocket gateway
 
 License: GPLv3 or any later version
 """
-
-from .subcommand import SubCommand
-
 import asyncio
 import json
 import logging
 import re
 import traceback
+from uuid import UUID
 
 import aiohttp.web
 import asyncpg
+
+from .subcommand import SubCommand
+
+
+def encode_json(obj):
+    if isinstance(obj, UUID):
+        return str(obj)
+
+    raise TypeError
 
 
 async def db_connect(cfg):
@@ -37,6 +44,7 @@ class SFTPGWS(SubCommand):
     """
     sft psql websocket gateway
     """
+
     def __init__(self, config, **args):
         self.cfg = config
 
@@ -52,6 +60,8 @@ class SFTPGWS(SubCommand):
             self.logger.setLevel(logging.DEBUG)
         elif args['verbose'] > 1:
             self.logger.setLevel(logging.INFO)
+        else:
+            self.logger.setLevel(logging.WARNING)
 
     async def run(self):
         """
@@ -172,7 +182,8 @@ class SFTPGWS(SubCommand):
         """
         while True:
             item = await tx_queue.get()
-            await asyncio.shield(ws.send_str(json.dumps(item) + '\n'))
+            msg = json.dumps(item, default=encode_json) + '\n'
+            await asyncio.shield(ws.send_str(msg))
 
     async def ws_message(self, connection, connection_id, msg):
         """
