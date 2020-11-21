@@ -17,9 +17,14 @@ export class Header extends Component {
         const authLinks = (
             <ul className="navbar-nav mt-2 mt-lg-0">
                 <div className="d-flex flex-row ml-auto">
-        <span className="navbar-text mr-3">
-          <strong>{user ? `Welcome ${user.username}` : ''}</strong>
-        </span>
+                    <span className="navbar-text mr-3">
+                      <strong>{user ? `Welcome ${user.username}` : ''}</strong>
+                    </span>
+                    <li className="nav-item">
+                        <Link to="/profile" className="nav-link">
+                            Profile
+                        </Link>
+                    </li>
                     <li className="nav-item">
                         <button onClick={this.props.logout} className="nav-link btn btn-info btn-sm text-light">
                             Logout
@@ -72,7 +77,7 @@ export class Header extends Component {
 
 const mapStateToProps = (state) => ({
     user: state.auth.user,
-    isAuthenticated: state.auth.status === 'authenticated'
+    isAuthenticated: state.auth.isAuthenticated,
 });
 
 export default connect(mapStateToProps, {logout})(Header);

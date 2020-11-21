@@ -1,128 +1,203 @@
 import {createAsyncThunk, createSlice} from '@reduxjs/toolkit';
 import {ws} from '../../websocket';
-import {createError} from '../messages/messagesSlice'
 
-// export const login = (username, password) => (dispatch, getState) => {
-//     dispatch(beginLogin());
-//     ws.call("login_with_password", {
-//         session: getState().auth.sessionName,
-//         username: username,
-//         password: password
-//     }, (msg) => {
-//         dispatch(loggedIn(msg))
-//     });
-// }
-
-export const login = createAsyncThunk('auth/login', async (payload, thunkAPI) => {
+export const login = createAsyncThunk('auth/login', async ({username, password, sessionName}, {getState}) => {
     return ws.call("login_with_password", {
-        session: thunkAPI.getState().auth.sessionName,
-        username: payload.username,
-        password: payload.password
+        session: sessionName,
+        username: username,
+        password: password
     });
 })
 
-export const logout = () => (dispatch, getState) => {
-    if (getState().auth.sessionToken === null) {
-        return;
-    }
-    ws.call("logout", {
-        authtoken: getState().auth.sessionToken,
-    }, (msg) => {
-        dispatch(loggedOut(msg))
+export const logout = createAsyncThunk('auth/logout', async (_, {getState}) => {
+    return ws.call("logout", {
+        authtoken: getState().auth.sessionToken
     });
-    dispatch(beginLogin());
-}
+})
 
-export const getUserInfo = () => (dispatch, getState) => {
-    if (getState().auth.sessionToken === null) {
-        dispatch(createError({msg: "Error, not logged in", status: 403}));
-        return;
+export const initSession = createAsyncThunk('auth/initSession', async (_, {dispatch}) => {
+    if (localStorage.getItem("sessionToken") !== null && localStorage.getItem("sessionToken") !== undefined && localStorage.getItem("sessionToken") !== "") {
+        const token = localStorage.getItem("sessionToken");
+        // TODO: also load session name from token
+        const sessionName = localStorage.getItem("sessionName");
+        dispatch(initSessionData({token: token, sessionName: sessionName}));
+        return ws.call("get_user_info", {
+            authtoken: token
+        });
     }
-    ws.call("get_user_info", {
-        authtoken: getState().auth.sessionToken,
-    }, (msg) => {
-        dispatch(receiveUserInfo(msg))
-    });
-}
+    throw Error("no session token found");
+})
 
-export const register = (username, email, password) => dispatch => {
-    dispatch(beginRegister());
-    ws.call("register_user", {
+export const renameSession = createAsyncThunk('auth/renameSession', async ({session, new_name}, {getState}) => {
+    return ws.call("rename_session", {
+        authtoken: getState().auth.sessionToken,
+        session: session,
+        new_name: new_name,
+    });
+})
+
+export const deleteSession = createAsyncThunk('auth/deleteSession', async ({session}, {getState}) => {
+    return ws.call("logout_session", {
+        authtoken: getState().auth.sessionToken,
+        session: session,
+    });
+})
+
+export const fetchUserInfo = createAsyncThunk('auth/fetchUserInfo', async (_, {getState}) => {
+    return ws.call("get_user_info", {
+        authtoken: getState().auth.sessionToken
+    });
+})
+
+export const fetchSessionInfo = createAsyncThunk('auth/fetchSessionInfo', async (_, {getState}) => {
+    return ws.call("list_sessions", {
+        authtoken: getState().auth.sessionToken
+    });
+})
+
+export const register = createAsyncThunk('auth/register', async ({username, email, password}) => {
+    return ws.call("register_user", {
         email: email,
         username: username,
         password: password
-    }, (msg) => {
-        dispatch(registered(msg))
     });
-}
-
+})
 
 export const authSlice = createSlice({
     name: 'auth',
     initialState: {
         user: null,
-        status: 'idle', // or loading, authenticated, failed, pending_registration
+        status: 'idle', // or loading, failed, pending_registration
+        isAuthenticated: false,
         error: null,
         sessionToken: null,
-        sessionName: "test-session" // TODO: not hardcode
+        sessionName: null,
+        sessions: null,
     },
     reducers: {
-        beginLogin: (state, action) => {
-            state.status = 'loading';
-        },
-        loggedIn: (state, action) => {
-            if (action.payload.type === 'call-result') {
-                state.status = 'authenticated';
-                state.sessionToken = action.payload.data[0][0]; // this is not pretty ...
-            } else {
-                // TODO: error handling
-                state.status = 'failed';
-            }
-            console.log("logged in with session token", state.sessionToken);
-        },
-        receiveUserInfo: (state, action) => {
-            if (action.payload.type === 'call-result') {
-                state.user = action.payload.data // reconstruct from the received columns
-            } else {
-                // TODO: error handling
-            }
-        },
-        beginRegister: state => {
-            state.status = 'loading';
-        },
-        registered: (state, action) => {
-            if (action.payload.type === 'call-result') {
-                state.status = 'pending_registration';
-            } else {
-                // TODO: error handling
-                state.status = 'failed';
-            }
-            console.log("registered, now pending registration");
-        },
-        beginLogout: (state) => {
-            state.sessionToken = null;
-            state.status = 'idle';
-            state.user = null;
-            state.error = null;
-        },
-        loggedOut: (state, action) => {
-            if (action.payload.type === 'call-result') {
-                console.log('logged out successfully');
-            } else {
-                // TODO: error handling
-            }
-        },
+        initSessionData: (state, action) => {
+            state.sessionToken = action.payload.sessionToken;
+            state.sessionName = action.payload.sessionName;
+        }
     },
     extraReducers: {
         [login.fulfilled]: (state, action) => {
-
+            state.status = 'idle';
+            state.isAuthenticated = true;
+            state.sessionToken = action.payload[0].token; // this is not pretty ...
+            state.sessionName = action.meta.arg.sessionName;
+            state.error = null;
+            localStorage.setItem("sessionToken", state.sessionToken);
+            localStorage.setItem("sessionName", action.meta.arg.sessionName);
+            console.log("logged in with session token", state.sessionToken);
         },
-        [login.pending]: (state, action) => {
+        [login.pending]: (state) => {
             state.status = 'loading';
-        }
+        },
+        [login.rejected]: (state, action) => {
+            state.error = action.error.message;
+            state.status = 'failed';
+        },
+        [logout.fulfilled]: (state, action) => {
+            console.log('logged out successfully');
+            state.sessionToken = null;
+            localStorage.removeItem("sessionToken");
+            state.status = 'idle';
+            state.isAuthenticated = false;
+            state.user = null;
+            state.error = null;
+        },
+        [logout.rejected]: (state, action) => {
+            // TODO: error handling
+            console.log("error on logout - do something")
+            state.sessionToken = null;
+            localStorage.removeItem("sessionToken");
+            state.status = 'idle';
+            state.isAuthenticated = false;
+            state.user = null;
+            state.error = null;
+        },
+        [register.fulfilled]: (state, action) => {
+            state.status = 'pending_registration';
+            state.error = null;
+            console.log('logged out successfully');
+        },
+        [register.pending]: (state, action) => {
+            state.status = 'loading';
+        },
+        [register.rejected]: (state, action) => {
+            // TODO: error handling
+            state.status = 'failed';
+            state.error = action.error.message;
+        },
+        [fetchUserInfo.fulfilled]: (state, action) => {
+            state.user = action.payload[0];
+            console.log("received user info", state.user)
+            state.status = 'idle';
+            state.error = null;
+        },
+        [fetchUserInfo.pending]: (state, action) => {
+            state.status = 'loading';
+        },
+        [fetchUserInfo.rejected]: (state, action) => {
+            state.error = action.error.message;
+            state.status = 'failed';
+        },
+        [initSession.fulfilled]: (state, action) => {
+            state.user = action.payload[0];
+            console.log("initialized session with user", state.user)
+            state.isAuthenticated = true;
+            state.status = 'idle';
+            state.error = null;
+        },
+        [initSession.pending]: (state, action) => {
+            state.status = 'loading';
+        },
+        [initSession.rejected]: (state, action) => {
+            state.error = action.error.message;
+            state.status = 'failed';
+        },
+        [fetchSessionInfo.fulfilled]: (state, action) => {
+            state.sessions = action.payload;
+            state.status = 'idle';
+            state.error = null;
+        },
+        [fetchSessionInfo.pending]: (state, action) => {
+            state.status = 'loading';
+        },
+        [fetchSessionInfo.rejected]: (state, action) => {
+            state.error = action.error.message;
+            state.status = 'failed';
+        },
+        [deleteSession.fulfilled]: (state, action) => {
+            const deletedSessionID = action.meta.arg.session;
+            state.sessions = state.sessions.filter((session) => session.id !== deletedSessionID);
+            state.status = 'idle';
+            state.error = null;
+        },
+        [deleteSession.rejected]: (state, action) => {
+            state.error = action.error.message;
+        },
+        [renameSession.fulfilled]: (state, action) => {
+            const renamedSessionName = action.meta.arg.new_name;
+            const renamedSessionID = action.meta.arg.session;
+            state.sessions = state.sessions.map((session) => {
+                if (session.id === renamedSessionID) {
+                    return {
+                        ...session,
+                        name: renamedSessionName
+                    }
+                } else {
+                    return session;
+                }
+            });
+        },
+        [renameSession.rejected]: (state, action) => {
+            state.error = action.error.message;
+        },
     }
 });
 
-export const {beginLogin, beginRegister, loggedIn, registered, receiveUserInfo, beginLogout, loggedOut} = authSlice.actions;
+export const {initSessionData} = authSlice.actions;
 
 export default authSlice.reducer;

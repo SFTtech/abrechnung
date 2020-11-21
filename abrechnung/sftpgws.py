@@ -12,6 +12,7 @@ import json
 import logging
 import re
 import traceback
+from datetime import datetime
 from uuid import UUID
 
 import aiohttp.web
@@ -24,7 +25,11 @@ def encode_json(obj):
     if isinstance(obj, UUID):
         return str(obj)
 
-    raise TypeError
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+
+    print(type(obj))
+    raise TypeError(f'cannot encode object of type {type(obj)}')
 
 
 async def db_connect(cfg):

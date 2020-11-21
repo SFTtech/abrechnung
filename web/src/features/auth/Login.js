@@ -18,7 +18,8 @@ class Login extends Component {
 
     onSubmit = (e) => {
         e.preventDefault();
-        this.props.login(this.state.username, this.state.password);
+        const sessionName = navigator.appVersion + " " + navigator.userAgent + " " + navigator.appName;
+        this.props.login({username: this.state.username, password: this.state.password, sessionName: sessionName});
     };
 
     onChange = (e) => this.setState({[e.target.name]: e.target.value});
@@ -28,12 +29,15 @@ class Login extends Component {
             return <Redirect to="/"/>;
         }
 
+        const error = this.props.error !== null ? <div className="alert alert-danger">{this.props.error}</div> : "";
+
         const {username, password} = this.state;
         return (
             <div className="container">
                 <div className="col-md-6 m-auto">
                     <div className="card card-body mt-5">
                         <h2 className="text-center">Login</h2>
+                        {error}
                         <form onSubmit={this.onSubmit}>
                             <div className="form-group">
                                 <label>Username</label>
@@ -71,7 +75,8 @@ class Login extends Component {
 }
 
 const mapStateToProps = (state) => ({
-    isAuthenticated: state.auth.status === 'authenticated',
+    isAuthenticated: state.auth.isAuthenticated,
+    error: state.auth.error
 });
 
 export default connect(mapStateToProps, {login})(Login);

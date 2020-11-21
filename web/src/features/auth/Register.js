@@ -24,14 +24,14 @@ class Register extends Component {
         if (password !== password2) {
             this.props.createMessage({passwordNotMatch: 'Passwords do not match'});
         } else {
-            this.props.register(username, email, password);
+            this.props.register({username: username, email: email, password: password});
         }
     };
 
     onChange = (e) => this.setState({[e.target.name]: e.target.value});
 
     render() {
-        if (this.props.status === 'authenticated') {
+        if (this.props.isAuthenticated) {
             return <Redirect to="/"/>;
         }
 
@@ -108,7 +108,7 @@ class Register extends Component {
 }
 
 const mapStateToProps = (state) => ({
-    status: state.auth.status,
+    isAuthenticated: state.auth.isAuthenticated,
 });
 
 export default connect(mapStateToProps, {register, createMessage})(Register);
