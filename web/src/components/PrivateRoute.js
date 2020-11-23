@@ -1,14 +1,16 @@
 import React from 'react';
 import {Redirect, Route} from 'react-router-dom';
 import {connect} from 'react-redux';
-import Spinner from "./common/Spinner";
+import {Spinner} from "react-bootstrap";
 
 const PrivateRoute = ({component: Component, status, isAuthenticated, ...rest}) => (
     <Route
         {...rest}
         render={(props) => {
             if (status === 'loading') {
-                return <Spinner/>;
+                return <Spinner animation="border" role="status">
+                    <span className="sr-only">Loading...</span>
+                </Spinner>;
             }
 
             if (!isAuthenticated) {

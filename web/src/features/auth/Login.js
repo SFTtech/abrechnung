@@ -3,6 +3,7 @@ import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
 import {login} from "./authSlice";
 import {Redirect} from "react-router-dom";
+import {Spinner} from "react-bootstrap";
 
 class Login extends Component {
     state = {
@@ -29,15 +30,22 @@ class Login extends Component {
             return <Redirect to="/"/>;
         }
 
-        const error = this.props.error !== null ? <div className="alert alert-danger">{this.props.error}</div> : "";
-
         const {username, password} = this.state;
         return (
             <div className="container">
                 <div className="col-md-6 m-auto">
                     <div className="card card-body mt-5">
                         <h2 className="text-center">Login</h2>
-                        {error}
+                        {this.props.error !== null ? (
+                            <div className="alert alert-danger">{this.props.error}</div>
+                        ) : ""}
+                        {this.props.status === 'loading' ? (
+                            <div className="d-flex justify-content-center">
+                                <Spinner animation="border" role="status">
+                                    <span className="sr-only">Loading...</span>
+                                </Spinner>
+                            </div>
+                        ) : ''}
                         <form onSubmit={this.onSubmit}>
                             <div className="form-group">
                                 <label>Username</label>
@@ -76,7 +84,8 @@ class Login extends Component {
 
 const mapStateToProps = (state) => ({
     isAuthenticated: state.auth.isAuthenticated,
-    error: state.auth.error
+    status: state.auth.status,
+    error: state.auth.error,
 });
 
 export default connect(mapStateToProps, {login})(Login);

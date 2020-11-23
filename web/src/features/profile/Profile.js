@@ -1,12 +1,14 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
-import {Button, Modal} from "react-bootstrap";
-import {deleteSession, fetchSessionInfo, fetchUserInfo, renameSession} from "./authSlice";
+import {Accordion, Button, Card, Modal, Row, Spinner} from "react-bootstrap";
+import {fetchUserInfo} from "../auth/authSlice";
+import {deleteSession, fetchSessionInfo, renameSession} from "./profileSlice";
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
 import {faCheck, faPencilAlt, faTimes, faTrash} from '@fortawesome/free-solid-svg-icons'
-import Spinner from "../../components/common/Spinner";
+import ChangePassword from "./ChangePassword";
 import './Profile.css';
+import ChangeEmail from "./ChangeEmail";
 
 class Profile extends Component {
     static propTypes = {
@@ -47,7 +49,10 @@ class Profile extends Component {
 
     renameSession = (index) => {
         if (this.state.editedSessions.hasOwnProperty(index)) {
-            this.props.renameSession({session: this.props.sessions[index].id, new_name: this.state.editedSessions[index]})
+            this.props.renameSession({
+                session: this.props.sessions[index].id,
+                new_name: this.state.editedSessions[index]
+            })
             this.stopEditSession(index);
         }
     }
@@ -86,7 +91,9 @@ class Profile extends Component {
                         <div className="card card-body mt-5">
                             <h3 className="text-center">Profile</h3>
                             {error}
-                            <Spinner/>
+                            <Spinner animation="border" role="status">
+                                <span className="sr-only">Loading...</span>
+                            </Spinner>
                         </div>
                     </div>
                 </div>
@@ -136,14 +143,44 @@ class Profile extends Component {
         }
 
         return (
-            <div className="row">
+            <Row>
                 <div className="col-md-10 m-auto">
                     <div className="card card-body mt-5">
                         <h3 className="text-center">Profile</h3>
                         {error}
                         <hr/>
-                        <h4>Sessions</h4>
-                        <ul className="list-group session-list">{sessions}</ul>
+                        <Accordion>
+                            <Card>
+                                <Card.Header>
+                                    <Accordion.Toggle as={Button} variant={"link"} eventKey={"0"}>
+                                        Change Password
+                                    </Accordion.Toggle>
+                                </Card.Header>
+                                <Accordion.Collapse eventKey={"0"}>
+                                    <Card.Body>
+                                        <ChangePassword/>
+                                    </Card.Body>
+                                </Accordion.Collapse>
+                            </Card>
+                        </Accordion>
+                        <Accordion>
+                            <Card>
+                                <Card.Header>
+                                    <Accordion.Toggle as={Button} variant={"link"} eventKey={"1"}>
+                                        Change Email
+                                    </Accordion.Toggle>
+                                </Card.Header>
+                                <Accordion.Collapse eventKey={"1"}>
+                                    <Card.Body>
+                                        <ChangeEmail/>
+                                    </Card.Body>
+                                </Accordion.Collapse>
+                            </Card>
+                        </Accordion>
+                        <div className={"mt-3"}>
+                            <h4>Sessions</h4>
+                            <ul className="list-group session-list">{sessions}</ul>
+                        </div>
                     </div>
                 </div>
                 <Modal show={this.state.deleteSession.show} onHide={this.closeDeleteSessionModal}>
@@ -152,8 +189,10 @@ class Profile extends Component {
                     </Modal.Header>
 
                     <Modal.Body>
-                        {this.state.deleteSession.toDelete !== null ? <p>Are you sure you want to delete
-                            session {this.props.sessions[this.state.deleteSession.toDelete].name}</p> : ""}
+                        {this.state.deleteSession.toDelete !== null ? (
+                            <p>Are you sure you want to delete
+                                session {this.props.sessions[this.state.deleteSession.toDelete].name}</p>
+                        ) : ""}
                     </Modal.Body>
 
                     <Modal.Footer>
@@ -161,16 +200,16 @@ class Profile extends Component {
                         <Button variant="outline-danger" onClick={this.closeDeleteSessionModal}>No</Button>
                     </Modal.Footer>
                 </Modal>
-            </div>
+            </Row>
         );
     }
 }
 
 const mapStateToProps = (state) => ({
     user: state.auth.user,
-    error: state.auth.error,
-    sessions: state.auth.sessions,
-    isLoading: state.auth.status === 'loading'
+    error: state.profile.error,
+    sessions: state.profile.sessions,
+    isLoading: state.profile.status === 'loading'
 });
 
 export default connect(mapStateToProps, {fetchUserInfo, fetchSessionInfo, deleteSession, renameSession})(Profile);
