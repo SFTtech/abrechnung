@@ -16,6 +16,7 @@ class Register extends Component {
     static propTypes = {
         register: PropTypes.func.isRequired,
         isAuthenticated: PropTypes.bool,
+        status :PropTypes.string.isRequired,
     };
 
     onSubmit = (e) => {
@@ -39,18 +40,20 @@ class Register extends Component {
             return (
                 <div className="col-md-6 m-auto">
                     <div className="card card-body mt-5">
-                        <p className="text-success">Registration successful, please confirm the link you received via
-                            email.</p>
+                        <p>Registration successful, please confirm the link you received via email.</p>
                     </div>
                 </div>
             )
         }
+
+        const error = this.props.error !== null ? <div className="alert alert-danger">{this.props.error}</div> : "";
 
         const {username, email, password, password2} = this.state;
         return (
             <div className="col-md-6 m-auto">
                 <div className="card card-body mt-5">
                     <h2 className="text-center">Register</h2>
+                    {error}
                     <form onSubmit={this.onSubmit}>
                         <div className="form-group">
                             <label>Username</label>
@@ -109,6 +112,8 @@ class Register extends Component {
 
 const mapStateToProps = (state) => ({
     isAuthenticated: state.auth.isAuthenticated,
+    status: state.auth.status,
+    error: state.auth.error,
 });
 
 export default connect(mapStateToProps, {register, createMessage})(Register);

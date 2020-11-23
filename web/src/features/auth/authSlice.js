@@ -18,9 +18,8 @@ export const logout = createAsyncThunk('auth/logout', async (_, {getState}) => {
 export const initSession = createAsyncThunk('auth/initSession', async (_, {dispatch}) => {
     if (localStorage.getItem("sessionToken") !== null && localStorage.getItem("sessionToken") !== undefined && localStorage.getItem("sessionToken") !== "") {
         const token = localStorage.getItem("sessionToken");
-        // TODO: also load session name from token
         const sessionName = localStorage.getItem("sessionName");
-        dispatch(initSessionData({token: token, sessionName: sessionName}));
+        dispatch(initSessionData({sessionToken: token, sessionName: sessionName}));
         return ws.call("get_user_info", {
             authtoken: token
         });
@@ -108,7 +107,6 @@ export const authSlice = createSlice({
             state.error = null;
         },
         [logout.rejected]: (state, action) => {
-            // TODO: error handling
             console.log("error on logout - do something")
             state.sessionToken = null;
             localStorage.removeItem("sessionToken");
@@ -126,7 +124,6 @@ export const authSlice = createSlice({
             state.status = 'loading';
         },
         [register.rejected]: (state, action) => {
-            // TODO: error handling
             state.status = 'failed';
             state.error = action.error.message;
         },
@@ -153,10 +150,10 @@ export const authSlice = createSlice({
         [initSession.pending]: (state, action) => {
             state.status = 'loading';
         },
-        [initSession.rejected]: (state, action) => {
-            state.error = action.error.message;
-            state.status = 'failed';
-        },
+        // [initSession.rejected]: (state, action) => {
+        //     state.error = action.error.message;
+        //     state.status = 'failed';
+        // },
         [fetchSessionInfo.fulfilled]: (state, action) => {
             state.sessions = action.payload;
             state.status = 'idle';
@@ -191,6 +188,7 @@ export const authSlice = createSlice({
                     return session;
                 }
             });
+            state.error = null;
         },
         [renameSession.rejected]: (state, action) => {
             state.error = action.error.message;
