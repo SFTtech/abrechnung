@@ -28,7 +28,6 @@ def encode_json(obj):
     if isinstance(obj, datetime):
         return obj.isoformat()
 
-    print(type(obj))
     raise TypeError(f'cannot encode object of type {type(obj)}')
 
 
@@ -60,13 +59,6 @@ class SFTPGWS(SubCommand):
         self.function_whitelist = dict()
 
         self.logger = logging.getLogger(__name__)
-
-        if args['verbose'] > 2:
-            self.logger.setLevel(logging.DEBUG)
-        elif args['verbose'] > 1:
-            self.logger.setLevel(logging.INFO)
-        else:
-            self.logger.setLevel(logging.WARNING)
 
     async def run(self):
         """

@@ -1,5 +1,7 @@
 # project-specific
 /config.yaml
+
+# Editors / IDEs
 .idea
 
 ### Python ###
