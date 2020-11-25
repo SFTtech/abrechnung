@@ -125,13 +125,65 @@ async def test(test):
     # normally, the user would retrieve the token from the pending-registration
     # email they get sent by the mailer.
     # we'll just grab it directly from the table :D
-    token, valid_until_, mail_sent = await test.fetchrow(
-        'select token, valid_until, mail_sent from pending_registration where usr=$1',
+    token, valid_until_, mail_next_attempt = await test.fetchrow(
+        'select token, valid_until, mail_next_attempt from pending_registration where usr=$1',
         usr_id
     )
+
+    # check whether the mail-to-be-sent
+    mail = await test.fetchrow(
+        'select * from mails_pending_registration_get()',
+        columns=['email', 'username', 'language', 'registered_at', 'valid_until', 'token']
+    )
+    test.expect_eq(mail[0], 'foo@bar.baz')
+    test.expect_eq(mail[1], 'fooman')
+    test.expect_eq(mail[2], 'en_int')
+    test.expect_eq(
+        mail[3],
+        datetime.datetime.now(datetime.timezone.utc),
+        tolerance=datetime.timedelta(minutes=1)
+    )
+    test.expect_eq(mail[4], valid_until_)
+    test.expect_eq(mail[5], token)
+    del mail
+
+    # we should only get the mail once
+    await test.fetch(
+        'select * from mails_pending_registration_get()',
+        rowcount=0
+    )
+
     test.expect_eq(valid_until_, valid_until)
-    test.expect_eq(mail_sent, None)
-    del valid_until_, valid_until, mail_sent
+    test.expect_eq(
+        mail_next_attempt,
+        datetime.datetime.now(datetime.timezone.utc),
+        tolerance=datetime.timedelta(minutes=1)
+    )
+    del valid_until_, valid_until, mail_next_attempt
+
+    await test.fetchval(
+        'select mail_next_attempt from pending_registration where usr=$1',
+        usr_id,
+        expect_eq=None
+    )
+
+    # mark the mail as not-successfully-sent
+    await test.fetch(
+        'call mails_pending_registration_need_retry(token := $1)',
+        token
+    )
+    await test.fetchval(
+        'select mail_next_attempt from pending_registration where usr=$1',
+        usr_id,
+        expect_eq=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
+        tolerance=datetime.timedelta(minutes=1)
+    )
+
+    # we shouldn't get the mail because it will only be re-sent in one hour
+    await test.fetch(
+        'select * from mails_pending_registration_get()',
+        rowcount=0
+    )
 
     # confirm the pending registration
     await test.fetch(
@@ -610,6 +662,10 @@ async def test(test):
         usr1_id
     )
     await test.fetch(
+        'select * from mails_pending_password_recovery_get()',
+        rowcount=0
+    )
+    await test.fetch(
         'call request_password_recovery(email := $1)',
         'foo@bar.baz'
     )
@@ -625,6 +681,24 @@ async def test(test):
     recovery_token_1 = row['token']
     del row
     test.expect_eq((await test.get_notification())[1], 'pending_password_recovery')
+
+    mail = await test.fetchrow(
+        'select * from mails_pending_password_recovery_get()',
+        columns=['email', 'username', 'language', 'valid_until', 'token']
+    )
+    test.expect_eq(mail[0], 'foo@bar.baz')
+    test.expect_eq(mail[1], 'fooman')
+    test.expect_eq(mail[2], 'en_int')
+    test.expect_eq(
+        mail[3],
+        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
+        tolerance=datetime.timedelta(minutes=1)
+    )
+    del mail
+    await test.fetch(
+        'select * from mails_pending_password_recovery_get()',
+        rowcount=0
+    )
 
     # attempt password recovery for another user
     await test.fetch(
@@ -788,6 +862,10 @@ async def test(test):
     )
     # attempt to change email successfully
     await test.fetch(
+        'select * from mails_pending_email_change_get()',
+        rowcount=0
+    )
+    await test.fetch(
         'call request_email_change(authtoken := $1, password := $2, new_email := $3)',
         usr1_token,
         'secure password',
@@ -808,13 +886,42 @@ async def test(test):
         'secure password',
         'newer.foo@bar.baz'
     )
+    test.expect_eq((await test.get_notification())[1], 'pending_email_change')
     change_token_1, change_new_email = await test.fetchrow(
         'select token, new_email from pending_email_change where usr=$1',
         usr1_id
     )
     test.expect_eq(change_new_email, 'newer.foo@bar.baz')
-    del change_new_email
-    test.expect_eq((await test.get_notification())[1], 'pending_email_change')
+    mail = await test.fetchrow(
+        'select * from mails_pending_email_change_get()',
+        columns=['email', 'username', 'language', 'new_email', 'valid_until', 'token']
+    )
+    test.expect_eq(mail[0], 'foo@bar.baz')
+    test.expect_eq(mail[1], 'fooman')
+    test.expect_eq(mail[2], 'en_int')
+    test.expect_eq(mail[3], change_new_email)
+    test.expect_eq(
+        mail[4],
+        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
+        tolerance=datetime.timedelta(minutes=1)
+    )
+    test.expect_eq(mail[5], change_token_1)
+    del change_new_email, mail
+    # the pending email should be gone now
+    await test.fetch(
+        'select * from mails_pending_email_change_get()',
+        rowcount=0
+    )
+    # re-enable the pending notification
+    await test.fetch(
+        'call mails_pending_email_change_need_retry(token := $1)',
+        change_token_1
+    )
+    # but it should not be enabled yet
+    await test.fetch(
+        'select * from mails_pending_email_change_get()',
+        rowcount=0
+    )
 
     # create an email change request for the other user
     usr2_token = await test.fetchval(

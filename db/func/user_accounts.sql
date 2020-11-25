@@ -34,27 +34,27 @@ call allow_function('register_user');
 -- designed for use by the mailer service
 -- returns information for unsent pending registration mails
 -- the returned mails are marked as sent
--- information for at most 5 mails is returned
+-- information for at most max_count mails is returned
 -- if there's no unsent pending registration mails, an empty table is returned
-create or replace function get_mails_pending_registration()
+create or replace function mails_pending_registration_get(max_count integer default 5)
 returns table (email text, username text, language text, registered_at timestamptz, valid_until timestamptz, token uuid)
 as $$
     with
-        registration_batch as (
-            select token
+        batch as (
+            select pending_registration.token
                 from pending_registration
                 where
-                    valid_until >= now() and
-                    mail_sent is null
-                limit 5
+                    pending_registration.valid_until >= now() and
+                    pending_registration.mail_next_attempt <= now()
+                limit mails_pending_registration_get.max_count
         ),
         usrs as (
             update
-                pending_registration p
-                set mail_sent=now()
-                from registration_batch b
-                where p.token = b.token
-                returning p.usr
+                pending_registration
+                set mail_next_attempt=NULL
+                from batch
+                where pending_registration.token = batch.token
+                returning pending_registration.usr
         )
     select
         usr.email,
@@ -70,49 +70,17 @@ as $$
             usr.id = pending_registration.usr and
             usr.id in (select usr from usrs)
 $$ language sql;
--- TODO test
 
 
 -- designed for use by the mailer service
--- shall be called if mail that was returned in get_mails_pending_registration()
+-- shall be called if mail that was returned in mails_pending_registration_get()
 -- could not be sent for any reason
-create or replace procedure unsent_mail_pending_registration(token uuid)
+create or replace procedure mails_pending_registration_need_retry(token uuid, delay interval default '1 hour')
 as $$
-    update pending_registration set mail_sent=null where pending_registration.token=unsent_mail_pending_registration.token;
-    -- TODO: retry timer
+    update pending_registration
+        set mail_next_attempt = now() + delay
+        where pending_registration.token=mails_pending_registration_need_retry.token;
 $$ language sql;
--- TODO test
-
-
--- create table if not exists usr(
---     id serial primary key,
---     email text unique not null,
---     -- pgcrypto crypt
---     password text not null,
---     registered_at timestamptz not null default now(),
---     username text unique not null,
---     -- preferred language
---     language text not null default 'en_int',
---     -- has database admin permissions
---     admin boolean not null default false,
---     -- registration is not completed yet
---     pending boolean not null default true,
---     -- user is allowed to upload files
---     can_upload_files boolean not null default false,
---     -- is deleted (users with commits can't be deleted)
---     -- sessions must be cleared if a user is marked deleted
---     deleted boolean not null default false
--- );
--- 
--- create table if not exists pending_registration(
---     usr integer not null unique references usr(id) on delete cascade,
---     token uuid primary key default ext.uuid_generate_v4(),
---     -- gc should delete from usr where id=id if valid_until < now()
---     valid_until timestamptz not null default now() + interval '1 hour',
---     -- if not NULL, the registration confirmation mail has already been sent
---     mail_sent timestamptz default null
--- );
-
 
 
 -- confirms a registration that was started with register_user()
@@ -361,6 +329,57 @@ $$ language plpgsql;
 call allow_function('request_password_recovery', is_procedure := true);
 
 
+-- designed for use by the mailer service
+-- returns information for unsent pending password recovery mails
+-- the returned mails are marked as sent
+-- information for at most max_count mails is returned
+-- if there's no unsent pending password recovery mails, an empty table is returned
+create or replace function mails_pending_password_recovery_get(max_count integer default 5)
+returns table (email text, username text, language text, valid_until timestamptz, token uuid)
+as $$
+    with
+        batch as (
+            select pending_password_recovery.token
+                from pending_password_recovery
+                where
+                    pending_password_recovery.valid_until >= now() and
+                    pending_password_recovery.mail_next_attempt <= now()
+                limit mails_pending_password_recovery_get.max_count
+        ),
+        usrs as (
+            update
+                pending_password_recovery
+                set mail_next_attempt=NULL
+                from batch
+                where pending_password_recovery.token = batch.token
+                returning pending_password_recovery.usr
+        )
+    select
+        usr.email,
+        usr.username,
+        usr.language,
+        pending_password_recovery.valid_until,
+        pending_password_recovery.token
+        from
+            usr,
+            pending_password_recovery
+        where
+            usr.id = pending_password_recovery.usr and
+            usr.id in (select usr from usrs)
+$$ language sql;
+
+
+-- designed for use by the mailer service
+-- shall be called if mail that was returned in mails_pending_password_recovery_get()
+-- could not be sent for any reason
+create or replace procedure mails_pending_password_recovery_need_retry(token uuid, delay interval default '1 hour')
+as $$
+    update pending_password_recovery
+        set mail_next_attempt = now() + delay
+        where pending_password_recovery.token=mails_pending_password_recovery_need_retry.token;
+$$ language sql;
+
+
 -- delete timed-out pending password recovery requests
 create or replace procedure gc_pending_password_recovery()
 as $$
@@ -461,6 +480,60 @@ begin
 end;
 $$ language plpgsql;
 call allow_function('request_email_change', is_procedure := true);
+
+
+-- designed for use by the mailer service
+-- returns information for unsent pending email change mails
+-- the returned mails are marked as sent
+-- information for at most max_count mails is returned
+-- if there's no unsent pending email change mails, an empty table is returned
+-- the mailer should send a notification mail to the old email address,
+-- and a confirmation mail to the new email address
+create or replace function mails_pending_email_change_get(max_count integer default 5)
+returns table (email text, username text, language text, new_email text, valid_until timestamptz, token uuid)
+as $$
+    with
+        batch as (
+            select pending_email_change.token
+                from pending_email_change
+                where
+                    pending_email_change.valid_until >= now() and
+                    pending_email_change.mail_next_attempt <= now()
+                limit mails_pending_email_change_get.max_count
+        ),
+        usrs as (
+            update
+                pending_email_change
+                set mail_next_attempt=NULL
+                from batch
+                where pending_email_change.token = batch.token
+                returning pending_email_change.usr
+        )
+    select
+        usr.email,
+        usr.username,
+        usr.language,
+        pending_email_change.new_email,
+        pending_email_change.valid_until,
+        pending_email_change.token
+        from
+            usr,
+            pending_email_change
+        where
+            usr.id = pending_email_change.usr and
+            usr.id in (select usr from usrs)
+$$ language sql;
+
+
+-- designed for use by the mailer service
+-- shall be called if mail to new_email that was returned in
+-- mails_pending_email_change_get() could not be sent for any reason
+create or replace procedure mails_pending_email_change_need_retry(token uuid, delay interval default '1 hour')
+as $$
+    update pending_email_change
+        set mail_next_attempt = now() + delay
+        where pending_email_change.token=mails_pending_email_change_need_retry.token;
+$$ language sql;
 
 
 -- delete timed-out pending email change requests

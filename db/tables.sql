@@ -60,8 +60,9 @@ create table if not exists pending_registration(
     token uuid primary key default ext.uuid_generate_v4(),
     -- gc should delete from usr where id=id if valid_until < now()
     valid_until timestamptz not null default now() + interval '1 hour',
-    -- if not NULL, the registration confirmation mail has already been sent
-    mail_sent timestamptz default null
+    -- if NULL, the mail has been successfully sent
+    -- if not NULL, the next attempt to send the mail should be attempted at that time
+    mail_next_attempt timestamptz default now()
 );
 
 -- holds entries only for users which are neither deleted nor pending
@@ -70,8 +71,9 @@ create table if not exists pending_password_recovery(
     token uuid primary key default ext.uuid_generate_v4(),
     -- gc should delete rows where valid_until < now()
     valid_until timestamptz not null default now() + interval '1 hour',
-    -- if not NULL, the password recovery mail has already been sent
-    mail_sent timestamptz default null
+    -- if NULL, the mail has been successfully sent
+    -- if not NULL, the next attempt to send the mail should be attempted at that time
+    mail_next_attempt timestamptz default now()
 );
 
 -- holds entries only for users which are neither deleted nor pending
@@ -81,8 +83,9 @@ create table if not exists pending_email_change(
     new_email text not null,
     -- gc should delete rows where valid_until < now()
     valid_until timestamptz not null default now() + interval '1 hour',
-    -- if not NULL, the mail change email has already been sent
-    mail_sent timestamptz
+    -- if NULL, the mail has been successfully sent
+    -- if not NULL, the next attempt to send the mail should be attempted at that time
+    mail_next_attempt timestamptz default now()
 );
 
 -- tracking of login sessions
