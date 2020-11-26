@@ -6,7 +6,22 @@ sft psql websocket gateway
 (c) 2020 Jonas Jelten <jj@sft.lol>
 
 License: GPLv3 or any later version
+
+
+The database needs these API functions for sftpgws:
+
+* on startup
+  * `channel_name:text forwarder_boot(forwarder:text)`
+  * `functions:table get_allowed_functions()`
+
+* client connections
+  * `connection_id:bigint client_connected(forwarder:text)`
+  * `client_disconnected(id:bigint)`
+
+* on shutdown
+  * `deleted_connections:integer forwarder_stop(forwarder:text)`
 """
+
 import asyncio
 import json
 import logging
