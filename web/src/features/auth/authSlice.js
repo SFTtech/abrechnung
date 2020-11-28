@@ -37,7 +37,7 @@ export const authSlice = createSlice({
     name: 'auth',
     initialState: {
         user: null,
-        status: 'idle', // or loading, failed
+        status: 'init', // or idle, loading, failed
         isAuthenticated: false,
         error: null,
         sessionToken: null,
@@ -108,10 +108,9 @@ export const authSlice = createSlice({
         [initSession.pending]: (state, action) => {
             state.status = 'loading';
         },
-        // [initSession.rejected]: (state, action) => {
-        //     state.error = action.error.message;
-        //     state.status = 'failed';
-        // },
+        [initSession.rejected]: (state, action) => {
+            state.status = 'idle';
+        },
     }
 });
 

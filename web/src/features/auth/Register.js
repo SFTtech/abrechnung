@@ -3,7 +3,7 @@ import {Link, Redirect} from 'react-router-dom';
 import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
 import {ws} from "../../websocket";
-import {Spinner} from "react-bootstrap";
+import Spinner from "react-bootstrap/Spinner";
 
 class Register extends Component {
     state = {

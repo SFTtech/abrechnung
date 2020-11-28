@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
-import {Link} from 'react-router-dom';
 import {ws} from "../../websocket";
-import {Spinner} from "react-bootstrap";
+import Spinner from "react-bootstrap/Spinner";
 import {connect} from "react-redux";
 
 class ChangePassword extends Component {

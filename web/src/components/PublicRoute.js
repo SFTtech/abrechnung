@@ -3,7 +3,7 @@ import {Redirect, Route} from 'react-router-dom';
 import {connect} from 'react-redux';
 import Spinner from "react-bootstrap/Spinner";
 
-const PrivateRoute = ({component: Component, status, isAuthenticated, ...rest}) => (
+const PublicRoute = ({component: Component, status, isAuthenticated, ...rest}) => (
     <Route
         {...rest}
         render={(props) => {
@@ -17,8 +17,8 @@ const PrivateRoute = ({component: Component, status, isAuthenticated, ...rest}) 
                 );
             }
 
-            if (!isAuthenticated) {
-                return <Redirect to="/login"/>;
+            if (isAuthenticated) {
+                return <Redirect to="/"/>;
             }
             return <Component {...props} />;
         }}
@@ -30,4 +30,4 @@ const mapStateToProps = (state) => ({
     isAuthenticated: state.auth.isAuthenticated,
 });
 
-export default connect(mapStateToProps)(PrivateRoute);
+export default connect(mapStateToProps)(PublicRoute);

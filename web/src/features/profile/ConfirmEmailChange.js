@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {ws} from "../../websocket";
-import {Spinner} from "react-bootstrap";
+import Spinner from "react-bootstrap/Spinner";
 import "./ConfirmEmailChange.css";
 
 class ConfirmEmailChange extends Component {

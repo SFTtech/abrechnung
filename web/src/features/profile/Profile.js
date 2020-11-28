@@ -1,14 +1,23 @@
 import React, {Component} from 'react';
 import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
-import {Accordion, Button, Card, Modal, Row, Spinner} from "react-bootstrap";
+import {withRouter} from "react-router-dom";
 import {fetchUserInfo} from "../auth/authSlice";
 import {deleteSession, fetchSessionInfo, renameSession} from "./profileSlice";
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
 import {faCheck, faPencilAlt, faTimes, faTrash} from '@fortawesome/free-solid-svg-icons'
 import ChangePassword from "./ChangePassword";
-import './Profile.css';
 import ChangeEmail from "./ChangeEmail";
+import Spinner from "react-bootstrap/Spinner";
+import Row from "react-bootstrap/Row";
+import Button from "react-bootstrap/Button";
+import Modal from "react-bootstrap/Modal";
+import Col from "react-bootstrap/Col";
+import Tab from "react-bootstrap/Tab";
+import ListGroup from "react-bootstrap/cjs/ListGroup";
+import {LinkContainer} from "react-router-bootstrap";
+
+import './Profile.css';
 
 class Profile extends Component {
     static propTypes = {
@@ -88,13 +97,11 @@ class Profile extends Component {
             return (
                 <div className="row">
                     <div className="col-md-10 m-auto">
-                        <div className="card card-body mt-5">
-                            <h3 className="text-center">Profile</h3>
-                            {error}
-                            <Spinner animation="border" role="status">
-                                <span className="sr-only">Loading...</span>
-                            </Spinner>
-                        </div>
+                        <h3>Profile</h3>
+                        {error}
+                        <Spinner animation="border" role="status">
+                            <span className="sr-only">Loading...</span>
+                        </Spinner>
                     </div>
                 </div>
             );
@@ -141,48 +148,73 @@ class Profile extends Component {
                 }
             });
         }
-
         return (
-            <Row>
-                <div className="col-md-10 m-auto">
-                    <div className="card card-body mt-5">
-                        <h3 className="text-center">Profile</h3>
-                        {error}
-                        <hr/>
-                        <Accordion>
-                            <Card>
-                                <Card.Header>
-                                    <Accordion.Toggle as={Button} variant={"link"} eventKey={"0"}>
-                                        Change Password
-                                    </Accordion.Toggle>
-                                </Card.Header>
-                                <Accordion.Collapse eventKey={"0"}>
-                                    <Card.Body>
-                                        <ChangePassword/>
-                                    </Card.Body>
-                                </Accordion.Collapse>
-                            </Card>
-                        </Accordion>
-                        <Accordion>
-                            <Card>
-                                <Card.Header>
-                                    <Accordion.Toggle as={Button} variant={"link"} eventKey={"1"}>
-                                        Change Email
-                                    </Accordion.Toggle>
-                                </Card.Header>
-                                <Accordion.Collapse eventKey={"1"}>
-                                    <Card.Body>
+            <Row className={"mt-4"}>
+                <Col xs={12}>
+                    <h3>Profile</h3>
+                    {error}
+                    <hr/>
+                    <Tab.Container id="profile-tabs" defaultActiveKey="user-info"
+                                   activeKey={this.props.match.params !== undefined ? this.props.match.params.tab : "user-info"}>
+                        <Row>
+                            <Col lg={3} md={4}>
+                                <ListGroup>
+                                    <LinkContainer to={"/profile/user-info"}>
+                                        <ListGroup.Item action>User Info</ListGroup.Item>
+                                    </LinkContainer>
+                                    <LinkContainer to={"/profile/sessions"}>
+                                        <ListGroup.Item action>Sessions</ListGroup.Item>
+                                    </LinkContainer>
+                                    <LinkContainer to={"/profile/change-email"}>
+                                        <ListGroup.Item action>Change E-Mail</ListGroup.Item>
+                                    </LinkContainer>
+                                    <LinkContainer to={"/profile/change-password"}>
+                                        <ListGroup.Item action>Change Password</ListGroup.Item>
+                                    </LinkContainer>
+                                </ListGroup>
+                            </Col>
+                            <Col lg={9} md={8}>
+                                <Tab.Content>
+                                    <Tab.Pane eventKey="user-info">
+                                        {this.props.state === "loading" || this.props.user === null ? (
+                                            <Spinner animation="border" role="status">
+                                                <span className="sr-only">Loading...</span>
+                                            </Spinner>
+                                        ) : (
+                                            <ListGroup variant={"flush"}>
+                                                <ListGroup.Item className={"d-flex"}>
+                                                    <span className={"font-weight-bold w-25"}>Username</span>
+                                                    <span>{this.props.user.username}</span>
+                                                </ListGroup.Item>
+                                                <ListGroup.Item className={"d-flex"}>
+                                                    <span className={"font-weight-bold w-25"}>E-Mail</span>
+                                                    <span>{this.props.user.email}</span>
+                                                </ListGroup.Item>
+                                                <ListGroup.Item className={"d-flex"}>
+                                                    <span className={"font-weight-bold w-25"}>Language</span>
+                                                    <span>{this.props.user.language}</span>
+                                                </ListGroup.Item>
+                                                <ListGroup.Item className={"d-flex"}>
+                                                    <span className={"font-weight-bold w-25"}>Registered</span>
+                                                    <span>{this.props.user.registered_at}</span>
+                                                </ListGroup.Item>
+                                            </ListGroup>
+                                        )}
+                                    </Tab.Pane>
+                                    <Tab.Pane eventKey="sessions">
+                                        {sessions}
+                                    </Tab.Pane>
+                                    <Tab.Pane eventKey="change-email">
                                         <ChangeEmail/>
-                                    </Card.Body>
-                                </Accordion.Collapse>
-                            </Card>
-                        </Accordion>
-                        <div className={"mt-3"}>
-                            <h4>Sessions</h4>
-                            <ul className="list-group session-list">{sessions}</ul>
-                        </div>
-                    </div>
-                </div>
+                                    </Tab.Pane>
+                                    <Tab.Pane eventKey="change-password">
+                                        <ChangePassword/>
+                                    </Tab.Pane>
+                                </Tab.Content>
+                            </Col>
+                        </Row>
+                    </Tab.Container>
+                </Col>
                 <Modal show={this.state.deleteSession.show} onHide={this.closeDeleteSessionModal}>
                     <Modal.Header closeButton>
                         <Modal.Title>Delete Session?</Modal.Title>
@@ -212,4 +244,9 @@ const mapStateToProps = (state) => ({
     isLoading: state.profile.status === 'loading'
 });
 
-export default connect(mapStateToProps, {fetchUserInfo, fetchSessionInfo, deleteSession, renameSession})(Profile);
+export default withRouter(connect(mapStateToProps, {
+    fetchUserInfo,
+    fetchSessionInfo,
+    deleteSession,
+    renameSession
+})(Profile));

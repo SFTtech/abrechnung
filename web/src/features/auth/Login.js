@@ -3,7 +3,7 @@ import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
 import {login} from "./authSlice";
 import {Redirect} from "react-router-dom";
-import {Spinner} from "react-bootstrap";
+import Spinner from "react-bootstrap/Spinner";
 
 class Login extends Component {
     state = {
