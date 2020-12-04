@@ -165,28 +165,9 @@ create table if not exists grp (
     terms text not null default '',
     -- currency (symbol) to use in the group
     -- eurocentric all the way
-    currency text not null default '€'
-);
+    currency text not null default '€',
 
--- group authtokens can be used in place of a session token;
--- they allow read-only access to a specific group, and nothing else.
--- this can be used to share a group with a 3rd person who doesn't have an account.
-create table if not exists group_authtoken (
-    -- the group that the token grants access to
-    grp integer references grp(id) on delete cascade,
-    token uuid primary key,
-    -- the last time this token was used
-    last_seen timestamptz,
-    -- description text for the authtoken
-    description text not null,
-    -- can be NULL for infinite validity
-    -- gc should delete this row when valid_until < now()
-    valid_until timestamptz,
-    granted_by integer not null references usr(id) on delete restrict,
-    -- if true, the group authtoken can be used to become a read-only
-    -- group member;
-    -- this is the only way to join a group apart from creating one.
-    is_invite bool default true
+    created timestamptz not null default now()
 );
 
 create table if not exists group_membership (
@@ -194,21 +175,34 @@ create table if not exists group_membership (
     grp integer references grp(id) on delete cascade,
     primary key(usr, grp),
 
+    joined timestamptz not null default now(),
+
     -- optional user description text
     description text not null default '',
 
     -- owner permissions allow editing the group name, description, terms and currency.
-    -- anybody with owner permissions can grant owner, write and read permissions,
-    -- generate and delete group authtokens and revoke write and read permissions
+    -- anybody with owner permissions can grant and revoke owner permissions.
     is_owner bool not null default false,
     -- write permissions allow creating commits.
-    -- anybody with write permissions can grant write and read permissions,
-    -- generate and delete group authtokens and revoke read permissions.
-    can_write bool not null default true,
-    -- read permissions allow access to any group-related information.
-    -- anybody with read permissions can grant read permission to other users,
-    -- and generate and delete group_authtokens
-    can_read bool not null default true
+    -- anybody with write permissions can grant and revoke write permissions.
+    can_write bool not null default true
+);
+
+-- active group invites that allow users to join a group
+create table if not exists group_invite (
+    -- the group that the token grants access to
+    grp integer references grp(id) on delete cascade,
+    token uuid primary key default ext.uuid_generate_v4(),
+    -- description text for the authtoken
+    description text not null,
+    -- the user who has created the invite token
+    created_by integer references usr(id) on delete cascade,
+    -- can be NULL for infinite validity
+    -- gc should delete this row when valid_until < now()
+    valid_until timestamptz,
+    -- if true, the token is auto-deleted when it's used to
+    -- join the group
+    single_use bool default true
 );
 
 -- every data and history entry in a group references a commit as a foreign key.

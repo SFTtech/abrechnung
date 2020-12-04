@@ -688,6 +688,7 @@ begin
     delete from session where session.usr=locals.usr;
     delete from pending_password_recovery where pending_password_recovery.usr=locals.usr;
     delete from pending_email_change where pending_email_change.usr=locals.usr;
+    delete from group_invite where created_by=locals.usr;
 end;
 $$ language plpgsql;
 call allow_function('delete_account', is_procedure := true);

@@ -67,6 +67,9 @@ class DBTest(subcommand.SubCommand):
         from . import user_accounts
         print(f'\x1b[1muser_accounts.test\x1b[m')
         await user_accounts.test(self)
+        from . import groups
+        print(f'\x1b[1mgroups.test\x1b[m')
+        await groups.test(self)
 
         print(f'\x1b[1mtests done\x1b[m')
         self.done = True
