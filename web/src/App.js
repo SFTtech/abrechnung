@@ -1,4 +1,4 @@
-import React, {Component, Fragment} from 'react';
+import React, {Component, Fragment, Suspense} from 'react';
 import {BrowserRouter as Router, Route, Switch,} from "react-router-dom";
 
 import "bootswatch/dist/flatly/bootstrap.min.css";
@@ -7,14 +7,19 @@ import Index from './components/Index'
 import Header from './components/Header'
 import PrivateRoute from './components/PrivateRoute'
 import Alerts from "./components/Alerts";
-import Register from './features/auth/Register';
-import Login from './features/auth/Login';
-import Profile from "./features/profile/Profile";
 import {connect} from 'react-redux';
-import ConfirmRegistration from "./features/auth/ConfirmRegistration";
-import ConfirmEmailChange from "./features/profile/ConfirmEmailChange";
 import {initSession} from "./features/auth/authSlice";
 import './App.css';
+import Spinner from "react-bootstrap/Spinner";
+import Register from './features/auth/Register';
+import Login from "./features/auth/Login";
+import PublicRoute from "./components/PublicRoute";
+import Logout from "./features/auth/Logout";
+
+const Profile = React.lazy(() => import("./features/profile/Profile"));
+const Groups = React.lazy(() => import("./features/users/Groups"));
+const ConfirmEmailChange = React.lazy(() => import("./features/profile/ConfirmEmailChange"));
+const ConfirmRegistration = React.lazy(() => import("./features/auth/ConfirmRegistration"));
 
 class App extends Component {
 
@@ -30,12 +35,22 @@ class App extends Component {
                     <div className="container">
                         <Alerts/>
                         <Switch>
-                            <Route exact path="/" component={Index}/>
-                            <Route exact path="/register" component={Register}/>
-                            <Route exact path="/login" component={Login}/>
-                            <Route path="/confirm-registration/:token" component={ConfirmRegistration}/>
-                            <Route path="/confirm-email-change/:token" component={ConfirmEmailChange}/>
-                            <PrivateRoute exact path="/profile" component={Profile}/>
+                            <PublicRoute exact path="/register" component={Register}/>
+                            <PublicRoute exact path="/login" component={Login}/>
+                            <Route path="/confirm-registration/:token">
+                                <Suspense fallback={<Spinner/>}>
+                                    <ConfirmRegistration/>
+                                </Suspense>
+                            </Route>
+                            <Route path="/confirm-email-change/:token">
+                                <Suspense fallback={<Spinner/>}>
+                                    <ConfirmEmailChange/>
+                                </Suspense>
+                            </Route>
+                            <PrivateRoute exact path="/logout" component={Logout}/>
+                            <PrivateRoute exact path="/" component={Index}/>
+                            <PrivateRoute exact path="/groups" component={Groups}/>
+                            <PrivateRoute path="/profile/:tab?" component={Profile}/>
                         </Switch>
                     </div>
                 </Fragment>

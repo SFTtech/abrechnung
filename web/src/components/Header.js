@@ -1,83 +1,80 @@
 import React, {Component} from 'react';
-import {Link} from 'react-router-dom';
-import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
-import {logout} from "../features/auth/authSlice";
+import {connect} from "react-redux";
+import {Link} from "react-router-dom";
+import Navbar from "react-bootstrap/Navbar";
+import Nav from "react-bootstrap/Nav";
+import {LinkContainer} from "react-router-bootstrap";
 
 export class Header extends Component {
     static propTypes = {
         isAuthenticated: PropTypes.bool.isRequired,
-        user: PropTypes.object,
-        logout: PropTypes.func.isRequired,
     };
 
     render() {
-        const {user, isAuthenticated} = this.props;
-
-        const authLinks = (
-            <ul className="navbar-nav mt-2 mt-lg-0">
-                <div className="d-flex flex-row ml-auto">
-                    <span className="navbar-text mr-3">
-                      <strong>{user ? `Welcome ${user.username}` : ''}</strong>
-                    </span>
-                    <li className="nav-item">
-                        <Link to="/profile" className="nav-link">
-                            Profile
-                        </Link>
-                    </li>
-                    <li className="nav-item">
-                        <button onClick={this.props.logout} className="nav-link btn btn-info btn-sm text-light">
-                            Logout
-                        </button>
-                    </li>
-                </div>
-            </ul>
-        );
-
-        const guestLinks = (
-            <ul className="navbar-nav ml-auto mt-2 mt-lg-0">
-                <li className="nav-item">
-                    <Link to="/register" className="nav-link">
-                        Register
-                    </Link>
-                </li>
-                <li className="nav-item">
-                    <Link to="/login" className="nav-link">
-                        Login
-                    </Link>
-                </li>
-            </ul>
-        );
+        const {isAuthenticated} = this.props;
 
         return (
-            <nav className="navbar navbar-expand-sm navbar-dark bg-dark">
-                <div className="container">
-                    <button
-                        className="navbar-toggler"
-                        type="button"
-                        data-toggle="collapse"
-                        data-target="#navbarToggler"
-                        aria-controls="navbarToggler"
-                        aria-expanded="false"
-                        aria-label="Toggle navigation"
-                    >
-                        <span className="navbar-toggler-icon"/>
-                    </button>
-                    <div className="collapse navbar-collapse" id="navbarToggler">
-                        <Link className="navbar-brand" to="/">
-                            Abrechnung
-                        </Link>
-                    </div>
-                    {isAuthenticated ? authLinks : guestLinks}
+            <Navbar bg={"primary"} variant={"dark"}>
+                <div className={"container"}>
+                    <Navbar.Brand><Link to={"/"}>Abrechnung</Link></Navbar.Brand>
+                    <Navbar.Toggle aria-controls={"responsive-navbar-nav"}/>
+                    <Navbar.Collapse id={"responsive-navbar-nav"}>
+                        {isAuthenticated ? (
+                            <>
+                                <Nav>
+                                    <Nav.Item>
+                                        <LinkContainer to={"/groups"}>
+                                            <Nav.Link>
+                                                Groups
+                                            </Nav.Link>
+                                        </LinkContainer>
+                                    </Nav.Item>
+                                </Nav>
+                                <Nav className={"ml-auto"}>
+                                    <Nav.Item>
+                                        <LinkContainer to={"/profile"}>
+                                            <Nav.Link>
+                                                Profile
+                                            </Nav.Link>
+                                        </LinkContainer>
+                                    </Nav.Item>
+                                    <Nav.Item>
+                                        <LinkContainer to={"/logout"}>
+                                            <Nav.Link>
+                                                Logout
+                                            </Nav.Link>
+                                        </LinkContainer>
+                                    </Nav.Item>
+                                </Nav>
+                            </>
+                        ) : (
+                            <Nav className={"ml-auto"}>
+                                <Nav.Item>
+                                    <LinkContainer to={"/register"}>
+                                        <Nav.Link>
+                                            Register
+                                        </Nav.Link>
+                                    </LinkContainer>
+                                </Nav.Item>
+                                <Nav.Item>
+                                    <LinkContainer to={"/login"}>
+                                        <Nav.Link>
+                                            Login
+                                        </Nav.Link>
+                                    </LinkContainer>
+                                </Nav.Item>
+                            </Nav>
+                        )}
+                    </Navbar.Collapse>
                 </div>
-            </nav>
+            </Navbar>
         );
     }
 }
 
 const mapStateToProps = (state) => ({
-    user: state.auth.user,
     isAuthenticated: state.auth.isAuthenticated,
 });
 
-export default connect(mapStateToProps, {logout})(Header);
+export default connect(mapStateToProps)(Header);

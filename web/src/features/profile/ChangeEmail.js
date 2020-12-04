@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {ws} from "../../websocket";
-import {Spinner} from "react-bootstrap";
+import Spinner from "react-bootstrap/Spinner";
 import {connect} from "react-redux";
 
 class ChangeEmail extends Component {
