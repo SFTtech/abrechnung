@@ -48,19 +48,9 @@ class App extends Component {
                                 </Suspense>
                             </Route>
                             <PrivateRoute exact path="/logout" component={Logout}/>
-                            <PrivateRoute exact path="/">
-                                <Index/>
-                            </PrivateRoute>
-                            <PrivateRoute exact path="/groups">
-                                <Suspense fallback={<Spinner/>}>
-                                    <Groups/>
-                                </Suspense>
-                            </PrivateRoute>
-                            <PrivateRoute path="/profile/:tab?">
-                                <Suspense fallback={<Spinner/>}>
-                                    <Profile/>
-                                </Suspense>
-                            </PrivateRoute>
+                            <PrivateRoute exact path="/" component={Index}/>
+                            <PrivateRoute exact path="/groups" component={Groups}/>
+                            <PrivateRoute path="/profile/:tab?" component={Profile}/>
                         </Switch>
                     </div>
                 </Fragment>

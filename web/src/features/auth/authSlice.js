@@ -106,7 +106,7 @@ export const authSlice = createSlice({
             state.error = null;
         },
         [initSession.pending]: (state, action) => {
-            state.status = 'loading';
+            // state.status = 'loading';
         },
         [initSession.rejected]: (state, action) => {
             state.status = 'idle';

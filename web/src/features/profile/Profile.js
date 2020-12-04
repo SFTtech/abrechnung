@@ -29,6 +29,7 @@ class Profile extends Component {
         renameSession: PropTypes.func.isRequired,
         deleteSession: PropTypes.func.isRequired,
     };
+
     state = {
         editedSessions: {},
         deleteSession: {
@@ -93,19 +94,6 @@ class Profile extends Component {
 
     render() {
         const error = this.props.error !== null ? <div className="alert alert-danger">{this.props.error}</div> : "";
-        if (this.props.isLoading) {
-            return (
-                <div className="row">
-                    <div className="col-md-10 m-auto">
-                        <h3>Profile</h3>
-                        {error}
-                        <Spinner animation="border" role="status">
-                            <span className="sr-only">Loading...</span>
-                        </Spinner>
-                    </div>
-                </div>
-            );
-        }
 
         let sessions = "";
         if (this.props.sessions !== null) {
@@ -148,6 +136,7 @@ class Profile extends Component {
                 }
             });
         }
+
         return (
             <Row className={"mt-4"}>
                 <Col xs={12}>
@@ -176,10 +165,12 @@ class Profile extends Component {
                             <Col lg={9} md={8}>
                                 <Tab.Content>
                                     <Tab.Pane eventKey="user-info">
-                                        {this.props.state === "loading" || this.props.user === null ? (
-                                            <Spinner animation="border" role="status">
-                                                <span className="sr-only">Loading...</span>
-                                            </Spinner>
+                                        {this.props.isLoading || this.props.user === null ? (
+                                            <div className={"d-flex justify-content-center"}>
+                                                <Spinner animation="border" role="status">
+                                                    <span className="sr-only">Loading...</span>
+                                                </Spinner>
+                                            </div>
                                         ) : (
                                             <ListGroup variant={"flush"}>
                                                 <ListGroup.Item className={"d-flex"}>
@@ -202,7 +193,15 @@ class Profile extends Component {
                                         )}
                                     </Tab.Pane>
                                     <Tab.Pane eventKey="sessions">
-                                        {sessions}
+                                        {this.props.isLoading || this.props.sessions === null ? (
+                                            <div className={"d-flex justify-content-center"}>
+                                                <Spinner animation="border" role="status">
+                                                    <span className="sr-only">Loading...</span>
+                                                </Spinner>
+                                            </div>
+                                        ) : (
+                                            sessions
+                                        )}
                                     </Tab.Pane>
                                     <Tab.Pane eventKey="change-email">
                                         <ChangeEmail/>

@@ -6,12 +6,22 @@ export const usersSlice = createSlice({
         users: [],
         groups: [
             {
-                name: 'asdf 1234'
+                id: 1,
+                name: "asdf 1234",
+                description: "some description 1",
+                temrs: "some terms",
+                currency: "€",
             },
             {
-                name: "afoiejöfoi"
+                id: 2,
+                name: "afoiejöfoi",
+                description: "some description 2",
+                temrs: "some terms",
+                currency: "€",
             }
         ],
+        status: 'idle', // or loading | failed
+        error: null,
     },
     reducers: {},
 });

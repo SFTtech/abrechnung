@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {Suspense} from 'react';
 import {Redirect, Route} from 'react-router-dom';
 import {connect} from 'react-redux';
 import Spinner from "react-bootstrap/Spinner";
@@ -20,7 +20,12 @@ const PrivateRoute = ({component: Component, status, isAuthenticated, ...rest}) 
             if (!isAuthenticated) {
                 return <Redirect to="/login"/>;
             }
-            return <Component {...props} />;
+
+            return (
+                <Suspense fallback={<Spinner/>}>
+                    <Component {...props} />
+                </Suspense>
+            );
         }}
     />
 );
