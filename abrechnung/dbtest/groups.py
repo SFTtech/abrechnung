@@ -89,6 +89,21 @@ async def test(test):
     test.expect_eq(group_info[7], True)
     test.expect_eq(group_info[8], True)
 
+    invitetoken1 = await test.fetch_expect_raise(
+        'select * from group_invite('
+            'authtoken := $1, '
+            'grp := $2, '
+            'description := $3, '
+            'valid_until := $4, '
+            'single_use := $5)',
+        'a'*32,
+        grp1,
+        'best invite',
+        datetime.datetime.now() + datetime.timedelta(hours=1),
+        True,
+        error_id='bad-authtoken'
+    )
+
     # clean up the test
     await remove_user(test, usr1)
     await remove_user(test, usr2)

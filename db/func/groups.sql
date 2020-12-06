@@ -190,7 +190,7 @@ call allow_function('group_invite');
 -- doesn't require user authentication
 -- designed to be displayed to a user that wants to join a grup
 create or replace function group_preview(
-    invitetoken uuid,
+    invite_token uuid,
     out group_id integer,
     out group_name text,
     out group_description text,
@@ -212,17 +212,18 @@ begin
     from
         group_invite, grp
     where
-        group_invite.token = group_preview.invitetoken and
+        group_invite.token = group_preview.invite_token and
         group_invite.grp = grp.id;
 end;
 $$ language plpgsql;
 call allow_function('group_preview');
 
 
--- joins the user to the group with tadds the user to the given group using the invite token
+-- joins the user to the group with the given invite token
+-- returns the id of the group that the user just joined
 create or replace function group_join(
     authtoken uuid,
-    invitetoken uuid,
+    invite_token uuid,
     out group_id integer
 )
 as $$
@@ -237,7 +238,7 @@ begin
     into group_join.group_id, locals.inviter
     from group_invite
     where
-        group_invite.token = group_join.invitetoken and
+        group_invite.token = group_join.invite_token and
         group_invite.valid_until >= now();
 
     insert into group_membership (usr, grp, is_owner, can_write, invited_by)
@@ -246,7 +247,7 @@ begin
     -- delete the invite if it was single-use
     delete from group_invite
     where
-        group_invite.token = group_join.invitetoken and
+        group_invite.token = group_join.invite_token and
         group_invite.single_use;
 end;
 $$ language plpgsql;
