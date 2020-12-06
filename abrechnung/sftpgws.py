@@ -23,7 +23,6 @@ The database needs these API functions for sftpgws:
 """
 
 import asyncio
-import datetime
 import json
 import logging
 import re
@@ -254,15 +253,15 @@ class SFTPGWS(SubCommand):
 
             prepared_query = await connection.prepare(query)
             for arg_id, arg_info in enumerate(prepared_query.get_parameters()):
-                if param.name == 'timestamptz':
-                    query_args[arg_id] = datetime.datetime.strptime(
+                if arg_info.name == 'timestamptz':
+                    query_args[arg_id] = datetime.strptime(
                         query_args[arg_id],
                         "%Y-%m-%dT%H:%M:%S.%f%z"
                     )
 
             try:
                 # perform the call!
-                query_result = await prepared_query.fetch(query, *query_args, timeout=10)
+                query_result = await prepared_query.fetch(*query_args, timeout=10)
             except asyncpg.RaiseError as exc:
                 # a specific error was raised in the db
                 error_id, error = exc.args[0].split(':', maxsplit=1)

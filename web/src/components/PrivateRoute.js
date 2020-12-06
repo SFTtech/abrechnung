@@ -1,13 +1,13 @@
-import React, {Suspense} from 'react';
-import {Redirect, Route} from 'react-router-dom';
-import {connect} from 'react-redux';
+import React, { Suspense } from "react";
+import { Redirect, Route } from "react-router-dom";
+import { connect } from "react-redux";
 import Spinner from "react-bootstrap/Spinner";
 
-const PrivateRoute = ({component: Component, status, isAuthenticated, ...rest}) => (
+const PrivateRoute = ({ component: Component, status, isAuthenticated, ...rest }) => (
     <Route
         {...rest}
         render={(props) => {
-            if (status === 'loading' || status === 'init') {
+            if (status === "loading" || status === "init") {
                 return (
                     <div className={"d-flex justify-content-center mt-5"}>
                         <Spinner animation="border" role="status">
@@ -18,11 +18,11 @@ const PrivateRoute = ({component: Component, status, isAuthenticated, ...rest}) 
             }
 
             if (!isAuthenticated) {
-                return <Redirect to="/login"/>;
+                return <Redirect to="/login" />;
             }
 
             return (
-                <Suspense fallback={<Spinner/>}>
+                <Suspense fallback={<Spinner />}>
                     <Component {...props} />
                 </Suspense>
             );

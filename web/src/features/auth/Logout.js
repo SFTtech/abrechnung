@@ -1,22 +1,24 @@
-import React, {Component} from 'react';
-import {connect} from 'react-redux';
-import PropTypes from 'prop-types';
-import {logout} from "./authSlice";
-import {Redirect} from "react-router-dom";
+import React, { Component } from "react";
+import { connect } from "react-redux";
+import PropTypes from "prop-types";
+import { Redirect } from "react-router-dom";
 import Spinner from "react-bootstrap/Spinner";
+
+import { logout } from "./authSlice";
 
 class Logout extends Component {
     static propTypes = {
         logout: PropTypes.func.isRequired,
         isAuthenticated: PropTypes.bool,
     };
+
     componentDidMount() {
         this.props.logout();
     }
 
     render() {
         if (!this.props.isAuthenticated) {
-            return <Redirect to="/login"/>;
+            return <Redirect to="/login" />;
         }
 
         return (
@@ -41,4 +43,4 @@ const mapStateToProps = (state) => ({
     error: state.auth.error,
 });
 
-export default connect(mapStateToProps, {logout})(Logout);
+export default connect(mapStateToProps, { logout })(Logout);
