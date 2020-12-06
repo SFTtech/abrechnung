@@ -186,6 +186,9 @@ $$ language plpgsql;
 call allow_function('group_invite');
 
 
+-- previews group metadata with an invite token
+-- doesn't require user authentication
+-- designed to be displayed to a user that wants to join a grup
 create or replace function group_preview(
     invitetoken uuid,
     out group_id integer,
@@ -199,21 +202,13 @@ create or replace function group_preview(
 as $$
 begin
     select
-        grp.id,
-        grp.name,
-        grp.description,
-        grp.created,
-        group_invite.description,
-        group_invite.valid_until,
-        group_invite.single_use
-    into
-        group_preview.group_id,
-        group_preview.group_name,
-        group_preview.group_description,
-        group_preview.group_created,
-        group_preview.invite_description,
-        group_preview.invite_valid_until,
-        group_preview.invite_single_use
+        grp.id as group_id,
+        grp.name as group_name,
+        grp.description as group_description,
+        grp.created as group_create,
+        group_invite.description as invite_description,
+        group_invite.valid_until as invite_valid_until,
+        group_invite.single_use as invite_single_use
     from
         group_invite, grp
     where
@@ -222,3 +217,37 @@ begin
 end;
 $$ language plpgsql;
 call allow_function('group_preview');
+
+
+-- joins the user to the group with tadds the user to the given group using the invite token
+create or replace function group_join(
+    authtoken uuid,
+    invitetoken uuid,
+    out group_id integer
+)
+as $$
+<<locals>>
+declare
+    usr integer;
+    inviter integer;
+begin
+    select session_auth(group_join.authtoken) into locals.usr;
+
+    select group_invite.grp, group_invite.created_by
+    into group_join.group_id, locals.inviter
+    from group_invite
+    where
+        group_invite.token = group_join.invitetoken and
+        group_invite.valid_until >= now();
+
+    insert into group_membership (usr, grp, is_owner, can_write, invited_by)
+    values (locals.usr, group_join.group_id, false, false, locals.inviter);
+
+    -- delete the invite if it was single-use
+    delete from group_invite
+    where
+        group_invite.token = group_join.invitetoken and
+        group_invite.single_use;
+end;
+$$ language plpgsql;
+call allow_function('group_join');

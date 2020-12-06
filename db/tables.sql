@@ -185,7 +185,10 @@ create table if not exists group_membership (
     is_owner bool not null default false,
     -- write permissions allow creating commits.
     -- anybody with write permissions can grant and revoke write permissions.
-    can_write bool not null default true
+    can_write bool not null default true,
+
+    -- the user that invited this person
+    invited_by integer default null references usr(id) on delete restrict
 );
 
 -- active group invites that allow users to join a group

@@ -22,7 +22,7 @@ async def test(test):
         ''',
         auth1, 'best group', 'this group is amazing',
         'you must be amazing to join', '€',
-        column='grp'
+        column='id'
     )
 
     grp2 = await test.fetchval(
@@ -37,7 +37,7 @@ async def test(test):
         ''',
         auth2, 'acceptable group', 'this group is mediocre',
         'you must be mediocre to join', '€',
-        column='grp'
+        column='id'
     )
 
     # check the groups that user is a part of
@@ -45,7 +45,7 @@ async def test(test):
         'select * from group_list(authtoken := $1)',
         auth1,
         columns=[
-            'grp', 'name', 'description',
+            'id', 'name', 'description',
             'member_count', 'created', 'joined',
             'latest_commit', 'is_owner', 'can_write'
         ]
