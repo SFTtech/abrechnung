@@ -21,15 +21,28 @@ class DBTest(subcommand.SubCommand):
         self.config = config
         self.psql = None
         self.done = False
+        self.populate_db = args['populate']
         self.prepare_action = args['prepare_action']
 
         self.notifications = asyncio.Queue()
 
     @staticmethod
     def argparse_register(subparser):
-        subparser.add_argument('--confirm-destructive-test', action='store_true')
-        subparser.add_argument('--prepare-action',
-                               help='run the given psql action before running the tests')
+        subparser.add_argument(
+            '--confirm-destructive-test',
+            action='store_true',
+            help='confirm that you are aware that the database contents '
+                 'will be destroyed'
+        )
+        subparser.add_argument(
+            '--prepare-action',
+            help='run the given psql action before running the tests'
+        )
+        subparser.add_argument(
+            '--populate',
+            action='store_true',
+            help='once the test is done, populate the db with example data'
+        )
 
     @staticmethod
     def argparse_validate(args, error_cb):
@@ -72,6 +85,12 @@ class DBTest(subcommand.SubCommand):
         await groups.test(self)
 
         print(f'\x1b[1mtests done\x1b[m')
+
+        if self.populate_db:
+            print(f'\x1b[1mpopulating db with test data\x1b[m')
+            from .import populate
+            await populate.populate(self)
+
         self.done = True
 
     async def fetch(self, query, *args, columns=None, rowcount=None):
