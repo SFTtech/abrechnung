@@ -6,7 +6,7 @@ create or replace function group_create(
     description text,
     terms text,
     currency text,
-    out grp int
+    out id int
 )
 as $$
 <<locals>>
@@ -17,11 +17,11 @@ begin
 
     insert into grp (name, description, terms, currency)
         values (group_create.name, group_create.description, group_create.terms, group_create.currency)
-        returning grp.id into group_create.grp;
+        returning grp.id into group_create.id;
 
     insert into group_membership
         (usr, grp, description, is_owner, can_write)
-        values (locals.usr, group_create.grp, 'creator', true, true);
+        values (locals.usr, group_create.id, 'creator', true, true);
 end;
 $$ language plpgsql;
 call allow_function('group_create');
@@ -30,7 +30,7 @@ call allow_function('group_create');
 -- lists groups that the user is a member of
 create or replace function group_list(authtoken uuid)
 returns table (
-    grp integer,
+    id integer,
     name text,
     description text,
     member_count bigint,
@@ -81,7 +81,7 @@ begin
             group by my_groups.grp
         )
     select
-        my_groups.grp as grp,
+        my_groups.grp as id,
         my_groups.name as name,
         my_groups.description as description,
         group_member_counts.member_count as member_count,
@@ -128,12 +128,12 @@ as $$
 begin
     select session_auth(session_auth_grp.token) into session_auth_grp.usr;
 
-    select can_write, is_owner
+    select group_membership.can_write, group_membership.is_owner
     into session_auth_grp.can_write, session_auth_grp.is_owner
     from group_membership
     where
         group_membership.usr = session_auth_grp.usr and
-        group_membership.grp = grp;
+        group_membership.grp = session_auth_grp.grp;
 
     if not found then
         raise exception 'no-group-membership:user is not a member of the group';
@@ -169,14 +169,14 @@ declare
 begin
     -- the user needs to be a group member,
     -- but any user can create new invites even if they have only read permissions
-    select usr into locals.usr
-    from session_auth_grp(group_list.authtoken, group_list.grp);
+    select session_auth_grp.usr into locals.usr
+    from session_auth_grp(group_invite.authtoken, group_invite.grp);
 
     insert into group_invite(grp, description, created_by, valid_until, single_use)
     values (
         group_invite.grp,
         group_invite.description,
-        group_invite.usr,
+        locals.usr,
         group_invite.valid_until,
         group_invite.single_use
     )
