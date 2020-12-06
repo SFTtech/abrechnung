@@ -152,11 +152,13 @@ $$ language plpgsql;
 
 -- create an invite token for a group
 -- this token can be given to other users and allows them to join the group
+-- valid_until can be null for infinite validity
+-- if single_use = true, only one user can use this invite to join the group
 create or replace function group_invite(
     authtoken uuid,
     grp int,
     description text,
-    valid_until timestamptz,
+    valid_until timestamptz = null,
     single_use bool default true,
     out invite_token uuid
 )
@@ -184,7 +186,39 @@ $$ language plpgsql;
 call allow_function('group_invite');
 
 
--- create or replace function group_preview(
--- )
--- as $$
--- $$ language plpgsql;
+create or replace function group_preview(
+    invitetoken uuid,
+    out group_id integer,
+    out group_name text,
+    out group_description text,
+    out group_created timestamptz,
+    out invite_description text,
+    out invite_valid_until timestamptz,
+    out invite_single_use bool
+)
+as $$
+begin
+    select
+        grp.id,
+        grp.name,
+        grp.description,
+        grp.created,
+        group_invite.description,
+        group_invite.valid_until,
+        group_invite.single_use
+    into
+        group_preview.group_id,
+        group_preview.group_name,
+        group_preview.group_description,
+        group_preview.group_created,
+        group_preview.invite_description,
+        group_preview.invite_valid_until,
+        group_preview.invite_single_use
+    from
+        group_invite, grp
+    where
+        group_invite.token = group_preview.invitetoken and
+        group_invite.grp = grp.id;
+end;
+$$ language plpgsql;
+call allow_function('group_preview');
