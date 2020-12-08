@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { withRouter } from "react-router-dom";
+import { withRouter, Redirect } from "react-router-dom";
 
 import Row from "react-bootstrap/cjs/Row";
 import Col from "react-bootstrap/cjs/Col";
@@ -14,12 +14,14 @@ import { LinkContainer } from "react-router-bootstrap";
 
 import { ws } from "../../websocket";
 import Button from "react-bootstrap/Button";
+import {fetchGroups} from "./usersSlice";
 
 class GroupInvite extends Component {
     state = {
         group: null,
         status: "loading",
         error: null,
+        joined: false,
     };
 
     componentDidMount = () => {
@@ -39,8 +41,31 @@ class GroupInvite extends Component {
             });
     };
 
+    join = () => {
+        console.log("joining group");
+        ws.call("group_join", {
+            authtoken: this.props.auth.sessionToken,
+            invite_token: this.props.match.params.inviteToken,
+        })
+            .then((value) => {
+                this.setState({
+                    status: "success",
+                    error: null,
+                    joined: true,
+                });
+                this.props.fetchGroups();
+            })
+            .catch((error) => {
+                this.setState({ status: "failed", error: error });
+            });
+    };
+
     render() {
         const error = this.state.error !== null ? <div className="alert alert-danger">{this.state.error}</div> : "";
+
+        if (this.state.joined) {
+            return <Redirect to={"/groups"} />;
+        }
 
         return (
             <Row className={"justify-content-center"}>
@@ -91,12 +116,10 @@ class GroupInvite extends Component {
                                 </ListGroup>
                                 <hr />
                                 <Row className={"justify-content-center"}>
-                                    {this.props.isAuthenticated ? (
-                                        <LinkContainer to={"/join"}>
-                                            <Button variant={"success"}>Join</Button>
-                                        </LinkContainer>
+                                    {this.props.auth.isAuthenticated ? (
+                                        <Button variant={"success"} onClick={this.join}>Join</Button>
                                     ) : (
-                                        <LinkContainer to={"/login"}>
+                                        <LinkContainer to={"/login?next=" + this.props.match.url}>
                                             <Button variant={"success"}>Join</Button>
                                         </LinkContainer>
                                     )}
@@ -113,7 +136,7 @@ class GroupInvite extends Component {
 const mapStateToProps = (state) => ({
     status: state.users.status,
     error: state.users.error,
-    isAuthenticated: state.auth.isAuthenticated,
+    auth: state.auth,
 });
 
-export default withRouter(connect(mapStateToProps, null)(GroupInvite));
+export default withRouter(connect(mapStateToProps, {fetchGroups})(GroupInvite));

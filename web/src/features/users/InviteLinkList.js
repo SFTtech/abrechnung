@@ -136,7 +136,7 @@ class InviteLinkList extends Component {
                             </Form.Group>
                             <Form.Group controlId={"inviteLinkSingleUse"}>
                                 <Form.Label>Single Use</Form.Label>
-                                <Form.Check name={"singleUse"} onChange={this.onChange} value={this.state.singleUse} />
+                                <Form.Check name={"singleUse"} onChange={(e) => {this.setState({singleUse: e.target.checked})}} checked={this.state.singleUse} />
                             </Form.Group>
                         </Modal.Body>
 

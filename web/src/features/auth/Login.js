@@ -3,6 +3,7 @@ import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import { Redirect } from "react-router-dom";
 import Spinner from "react-bootstrap/Spinner";
+import queryString from "query-string";
 
 import { login } from "./authSlice";
 
@@ -27,6 +28,11 @@ class Login extends Component {
 
     render() {
         if (this.props.isAuthenticated) {
+            let params = queryString.parse(this.props.location.search);
+            console.log(params, params.next);
+            if (params.next !== null && params.next !== undefined && params.next.startsWith("/")) {
+                return <Redirect to={params.next} />;
+            }
             return <Redirect to="/" />;
         }
 

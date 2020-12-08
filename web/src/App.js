@@ -37,7 +37,7 @@ class App extends Component {
                         <Alerts />
                         <Switch>
                             <PublicRoute exact path="/register" component={Register} />
-                            <PublicRoute exact path="/login" component={Login} />
+                            <Route exact path="/login" component={Login} />
                             <Route path="/confirm-registration/:token">
                                 <Suspense fallback={<Spinner />}>
                                     <ConfirmRegistration />
