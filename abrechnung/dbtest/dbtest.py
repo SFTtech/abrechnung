@@ -83,6 +83,9 @@ class DBTest(subcommand.SubCommand):
         from . import groups
         print(f'\x1b[1mgroups.test\x1b[m')
         await groups.test(self)
+        from . import group_data
+        print(f'\x1b[1mgroup_data.test\x1b[m')
+        await group_data.test(self)
 
         print(f'\x1b[1mtests done\x1b[m')
 
