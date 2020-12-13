@@ -193,6 +193,8 @@ create table if not exists group_membership (
 
 -- active group invites that allow users to join a group
 create table if not exists group_invite (
+    id bigserial unique,
+
     -- the group that the token grants access to
     grp integer references grp(id) on delete cascade,
     token uuid primary key default ext.uuid_generate_v4(),
@@ -206,6 +208,26 @@ create table if not exists group_invite (
     -- if true, the token is auto-deleted when it's used to
     -- join the group
     single_use bool default true
+);
+
+-- log entries for the group.
+-- holds messages about group membership changes, commits, text messages, ...
+create table if not exists group_log (
+    id bigserial primary key,
+
+    grp integer not null references grp(id) on delete cascade,
+    -- user that's responsible for this log entry
+    usr integer not null references usr(id) on delete restrict,
+
+    logged timestamptz not null default now(),
+
+    -- type of the entry.
+    -- e.g.: 'create-group', 'grant-write', 'revoke-owner', 'create-commit'
+    type text not null,
+    message text default '',
+
+    -- user that was affected by the event (can be null, depends on event type)
+    affected integer references usr(id) on delete restrict
 );
 
 -- every data and history entry in a group references a commit as a foreign key.

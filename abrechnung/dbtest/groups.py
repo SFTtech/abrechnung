@@ -105,6 +105,8 @@ async def test(test):
     )
 
     # clean up the test
+    await test.fetch('delete from grp where grp.id=$1', grp1)
+    await test.fetch('delete from grp where grp.id=$1', grp2)
     await remove_user(test, usr1)
     await remove_user(test, usr2)
     await remove_user(test, usr3)

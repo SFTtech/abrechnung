@@ -7,4 +7,5 @@ create or replace procedure gc() as $$
     call gc_session();
     call gc_pending_password_recovery();
     call gc_pending_email_change();
+    call gc_group_invite();
 $$ language sql;

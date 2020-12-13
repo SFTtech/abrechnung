@@ -22,6 +22,9 @@ begin
     insert into group_membership
         (usr, grp, description, is_owner, can_write)
         values (locals.usr, group_create.id, 'creator', true, true);
+
+    insert into group_log (grp, usr, type)
+    values (group_create.id, locals.usr, 'group-create');
 end;
 $$ language plpgsql;
 call allow_function('group_create');
@@ -181,9 +184,20 @@ begin
         group_invite.single_use
     )
     returning token into group_invite.invite_token;
+
+    insert into group_log (grp, usr, type)
+    values (group_invite.grp, locals.usr, 'invite-create');
 end;
 $$ language plpgsql;
 call allow_function('group_invite');
+
+
+-- delete timed-out invite links
+create or replace procedure gc_group_invite()
+as $$
+    delete from group_invite
+    where group_invite.valid_until < now();
+$$ language sql;
 
 
 -- previews group metadata with an invite token
@@ -249,6 +263,462 @@ begin
     where
         group_invite.token = group_join.invite_token and
         group_invite.single_use;
+
+    insert into group_log (grp, usr, type, affected)
+    values (group_join.group_id, locals.usr, 'invite-join', locals.inviter);
 end;
 $$ language plpgsql;
 call allow_function('group_join');
+
+
+-- lists all members of the group
+create or replace function group_member_list(
+    authtoken uuid,
+    group_id integer
+)
+returns table (
+    id integer,
+    username text,
+    is_owner bool,
+    can_write bool,
+    joined timestamptz,
+    invited_by integer,
+    description text
+)
+as $$
+<<locals>>
+declare
+    usr integer;
+    inviter integer;
+begin
+    select session_auth_grp.usr into locals.usr
+    from session_auth_grp(group_member_list.authtoken, group_member_list.group_id);
+
+    return query
+    select
+        usr.id as id,
+        usr.username as username,
+        group_membership.is_owner as is_owner,
+        group_membership.can_write as can_write,
+        group_membership.joined as joined,
+        group_membership.invited_by as invited_by,
+        group_membership.description as description
+    from
+        group_membership, usr
+    where
+        group_membership.usr = usr.id;
+end;
+$$ language plpgsql;
+call allow_function('group_member_list');
+
+
+-- grants or revokes privileges of another group member
+-- if 'null' is passed for a privilege, it remains unchanged
+create or replace procedure group_member_privileges_set(
+    authtoken uuid,
+    group_id integer,
+    usr integer,
+    can_write boolean default null,
+    is_owner boolean default null
+)
+as $$
+<<locals>>
+declare
+    usr integer;
+    old_can_write boolean;
+    old_is_owner boolean;
+begin
+    select session_auth_grp.usr into locals.usr
+    from session_auth_grp(
+        group_member_privileges_set.authtoken,
+        group_member_privileges_set.group_id,
+        need_write_permission := (can_write is not null),
+        need_owner_permission := (is_owner is not null)
+    );
+
+    if group_member_privileges_set.usr = locals.usr then
+        raise exception 'cannot-modify-own-privileges:group members cannot modify their own privileges';
+    end if;
+
+    select
+        group_membership.can_write,
+        group_membership.is_owner
+    into
+        locals.old_can_write,
+        locals.old_is_owner
+    from
+        group_membership
+    where
+        group_membership.grp = group_member_privileges_set.group_id and
+        group_membership.usr = group_member_privileges_set.usr;
+
+    if locals.old_can_write is null then
+        raise exception 'no-such-group-member:there is no group member with this id';
+    end if;
+
+    if not
+        (
+            (group_member_privileges_set.can_write != locals.old_can_write) or
+            (group_member_privileges_set.is_owner != locals.old_is_owner)
+        )
+    then
+        -- no changes are requested, skip table update
+        return;
+    end if;
+
+    update group_membership
+    set
+        can_write = group_member_privileges_set.can_write,
+        is_owner = group_member_privileges_set.is_owner
+    where
+        group_membership.grp = group_member_privileges_set.group_id and
+        group_membership.usr = group_member_privileges_set.usr;
+
+    if group_member_privileges_set.can_write != locals.old_can_write then
+        insert into group_log (grp, usr, type, affected)
+        values (
+            group_member_privileges_set.grp,
+            locals.usr,
+            case
+                when group_member_privileges_set.can_write then 'grant-write'
+                else 'revoke-write'
+            end,
+            group_member_privileges_set.usr
+        );
+    end if;
+
+    if group_member_privileges_set.is_owner != locals.old_is_owner then
+        insert into group_log (grp, usr, type, affected)
+        values (
+            group_member_privileges_set.grp,
+            locals.usr,
+            case
+                when group_member_privileges_set.can_write then 'grant-owner'
+                else 'revoke-owner'
+            end,
+            group_member_privileges_set.usr
+        );
+    end if;
+end;
+$$ language plpgsql;
+call allow_function('group_member_privileges_set', is_procedure := true);
+
+
+-- lists existing invite tokens of the group
+-- if only_mine is set, only the tokens of this user are returned
+-- the token values are returned only for the user's own tokens
+create or replace function group_invite_list(
+    authtoken uuid,
+    group_id integer,
+    only_mine boolean default false
+)
+returns table (
+    id bigint,
+    token uuid,
+    description text,
+    created_by integer,
+    valid_until timestamptz,
+    single_use boolean
+)
+as $$
+<<locals>>
+declare
+    usr integer;
+begin
+    select session_auth_grp.usr into locals.usr
+    from session_auth_grp(group_invite_list.authtoken, group_invite_list.group_id);
+
+    return query
+    select
+        group_invite.id as id,
+        case
+            when group_invite.created_by = locals.usr then group_invite.token
+            else null
+        end as token,
+        group_invite.description as description,
+        group_invite.created_by as created_by,
+        group_invite.valid_until as valid_until,
+        group_invite.single_use as single_use
+    from
+        group_membership
+    where
+        group_membership.grp = group_invite_list.group_id;
+end;
+$$ language plpgsql;
+call allow_function('group_invite_list');
+
+
+-- deletes an existing group invite token
+create or replace procedure group_invite_delete(
+    authtoken uuid,
+    group_id integer,
+    invite_id bigint
+)
+as $$
+<<locals>>
+declare
+    usr integer;
+begin
+    select session_auth_grp.usr into locals.usr
+    from session_auth_grp(group_invite_delete.authtoken, group_invite_delete.group_id);
+
+    delete from group_invite
+    where
+        group_invite.grp = group_invite_delete.group_id and
+        group_invite.id = group_invite_delete.invite_id;
+
+    if not found then
+        raise exception 'no-such-invite:no invite token with this id for this group';
+    end if;
+
+    insert into group_log (grp, usr, type)
+    values (group_invite_delete.grp, locals.usr, 'invite-delete');
+end;
+$$ language plpgsql;
+call allow_function('group_invite_delete', is_procedure := true);
+
+
+-- posts a chat message to the group log
+create or replace procedure group_log_post(
+    authtoken uuid,
+    group_id integer,
+    message text
+)
+as $$
+<<locals>>
+declare
+    usr integer;
+begin
+    select session_auth_grp.usr into locals.usr
+    from session_auth_grp(group_invite_delete.authtoken, group_invite_delete.group_id);
+
+    insert into group_log (grp, usr, type, message)
+    values (group_log_post.group_id, locals.usr, 'text-message', group_log_post.message);
+end;
+$$ language plpgsql;
+call allow_function('group_log_post', is_procedure := true);
+
+
+-- retrieves the group log
+create or replace function group_log_get(
+    authtoken uuid,
+    group_id integer,
+    from_id bigint default 0
+)
+returns table (
+    id bigint,
+    usr integer,
+    logged timestamptz,
+    type text,
+    message text,
+    affected integer
+)
+as $$
+<<locals>>
+declare
+    usr integer;
+begin
+    select session_auth_grp.usr into locals.usr
+    from session_auth_grp(group_log_get.authtoken, group_log_get.group_id);
+
+    return query
+    select
+        gorup_log.id as id,
+        group_log.usr as usr,
+        group_log.logged as logged,
+        group_log.type as type,
+        group_log.message as message,
+        group_log.affected as affected
+    from
+        group_log
+    where
+        group_log.grp = group_log_get.group_id and
+        group_log.id >= group_log_get.from_id
+    order by
+        group_log.id;
+end;
+$$ language plpgsql;
+call allow_function('group_log_get');
+
+
+-- retrieves the group metadata
+create or replace function group_metadata_get(
+    authtoken uuid,
+    group_id integer,
+    out name text,
+    out description text,
+    out terms text,
+    out currency text
+)
+as $$
+<<locals>>
+declare
+    usr integer;
+begin
+    select session_auth_grp.usr into locals.usr
+    from session_auth_grp(group_invite_delete.authtoken, group_invite_delete.group_id);
+
+    select
+        grp.name,
+        grp.description,
+        grp.terms,
+        grp.currency
+    into
+        group_metadata_get.name,
+        group_metadata_get.description,
+        group_metadata_get.terms,
+        group_metadata_get.currency
+    from
+        grp
+    where
+        grp.id = group_metadata_get.group_id;
+end;
+$$ language plpgsql;
+call allow_function('group_metadata_get');
+
+
+-- modifies the group metadata
+-- all parameters that are passed as null remain unchanged
+create or replace procedure group_metadata_set(
+    authtoken uuid,
+    group_id integer,
+    name text default null,
+    description text default null,
+    terms text default null,
+    currency text default null
+)
+as $$
+<<locals>>
+declare
+    usr integer;
+    old_name text;
+    old_description text;
+    old_terms text;
+    old_currency text;
+begin
+    select session_auth_grp.usr into locals.usr
+    from session_auth_grp(
+        group_set_metadata.authtoken,
+        group_set_metadata.group_id,
+        need_owner_permission := true
+    );
+
+    select
+        grp.name,
+        grp.description,
+        grp.terms,
+        grp.currency
+    into
+        locals.old_name,
+        locals.old_description,
+        locals.old_terms,
+        locals.old_currency
+    from
+        grp
+    where
+        grp.id = group_metadata_set.group_id;
+
+    if not
+        (
+            (group_metadata_set.name != locals.old_name) or
+            (group_metadata_set.description != locals.old_description) or
+            (group_metadata_set.terms != locals.old_terms) or
+            (group_metadata_set.currency != locals.old_currency)
+        )
+    then
+        -- no changes are requested, skip table update
+        return;
+    end if;
+
+    update grp
+    set
+        name = group_metadata_set.name,
+        description = group_metadata_set.description,
+        terms = group_metadata_set.terms,
+        currency = group_metadata_set.currency
+    where
+        grp.id = group_metadata_set.group_id;
+
+    if group_metadata_set.name != locals.old_name then
+        insert into group_log (grp, usr, type, message)
+        values (
+            group_metadata_set.group_id,
+            locals.usr,
+            'group-change-name',
+            concat('old name: ', locals.old_name)
+        );
+    end if;
+    if group_metadata_set.description != locals.old_description then
+        insert into group_log (grp, usr, type, message)
+        values (
+            group_metadata_set.group_id,
+            locals.usr,
+            'group-change-description',
+            concat('old description: ', locals.old_description)
+        );
+    end if;
+    if group_metadata_set.terms != locals.old_terms then
+        values (
+            group_metadata_set.group_id,
+            locals.usr,
+            'group-change-terms',
+            concat('old terms: ', locals.old_terms)
+        );
+    end if;
+    if group_metadata_set.currency != locals.old_currency then
+        insert into group_log (grp, usr, type, message)
+        values (
+            group_metadata_set.group_id,
+            locals.usr,
+            'group-change-currency',
+            concat('old currency: ', locals.old_currency)
+        );
+    end if;
+end;
+$$ language plpgsql;
+call allow_function('group_metadata_set', is_procedure := true);
+
+
+-- leaves a group
+create or replace procedure group_leave(
+    authtoken uuid,
+    group_id integer
+)
+as $$
+<<locals>>
+declare
+    usr integer;
+    member_count integer;
+    remaining_owner_count integer;
+begin
+    select session_auth_grp.usr into locals.usr
+    from session_auth_grp(group_invite_delete.authtoken, group_invite_delete.group_id);
+
+    select count(group_membership.usr) into locals.member_count
+    from group_membership
+    where group_membership.grp = group_leave.group_id;
+
+    if locals.member_count = 1 then
+        -- we're the last user in the group; delete it!
+        delete from grp where grp.id = group_leave.group_id;
+        return;
+    end if;
+
+    select count(group_membership.usr) into locals.remaining_owner_count
+    from group_membership
+    where
+        group_membership.grp = group_leave.group_id and
+        group_membership.usr != locals.usr and
+        group_membership.is_owner;
+
+    if locals.remaining_owner_count = 0 then
+        raise exception 'last-owner-cannot-leave:cannot leave the group because you are the last owner';
+    end if;
+
+    delete from group_membership
+    where
+        group_membership.grp = group_leave.group_id and
+        group_membership.usr = locals.usr;
+end;
+$$ language plpgsql;
+call allow_function('group_leave', is_procedure := true);
