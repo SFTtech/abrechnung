@@ -1,58 +1,60 @@
-import React, {Component} from 'react';
-import {ws} from "../../websocket";
+import React, { Component } from "react";
+import { ws } from "../../websocket";
 import Spinner from "react-bootstrap/Spinner";
-import {connect} from "react-redux";
+import { connect } from "react-redux";
 
 class ChangePassword extends Component {
     state = {
         error: null,
-        status: 'idle', // or loading, success, failed
-        password: '',
-        newPassword: '',
-        newPassword2: '',
+        status: "idle", // or loading, success, failed
+        password: "",
+        newPassword: "",
+        newPassword2: "",
     };
 
     onSubmit = (e) => {
-        e.preventDefault()
+        e.preventDefault();
 
-        const {password, newPassword, newPassword2} = this.state;
+        const { password, newPassword, newPassword2 } = this.state;
         if (newPassword !== newPassword2) {
-            this.setState({error: 'Passwords do not match'});
+            this.setState({ error: "Passwords do not match" });
         } else {
-            this.setState({status: 'loading'})
+            this.setState({ status: "loading" });
             ws.call("change_password", {
                 authtoken: this.props.authtoken,
                 password: password,
                 new_password: newPassword,
-            }).then(value => {
-                this.setState({status: 'success', error: null, password: '', newPassword: '', newPassword2: ''})
-            }).catch(error => {
-                this.setState({status: 'failed', error: error})
-            });
+            })
+                .then((value) => {
+                    this.setState({ status: "success", error: null, password: "", newPassword: "", newPassword2: "" });
+                })
+                .catch((error) => {
+                    this.setState({ status: "failed", error: error });
+                });
         }
     };
 
-    onChange = (e) => this.setState({[e.target.name]: e.target.value});
+    onChange = (e) => this.setState({ [e.target.name]: e.target.value });
 
     render() {
-        const {password, newPassword, newPassword2} = this.state;
+        const { password, newPassword, newPassword2 } = this.state;
         return (
             <>
-                {this.state.error !== null ? (
-                    <div className="alert alert-danger">{this.state.error}</div>
-                ) : ""}
-                {this.state.status === 'loading' ? (
+                {this.state.error !== null ? <div className="alert alert-danger">{this.state.error}</div> : ""}
+                {this.state.status === "loading" ? (
                     <div className="d-flex justify-content-center">
                         <Spinner animation="border" role="status">
                             <span className="sr-only">Loading...</span>
                         </Spinner>
                     </div>
-                ) : ""}
-                {this.state.status === 'success' ? (
-                    <div className="alert alert-success">
-                        Password changed successfully.
-                    </div>
-                ) : ""}
+                ) : (
+                    ""
+                )}
+                {this.state.status === "success" ? (
+                    <div className="alert alert-success">Password changed successfully.</div>
+                ) : (
+                    ""
+                )}
 
                 <form onSubmit={this.onSubmit}>
                     <div className="form-group">

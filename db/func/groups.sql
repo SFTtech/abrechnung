@@ -216,13 +216,21 @@ create or replace function group_preview(
 as $$
 begin
     select
-        grp.id as group_id,
-        grp.name as group_name,
-        grp.description as group_description,
-        grp.created as group_create,
-        group_invite.description as invite_description,
-        group_invite.valid_until as invite_valid_until,
-        group_invite.single_use as invite_single_use
+        grp.id,
+        grp.name,
+        grp.description,
+        grp.created,
+        group_invite.description,
+        group_invite.valid_until,
+        group_invite.single_use
+    into
+        group_preview.group_id,
+        group_preview.group_name,
+        group_preview.group_description,
+        group_preview.group_created,
+        group_preview.invite_description,
+        group_preview.invite_valid_until,
+        group_preview.invite_single_use
     from
         group_invite, grp
     where

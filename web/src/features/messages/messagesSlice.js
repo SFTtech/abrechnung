@@ -1,10 +1,10 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice } from "@reduxjs/toolkit";
 
 export const messageSlice = createSlice({
-    name: 'messages',
+    name: "messages",
     initialState: {
         msg: null,
-        status: "info" // or error, success, warning
+        status: "info", // or error, success, warning
     },
     reducers: {
         createMessage: (state, action) => {
@@ -17,11 +17,10 @@ export const messageSlice = createSlice({
         },
         removeMessage: (state) => {
             state.msg = null;
-        }
+        },
     },
 });
 
 export const { createMessage, createError, removeMessage } = messageSlice.actions;
-
 
 export default messageSlice.reducer;

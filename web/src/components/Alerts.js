@@ -1,7 +1,8 @@
-import React, {Component} from 'react';
-import {connect} from 'react-redux';
-import PropTypes from 'prop-types';
-import {removeMessage} from "../features/messages/messagesSlice";
+import React, { Component } from "react";
+import { connect } from "react-redux";
+import PropTypes from "prop-types";
+
+import { removeMessage } from "../features/messages/messagesSlice";
 
 export class Alerts extends Component {
     static propTypes = {
@@ -19,14 +20,14 @@ export class Alerts extends Component {
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-            )
+            );
         }
         return "";
     }
 }
 
 const mapStateToProps = (state) => ({
-    messages: state.messages
+    messages: state.messages,
 });
 
-export default connect(mapStateToProps, {removeMessage})(Alerts);
+export default connect(mapStateToProps, { removeMessage })(Alerts);
