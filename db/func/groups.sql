@@ -142,7 +142,11 @@ begin
         raise exception 'no-group-membership:user is not a member of the group';
     end if;
 
-    if session_auth_grp.need_write_permission and session_auth_grp.can_write is not true then
+    if
+        session_auth_grp.need_write_permission and
+        session_auth_grp.can_write is not true and
+        session_auth_grp.is_owner is not true  -- owners are also allowed to write!
+    then
         raise exception 'no-group-write-permission:user cannot write in group';
     end if;
 
