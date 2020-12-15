@@ -5,29 +5,45 @@ import ListGroup from "react-bootstrap/cjs/ListGroup";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/cjs/Button";
-import Card from "react-bootstrap/cjs/Card";
 import Datetime from "react-datetime";
 import "react-datetime/css/react-datetime.css";
 import PropTypes from "prop-types";
-
-import { ws } from "../../websocket";
-import { createInviteLink } from "./usersSlice";
 import Spinner from "react-bootstrap/Spinner";
+import { ws } from "../../websocket";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrash } from "@fortawesome/free-solid-svg-icons/faTrash";
 
 class InviteLinkList extends Component {
     static propTypes = {
-        groupInviteTokens: PropTypes.any.isRequired,
         group: PropTypes.object.isRequired,
         auth: PropTypes.object.isRequired,
     };
 
     state = {
+        tokens: null,
         show: false,
         description: "",
         singleUse: false,
         validUntil: "",
-        status: "idle",
         error: null,
+    };
+
+    fetchInviteTokens = () => {
+        ws.call("group_invite_list", {
+            authtoken: this.props.auth.sessionToken,
+            group_id: this.props.group.id,
+            only_mine: false,
+        })
+            .then((value) => {
+                this.setState({ status: "idle", error: null, tokens: value });
+            })
+            .catch((error) => {
+                this.setState({ status: "failed", error: error });
+            });
+    };
+
+    componentDidMount = () => {
+        this.fetchInviteTokens();
     };
 
     openModal = () => {
@@ -45,6 +61,24 @@ class InviteLinkList extends Component {
     onChange = (e) => {
         this.setState({ [e.target.name]: e.target.value });
     };
+
+    deleteInviteToken = (id) => {
+        ws.call("group_invite_delete", {
+            authtoken: this.props.auth.sessionToken,
+            group_id: this.props.group.id,
+            invite_id: id,
+        })
+            .then((value) => {
+                this.setState({
+                    status: "success",
+                    error: null,
+                    tokens: this.state.tokens.filter((token) => token.id !== id),
+                });
+            })
+            .catch((error) => {
+                this.setState({ status: "failed", error: error });
+            });
+    }
 
     onSubmit = (e) => {
         e.preventDefault();
@@ -65,12 +99,15 @@ class InviteLinkList extends Component {
                     description: "",
                     singleUse: false,
                     validUntil: "",
-                });
-                this.props.createInviteLink({
-                    description: description,
-                    single_use: singleUse,
-                    valid_until: JSON.stringify(validUntil),
-                    inviteToken: value[0].invite_token,
+                    tokens: [
+                        ...this.state.tokens,
+                        {
+                            description: description,
+                            single_use: singleUse,
+                            valid_until: JSON.stringify(validUntil),
+                            token: value[0].invite_token,
+                        },
+                    ],
                 });
             })
             .catch((error) => {
@@ -79,32 +116,47 @@ class InviteLinkList extends Component {
     };
 
     render() {
+        const error = this.state.error !== null ? <div className="alert alert-danger">{this.state.error}</div> : "";
+        // TODO: not hardcode the invite url here
         return (
-            <Card className={"mt-3"}>
-                <Card.Body>
-                    <h5>
-                        Active invite links{" "}
-                        <Button className={"float-right"} onClick={this.openModal} variant={"success"}>
-                            Invite
-                        </Button>
-                    </h5>
-                    <hr />
-                    <ListGroup variant={"flush"}>
-                        {this.props.groupInviteTokens === null ? (
+            <div>
+                {error}
+                <h5>
+                    Active invite links{" "}
+                    <Button className={"float-right"} onClick={this.openModal} variant={"success"}>
+                        Invite
+                    </Button>
+                </h5>
+                <hr />
+                <ListGroup variant={"flush"}>
+                    {this.state.tokens === null ? (
+                        <div className={"d-flex justify-content-center"}>
                             <Spinner animation="border" role="status">
                                 <span className="sr-only">Loading...</span>
                             </Spinner>
-                        ) : this.props.groupInviteTokens.length === 0 ? (
-                            <ListGroup.Item>No Links</ListGroup.Item>
-                        ) : (
-                            this.props.groupInviteTokens.map((link, index) => (
-                                <ListGroup.Item key={index}>
-                                    <div>{window.location.origin}/groups/invite/{link.inviteToken}</div>
-                                </ListGroup.Item>
-                            ))
-                        )}
-                    </ListGroup>
-                </Card.Body>
+                        </div>
+                    ) : this.state.tokens.length === 0 ? (
+                        <ListGroup.Item>No Links</ListGroup.Item>
+                    ) : (
+                        this.state.tokens.map((link, index) => (
+                            <ListGroup.Item key={index} className={"d-flex justify-content-between"}>
+                                <div>
+                                    <span>{window.location.origin}/groups/invite/{link.token}</span>
+                                    <br/>
+                                    <small className={"text-muted"}>{link.description}</small>
+                                </div>
+                                <div>
+                                    <button
+                                        className="btn text-danger"
+                                        onClick={() => this.deleteInviteToken(link.id)}
+                                    >
+                                        <FontAwesomeIcon icon={faTrash} />
+                                    </button>
+                                </div>
+                            </ListGroup.Item>
+                        ))
+                    )}
+                </ListGroup>
                 <Modal show={this.state.show} onHide={this.closeModal}>
                     <Modal.Header closeButton>
                         <Modal.Title>Create Invite Link</Modal.Title>
@@ -136,7 +188,13 @@ class InviteLinkList extends Component {
                             </Form.Group>
                             <Form.Group controlId={"inviteLinkSingleUse"}>
                                 <Form.Label>Single Use</Form.Label>
-                                <Form.Check name={"singleUse"} onChange={(e) => {this.setState({singleUse: e.target.checked})}} checked={this.state.singleUse} />
+                                <Form.Check
+                                    name={"singleUse"}
+                                    onChange={(e) => {
+                                        this.setState({ singleUse: e.target.checked });
+                                    }}
+                                    checked={this.state.singleUse}
+                                />
                             </Form.Group>
                         </Modal.Body>
 
@@ -150,14 +208,13 @@ class InviteLinkList extends Component {
                         </Modal.Footer>
                     </Form>
                 </Modal>
-            </Card>
+            </div>
         );
     }
 }
 
 const mapStateToProps = (state) => ({
-    groupInviteTokens: state.users.groupInviteTokens,
     auth: state.auth,
 });
 
-export default connect(mapStateToProps, { createInviteLink })(InviteLinkList);
+export default connect(mapStateToProps, null)(InviteLinkList);

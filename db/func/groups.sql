@@ -452,9 +452,9 @@ begin
         group_invite.valid_until as valid_until,
         group_invite.single_use as single_use
     from
-        group_membership
+        group_invite
     where
-        group_membership.grp = group_invite_list.group_id;
+        group_invite.grp = group_invite_list.group_id;
 end;
 $$ language plpgsql;
 call allow_function('group_invite_list');
@@ -484,7 +484,7 @@ begin
     end if;
 
     insert into group_log (grp, usr, type)
-    values (group_invite_delete.grp, locals.usr, 'invite-delete');
+    values (group_invite_delete.group_id, locals.usr, 'invite-delete');
 end;
 $$ language plpgsql;
 call allow_function('group_invite_delete', is_procedure := true);
@@ -502,7 +502,7 @@ declare
     usr integer;
 begin
     select session_auth_grp.usr into locals.usr
-    from session_auth_grp(group_invite_delete.authtoken, group_invite_delete.group_id);
+    from session_auth_grp(group_log_post.authtoken, group_log_post.group_id);
 
     insert into group_log (grp, usr, type, message)
     values (group_log_post.group_id, locals.usr, 'text-message', group_log_post.message);
@@ -568,7 +568,7 @@ declare
     usr integer;
 begin
     select session_auth_grp.usr into locals.usr
-    from session_auth_grp(group_invite_delete.authtoken, group_invite_delete.group_id);
+    from session_auth_grp(group_metadata_get.authtoken, group_metadata_get.group_id);
 
     select
         grp.name,
@@ -610,8 +610,8 @@ declare
 begin
     select session_auth_grp.usr into locals.usr
     from session_auth_grp(
-        group_set_metadata.authtoken,
-        group_set_metadata.group_id,
+        group_metadata_set.authtoken,
+        group_metadata_set.group_id,
         need_owner_permission := true
     );
 

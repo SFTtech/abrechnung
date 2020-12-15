@@ -1,70 +1,116 @@
 import React, { Component } from "react";
 import { connect } from "react-redux";
-import { withRouter } from "react-router-dom";
 
-import Row from "react-bootstrap/cjs/Row";
-import Col from "react-bootstrap/cjs/Col";
-import Spinner from "react-bootstrap/Spinner";
 import ListGroup from "react-bootstrap/cjs/ListGroup";
-import Card from "react-bootstrap/cjs/Card";
 import "react-datetime/css/react-datetime.css";
-import InviteLinkList from "./InviteLinkList";
-
-import { fetchGroups } from "./usersSlice";
+import PropTypes from "prop-types";
+import { fetchGroupMetadata, updateGroupMetadata } from "./usersSlice";
+import Spinner from "react-bootstrap/Spinner";
+import Alert from "react-bootstrap/cjs/Alert";
+import Col from "react-bootstrap/cjs/Col";
+import EditableField from "../../components/EditableField";
 
 class GroupDetail extends Component {
+    static propTypes = {
+        group: PropTypes.object.isRequired,
+    };
+
     state = {};
 
+    updateName = (name) => {
+        this.props.updateGroupMetadata({ groupID: this.props.group.id, name: name });
+    };
+
+    updateDescription = (description) => {
+        this.props.updateGroupMetadata({ groupID: this.props.group.id, description: description });
+    };
+
+    updateCurrency = (currency) => {
+        this.props.updateGroupMetadata({ groupID: this.props.group.id, currency: currency });
+    };
+
+    updateTerms = (terms) => {
+        this.props.updateGroupMetadata({ groupID: this.props.group.id, terms: terms });
+    };
+
     componentDidMount = () => {
-        if (this.props.groups === null) {
-            this.props.fetchGroups();
+        if (this.props.group.terms === undefined || this.props.group.currency === undefined) {
+            // TODO better detect when we need to fetch this info
+            this.props.fetchGroupMetadata({ groupID: this.props.group.id });
         }
     };
 
     render() {
-        const error = this.props.error !== null ? <div className="alert alert-danger">{this.props.error}</div> : "";
-
-        // we need parseInt here since the props param is a string
-        const group =
-            this.props.groups === null
-                ? null
-                : this.props.groups.find((group) => group.id === parseInt(this.props.match.params.id));
-
         return (
-            <Row>
-                <Col xs={12}>
-                    <h3>Groups</h3>
-                    {error}
-                    <hr />
-                    {group === null ? (
-                        <div className={"d-flex justify-content-center"}>
+            <>
+                {this.props.group.is_owner ? (
+                    <Alert variant={"info"}>You are an owner of this group</Alert>
+                ) : !this.props.group.can_write ? (
+                    <Alert variant={"info"}>You only have read access to this group</Alert>
+                ) : (
+                    ""
+                )}
+                <ListGroup variant={"flush"}>
+                    <ListGroup.Item className={"d-flex"}>
+                        <Col xs={3} className={"p-0"}>
+                            <span className={"font-weight-bold"}>Name</span>
+                        </Col>
+                        <Col xs={9} className={"p-0 d-flex justify-content-between"}>
+                            <EditableField value={this.props.group.name} onChange={this.updateName} />
+                        </Col>
+                    </ListGroup.Item>
+                    <ListGroup.Item className={"d-flex"}>
+                        <Col xs={3} className={"p-0"}>
+                            <span className={"font-weight-bold"}>Description</span>
+                        </Col>
+                        <Col xs={9} className={"p-0 d-flex justify-content-between"}>
+                            <EditableField value={this.props.group.description} onChange={this.updateDescription} />
+                        </Col>
+                    </ListGroup.Item>
+                    <ListGroup.Item className={"d-flex"}>
+                        <span className={"font-weight-bold w-25"}>Created</span>
+                        <span>{this.props.group.created}</span>
+                    </ListGroup.Item>
+                    <ListGroup.Item className={"d-flex"}>
+                        <span className={"font-weight-bold w-25"}>Joined</span>
+                        <span>{this.props.group.joined}</span>
+                    </ListGroup.Item>
+                    <ListGroup.Item className={"d-flex"}>
+                        <span className={"font-weight-bold w-25"}>Last Changed</span>
+                        <span>
+                            {this.props.group.latest_commit === null ? "never" : this.props.group.latest_commit}
+                        </span>
+                    </ListGroup.Item>
+                    {this.props.group.currency === undefined || this.props.group.terms === undefined ? (
+                        <ListGroup.Item className={"d-flex justify-content-center"}>
                             <Spinner animation="border" role="status">
                                 <span className="sr-only">Loading...</span>
                             </Spinner>
-                        </div>
+                        </ListGroup.Item>
                     ) : (
-                        <Row>
-                            <Col md={7} xs={12}>
-                                <span>asdf</span>
-                                <span>Detail for group with id {this.props.match.params.id}</span>
-                            </Col>
-                            <Col md={5} xs={12}>
-                                <Card>
-                                    <Card.Body>
-                                        <h5>Members</h5>
-                                        <hr />
-                                        <ListGroup variant={"flush"}>
-                                            <ListGroup.Item>Member 1</ListGroup.Item>
-                                            <ListGroup.Item>Member 2</ListGroup.Item>
-                                        </ListGroup>
-                                    </Card.Body>
-                                </Card>
-                                <InviteLinkList group={group} />
-                            </Col>
-                        </Row>
+                        <>
+                            <ListGroup.Item className={"d-flex"}>
+                                <Col xs={3} className={"p-0"}>
+                                    <span className={"font-weight-bold"}>Currency</span>
+                                </Col>
+                                <Col xs={9} className={"p-0 d-flex justify-content-between"}>
+                                    <EditableField value={this.props.group.currency} onChange={this.updateCurrency} />
+                                </Col>
+                            </ListGroup.Item>
+                            <ListGroup.Item>
+                                <div className={"d-flex justify-content-between"}>
+                                    <span className={"font-weight-bold"}>Terms</span>
+                                    <EditableField
+                                        type={"textarea"}
+                                        value={this.props.group.terms}
+                                        onChange={this.updateTerms}
+                                    />
+                                </div>
+                            </ListGroup.Item>
+                        </>
                     )}
-                </Col>
-            </Row>
+                </ListGroup>
+            </>
         );
     }
 }
@@ -72,7 +118,6 @@ class GroupDetail extends Component {
 const mapStateToProps = (state) => ({
     status: state.users.status,
     error: state.users.error,
-    groups: state.users.groups,
 });
 
-export default withRouter(connect(mapStateToProps, { fetchGroups })(GroupDetail));
+export default connect(mapStateToProps, { fetchGroupMetadata, updateGroupMetadata })(GroupDetail);

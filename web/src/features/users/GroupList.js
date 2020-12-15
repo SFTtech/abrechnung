@@ -13,7 +13,7 @@ import { createGroup, deleteGroup, fetchGroups } from "./usersSlice";
 import { Link } from "react-router-dom";
 import Spinner from "react-bootstrap/Spinner";
 
-class Groups extends Component {
+class GroupList extends Component {
     state = {
         showGroupCreationModal: false,
         showGroupDeletionModal: false,
@@ -23,7 +23,6 @@ class Groups extends Component {
     };
 
     onGroupSave = (e) => {
-        console.log(e);
         e.preventDefault();
         this.props.createGroup({ name: this.state.groupName, description: this.state.groupDescription });
         this.setState({
@@ -58,7 +57,7 @@ class Groups extends Component {
 
     confirmDeleteGroup = () => {
         if (this.state.groupToDelete !== null) {
-            this.props.deleteGroup({ group: this.state.groupToDelete });
+            this.props.deleteGroup({ groupID: this.state.groupToDelete });
             this.setState({ groupToDelete: null, showGroupDeletionModal: false });
         }
     };
@@ -204,4 +203,4 @@ const mapStateToProps = (state) => ({
     groups: state.users.groups,
 });
 
-export default connect(mapStateToProps, { fetchGroups, createGroup, deleteGroup })(Groups);
+export default connect(mapStateToProps, { fetchGroups, createGroup, deleteGroup })(GroupList);
