@@ -40,14 +40,18 @@ export const fetchGroupMetadata = createAsyncThunk("users/fetchGroupMetadata", a
 
 export const setGroupMemberPrivileges = createAsyncThunk(
     "users/setGroupMemberPrivileges",
-    async ({ groupID, userID, canWrite, isOwner }, { getState }) => {
-        return ws.call("group_member_privileges_set", {
-            authtoken: getState().auth.sessionToken,
-            group_id: groupID,
-            usr: userID,
-            can_write: canWrite === undefined ? null : canWrite,
-            is_owner: isOwner === undefined ? null : isOwner,
-        });
+    async ({ groupID, userID, canWrite, isOwner }, { getState, dispatch }) => {
+        return ws
+            .call("group_member_privileges_set", {
+                authtoken: getState().auth.sessionToken,
+                group_id: groupID,
+                usr: userID,
+                can_write: canWrite === undefined ? null : canWrite,
+                is_owner: isOwner === undefined ? null : isOwner,
+            })
+            .then(() => {
+                dispatch(refreshGroupLog(groupID));
+            });
     }
 );
 
@@ -65,6 +69,40 @@ export const updateGroupMetadata = createAsyncThunk(
     }
 );
 
+export const fetchGroupLog = createAsyncThunk("users/fetchGroupLog", async ({ groupID, fromID }, { getState }) => {
+    return ws.call("group_log_get", {
+        authtoken: getState().auth.sessionToken,
+        group_id: groupID,
+        from_id: fromID !== undefined ? fromID : 0,
+    });
+});
+
+export const refreshGroupLog = (groupID) => {
+    return (dispatch, getState) => {
+        if (
+            getState().users.groups.find((group) => group.id === groupID) === undefined ||
+            getState().users.groups.find((group) => group.id === groupID).log === undefined
+        ) {
+            dispatch(fetchGroupLog({ groupID: groupID, fromID: 0 }));
+        } else {
+            const log = getState().users.groups.find((group) => group.id === groupID).log;
+            dispatch(fetchGroupLog({ groupID: groupID, fromID: log[log.length - 1].id + 1 }));
+        }
+    };
+};
+
+export const createGroupLog = createAsyncThunk("users/createGroupLog", async ({ groupID, message }, { getState, dispatch }) => {
+    return ws
+        .call("group_log_post", {
+            authtoken: getState().auth.sessionToken,
+            group_id: groupID,
+            message: message,
+        })
+        .then(() => {
+            dispatch(refreshGroupLog(groupID));
+        });
+});
+
 export const usersSlice = createSlice({
     name: "users",
     initialState: {
@@ -75,6 +113,8 @@ export const usersSlice = createSlice({
     },
     extraReducers: {
         [fetchGroups.fulfilled]: (state, action) => {
+            // TODO: more sophisticated merging of group data to not overwrite existing member info
+            // alternatively force a full reload (which might lead to more consistency)
             state.groups = action.payload;
             state.status = "idle";
             state.error = null;
@@ -169,6 +209,28 @@ export const usersSlice = createSlice({
             state.error = null;
         },
         [setGroupMemberPrivileges.rejected]: (state, action) => {
+            state.error = action.error.message;
+            state.status = "idle";
+        },
+        [fetchGroupLog.fulfilled]: (state, action) => {
+            const idx = state.groups.findIndex((group) => group.id === action.meta.arg.groupID);
+            if (idx >= 0) {
+                // TODO more sophisticated merging of log fetching
+                state.groups[idx].log = action.payload.sort((left, right) => left.id < right.id);
+            }
+            state.status = "idle";
+            state.error = null;
+        },
+        [fetchGroupLog.rejected]: (state, action) => {
+            state.error = action.error.message;
+            state.status = "idle";
+        },
+        [createGroupLog.fulfilled]: (state, action) => {
+            // TODO: would like to get the created object back from the API
+            state.status = "idle";
+            state.error = null;
+        },
+        [createGroupLog.rejected]: (state, action) => {
             state.error = action.error.message;
             state.status = "idle";
         },

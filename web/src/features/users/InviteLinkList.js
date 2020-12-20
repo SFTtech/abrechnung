@@ -12,6 +12,7 @@ import Spinner from "react-bootstrap/Spinner";
 import { ws } from "../../websocket";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons/faTrash";
+import { refreshGroupLog } from "./usersSlice";
 
 class InviteLinkList extends Component {
     static propTypes = {
@@ -109,6 +110,7 @@ class InviteLinkList extends Component {
                         },
                     ],
                 });
+                this.props.refreshGroupLog(this.props.group.id);
             })
             .catch((error) => {
                 this.setState({ status: "failed", error: error });
@@ -217,4 +219,4 @@ const mapStateToProps = (state) => ({
     auth: state.auth,
 });
 
-export default connect(mapStateToProps, null)(InviteLinkList);
+export default connect(mapStateToProps, {refreshGroupLog})(InviteLinkList);

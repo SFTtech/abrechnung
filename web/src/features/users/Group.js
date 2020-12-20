@@ -70,8 +70,8 @@ class Group extends Component {
                                     <LinkContainer to={"/groups/" + this.props.match.params.id + "/members"}>
                                         <ListGroup.Item action>Members</ListGroup.Item>
                                     </LinkContainer>
-                                    <LinkContainer to={"/groups/" + this.props.match.params.id + "/chat"}>
-                                        <ListGroup.Item action>Chat</ListGroup.Item>
+                                    <LinkContainer to={"/groups/" + this.props.match.params.id + "/log"}>
+                                        <ListGroup.Item action>Log</ListGroup.Item>
                                     </LinkContainer>
                                     <LinkContainer to={"/groups/" + this.props.match.params.id + "/invite-tokens"}>
                                         <ListGroup.Item action>Invite Links</ListGroup.Item>
@@ -86,7 +86,7 @@ class Group extends Component {
                                     <Tab.Pane eventKey="members">
                                         <GroupMemberList group={group} />
                                     </Tab.Pane>
-                                    <Tab.Pane eventKey="chat">
+                                    <Tab.Pane eventKey="log">
                                         <GroupLog group={group} />
                                     </Tab.Pane>
                                     <Tab.Pane eventKey="invite-tokens">

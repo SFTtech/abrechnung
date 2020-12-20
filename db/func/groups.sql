@@ -535,7 +535,7 @@ begin
 
     return query
     select
-        gorup_log.id as id,
+        group_log.id as id,
         group_log.usr as usr,
         group_log.logged as logged,
         group_log.type as type,
