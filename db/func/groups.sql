@@ -161,13 +161,13 @@ $$ language plpgsql;
 -- this token can be given to other users and allows them to join the group
 -- valid_until can be null for infinite validity
 -- if single_use = true, only one user can use this invite to join the group
-create or replace function group_invite(
+create or replace function group_invite_create(
     authtoken uuid,
-    grp int,
+    group_id int,
     description text,
     valid_until timestamptz = null,
     single_use bool default true,
-    out invite_token uuid
+    out token uuid
 )
 as $$
 <<locals>>
@@ -177,23 +177,23 @@ begin
     -- the user needs to be a group member,
     -- but any user can create new invites even if they have only read permissions
     select session_auth_grp.usr into locals.usr
-    from session_auth_grp(group_invite.authtoken, group_invite.grp);
+    from session_auth_grp(group_invite_create.authtoken, group_invite_create.group_id);
 
     insert into group_invite(grp, description, created_by, valid_until, single_use)
     values (
-        group_invite.grp,
-        group_invite.description,
+        group_invite_create.group_id,
+        group_invite_create.description,
         locals.usr,
-        group_invite.valid_until,
-        group_invite.single_use
+        group_invite_create.valid_until,
+        group_invite_create.single_use
     )
-    returning token into group_invite.invite_token;
+    returning group_invite.token into group_invite_create.token;
 
     insert into group_log (grp, usr, type)
-    values (group_invite.grp, locals.usr, 'invite-create');
+    values (group_invite_create.group_id, locals.usr, 'invite-create');
 end;
 $$ language plpgsql;
-call allow_function('group_invite');
+call allow_function('group_invite_create');
 
 
 -- delete timed-out invite links
@@ -318,7 +318,8 @@ begin
     from
         group_membership, usr
     where
-        group_membership.usr = usr.id;
+        group_membership.usr = usr.id and
+        group_membership.grp = group_member_list.group_id;
 end;
 $$ language plpgsql;
 call allow_function('group_member_list');

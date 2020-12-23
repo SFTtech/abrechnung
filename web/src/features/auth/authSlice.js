@@ -1,22 +1,28 @@
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
+import {ofType} from "redux-observable";
+import {map, withLatestFrom} from "rxjs/operators";
 
-import { ws } from "../../websocket";
+import {ws} from "../../websocket";
 
-export const login = createAsyncThunk("auth/login", async ({ username, password, sessionName }) => {
+export const login = createAsyncThunk("auth/login", async ({username, password, sessionName}, {dispatch}) => {
     return ws.call("login_with_password", {
         session: sessionName,
         username: username,
         password: password,
     });
+    // TODO: think about how to chain actions
+    // .then((val) => {
+    //     dispatch(fetchUserInfo());
+    // });
 });
 
-export const logout = createAsyncThunk("auth/logout", async (_, { getState }) => {
+export const logout = createAsyncThunk("auth/logout", async (_, {getState}) => {
     return ws.call("logout", {
         authtoken: getState().auth.sessionToken,
     });
 });
 
-export const initSession = createAsyncThunk("auth/initSession", async (_, { dispatch }) => {
+export const initSession = createAsyncThunk("auth/initSession", async (_, {dispatch}) => {
     if (
         localStorage.getItem("sessionToken") !== null &&
         localStorage.getItem("sessionToken") !== undefined &&
@@ -24,7 +30,7 @@ export const initSession = createAsyncThunk("auth/initSession", async (_, { disp
     ) {
         const token = localStorage.getItem("sessionToken");
         const sessionName = localStorage.getItem("sessionName");
-        dispatch(initSessionData({ sessionToken: token, sessionName: sessionName }));
+        dispatch(initSessionData({sessionToken: token, sessionName: sessionName}));
         return ws.call("get_user_info", {
             authtoken: token,
         });
@@ -32,7 +38,7 @@ export const initSession = createAsyncThunk("auth/initSession", async (_, { disp
     throw Error("no session token found");
 });
 
-export const fetchUserInfo = createAsyncThunk("auth/fetchUserInfo", async (_, { getState }) => {
+export const fetchUserInfo = createAsyncThunk("auth/fetchUserInfo", async (_, {getState}) => {
     return ws.call("get_user_info", {
         authtoken: getState().auth.sessionToken,
     });
@@ -58,12 +64,11 @@ export const authSlice = createSlice({
         [login.fulfilled]: (state, action) => {
             state.status = "idle";
             state.isAuthenticated = true;
-            state.sessionToken = action.payload[0].token; // this is not pretty ...
+            state.sessionToken = action.payload[0].token;
             state.sessionName = action.meta.arg.sessionName;
             state.error = null;
             localStorage.setItem("sessionToken", state.sessionToken);
             localStorage.setItem("sessionName", action.meta.arg.sessionName);
-            console.log("logged in with session token", state.sessionToken);
         },
         [login.pending]: (state) => {
             state.status = "loading";
@@ -73,7 +78,6 @@ export const authSlice = createSlice({
             state.status = "failed";
         },
         [logout.fulfilled]: (state, action) => {
-            console.log("logged out successfully");
             state.sessionToken = null;
             localStorage.removeItem("sessionToken");
             state.status = "idle";
@@ -82,7 +86,6 @@ export const authSlice = createSlice({
             state.error = null;
         },
         [logout.rejected]: (state, action) => {
-            console.log("error on logout - do something");
             state.sessionToken = null;
             localStorage.removeItem("sessionToken");
             state.status = "idle";
@@ -92,7 +95,6 @@ export const authSlice = createSlice({
         },
         [fetchUserInfo.fulfilled]: (state, action) => {
             state.user = action.payload[0];
-            console.log("received user info", state.user);
             state.status = "idle";
             state.error = null;
         },
@@ -105,7 +107,6 @@ export const authSlice = createSlice({
         },
         [initSession.fulfilled]: (state, action) => {
             state.user = action.payload[0];
-            console.log("initialized session with user", state.user);
             state.isAuthenticated = true;
             state.status = "idle";
             state.error = null;
@@ -119,6 +120,11 @@ export const authSlice = createSlice({
     },
 });
 
-export const { initSessionData } = authSlice.actions;
+export const {initSessionData} = authSlice.actions;
+
+export const authEpic = (action$, state$) => action$.pipe(
+    ofType("auth/login/fulfilled"),
+    map(() => fetchUserInfo())
+)
 
 export default authSlice.reducer;

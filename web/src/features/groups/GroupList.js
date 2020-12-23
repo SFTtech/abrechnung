@@ -9,7 +9,7 @@ import Form from "react-bootstrap/Form";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 
-import { createGroup, deleteGroup, fetchGroups } from "./usersSlice";
+import { createGroup, deleteGroup, fetchGroups } from "./groupsSlice";
 import { Link } from "react-router-dom";
 import Spinner from "react-bootstrap/Spinner";
 
@@ -63,9 +63,7 @@ class GroupList extends Component {
     };
 
     componentDidMount = () => {
-        if (this.props.groups === null) {
-            this.props.fetchGroups();
-        }
+        this.props.fetchGroups();
     };
 
     onChange = (e) => {
@@ -90,28 +88,28 @@ class GroupList extends Component {
                                 </div>
                             ) : (
                                 <ListGroup>
-                                    {this.props.groups.length === 0 ? (
+                                    {this.props.groupIDs.length === 0 ? (
                                         <ListGroup.Item key={0}>
                                             <span>No Groups</span>
                                         </ListGroup.Item>
                                     ) : (
-                                        this.props.groups.map((group, index) => {
+                                        this.props.groupIDs.map(id => {
                                             return (
                                                 <ListGroup.Item
-                                                    key={group.id}
+                                                    key={id}
                                                     className={"d-flex justify-content-between"}
                                                 >
                                                     <div>
                                                         <span>
-                                                            <Link to={"/groups/" + group.id}>{group.name}</Link>
+                                                            <Link to={"/groups/" + id}>{this.props.groups[id].name}</Link>
                                                         </span>
                                                         <br />
-                                                        <small className="text-muted">{group.description}</small>
+                                                        <small className="text-muted">{this.props.groups[id].description}</small>
                                                     </div>
                                                     <div>
                                                         <button
                                                             className="btn text-danger"
-                                                            onClick={() => this.openGroupDeletionModal(group.id)}
+                                                            onClick={() => this.openGroupDeletionModal(id)}
                                                         >
                                                             <FontAwesomeIcon icon={faTrash} />
                                                         </button>
@@ -174,8 +172,8 @@ class GroupList extends Component {
                         <Modal.Body>
                             {this.state.groupToDelete !== null ? (
                                 <p>
-                                    Are you sure you want to delete group{" "}
-                                    {this.props.groups.find((item) => item.id === this.state.groupToDelete).name}
+                                    Are you sure you want to delete group
+                                    {this.props.groups[this.state.groupToDelete].name}
                                 </p>
                             ) : (
                                 ""
@@ -198,9 +196,10 @@ class GroupList extends Component {
 }
 
 const mapStateToProps = (state) => ({
-    status: state.users.status,
-    error: state.users.error,
-    groups: state.users.groups,
+    status: state.groups.status,
+    error: state.groups.error,
+    groups: state.groups.entities,
+    groupIDs: state.groups.ids,
 });
 
 export default connect(mapStateToProps, { fetchGroups, createGroup, deleteGroup })(GroupList);

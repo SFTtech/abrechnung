@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import ListGroup from "react-bootstrap/cjs/ListGroup";
 import "react-datetime/css/react-datetime.css";
 import PropTypes from "prop-types";
-import { fetchGroupMembers, setGroupMemberPrivileges } from "./usersSlice";
+import { fetchGroupMembers, setGroupMemberPrivileges } from "./groupsSlice";
 import Spinner from "react-bootstrap/Spinner";
 import Badge from "react-bootstrap/cjs/Badge";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -73,9 +73,7 @@ class GroupMemberList extends Component {
     };
 
     componentDidMount = () => {
-        if (this.getMembers() === null) {
-            this.props.fetchGroupMembers({ groupID: this.props.group.id });
-        }
+        this.props.fetchGroupMembers({ groupID: this.props.group.id });
     };
 
     render() {
@@ -218,8 +216,8 @@ class GroupMemberList extends Component {
 }
 
 const mapStateToProps = (state) => ({
-    status: state.users.status,
-    error: state.users.error,
+    status: state.groups.status,
+    error: state.groups.error,
     currentUser: state.auth.user.username,
 });
 

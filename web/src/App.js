@@ -14,12 +14,12 @@ import Register from "./features/auth/Register";
 import Login from "./features/auth/Login";
 import PublicRoute from "./components/PublicRoute";
 import Logout from "./features/auth/Logout";
-import GroupDetail from "./features/users/Group";
-import GroupInvite from "./features/users/GroupInvite";
+import GroupDetail from "./features/groups/Group";
+import GroupInvite from "./features/groups/GroupInvite";
 import "./App.css";
 
 const Profile = React.lazy(() => import("./features/profile/Profile"));
-const Groups = React.lazy(() => import("./features/users/GroupList"));
+const Groups = React.lazy(() => import("./features/groups/GroupList"));
 const ConfirmEmailChange = React.lazy(() => import("./features/profile/ConfirmEmailChange"));
 const ConfirmRegistration = React.lazy(() => import("./features/auth/ConfirmRegistration"));
 

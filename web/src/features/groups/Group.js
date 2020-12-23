@@ -8,7 +8,7 @@ import Spinner from "react-bootstrap/Spinner";
 import "react-datetime/css/react-datetime.css";
 import InviteLinkList from "./InviteLinkList";
 
-import { fetchGroups } from "./usersSlice";
+import { fetchGroups } from "./groupsSlice";
 import GroupMemberList from "./GroupMemberList";
 import Tab from "react-bootstrap/Tab";
 import ListGroup from "react-bootstrap/cjs/ListGroup";
@@ -20,23 +20,19 @@ class Group extends Component {
     state = {};
 
     componentDidMount = () => {
-        if (this.props.groups === null) {
-            this.props.fetchGroups();
-        }
+        this.props.fetchGroups();
     };
 
     getGroup = () => {
         // we need parseInt here since the props param is a string
-        return this.props.groups === null
-            ? null
-            : this.props.groups.find((group) => group.id === parseInt(this.props.match.params.id));
+        return this.props.groups[parseInt(this.props.match.params.id)];
     };
 
     render() {
         const error = this.props.error !== null ? <div className="alert alert-danger">{this.props.error}</div> : "";
         const group = this.getGroup();
 
-        if (group === null) {
+        if (group === undefined) {
             return (
                 <Row>
                     <Col xs={12}>
@@ -103,9 +99,9 @@ class Group extends Component {
 }
 
 const mapStateToProps = (state) => ({
-    status: state.users.status,
-    error: state.users.error,
-    groups: state.users.groups,
+    status: state.groups.status,
+    error: state.groups.error,
+    groups: state.groups.entities,
 });
 
 export default withRouter(connect(mapStateToProps, { fetchGroups })(Group));

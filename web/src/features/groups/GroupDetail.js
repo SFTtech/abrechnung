@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import ListGroup from "react-bootstrap/cjs/ListGroup";
 import "react-datetime/css/react-datetime.css";
 import PropTypes from "prop-types";
-import { fetchGroupMetadata, updateGroupMetadata } from "./usersSlice";
+import { fetchGroupMetadata, updateGroupMetadata } from "./groupsSlice";
 import Spinner from "react-bootstrap/Spinner";
 import Alert from "react-bootstrap/cjs/Alert";
 import Col from "react-bootstrap/cjs/Col";
@@ -34,10 +34,7 @@ class GroupDetail extends Component {
     };
 
     componentDidMount = () => {
-        if (this.props.group.terms === undefined || this.props.group.currency === undefined) {
-            // TODO better detect when we need to fetch this info
-            this.props.fetchGroupMetadata({ groupID: this.props.group.id });
-        }
+        this.props.fetchGroupMetadata({ groupID: this.props.group.id });
     };
 
     render() {
@@ -116,8 +113,8 @@ class GroupDetail extends Component {
 }
 
 const mapStateToProps = (state) => ({
-    status: state.users.status,
-    error: state.users.error,
+    status: state.groups.status,
+    error: state.groups.error,
 });
 
 export default connect(mapStateToProps, { fetchGroupMetadata, updateGroupMetadata })(GroupDetail);

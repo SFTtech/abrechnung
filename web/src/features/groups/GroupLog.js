@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import "react-datetime/css/react-datetime.css";
 import PropTypes from "prop-types";
-import { createGroupLog, fetchGroupLog, fetchGroupMembers } from "./usersSlice";
+import { createGroupLog, fetchGroupLog, fetchGroupMembers } from "./groupsSlice";
 import Spinner from "react-bootstrap/Spinner";
 import Form from "react-bootstrap/Form";
 import ListGroup from "react-bootstrap/cjs/ListGroup";
@@ -104,8 +104,8 @@ class GroupLog extends Component {
 }
 
 const mapStateToProps = (state) => ({
-    status: state.users.status,
-    error: state.users.error,
+    status: state.groups.status,
+    error: state.groups.error,
 });
 
 export default connect(mapStateToProps, { fetchGroupLog, fetchGroupMembers, createGroupLog })(GroupLog);

@@ -1,5 +1,5 @@
-import React, { Component } from "react";
-import { connect } from "react-redux";
+import React, {Component} from "react";
+import {connect} from "react-redux";
 
 import ListGroup from "react-bootstrap/cjs/ListGroup";
 import Modal from "react-bootstrap/Modal";
@@ -9,15 +9,13 @@ import Datetime from "react-datetime";
 import "react-datetime/css/react-datetime.css";
 import PropTypes from "prop-types";
 import Spinner from "react-bootstrap/Spinner";
-import { ws } from "../../websocket";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrash } from "@fortawesome/free-solid-svg-icons/faTrash";
-import { refreshGroupLog } from "./usersSlice";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faTrash} from "@fortawesome/free-solid-svg-icons/faTrash";
+import {createInviteToken, deleteInviteToken, fetchInviteTokens} from "./groupsSlice";
 
 class InviteLinkList extends Component {
     static propTypes = {
         group: PropTypes.object.isRequired,
-        auth: PropTypes.object.isRequired,
     };
 
     state = {
@@ -26,25 +24,10 @@ class InviteLinkList extends Component {
         description: "",
         singleUse: false,
         validUntil: "",
-        error: null,
-    };
-
-    fetchInviteTokens = () => {
-        ws.call("group_invite_list", {
-            authtoken: this.props.auth.sessionToken,
-            group_id: this.props.group.id,
-            only_mine: false,
-        })
-            .then((value) => {
-                this.setState({ status: "idle", error: null, tokens: value });
-            })
-            .catch((error) => {
-                this.setState({ status: "failed", error: error });
-            });
     };
 
     componentDidMount = () => {
-        this.fetchInviteTokens();
+        this.props.fetchInviteTokens({groupID: this.props.group.id});
     };
 
     openModal = () => {
@@ -60,65 +43,24 @@ class InviteLinkList extends Component {
     };
 
     onChange = (e) => {
-        this.setState({ [e.target.name]: e.target.value });
+        this.setState({[e.target.name]: e.target.value});
     };
 
-    deleteInviteToken = (id) => {
-        ws.call("group_invite_delete", {
-            authtoken: this.props.auth.sessionToken,
-            group_id: this.props.group.id,
-            invite_id: id,
-        })
-            .then((value) => {
-                this.setState({
-                    status: "success",
-                    error: null,
-                    tokens: this.state.tokens.filter((token) => token.id !== id),
-                });
-            })
-            .catch((error) => {
-                this.setState({ status: "failed", error: error });
-            });
+    deleteToken = (id) => {
+        this.props.deleteInviteToken({groupID: this.props.group.id, tokenID: id});
     }
 
     onSubmit = (e) => {
         e.preventDefault();
-        const { description, singleUse, validUntil } = this.state;
-        this.setState({ status: "loading" });
-        ws.call("group_invite", {
-            authtoken: this.props.auth.sessionToken,
-            grp: this.props.group.id,
-            description: description,
-            valid_until: validUntil,
-            single_use: singleUse,
-        })
-            .then((value) => {
-                this.setState({
-                    status: "success",
-                    error: null,
-                    show: false,
-                    description: "",
-                    singleUse: false,
-                    validUntil: "",
-                    tokens: [
-                        ...this.state.tokens,
-                        {
-                            description: description,
-                            single_use: singleUse,
-                            valid_until: JSON.stringify(validUntil),
-                            token: value[0].invite_token,
-                        },
-                    ],
-                });
-                this.props.refreshGroupLog(this.props.group.id);
+        const {description, singleUse, validUntil} = this.state;
+        this.props.createInviteToken({groupID: this.props.group.id, description, singleUse, validUntil})
+            .then(val => {
+                this.setState({show: false, description: "", singleUse: false, validUntil: ""});
             })
-            .catch((error) => {
-                this.setState({ status: "failed", error: error });
-            });
     };
 
     render() {
-        const error = this.state.error !== null ? <div className="alert alert-danger">{this.state.error}</div> : "";
+        const error = this.props.error !== null ? <div className="alert alert-danger">{this.props.error}</div> : "";
         // TODO: not hardcode the invite url here
         return (
             <div>
@@ -129,18 +71,18 @@ class InviteLinkList extends Component {
                         Invite
                     </Button>
                 </h5>
-                <hr />
+                <hr/>
                 <ListGroup variant={"flush"}>
-                    {this.state.tokens === null ? (
+                    {this.props.group.tokens === undefined ? (
                         <div className={"d-flex justify-content-center"}>
                             <Spinner animation="border" role="status">
                                 <span className="sr-only">Loading...</span>
                             </Spinner>
                         </div>
-                    ) : this.state.tokens.length === 0 ? (
+                    ) : this.props.group.tokens.length === 0 ? (
                         <ListGroup.Item>No Links</ListGroup.Item>
                     ) : (
-                        this.state.tokens.map((link, index) => (
+                        this.props.group.tokens.map((link, index) => (
                             <ListGroup.Item key={index} className={"d-flex justify-content-between"}>
                                 <div>
                                     <span>{window.location.origin}/groups/invite/{link.token}</span>
@@ -150,9 +92,9 @@ class InviteLinkList extends Component {
                                 <div>
                                     <button
                                         className="btn text-danger"
-                                        onClick={() => this.deleteInviteToken(link.id)}
+                                        onClick={() => this.deleteToken(link.id)}
                                     >
-                                        <FontAwesomeIcon icon={faTrash} />
+                                        <FontAwesomeIcon icon={faTrash}/>
                                     </button>
                                 </div>
                             </ListGroup.Item>
@@ -166,8 +108,8 @@ class InviteLinkList extends Component {
 
                     <Form onSubmit={this.onSubmit}>
                         <Modal.Body>
-                            {this.state.error !== null ? (
-                                <div className="alert alert-danger">{this.state.error}</div>
+                            {this.props.error !== null ? (
+                                <div className="alert alert-danger">{this.props.error}</div>
                             ) : (
                                 ""
                             )}
@@ -184,7 +126,7 @@ class InviteLinkList extends Component {
                                 <Form.Label>Valid Until</Form.Label>
                                 <Datetime
                                     name={"validUntil"}
-                                    onChange={(e) => this.setState({ validUntil: e })}
+                                    onChange={(e) => this.setState({validUntil: e})}
                                     value={this.state.validUntil}
                                 />
                             </Form.Group>
@@ -193,7 +135,7 @@ class InviteLinkList extends Component {
                                 <Form.Check
                                     name={"singleUse"}
                                     onChange={(e) => {
-                                        this.setState({ singleUse: e.target.checked });
+                                        this.setState({singleUse: e.target.checked});
                                     }}
                                     checked={this.state.singleUse}
                                 />
@@ -216,7 +158,8 @@ class InviteLinkList extends Component {
 }
 
 const mapStateToProps = (state) => ({
-    auth: state.auth,
+    status: state.groups.status,
+    error: state.groups.error,
 });
 
-export default connect(mapStateToProps, {refreshGroupLog})(InviteLinkList);
+export default connect(mapStateToProps, {fetchInviteTokens, createInviteToken, deleteInviteToken})(InviteLinkList);

@@ -90,9 +90,9 @@ async def test(test):
     test.expect_eq(group_info[8], True)
 
     invitetoken1 = await test.fetch_expect_raise(
-        'select * from group_invite('
+        'select * from group_invite_create('
             'authtoken := $1, '
-            'grp := $2, '
+            'group_id := $2, '
             'description := $3, '
             'valid_until := $4, '
             'single_use := $5)',

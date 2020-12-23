@@ -14,7 +14,7 @@ import { LinkContainer } from "react-router-bootstrap";
 
 import { ws } from "../../websocket";
 import Button from "react-bootstrap/Button";
-import {fetchGroups} from "./usersSlice";
+import {fetchGroups} from "./groupsSlice";
 
 class GroupInvite extends Component {
     state = {
@@ -134,8 +134,8 @@ class GroupInvite extends Component {
 }
 
 const mapStateToProps = (state) => ({
-    status: state.users.status,
-    error: state.users.error,
+    status: state.groups.status,
+    error: state.groups.error,
     auth: state.auth,
 });
 
