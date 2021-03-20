@@ -89,7 +89,8 @@ async def test(test):
     test.expect_eq(group_info[7], True)
     test.expect_eq(group_info[8], True)
 
-    invitetoken1 = await test.fetch_expect_raise(
+    # attempt to invite with bad authtoken
+    await test.fetch_expect_raise(
         'select * from group_invite_create('
             'authtoken := $1, '
             'group_id := $2, '
@@ -102,6 +103,54 @@ async def test(test):
         datetime.datetime.now() + datetime.timedelta(hours=1),
         True,
         error_id='bad-authtoken'
+    )
+
+    # attempt to invite to a group you're not a member of
+    await test.fetch_expect_raise(
+        'select * from group_invite('
+            'authtoken := $1, '
+            'grp := $2, '
+            'description := $3, '
+            'valid_until := $4, '
+            'single_use := $5)',
+        auth2,
+        grp1,
+        'best invite',
+        datetime.datetime.now() + datetime.timedelta(hours=1),
+        True,
+        error_id='no-group-membership'
+    )
+
+    # create a single-use invite to group 1
+    invitetoken1 = await test.fetchval(
+        'select * from group_invite('
+            'authtoken := $1, '
+            'grp := $2, '
+            'description := $3, '
+            'valid_until := $4, '
+            'single_use := $5)',
+        auth1,
+        grp1,
+        'best invite',
+        datetime.datetime.now() + datetime.timedelta(hours=1),
+        True,
+        column='invite_token'
+    )
+
+    # create a multi-use invite to group 2
+    invitetoken2 = await test.fetchval(
+        'select * from group_invite('
+            'authtoken := $1, '
+            'grp := $2, '
+            'description := $3, '
+            'valid_until := $4, '
+            'single_use := $5)',
+        auth2,
+        grp2,
+        'infinite invite',
+        None,
+        True,
+        column='invite_token'
     )
 
     # clean up the test

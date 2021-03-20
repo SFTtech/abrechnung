@@ -289,7 +289,7 @@ create or replace function group_member_list(
     group_id integer
 )
 returns table (
-    id integer,
+    usr_id integer,
     username text,
     is_owner bool,
     can_write bool,
@@ -308,7 +308,7 @@ begin
 
     return query
     select
-        usr.id as id,
+        usr.id as usr_id,
         usr.username as username,
         group_membership.is_owner as is_owner,
         group_membership.can_write as can_write,
@@ -320,6 +320,8 @@ begin
     where
         group_membership.usr = usr.id and
         group_membership.grp = group_member_list.group_id;
+    order by
+        group_membership.joined;
 end;
 $$ language plpgsql;
 call allow_function('group_member_list');
@@ -330,7 +332,7 @@ call allow_function('group_member_list');
 create or replace procedure group_member_privileges_set(
     authtoken uuid,
     group_id integer,
-    usr integer,
+    usr_id integer,
     can_write boolean default null,
     is_owner boolean default null
 )
@@ -363,7 +365,7 @@ begin
         group_membership
     where
         group_membership.grp = group_member_privileges_set.group_id and
-        group_membership.usr = group_member_privileges_set.usr;
+        group_membership.usr = group_member_privileges_set.usr_id;
 
     if locals.old_can_write is null then
         raise exception 'no-such-group-member:there is no group member with this id';
@@ -385,7 +387,7 @@ begin
         is_owner = group_member_privileges_set.is_owner
     where
         group_membership.grp = group_member_privileges_set.group_id and
-        group_membership.usr = group_member_privileges_set.usr;
+        group_membership.usr = group_member_privileges_set.usr_id;
 
     if group_member_privileges_set.can_write != locals.old_can_write then
         insert into group_log (grp, usr, type, affected)
@@ -396,7 +398,7 @@ begin
                 when group_member_privileges_set.can_write then 'grant-write'
                 else 'revoke-write'
             end,
-            group_member_privileges_set.usr
+            group_member_privileges_set.usr_id
         );
     end if;
 
@@ -409,7 +411,7 @@ begin
                 when group_member_privileges_set.can_write then 'grant-owner'
                 else 'revoke-owner'
             end,
-            group_member_privileges_set.usr
+            group_member_privileges_set.usr_id
         );
     end if;
 end;
@@ -426,8 +428,8 @@ create or replace function group_invite_list(
     only_mine boolean default false
 )
 returns table (
-    id bigint,
-    token uuid,
+    invite_id bigint,
+    invite_token uuid,
     description text,
     created_by integer,
     valid_until timestamptz,
@@ -443,7 +445,7 @@ begin
 
     return query
     select
-        group_invite.id as id,
+        group_invite.id as invite_id,
         case
             when group_invite.created_by = locals.usr then group_invite.token
             else null
@@ -519,12 +521,12 @@ create or replace function group_log_get(
     from_id bigint default 0
 )
 returns table (
-    id bigint,
-    usr integer,
+    logentry_id bigint,
+    usr_id integer,
     logged timestamptz,
     type text,
     message text,
-    affected integer
+    affected_usr_id integer
 )
 as $$
 <<locals>>
@@ -536,12 +538,12 @@ begin
 
     return query
     select
-        group_log.id as id,
-        group_log.usr as usr,
+        group_log.id as logentry_id,
+        group_log.usr as usr_id,
         group_log.logged as logged,
         group_log.type as type,
         group_log.message as message,
-        group_log.affected as affected
+        group_log.affected as affected_usr_id
     from
         group_log
     where
