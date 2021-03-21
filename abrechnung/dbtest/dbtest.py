@@ -75,6 +75,9 @@ class DBTest(subcommand.SubCommand):
         self.psql.add_termination_listener(self.terminate_callback)
         self.psql.add_log_listener(self.log_callback)
 
+        # for testing purposes, reduce the number of rounds for bf
+        await self.fetch("insert into password_setting (algorithm, rounds) values ('bf', 4);")
+
         from . import websocket_connections
         print(f'{util.BOLD}websocket_connections.test{util.NORMAL}')
         await websocket_connections.test(self)
@@ -87,6 +90,8 @@ class DBTest(subcommand.SubCommand):
         from . import group_data
         print(f'{util.BOLD}group_data.test{util.NORMAL}')
         await group_data.test(self)
+
+        await self.fetch("delete from password_setting where algorithm = 'bf' and rounds = 4;")
 
         print(f'{util.BOLD}tests done{util.NORMAL}')
 
