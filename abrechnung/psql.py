@@ -81,7 +81,5 @@ class PSQL(subcommand.SubCommand):
             ret = util.run_as_fg_process(command, env=env, cwd=db_folder)
 
             if ret != 0:
-                print("\N{ESCAPE}[31;1m"
-                      "\N{PILE OF POO} psql failed"
-                      "\N{ESCAPE}[m")
+                print(util.format_error('psql failed'))
             exit(ret)
