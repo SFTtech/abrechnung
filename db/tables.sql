@@ -57,7 +57,7 @@ create table if not exists usr(
 
 create table if not exists pending_registration(
     usr integer not null unique references usr(id) on delete cascade,
-    token uuid primary key default ext.uuid_generate_v4(),
+    token uuid primary key default gen_random_uuid(),
     -- gc should delete from usr where id=id if valid_until < now()
     valid_until timestamptz not null default now() + interval '1 hour',
     -- if NULL, the mail has been successfully sent
@@ -68,7 +68,7 @@ create table if not exists pending_registration(
 -- holds entries only for users which are neither deleted nor pending
 create table if not exists pending_password_recovery(
     usr integer not null unique references usr(id) on delete cascade,
-    token uuid primary key default ext.uuid_generate_v4(),
+    token uuid primary key default gen_random_uuid(),
     -- gc should delete rows where valid_until < now()
     valid_until timestamptz not null default now() + interval '1 hour',
     -- if NULL, the mail has been successfully sent
@@ -79,7 +79,7 @@ create table if not exists pending_password_recovery(
 -- holds entries only for users which are neither deleted nor pending
 create table if not exists pending_email_change(
     usr integer not null unique references usr(id) on delete cascade,
-    token uuid primary key default ext.uuid_generate_v4(),
+    token uuid primary key default gen_random_uuid(),
     new_email text not null,
     -- gc should delete rows where valid_until < now()
     valid_until timestamptz not null default now() + interval '1 hour',
@@ -96,7 +96,7 @@ create table if not exists session(
     usr integer not null references usr(id) on delete cascade,
     id serial primary key,
     -- authtoken
-    token uuid unique default ext.uuid_generate_v4(),
+    token uuid unique default gen_random_uuid(),
     -- last time this session token has been used
     last_seen timestamptz not null default now(),
     -- informational session name, chosen when logging in
@@ -119,11 +119,11 @@ create table if not exists hoster(
 -- (file servers should not get access to session tokens)
 create table if not exists file_upload_token(
     usr integer primary key references usr(id) on delete cascade,
-    token uuid unique not null default ext.uuid_generate_v4()
+    token uuid unique not null default gen_random_uuid()
 );
 
 create table if not exists file(
-    -- uuid_generate_v4() plus suitable file extension
+    -- gen_random_uuid() plus suitable file extension
     filename text primary key,
     -- hash of file content
     sha256 text not null,
@@ -197,7 +197,7 @@ create table if not exists group_invite (
 
     -- the group that the token grants access to
     grp integer references grp(id) on delete cascade,
-    token uuid primary key default ext.uuid_generate_v4(),
+    token uuid primary key default gen_random_uuid(),
     -- description text for the authtoken
     description text not null,
     -- the user who has created the invite token
