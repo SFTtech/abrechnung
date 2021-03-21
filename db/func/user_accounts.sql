@@ -227,7 +227,7 @@ begin
                 session.token = session_auth.token
             and
                 (session.valid_until is null or session.valid_until >= now())
-    returning session.usr into session_auth.usr;
+    returning session.usr into session_auth.user_id;
 
     if session_auth.fatal and session_auth.usr is null then
         raise exception 'bad-authtoken:invalid session authtoken';
