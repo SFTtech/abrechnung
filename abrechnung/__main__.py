@@ -15,7 +15,8 @@ def main():
     cli = argparse.ArgumentParser()
 
     cli.add_argument('-c', '--config-path',
-                     default='/etc/abrechnung/abrechnung.yaml')
+                     default='/etc/abrechnung/abrechnung.yaml',
+                     help='config file, default: %(default)s')
 
     cli.add_argument("-d", "--debug", action="store_true",
                      help="enable asyncio debugging")
