@@ -1,5 +1,31 @@
 -- functions for managing user accounts
 -- these are available to the public
+
+-- create a salt, depending on the password settings
+create or replace function create_salt(out salt text)
+as $$
+<<locals>>
+declare
+    algorithm text;
+    rounds integer;
+begin
+    select
+        password_setting.algorithm,
+        password_setting.rounds
+    into
+        locals.algorithm,
+        locals.rounds
+    from
+        password_setting
+    order by password_setting.timestamp desc
+    limit 1;
+
+    -- use pgcrypto gen_salt with the given parameters
+    select ext.gen_salt(locals.algorithm, locals.rounds) into create_salt.salt;
+end
+$$ language plpgsql;
+
+
 -- returns the timestamp until when the pending registration will be valid
 -- if the email or username already exist, raises a UniqueViolationError
 create or replace function register_user(email text, password text, username text, language text default 'en_int', out valid_until timestamptz)
@@ -13,7 +39,7 @@ begin
         insert into usr (email, password, username, language)
             values (
                 register_user.email,
-                ext.crypt(register_user.password, ext.gen_salt('bf', 12)),
+                ext.crypt(register_user.password, create_salt()),
                 register_user.username,
                 register_user.language
             )
@@ -408,7 +434,7 @@ begin
     end if;
 
     update usr
-    set password = ext.crypt(confirm_password_recovery.password, ext.gen_salt('bf', 12))
+    set password = ext.crypt(confirm_password_recovery.password, create_salt())
     where usr.id = locals.usr;
 
     delete from pending_password_recovery where pending_password_recovery.token = confirm_password_recovery.token;
@@ -435,7 +461,7 @@ begin
     end if;
 
     update usr
-        set password=ext.crypt(change_password.new_password, ext.gen_salt('bf', 12))
+        set password=ext.crypt(change_password.new_password, create_salt())
         where usr.id = locals.usr;
 end;
 $$ language plpgsql;

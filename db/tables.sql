@@ -35,6 +35,16 @@ create table if not exists allowed_function(
 
 -- user accounts
 
+create table if not exists password_setting(
+    -- arguments for pgcrypto.gen_salt()
+    algorithm text not null,
+    rounds int not null,
+    primary key (algorithm, rounds),
+    timestamp timestamptz not null default now()
+);
+insert into password_setting (algorithm, rounds) values ('bf', 12);
+
+
 create table if not exists usr(
     id serial primary key,
     email text unique not null,
