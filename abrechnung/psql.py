@@ -51,7 +51,7 @@ class PSQL(subcommand.SubCommand):
                 def escape_colon(str):
                     return str.replace('\\', '\\\\').replace(':', '\\:')
 
-                passfile = exitstack.enter(tempfile.NamedTemporaryFile('w'))
+                passfile = exitstack.enter_context(tempfile.NamedTemporaryFile('w'))
                 os.chmod(passfile.name, 0o600)
 
                 passfile.write(':'.join([
