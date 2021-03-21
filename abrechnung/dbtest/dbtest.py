@@ -14,6 +14,7 @@ import asyncpg
 
 from .. import subcommand
 from .. import psql as psql_command
+from .. import util
 
 
 class DBTest(subcommand.SubCommand):
@@ -56,7 +57,7 @@ class DBTest(subcommand.SubCommand):
         CLI entry point
         """
         if self.prepare_action:
-            print(f'prepare action: \x1b[1mpsql {self.prepare_action}\x1b[m')
+            print(f'prepare action: {util.BOLD}psql {self.prepare_action}{util.NORMAL}')
             try:
                 await psql_command.PSQL(self.config, action=self.prepare_action).run()
             except SystemExit as exc:
@@ -75,22 +76,22 @@ class DBTest(subcommand.SubCommand):
         self.psql.add_log_listener(self.log_callback)
 
         from . import websocket_connections
-        print(f'\x1b[1mwebsocket_connections.test\x1b[m')
+        print(f'{util.BOLD}websocket_connections.test{util.NORMAL}')
         await websocket_connections.test(self)
         from . import user_accounts
-        print(f'\x1b[1muser_accounts.test\x1b[m')
+        print(f'{util.BOLD}user_accounts.test{util.NORMAL}')
         await user_accounts.test(self)
         from . import groups
-        print(f'\x1b[1mgroups.test\x1b[m')
+        print(f'{util.BOLD}groups.test{util.NORMAL}')
         await groups.test(self)
         from . import group_data
-        print(f'\x1b[1mgroup_data.test\x1b[m')
+        print(f'{util.BOLD}group_data.test{util.NORMAL}')
         await group_data.test(self)
 
-        print(f'\x1b[1mtests done\x1b[m')
+        print(f'{util.BOLD}tests done{util.NORMAL}')
 
         if self.populate_db:
-            print(f'\x1b[1mpopulating db with test data\x1b[m')
+            print(f'{util.BOLD}populating db with test data{util.NORMAL}')
             from .import populate
             await populate.populate(self)
 
@@ -253,7 +254,7 @@ class DBTest(subcommand.SubCommand):
         """
         Call this to indicate an error during testing.
         """
-        print(f'\x1b[31;1mtest error\x1b[m {error_message}')
+        print(f'{util.format_error("test error")} {error_message}')
         raise RuntimeError(error_message) from None
 
     def expect_is(self, actual, expected):

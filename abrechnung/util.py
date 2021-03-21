@@ -1,8 +1,28 @@
 import logging
 
 
-# convenience infinity.
-INF = float("inf")
+# the vt100 CONTROL SEQUENCE INTRODUCER
+CSI = '\N{ESCAPE}['
+
+
+def SGR(code=""):
+    """
+    Returns a SELECT GRAPHIC RENDITION code sequence
+    for the given code.
+    See https://en.wikipedia.org/wiki/ANSI_escape_code
+    """
+    return f'{CSI}{code}m'
+
+BOLD = SGR(1)
+RED = SGR(31)
+NORMAL = SGR()
+
+
+def format_error(text):
+    """
+    Formats an error text for printing in a terminal
+    """
+    return f'\N{PILE OF POO} {RED}{BOLD}{text}{NORMAL}'
 
 
 def log_setup(setting, default=1):
