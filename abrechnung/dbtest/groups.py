@@ -17,7 +17,7 @@ async def test(test):
             name := $2,
             description := $3,
             terms := $4,
-            currency := $5
+            currency_symbol := $5
         )
         ''',
         auth1, 'best group', 'this group is amazing',
@@ -32,7 +32,7 @@ async def test(test):
             name := $2,
             description := $3,
             terms := $4,
-            currency := $5
+            currency_symbol := $5
         )
         ''',
         auth2, 'acceptable group', 'this group is mediocre',

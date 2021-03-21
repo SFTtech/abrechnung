@@ -174,8 +174,7 @@ create table if not exists grp (
     -- e.g. "you have to pay your entire due balance before august 8th"
     terms text not null default '',
     -- currency (symbol) to use in the group
-    -- eurocentric all the way
-    currency text not null default '€',
+    currency_symbol text not null,
 
     created timestamptz not null default now()
 );

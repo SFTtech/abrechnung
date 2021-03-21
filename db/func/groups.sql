@@ -5,7 +5,7 @@ create or replace function group_create(
     name text,
     description text,
     terms text,
-    currency text,
+    currency_symbol text,
     out id int
 )
 as $$
@@ -15,8 +15,8 @@ declare
 begin
     select session_auth(group_create.authtoken) into locals.usr;
 
-    insert into grp (name, description, terms, currency)
-        values (group_create.name, group_create.description, group_create.terms, group_create.currency)
+    insert into grp (name, description, terms, currency_symbol)
+        values (group_create.name, group_create.description, group_create.terms, group_create.currency_symbol)
         returning grp.id into group_create.id;
 
     insert into group_membership
@@ -563,7 +563,7 @@ create or replace function group_metadata_get(
     out name text,
     out description text,
     out terms text,
-    out currency text
+    out currency_symbol text
 )
 as $$
 <<locals>>
@@ -577,12 +577,12 @@ begin
         grp.name,
         grp.description,
         grp.terms,
-        grp.currency
+        grp.currency_symbol
     into
         group_metadata_get.name,
         group_metadata_get.description,
         group_metadata_get.terms,
-        group_metadata_get.currency
+        group_metadata_get.currency_symbol
     from
         grp
     where
@@ -600,7 +600,7 @@ create or replace procedure group_metadata_set(
     name text default null,
     description text default null,
     terms text default null,
-    currency text default null
+    currency_symbol text default null
 )
 as $$
 <<locals>>
@@ -609,7 +609,7 @@ declare
     old_name text;
     old_description text;
     old_terms text;
-    old_currency text;
+    old_currency_symbol text;
 begin
     select session_auth_grp.usr into locals.usr
     from session_auth_grp(
@@ -622,12 +622,12 @@ begin
         grp.name,
         grp.description,
         grp.terms,
-        grp.currency
+        grp.currency_symbol
     into
         locals.old_name,
         locals.old_description,
         locals.old_terms,
-        locals.old_currency
+        locals.old_currency_symbol
     from
         grp
     where
@@ -638,7 +638,7 @@ begin
             (group_metadata_set.name != locals.old_name) or
             (group_metadata_set.description != locals.old_description) or
             (group_metadata_set.terms != locals.old_terms) or
-            (group_metadata_set.currency != locals.old_currency)
+            (group_metadata_set.currency_symbol != locals.old_currency_symbol)
         )
     then
         -- no changes are requested, skip table update
@@ -650,7 +650,7 @@ begin
         name = group_metadata_set.name,
         description = group_metadata_set.description,
         terms = group_metadata_set.terms,
-        currency = group_metadata_set.currency
+        currency_symbol = group_metadata_set.currency_symbol
     where
         grp.id = group_metadata_set.group_id;
 
@@ -680,13 +680,13 @@ begin
             concat('old terms: ', locals.old_terms)
         );
     end if;
-    if group_metadata_set.currency != locals.old_currency then
+    if group_metadata_set.currency_symbol != locals.old_currency_symbol then
         insert into group_log (grp, usr, type, message)
         values (
             group_metadata_set.group_id,
             locals.usr,
-            'group-change-currency',
-            concat('old currency: ', locals.old_currency)
+            'group-change-currency-symbol',
+            concat('old currency symbol: ', locals.old_currency_symbol)
         );
     end if;
 end;

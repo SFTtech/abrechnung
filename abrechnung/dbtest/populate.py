@@ -14,13 +14,13 @@ async def populate(test):
 
     # group1 created by usr1
     grp1 = await test.fetchval(
-        'select * from group_create(authtoken := $1, name := $2, description := $3, terms := $4, currency := $5)',
+        'select * from group_create(authtoken := $1, name := $2, description := $3, terms := $4, currency_symbol := $5)',
         auth1, 'example group', 'this is an example group', '', '€', 
     )
 
     # group2 created by usr3
     grp2 = await test.fetchval(
-        'select * from group_create(authtoken := $1, name := $2, description := $3, terms := $4, currency := $5)',
+        'select * from group_create(authtoken := $1, name := $2, description := $3, terms := $4, currency_symbol := $5)',
         auth3, 'example group', 'this is an example group', '', '€', 
     )
 
