@@ -241,10 +241,12 @@ create table if not exists group_log (
 );
 
 -- every data and history entry in a group references a commit as a foreign key.
--- entries that have been just added, but not yet commited, reference a special commit with
--- a negative id;
--- the commits table contains one such entry for every usr and grp,
--- which is created the moment a row is added to the group_membership table.
+-- entries that have just been added, but not yet commited, reference a commit
+-- where the timestamp is null;
+-- this special commit is visible only to the user who has done these edits;
+-- it is created as soon as the user wants to edit the group,
+-- and will receive a timestamp when the user clicks 'commit'.
+-- commits with timestamps can no longer be edited.
 create table if not exists commit (
     id bigserial primary key,
 
@@ -252,13 +254,28 @@ create table if not exists commit (
     -- user that have created commits cannot be deleted
     usr integer not null references usr(id) on delete restrict,
 
-    timestamp timestamptz default now(),
-    constraint timestamp_not_null check (id < 0 or timestamp is not null),
+    timestamp timestamptz default null,
 
     message text not null
 );
 
 -- group data, the actual purpose of the abrechnung
+--
+-- all items of group data are organized in two tables:
+-- the base table, and the history table which has the name of the base table
+-- plus an appended '_history'.
+-- the base table contains - for each item, deleted or not - one row with
+-- all information that is fixed for all time:
+-- - the item id
+-- - the group id
+-- - other associated ids
+-- the history table can contain multiple entries for each item.
+-- each history table entry is linked to a commit id,
+-- and contains all information that can change over time:
+-- - whether the item is valid (this is set to false in commits that delete it)
+--   often there's conditions for when valid is allowed to be set to false.
+--   check the 
+-- - item-specific information, e.g. name, price, currency, ...
 
 -- bookkeeping account
 create table if not exists account (
@@ -270,9 +287,7 @@ create table if not exists account_history (
     id integer references account(id) on delete restrict,
     commit bigint references commit(id) on delete restrict,
     primary key(id, commit),
-    -- valid = false must only be allowed if the account balance for this commit is 0.
-    -- the account must not be involved in any account balance transfers with non-zero shares.
-    -- this must be checked before valid = false is commited.
+    -- valid can only be false if no other valid item references the account id.
     valid bool not null default true,
 
     name text not null,
@@ -281,70 +296,215 @@ create table if not exists account_history (
     priority integer not null
 );
 
--- transfers of balances from one account to other accounts,
--- performed in the post-processing step of group account balance evaluation
--- ("verrechnungskonto")
-create table if not exists account_balance_transfer (
+-- clearing relations between accounts.
+-- accounts can be clearing accounts ("verrechnungskonto"),
+-- temporary accounts whose balances are transferred to different accounts.
+-- in Abrechnung, this balance transfer happens in a post-processing step:
+-- first, all account balances are calculated according to the given
+-- transactions.
+-- then, accounts are cleared according to all clearing relations
+-- e.g. the account balance from "spaghetti on wednsday" is transferred
+-- in equal parts to the accounts "hans", "fritz", "elfriede", and the
+-- account balance from "elfriede" is transferred to the account "fritz".
+-- both "spaghetti on wednsday" and "elfriede" are clearing accounts,
+-- no balance remains on them after clearing.
+-- cycles between clearing accounts (e.g. "hans" clears to "fritz",
+-- "fritz" clears to "elfriede" and "elfriede" clears to "hans" and "fritz"
+-- are forbidden; if any are found, clearing is skipped, and commiting is
+-- forbidden.
+-- (cycles could in theory be resolved using linear algebra, but
+--  neither comprehensibility nore numerical stability can be guaranteed).
+create table if not exists account_clearing_relation (
     grp integer not null references grp(id) on delete cascade,
     id serial primary key,
 
+    -- the account that is cleared.
     source integer not null references account(id) on delete restrict,
+    -- the account to which the balance is transferred.
     -- if destination == source, the given share is actually kept on this account.
-    -- this can be used if e.g. only half of the account's balance should be transferred.
-    -- there must be no cycles where e.g. A transfers to B, B transfers to C and C transfers to A.
-    -- even if it would still be resolvable, there would be a risk of it being numerically unstable,
-    -- and it would be needlessly complex and hard to comprehend.
-    -- this must be checked before any account balance transfer changes are commited.
+    -- this can be used if e.g. only half of the account's balance should be cleared.
     destination integer not null references account(id) on delete restrict,
 
-    constraint source_destination_unique unique (source, destination)
+    constraint account_clearing_relation_source_destination_unique unique (source, destination)
 );
 
-create table if not exists account_balance_transfer_history (
+create table if not exists account_clearing_relation_history (
     id integer references account(id) on delete restrict,
     commit bigint references commit(id) on delete restrict,
     primary key(id, commit),
+    -- valid cna be set to false at any time
     valid bool not null default true,
 
+    -- the number of shares of the source account's balance that
+    -- should be cleared to this destination account.
+    -- balance transferred to destination :=
+    --   balance of source * (shares / (sum of all shares with this source))
     shares double precision not null,
-    constraint shares_nonnegative check (shares >= 0),
+    constraint account_clearing_relation_history_shares_nonnegative check (shares >= 0),
     description text not null default ''
 );
 
--- alternate currencies that could be used in transactions
-create table if not exists currency (
-    grp integer not null references grp(id) on delete cascade,
-    id serial primary key
+create type transaction_type as enum (
+    -- a regular 'purchase' transaction, where multiple people purchased
+    -- things, and one person paid the balance.
+    -- must have exactly one creditor share (the person who paid)
+    -- but can have multiple debitor shares
+    -- (the people who profited i.e. consumed items from the purchase).
+    -- can have purchase_items associated with it.
+    -- the creditor share is exactly one;
+    -- the debitor shares describe the magnitude in which unassigned
+    -- purchase items were consumed by the debitors.
+    -- note that typically the creditor is also listed as a debitor.
+    -- not the entire purchase value is split among the debitors,
+    -- just the parts that were not debited directly.
+    'purchase',
+    -- a transfer of balance from one account to another.
+    -- must have exactly one creditor share
+    -- (the account whose balance increases, e.g. who sent a bank transfer),
+    -- and one debitor share
+    -- (the account whose balance decreases, e.g. who received a bank transfer).
+    -- must not have purchase_items associated with it (duh.)
+    -- the creditor and debitor shares are exactly one.
+    'transfer',
+    -- a transfer of balance between any number of accounts
+    -- (multiple-input multiple-output).
+    -- can have more than one creditor share
+    -- (every account that balance should be transferred to)
+    -- and more than one debitor share
+    -- (every account that balance should be transferred from).
+    -- must not have purchase_items associated with it (duh.)
+    -- creditor shares are equal to the amount that is credited to the accounts,
+    -- debitor shares are equal to the amount that is debited to the account.
+    'mimo'
 );
 
-create table if not exists currency_history (
-    id integer references currency(id) on delete restrict,
-    commit bigint references commit(id) on delete restrict,
-    primary key(id, commit),
-    -- valid = false must only be allowed if the currency is not referenced from anywhere.
-    -- this must be checked before valid = false is commited.
-    valid bool not null default true,
-
-    symbol text not null,
-    exchange_rate double precision not null
-);
-
--- a simple transaction, simply transferring balance from one account to another
+-- any kind of transaction (see the types listed above)
 create table if not exists transaction (
     grp integer references grp(id) on delete cascade,
-    id serial primary key
+    id serial primary key,
+
+    type transaction_type not null
 );
 
 create table if not exists transaction_history (
     id integer references transaction(id) on delete restrict,
     commit bigint references commit(id) on delete restrict,
     primary key(id, commit),
+    -- valid can be set to false at any time
+    valid bool not null default true,
+    -- currency (symbol) of the values inside this transaction
+    currency_symbol text not null,
+    -- the values of this transaction are multiplied with this for purposes of
+    -- calculating group account balances.
+    currency_conversion_rate double precision not null,
+    -- total value of the transaction, in the transaction currency
+    value double precision not null
+);
+
+-- a share that a transaction's creditor has in the transaction value
+-- see the transaction_type documentation on what this means for the particular
+-- transaction types.
+-- transactions can only be evaluated if the sum of their creditor shares is > 0.
+create table if not exists creditor_share (
+    id serial primary key,
+
+    -- the transaction whose value is credited
+    transaction integer not null references transaction(id) on delete restrict,
+    -- the account that is credited
+    account integer not null references account(id) on delete restrict,
+    constraint creditor_share_transaction_account_unique unique (transaction, account)
+);
+
+create table if not exists creditor_share_history (
+    id integer references creditor_share(id) on delete restrict,
+    commit bigint references commit(id) on delete restrict,
+    primary key(id, commit),
+    -- valid can be set to false at any time, but the transaction may
+    -- become impossible to evaluate (making commiting impossible).
+    valid bool not null default true,
+    shares double precision not null default 1.0,
+    description text not null default ''
+);
+
+-- a share that a transaction's debitor has in the transaction value
+-- see the transaction_type documentation on what this means for the particular
+-- transaction types.
+-- transactions can only be evaluated if the sum of their debitor shares is > 0.
+create table if not exists debitor_share (
+    id serial primary key,
+
+    -- the transaction whose value is debited
+    transaction integer not null references transaction(id) on delete restrict,
+    -- the account that is debited
+    account integer not null references account(id) on delete restrict,
+    constraint debitor_share_transaction_account_unique unique (transaction, account)
+);
+
+create table if not exists debitor_share_history (
+    id integer references debitor_share(id) on delete restrict,
+    commit bigint references commit(id) on delete restrict,
+    primary key(id, commit),
+    -- valid can be set to false if the debited account is not referenced by
+    -- any item_consumption, but the transaction may
+    -- become impossible to evaluate (making commiting impossible).
+    valid bool not null default true,
+    shares double precision not null default 1.0,
+    description text not null default ''
+);
+
+-- an item in a 'purchase'-type transaction
+create table if not exists purchase_item (
+    transaction integer not null references transaction(id) on delete restrict,
+    id serial primary key
+);
+
+create table if not exists purchase_item_history (
+    id integer references purchase_item(id) on delete restrict,
+    commit bigint references commit(id) on delete restrict,
+    primary key(id, commit),
+    -- valid can be set to false at any time.
     valid bool not null default true,
 
-    -- the account whose balance is changed += value
-    debited integer not null references account(id) on delete restrict,
-    -- the account whose balance is changed -= value
-    credited integer not null references account(id) on delete restrict,
-    value double precision,
-    currency integer default null references currency(id) on delete restrict
+    -- the name of the item
+    name text not null,
+    -- the amount of the item (in 'unit').
+    amount double precision not null,
+    -- the unit in which the amount is given. null means pieces.
+    unit text default null,
+    -- the price - either per unit or in total, in the transaction currency.
+    price double precision not null,
+    -- if true, the price is per unit. if false, the price is for the entirety.
+    price_is_per_unit boolean not null default true,
+
+    description text not null default ''
+);
+
+-- an usage of an item by an account,
+-- causing part of the item price to be debited to that account.
+create table if not exists item_usage (
+    id serial primary key,
+
+    -- the transaction whose value is debited
+    item integer not null references purchase_item(id) on delete restrict,
+    -- the account that is debited
+    account integer not null references debitor_share(id) on delete restrict,
+    constraint item_usage_transaction_account_unique unique (item, account)
+);
+
+create table if not exists item_usage_history (
+    id integer references item_usage(id) on delete restrict,
+    commit bigint references commit(id) on delete restrict,
+    primary key(id, commit),
+    -- valid can be set to false at any time.
+    valid bool not null default true,
+
+    -- the absolute amount (of the item amount) to debit to this account.
+    amount double precision not null default 0,
+    -- the number of shares of the item to debit to this account.
+    -- first, all 'amount'-based shares are debited.
+    -- the remaining amount is debited to accounts based on shares.
+    -- if no share-based item usages are defined for the account at all,
+    -- the purchases' debitor shares are used.
+    -- otherwise, the item-specific shares are used.
+    shares double precision default null
 );
