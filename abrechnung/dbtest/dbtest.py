@@ -228,7 +228,7 @@ class DBTest(subcommand.SubCommand):
 
     async def get_notification(self, ensure_single=True):
         """
-        returns the current next notification
+        returns the current next notification as (channel, payloaddict, time)
 
         if ensure_single, ensures that there are no further notifications
         in the queue.
@@ -238,6 +238,7 @@ class DBTest(subcommand.SubCommand):
         except asyncio.exceptions.TimeoutError:
             self.error('expected a notification but did not receive it')
         if ensure_single:
+            # wait a bit for more notifications to arrive
             await asyncio.sleep(0.05)
             extra_notifications = []
             while self.notifications.qsize() > 0:

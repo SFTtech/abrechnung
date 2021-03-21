@@ -107,9 +107,9 @@ async def test(test):
 
     # attempt to invite to a group you're not a member of
     await test.fetch_expect_raise(
-        'select * from group_invite('
+        'select * from group_invite_create('
             'authtoken := $1, '
-            'grp := $2, '
+            'group_id := $2, '
             'description := $3, '
             'valid_until := $4, '
             'single_use := $5)',
@@ -123,9 +123,9 @@ async def test(test):
 
     # create a single-use invite to group 1
     invitetoken1 = await test.fetchval(
-        'select * from group_invite('
+        'select * from group_invite_create('
             'authtoken := $1, '
-            'grp := $2, '
+            'group_id := $2, '
             'description := $3, '
             'valid_until := $4, '
             'single_use := $5)',
@@ -134,14 +134,14 @@ async def test(test):
         'best invite',
         datetime.datetime.now() + datetime.timedelta(hours=1),
         True,
-        column='invite_token'
+        column='token'
     )
 
     # create a multi-use invite to group 2
     invitetoken2 = await test.fetchval(
-        'select * from group_invite('
+        'select * from group_invite_create('
             'authtoken := $1, '
-            'grp := $2, '
+            'group_id := $2, '
             'description := $3, '
             'valid_until := $4, '
             'single_use := $5)',
@@ -150,7 +150,7 @@ async def test(test):
         'infinite invite',
         None,
         True,
-        column='invite_token'
+        column='token'
     )
 
     # clean up the test

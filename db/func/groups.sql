@@ -319,7 +319,7 @@ begin
         group_membership, usr
     where
         group_membership.usr = usr.id and
-        group_membership.grp = group_member_list.group_id;
+        group_membership.grp = group_member_list.group_id
     order by
         group_membership.joined;
 end;
