@@ -212,9 +212,14 @@ class DBTest(subcommand.SubCommand):
         """ runs whenever we get a psql notification """
         self.expect_is(connection, self.psql)
         del pid  # unused
-        payload_json = json.loads(payload)
+        try:
+            payload_json = json.loads(payload)
+        except json.JSONDecodeError as exc:
+            print(f'notification on {channel!r}: '
+                  f'invalid json: {payload!r}')
+            raise
         print(f'notification on {channel!r}: {payload_json!r}')
-        self.notifications.put_nowait((channel, json.loads(payload), time.time()))
+        self.notifications.put_nowait((channel, payload_json, time.time()))
 
     async def get_notification(self, ensure_single=True):
         """
