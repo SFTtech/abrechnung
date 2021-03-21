@@ -47,11 +47,11 @@ $$ language plpgsql;
 -- to be called by a forwarder whenever a websocket connection is closed
 -- deletes the row in the connection table
 -- raises bad-connection-id if the connection has not existed
-create or replace procedure client_disconnected(id bigint)
+create or replace procedure client_disconnected(connection_id bigint)
 as $$
 begin
     delete from connection
-        where connection.id = client_disconnected.id;
+        where connection.id = client_disconnected.connection_id;
 
     if not found then
         raise exception 'bad-connection-id:no connection with the given connection id';
@@ -97,7 +97,7 @@ $$ language sql;
 call allow_function('get_allowed_functions');
 
 -- sends a notification with 'args' to the given clients
-create or replace procedure notify_connections(connections bigint[], event text, args json)
+create or replace procedure notify_connections(connection_ids bigint[], event text, args json)
 as $$
 <<locals>>
 declare
@@ -112,7 +112,7 @@ begin
                 connection
             where
                 forwarder.id = connection.forwarder and
-                connection.id = any(connections)
+                connection.id = any(notify_connections.connection_ids)
             group by
                 forwarder.id
     loop

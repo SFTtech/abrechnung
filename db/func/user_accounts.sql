@@ -2,6 +2,7 @@
 -- these are available to the public
 
 -- create a salt, depending on the password settings
+-- designed for internal use by functions that want to hash passwords
 create or replace function create_salt(out salt text)
 as $$
 <<locals>>
@@ -216,7 +217,7 @@ $$ language sql;
 -- and returns the usr.id of the user this authenticates as
 -- designed for internal use by all functions that accept a session authtoken
 -- all methods that call this can raise bad-authtoken
-create or replace function session_auth(token uuid, fatal boolean default true, out usr integer)
+create or replace function session_auth(token uuid, fatal boolean default true, out user_id integer)
 as $$
 begin
     update session
@@ -237,20 +238,20 @@ $$ language plpgsql;
 
 -- returns a list of all of the user's active sessions
 create or replace function list_sessions(authtoken uuid)
-returns table (id integer, name text, valid_until timestamptz, last_seen timestamptz, this boolean)
+returns table (session_id integer, name text, valid_until timestamptz, last_seen timestamptz, this boolean)
 as $$
     with auth as (
-        select usr from session_auth(list_sessions.authtoken)
+        select user_id from session_auth(list_sessions.authtoken)
     )
     select
-        session.id,
-        session.name,
-        session.valid_until,
-        session.last_seen,
+        session.id as session_id,
+        session.name as name,
+        session.valid_until as valid_until,
+        session.last_seen as last_seen,
         session.token = list_sessions.authtoken as this
     from session
         where
-                session.usr in (select usr from auth)
+                session.usr in (select user_id from auth)
             and
                 (session.valid_until is null or session.valid_until >= now());
 $$ language sql;
@@ -259,7 +260,7 @@ call allow_function('list_sessions');
 
 -- renames one of the user's sessions
 -- raises bad-session-id if no such session exists
-create or replace procedure rename_session(authtoken uuid, session integer, new_name text)
+create or replace procedure rename_session(authtoken uuid, session_id integer, new_name text)
 as $$
 <<locals>>
 declare
@@ -270,7 +271,7 @@ begin
     update session
         set name = rename_session.new_name
         where
-                session.id = rename_session.session
+                session.id = rename_session.session_id
             and
                 session.usr = locals.usr;
 
@@ -300,7 +301,7 @@ call allow_function('logout', is_procedure := true);
 
 -- logs out another session (of the same user)
 -- raises bad-session-id if no such session exists
-create or replace procedure logout_session(authtoken uuid, session integer)
+create or replace procedure logout_session(authtoken uuid, session_id integer)
 as $$
 <<locals>>
 declare
@@ -312,7 +313,7 @@ begin
         where
                 session.usr = locals.usr
             and
-                (logout_session.session is null or session.id = logout_session.session);
+                (logout_session.session is null or session.id = logout_session.session_id);
 
     if not found then
         raise exception 'bad-session-id:no such session id';
@@ -627,14 +628,14 @@ call allow_function('get_user_info');
 -- validates an admin's existing login session token,
 -- and returns the usr.id of the admin user this authenticates as.
 -- all methods that call this can raise bad-authtoken or no-admin
-create or replace function admin_auth(token uuid, fatal boolean default true, out usr integer)
+create or replace function admin_auth(token uuid, fatal boolean default true, out user_id integer)
 as $$
 begin
-    select session_auth(admin_auth.token, fatal := admin_auth.fatal) into admin_auth.usr;
+    select session_auth(admin_auth.token, fatal := admin_auth.fatal) into admin_auth.user_id;
 
-    select usr.id into admin_auth.usr
+    select usr.id into admin_auth.user_id
     from usr
-    where usr.id=admin_auth.usr and usr.admin=true;
+    where usr.id=admin_auth.user_id and usr.admin=true;
 
     if admin_auth.fatal and admin_auth.usr is null then
         raise exception 'no-admin:user does not have admin permissions';

@@ -6,7 +6,7 @@ create or replace function group_create(
     description text,
     terms text,
     currency_symbol text,
-    out id int
+    out group_id int
 )
 as $$
 <<locals>>
@@ -17,7 +17,7 @@ begin
 
     insert into grp (name, description, terms, currency_symbol)
         values (group_create.name, group_create.description, group_create.terms, group_create.currency_symbol)
-        returning grp.id into group_create.id;
+        returning grp.id into group_create.group_id;
 
     insert into group_membership
         (usr, grp, description, is_owner, can_write)
@@ -33,7 +33,7 @@ call allow_function('group_create');
 -- lists groups that the user is a member of
 create or replace function group_list(authtoken uuid)
 returns table (
-    id integer,
+    group_id integer,
     name text,
     description text,
     member_count bigint,
@@ -84,7 +84,7 @@ begin
             group by my_groups.grp
         )
     select
-        my_groups.grp as id,
+        my_groups.grp as group_id,
         my_groups.name as name,
         my_groups.description as description,
         group_member_counts.member_count as member_count,
@@ -118,39 +118,39 @@ call allow_function('group_list');
 -- - no-group-membership
 -- - no-group-write-permission
 -- - no-group-owner-permission
-create or replace function session_auth_grp(
+create or replace function session_auth_group(
     token uuid,
-    grp integer,
+    group_id integer,
     need_write_permission boolean default false,
     need_owner_permission boolean default false,
-    out usr integer,
+    out user_id integer,
     out can_write boolean,
     out is_owner boolean
 )
 as $$
 begin
-    select session_auth(session_auth_grp.token) into session_auth_grp.usr;
+    select session_auth(session_auth_group.token) into session_auth_group.user_id;
 
     select group_membership.can_write, group_membership.is_owner
-    into session_auth_grp.can_write, session_auth_grp.is_owner
+    into session_auth_group.can_write, session_auth_group.is_owner
     from group_membership
     where
-        group_membership.usr = session_auth_grp.usr and
-        group_membership.grp = session_auth_grp.grp;
+        group_membership.usr = session_auth_group.user_id and
+        group_membership.grp = session_auth_group.group_id;
 
     if not found then
         raise exception 'no-group-membership:user is not a member of the group';
     end if;
 
     if
-        session_auth_grp.need_write_permission and
-        session_auth_grp.can_write is not true and
-        session_auth_grp.is_owner is not true  -- owners are also allowed to write!
+        session_auth_group.need_write_permission and
+        session_auth_group.can_write is not true and
+        session_auth_group.is_owner is not true  -- owners are also allowed to write!
     then
         raise exception 'no-group-write-permission:user cannot write in group';
     end if;
 
-    if session_auth_grp.need_owner_permission and session_auth_grp.is_owner is not true then
+    if session_auth_group.need_owner_permission and session_auth_group.is_owner is not true then
         raise exception 'no-group-owner-permission:user is not owner of group';
     end if;
 end;
@@ -176,8 +176,8 @@ declare
 begin
     -- the user needs to be a group member,
     -- but any user can create new invites even if they have only read permissions
-    select session_auth_grp.usr into locals.usr
-    from session_auth_grp(group_invite_create.authtoken, group_invite_create.group_id);
+    select session_auth_group.user_id into locals.usr
+    from session_auth_group(group_invite_create.authtoken, group_invite_create.group_id);
 
     insert into group_invite(grp, description, created_by, valid_until, single_use)
     values (
@@ -289,7 +289,7 @@ create or replace function group_member_list(
     group_id integer
 )
 returns table (
-    usr_id integer,
+    user_id integer,
     username text,
     is_owner bool,
     can_write bool,
@@ -303,12 +303,12 @@ declare
     usr integer;
     inviter integer;
 begin
-    select session_auth_grp.usr into locals.usr
-    from session_auth_grp(group_member_list.authtoken, group_member_list.group_id);
+    select session_auth_group.user_id into locals.usr
+    from session_auth_group(group_member_list.authtoken, group_member_list.group_id);
 
     return query
     select
-        usr.id as usr_id,
+        usr.id as user_id,
         usr.username as username,
         group_membership.is_owner as is_owner,
         group_membership.can_write as can_write,
@@ -332,7 +332,7 @@ call allow_function('group_member_list');
 create or replace procedure group_member_privileges_set(
     authtoken uuid,
     group_id integer,
-    usr_id integer,
+    user_id integer,
     can_write boolean default null,
     is_owner boolean default null
 )
@@ -343,8 +343,8 @@ declare
     old_can_write boolean;
     old_is_owner boolean;
 begin
-    select session_auth_grp.usr into locals.usr
-    from session_auth_grp(
+    select session_auth_group.user_id into locals.usr
+    from session_auth_group(
         group_member_privileges_set.authtoken,
         group_member_privileges_set.group_id,
         need_write_permission := (can_write is not null),
@@ -365,7 +365,7 @@ begin
         group_membership
     where
         group_membership.grp = group_member_privileges_set.group_id and
-        group_membership.usr = group_member_privileges_set.usr_id;
+        group_membership.usr = group_member_privileges_set.user_id;
 
     if locals.old_can_write is null then
         raise exception 'no-such-group-member:there is no group member with this id';
@@ -387,7 +387,7 @@ begin
         is_owner = group_member_privileges_set.is_owner
     where
         group_membership.grp = group_member_privileges_set.group_id and
-        group_membership.usr = group_member_privileges_set.usr_id;
+        group_membership.usr = group_member_privileges_set.user_id;
 
     if group_member_privileges_set.can_write != locals.old_can_write then
         insert into group_log (grp, usr, type, affected)
@@ -398,7 +398,7 @@ begin
                 when group_member_privileges_set.can_write then 'grant-write'
                 else 'revoke-write'
             end,
-            group_member_privileges_set.usr_id
+            group_member_privileges_set.user_id
         );
     end if;
 
@@ -411,7 +411,7 @@ begin
                 when group_member_privileges_set.can_write then 'grant-owner'
                 else 'revoke-owner'
             end,
-            group_member_privileges_set.usr_id
+            group_member_privileges_set.user_id
         );
     end if;
 end;
@@ -440,8 +440,8 @@ as $$
 declare
     usr integer;
 begin
-    select session_auth_grp.usr into locals.usr
-    from session_auth_grp(group_invite_list.authtoken, group_invite_list.group_id);
+    select session_auth_group.user_id into locals.usr
+    from session_auth_group(group_invite_list.authtoken, group_invite_list.group_id);
 
     return query
     select
@@ -474,8 +474,8 @@ as $$
 declare
     usr integer;
 begin
-    select session_auth_grp.usr into locals.usr
-    from session_auth_grp(group_invite_delete.authtoken, group_invite_delete.group_id);
+    select session_auth_group.user_id into locals.usr
+    from session_auth_group(group_invite_delete.authtoken, group_invite_delete.group_id);
 
     delete from group_invite
     where
@@ -504,8 +504,8 @@ as $$
 declare
     usr integer;
 begin
-    select session_auth_grp.usr into locals.usr
-    from session_auth_grp(group_log_post.authtoken, group_log_post.group_id);
+    select session_auth_group.user_id into locals.usr
+    from session_auth_group(group_log_post.authtoken, group_log_post.group_id);
 
     insert into group_log (grp, usr, type, message)
     values (group_log_post.group_id, locals.usr, 'text-message', group_log_post.message);
@@ -522,28 +522,28 @@ create or replace function group_log_get(
 )
 returns table (
     logentry_id bigint,
-    usr_id integer,
+    user_id integer,
     logged timestamptz,
     type text,
     message text,
-    affected_usr_id integer
+    affected_user_id integer
 )
 as $$
 <<locals>>
 declare
     usr integer;
 begin
-    select session_auth_grp.usr into locals.usr
-    from session_auth_grp(group_log_get.authtoken, group_log_get.group_id);
+    select session_auth_group.user_id into locals.usr
+    from session_auth_group(group_log_get.authtoken, group_log_get.group_id);
 
     return query
     select
         group_log.id as logentry_id,
-        group_log.usr as usr_id,
+        group_log.usr as user_id,
         group_log.logged as logged,
         group_log.type as type,
         group_log.message as message,
-        group_log.affected as affected_usr_id
+        group_log.affected as affected_user_id
     from
         group_log
     where
@@ -570,8 +570,8 @@ as $$
 declare
     usr integer;
 begin
-    select session_auth_grp.usr into locals.usr
-    from session_auth_grp(group_metadata_get.authtoken, group_metadata_get.group_id);
+    select session_auth_group.user_id into locals.usr
+    from session_auth_group(group_metadata_get.authtoken, group_metadata_get.group_id);
 
     select
         grp.name,
@@ -611,8 +611,8 @@ declare
     old_terms text;
     old_currency_symbol text;
 begin
-    select session_auth_grp.usr into locals.usr
-    from session_auth_grp(
+    select session_auth_group.user_id into locals.usr
+    from session_auth_group(
         group_metadata_set.authtoken,
         group_metadata_set.group_id,
         need_owner_permission := true
@@ -706,8 +706,8 @@ declare
     member_count integer;
     remaining_owner_count integer;
 begin
-    select session_auth_grp.usr into locals.usr
-    from session_auth_grp(group_invite_delete.authtoken, group_invite_delete.group_id);
+    select session_auth_group.user_id into locals.usr
+    from session_auth_group(group_invite_delete.authtoken, group_invite_delete.group_id);
 
     select count(group_membership.usr) into locals.member_count
     from group_membership
