@@ -389,7 +389,7 @@ async def test(test):
     await test.fetchval(
         'select * from session_auth(token := $1)',
         token_1,
-        column='usr',
+        column='user_id',
         expect_eq=usr_id
     )
     last_seen_after = await test.fetchval(
@@ -403,7 +403,7 @@ async def test(test):
     await test.fetchval(
         'select * from session_auth(token := $1)',
         token_3,
-        column='usr',
+        column='user_id',
         expect_eq=usr_id
     )
     last_seen_after = await test.fetchval(
@@ -417,7 +417,7 @@ async def test(test):
     await test.fetchval(
         'select * from session_auth(token := $1, fatal := false)',
         token_2,
-        column='usr',
+        column='user_id',
         expect_eq=None
     )
 
@@ -455,7 +455,7 @@ async def test(test):
     session_info_other, session_info_this = await test.fetch(
         "select * from list_sessions(authtoken := $1) order by this",
         usr1_token,
-        columns=['id', 'name', 'valid_until', 'last_seen', 'this']
+        columns=['session_id', 'name', 'valid_until', 'last_seen', 'this']
     )
 
     test.expect_eq(session_info_this['name'], 'testscript-1')
@@ -503,45 +503,45 @@ async def test(test):
 
     # test renaming sessions
     await test.fetch_expect_raise(
-        'call rename_session(authtoken := $1, session := $2, new_name := $3)',
+        'call rename_session(authtoken := $1, session_id := $2, new_name := $3)',
         'a'*32,
-        session_info_other['id'],
+        session_info_other['session_id'],
         'best session',
         error_id='bad-authtoken'
     )
 
     # test renaming an other user's sessions, it shouldn't work and the name should stay the same
     await test.fetch_expect_raise(
-        'call rename_session(authtoken := $1, session := $2, new_name := $3)',
+        'call rename_session(authtoken := $1, session_id := $2, new_name := $3)',
         usr2_token,
-        session_info_other['id'],
+        session_info_other['session_id'],
         'best session',
         error_id='bad-session-id'
     )
     await test.fetchval(
         'select name from session where id=$1',
-        session_info_other['id'],
+        session_info_other['session_id'],
         expect_eq=session_info_other['name']
     )
 
     # test renaming one's own session, it should work fine
     await test.fetch(
-        'call rename_session(authtoken := $1, session := $2, new_name := $3)',
+        'call rename_session(authtoken := $1, session_id := $2, new_name := $3)',
         usr1_token,
-        session_info_other['id'],
+        session_info_other['session_id'],
         'best session'
     )
     await test.fetchval(
         'select name from session where id=$1',
-        session_info_other['id'],
+        session_info_other['session_id'],
         expect_eq='best session'
     )
 
     # test logging out another user's session (shouldn't work)
     await test.fetch_expect_raise(
-        'call logout_session(authtoken := $1, session := $2)',
+        'call logout_session(authtoken := $1, session_id := $2)',
         usr2_token,
-        session_info_other['id'],
+        session_info_other['session_id'],
         error_id='bad-session-id'
     )
     await test.fetchval(
@@ -552,9 +552,9 @@ async def test(test):
 
     # test logging out another session
     await test.fetch_expect_raise(
-        'call logout_session(authtoken := $1, session := $2)',
+        'call logout_session(authtoken := $1, session_id := $2)',
         'a'*32,
-        session_info_other['id'],
+        session_info_other['session_id'],
         error_id='bad-authtoken'
     )
     await test.fetchval(
@@ -563,9 +563,9 @@ async def test(test):
         expect_eq=usr1_id
     )
     await test.fetch(
-        'call logout_session(authtoken := $1, session := $2)',
+        'call logout_session(authtoken := $1, session_id := $2)',
         usr1_token,
-        session_info_other['id']
+        session_info_other['session_id']
     )
     await test.fetch_expect_raise(
         'select * from session_auth(token := $1)',

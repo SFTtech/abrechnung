@@ -21,10 +21,10 @@ begin
 
     insert into group_membership
         (usr, grp, description, is_owner, can_write)
-        values (locals.usr, group_create.id, 'creator', true, true);
+        values (locals.usr, group_create.group_id, 'creator', true, true);
 
     insert into group_log (grp, usr, type)
-    values (group_create.id, locals.usr, 'group-create');
+    values (group_create.group_id, locals.usr, 'group-create');
 end;
 $$ language plpgsql;
 call allow_function('group_create');
@@ -99,7 +99,8 @@ begin
         latest_commit
     order by
         latest_commit.latest_commit desc,
-        my_groups.joined desc;
+        my_groups.joined desc,
+        group_id desc;
 end;
 $$ language plpgsql;
 call allow_function('group_list');
@@ -110,7 +111,7 @@ call allow_function('group_list');
 --
 -- also checks that the user is part of the group and has the
 -- needed permissions.
--- 
+--
 -- designed for internal use by all functions that accept a session authtoken.
 -- methods that call this can raise:
 --

@@ -214,7 +214,7 @@ $$ language sql;
 
 
 -- validates an existing login session token,
--- and returns the usr.id of the user this authenticates as
+-- and returns the usr.id of the user authtoken authenticates as.
 -- designed for internal use by all functions that accept a session authtoken
 -- all methods that call this can raise bad-authtoken
 create or replace function session_auth(token uuid, fatal boolean default true, out user_id integer)
@@ -229,7 +229,7 @@ begin
                 (session.valid_until is null or session.valid_until >= now())
     returning session.usr into session_auth.user_id;
 
-    if session_auth.fatal and session_auth.usr is null then
+    if session_auth.fatal and session_auth.user_id is null then
         raise exception 'bad-authtoken:invalid session authtoken';
     end if;
 end
@@ -313,7 +313,7 @@ begin
         where
                 session.usr = locals.usr
             and
-                (logout_session.session is null or session.id = logout_session.session_id);
+                (logout_session.session_id is null or session.id = logout_session.session_id);
 
     if not found then
         raise exception 'bad-session-id:no such session id';
@@ -637,7 +637,7 @@ begin
     from usr
     where usr.id=admin_auth.user_id and usr.admin=true;
 
-    if admin_auth.fatal and admin_auth.usr is null then
+    if admin_auth.fatal and admin_auth.user_id is null then
         raise exception 'no-admin:user does not have admin permissions';
     end if;
 end;

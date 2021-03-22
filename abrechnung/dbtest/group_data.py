@@ -21,7 +21,7 @@ async def test(test):
         ''',
         auth1, 'best group', 'this group is amazing',
         'you must be amazing to join', '€',
-        column='id'
+        column='group_id'
     )
 
     # TODO tests here!
