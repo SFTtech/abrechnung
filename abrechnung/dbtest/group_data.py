@@ -16,12 +16,12 @@ async def test(test):
             name := $2,
             description := $3,
             terms := $4,
-            currency := $5
+            currency_symbol := $5
         )
         ''',
         auth1, 'best group', 'this group is amazing',
         'you must be amazing to join', '€',
-        column='id'
+        column='group_id'
     )
 
     # TODO tests here!

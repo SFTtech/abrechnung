@@ -34,6 +34,7 @@ import aiohttp.web
 import asyncpg
 
 from .subcommand import SubCommand
+from . import util
 
 
 def encode_json(obj):
@@ -249,7 +250,7 @@ class SFTPGWS(SubCommand):
             else:
                 query = f"select * from {func}({', '.join(func_args)});"
 
-            self.logger.info(f"[{connection_id}] \x1b[1m{query}\x1b[m {query_args!r}")
+            self.logger.info(f"[{connection_id}] {util.BOLD}{query}{util.NORMAL} {query_args!r}")
 
             prepared_query = await connection.prepare(query)
             for arg_id, arg_info in enumerate(prepared_query.get_parameters()):

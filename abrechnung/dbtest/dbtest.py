@@ -14,6 +14,7 @@ import asyncpg
 
 from .. import subcommand
 from .. import psql as psql_command
+from .. import util
 
 
 class DBTest(subcommand.SubCommand):
@@ -56,7 +57,7 @@ class DBTest(subcommand.SubCommand):
         CLI entry point
         """
         if self.prepare_action:
-            print(f'prepare action: \x1b[1mpsql {self.prepare_action}\x1b[m')
+            print(f'prepare action: {util.BOLD}psql {self.prepare_action}{util.NORMAL}')
             try:
                 await psql_command.PSQL(self.config, action=self.prepare_action).run()
             except SystemExit as exc:
@@ -74,23 +75,28 @@ class DBTest(subcommand.SubCommand):
         self.psql.add_termination_listener(self.terminate_callback)
         self.psql.add_log_listener(self.log_callback)
 
+        # for testing purposes, reduce the number of rounds for bf
+        await self.fetch("insert into password_setting (algorithm, rounds) values ('bf', 4);")
+
         from . import websocket_connections
-        print(f'\x1b[1mwebsocket_connections.test\x1b[m')
+        print(f'{util.BOLD}websocket_connections.test{util.NORMAL}')
         await websocket_connections.test(self)
         from . import user_accounts
-        print(f'\x1b[1muser_accounts.test\x1b[m')
+        print(f'{util.BOLD}user_accounts.test{util.NORMAL}')
         await user_accounts.test(self)
         from . import groups
-        print(f'\x1b[1mgroups.test\x1b[m')
+        print(f'{util.BOLD}groups.test{util.NORMAL}')
         await groups.test(self)
         from . import group_data
-        print(f'\x1b[1mgroup_data.test\x1b[m')
+        print(f'{util.BOLD}group_data.test{util.NORMAL}')
         await group_data.test(self)
 
-        print(f'\x1b[1mtests done\x1b[m')
+        await self.fetch("delete from password_setting where algorithm = 'bf' and rounds = 4;")
+
+        print(f'{util.BOLD}tests done{util.NORMAL}')
 
         if self.populate_db:
-            print(f'\x1b[1mpopulating db with test data\x1b[m')
+            print(f'{util.BOLD}populating db with test data{util.NORMAL}')
             from .import populate
             await populate.populate(self)
 
@@ -211,13 +217,18 @@ class DBTest(subcommand.SubCommand):
         """ runs whenever we get a psql notification """
         self.expect_is(connection, self.psql)
         del pid  # unused
-        payload_json = json.loads(payload)
+        try:
+            payload_json = json.loads(payload)
+        except json.JSONDecodeError as exc:
+            print(f'notification on {channel!r}: '
+                  f'invalid json: {payload!r}')
+            raise
         print(f'notification on {channel!r}: {payload_json!r}')
-        self.notifications.put_nowait((channel, json.loads(payload), time.time()))
+        self.notifications.put_nowait((channel, payload_json, time.time()))
 
     async def get_notification(self, ensure_single=True):
         """
-        returns the current next notification
+        returns the current next notification as (channel, payloaddict, time)
 
         if ensure_single, ensures that there are no further notifications
         in the queue.
@@ -227,6 +238,7 @@ class DBTest(subcommand.SubCommand):
         except asyncio.exceptions.TimeoutError:
             self.error('expected a notification but did not receive it')
         if ensure_single:
+            # wait a bit for more notifications to arrive
             await asyncio.sleep(0.05)
             extra_notifications = []
             while self.notifications.qsize() > 0:
@@ -253,7 +265,7 @@ class DBTest(subcommand.SubCommand):
         """
         Call this to indicate an error during testing.
         """
-        print(f'\x1b[31;1mtest error\x1b[m {error_message}')
+        print(f'{util.format_error("test error")} {error_message}')
         raise RuntimeError(error_message) from None
 
     def expect_is(self, actual, expected):

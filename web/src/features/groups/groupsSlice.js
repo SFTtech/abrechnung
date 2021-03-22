@@ -16,7 +16,7 @@ export const createGroup = createAsyncThunk("groups/createGroup", async ({name, 
         name: name,
         description: description,
         terms: "",
-        currency: "€",
+        currency_symbol: "€",
     });
 });
 
@@ -57,14 +57,14 @@ export const setGroupMemberPrivileges = createAsyncThunk(
 
 export const updateGroupMetadata = createAsyncThunk(
     "groups/updateGroupMetadata",
-    async ({groupID, name, description, currency, terms}, {getState}) => {
+    async ({groupID, name, description, currency_symbol, terms}, {getState}) => {
         return ws.call("group_metadata_set", {
             authtoken: getState().auth.sessionToken,
             group_id: groupID,
             name: name === undefined ? null : name,
             description: description === undefined ? null : description,
             terms: terms === undefined ? null : terms,
-            currency: currency === undefined ? null : currency,
+            currency_symbol: currency_symbol === undefined ? null : currency_symbol,
         });
     }
 );
@@ -155,7 +155,7 @@ export const groupsSlice = createSlice({
                 name: action.meta.arg.name,
                 description: action.meta.arg.description,
                 terms: action.meta.arg.terms,
-                currency: action.meta.arg.currency,
+                currency_symbol: action.meta.arg.currency_symbol,
             };
             groupsAdapter.addOne(state, group);
             state.status = "idle";

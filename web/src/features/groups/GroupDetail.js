@@ -25,8 +25,8 @@ class GroupDetail extends Component {
         this.props.updateGroupMetadata({ groupID: this.props.group.id, description: description });
     };
 
-    updateCurrency = (currency) => {
-        this.props.updateGroupMetadata({ groupID: this.props.group.id, currency: currency });
+    updateCurrencySymbol = (currency_symbol) => {
+        this.props.updateGroupMetadata({ groupID: this.props.group.id, currency_symbol: currency_symbol });
     };
 
     updateTerms = (terms) => {
@@ -78,7 +78,7 @@ class GroupDetail extends Component {
                             {this.props.group.latest_commit === null ? "never" : this.props.group.latest_commit}
                         </span>
                     </ListGroup.Item>
-                    {this.props.group.currency === undefined || this.props.group.terms === undefined ? (
+                    {this.props.group.currency_symbol === undefined || this.props.group.terms === undefined ? (
                         <ListGroup.Item className={"d-flex justify-content-center"}>
                             <Spinner animation="border" role="status">
                                 <span className="sr-only">Loading...</span>
@@ -87,8 +87,12 @@ class GroupDetail extends Component {
                     ) : (
                         <>
                             <ListGroup.Item className={"d-flex"}>
-                                <span className={"font-weight-bold w-25"}>Currency</span>
-                                <span>{this.props.group.currency}</span>
+                                <Col xs={3} className={"p-0"}>
+                                    <span className={"font-weight-bold"}>Currency Symbol</span>
+                                </Col>
+                                <Col xs={9} className={"p-0 d-flex justify-content-between"}>
+                                    <EditableField value={this.props.group.currency_symbol} onChange={this.updateCurrencySymbol} />
+                                </Col>
                             </ListGroup.Item>
                             <ListGroup.Item>
                                 <div className={"d-flex justify-content-between"}>

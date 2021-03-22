@@ -47,12 +47,12 @@ async def test(test):
 
     # disconnect clients
     await test.fetch(
-        "call client_disconnected(id := $1)",
+        "call client_disconnected(connection_id := $1)",
         connection_id
     )
 
     await test.fetch_expect_raise(
-        "call client_disconnected(id := $1)",
+        "call client_disconnected(connection_id := $1)",
         connection_id,
         error_id='bad-connection-id'
     )
@@ -83,7 +83,7 @@ async def test(test):
     await test.listen(channel)
 
     await test.fetch(
-        "call notify_connections(connections := $1, event := $2, args := $3)",
+        "call notify_connections(connection_ids := $1, event := $2, args := $3)",
         [connection_id],
         'notify_connections a',
         json.dumps({'foo': 1})
@@ -99,7 +99,7 @@ async def test(test):
     )
 
     await test.fetch(
-        "call notify_connections(connections := $1, event := $2, args := $3)",
+        "call notify_connections(connection_ids := $1, event := $2, args := $3)",
         [connection_id, connection_id_other],
         'notify_connections b',
         json.dumps({'bar': 1337, 'lol': 'test'})
