@@ -35,11 +35,9 @@ class GroupLog extends Component {
     }
 
     render() {
-        if (this.props.group.log === undefined) {
+        if (this.props.group.log === undefined || this.props.group.members === undefined) {
             return (
                 <div>
-                    <h5>Log</h5>
-                    <hr />
                     <div className={"d-flex justify-content-center"}>
                         <Spinner animation="border" role="status">
                             <span className="sr-only">Loading...</span>
@@ -57,9 +55,7 @@ class GroupLog extends Component {
 
         return (
             <div>
-                <h5>Log</h5>
                 {error}
-                <hr />
                 <Col xs={12}>
                     <Form.Check
                         type={"switch"}

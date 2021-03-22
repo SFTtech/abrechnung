@@ -29,7 +29,6 @@ class Login extends Component {
     render() {
         if (this.props.isAuthenticated) {
             let params = queryString.parse(this.props.location.search);
-            console.log(params, params.next);
             if (params.next !== null && params.next !== undefined && params.next.startsWith("/")) {
                 return <Redirect to={params.next} />;
             }

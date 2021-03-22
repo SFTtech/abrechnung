@@ -3,7 +3,7 @@ import { Redirect, Route } from "react-router-dom";
 import { connect } from "react-redux";
 import Spinner from "react-bootstrap/Spinner";
 
-const PrivateRoute = ({ component: Component, status, isAuthenticated, ...rest }) => (
+const PrivateRoute = ({ component: Component, children, status, isAuthenticated, ...rest }) => (
     <Route
         {...rest}
         render={(props) => {
@@ -19,6 +19,10 @@ const PrivateRoute = ({ component: Component, status, isAuthenticated, ...rest }
 
             if (!isAuthenticated) {
                 return <Redirect to="/login" />;
+            }
+
+            if (children !== undefined) {
+                return {...children};
             }
 
             return (

@@ -1,6 +1,6 @@
-import React, { Component } from "react";
-import { connect } from "react-redux";
-import { withRouter } from "react-router-dom";
+import React, {Component} from "react";
+import {connect} from "react-redux";
+import {Switch, withRouter} from "react-router-dom";
 
 import Row from "react-bootstrap/cjs/Row";
 import Col from "react-bootstrap/cjs/Col";
@@ -8,13 +8,15 @@ import Spinner from "react-bootstrap/Spinner";
 import "react-datetime/css/react-datetime.css";
 import InviteLinkList from "./InviteLinkList";
 
-import { fetchGroups } from "./groupsSlice";
+import {fetchGroups} from "./groupsSlice";
 import GroupMemberList from "./GroupMemberList";
-import Tab from "react-bootstrap/Tab";
 import ListGroup from "react-bootstrap/cjs/ListGroup";
-import { LinkContainer } from "react-router-bootstrap";
+import {LinkContainer} from "react-router-bootstrap";
 import GroupLog from "./GroupLog";
 import GroupDetail from "./GroupDetail";
+import PrivateRoute from "../../components/PrivateRoute";
+import TransactionLog from "../transactions/TransactionLog";
+import Accounts from "../transactions/Accounts";
 
 class Group extends Component {
     state = {};
@@ -46,52 +48,61 @@ class Group extends Component {
             );
         }
 
+        const path = this.props.match.path;
+        const url = this.props.match.url;
+
         return (
             <Row>
                 <Col xs={12}>
                     <h3>{group.name}</h3>
                     {error}
-                    <hr />
-                    <Tab.Container
-                        id="group-tabs"
-                        defaultActiveKey="group-detail"
-                        activeKey={this.props.match.params !== undefined ? this.props.match.params.tab : "group-detail"}
-                    >
-                        <Row>
-                            <Col lg={3} md={4}>
-                                <ListGroup>
-                                    <LinkContainer to={"/groups/" + this.props.match.params.id + "/group-detail"}>
-                                        <ListGroup.Item action>Group Detail</ListGroup.Item>
-                                    </LinkContainer>
-                                    <LinkContainer to={"/groups/" + this.props.match.params.id + "/members"}>
-                                        <ListGroup.Item action>Members</ListGroup.Item>
-                                    </LinkContainer>
-                                    <LinkContainer to={"/groups/" + this.props.match.params.id + "/log"}>
-                                        <ListGroup.Item action>Log</ListGroup.Item>
-                                    </LinkContainer>
-                                    <LinkContainer to={"/groups/" + this.props.match.params.id + "/invite-tokens"}>
-                                        <ListGroup.Item action>Invite Links</ListGroup.Item>
-                                    </LinkContainer>
-                                </ListGroup>
-                            </Col>
-                            <Col lg={9} md={8}>
-                                <Tab.Content>
-                                    <Tab.Pane eventKey="group-detail">
-                                        <GroupDetail group={group} />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="members">
-                                        <GroupMemberList group={group} />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="log">
-                                        <GroupLog group={group} />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="invite-tokens">
-                                        <InviteLinkList group={group} />
-                                    </Tab.Pane>
-                                </Tab.Content>
-                            </Col>
-                        </Row>
-                    </Tab.Container>
+                    <hr/>
+                    <Row>
+                        <Col lg={9} md={8}>
+                            <Switch>
+                                <PrivateRoute exact path={`${path}/(transactions)?`}>
+                                    <TransactionLog group={group}/>
+                                </PrivateRoute>
+                                <PrivateRoute exact path={`${path}/accounts`}>
+                                    <Accounts group={group}/>
+                                </PrivateRoute>
+                                <PrivateRoute exact path={`${path}/group-detail`}>
+                                    <GroupDetail group={group}/>
+                                </PrivateRoute>
+                                <PrivateRoute exact path={`${path}/invite-tokens`}>
+                                    <InviteLinkList group={group}/>
+                                </PrivateRoute>
+                                <PrivateRoute exact path={`${path}/log`}>
+                                    <GroupLog group={group}/>
+                                </PrivateRoute>
+                                <PrivateRoute exact path={`${path}/members`}>
+                                    <GroupMemberList group={group}/>
+                                </PrivateRoute>
+                            </Switch>
+                        </Col>
+                        <Col lg={3} md={4}>
+                            <ListGroup>
+                                <LinkContainer to={`${url}/transactions`}>
+                                    <ListGroup.Item action>Transactions</ListGroup.Item>
+                                </LinkContainer>
+                                <LinkContainer to={`${url}/accounts`}>
+                                    <ListGroup.Item action>Accounts</ListGroup.Item>
+                                </LinkContainer>
+                                <LinkContainer to={`${url}/group-detail`}>
+                                    <ListGroup.Item action>Group Detail</ListGroup.Item>
+                                </LinkContainer>
+                                <LinkContainer to={`${url}/members`}>
+                                    <ListGroup.Item action>Members</ListGroup.Item>
+                                </LinkContainer>
+                                <LinkContainer to={`${url}/log`}>
+                                    <ListGroup.Item action>Log</ListGroup.Item>
+                                </LinkContainer>
+                                <LinkContainer to={`${url}/invite-tokens`}>
+                                    <ListGroup.Item action>Invite Links</ListGroup.Item>
+                                </LinkContainer>
+                            </ListGroup>
+                        </Col>
+                    </Row>
                 </Col>
             </Row>
         );
@@ -104,4 +115,4 @@ const mapStateToProps = (state) => ({
     groups: state.groups.entities,
 });
 
-export default withRouter(connect(mapStateToProps, { fetchGroups })(Group));
+export default withRouter(connect(mapStateToProps, {fetchGroups})(Group));

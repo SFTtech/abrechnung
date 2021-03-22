@@ -79,8 +79,6 @@ class GroupMemberList extends Component {
     render() {
         return (
             <div>
-                <h5>Members</h5>
-                <hr />
                 <ListGroup variant={"flush"}>
                     {this.getMembers() === null ? (
                         <div className={"d-flex justify-content-center"}>

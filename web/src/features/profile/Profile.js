@@ -1,8 +1,8 @@
-import React, { Component } from "react";
-import { connect } from "react-redux";
+import React, {Component} from "react";
+import {connect} from "react-redux";
 import PropTypes from "prop-types";
-import { withRouter } from "react-router-dom";
-import { fetchUserInfo } from "../auth/authSlice";
+import {Switch, withRouter} from "react-router-dom";
+import {fetchUserInfo} from "../auth/authSlice";
 import ChangePassword from "./ChangePassword";
 import ChangeEmail from "./ChangeEmail";
 import Spinner from "react-bootstrap/Spinner";
@@ -10,10 +10,11 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/Col";
 import Tab from "react-bootstrap/Tab";
 import ListGroup from "react-bootstrap/cjs/ListGroup";
-import { LinkContainer } from "react-router-bootstrap";
+import {LinkContainer} from "react-router-bootstrap";
 
 import SessionList from "./SessionList";
 import "./Profile.css";
+import PrivateRoute from "../../components/PrivateRoute";
 
 class Profile extends Component {
     static propTypes = {
@@ -31,13 +32,15 @@ class Profile extends Component {
 
     render() {
         const error = this.props.error !== null ? <div className="alert alert-danger">{this.props.error}</div> : "";
+        const path = this.props.match.path;
+        const url = this.props.match.url;
 
         return (
             <Row>
                 <Col xs={12}>
                     <h3>Profile</h3>
                     {error}
-                    <hr />
+                    <hr/>
                     <Tab.Container
                         id="profile-tabs"
                         defaultActiveKey="user-info"
@@ -46,23 +49,23 @@ class Profile extends Component {
                         <Row>
                             <Col lg={3} md={4}>
                                 <ListGroup>
-                                    <LinkContainer to={"/profile/user-info"}>
+                                    <LinkContainer to={`${url}/user-info`}>
                                         <ListGroup.Item action>User Info</ListGroup.Item>
                                     </LinkContainer>
-                                    <LinkContainer to={"/profile/sessions"}>
+                                    <LinkContainer to={`${url}/sessions`}>
                                         <ListGroup.Item action>Sessions</ListGroup.Item>
                                     </LinkContainer>
-                                    <LinkContainer to={"/profile/change-email"}>
+                                    <LinkContainer to={`${url}/change-email`}>
                                         <ListGroup.Item action>Change E-Mail</ListGroup.Item>
                                     </LinkContainer>
-                                    <LinkContainer to={"/profile/change-password"}>
+                                    <LinkContainer to={`${url}/change-password`}>
                                         <ListGroup.Item action>Change Password</ListGroup.Item>
                                     </LinkContainer>
                                 </ListGroup>
                             </Col>
                             <Col lg={9} md={8}>
-                                <Tab.Content>
-                                    <Tab.Pane eventKey="user-info">
+                                <Switch>
+                                    <PrivateRoute exact path={`${path}/(user-info)?`}>
                                         {this.props.isLoading || this.props.user === null ? (
                                             <div className={"d-flex justify-content-center"}>
                                                 <Spinner animation="border" role="status">
@@ -89,17 +92,17 @@ class Profile extends Component {
                                                 </ListGroup.Item>
                                             </ListGroup>
                                         )}
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="sessions">
-                                        <SessionList />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="change-email">
-                                        <ChangeEmail />
-                                    </Tab.Pane>
-                                    <Tab.Pane eventKey="change-password">
-                                        <ChangePassword />
-                                    </Tab.Pane>
-                                </Tab.Content>
+                                    </PrivateRoute>
+                                    <PrivateRoute exact path={`${path}/sessions`}>
+                                        <SessionList/>
+                                    </PrivateRoute>
+                                    <PrivateRoute exact path={`${path}/change-email`}>
+                                        <ChangeEmail/>
+                                    </PrivateRoute>
+                                    <PrivateRoute exact path={`${path}/change-password`}>
+                                        <ChangePassword/>
+                                    </PrivateRoute>
+                                </Switch>
                             </Col>
                         </Row>
                     </Tab.Container>

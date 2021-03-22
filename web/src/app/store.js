@@ -5,6 +5,8 @@ import authReducer, {authEpic} from "../features/auth/authSlice";
 import messagesReducer from "../features/messages/messagesSlice";
 import profileReducer from "../features/profile/profileSlice";
 import groupsReducer, {groupsEpic} from "../features/groups/groupsSlice";
+import transactionsReducer from "../features/transactions/transactionsSlice";
+import accountsSlice from "../features/transactions/accountsSlice";
 
 const epicMiddleware = createEpicMiddleware();
 
@@ -14,6 +16,8 @@ export default configureStore({
         groups: groupsReducer,
         messages: messagesReducer,
         profile: profileReducer,
+        transactions: transactionsReducer,
+        accounts: accountsSlice,
     },
     middleware: (getDefaultMiddleware) => {
         return getDefaultMiddleware().concat(epicMiddleware);

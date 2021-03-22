@@ -1,6 +1,6 @@
 import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import {ofType} from "redux-observable";
-import {map, withLatestFrom} from "rxjs/operators";
+import {map} from "rxjs/operators";
 
 import {ws} from "../../websocket";
 

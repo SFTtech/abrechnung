@@ -23,8 +23,8 @@ export class SFTWebsocket {
     }
     onopen = () => {
         console.log("WS Connected");
-        for (const msg of this.msgQueue) {
-            this.send(msg);
+        while (this.msgQueue.length > 0) {
+            this.send(this.msgQueue.pop());
         }
     }
     onclose = () => {

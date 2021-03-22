@@ -11,7 +11,7 @@ import PropTypes from "prop-types";
 import Spinner from "react-bootstrap/Spinner";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faTrash} from "@fortawesome/free-solid-svg-icons/faTrash";
-import {createInviteToken, deleteInviteToken, fetchInviteTokens} from "./groupsSlice";
+import {createInviteToken, deleteInviteToken, fetchGroupMembers, fetchInviteTokens} from "./groupsSlice";
 
 class InviteLinkList extends Component {
     static propTypes = {
@@ -28,6 +28,7 @@ class InviteLinkList extends Component {
 
     componentDidMount = () => {
         this.props.fetchInviteTokens({groupID: this.props.group.id});
+        this.props.fetchGroupMembers({ groupID: this.props.group.id });
     };
 
     openModal = () => {
@@ -162,4 +163,4 @@ const mapStateToProps = (state) => ({
     error: state.groups.error,
 });
 
-export default connect(mapStateToProps, {fetchInviteTokens, createInviteToken, deleteInviteToken})(InviteLinkList);
+export default connect(mapStateToProps, {fetchInviteTokens, fetchGroupMembers, createInviteToken, deleteInviteToken})(InviteLinkList);

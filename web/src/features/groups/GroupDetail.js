@@ -87,12 +87,8 @@ class GroupDetail extends Component {
                     ) : (
                         <>
                             <ListGroup.Item className={"d-flex"}>
-                                <Col xs={3} className={"p-0"}>
-                                    <span className={"font-weight-bold"}>Currency</span>
-                                </Col>
-                                <Col xs={9} className={"p-0 d-flex justify-content-between"}>
-                                    <EditableField value={this.props.group.currency} onChange={this.updateCurrency} />
-                                </Col>
+                                <span className={"font-weight-bold w-25"}>Currency</span>
+                                <span>{this.props.group.currency}</span>
                             </ListGroup.Item>
                             <ListGroup.Item>
                                 <div className={"d-flex justify-content-between"}>
