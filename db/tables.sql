@@ -397,7 +397,9 @@ create table if not exists transaction_history (
     -- calculating group account balances.
     currency_conversion_rate double precision not null,
     -- total value of the transaction, in the transaction currency
-    value double precision not null
+    value double precision not null,
+
+    description text not null default ''
 );
 
 -- a share that a transaction's creditor has in the transaction value

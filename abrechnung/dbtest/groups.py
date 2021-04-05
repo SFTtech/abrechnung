@@ -22,7 +22,7 @@ async def test(test):
         )
         ''',
         auth1, 'best group', 'this group is amazing',
-        'you must be amazing to join', '€',
+        'you must be amazing to join', '\N{EURO SIGN}',
         column='group_id'
     )
 
@@ -38,7 +38,7 @@ async def test(test):
         )
         ''',
         auth2, 'acceptable group', 'this group is mediocre',
-        'you must be mediocre to join', '€',
+        'you must be mediocre to join', '\N{EURO SIGN}',
         column='group_id'
     )
 
@@ -63,7 +63,7 @@ async def test(test):
         'select * from group_list(authtoken := $1)',
         auth1,
         columns=[
-            'group_id', 'name', 'description',
+            'group_id', 'name', 'description', 'currency_symbol',
             'member_count', 'created', 'joined',
             'latest_commit', 'is_owner', 'can_write'
         ]
@@ -72,38 +72,40 @@ async def test(test):
     test.expect_eq(group_infos[0][0], grp3)
     test.expect_eq(group_infos[0][1], 'boring group')
     test.expect_eq(group_infos[0][2], 'nothing to see here')
-    test.expect_eq(group_infos[0][3], 1)
-    test.expect_eq(
-        group_infos[0][4],
-        datetime.datetime.now(datetime.timezone.utc),
-        tolerance=datetime.timedelta(minutes=1)
-    )
+    test.expect_eq(group_infos[0][3], '$')
+    test.expect_eq(group_infos[0][4], 1)
     test.expect_eq(
         group_infos[0][5],
         datetime.datetime.now(datetime.timezone.utc),
         tolerance=datetime.timedelta(minutes=1)
     )
-    test.expect_eq(group_infos[0][6], None)
-    test.expect_eq(group_infos[0][7], True)
+    test.expect_eq(
+        group_infos[0][6],
+        datetime.datetime.now(datetime.timezone.utc),
+        tolerance=datetime.timedelta(minutes=1)
+    )
+    test.expect_eq(group_infos[0][7], None)
     test.expect_eq(group_infos[0][8], True)
+    test.expect_eq(group_infos[0][9], True)
 
     test.expect_eq(group_infos[1][0], grp1)
     test.expect_eq(group_infos[1][1], 'best group')
     test.expect_eq(group_infos[1][2], 'this group is amazing')
-    test.expect_eq(group_infos[1][3], 1)
-    test.expect_eq(
-        group_infos[1][4],
-        datetime.datetime.now(datetime.timezone.utc),
-        tolerance=datetime.timedelta(minutes=1)
-    )
+    test.expect_eq(group_infos[1][3], '\N{EURO SIGN}')
+    test.expect_eq(group_infos[1][4], 1)
     test.expect_eq(
         group_infos[1][5],
         datetime.datetime.now(datetime.timezone.utc),
         tolerance=datetime.timedelta(minutes=1)
     )
-    test.expect_eq(group_infos[1][6], None)
-    test.expect_eq(group_infos[1][7], True)
+    test.expect_eq(
+        group_infos[1][6],
+        datetime.datetime.now(datetime.timezone.utc),
+        tolerance=datetime.timedelta(minutes=1)
+    )
+    test.expect_eq(group_infos[1][7], None)
     test.expect_eq(group_infos[1][8], True)
+    test.expect_eq(group_infos[1][9], True)
 
     # check the groups that user2 is a part of
     group_info = await test.fetchrow(
@@ -113,20 +115,21 @@ async def test(test):
     test.expect_eq(group_info[0], grp2)
     test.expect_eq(group_info[1], 'acceptable group')
     test.expect_eq(group_info[2], 'this group is mediocre')
-    test.expect_eq(group_info[3], 1)
-    test.expect_eq(
-        group_info[4],
-        datetime.datetime.now(datetime.timezone.utc),
-        tolerance=datetime.timedelta(minutes=1)
-    )
+    test.expect_eq(group_info[3], '\N{EURO SIGN}')
+    test.expect_eq(group_info[4], 1)
     test.expect_eq(
         group_info[5],
         datetime.datetime.now(datetime.timezone.utc),
         tolerance=datetime.timedelta(minutes=1)
     )
-    test.expect_eq(group_info[6], None)
-    test.expect_eq(group_info[7], True)
+    test.expect_eq(
+        group_info[6],
+        datetime.datetime.now(datetime.timezone.utc),
+        tolerance=datetime.timedelta(minutes=1)
+    )
+    test.expect_eq(group_info[7], None)
     test.expect_eq(group_info[8], True)
+    test.expect_eq(group_info[9], True)
 
     # attempt to invite with bad authtoken
     await test.fetch_expect_raise(
