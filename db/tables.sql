@@ -60,7 +60,7 @@ create table if not exists usr(
     pending boolean not null default true,
     -- user is allowed to upload files
     can_upload_files boolean not null default false,
-    -- is deleted (users with commits can't be deleted)
+    -- is deleted (users with changes can't be deleted)
     -- sessions must be cleared if a user is marked deleted
     deleted boolean not null default false
 );
@@ -192,7 +192,7 @@ create table if not exists group_membership (
     -- owner permissions allow editing the group name, description, terms and currency.
     -- anybody with owner permissions can grant and revoke owner permissions.
     is_owner bool not null default false,
-    -- write permissions allow creating commits.
+    -- write permissions allow creating changes.
     -- anybody with write permissions can grant and revoke write permissions.
     can_write bool not null default true,
 
@@ -220,7 +220,8 @@ create table if not exists group_invite (
 );
 
 -- log entries for the group.
--- holds messages about group membership changes, commits, text messages, ...
+-- holds messages about group membership changes,
+-- group data changes, text messages, ...
 create table if not exists group_log (
     id bigserial primary key,
 
@@ -231,7 +232,8 @@ create table if not exists group_log (
     logged timestamptz not null default now(),
 
     -- type of the entry.
-    -- e.g.: 'create-group', 'grant-write', 'revoke-owner', 'create-commit'
+    -- e.g.: 'create-group', 'grant-write', 'revoke-owner',
+    --       'create-change', 'commit-change'
     type text not null,
     message text default '',
 
@@ -239,23 +241,39 @@ create table if not exists group_log (
     affected integer references usr(id) on delete restrict
 );
 
--- every data and history entry in a group references a commit as a foreign key.
--- entries that have just been added, but not yet commited, reference a commit
--- where the timestamp is null;
--- this special commit is visible only to the user who has done these edits;
--- it is created as soon as the user wants to edit the group,
--- and will receive a timestamp when the user clicks 'commit'.
--- commits with timestamps can no longer be edited.
-create table if not exists commit (
+-- every data and history entry in a group references a change as a foreign key.
+-- entries that have just been added, but not yet commited, reference a change
+-- where the commited timestamp is null;
+-- these uncommited changes are only visible if entered in the
+-- watched_uncommited_change table.
+-- uncommited changes are created when users start to change a group,
+-- and receive a 'commited' timestamp when the user clicks 'commit'.
+-- changes that have been commited can no longer be modified.
+create table if not exists change (
     id bigserial primary key,
 
     grp integer not null references grp(id) on delete cascade,
-    -- user that have created commits cannot be deleted
+    -- users that have created changes cannot be deleted
     usr integer not null references usr(id) on delete restrict,
 
-    timestamp timestamptz default null,
+    started timestamptz not null default now(),
+    commited timestamptz default null,
 
     message text not null
+);
+
+-- uncommited changes that a user watches.
+-- these changes will be visible to the user when they watch a group.
+-- when a user creates a new change, that change is automatically
+-- added to this table for them.
+-- when a change is commited, it is removed from this table for everybody.
+-- users can manually add other users' changes to this table for themselves,
+-- which is useful for live collaboration.
+create table if not exists watched_uncommited_change (
+    change_id bigint,
+    user_id bigint,
+
+    primary key (change_id, user_id)
 );
 
 -- group data, the actual purpose of the abrechnung
@@ -269,11 +287,10 @@ create table if not exists commit (
 -- - the group id
 -- - other associated ids
 -- the history table can contain multiple entries for each item.
--- each history table entry is linked to a commit id,
+-- each history table entry is linked to a change id,
 -- and contains all information that can change over time:
--- - whether the item is valid (this is set to false in commits that delete it)
+-- - whether the item is valid (this is set to false in changes that delete it)
 --   often there's conditions for when valid is allowed to be set to false.
---   check the 
 -- - item-specific information, e.g. name, price, currency, ...
 
 -- bookkeeping account
@@ -284,8 +301,8 @@ create table if not exists account (
 
 create table if not exists account_history (
     id integer references account(id) on delete restrict,
-    commit bigint references commit(id) on delete restrict,
-    primary key(id, commit),
+    change bigint references change(id) on delete restrict,
+    primary key(id, change),
     -- valid can only be false if no other valid item references the account id.
     valid bool not null default true,
 
@@ -329,8 +346,8 @@ create table if not exists account_clearing_relation (
 
 create table if not exists account_clearing_relation_history (
     id integer references account(id) on delete restrict,
-    commit bigint references commit(id) on delete restrict,
-    primary key(id, commit),
+    change bigint references change(id) on delete restrict,
+    primary key(id, change),
     -- valid cna be set to false at any time
     valid bool not null default true,
 
@@ -387,8 +404,8 @@ create table if not exists transaction (
 
 create table if not exists transaction_history (
     id integer references transaction(id) on delete restrict,
-    commit bigint references commit(id) on delete restrict,
-    primary key(id, commit),
+    change bigint references change(id) on delete restrict,
+    primary key(id, change),
     -- valid can be set to false at any time
     valid bool not null default true,
     -- currency (symbol) of the values inside this transaction
@@ -418,8 +435,8 @@ create table if not exists creditor_share (
 
 create table if not exists creditor_share_history (
     id integer references creditor_share(id) on delete restrict,
-    commit bigint references commit(id) on delete restrict,
-    primary key(id, commit),
+    change bigint references change(id) on delete restrict,
+    primary key(id, change),
     -- valid can be set to false at any time, but the transaction may
     -- become impossible to evaluate (making commiting impossible).
     valid bool not null default true,
@@ -443,8 +460,8 @@ create table if not exists debitor_share (
 
 create table if not exists debitor_share_history (
     id integer references debitor_share(id) on delete restrict,
-    commit bigint references commit(id) on delete restrict,
-    primary key(id, commit),
+    change bigint references change(id) on delete restrict,
+    primary key(id, change),
     -- valid can be set to false if the debited account is not referenced by
     -- any item_consumption, but the transaction may
     -- become impossible to evaluate (making commiting impossible).
@@ -461,8 +478,8 @@ create table if not exists purchase_item (
 
 create table if not exists purchase_item_history (
     id integer references purchase_item(id) on delete restrict,
-    commit bigint references commit(id) on delete restrict,
-    primary key(id, commit),
+    change bigint references change(id) on delete restrict,
+    primary key(id, change),
     -- valid can be set to false at any time.
     valid bool not null default true,
 
@@ -494,8 +511,8 @@ create table if not exists item_usage (
 
 create table if not exists item_usage_history (
     id integer references item_usage(id) on delete restrict,
-    commit bigint references commit(id) on delete restrict,
-    primary key(id, commit),
+    change bigint references change(id) on delete restrict,
+    primary key(id, change),
     -- valid can be set to false at any time.
     valid bool not null default true,
 

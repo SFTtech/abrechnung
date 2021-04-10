@@ -78,11 +78,11 @@ begin
         latest_commit as (
             select
                 my_groups.grp as grp,
-                max(commit.timestamp) as latest_commit
+                max(change.commited) as latest_commit
             from
                 my_groups
-            left outer join commit
-                on (my_groups.grp = commit.grp)
+            left outer join change
+                on (my_groups.grp = change.grp)
             group by my_groups.grp
         )
     select
