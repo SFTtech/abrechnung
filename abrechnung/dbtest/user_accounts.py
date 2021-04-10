@@ -7,7 +7,7 @@ import time
 import asyncpg.exceptions
 
 
-async def get_user(test, email='rofl@bar.baz', username='foowoman', password='123456', session='test'):
+async def make_user(test, email='rofl@bar.baz', username='foowoman', password='123456', session='test'):
     """
     registers a user and logs them in
 
@@ -442,7 +442,7 @@ async def test(test):
 
     usr1_id, usr1_token = usr_id, token_1
     # add a second user; it's used to test if users can see or manipulate each other's stuff
-    usr2_id, usr2_token = await get_user(test)
+    usr2_id, usr2_token = await make_user(test)
     test.expect_eq((await test.get_notification())[1], 'pending_registration')
 
     # check listing sessions - only the two non-outdated sessions of usr_id should be visible

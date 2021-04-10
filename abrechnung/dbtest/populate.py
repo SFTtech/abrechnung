@@ -1,11 +1,11 @@
 import datetime
 
-from .user_accounts import get_user
+from .user_accounts import make_user
 
 async def populate(test):
-    usr1, auth1 = await get_user(test, email='aaa@example.com', username='aaa')
-    usr2, auth2 = await get_user(test, email='bbb@example.com', username='bbb')
-    usr3, auth3 = await get_user(test, email='ccc@example.com', username='ccc')
+    usr1, auth1 = await make_user(test, email='foo@example.com', username='foo1')
+    usr2, auth2 = await make_user(test, email='bar@example.com', username='bar2')
+    usr3, auth3 = await make_user(test, email='baz@example.com', username='baz3')
 
     auth3b = await test.fetchval(
         'select * from login_with_password(session := $1, password := $2, username := $3)',

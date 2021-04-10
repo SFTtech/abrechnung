@@ -3,12 +3,12 @@ Tests for the functions from groups.sql
 """
 import datetime
 
-from .user_accounts import get_user, remove_user
+from .user_accounts import make_user, remove_user
 
 async def test(test):
-    usr1, auth1 = await get_user(test, email='a@example.com', username='a')
-    usr2, auth2 = await get_user(test, email='b@example.com', username='b')
-    usr3, auth3 = await get_user(test, email='c@example.com', username='c')
+    usr1, auth1 = await make_user(test, email='a@example.com', username='a')
+    usr2, auth2 = await make_user(test, email='b@example.com', username='b')
+    usr3, auth3 = await make_user(test, email='c@example.com', username='c')
 
     # usr1 creates a group
     grp1 = await test.fetchval(
