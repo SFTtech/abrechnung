@@ -269,7 +269,12 @@ begin
     from group_invite
     where
         group_invite.token = group_join.invite_token and
-        group_invite.valid_until >= now();
+        (group_invite.valid_until is null or
+         group_invite.valid_until >= now());
+
+    if not found then
+        raise exception 'no-group-invite:invite_token not found or no longer valid';
+    end if;
 
     insert into group_membership (usr, grp, is_owner, can_write, invited_by)
     values (locals.usr, group_join.group_id, false, false, locals.inviter);
