@@ -5,13 +5,13 @@ DBTest command
 import asyncio
 import json
 import re
-import subprocess
 import sys
 import time
 import traceback
 
 import asyncpg
 
+from . import compare
 from .. import subcommand
 from .. import psql as psql_command
 from .. import util
@@ -165,13 +165,21 @@ class DBTest(subcommand.SubCommand):
             error_re=f'^{error_id}:'
         )
 
-    async def fetchrow(self, query, *args, columns=None):
+    async def fetchrow(self, query, *args, columns=None, expect=None):
         """
         runs fetch and extracts the single row,
         checking columns.
+
+        expect can be a tuple to compare all row values against by ==,
+        you may wrap it with the compare module functions.
         """
         rows = await self.fetch(query, *args, columns=columns, rowcount=1)
-        return rows[0]
+        row = rows[0]
+
+        if expect is not None:
+            self.expect(row, expect)
+
+        return row
 
     async def fetchvals(self, query, *args, column=None, rowcount=None):
         """
@@ -181,20 +189,16 @@ class DBTest(subcommand.SubCommand):
         rows = await self.fetch(query, *args, columns=[column], rowcount=rowcount)
         return [row[0] for row in rows]
 
-    async def fetchval(self, query, *args, column=None, **kwargs):
+    async def fetchval(self, query, *args, column=None, expect=...):
         """
         runs fetchrow and extracts the single value
 
-        kwargs can be used to add expect_eq, expect_neq and expect_gt checks.
+        expect can be an expected value, usually wrapped with the compare module functions.
         """
         val = (await self.fetchrow(query, *args, columns=[column]))[0]
 
-        if 'expect_eq' in kwargs:
-            self.expect_eq(val, kwargs['expect_eq'], tolerance=kwargs.get('tolerance', None))
-        elif 'expect_neq' in kwargs:
-            self.expect_neq(val, kwargs['expect_neq'])
-        elif 'expect_gt' in kwargs:
-            self.expect_gt(val, kwargs['expect_gt'])
+        if expect is not ...:
+            self.expect(val, expect)
 
         return val
 
@@ -213,7 +217,7 @@ class DBTest(subcommand.SubCommand):
 
     def notification_callback(self, connection, pid, channel, payload):
         """ runs whenever we get a psql notification """
-        self.expect_is(connection, self.psql)
+        self.expect(connection, compare.identical(self.psql))
         del pid  # unused
         try:
             payload_json = json.loads(payload)
@@ -250,13 +254,13 @@ class DBTest(subcommand.SubCommand):
 
     def terminate_callback(self, connection):
         """ runs when the psql connection is closed """
-        self.expect_is(connection, self.psql)
+        self.expect(connection, compare.identical(self.psql))
         if not self.done:
             self.error('psql connection closed unexpectedly')
 
     async def log_callback(self, connection, message):
         """ runs when psql sends a log message """
-        self.expect_is(connection, self.psql)
+        self.expect(connection, compare.identical(self.psql))
         print(f'psql log message: {message}')
 
     def error(self, error_message):
@@ -266,50 +270,18 @@ class DBTest(subcommand.SubCommand):
         print(f'{util.format_error("test error")} {error_message}')
         raise RuntimeError(error_message) from None
 
-    def expect_is(self, actual, expected):
-        """
-        Tests that actual is expected, calls self.error if not, and returns actual.
-        """
-        if not (actual is expected):
-            self.error(f"expected {expected!r}, but got {actual!r}")
-        return actual
-
-    def expect_eq(self, actual, expected, tolerance=None):
+    def expect(self, actual, expected):
         """
         Tests that actual == expected, calls self.error if not, and returns actual.
+        You can use this in combination with the compare module.
+        """
 
-        if tolerance is not None, values of actual within the given tolerance
-        of expected are accepted as well.
-        """
-        if tolerance is not None:
-            return self.expect_in_interval(actual, expected - tolerance, expected + tolerance)
-
-        if not (actual == expected):
-            self.error(f"expected {expected!r}, but got {actual!r}")
-        return actual
-
-    def expect_neq(self, actual, expected):
-        """
-        Tests that actual != expected, calls self.error if not, and returns actual.
-        """
-        if not (actual != expected):
-            self.error(f"expected something different from {expected!r}, but got the same")
-        return actual
-
-    def expect_in_interval(self, actual, interval_start, interval_end):
-        """
-        Tests that interval_start <= actual <= interval_end,
-        calls self.error if not, and returns actual.
-        """
-        if not (interval_start <= actual <= interval_end):
-            self.error(f"expected value with {interval_start!r} <= value <= {interval_end!r}, but got {actual!r}")
-        return actual
-
-    def expect_gt(self, actual, expected):
-        """
-        Tests that actual > expected,
-        calls self.error if not, and returns actual.
-        """
-        if not (actual > expected):
-            self.error(f"expected value greater than {expected!r}, but got {actual!r}")
+        if not (expected == actual):
+            if (isinstance(expected, (list, tuple))):
+                for idx, (exp, act) in enumerate(zip(expected, actual)):
+                    if not (exp == act):
+                        self.error(f"when comparing index {idx}, "
+                                   f"expected {exp!r}, but got {act!r}")
+            else:
+                self.error(f"expected {expected!r}, but got {actual!r}")
         return actual

@@ -5,6 +5,8 @@ import json
 
 import asyncpg
 
+from . import compare
+
 
 async def test(test):
     forwarder_name = "test forwarder"
@@ -18,10 +20,10 @@ async def test(test):
         forwarder_name,
         column='notification_channel_number',
     )
-    test.expect_eq(channel, f"channel{channel_number}")
+    test.expect(channel, f"channel{channel_number}")
 
     # same forwarder should have the same channel
-    test.expect_eq(
+    test.expect(
         await test.fetchval(
             "select * from forwarder_boot(forwarder := $1)",
             forwarder_name
@@ -30,12 +32,12 @@ async def test(test):
     )
 
     # different forwarder should have a different channel
-    test.expect_neq(
+    test.expect(
         await test.fetchval(
             "select * from forwarder_boot(forwarder := $1)",
             forwarder_name + "_other"
         ),
-        channel
+        compare.different(channel)
     )
 
     # connect clients
@@ -70,7 +72,7 @@ async def test(test):
         column="connection_id"
     )
 
-    test.expect_eq(
+    test.expect(
         set(await test.fetchvals(
             "select id from connection where forwarder = $1",
             forwarder_name,
@@ -89,7 +91,7 @@ async def test(test):
         json.dumps({'foo': 1})
     )
 
-    test.expect_eq(
+    test.expect(
         (await test.get_notification())[1],
         {
             'connections': [connection_id],
@@ -105,7 +107,7 @@ async def test(test):
         json.dumps({'bar': 1337, 'lol': 'test'})
     )
 
-    test.expect_eq(
+    test.expect(
         (await test.get_notification())[1],
         {
             'connections': [connection_id, connection_id_other],
@@ -121,7 +123,7 @@ async def test(test):
         json.dumps({})
     )
 
-    test.expect_eq(
+    test.expect(
         (await test.get_notification())[1],
         {
             'connections': [connection_id],
@@ -136,7 +138,7 @@ async def test(test):
         json.dumps({'haha': 1})
     )
 
-    test.expect_eq(
+    test.expect(
         (await test.get_notification())[1],
         {
             'connections': '*',
@@ -148,7 +150,7 @@ async def test(test):
     await test.unlisten(channel)
 
     # close forwarder
-    test.expect_eq(
+    test.expect(
         await test.fetchval(
             "select * from forwarder_stop(forwarder := $1)",
             forwarder_name,
@@ -157,7 +159,7 @@ async def test(test):
         2
     )
 
-    test.expect_eq(
+    test.expect(
         set(await test.fetchvals(
             "select id from connection where forwarder = $1",
             forwarder_name,
@@ -182,4 +184,4 @@ async def test(test):
     expected_allowed_functions = {"confirm_registration", "login_with_password", "notify_me"}
     for allowed_function in allowed_functions:
         expected_allowed_functions.discard(allowed_function["name"])
-    test.expect_eq(expected_allowed_functions, set())
+    test.expect(expected_allowed_functions, set())

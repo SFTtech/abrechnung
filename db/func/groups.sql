@@ -276,8 +276,13 @@ begin
         raise exception 'no-group-invite:invite_token not found or no longer valid';
     end if;
 
-    insert into group_membership (usr, grp, is_owner, can_write, invited_by)
-    values (locals.usr, group_join.group_id, false, false, locals.inviter);
+    begin
+        insert into group_membership (usr, grp, is_owner, can_write, invited_by)
+        values (locals.usr, group_join.group_id, false, false, locals.inviter);
+    exception
+        when unique_violation or exclusion_violation then
+            raise exception 'already-member:user already member of this group';
+    end;
 
     -- delete the invite if it was single-use
     delete from group_invite
