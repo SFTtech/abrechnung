@@ -287,7 +287,7 @@ create table if not exists account (
 
 create table if not exists account_history (
     id integer references account(id) on delete restrict,
-    change bigint references change(id) on delete restrict,
+    change bigint references change(id) on delete cascade,
     primary key(id, change),
     -- valid can only be false if no other valid item references the account id.
     valid bool not null default true,
@@ -332,7 +332,7 @@ create table if not exists account_clearing_relation (
 
 create table if not exists account_clearing_relation_history (
     id integer references account(id) on delete restrict,
-    change bigint references change(id) on delete restrict,
+    change bigint references change(id) on delete cascade,
     primary key(id, change),
     -- valid cna be set to false at any time
     valid bool not null default true,
@@ -390,7 +390,7 @@ create table if not exists transaction (
 
 create table if not exists transaction_history (
     id integer references transaction(id) on delete restrict,
-    change bigint references change(id) on delete restrict,
+    change bigint references change(id) on delete cascade,
     primary key(id, change),
     -- valid can be set to false at any time
     valid bool not null default true,
@@ -421,7 +421,7 @@ create table if not exists creditor_share (
 
 create table if not exists creditor_share_history (
     id integer references creditor_share(id) on delete restrict,
-    change bigint references change(id) on delete restrict,
+    change bigint references change(id) on delete cascade,
     primary key(id, change),
     -- valid can be set to false at any time, but the transaction may
     -- become impossible to evaluate (making commiting impossible).
@@ -446,7 +446,7 @@ create table if not exists debitor_share (
 
 create table if not exists debitor_share_history (
     id integer references debitor_share(id) on delete restrict,
-    change bigint references change(id) on delete restrict,
+    change bigint references change(id) on delete cascade,
     primary key(id, change),
     -- valid can be set to false if the debited account is not referenced by
     -- any item_consumption, but the transaction may
@@ -464,7 +464,7 @@ create table if not exists purchase_item (
 
 create table if not exists purchase_item_history (
     id integer references purchase_item(id) on delete restrict,
-    change bigint references change(id) on delete restrict,
+    change bigint references change(id) on delete cascade,
     primary key(id, change),
     -- valid can be set to false at any time.
     valid bool not null default true,
@@ -497,7 +497,7 @@ create table if not exists item_usage (
 
 create table if not exists item_usage_history (
     id integer references item_usage(id) on delete restrict,
-    change bigint references change(id) on delete restrict,
+    change bigint references change(id) on delete cascade,
     primary key(id, change),
     -- valid can be set to false at any time.
     valid bool not null default true,
