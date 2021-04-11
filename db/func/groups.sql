@@ -119,7 +119,7 @@ call allow_function('group_list');
 -- methods that call this can raise:
 --
 -- - bad-authtoken
--- - no-group-membership
+-- - no-group-membership (also if group_id is null)
 -- - no-group-write-permission
 -- - no-group-owner-permission
 create or replace function session_auth_group(
@@ -360,7 +360,7 @@ begin
         need_owner_permission := (is_owner is not null)
     );
 
-    if group_member_privileges_set.usr = locals.usr then
+    if group_member_privileges_set.user_id = locals.usr then
         raise exception 'cannot-modify-own-privileges:group members cannot modify their own privileges';
     end if;
 
@@ -380,11 +380,10 @@ begin
         raise exception 'no-such-group-member:there is no group member with this id';
     end if;
 
-    if not
-        (
-            (group_member_privileges_set.can_write != locals.old_can_write) or
-            (group_member_privileges_set.is_owner != locals.old_is_owner)
-        )
+    if (
+        (group_member_privileges_set.can_write is null or group_member_privileges_set.can_write = locals.old_can_write) and
+        (group_member_privileges_set.is_owner is null or group_member_privileges_set.is_owner = locals.old_is_owner)
+    )
     then
         -- no changes are requested, skip table update
         return;
@@ -392,8 +391,8 @@ begin
 
     update group_membership
     set
-        can_write = group_member_privileges_set.can_write,
-        is_owner = group_member_privileges_set.is_owner
+        can_write = coalesce(group_member_privileges_set.can_write, locals.old_can_write),
+        is_owner = coalesce(group_member_privileges_set.is_owner, locals.old_is_owner)
     where
         group_membership.grp = group_member_privileges_set.group_id and
         group_membership.usr = group_member_privileges_set.user_id;
@@ -401,7 +400,7 @@ begin
     if group_member_privileges_set.can_write != locals.old_can_write then
         insert into group_log (grp, usr, type, affected)
         values (
-            group_member_privileges_set.grp,
+            group_member_privileges_set.group_id,
             locals.usr,
             case
                 when group_member_privileges_set.can_write then 'grant-write'
@@ -414,7 +413,7 @@ begin
     if group_member_privileges_set.is_owner != locals.old_is_owner then
         insert into group_log (grp, usr, type, affected)
         values (
-            group_member_privileges_set.grp,
+            group_member_privileges_set.group_id,
             locals.usr,
             case
                 when group_member_privileges_set.can_write then 'grant-owner'

@@ -31,22 +31,30 @@ async def populate(test):
     )
 
     # users accept invite to group1
-    for authtoken in (auth2, auth3):
-        await test.fetchval(
-            'select * from group_join(authtoken := $1, invite_token := $2)',
-            authtoken, invite1
-        )
+    await test.fetchval(
+        'select * from group_join(authtoken := $1, invite_token := $2)',
+        auth2, invite1
+    )
+    await test.fetchval(
+        'select * from group_join(authtoken := $1, invite_token := $2)',
+        auth3, invite1
+    )
+    # user receives write permissions to group1
+    await test.fetch(
+        'call group_member_privileges_set(authtoken := $1, group_id := $2, user_id := $3, can_write := true)',
+        auth1, grp1, usr2
+    )
 
     # users start editing group1
     await test.fetchval(
-        'select * from create_change(authtoken := $1, group_id := $2, message := $3)',
+        'select * from create_change(token := $1, group_id := $2, message := $3)',
         auth1, grp1, "foo1's change"
     )
     await test.fetchval(
-        'select * from create_change(authtoken := $1, group_id := $2, message := $3)',
+        'select * from create_change(token := $1, group_id := $2, message := $3)',
         auth2, grp1, "bar2's change"
     )
     await test.fetchval(
-        'select * from create_change(authtoken := $1, group_id := $2, message := $3)',
+        'select * from create_change(token := $1, group_id := $2, message := $3)',
         auth2, grp1, "bar2's second change"
     )
