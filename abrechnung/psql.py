@@ -84,4 +84,4 @@ class PSQL(subcommand.SubCommand):
 
             if ret != 0:
                 print(util.format_error('psql failed'))
-            exit(ret)
+            return ret

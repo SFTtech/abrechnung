@@ -58,12 +58,10 @@ class DBTest(subcommand.SubCommand):
         """
         if self.prepare_action:
             print(f'prepare action: {util.BOLD}psql {self.prepare_action}{util.NORMAL}')
-            try:
-                await psql_command.PSQL(self.config, action=self.prepare_action).run()
-            except SystemExit as exc:
-                if exc.args[0] != 0:
-                    print(f'action failed; aborting tests')
-                    raise
+            ret = await psql_command.PSQL(self.config, action=self.prepare_action).run()
+            if ret != 0:
+                print(f'action failed; aborting tests')
+                exit(1)
 
         self.psql = await asyncpg.connect(
             user=self.config['database']['user'],
