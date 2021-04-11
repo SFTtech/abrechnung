@@ -9,7 +9,6 @@ import os
 import shlex
 import shutil
 import signal
-import subprocess
 import sys
 import tempfile
 import termios
@@ -81,7 +80,7 @@ class PSQL(subcommand.SubCommand):
             else:
                 raise Exception(f'unknown action {self.action}')
 
-            ret = util.run_as_fg_process(command, env=env, cwd=db_folder)
+            ret = await util.run_as_fg_process(command, env=env, cwd=db_folder)
 
             if ret != 0:
                 print(util.format_error('psql failed'))

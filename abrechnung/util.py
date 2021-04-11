@@ -1,5 +1,6 @@
 import logging
 
+import asyncio
 import os
 import signal
 import subprocess
@@ -55,7 +56,7 @@ def clamp(number, smallest, largest):
     return max(smallest, min(number, largest))
 
 
-def run_as_fg_process(*args, **kwargs):
+async def run_as_fg_process(args, **kwargs):
     """
     the "correct" way of spawning a new subprocess:
     signals like C-c must only go
@@ -99,8 +100,8 @@ def run_as_fg_process(*args, **kwargs):
 
     try:
         # fork the child
-        child = subprocess.Popen(*args, preexec_fn=new_pgid,
-                                 **kwargs)
+        child = await asyncio.create_subprocess_exec(*args, preexec_fn=new_pgid,
+                                                     **kwargs)
 
         # we can't set the process group id from the parent since the child
         # will already have exec'd. and we can't SIGSTOP it before exec,
@@ -117,7 +118,7 @@ def run_as_fg_process(*args, **kwargs):
         os.kill(child.pid, signal.SIGCONT)
 
         # wait for the child to terminate
-        ret = child.wait()
+        ret = await child.wait()
 
     finally:
         # we have to mask SIGTTOU because tcsetpgrp
