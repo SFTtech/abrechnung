@@ -244,8 +244,8 @@ create table if not exists group_log (
 -- every data and history entry in a group references a change as a foreign key.
 -- entries that have just been added, but not yet commited, reference a change
 -- where the commited timestamp is null;
--- these uncommited changes are only visible if entered in the
--- watched_uncommited_change table.
+-- these uncommited changes are only visible if a user explicitly requests
+-- to see them.
 -- uncommited changes are created when users start to change a group,
 -- and receive a 'commited' timestamp when the user clicks 'commit'.
 -- changes that have been commited can no longer be modified.
@@ -260,20 +260,6 @@ create table if not exists change (
     commited timestamptz default null,
 
     message text not null
-);
-
--- uncommited changes that a user watches.
--- these changes will be visible to the user when they watch a group.
--- when a user creates a new change, that change is automatically
--- added to this table for them.
--- when a change is commited, it is removed from this table for everybody.
--- users can manually add other users' changes to this table for themselves,
--- which is useful for live collaboration.
-create table if not exists watched_uncommited_change (
-    change_id bigint,
-    user_id bigint,
-
-    primary key (change_id, user_id)
 );
 
 -- group data, the actual purpose of the abrechnung
