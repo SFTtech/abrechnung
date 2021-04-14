@@ -7,8 +7,8 @@ Runs the 'psql' tool with the appropriate parameters.
 import contextlib
 import os
 import shlex
+import shutil
 import signal
-import subprocess
 import sys
 import tempfile
 import termios
@@ -74,12 +74,14 @@ class PSQL(subcommand.SubCommand):
             elif self.action == 'load-funcs':
                 command.extend(['--file', 'funcs.sql'])
             elif self.action == 'attach':
-                pass
+                if shutil.which('pgcli') is not None:
+                    # if pgcli is installed, use that instead!
+                    command = ['pgcli']
             else:
                 raise Exception(f'unknown action {self.action}')
 
-            ret = util.run_as_fg_process(command, env=env, cwd=db_folder)
+            ret = await util.run_as_fg_process(command, env=env, cwd=db_folder)
 
             if ret != 0:
                 print(util.format_error('psql failed'))
-            exit(ret)
+            return ret

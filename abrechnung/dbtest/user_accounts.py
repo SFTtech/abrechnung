@@ -6,8 +6,10 @@ import time
 
 import asyncpg.exceptions
 
+from . import compare
 
-async def get_user(test, email='rofl@bar.baz', username='foowoman', password='123456', session='test'):
+
+async def make_user(test, email='rofl@bar.baz', username='foowoman', password='123456', session='test'):
     """
     registers a user and logs them in
 
@@ -67,7 +69,7 @@ async def test(test):
         column='valid_until'
     )
     print(f'duration of register_user(): {time.time() - start:.3f} s')
-    test.expect_eq((await test.get_notification())[1], 'pending_registration')
+    test.expect((await test.get_notification())[1], 'pending_registration')
 
     # overwrite the existing pending registration for the same email
     valid_until = await test.fetchval(
@@ -78,7 +80,7 @@ async def test(test):
         column='valid_until'
     )
     print(f'duration of register_user(): {time.time() - start:.3f} s')
-    test.expect_eq((await test.get_notification())[1], 'pending_registration')
+    test.expect((await test.get_notification())[1], 'pending_registration')
 
     # registering with an already-existing username should fail
     await test.fetch_expect_error(
@@ -91,23 +93,24 @@ async def test(test):
     )
 
     # the pending registration should be valid for one hour
-    test.expect_eq(
+    test.expect(
         valid_until,
-        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
-        tolerance=datetime.timedelta(minutes=1)
+        compare.with_tolerance(datetime.datetime.now(datetime.timezone.utc) +
+                               datetime.timedelta(hours=1),
+                               datetime.timedelta(minutes=1)),
     )
 
     usr_id, usr_registered_at, usr_admin, usr_pending = await test.fetchrow(
         'select id, registered_at, admin, pending from usr where email=$1',
         'foo@bar.baz'
     )
-    test.expect_eq(
+    test.expect(
         usr_registered_at,
-        datetime.datetime.now(datetime.timezone.utc),
-        tolerance=datetime.timedelta(minutes=1)
+        compare.with_tolerance(datetime.datetime.now(datetime.timezone.utc),
+                               datetime.timedelta(minutes=1)),
     )
-    test.expect_eq(usr_admin, False)
-    test.expect_eq(usr_pending, True)
+    test.expect(usr_admin, False)
+    test.expect(usr_pending, True)
     del usr_registered_at, usr_admin, usr_pending
 
     # garbage collection shouldn't do anything
@@ -135,16 +138,16 @@ async def test(test):
         'select * from mails_pending_registration_get()',
         columns=['email', 'username', 'language', 'registered_at', 'valid_until', 'token']
     )
-    test.expect_eq(mail[0], 'foo@bar.baz')
-    test.expect_eq(mail[1], 'fooman')
-    test.expect_eq(mail[2], 'en_int')
-    test.expect_eq(
+    test.expect(mail[0], 'foo@bar.baz')
+    test.expect(mail[1], 'fooman')
+    test.expect(mail[2], 'en_int')
+    test.expect(
         mail[3],
-        datetime.datetime.now(datetime.timezone.utc),
-        tolerance=datetime.timedelta(minutes=1)
+        compare.with_tolerance(datetime.datetime.now(datetime.timezone.utc),
+                               datetime.timedelta(minutes=1)),
     )
-    test.expect_eq(mail[4], valid_until_)
-    test.expect_eq(mail[5], token)
+    test.expect(mail[4], valid_until_)
+    test.expect(mail[5], token)
     del mail
 
     # we should only get the mail once
@@ -153,18 +156,18 @@ async def test(test):
         rowcount=0
     )
 
-    test.expect_eq(valid_until_, valid_until)
-    test.expect_eq(
+    test.expect(valid_until_, valid_until)
+    test.expect(
         mail_next_attempt,
-        datetime.datetime.now(datetime.timezone.utc),
-        tolerance=datetime.timedelta(minutes=1)
+        compare.with_tolerance(datetime.datetime.now(datetime.timezone.utc),
+                               datetime.timedelta(minutes=1)),
     )
     del valid_until_, valid_until, mail_next_attempt
 
     await test.fetchval(
         'select mail_next_attempt from pending_registration where usr=$1',
         usr_id,
-        expect_eq=None
+        expect=None
     )
 
     # mark the mail as not-successfully-sent
@@ -175,8 +178,11 @@ async def test(test):
     await test.fetchval(
         'select mail_next_attempt from pending_registration where usr=$1',
         usr_id,
-        expect_eq=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
-        tolerance=datetime.timedelta(minutes=1)
+        expect=compare.with_tolerance(
+            datetime.datetime.now(datetime.timezone.utc) +
+            datetime.timedelta(hours=1),
+            datetime.timedelta(minutes=1)
+        ),
     )
 
     # we shouldn't get the mail because it will only be re-sent in one hour
@@ -215,7 +221,7 @@ async def test(test):
     await test.fetchval(
         'select pending from usr where id=$1',
         usr_id,
-        expect_eq=False
+        expect=False
     )
 
     # registering with an already-existing, confirmed email should fail
@@ -235,7 +241,7 @@ async def test(test):
         '123456',
         'foowoman'
     )
-    test.expect_eq((await test.get_notification())[1], 'pending_registration')
+    test.expect((await test.get_notification())[1], 'pending_registration')
 
     # change the valid_until column to make the row "timed_out"
     usr2_id = await test.fetchval(
@@ -354,31 +360,36 @@ async def test(test):
         rowcount=3
     )
     for session in sessions:
-        test.expect_eq(
+        test.expect(
             session['last_seen'],
-            datetime.datetime.now(datetime.timezone.utc),
-            tolerance=datetime.timedelta(minutes=1)
+            compare.with_tolerance(datetime.datetime.now(datetime.timezone.utc),
+                                   datetime.timedelta(minutes=1)),
         )
     await test.fetchval(
         'select valid_until from session where usr = $1 and name = $2',
         usr_id,
         'testscript-1',
-        expect_eq=None
+        expect=None
     )
 
     await test.fetchval(
         'select valid_until from session where usr = $1 and name = $2',
         usr_id,
         'testscript-2',
-        expect_eq=datetime.datetime.now(datetime.timezone.utc),
-        tolerance=datetime.timedelta(minutes=1)
+        expect=compare.with_tolerance(
+            datetime.datetime.now(datetime.timezone.utc),
+            datetime.timedelta(minutes=1)
+        ),
     )
     await test.fetchval(
         'select valid_until from session where usr = $1 and name = $2',
         usr_id,
         'testscript-3',
-        expect_eq=datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
-        tolerance=datetime.timedelta(minutes=1)
+        expect=compare.with_tolerance(
+            datetime.datetime.now(datetime.timezone.utc) +
+            datetime.timedelta(hours=1),
+            datetime.timedelta(minutes=1)
+        ),
     )
 
     # check validating the session token
@@ -390,35 +401,35 @@ async def test(test):
         'select * from session_auth(token := $1)',
         token_1,
         column='user_id',
-        expect_eq=usr_id
-    )
-    last_seen_after = await test.fetchval(
-        'select last_seen from session where token = $1',
-        token_1
+        expect=usr_id
     )
     # the last_seen timestamp should have been incremented
-    test.expect_gt(last_seen_after, last_seen_before)
+    last_seen_after = await test.fetchval(
+        'select last_seen from session where token = $1',
+        token_1,
+        expect=compare.greater(last_seen_before)
+    )
 
     # check validating the other valid session token
     await test.fetchval(
         'select * from session_auth(token := $1)',
         token_3,
         column='user_id',
-        expect_eq=usr_id
-    )
-    last_seen_after = await test.fetchval(
-        'select last_seen from session where token = $1',
-        token_1
+        expect=usr_id
     )
     # the last_seen timestamp for token_1 should not have been incremented
-    test.expect_gt(last_seen_after, last_seen_before)
+    await test.fetchval(
+        'select last_seen from session where token = $1',
+        token_1,
+        expect=compare.greater(last_seen_before)
+    )
 
     # check validating a timed-out token
     await test.fetchval(
         'select * from session_auth(token := $1, fatal := false)',
         token_2,
         column='user_id',
-        expect_eq=None
+        expect=None
     )
 
     await test.fetch_expect_raise(
@@ -442,8 +453,8 @@ async def test(test):
 
     usr1_id, usr1_token = usr_id, token_1
     # add a second user; it's used to test if users can see or manipulate each other's stuff
-    usr2_id, usr2_token = await get_user(test)
-    test.expect_eq((await test.get_notification())[1], 'pending_registration')
+    usr2_id, usr2_token = await make_user(test)
+    test.expect((await test.get_notification())[1], 'pending_registration')
 
     # check listing sessions - only the two non-outdated sessions of usr_id should be visible
     await test.fetch_expect_raise(
@@ -458,29 +469,34 @@ async def test(test):
         columns=['session_id', 'name', 'valid_until', 'last_seen', 'this']
     )
 
-    test.expect_eq(session_info_this['name'], 'testscript-1')
-    test.expect_eq(session_info_other['name'], 'testscript-3')
-    test.expect_eq(session_info_this['this'], True)
-    test.expect_eq(session_info_other['this'], False)
+    test.expect(session_info_this['name'], 'testscript-1')
+    test.expect(session_info_other['name'], 'testscript-3')
+    test.expect(session_info_this['this'], True)
+    test.expect(session_info_other['this'], False)
     # last_seen should have been incremented again by the authenticated call to list_sessions
     # but the result may not yet be returned by the list_sessions call
-    test.expect_eq(session_info_this['last_seen'], last_seen_after, tolerance=datetime.timedelta(minutes=1))
-    test.expect_eq(
-        session_info_other['last_seen'],
-        datetime.datetime.now(datetime.timezone.utc),
-        tolerance=datetime.timedelta(minutes=1)
+    test.expect(
+        session_info_this['last_seen'],
+        compare.with_tolerance(last_seen_after,
+                               datetime.timedelta(minutes=1)),
     )
-    test.expect_eq(session_info_this['valid_until'], None)
-    test.expect_eq(
+    test.expect(
+        session_info_other['last_seen'],
+        compare.with_tolerance(datetime.datetime.now(datetime.timezone.utc),
+                               datetime.timedelta(minutes=1)),
+    )
+    test.expect(session_info_this['valid_until'], None)
+    test.expect(
         session_info_other['valid_until'],
-        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
-        tolerance=datetime.timedelta(minutes=1)
+        compare.with_tolerance(datetime.datetime.now(datetime.timezone.utc) +
+                               datetime.timedelta(hours=1),
+                               datetime.timedelta(minutes=1)),
     )
     # now the last_seen should have increased
     await test.fetchval(
         'select last_seen from session where token = $1',
         usr1_token,
-        expect_gt=last_seen_after
+        expect=compare.greater(last_seen_after)
     )
 
     # gc should delete the timed-out session; two rows should be left
@@ -521,7 +537,7 @@ async def test(test):
     await test.fetchval(
         'select name from session where id=$1',
         session_info_other['session_id'],
-        expect_eq=session_info_other['name']
+        expect=session_info_other['name']
     )
 
     # test renaming one's own session, it should work fine
@@ -534,7 +550,7 @@ async def test(test):
     await test.fetchval(
         'select name from session where id=$1',
         session_info_other['session_id'],
-        expect_eq='best session'
+        expect='best session'
     )
 
     # test logging out another user's session (shouldn't work)
@@ -547,7 +563,7 @@ async def test(test):
     await test.fetchval(
         'select * from session_auth(token := $1)',
         token_3,
-        expect_eq=usr1_id
+        expect=usr1_id
     )
 
     # test logging out another session
@@ -560,7 +576,7 @@ async def test(test):
     await test.fetchval(
         'select * from session_auth(token := $1)',
         token_3,
-        expect_eq=usr1_id
+        expect=usr1_id
     )
     await test.fetch(
         'call logout_session(authtoken := $1, session_id := $2)',
@@ -575,14 +591,14 @@ async def test(test):
     await test.fetchval(
         'select * from session_auth(token := $1)',
         usr1_token,
-        expect_eq=usr1_id
+        expect=usr1_id
     )
 
     # test logging out of a session
     await test.fetchval(
         'select * from session_auth(token := $1)',
         usr2_token,
-        expect_eq=usr2_id
+        expect=usr2_id
     )
     await test.fetch(
         'call logout(authtoken := $1)',
@@ -672,27 +688,28 @@ async def test(test):
     row = await test.fetchrow(
         'select * from pending_password_recovery',
     )
-    test.expect_eq(row['usr'], usr1_id)
-    test.expect_eq(
+    test.expect(row['usr'], usr1_id)
+    test.expect(
         row['valid_until'],
-        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
-        tolerance=datetime.timedelta(minutes=1)
+        compare.with_tolerance(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
+                               datetime.timedelta(minutes=1)),
     )
     recovery_token_1 = row['token']
     del row
-    test.expect_eq((await test.get_notification())[1], 'pending_password_recovery')
+    test.expect((await test.get_notification())[1], 'pending_password_recovery')
 
     mail = await test.fetchrow(
         'select * from mails_pending_password_recovery_get()',
         columns=['email', 'username', 'language', 'valid_until', 'token']
     )
-    test.expect_eq(mail[0], 'foo@bar.baz')
-    test.expect_eq(mail[1], 'fooman')
-    test.expect_eq(mail[2], 'en_int')
-    test.expect_eq(
+    test.expect(mail[0], 'foo@bar.baz')
+    test.expect(mail[1], 'fooman')
+    test.expect(mail[2], 'en_int')
+    test.expect(
         mail[3],
-        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
-        tolerance=datetime.timedelta(minutes=1)
+        compare.with_tolerance(datetime.datetime.now(datetime.timezone.utc)
+                               + datetime.timedelta(hours=1),
+                               datetime.timedelta(minutes=1)),
     )
     del mail
     await test.fetch(
@@ -706,14 +723,14 @@ async def test(test):
         'rofl@bar.baz'
     )
     # the pending request table should now have two entries
-    test.expect_eq(set(await test.fetchvals(
+    test.expect(set(await test.fetchvals(
         'select usr from pending_password_recovery',
     )), {usr1_id, usr2_id})
     recovery_token_2 = await test.fetchval(
         'select token from pending_password_recovery where usr=$1',
         usr2_id
     )
-    test.expect_eq((await test.get_notification())[1], 'pending_password_recovery')
+    test.expect((await test.get_notification())[1], 'pending_password_recovery')
 
     # attempt to recover the password with a wrong token
     await test.fetch_expect_raise(
@@ -736,7 +753,7 @@ async def test(test):
     )
 
     # the pending request table should still have two entries
-    test.expect_eq(set(await test.fetchvals(
+    test.expect(set(await test.fetchvals(
         'select usr from pending_password_recovery',
     )), {usr1_id, usr2_id})
 
@@ -744,7 +761,7 @@ async def test(test):
     await test.fetch('call gc()')
 
     # the pending request table should still have two entries
-    test.expect_eq(set(await test.fetchvals(
+    test.expect(set(await test.fetchvals(
         'select usr from pending_password_recovery',
     )), {usr1_id})
 
@@ -875,9 +892,9 @@ async def test(test):
         'select new_email from pending_email_change where usr=$1',
         usr1_id
     )
-    test.expect_eq(change_new_email, 'new.foo@bar.baz')
+    test.expect(change_new_email, 'new.foo@bar.baz')
     del change_new_email
-    test.expect_eq((await test.get_notification())[1], 'pending_email_change')
+    test.expect((await test.get_notification())[1], 'pending_email_change')
 
     # overwrite the email change request
     await test.fetch(
@@ -886,26 +903,27 @@ async def test(test):
         'secure password',
         'newer.foo@bar.baz'
     )
-    test.expect_eq((await test.get_notification())[1], 'pending_email_change')
+    test.expect((await test.get_notification())[1], 'pending_email_change')
     change_token_1, change_new_email = await test.fetchrow(
         'select token, new_email from pending_email_change where usr=$1',
         usr1_id
     )
-    test.expect_eq(change_new_email, 'newer.foo@bar.baz')
+    test.expect(change_new_email, 'newer.foo@bar.baz')
     mail = await test.fetchrow(
         'select * from mails_pending_email_change_get()',
         columns=['email', 'username', 'language', 'new_email', 'valid_until', 'token']
     )
-    test.expect_eq(mail[0], 'foo@bar.baz')
-    test.expect_eq(mail[1], 'fooman')
-    test.expect_eq(mail[2], 'en_int')
-    test.expect_eq(mail[3], change_new_email)
-    test.expect_eq(
+    test.expect(mail[0], 'foo@bar.baz')
+    test.expect(mail[1], 'fooman')
+    test.expect(mail[2], 'en_int')
+    test.expect(mail[3], change_new_email)
+    test.expect(
         mail[4],
-        datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),
-        tolerance=datetime.timedelta(minutes=1)
+        compare.with_tolerance(datetime.datetime.now(datetime.timezone.utc) +
+                               datetime.timedelta(hours=1),
+                               datetime.timedelta(minutes=1)),
     )
-    test.expect_eq(mail[5], change_token_1)
+    test.expect(mail[5], change_token_1)
     del change_new_email, mail
     # the pending email should be gone now
     await test.fetch(
@@ -940,7 +958,7 @@ async def test(test):
         'select token from pending_email_change where usr=$1',
         usr2_id
     )
-    test.expect_eq((await test.get_notification())[1], 'pending_email_change')
+    test.expect((await test.get_notification())[1], 'pending_email_change')
 
     # attempt to confirm the timed-out email change, should fail
     await test.fetch(
@@ -1007,12 +1025,12 @@ async def test(test):
     await test.fetchval(
         'select email from usr where usr.id=$1',
         usr1_id,
-        expect_eq='foo@bar.baz'
+        expect='foo@bar.baz'
     )
     await test.fetchval(
         'select email from usr where usr.id=$1',
         usr2_id,
-        expect_eq='rofl@bar.baz'
+        expect='rofl@bar.baz'
     )
 
     # attempt to correctly confirm an email change request
@@ -1028,7 +1046,7 @@ async def test(test):
     await test.fetchval(
         'select email from usr where usr.id=$1',
         usr1_id,
-        expect_eq='newer.foo@bar.baz'
+        expect='newer.foo@bar.baz'
     )
     await test.fetch_expect_raise(
         'call confirm_email_change(token := $1)',
@@ -1054,7 +1072,7 @@ async def test(test):
         'secure password',
         'rofl@bar.baz'
     )
-    test.expect_eq((await test.get_notification())[1], 'pending_email_change')
+    test.expect((await test.get_notification())[1], 'pending_email_change')
     change_token = await test.fetchval(
         'select token from pending_email_change where usr=$1',
         usr1_id
@@ -1069,7 +1087,7 @@ async def test(test):
     await test.fetchval(
         'select email from usr where usr.id=$1',
         usr1_id,
-        expect_eq='newer.foo@bar.baz'
+        expect='newer.foo@bar.baz'
     )
     # the request should still exist
     await test.fetch(
@@ -1083,16 +1101,16 @@ async def test(test):
         'select * from get_user_info(authtoken := $1)',
         usr1_token
     )
-    test.expect_eq(result['email'], 'newer.foo@bar.baz')
-    test.expect_eq(
+    test.expect(result['email'], 'newer.foo@bar.baz')
+    test.expect(
         result['registered_at'],
-        datetime.datetime.now(datetime.timezone.utc),
-        tolerance=datetime.timedelta(minutes=1)
+        compare.with_tolerance(datetime.datetime.now(datetime.timezone.utc),
+                               datetime.timedelta(minutes=1)),
     )
-    test.expect_eq(result['username'], 'fooman')
-    test.expect_eq(result['language'], 'en_int')
-    test.expect_eq(result['admin'], False)
-    test.expect_eq(result['can_upload_files'], False)
+    test.expect(result['username'], 'fooman')
+    test.expect(result['language'], 'en_int')
+    test.expect(result['admin'], False)
+    test.expect(result['can_upload_files'], False)
 
     # test admin_auth
     await test.fetch_expect_raise(
@@ -1109,8 +1127,7 @@ async def test(test):
     await test.fetchval(
         'select * from admin_auth(token := $1)',
         usr1_token,
-        channel='usr',
-        expect_eq=usr1_id
+        expect=usr1_id
     )
 
     # try setting can-upload-files status
@@ -1140,7 +1157,7 @@ async def test(test):
     await test.fetchval(
         'select can_upload_files from usr where id=$1',
         usr2_id,
-        expect_eq=False
+        expect=False
     )
     await test.fetch(
         'call user_allow_upload_files(authtoken := $1, email := $2, allow := $3)',
@@ -1151,7 +1168,7 @@ async def test(test):
     await test.fetchval(
         'select can_upload_files from usr where id=$1',
         usr2_id,
-        expect_eq=True
+        expect=True
     )
     await test.fetch(
         'call user_allow_upload_files(authtoken := $1, email := $2, allow := $3)',
@@ -1162,7 +1179,7 @@ async def test(test):
     await test.fetchval(
         'select can_upload_files from usr where id=$1',
         usr2_id,
-        expect_eq=False
+        expect=False
     )
 
     # test setting admin status
@@ -1192,7 +1209,7 @@ async def test(test):
     await test.fetchval(
         'select admin from usr where id=$1',
         usr2_id,
-        expect_eq=False
+        expect=False
     )
     await test.fetch(
         'call user_set_admin(authtoken := $1, email := $2, admin := $3)',
@@ -1203,7 +1220,7 @@ async def test(test):
     await test.fetchval(
         'select admin from usr where id=$1',
         usr2_id,
-        expect_eq=True
+        expect=True
     )
     await test.fetch(
         'call user_set_admin(authtoken := $1, email := $2, admin := $3)',
@@ -1214,7 +1231,7 @@ async def test(test):
     await test.fetchval(
         'select admin from usr where id=$1',
         usr2_id,
-        expect_eq=False
+        expect=False
     )
     # try setting yourself as admin (when already an admin)
     await test.fetch(
@@ -1226,7 +1243,7 @@ async def test(test):
     await test.fetchval(
         'select admin from usr where id=$1',
         usr1_id,
-        expect_eq=True
+        expect=True
     )
     # try revoking your own admin status
     await test.fetch(
@@ -1238,7 +1255,7 @@ async def test(test):
     await test.fetchval(
         'select admin from usr where id=$1',
         usr1_id,
-        expect_eq=False
+        expect=False
     )
     await test.fetch_expect_raise(
         'call user_set_admin(authtoken := $1, email := $2, admin := $3)',
@@ -1258,7 +1275,7 @@ async def test(test):
     await test.fetchval(
         'select language from usr where id=$1',
         usr1_id,
-        expect_eq='en_int'
+        expect='en_int'
     )
     await test.fetch(
         'call user_set_language(authtoken := $1, language := $2)',
@@ -1268,7 +1285,7 @@ async def test(test):
     await test.fetchval(
         'select language from usr where id=$1',
         usr1_id,
-        expect_eq='de_de'
+        expect='de_de'
     )
 
     # test deleting account with wrong authtoken
@@ -1289,7 +1306,7 @@ async def test(test):
     await test.fetchval(
         'select deleted from usr where usr.id=$1',
         usr1_id,
-        expect_eq=False
+        expect=False
     )
     await test.fetch(
         'select * from login_with_password(session := $1, password := $2, email := $3)',
@@ -1315,7 +1332,7 @@ async def test(test):
     await test.fetchval(
         'select deleted from usr where usr.id=$1',
         usr1_id,
-        expect_eq=True
+        expect=True
     )
     # ensure that all sessions are gone
     await test.fetch(

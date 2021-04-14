@@ -36,6 +36,7 @@ returns table (
     group_id integer,
     name text,
     description text,
+    currency_symbol text,
     member_count bigint,
     created timestamptz,
     joined timestamptz,
@@ -57,6 +58,7 @@ begin
                 grp.id as grp,
                 grp.name as name,
                 grp.description as description,
+                grp.currency_symbol as currency_symbol,
                 grp.created as created,
                 group_membership.joined as joined,
                 group_membership.is_owner as is_owner,
@@ -76,17 +78,18 @@ begin
         latest_commit as (
             select
                 my_groups.grp as grp,
-                max(commit.timestamp) as latest_commit
+                max(change.commited) as latest_commit
             from
                 my_groups
-            left outer join commit
-                on (my_groups.grp = commit.grp)
+            left outer join change
+                on (my_groups.grp = change.grp)
             group by my_groups.grp
         )
     select
         my_groups.grp as group_id,
         my_groups.name as name,
         my_groups.description as description,
+        my_groups.currency_symbol as currency_symbol,
         group_member_counts.member_count as member_count,
         my_groups.created as created,
         my_groups.joined as joined,
@@ -116,7 +119,7 @@ call allow_function('group_list');
 -- methods that call this can raise:
 --
 -- - bad-authtoken
--- - no-group-membership
+-- - no-group-membership (also if group_id is null)
 -- - no-group-write-permission
 -- - no-group-owner-permission
 create or replace function session_auth_group(
@@ -266,10 +269,20 @@ begin
     from group_invite
     where
         group_invite.token = group_join.invite_token and
-        group_invite.valid_until >= now();
+        (group_invite.valid_until is null or
+         group_invite.valid_until >= now());
 
-    insert into group_membership (usr, grp, is_owner, can_write, invited_by)
-    values (locals.usr, group_join.group_id, false, false, locals.inviter);
+    if not found then
+        raise exception 'no-group-invite:invite_token not found or no longer valid';
+    end if;
+
+    begin
+        insert into group_membership (usr, grp, is_owner, can_write, invited_by)
+        values (locals.usr, group_join.group_id, false, false, locals.inviter);
+    exception
+        when unique_violation or exclusion_violation then
+            raise exception 'already-member:user already member of this group';
+    end;
 
     -- delete the invite if it was single-use
     delete from group_invite
@@ -352,7 +365,7 @@ begin
         need_owner_permission := (is_owner is not null)
     );
 
-    if group_member_privileges_set.usr = locals.usr then
+    if group_member_privileges_set.user_id = locals.usr then
         raise exception 'cannot-modify-own-privileges:group members cannot modify their own privileges';
     end if;
 
@@ -372,11 +385,10 @@ begin
         raise exception 'no-such-group-member:there is no group member with this id';
     end if;
 
-    if not
-        (
-            (group_member_privileges_set.can_write != locals.old_can_write) or
-            (group_member_privileges_set.is_owner != locals.old_is_owner)
-        )
+    if (
+        (group_member_privileges_set.can_write is null or group_member_privileges_set.can_write = locals.old_can_write) and
+        (group_member_privileges_set.is_owner is null or group_member_privileges_set.is_owner = locals.old_is_owner)
+    )
     then
         -- no changes are requested, skip table update
         return;
@@ -384,8 +396,8 @@ begin
 
     update group_membership
     set
-        can_write = group_member_privileges_set.can_write,
-        is_owner = group_member_privileges_set.is_owner
+        can_write = coalesce(group_member_privileges_set.can_write, locals.old_can_write),
+        is_owner = coalesce(group_member_privileges_set.is_owner, locals.old_is_owner)
     where
         group_membership.grp = group_member_privileges_set.group_id and
         group_membership.usr = group_member_privileges_set.user_id;
@@ -393,7 +405,7 @@ begin
     if group_member_privileges_set.can_write != locals.old_can_write then
         insert into group_log (grp, usr, type, affected)
         values (
-            group_member_privileges_set.grp,
+            group_member_privileges_set.group_id,
             locals.usr,
             case
                 when group_member_privileges_set.can_write then 'grant-write'
@@ -406,7 +418,7 @@ begin
     if group_member_privileges_set.is_owner != locals.old_is_owner then
         insert into group_log (grp, usr, type, affected)
         values (
-            group_member_privileges_set.grp,
+            group_member_privileges_set.group_id,
             locals.usr,
             case
                 when group_member_privileges_set.can_write then 'grant-owner'
