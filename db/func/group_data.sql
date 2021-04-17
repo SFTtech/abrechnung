@@ -181,3 +181,158 @@ begin
 end;
 $$ language plpgsql;
 call allow_function('discard_change');
+
+-- retrieves the accounts in a group
+create or replace function account_list(
+    authtoken uuid,
+    group_id integer
+)
+returns table (
+    account_id integer,
+    last_change_id bigint,
+    valid bool,
+    name text,
+    description text,
+    priority integer
+)
+as $$
+<<locals>>
+    declare
+    usr integer;
+begin
+    select session_auth_group.user_id into locals.usr
+    from session_auth_group(account_list.authtoken, account_list.group_id);
+
+    return query
+        select
+            account_history.id as account_id,
+            account_history.change as last_change_id,
+            account_history.valid as valid,
+            account_history.name as name,
+            account_history.description as description,
+            account_history.priority as priority
+        from
+            account_history
+            join account on account_history.id = account.id
+        where
+            account.grp = account_list.group_id;
+end;
+$$ language plpgsql;
+call allow_function('account_list');
+
+-- creates a new account in a group
+create or replace function account_create(
+    authtoken uuid,
+    group_id integer,
+    name text,
+    description text,
+    priority integer default 0,
+    out account_id integer,
+    out change_id bigint
+)
+as $$
+<<locals>>
+    declare
+    usr integer;
+begin
+    select session_auth_group.user_id into locals.usr
+    from session_auth_group(account_create.authtoken, account_create.group_id, true);
+
+    insert into account (grp)
+    values (account_create.group_id) returning account.id into account_create.id;
+
+    select commit_create_no_auth.id into account_create.commit_id
+    from commit_create_no_auth(account_create.group_id, locals.usr, 'create account');
+
+    insert into change (grp, usr, message, commited)
+    values (account_create.group_id, locals.usr, 'create account', now())
+    returning change.id into account_create.change_id;
+
+    insert into account_history(id, change, name, description, priority)
+    values (account_create.id, account_create.change_id, account_create.name, account_create.description, account_create.priority);
+end;
+$$ language plpgsql;
+call allow_function('account_create');
+
+-- retrieves all transactions in a group
+create or replace function transaction_list(
+    authtoken uuid,
+    group_id integer
+)
+returns table (
+    transaction_id integer,
+    last_change_id bigint,
+    type text,
+    valid bool,
+    currency_symbol text,
+    currency_conversion_rate double precision,
+    value double precision,
+    description text
+)
+as $$
+<<locals>>
+    declare
+    usr integer;
+begin
+    select session_auth_group.user_id into locals.usr
+    from session_auth_group(transaction_list.authtoken, transaction_list.group_id);
+
+    return query
+        select
+            transaction.id as transaction_id,
+            transaction_history.change as last_change_id,
+            transaction.type::text as type,
+            transaction_history.valid as valid,
+            transaction_history.currency_symbol as currency_symbol,
+            transaction_history.currency_conversion_rate as currency_conversion_rate,
+            transaction_history.value as value,
+            transaction_history.description as description
+        from
+            transaction
+        join transaction_history on transaction.id = transaction_history.id
+        where
+            transaction.grp = transaction_list.group_id;
+end;
+$$ language plpgsql;
+call allow_function('transaction_list');
+
+-- posts a chat message to the group log
+create or replace function transaction_create(
+    authtoken uuid,
+    group_id integer,
+    type text,
+    description text,
+    currency_symbol text,
+    currency_conversion_rate double precision,
+    value double precision,
+    out transaction_id integer,
+    out change_id bigint
+)
+as $$
+<<locals>>
+    declare
+    usr integer;
+begin
+    select session_auth_group.user_id into locals.usr
+    from session_auth_group(account_create.authtoken, account_create.group_id, true);
+
+    insert into transaction(grp, type)
+    values (transaction_create.group_id, transaction_create.type)
+    returning transaction.id into transaction_create.id;
+
+    insert into change (grp, usr, message)
+    values (transaction_create.group_id, locals.usr, 'WIP: transaction')
+    returning change.id into transaction_create.change_id;
+
+    insert into transaction_history(id, change, currency_symbol, currency_conversion_rate, value, description)
+    values (
+        transaction_create.id,
+        transaction_create.change_id,
+        transaction_create.currency_symbol,
+        transaction_create.currency_conversion_rate,
+        transaction_create.value,
+        transaction_create.description
+    );
+end;
+$$ language plpgsql;
+call allow_function('transaction_create');
