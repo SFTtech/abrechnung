@@ -6,15 +6,23 @@ import Row from "react-bootstrap/cjs/Row";
 import Col from "react-bootstrap/cjs/Col";
 
 import ListGroup from "react-bootstrap/ListGroup";
-import {createAccount, fetchAccounts} from "./accountsSlice";
+import {createAccount, fetchAccounts} from "../../store/groupsSlice";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faTrash} from "@fortawesome/free-solid-svg-icons";
 import Modal from "react-bootstrap/Modal";
 import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/cjs/Button";
+import {faPencilAlt} from "@fortawesome/free-solid-svg-icons/faPencilAlt";
+import {faPlus} from "@fortawesome/free-solid-svg-icons/faPlus";
+import PropTypes from "prop-types";
+import Spinner from "react-bootstrap/Spinner";
 
 
 class Accounts extends Component {
+    static propTypes = {
+        group: PropTypes.object.isRequired,
+    };
+
     state = {
         showAccountCreationModal: false,
         accountName: "",
@@ -22,12 +30,16 @@ class Accounts extends Component {
     };
 
     componentDidMount = () => {
-        this.props.fetchAccounts({groupID: this.props.group.id});
+        this.props.fetchAccounts({groupID: this.props.group.group_id});
     };
 
     onAccountSave = (e) => {
         e.preventDefault();
-        this.props.createAccount({ groupID: this.props.group.id, name: this.state.accountName, description: this.state.accountDescription });
+        this.props.createAccount({
+            groupID: this.props.group.group_id,
+            name: this.state.accountName,
+            description: this.state.accountDescription
+        });
         this.setState({
             showAccountCreationModal: false,
             accountName: "",
@@ -42,41 +54,58 @@ class Accounts extends Component {
     };
 
     closeAccountCreationModal = () => {
-        this.setState({ showAccountCreationModal: false });
+        this.setState({showAccountCreationModal: false});
     };
 
     onChange = (e) => {
-        this.setState({ [e.target.name]: e.target.value });
+        this.setState({[e.target.name]: e.target.value});
     };
 
     render() {
+        if (this.props.group.accounts === undefined) {
+            return (
+                <Row>
+                    <Col xs={12}>
+                        <div className={"d-flex justify-content-center"}>
+                            <Spinner animation="border" role="status">
+                                <span className="sr-only">Loading...</span>
+                            </Spinner>
+                        </div>
+                    </Col>
+                </Row>
+            )
+        }
+
         return (
             <Row>
                 <Col xs={12}>
-                    <Button variant={"success"} onClick={this.openAccountCreationModal}>
-                        New
-                    </Button>
-                    <ListGroup>
-                        {this.props.accountIDs.length === 0 ? (
+                    <ListGroup variant={"flush"}>
+                        {this.props.group.accounts.length === 0 ? (
                             <ListGroup.Item key={0}>
                                 <span>No Accounts</span>
                             </ListGroup.Item>
                         ) : (
-                            this.props.accountIDs.map(id => {
+                            this.props.group.accounts.map(account => {
                                 return (
                                     <ListGroup.Item
-                                        key={id}
+                                        key={account.id}
                                         className={"d-flex justify-content-between"}
                                     >
                                         <div>
-                                            <span>{this.props.accounts[id].name}</span>
+                                            <span>{account.name}</span>
                                             <br/>
-                                            <small className="text-muted">{this.props.accounts[id].description}</small>
+                                            <small className="text-muted">{account.description}</small>
                                         </div>
                                         <div>
                                             <button
+                                                className="btn text-info"
+                                                onClick={() => this.openEditAccountModal(account.id)}
+                                            >
+                                                <FontAwesomeIcon icon={faPencilAlt}/>
+                                            </button>
+                                            <button
                                                 className="btn text-danger"
-                                                onClick={() => this.openAccountDeletionModal(id)}
+                                                onClick={() => this.openRemoveAccountModal(account.id)}
                                             >
                                                 <FontAwesomeIcon icon={faTrash}/>
                                             </button>
@@ -86,6 +115,10 @@ class Accounts extends Component {
                             })
                         )}
                     </ListGroup>
+                    <div className={"d-flex justify-content-center"}>
+                        <Button variant={"outline-success"} onClick={this.openAccountCreationModal}><FontAwesomeIcon
+                            icon={faPlus}/></Button>
+                    </div>
                     <Modal show={this.state.showAccountCreationModal} onHide={this.closeAccountCreationModal}>
                         <Modal.Header closeButton>
                             <Modal.Title>Create Account</Modal.Title>
@@ -117,7 +150,7 @@ class Accounts extends Component {
                                 <Button variant="success" type={"submit"}>
                                     Save
                                 </Button>
-                                <Button variant="outline-danger" onClick={this.closeGroupCreationModal}>
+                                <Button variant="outline-danger" onClick={this.closeAccountCreationModal}>
                                     Close
                                 </Button>
                             </Modal.Footer>
@@ -129,11 +162,4 @@ class Accounts extends Component {
     }
 }
 
-const mapStateToProps = (state) => ({
-    status: state.transactions.status,
-    error: state.transactions.error,
-    accounts: state.accounts.entities,
-    accountIDs: state.accounts.ids,
-});
-
-export default withRouter(connect(mapStateToProps, {fetchAccounts, createAccount})(Accounts));
+export default withRouter(connect(null, {fetchAccounts, createAccount})(Accounts));

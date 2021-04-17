@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-import { ws } from "../../websocket";
+import { ws } from "../websocket";
 
 export const renameSession = createAsyncThunk("profile/renameSession", async ({ session, new_name }, { getState }) => {
     return ws.call("rename_session", {

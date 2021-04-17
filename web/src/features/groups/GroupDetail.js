@@ -1,14 +1,13 @@
-import React, { Component } from "react";
-import { connect } from "react-redux";
-
-import ListGroup from "react-bootstrap/cjs/ListGroup";
+import React, {Component} from "react";
+import {connect} from "react-redux";
 import "react-datetime/css/react-datetime.css";
 import PropTypes from "prop-types";
-import { fetchGroupMetadata, updateGroupMetadata } from "./groupsSlice";
+import {fetchGroupMetadata, updateGroupMetadata} from "../../store/groupsSlice";
 import Spinner from "react-bootstrap/Spinner";
 import Alert from "react-bootstrap/cjs/Alert";
-import Col from "react-bootstrap/cjs/Col";
 import EditableField from "../../components/EditableField";
+
+import "./GroupDetail.css";
 
 class GroupDetail extends Component {
     static propTypes = {
@@ -18,23 +17,23 @@ class GroupDetail extends Component {
     state = {};
 
     updateName = (name) => {
-        this.props.updateGroupMetadata({ groupID: this.props.group.id, name: name });
+        this.props.updateGroupMetadata({groupID: this.props.group.group_id, name: name});
     };
 
     updateDescription = (description) => {
-        this.props.updateGroupMetadata({ groupID: this.props.group.id, description: description });
+        this.props.updateGroupMetadata({groupID: this.props.group.group_id, description: description});
     };
 
     updateCurrencySymbol = (currency_symbol) => {
-        this.props.updateGroupMetadata({ groupID: this.props.group.id, currency_symbol: currency_symbol });
+        this.props.updateGroupMetadata({groupID: this.props.group.group_id, currency_symbol: currency_symbol});
     };
 
     updateTerms = (terms) => {
-        this.props.updateGroupMetadata({ groupID: this.props.group.id, terms: terms });
+        this.props.updateGroupMetadata({groupID: this.props.group.group_id, terms: terms});
     };
 
     componentDidMount = () => {
-        this.props.fetchGroupMetadata({ groupID: this.props.group.id });
+        this.props.fetchGroupMetadata({groupID: this.props.group.group_id});
     };
 
     render() {
@@ -47,66 +46,51 @@ class GroupDetail extends Component {
                 ) : (
                     ""
                 )}
-                <ListGroup variant={"flush"}>
-                    <ListGroup.Item className={"d-flex"}>
-                        <Col xs={3} className={"p-0"}>
-                            <span className={"font-weight-bold"}>Name</span>
-                        </Col>
-                        <Col xs={9} className={"p-0 d-flex justify-content-between"}>
-                            <EditableField value={this.props.group.name} onChange={this.updateName} />
-                        </Col>
-                    </ListGroup.Item>
-                    <ListGroup.Item className={"d-flex"}>
-                        <Col xs={3} className={"p-0"}>
-                            <span className={"font-weight-bold"}>Description</span>
-                        </Col>
-                        <Col xs={9} className={"p-0 d-flex justify-content-between"}>
-                            <EditableField value={this.props.group.description} onChange={this.updateDescription} />
-                        </Col>
-                    </ListGroup.Item>
-                    <ListGroup.Item className={"d-flex"}>
-                        <span className={"font-weight-bold w-25"}>Created</span>
-                        <span>{this.props.group.created}</span>
-                    </ListGroup.Item>
-                    <ListGroup.Item className={"d-flex"}>
-                        <span className={"font-weight-bold w-25"}>Joined</span>
-                        <span>{this.props.group.joined}</span>
-                    </ListGroup.Item>
-                    <ListGroup.Item className={"d-flex"}>
-                        <span className={"font-weight-bold w-25"}>Last Changed</span>
-                        <span>
-                            {this.props.group.latest_commit === null ? "never" : this.props.group.latest_commit}
-                        </span>
-                    </ListGroup.Item>
-                    {this.props.group.currency_symbol === undefined || this.props.group.terms === undefined ? (
-                        <ListGroup.Item className={"d-flex justify-content-center"}>
-                            <Spinner animation="border" role="status">
-                                <span className="sr-only">Loading...</span>
-                            </Spinner>
-                        </ListGroup.Item>
-                    ) : (
-                        <>
-                            <ListGroup.Item className={"d-flex"}>
-                                <Col xs={3} className={"p-0"}>
-                                    <span className={"font-weight-bold"}>Currency Symbol</span>
-                                </Col>
-                                <Col xs={9} className={"p-0 d-flex justify-content-between"}>
-                                    <EditableField value={this.props.group.currency_symbol} onChange={this.updateCurrencySymbol} />
-                                </Col>
-                            </ListGroup.Item>
-                            <ListGroup.Item>
-                                <div className={"d-flex justify-content-between"}>
-                                    <span className={"font-weight-bold"}>Terms</span>
-                                    <EditableField
-                                        type={"textarea"}
-                                        value={this.props.group.terms}
-                                        onChange={this.updateTerms}
-                                    />
-                                </div>
-                            </ListGroup.Item>
-                        </>
-                    )}
-                </ListGroup>
+                <span className={"font-weight-bold"}>Name</span>
+                <div className={"p-0 d-flex justify-content-between"}>
+                    <EditableField value={this.props.group.name} onChange={this.updateName}/>
+                </div>
+
+                <span className={"font-weight-bold"}>Description</span>
+                <div className={"p-0 d-flex justify-content-between"}>
+                    <EditableField value={this.props.group.description} onChange={this.updateDescription}/>
+                </div>
+
+                <span className={"font-weight-bold"}>Created</span><br/>
+                <span className={"info-text"}>{this.props.group.created}</span><br/>
+
+                <span className={"font-weight-bold"}>Joined</span><br/>
+                <span className={"info-text"}>{this.props.group.joined}</span><br/>
+
+                <span className={"font-weight-bold"}>Last Changed</span><br/>
+                <span className={"info-text"}>
+                    {this.props.group.latest_commit === null ? "never" : this.props.group.latest_commit}
+                </span><br/>
+
+                {this.props.group.currency_symbol === undefined || this.props.group.terms === undefined ? (
+                    <div className={"d-flex justify-content-center"}>
+                        <Spinner animation="border" role="status">
+                            <span className="sr-only">Loading...</span>
+                        </Spinner>
+                    </div>
+                ) : (
+                    <>
+                        <span className={"font-weight-bold"}>Currency Symbol</span>
+                        <div className={"d-flex justify-content-between"}>
+                            <EditableField value={this.props.group.currency_symbol}
+                                           onChange={this.updateCurrencySymbol}/>
+                        </div>
+
+                        <span className={"font-weight-bold"}>Terms</span>
+                        <div className={"d-flex justify-content-between"}>
+                            <EditableField
+                                type={"textarea"}
+                                value={this.props.group.terms}
+                                onChange={this.updateTerms}
+                            />
+                        </div>
+                    </>
+                )}
             </>
         );
     }
@@ -117,4 +101,4 @@ const mapStateToProps = (state) => ({
     error: state.groups.error,
 });
 
-export default connect(mapStateToProps, { fetchGroupMetadata, updateGroupMetadata })(GroupDetail);
+export default connect(mapStateToProps, {fetchGroupMetadata, updateGroupMetadata})(GroupDetail);

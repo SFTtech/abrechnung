@@ -5,7 +5,7 @@ import { Redirect } from "react-router-dom";
 import Spinner from "react-bootstrap/Spinner";
 import queryString from "query-string";
 
-import { login } from "./authSlice";
+import { login } from "../../store/authSlice";
 
 class Login extends Component {
     state = {

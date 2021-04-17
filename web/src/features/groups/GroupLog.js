@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { connect } from "react-redux";
 import "react-datetime/css/react-datetime.css";
 import PropTypes from "prop-types";
-import { createGroupLog, fetchGroupLog, fetchGroupMembers } from "./groupsSlice";
+import { createGroupLog, fetchGroupLog, fetchGroupMembers } from "../../store/groupsSlice";
 import Spinner from "react-bootstrap/Spinner";
 import Form from "react-bootstrap/Form";
 import ListGroup from "react-bootstrap/cjs/ListGroup";
@@ -21,10 +21,10 @@ class GroupLog extends Component {
 
     componentDidMount = () => {
         if (this.props.group.log === undefined) {
-            this.props.fetchGroupLog({ groupID: this.props.group.id });
+            this.props.fetchGroupLog({ groupID: this.props.group.group_id });
         }
         if (this.props.group.members === undefined) {
-            this.props.fetchGroupMembers({ groupID: this.props.group.id });
+            this.props.fetchGroupMembers({ groupID: this.props.group.group_id });
         }
     };
 

@@ -4,7 +4,7 @@ import { connect } from "react-redux";
 import ListGroup from "react-bootstrap/cjs/ListGroup";
 import "react-datetime/css/react-datetime.css";
 import PropTypes from "prop-types";
-import { fetchGroupMembers, setGroupMemberPrivileges } from "./groupsSlice";
+import { fetchGroupMembers, setGroupMemberPrivileges } from "../../store/groupsSlice";
 import Spinner from "react-bootstrap/Spinner";
 import Badge from "react-bootstrap/cjs/Badge";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -73,7 +73,7 @@ class GroupMemberList extends Component {
     };
 
     componentDidMount = () => {
-        this.props.fetchGroupMembers({ groupID: this.props.group.id });
+        this.props.fetchGroupMembers({ groupID: this.props.group.group_id });
     };
 
     render() {

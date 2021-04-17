@@ -2,7 +2,7 @@ import React, {Component} from "react";
 import {connect} from "react-redux";
 import PropTypes from "prop-types";
 import {Switch, withRouter} from "react-router-dom";
-import {fetchUserInfo} from "../auth/authSlice";
+import {fetchUserInfo} from "../../store/authSlice";
 import ChangePassword from "./ChangePassword";
 import ChangeEmail from "./ChangeEmail";
 import Spinner from "react-bootstrap/Spinner";

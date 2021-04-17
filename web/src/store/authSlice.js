@@ -2,7 +2,7 @@ import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import {ofType} from "redux-observable";
 import {map} from "rxjs/operators";
 
-import {ws} from "../../websocket";
+import {ws} from "../websocket";
 
 export const login = createAsyncThunk("auth/login", async ({username, password, sessionName}, {dispatch}) => {
     return ws.call("login_with_password", {

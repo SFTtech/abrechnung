@@ -9,7 +9,7 @@ import Form from "react-bootstrap/Form";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrash } from "@fortawesome/free-solid-svg-icons";
 
-import { createGroup, deleteGroup, fetchGroups } from "./groupsSlice";
+import { createGroup, deleteGroup, fetchGroups } from "../../store/groupsSlice";
 import { Link } from "react-router-dom";
 import Spinner from "react-bootstrap/Spinner";
 

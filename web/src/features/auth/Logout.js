@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import { Redirect } from "react-router-dom";
 import Spinner from "react-bootstrap/Spinner";
 
-import { logout } from "./authSlice";
+import { logout } from "../../store/authSlice";
 
 class Logout extends Component {
     static propTypes = {

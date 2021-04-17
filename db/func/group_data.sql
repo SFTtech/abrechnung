@@ -239,17 +239,14 @@ begin
     from session_auth_group(account_create.authtoken, account_create.group_id, true);
 
     insert into account (grp)
-    values (account_create.group_id) returning account.id into account_create.id;
-
-    select commit_create_no_auth.id into account_create.commit_id
-    from commit_create_no_auth(account_create.group_id, locals.usr, 'create account');
+    values (account_create.group_id) returning account.id into account_create.account_id;
 
     insert into change (grp, usr, message, commited)
     values (account_create.group_id, locals.usr, 'create account', now())
     returning change.id into account_create.change_id;
 
     insert into account_history(id, change, name, description, priority)
-    values (account_create.id, account_create.change_id, account_create.name, account_create.description, account_create.priority);
+    values (account_create.account_id, account_create.change_id, account_create.name, account_create.description, account_create.priority);
 end;
 $$ language plpgsql;
 call allow_function('account_create');
@@ -318,7 +315,7 @@ begin
 
     insert into transaction(grp, type)
     values (transaction_create.group_id, transaction_create.type)
-    returning transaction.id into transaction_create.id;
+    returning transaction.id into transaction_create.transaction_id;
 
     insert into change (grp, usr, message)
     values (transaction_create.group_id, locals.usr, 'WIP: transaction')
@@ -326,7 +323,7 @@ begin
 
     insert into transaction_history(id, change, currency_symbol, currency_conversion_rate, value, description)
     values (
-        transaction_create.id,
+        transaction_create.transaction_id,
         transaction_create.change_id,
         transaction_create.currency_symbol,
         transaction_create.currency_conversion_rate,

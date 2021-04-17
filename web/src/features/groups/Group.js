@@ -8,7 +8,7 @@ import Spinner from "react-bootstrap/Spinner";
 import "react-datetime/css/react-datetime.css";
 import InviteLinkList from "./InviteLinkList";
 
-import {fetchGroups} from "./groupsSlice";
+import {fetchGroups} from "../../store/groupsSlice";
 import GroupMemberList from "./GroupMemberList";
 import ListGroup from "react-bootstrap/cjs/ListGroup";
 import {LinkContainer} from "react-router-bootstrap";
@@ -17,6 +17,8 @@ import GroupDetail from "./GroupDetail";
 import PrivateRoute from "../../components/PrivateRoute";
 import TransactionLog from "../transactions/TransactionLog";
 import Accounts from "../transactions/Accounts";
+import Transaction from "../transactions/Transaction";
+import CreateTransaction from "../transactions/CreateTransaction";
 
 class Group extends Component {
     state = {};
@@ -54,14 +56,18 @@ class Group extends Component {
         return (
             <Row>
                 <Col xs={12}>
-                    <h3>{group.name}</h3>
-                    {error}
-                    <hr/>
                     <Row>
                         <Col lg={9} md={8}>
+                            {error}
                             <Switch>
                                 <PrivateRoute exact path={`${path}/(transactions)?`}>
                                     <TransactionLog group={group}/>
+                                </PrivateRoute>
+                                <PrivateRoute path={`${path}/transactions/new`}>
+                                    <CreateTransaction group={group}/>
+                                </PrivateRoute>
+                                <PrivateRoute path={`${path}/transactions/:id([0-9]+)`}>
+                                    <Transaction group={group}/>
                                 </PrivateRoute>
                                 <PrivateRoute exact path={`${path}/accounts`}>
                                     <Accounts group={group}/>

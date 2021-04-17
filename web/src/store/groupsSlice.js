@@ -1,6 +1,6 @@
-import {createAsyncThunk, createEntityAdapter, createSlice} from "@reduxjs/toolkit";
+import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 
-import {ws} from "../../websocket";
+import {ws} from "../websocket";
 import {ofType} from "redux-observable";
 import {map, withLatestFrom} from "rxjs/operators";
 
@@ -40,7 +40,6 @@ export const fetchGroupMetadata = createAsyncThunk("groups/fetchGroupMetadata", 
         group_id: groupID,
     });
 });
-
 export const setGroupMemberPrivileges = createAsyncThunk(
     "groups/setGroupMemberPrivileges",
     async ({groupID, userID, canWrite, isOwner}, {getState, dispatch}) => {
@@ -88,7 +87,10 @@ export const refreshGroupLog = (groupID) => {
     };
 };
 
-export const createGroupLog = createAsyncThunk("groups/createGroupLog", async ({groupID, message}, {getState, dispatch}) => {
+export const createGroupLog = createAsyncThunk("groups/createGroupLog", async ({groupID, message}, {
+    getState,
+    dispatch
+}) => {
     return ws
         .call("group_log_post", {
             authtoken: getState().auth.sessionToken,
@@ -105,17 +107,27 @@ export const fetchInviteTokens = createAsyncThunk("groups/fetchInviteTokens", as
     });
 });
 
-export const createInviteToken = createAsyncThunk("groups/createInviteToken", async ({groupID, description, validUntil, singleUse}, {getState, dispatch}) => {
-    return ws.call("group_invite_create", {
-        authtoken: getState().auth.sessionToken,
-        group_id: groupID,
-        description: description,
-        valid_until: validUntil,
-        single_use: singleUse,
+export const createInviteToken = createAsyncThunk(
+    "groups/createInviteToken",
+    async ({
+               groupID,
+               description,
+               validUntil,
+               singleUse
+           }, {getState, dispatch}) => {
+        return ws.call("group_invite_create", {
+            authtoken: getState().auth.sessionToken,
+            group_id: groupID,
+            description: description,
+            valid_until: validUntil,
+            single_use: singleUse,
+        });
     });
-});
 
-export const deleteInviteToken = createAsyncThunk("groups/deleteInviteToken", async ({groupID, tokenID}, {getState, dispatch}) => {
+export const deleteInviteToken = createAsyncThunk("groups/deleteInviteToken", async ({groupID, tokenID}, {
+    getState,
+    dispatch
+}) => {
     return ws.call("group_invite_delete", {
         authtoken: getState().auth.sessionToken,
         group_id: groupID,
@@ -123,22 +135,79 @@ export const deleteInviteToken = createAsyncThunk("groups/deleteInviteToken", as
     });
 });
 
-const groupsAdapter = createEntityAdapter({
-    // Sort groups by name
-    sortComparer: (a, b) => a.name.localeCompare(b.name),
+// account handling
+export const fetchAccounts = createAsyncThunk("groups/fetchAccounts", async ({groupID}, {getState}) => {
+    return ws.call("account_list", {
+        authtoken: getState().auth.sessionToken,
+        group_id: groupID,
+    });
 });
+
+export const createAccount = createAsyncThunk(
+    "groups/createAccount",
+    async ({
+               groupID,
+               name,
+               description
+           }, {getState}) => {
+        return ws.call("account_create", {
+            authtoken: getState().auth.sessionToken,
+            group_id: groupID,
+            name: name,
+            description: description,
+        });
+    });
+
+// transaction handling
+export const fetchTransactions = createAsyncThunk("groups/fetchTransactions", async ({groupID}, {getState}) => {
+    return ws.call("transaction_list", {
+        authtoken: getState().auth.sessionToken,
+        group_id: groupID,
+    });
+});
+
+export const createTransaction = createAsyncThunk(
+    "groups/createTransaction",
+    async ({
+               groupID,
+               type,
+               description,
+               currencySymbol,
+               currencyConversionRate,
+               value
+           }, {getState}) => {
+        return ws.call("transaction_create", {
+            authtoken: getState().auth.sessionToken,
+            group_id: groupID,
+            type: type,
+            description: description,
+            currency_symbol: currencySymbol,
+            currency_conversion_rate: currencyConversionRate,
+            value: value,
+        });
+    });
+
+const groupComparer = (a, b) => a.name.localeCompare(b.name);
 
 export const groupsSlice = createSlice({
     name: "groups",
-    initialState: groupsAdapter.getInitialState({
+    initialState: {
+        ids: [],
+        entities: {},
         status: "loading", // or loading | failed
         error: null,
-    }),
+    },
     extraReducers: {
         [fetchGroups.fulfilled]: (state, action) => {
             // TODO: more sophisticated merging of group data to not overwrite existing member info
             // alternatively force a full reload (which might lead to more consistency)
-            groupsAdapter.upsertMany(state, action.payload);
+            for (const group of action.payload) {
+                if (!(group.group_id in state.entities)) {
+                    state.ids.push(group.group_id);
+                    state.ids = state.ids.sort(groupComparer);
+                }
+                state.entities[group.group_id] = group;
+            }
             state.status = "idle";
             state.error = null;
         },
@@ -151,13 +220,15 @@ export const groupsSlice = createSlice({
         },
         [createGroup.fulfilled]: (state, action) => {
             let group = {
-                id: action.payload[0].id,
+                group_id: action.payload[0].group_id,
                 name: action.meta.arg.name,
                 description: action.meta.arg.description,
                 terms: action.meta.arg.terms,
                 currency_symbol: action.meta.arg.currency_symbol,
             };
-            groupsAdapter.addOne(state, group);
+            state.ids.push(group.group_id);
+            state.ids = state.ids.sort(groupComparer);
+            state.entities[group.group_id] = group;
             state.status = "idle";
             state.error = null;
         },
@@ -165,7 +236,8 @@ export const groupsSlice = createSlice({
             state.error = action.error.message;
         },
         [deleteGroup.fulfilled]: (state, action) => {
-            groupsAdapter.removeOne(state, action.meta.arg.groupID);
+            delete state.entities[action.meta.arg.groupID];
+            state.ids = state.ids.filter((group) => group.group_id !== action.meta.arg.groupID);
             state.status = "idle";
             state.error = null;
         },
@@ -173,11 +245,7 @@ export const groupsSlice = createSlice({
             state.error = action.error.message;
         },
         [fetchGroupMembers.fulfilled]: (state, action) => {
-            const group = {
-                id: action.meta.arg.groupID,
-                members: action.payload
-            }
-            groupsAdapter.upsertOne(state, group);
+            state.entities[action.meta.arg.groupID].members = action.payload;
             state.status = "idle";
             state.error = null;
         },
@@ -186,11 +254,20 @@ export const groupsSlice = createSlice({
             state.status = "idle";
         },
         [fetchGroupMetadata.fulfilled]: (state, action) => {
-            const group = {
-                id: action.meta.arg.groupID,
-                ...action.payload[0],
+            const id = action.meta.arg.groupID;
+            if (id in state.entities) {
+                state.entities[id] = {
+                    ...state.entities[id],
+                    ...action.payload[0]
+                };
+            } else {
+                state.entities[id] = {
+                    group_id: id,
+                    ...action.payload
+                }
+                state.ids.push(id);
+                state.ids = state.ids.sort(groupComparer);
             }
-            groupsAdapter.upsertOne(state, group);
             state.status = "idle";
             state.error = null;
         },
@@ -208,7 +285,6 @@ export const groupsSlice = createSlice({
             state.status = "idle";
         },
         [setGroupMemberPrivileges.fulfilled]: (state, action) => {
-            // TODO: use groupsAdapter for this
             const groupID = action.meta.arg.groupID
             if (state.entities[groupID] !== undefined) {
                 const memberIdx = state.entities[groupID].members.find((member) => member.id === action.meta.arg.userID);
@@ -292,10 +368,67 @@ export const groupsSlice = createSlice({
             state.error = action.error.message;
             state.status = "idle";
         },
+        [fetchAccounts.fulfilled]: (state, action) => {
+            let group = state.entities[action.meta.arg.groupID];
+            group.accounts = action.payload;
+        },
+        [fetchAccounts.pending]: (state, action) => {
+            let group = state.entities[action.meta.arg.groupID];
+            group.accounts = undefined;
+        },
+        [fetchAccounts.rejected]: (state, error) => {
+            console.log(error);
+        },
+        [createAccount.fulfilled]: (state, action) => {
+            let account = {
+                id: action.payload[0].account_id,
+                name: action.meta.arg.name,
+                description: action.meta.arg.description,
+            };
+            let group = state.entities[action.meta.arg.groupID];
+            group.accounts.push(account);
+        },
+        [fetchTransactions.fulfilled]: (state, action) => {
+            let group = state.entities[action.meta.arg.groupID];
+            group.transactions = action.payload;
+        },
+        [fetchTransactions.pending]: (state, action) => {
+            let group = state.entities[action.meta.arg.groupID];
+            group.transactions = undefined;
+        },
+        [fetchTransactions.rejected]: (state, error) => {
+            console.log(error);
+        },
+        [createTransaction.fulfilled]: (state, action) => {
+            let transaction = {
+                id: action.payload[0].transaction_id,
+                currency_symbol: action.meta.arg.currencySymbol,
+                currency_conversion_rate: action.meta.arg.currencyConversionRate,
+                value: action.meta.arg.value,
+                type: action.meta.arg.type,
+                change_id: action.payload[0].change_id
+            };
+            let group = state.entities[action.meta.arg.groupID];
+            group.transactions.push(transaction);
+        },
     },
 });
 
 // export const { } = groupsSlice.actions;
+
+export const getAccountsForGroup = (state, groupID) => {
+    if (groupID in state.entities) {
+        return state.entities[groupID].accounts;
+    }
+    return undefined;
+}
+
+export const getTransactionsForGroup = (state, groupID) => {
+    if (groupID in state.entities) {
+        return state.entities[groupID].transactions;
+    }
+    return undefined;
+}
 
 export const groupsEpic = (action$, state$) => action$.pipe(
     ofType("groups/createInviteToken/fulfilled", "groups/deleteInviteToken/fulfilled", "groups/updateGroupMetadata/fulfilled", "groups/setGroupMemberPrivileges/fulfilled"),

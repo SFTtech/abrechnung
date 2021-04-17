@@ -8,7 +8,7 @@ import Header from "./components/Header";
 import PrivateRoute from "./components/PrivateRoute";
 import Alerts from "./components/Alerts";
 import { connect } from "react-redux";
-import { initSession } from "./features/auth/authSlice";
+import { initSession } from "./store/authSlice";
 import Spinner from "react-bootstrap/Spinner";
 import Register from "./features/auth/Register";
 import Login from "./features/auth/Login";

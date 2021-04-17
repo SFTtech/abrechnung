@@ -14,7 +14,7 @@ import { LinkContainer } from "react-router-bootstrap";
 
 import { ws } from "../../websocket";
 import Button from "react-bootstrap/Button";
-import {fetchGroups} from "./groupsSlice";
+import {fetchGroups} from "../../store/groupsSlice";
 
 class GroupInvite extends Component {
     state = {

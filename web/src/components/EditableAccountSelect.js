@@ -1,6 +1,5 @@
 import React, {Component} from "react";
 import PropTypes from "prop-types";
-import Form from "react-bootstrap/cjs/Form";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faPencilAlt} from "@fortawesome/free-solid-svg-icons/faPencilAlt";
 import {faCheck} from "@fortawesome/free-solid-svg-icons/faCheck";
@@ -8,12 +7,14 @@ import {faTimes} from "@fortawesome/free-solid-svg-icons/faTimes";
 import {InputGroup} from "react-bootstrap";
 import Button from "react-bootstrap/cjs/Button";
 
-import "./EditableField.css";
+import "./EditableAccountSelect.css";
+import AccountSelect from "./AccountSelect";
 
-class EditableField extends Component {
+class EditableAccountSelect extends Component {
     static propTypes = {
         value: PropTypes.string.isRequired,
-        onChange: PropTypes.func.isRequired
+        onChange: PropTypes.func.isRequired,
+        group: PropTypes.object.isRequired,
     };
 
     state = {
@@ -30,18 +31,11 @@ class EditableField extends Component {
         if (this.state.editing) {
             return (
                 <InputGroup>
-                    {this.props.type === "textarea" ? (
-                        <Form.Control
-                            as={"textarea"}
-                            value={this.state.value}
-                            onChange={(event) => this.setState({value: event.target.value})}
-                        />
-                    ) : (
-                        <Form.Control
-                            value={this.state.value}
-                            onChange={(event) => this.setState({value: event.target.value})}
-                        />
-                    )}
+                    <AccountSelect
+                        group={this.props.group}
+                        value={this.state.value}
+                        onChange={(value) => this.setState({value: value})}
+                    />
                     <InputGroup.Append>
                         <Button
                             variant={"outline-success"}
@@ -75,4 +69,4 @@ class EditableField extends Component {
     }
 }
 
-export default EditableField;
+export default EditableAccountSelect;

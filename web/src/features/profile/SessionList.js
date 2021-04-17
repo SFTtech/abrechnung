@@ -6,7 +6,7 @@ import Spinner from "react-bootstrap/Spinner";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
 import { connect } from "react-redux";
-import { deleteSession, fetchSessionInfo, renameSession } from "./profileSlice";
+import { deleteSession, fetchSessionInfo, renameSession } from "../../store/profileSlice";
 
 class SessionList extends Component {
     static propTypes = {
