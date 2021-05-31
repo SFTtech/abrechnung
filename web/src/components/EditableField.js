@@ -1,5 +1,4 @@
-import React, {Component} from "react";
-import PropTypes from "prop-types";
+import React, {useState} from "react";
 import Form from "react-bootstrap/cjs/Form";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faPencilAlt} from "@fortawesome/free-solid-svg-icons/faPencilAlt";
@@ -10,69 +9,62 @@ import Button from "react-bootstrap/cjs/Button";
 
 import "./EditableField.css";
 
-class EditableField extends Component {
-    static propTypes = {
-        value: PropTypes.string.isRequired,
-        onChange: PropTypes.func.isRequired
-    };
+export default function EditableField({value, onChange, type = "textarea"}) {
+    const [currentValue, setValue] = useState(null);
+    const [editing, setEditing] = useState(false);
 
-    state = {
-        value: null,
-        editing: false
-    };
-
-    onSave = () => {
-        this.props.onChange(this.state.value);
-        this.setState({value: null, editing: false});
+    const onSave = () => {
+        onChange(currentValue);
+        setValue(null);
+        setEditing(false);
     }
 
-    render() {
-        if (this.state.editing) {
-            return (
-                <InputGroup>
-                    {this.props.type === "textarea" ? (
-                        <Form.Control
-                            as={"textarea"}
-                            value={this.state.value}
-                            onChange={(event) => this.setState({value: event.target.value})}
-                        />
-                    ) : (
-                        <Form.Control
-                            value={this.state.value}
-                            onChange={(event) => this.setState({value: event.target.value})}
-                        />
-                    )}
-                    <InputGroup.Append>
-                        <Button
-                            variant={"outline-success"}
-                            onClick={this.onSave}
-                        >
-                            <FontAwesomeIcon icon={faCheck}/>
-                        </Button>
-                    </InputGroup.Append>
-                    <InputGroup.Append>
-                        <Button
-                            variant={"outline-danger"}
-                            onClick={() => this.setState({name: null, editing: false})}
-                        >
-                            <FontAwesomeIcon icon={faTimes}/>
-                        </Button>
-                    </InputGroup.Append>
-                </InputGroup>
-            )
-        }
+    if (editing) {
         return (
-            <>
-                <span className={"text-field"}>{this.props.value}</span>
-                <button
-                    className="btn text-info p-0"
-                    onClick={() => this.setState({value: this.props.value, editing: true})}
-                >
-                    <FontAwesomeIcon icon={faPencilAlt}/>
-                </button>
-            </>
-        );
+            <InputGroup>
+                {type === "textarea" ? (
+                    <Form.Control
+                        as={"textarea"}
+                        value={currentValue}
+                        onChange={event => setValue(event.target.value)}
+                    />
+                ) : (
+                    <Form.Control
+                        value={value}
+                        onChange={event => setValue(event.target.value)}
+                    />
+                )}
+                <InputGroup.Append>
+                    <Button
+                        variant={"outline-success"}
+                        onClick={onSave}
+                    >
+                        <FontAwesomeIcon icon={faCheck}/>
+                    </Button>
+                </InputGroup.Append>
+                <InputGroup.Append>
+                    <Button
+                        variant={"outline-danger"}
+                        onClick={() => this.setState({name: null, editing: false})}
+                    >
+                        <FontAwesomeIcon icon={faTimes}/>
+                    </Button>
+                </InputGroup.Append>
+            </InputGroup>
+        )
     }
+    return (
+        <>
+            <span className={"text-field"}>{value}</span>
+            <button
+                className="btn text-info p-0"
+                onClick={() => {
+                    setValue(value);
+                    setEditing(true)
+                }}
+            >
+                <FontAwesomeIcon icon={faPencilAlt}/>
+            </button>
+        </>
+    );
 }
-
-export default EditableField;

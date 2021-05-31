@@ -5,9 +5,7 @@ DBTest command
 import asyncio
 import json
 import re
-import sys
 import time
-import traceback
 
 import asyncpg
 

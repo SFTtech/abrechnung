@@ -241,27 +241,6 @@ create table if not exists group_log (
     affected integer references usr(id) on delete restrict
 );
 
--- every data and history entry in a group references a change as a foreign key.
--- entries that have just been added, but not yet commited, reference a change
--- where the commited timestamp is null;
--- these uncommited changes are only visible if a user explicitly requests
--- to see them.
--- uncommited changes are created when users start to change a group,
--- and receive a 'commited' timestamp when the user clicks 'commit'.
--- changes that have been commited can no longer be modified.
-create table if not exists change (
-    id bigserial primary key,
-
-    grp integer not null references grp(id) on delete cascade,
-    -- users that have created changes cannot be deleted
-    usr integer not null references usr(id) on delete restrict,
-
-    started timestamptz not null default now(),
-    commited timestamptz default null,
-
-    message text not null
-);
-
 -- group data, the actual purpose of the abrechnung
 --
 -- all items of group data are organized in two tables:
@@ -283,67 +262,6 @@ create table if not exists change (
 create table if not exists account (
     grp integer not null references grp(id) on delete cascade,
     id serial primary key
-);
-
-create table if not exists account_history (
-    id integer references account(id) on delete restrict,
-    change bigint references change(id) on delete cascade,
-    primary key(id, change),
-    -- valid can only be false if no other valid item references the account id.
-    valid bool not null default true,
-
-    name text not null,
-    description text not null default '',
-    -- accounts with the highest priority are shown first. negative means hidden by default.
-    priority integer not null
-);
-
--- clearing relations between accounts.
--- accounts can be clearing accounts ("verrechnungskonto"),
--- temporary accounts whose balances are transferred to different accounts.
--- in Abrechnung, this balance transfer happens in a post-processing step:
--- first, all account balances are calculated according to the given
--- transactions.
--- then, accounts are cleared according to all clearing relations
--- e.g. the account balance from "spaghetti on wednsday" is transferred
--- in equal parts to the accounts "hans", "fritz", "elfriede", and the
--- account balance from "elfriede" is transferred to the account "fritz".
--- both "spaghetti on wednsday" and "elfriede" are clearing accounts,
--- no balance remains on them after clearing.
--- cycles between clearing accounts (e.g. "hans" clears to "fritz",
--- "fritz" clears to "elfriede" and "elfriede" clears to "hans" and "fritz"
--- are forbidden; if any are found, clearing is skipped, and commiting is
--- forbidden.
--- (cycles could in theory be resolved using linear algebra, but
---  neither comprehensibility nore numerical stability can be guaranteed).
-create table if not exists account_clearing_relation (
-    grp integer not null references grp(id) on delete cascade,
-    id serial primary key,
-
-    -- the account that is cleared.
-    source integer not null references account(id) on delete restrict,
-    -- the account to which the balance is transferred.
-    -- if destination == source, the given share is actually kept on this account.
-    -- this can be used if e.g. only half of the account's balance should be cleared.
-    destination integer not null references account(id) on delete restrict,
-
-    constraint account_clearing_relation_source_destination_unique unique (source, destination)
-);
-
-create table if not exists account_clearing_relation_history (
-    id integer references account(id) on delete restrict,
-    change bigint references change(id) on delete cascade,
-    primary key(id, change),
-    -- valid cna be set to false at any time
-    valid bool not null default true,
-
-    -- the number of shares of the source account's balance that
-    -- should be cleared to this destination account.
-    -- balance transferred to destination :=
-    --   balance of source * (shares / (sum of all shares with this source))
-    shares double precision not null,
-    constraint account_clearing_relation_history_shares_nonnegative check (shares >= 0),
-    description text not null default ''
 );
 
 create type transaction_type as enum (
@@ -388,10 +306,98 @@ create table if not exists transaction (
     type transaction_type not null
 );
 
+-- every data and history entry in a group references a change as a foreign key.
+-- entries that have just been added, but not yet commited, reference a change
+-- where the commited timestamp is null;
+-- these uncommited changes are only visible if a user explicitly requests
+-- to see them.
+-- uncommited changes are created when users start to change a group,
+-- and receive a 'commited' timestamp when the user clicks 'commit'.
+-- changes that have been commited can no longer be modified.
+create table if not exists revision (
+    id bigserial primary key,
+
+    -- users that have created changes cannot be deleted
+    usr integer not null references usr(id) on delete restrict,
+
+    -- a revision can either reference an account or a transaction
+    account integer references account(id) on delete cascade,
+    transaction integer references transaction(id) on delete cascade,
+
+    started timestamptz not null default now(),
+    commited timestamptz default null,
+
+    message text not null,
+
+    check ((account is null) <> (transaction is null))
+    -- TODO: maybe introduce check that only allows one uncommited revision per transaction / account per user
+);
+
+create table if not exists account_history (
+    id integer references account(id) on delete restrict,
+    revision bigint references revision(id) on delete cascade,
+    primary key(id, revision),
+    -- valid can only be false if no other valid item references the account id.
+    valid bool not null default true,
+
+    name text not null,
+    description text not null default '',
+    -- accounts with the highest priority are shown first. negative means hidden by default.
+    priority integer not null
+);
+
+-- clearing relations between accounts.
+-- accounts can be clearing accounts ("verrechnungskonto"),
+-- temporary accounts whose balances are transferred to different accounts.
+-- in Abrechnung, this balance transfer happens in a post-processing step:
+-- first, all account balances are calculated according to the given
+-- transactions.
+-- then, accounts are cleared according to all clearing relations
+-- e.g. the account balance from "spaghetti on wednsday" is transferred
+-- in equal parts to the accounts "hans", "fritz", "elfriede", and the
+-- account balance from "elfriede" is transferred to the account "fritz".
+-- both "spaghetti on wednsday" and "elfriede" are clearing accounts,
+-- no balance remains on them after clearing.
+-- cycles between clearing accounts (e.g. "hans" clears to "fritz",
+-- "fritz" clears to "elfriede" and "elfriede" clears to "hans" and "fritz"
+-- are forbidden; if any are found, clearing is skipped, and commiting is
+-- forbidden.
+-- (cycles could in theory be resolved using linear algebra, but
+--  neither comprehensibility nore numerical stability can be guaranteed).
+create table if not exists account_clearing_relation (
+    grp integer not null references grp(id) on delete cascade,
+    id serial primary key,
+
+    -- the account that is cleared.
+    source integer not null references account(id) on delete restrict,
+    -- the account to which the balance is transferred.
+    -- if destination == source, the given share is actually kept on this account.
+    -- this can be used if e.g. only half of the account's balance should be cleared.
+    destination integer not null references account(id) on delete restrict,
+
+    constraint account_clearing_relation_source_destination_unique unique (source, destination)
+);
+
+create table if not exists account_clearing_relation_history (
+    id integer references account(id) on delete restrict,
+    revision bigint references revision(id) on delete cascade,
+    primary key(id, revision),
+    -- valid cna be set to false at any time
+    valid bool not null default true,
+
+    -- the number of shares of the source account's balance that
+    -- should be cleared to this destination account.
+    -- balance transferred to destination :=
+    --   balance of source * (shares / (sum of all shares with this source))
+    shares double precision not null,
+    constraint account_clearing_relation_history_shares_nonnegative check (shares >= 0),
+    description text not null default ''
+);
+
 create table if not exists transaction_history (
     id integer references transaction(id) on delete restrict,
-    change bigint references change(id) on delete cascade,
-    primary key(id, change),
+    revision bigint references revision(id) on delete cascade,
+    primary key(id, revision),
     -- valid can be set to false at any time
     valid bool not null default true,
     -- currency (symbol) of the values inside this transaction
@@ -421,8 +427,8 @@ create table if not exists creditor_share (
 
 create table if not exists creditor_share_history (
     id integer references creditor_share(id) on delete restrict,
-    change bigint references change(id) on delete cascade,
-    primary key(id, change),
+    revision bigint references revision(id) on delete cascade,
+    primary key(id, revision),
     -- valid can be set to false at any time, but the transaction may
     -- become impossible to evaluate (making commiting impossible).
     valid bool not null default true,
@@ -446,8 +452,8 @@ create table if not exists debitor_share (
 
 create table if not exists debitor_share_history (
     id integer references debitor_share(id) on delete restrict,
-    change bigint references change(id) on delete cascade,
-    primary key(id, change),
+    revision bigint references revision(id) on delete cascade,
+    primary key(id, revision),
     -- valid can be set to false if the debited account is not referenced by
     -- any item_consumption, but the transaction may
     -- become impossible to evaluate (making commiting impossible).
@@ -464,8 +470,8 @@ create table if not exists purchase_item (
 
 create table if not exists purchase_item_history (
     id integer references purchase_item(id) on delete restrict,
-    change bigint references change(id) on delete cascade,
-    primary key(id, change),
+    revision bigint references revision(id) on delete cascade,
+    primary key(id, revision),
     -- valid can be set to false at any time.
     valid bool not null default true,
 
@@ -497,8 +503,8 @@ create table if not exists item_usage (
 
 create table if not exists item_usage_history (
     id integer references item_usage(id) on delete restrict,
-    change bigint references change(id) on delete cascade,
-    primary key(id, change),
+    revision bigint references revision(id) on delete cascade,
+    primary key(id, revision),
     -- valid can be set to false at any time.
     valid bool not null default true,
 

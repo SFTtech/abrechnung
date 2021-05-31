@@ -78,11 +78,15 @@ begin
         latest_commit as (
             select
                 my_groups.grp as grp,
-                max(change.commited) as latest_commit
+                max(revision.commited) as latest_commit
             from
                 my_groups
-            left outer join change
-                on (my_groups.grp = change.grp)
+            left outer join transaction
+                on (my_groups.grp = transaction.grp)
+            left outer join account
+                on (my_groups.grp = account.grp)
+            left outer join revision
+                on (revision.transaction = transaction.id or revision.account = account.id)
             group by my_groups.grp
         )
     select
@@ -171,6 +175,7 @@ create or replace function group_invite_create(
     description text,
     valid_until timestamptz = null,
     single_use bool default true,
+    out invite_id bigint,
     out token uuid
 )
 as $$
@@ -191,7 +196,7 @@ begin
         group_invite_create.valid_until,
         group_invite_create.single_use
     )
-    returning group_invite.token into group_invite_create.token;
+    returning group_invite.id, group_invite.token into group_invite_create.invite_id, group_invite_create.token;
 
     insert into group_log (grp, usr, type)
     values (group_invite_create.group_id, locals.usr, 'invite-create');
@@ -442,7 +447,7 @@ create or replace function group_invite_list(
 )
 returns table (
     invite_id bigint,
-    invite_token uuid,
+    token uuid,
     description text,
     created_by integer,
     valid_until timestamptz,

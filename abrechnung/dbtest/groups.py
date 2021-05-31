@@ -221,7 +221,7 @@ async def test(test):
     )
 
     # user1 creates a single-use invite to group 1
-    grp1_invite_single = await test.fetchval(
+    grp1_invite_single = await test.fetchrow(
         'select * from group_invite_create('
             'authtoken := $1, '
             'group_id := $2, '
@@ -233,11 +233,11 @@ async def test(test):
         'best invite',
         datetime.datetime.now() + datetime.timedelta(hours=1),
         True,
-        column='token'
+        columns=['invite_id', 'token']
     )
 
     # user2 creates a multi-use invite to group 2
-    grp2_invite_multi = await test.fetchval(
+    grp2_invite_multi = await test.fetchrow(
         'select * from group_invite_create('
             'authtoken := $1, '
             'group_id := $2, '
@@ -249,7 +249,7 @@ async def test(test):
         'infinite invite',
         None,
         False,
-        column='token'
+        columns=['invite_id', 'token']
     )
 
     # -> we now have 1-use group1-invite: grp1_invite_single
@@ -264,7 +264,7 @@ async def test(test):
         expect=invite_count
     )
 
-    expired_invitetoken = await test.fetchval(
+    expired_invitetoken = await test.fetchrow(
         'select * from group_invite_create('
             'authtoken := $1, '
             'group_id := $2, '
@@ -276,7 +276,7 @@ async def test(test):
         'expired invite',
         datetime.datetime.now() - datetime.timedelta(hours=1),
         True,
-        column='token'
+        columns=['invite_id', 'token']
     )
 
     # test group_preview
@@ -287,7 +287,7 @@ async def test(test):
             invite_token := $1
         )
         ''',
-        grp1_invite_single,
+        grp1_invite_single[1],
         columns=['group_id', 'group_name', 'group_description',
                  'group_created',
                  'invite_description',
@@ -310,7 +310,7 @@ async def test(test):
         '    authtoken := $1,'
         '    invite_token := $2)',
         auth2,
-        expired_invitetoken,
+        expired_invitetoken[1],
         error_id='no-group-invite',
     )
 
@@ -320,12 +320,12 @@ async def test(test):
         '    authtoken := $1,'
         '    invite_token := $2)',
         auth2,
-        grp1_invite_single,
+        grp1_invite_single[1],
         expect=grp1,
     )
 
     # user2 creates another group1 singleuse invite, i.e. a chain invite -> success
-    grp1_invite_chain_single = await test.fetchval(
+    grp1_invite_chain_single = await test.fetchrow(
         'select * from group_invite_create('
         '    authtoken := $1,'
         '    group_id := $2,'
@@ -337,7 +337,7 @@ async def test(test):
         'chained invite',
         datetime.datetime.now() + datetime.timedelta(hours=1),
         True,
-        column='token'
+        columns=['invite_id', 'token']
     )
     # user3 uses user2's group1 singleuse chain invite -> success
     await test.fetchval(
@@ -345,7 +345,7 @@ async def test(test):
         '    authtoken := $1,'
         '    invite_token := $2)',
         auth3,
-        grp1_invite_chain_single,
+        grp1_invite_chain_single[1],
         expect=grp1,
     )
 
@@ -355,7 +355,7 @@ async def test(test):
         '    authtoken := $1,'
         '    invite_token := $2)',
         auth3,
-        grp1_invite_chain_single,
+        grp1_invite_chain_single[1],
         error_id='no-group-invite',
     )
 
@@ -365,7 +365,7 @@ async def test(test):
         '    authtoken := $1,'
         '    invite_token := $2)',
         auth2,
-        grp1_invite_chain_single,
+        grp1_invite_chain_single[1],
         error_id='no-group-invite',
     )
 
@@ -375,7 +375,7 @@ async def test(test):
         '    authtoken := $1,'
         '    invite_token := $2)',
         auth1,
-        grp2_invite_multi,
+        grp2_invite_multi[1],
         expect=grp2,
     )
 
@@ -385,7 +385,7 @@ async def test(test):
         '    authtoken := $1,'
         '    invite_token := $2)',
         auth2,
-        grp2_invite_multi,
+        grp2_invite_multi[1],
         error_id='already-member',
     )
 
@@ -395,7 +395,7 @@ async def test(test):
         '    authtoken := $1,'
         '    invite_token := $2)',
         auth3,
-        grp2_invite_multi,
+        grp2_invite_multi[1],
         expect=grp2,
     )
 
@@ -405,7 +405,7 @@ async def test(test):
         '    authtoken := $1,'
         '    invite_token := $2)',
         auth3,
-        grp2_invite_multi,
+        grp2_invite_multi[1],
         error_id='already-member',
     )
 
@@ -472,7 +472,7 @@ async def test(test):
     await test.fetch('call gc()')
     await test.fetch(
         'select * from group_invite where token=$1',
-        expired_invitetoken,
+        expired_invitetoken[1],
         rowcount=0
     )
 
