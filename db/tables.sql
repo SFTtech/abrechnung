@@ -330,7 +330,7 @@ create table if not exists revision (
     message text not null,
 
     check ((account is null) <> (transaction is null))
-    -- TODO: maybe introduce check that only allows one uncommited revision per transaction / account per user
+    -- TODO: introduce check that only allows one uncommited revision per transaction / account per user
 );
 
 create table if not exists account_history (

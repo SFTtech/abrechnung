@@ -69,9 +69,24 @@ export const logout = async () => {
 }
 
 export const register = async ({email, username, password}) => {
-    return ws.call("register_user", {
+    return await ws.call("register_user", {
         email: email,
         username: username,
         password: password,
+    })
+}
+
+export const renameSession = async ({authtoken, sessionID, newName}) => {
+    return await ws.call("rename_session", {
+        authtoken: authtoken,
+        session_id: sessionID,
+        new_name: newName,
+    })
+}
+
+export const deleteSession = async ({authtoken, sessionID}) => {
+    return await ws.call("logout_session", {
+        authtoken: authtoken,
+        session_id: sessionID,
     })
 }

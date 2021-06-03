@@ -5,10 +5,7 @@ import {transactionDebitorShares} from "../../recoil/transactions";
 
 
 export default function TransactionDebitorShares({group, transaction}) {
-    const shares = useRecoilValue(transactionDebitorShares({
-        groupID: group.group_id,
-        transactionID: transaction.transaction_id
-    }));
+    const shares = useRecoilValue(transactionDebitorShares(transaction.transaction_id));
 
     return (
         <div>

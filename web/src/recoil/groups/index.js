@@ -121,8 +121,7 @@ export const deleteGroup = async ({sessionToken, groupID}) => {
 }
 
 export const setGroupMemberPrivileges = async ({sessionToken, groupID, userID, canWrite, isOwner}) => {
-    return ws
-        .call("group_member_privileges_set", {
+    return await ws.call("group_member_privileges_set", {
             authtoken: sessionToken,
             group_id: groupID,
             usr: userID,
@@ -132,7 +131,7 @@ export const setGroupMemberPrivileges = async ({sessionToken, groupID, userID, c
 }
 
 export const updateGroupMetadata = async ({sessionToken, groupID, name, description, currency_symbol, terms}) => {
-    return ws.call("group_metadata_set", {
+    return await ws.call("group_metadata_set", {
         authtoken: sessionToken,
         group_id: groupID,
         name: name === undefined ? null : name,
@@ -142,8 +141,8 @@ export const updateGroupMetadata = async ({sessionToken, groupID, name, descript
     });
 }
 
-export const createGroupLog = ({sessionToken, groupID, message}) => {
-    return ws.call("group_log_post", {
+export const createGroupLog = async ({sessionToken, groupID, message}) => {
+    return await ws.call("group_log_post", {
         authtoken: sessionToken,
         group_id: groupID,
         message: message,
@@ -175,15 +174,15 @@ export const deleteInviteToken = async ({sessionToken, groupID, tokenID}) => {
 }
 
 export const createAccount = async ({sessionToken, groupID, name, description}) => {
-    const accountID = (await ws.call("account_create", {
+    const result = await ws.call("account_create", {
         authtoken: sessionToken,
         group_id: groupID,
         name: name,
         description: description,
-    }))[0].account_id;
+    });
     // TODO: make this return the actual thingy
     return {
-        account_id: accountID,
+        account_id: result[0].account_id,
         name: name,
         description: description,
     }

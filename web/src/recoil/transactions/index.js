@@ -28,10 +28,9 @@ export const transactionDebitorShares = atomFamily({
     key: "transactionDebitorShares",
     default: selectorFamily({
         key: "transactionDebitorShares/default",
-        get: ({groupID, transactionID}) => async ({get}) => {
+        get: (transactionID) => async ({get}) => {
             return ws.call("transaction_debitor_shares_list", {
                 authtoken: get(sessionToken),
-                group_id: groupID,
                 transaction_id: transactionID,
             });
         }
@@ -42,23 +41,14 @@ export const transactionCreditorShares = atomFamily({
     key: "transactionCreditorShares",
     default: selectorFamily({
         key: "transactionCreditorShares/default",
-        get: ({groupID, transactionID}) => async ({get}) => {
+        get: (transactionID) => async ({get}) => {
             return ws.call("transaction_creditor_shares_list", {
                 authtoken: get(sessionToken),
-                group_id: groupID,
                 transaction_id: transactionID,
             });
         }
     })
 })
-
-export const fetchTransactionDetail = async ({sessionToken, groupID, transactionID}) => {
-    return ws.call("transaction_detail", {
-        authtoken: sessionToken,
-        group_id: groupID,
-        transaction_id: transactionID
-    });
-}
 
 export const createTransaction = async ({
                                             sessionToken,
@@ -69,7 +59,7 @@ export const createTransaction = async ({
                                             currencyConversionRate,
                                             value
                                         }) => {
-    const result = ws.call("transaction_create", {
+    const result = await ws.call("transaction_create", {
         authtoken: sessionToken,
         group_id: groupID,
         type: type,
@@ -78,19 +68,39 @@ export const createTransaction = async ({
         currency_conversion_rate: currencyConversionRate,
         value: value,
     })
+    return result[0];
+}
 
-    const transaction = {
-        transaction_id: result[0].transaction_id,
-        type: this.state.type,
-        history: [
-            {
-                revision_id: result.revision_id,
-                currency_symbol: this.state.currencySymbol,
-                currency_conversion_rate: this.state.currencyConversionRate,
-                value: this.state.value,
-            }
-        ]
-    };
+export const startEditTransaction = async ({sessionToken, transactionID}) => {
+    const result = await ws.call("transaction_edit", {
+        authtoken: sessionToken,
+        transaction_id: transactionID
+    })
+    return result[0].revision_id;
+}
 
-    return transaction;
+export const discardRevision = async ({sessionToken, revisionID}) => {
+    await ws.call("discard_revision", {
+        authtoken: sessionToken,
+        revision_id: revisionID
+    })
+}
+
+export const commitRevision = async ({sessionToken, revisionID}) => {
+    await ws.call("commit_revision", {
+        authtoken: sessionToken,
+        revision_id: revisionID
+    })
+}
+
+export const updateTransaction = async ({sessionToken, transactionID, revisionID, currencySymbol, currencyConversionRate, value, description}) => {
+    await ws.call("transaction_history_update", {
+        authtoken: sessionToken,
+        revision_id: revisionID,
+        transaction_id: transactionID,
+        description: description,
+        currency_symbol: currencySymbol,
+        currency_conversion_rate: currencyConversionRate,
+        value: value,
+    })
 }

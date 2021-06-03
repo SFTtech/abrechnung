@@ -18,11 +18,6 @@ export default function GroupCreateModal({show, onClose}) {
                 toast.success(`Created group ${values.name}`, {
                     position: "top-right",
                     autoClose: 5000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
                 });
                 // TODO: make this return the actual thingy
                 setGroupList((oldGroupList) => [
@@ -35,11 +30,6 @@ export default function GroupCreateModal({show, onClose}) {
             toast.error(`${err}`, {
                 position: "top-right",
                 autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
             });
             setSubmitting(false);
         })

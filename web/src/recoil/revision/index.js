@@ -18,7 +18,23 @@ export const revisions = atomFamily({
 export const revision = selectorFamily({
     key: "revision",
     get: ({groupID, revisionID}) => async ({get}) => {
-        const revisions = get(revision(groupID));
-        return revisions?.find(revision => revision.revision_id === revisionID);
+        const r = get(revisions(groupID));
+        return r?.find(revision => revision.revision_id === revisionID);
+    }
+})
+
+export const transactionRevisions = selectorFamily({
+    key: "transactionRevisions",
+    get: ({groupID, transactionID}) => async ({get}) => {
+        const r = get(revisions(groupID));
+        return r?.filter(revision => revision.transaction_id === transactionID);
+    }
+})
+
+export const uncommitedTransactionRevision = selectorFamily({
+    key: "uncommitedTransactionRevision",
+    get: ({groupID, transactionID}) => async ({get}) => {
+        const r = get(transactionRevisions({groupID: groupID, transactionID: transactionID}));
+        return r?.find(revision => revision.commited === null) ?? null;
     }
 })

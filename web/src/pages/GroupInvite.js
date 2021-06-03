@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {Redirect, useHistory, useRouteMatch} from "react-router-dom";
+import {useHistory, useRouteMatch} from "react-router-dom";
 
 import Row from "react-bootstrap/cjs/Row";
 import Col from "react-bootstrap/cjs/Col";

@@ -9,7 +9,7 @@ import Button from "react-bootstrap/cjs/Button";
 
 import "./EditableField.css";
 
-export default function EditableField({value, onChange, type = "textarea"}) {
+export default function EditableField({value, onChange, type = "text"}) {
     const [currentValue, setValue] = useState(null);
     const [editing, setEditing] = useState(false);
 
@@ -30,7 +30,7 @@ export default function EditableField({value, onChange, type = "textarea"}) {
                     />
                 ) : (
                     <Form.Control
-                        value={value}
+                        value={currentValue}
                         onChange={event => setValue(event.target.value)}
                     />
                 )}
@@ -43,12 +43,12 @@ export default function EditableField({value, onChange, type = "textarea"}) {
                     </Button>
                 </InputGroup.Append>
                 <InputGroup.Append>
-                    <Button
-                        variant={"outline-danger"}
-                        onClick={() => this.setState({name: null, editing: false})}
+                    <button
+                        className="btn btn-outline-danger"
+                        onClick={() => setEditing(false)}
                     >
                         <FontAwesomeIcon icon={faTimes}/>
-                    </Button>
+                    </button>
                 </InputGroup.Append>
             </InputGroup>
         )

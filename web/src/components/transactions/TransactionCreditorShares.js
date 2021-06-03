@@ -5,10 +5,7 @@ import {transactionCreditorShares} from "../../recoil/transactions";
 
 
 export default function TransactionCreditorShares({group, transaction}) {
-    const shares = useRecoilValue(transactionCreditorShares({
-        groupID: group.group_id,
-        transactionID: transaction.transaction_id
-    }));
+    const shares = useRecoilValue(transactionCreditorShares(transaction.transaction_id));
 
     return (
         <div>
