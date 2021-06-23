@@ -1,69 +1,65 @@
-import React, { Component } from "react";
-import { Link } from "react-router-dom";
-import { ws } from "../../websocket";
-import Spinner from "react-bootstrap/Spinner";
+import React, {useState} from "react";
+import {Link as RouterLink, useParams} from "react-router-dom";
+import {ws} from "../../websocket";
+import Loading from "../../components/style/Loading";
+import Typography from "@material-ui/core/Typography";
+import Button from "@material-ui/core/Button";
+import Link from "@material-ui/core/Link";
+import {Alert} from "@material-ui/lab";
 
-import "./ConfirmRegistration.css";
-import withRouter from "react-router-dom/es/withRouter";
 
-class ConfirmRegistration extends Component {
-    state = {
-        error: null,
-        status: "idle", // or loading, success, failed
-    };
+export default function ConfirmRegistration() {
+    const [error, setError] = useState(null);
+    const [status, setStatus] = useState("idle");
+    const {token} = useParams();
 
-    confirmEmail = (e) => {
+    const confirmEmail = (e) => {
         e.preventDefault();
-        this.setState({ status: "loading" });
+        setStatus("loading");
         ws.call("confirm_registration", {
-            token: this.props.match.params.token,
+            token: token,
         })
             .then((value) => {
-                this.setState({ status: "success", error: null });
+                setError(null);
+                setStatus("success");
             })
-            .catch((error) => {
-                this.setState({ status: "failed", error: error });
+            .catch((err) => {
+                setError(err);
+                setStatus("failed")
             });
     };
 
-    render() {
-        if (this.state.status === "success") {
-            return (
-                <div className="col-md-8 col-sm-12 m-auto">
-                    <div className="card card-body mt-5">
-                        <h4 className="text-center text-success">Confirmation successful</h4>
-                        <p>
-                            Please <Link to={"/login"}>login</Link> using your credentials.
-                        </p>
-                    </div>
-                </div>
-            );
-        }
-
+    if (status === "success") {
         return (
-            <div className="col-md-8 col-sm-12 m-auto">
-                <div className="card card-body mt-5">
-                    <h4 className="text-center">Confirm Registration</h4>
-                    {this.state.error !== null ? <div className="alert alert-danger">{this.state.error}</div> : ""}
-                    {this.state.status === "loading" ? (
-                        <div className="d-flex justify-content-center">
-                            <Spinner animation="border" role="status">
-                                <span className="sr-only">Loading...</span>
-                            </Spinner>
-                        </div>
-                    ) : (
-                        <p>
-                            Click{" "}
-                            <button className={"button-link text-success"} onClick={this.confirmEmail}>
-                                here
-                            </button>{" "}
-                            to confirm your registration.
-                        </p>
-                    )}
-                </div>
+            <div>
+                <Typography component="h4" variant="h5">
+                    Confirmation successful
+                </Typography>
+                <h4 className="text-center text-success">Confirmation successful</h4>
+                <p>
+                    Please <Link to="/login" component={RouterLink}>login</Link> using your credentials.
+                </p>
             </div>
         );
     }
-}
 
-export default withRouter(ConfirmRegistration);
+    return (
+        <div>
+            <Typography component="h4" variant="h5">
+                Confirm Registration
+            </Typography>
+            {error && <Alert severity="danger">{error}</Alert>}
+            {status === "loading" ? (
+                <Loading/>
+            ) : (
+                <p>
+                    Click{" "}
+                    <Button color="primary" onClick={confirmEmail}>
+                        here
+                    </Button>{" "}
+                    to confirm your registration.
+                </p>
+            )}
+        </div>
+    );
+}

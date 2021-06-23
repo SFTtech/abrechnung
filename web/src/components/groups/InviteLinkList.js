@@ -1,17 +1,30 @@
 import React, {useState} from "react";
 
-import ListGroup from "react-bootstrap/cjs/ListGroup";
-import Button from "react-bootstrap/cjs/Button";
-import "react-datetime/css/react-datetime.css";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faTrash} from "@fortawesome/free-solid-svg-icons/faTrash";
 import {useRecoilState, useRecoilValue} from "recoil";
 import {deleteInviteToken, groupInviteTokens} from "../../recoil/groups";
 import InviteLinkCreate from "./InviteLinkCreate";
 import {sessionToken} from "../../recoil/auth";
 import {toast} from "react-toastify";
+import List from "@material-ui/core/List";
+import IconButton from "@material-ui/core/IconButton";
+import ListItem from "@material-ui/core/ListItem";
+import Paper from "@material-ui/core/Paper";
+import ListItemText from "@material-ui/core/ListItemText";
+import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
+import Delete from "@material-ui/icons/Delete";
+import Typography from "@material-ui/core/Typography";
+import Grid from "@material-ui/core/Grid";
+import AddIcon from "@material-ui/icons/Add";
+import {makeStyles} from "@material-ui/core";
+
+const useStyles = makeStyles((theme) => ({
+    paper: {
+        padding: theme.spacing(2),
+    },
+}));
 
 export default function InviteLinkList({group}) {
+    const classes = useStyles();
     const [showModal, setShowModal] = useState(false);
     const authToken = useRecoilValue(sessionToken);
     const [tokens, setTokens] = useRecoilState(groupInviteTokens(group.group_id));
@@ -33,38 +46,35 @@ export default function InviteLinkList({group}) {
     }
 
     return (
-        <div>
-            <h5>
-                Active invite links{" "}
-                <Button className={"float-right"} onClick={() => setShowModal(true)} variant={"success"}>
-                    Invite
-                </Button>
-            </h5>
-            <hr/>
-            <ListGroup variant={"flush"}>
+        <Paper elevation={1} className={classes.paper}>
+            <Typography component="h3" variant="h5">
+                Active Invite Links
+            </Typography>
+            <List>
                 {tokens.length === 0 ? (
-                    <ListGroup.Item>No Links</ListGroup.Item>
+                    <ListItem><ListItemText primary="No Links"/></ListItem>
                 ) : (
                     tokens.map((link, index) => (
-                        <ListGroup.Item key={index} className={"d-flex justify-content-between"}>
-                            <div>
-                                <span>{window.location.origin}/groups/invite/{link.token}</span>
-                                <br/>
-                                <small className={"text-muted"}>{link.description}</small>
-                            </div>
-                            <div>
-                                <button
-                                    className="btn text-danger"
-                                    onClick={() => deleteToken(link.invite_id)}
-                                >
-                                    <FontAwesomeIcon icon={faTrash}/>
-                                </button>
-                            </div>
-                        </ListGroup.Item>
+                        <ListItem key={index}>
+                            <ListItemText
+                                primary={`${window.location.origin}/groups/invite/${link.token}`}
+                                secondary={link.description}/>
+                            <ListItemSecondaryAction>
+                                <IconButton onClick={() => deleteToken(link.invite_id)}>
+                                    <Delete/>
+                                </IconButton>
+                            </ListItemSecondaryAction>
+                        </ListItem>
                     ))
                 )}
-            </ListGroup>
+            </List>
+            <Grid container justify="center">
+                <IconButton color="primary"
+                            onClick={() => setShowModal(true)}>
+                    <AddIcon/>
+                </IconButton>
+            </Grid>
             <InviteLinkCreate show={showModal} onClose={() => setShowModal(false)} group={group}/>
-        </div>
+        </Paper>
     );
 }

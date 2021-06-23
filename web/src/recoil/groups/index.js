@@ -124,21 +124,30 @@ export const setGroupMemberPrivileges = async ({sessionToken, groupID, userID, c
     return await ws.call("group_member_privileges_set", {
             authtoken: sessionToken,
             group_id: groupID,
-            usr: userID,
+            user_id: userID,
             can_write: canWrite === undefined ? null : canWrite,
             is_owner: isOwner === undefined ? null : isOwner,
         });
 }
 
-export const updateGroupMetadata = async ({sessionToken, groupID, name, description, currency_symbol, terms}) => {
-    return await ws.call("group_metadata_set", {
+export const updateGroupMetadata = async ({sessionToken, groupID, name, description, currencySymbol, terms}) => {
+    let args = {
         authtoken: sessionToken,
         group_id: groupID,
-        name: name === undefined ? null : name,
-        description: description === undefined ? null : description,
-        terms: terms === undefined ? null : terms,
-        currency_symbol: currency_symbol === undefined ? null : currency_symbol,
-    });
+    };
+    if (name != null) {
+        args.name = name;
+    }
+    if (description != null) {
+        args.description = description;
+    }
+    if (currencySymbol != null) {
+        args.currency_symbol = currencySymbol;
+    }
+    if (terms != null) {
+        args.terms = terms;
+    }
+    return await ws.call("group_metadata_set", args);
 }
 
 export const createGroupLog = async ({sessionToken, groupID, message}) => {

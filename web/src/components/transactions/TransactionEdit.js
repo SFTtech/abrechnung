@@ -3,8 +3,8 @@ import Col from "react-bootstrap/cjs/Col";
 import Button from "react-bootstrap/cjs/Button";
 import Row from "react-bootstrap/Row";
 import TransactionShares from "./TransactionDebitorShares";
-import EditableField from "../EditableField";
-import EditableAccountSelect from "../EditableAccountSelect";
+import EditableField from "../style/EditableField";
+import EditableAccountSelect from "../style/EditableAccountSelect";
 import PropTypes from "prop-types";
 
 

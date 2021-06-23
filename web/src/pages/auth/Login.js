@@ -1,11 +1,37 @@
 import React, {useEffect, useState} from "react";
 import {useHistory} from "react-router-dom";
-import {Formik} from "formik";
+import {Field, Form, Formik} from "formik";
 import {fetchUserData, isAuthenticated, login, sessionToken, userData} from "../../recoil/auth";
 import {useRecoilState, useSetRecoilState} from "recoil";
-import Layout from "../../components/Layout";
-import Loading from "../../components/Loading";
+import Loading from "../../components/style/Loading";
 import {toast} from "react-toastify";
+import Button from "@material-ui/core/Button";
+import LinearProgress from "@material-ui/core/LinearProgress";
+import {TextField} from "formik-material-ui";
+import {Container, CssBaseline, makeStyles} from "@material-ui/core";
+import Typography from "@material-ui/core/Typography";
+import Avatar from '@material-ui/core/Avatar';
+import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
+
+const useStyles = makeStyles((theme) => ({
+    paper: {
+        marginTop: theme.spacing(8),
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+    },
+    avatar: {
+        margin: theme.spacing(1),
+        backgroundColor: theme.palette.secondary.main,
+    },
+    form: {
+        width: '100%', // Fix IE 11 issue.
+        marginTop: theme.spacing(1),
+    },
+    submit: {
+        margin: theme.spacing(3, 0, 2),
+    },
+}));
 
 export default function Login() {
     const setSessionToken = useSetRecoilState(sessionToken);
@@ -13,6 +39,7 @@ export default function Login() {
     const [loading, setLoading] = useState(true);
     const setUserData = useSetRecoilState(userData);
     let history = useHistory();
+    const classes = useStyles();
 
     useEffect(() => {
         if (loggedIn) {
@@ -40,7 +67,8 @@ export default function Login() {
             fetchUserData({authToken: res}).then(result => {
                 setUserData(result);
                 history.push("/"); // handle next
-            }).catch(err => {})
+            }).catch(err => {
+            })
         }).catch(err => {
             toast.error(`${err}`, {
                 position: "top-right",
@@ -64,57 +92,63 @@ export default function Login() {
     //     return <Redirect to="/"/>;
     // }
 
+    if (loading) {
+        return <Loading/>
+    }
+
     return (
-        <>
-            {loading ? <Loading/> : (
-                <Layout title="Login">
-                    <div className="col-md-6 m-auto">
-                        <div className="card card-body mt-5">
-                            <h2 className="text-center">Login</h2>
-                            <Formik initialValues={{password: "", username: ""}} onSubmit={handleSubmit}>
-                                {({values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
-                                    <form onSubmit={handleSubmit}>
-                                        <input type="hidden" name="remember" value="true"/>
-                                        <div className="form-group">
-                                            <label>Username</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                name="username"
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                value={values.username}
-                                            />
-                                            {errors.username && touched.username && errors.username}
-                                        </div>
+        <Container component="main" maxWidth="xs">
+            <CssBaseline/>
+            <div className={classes.paper}>
+                <Avatar className={classes.avatar}>
+                    <LockOutlinedIcon/>
+                </Avatar>
+                <Typography component="h1" variant="h5">
+                    Sign in
+                </Typography>
+                <Formik initialValues={{password: "", username: ""}} onSubmit={handleSubmit}>
+                    {({handleSubmit, isSubmitting}) => (
+                        <Form onSubmit={handleSubmit}>
+                            <input type="hidden" name="remember" value="true"/>
+                            <Field
+                                variant="outlined"
+                                margin="normal"
+                                required
+                                fullWidth
+                                autoFocus
+                                component={TextField}
+                                type="text"
+                                label="Username"
+                                name="username"
+                            />
 
-                                        <div className="form-group">
-                                            <label>Password</label>
-                                            <input
-                                                type="password"
-                                                className="form-control"
-                                                name="password"
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                value={values.password}
-                                            />
-                                            {errors.password && touched.password && errors.password}
-                                        </div>
+                            <Field
+                                variant="outlined"
+                                margin="normal"
+                                required
+                                fullWidth
+                                component={TextField}
+                                type="password"
+                                name="password"
+                                label="Password"
+                            />
 
-                                        <div className="form-group">
-                                            <button type="submit"
-                                                    className="btn btn-primary"
-                                                    disabled={isSubmitting}>
-                                                {isSubmitting ? "Logging in..." : "Login"}
-                                            </button>
-                                        </div>
-                                    </form>
-                                )}
-                            </Formik>
-                        </div>
-                    </div>
-                </Layout>
-            )}
-        </>
+                            {isSubmitting && <LinearProgress/>}
+                            <Button
+                                type="submit"
+                                fullWidth
+                                variant="contained"
+                                color="primary"
+                                disabled={isSubmitting}
+                                onClick={handleSubmit}
+                                className={classes.submit}
+                            >
+                                Login
+                            </Button>
+                        </Form>
+                    )}
+                </Formik>
+            </div>
+        </Container>
     );
 }

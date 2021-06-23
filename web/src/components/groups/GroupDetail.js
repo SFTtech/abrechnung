@@ -1,83 +1,93 @@
 import React from "react";
-import "react-datetime/css/react-datetime.css";
-import Spinner from "react-bootstrap/Spinner";
-import Alert from "react-bootstrap/cjs/Alert";
-import EditableField from "../EditableField";
+import EditableField from "../style/EditableField";
 
-import "./GroupDetail.css";
+import {Alert} from "@material-ui/lab";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemText from "@material-ui/core/ListItemText";
+import Paper from "@material-ui/core/Paper";
+import {makeStyles} from "@material-ui/core";
+import {updateGroupMetadata} from "../../recoil/groups";
+import {toast} from "react-toastify";
+import {useRecoilValue} from "recoil";
+import {sessionToken} from "../../recoil/auth";
+
+const useStyles = makeStyles((theme) => ({
+    paper: {
+        padding: theme.spacing(2),
+    },
+}));
 
 export default function GroupDetail({group}) {
+    const classes = useStyles();
+    const token = useRecoilValue(sessionToken);
 
-    const updateName = (name) => {
-        this.props.updateGroupMetadata({groupID: group.group_id, name: name});
-    };
-
-    const updateDescription = (description) => {
-        this.props.updateGroupMetadata({groupID: group.group_id, description: description});
-    };
-
-    const updateCurrencySymbol = (currency_symbol) => {
-        this.props.updateGroupMetadata({groupID: group.group_id, currency_symbol: currency_symbol});
-    };
-
-    const updateTerms = (terms) => {
-        this.props.updateGroupMetadata({groupID: group.group_id, terms: terms});
-    };
+    // TODO: actually make the editing part work
+    const updateGroup = (name = null, description = null, currencySymbol = null, terms = null) => {
+        updateGroupMetadata({
+            sessionToken: token,
+            groupID: group.group_id,
+            name: name,
+            description: description,
+            currency_symbol: currencySymbol,
+            terms: terms
+        })
+            .catch(err => {
+                toast.error(`Error updating group ${err}!`, {
+                    position: "top-right",
+                    autoClose: 5000,
+                });
+            })
+    }
 
     return (
-        <>
+        <Paper elevation={1} className={classes.paper}>
             {group.is_owner ? (
-                <Alert variant={"info"}>You are an owner of this group</Alert>
+                <Alert severity="info">You are an owner of this group</Alert>
             ) : !group.can_write ? (
-                <Alert variant={"info"}>You only have read access to this group</Alert>
-            ) : (
-                ""
-            )}
-            <span className={"font-weight-bold"}>Name</span>
-            <div className={"p-0 d-flex justify-content-between"}>
-                <EditableField value={group.name} onChange={updateName}/>
-            </div>
+                <Alert severity="info">You only have read access to this group</Alert>
+            ) : null}
 
-            <span className={"font-weight-bold"}>Description</span>
-            <div className={"p-0 d-flex justify-content-between"}>
-                <EditableField value={group.description} onChange={updateDescription}/>
-            </div>
+            <EditableField
+                label="Name"
+                margin="normal"
+                value={group.name}
+                onChange={updateGroup}
+            />
 
-            <span className={"font-weight-bold"}>Created</span><br/>
-            <span className={"info-text"}>{group.created}</span><br/>
+            <EditableField
+                label="Description"
+                margin="normal"
+                value={group.description}
+                onChange={updateGroup}
+            />
 
-            <span className={"font-weight-bold"}>Joined</span><br/>
-            <span className={"info-text"}>{group.joined}</span><br/>
+            <EditableField
+                label="Currency Symbol"
+                margin="normal"
+                value={group.currency_symbol}
+                onChange={updateGroup}
+            />
 
-            <span className={"font-weight-bold"}>Last Changed</span><br/>
-            <span className={"info-text"}>
-                    {group.latest_commit === null ? "never" : group.latest_commit}
-                </span><br/>
+            <EditableField
+                label="Terms"
+                margin="normal"
+                value={group.terms}
+                onChange={updateGroup}
+            />
 
-            {group.currency_symbol === undefined || group.terms === undefined ? (
-                <div className={"d-flex justify-content-center"}>
-                    <Spinner animation="border" role="status">
-                        <span className="sr-only">Loading...</span>
-                    </Spinner>
-                </div>
-            ) : (
-                <>
-                    <span className={"font-weight-bold"}>Currency Symbol</span>
-                    <div className={"d-flex justify-content-between"}>
-                        <EditableField value={group.currency_symbol}
-                                       onChange={updateCurrencySymbol}/>
-                    </div>
-
-                    <span className={"font-weight-bold"}>Terms</span>
-                    <div className={"d-flex justify-content-between"}>
-                        <EditableField
-                            type={"textarea"}
-                            value={group.terms}
-                            onChange={updateTerms}
-                        />
-                    </div>
-                </>
-            )}
-        </>
+            <List>
+                <ListItem>
+                    <ListItemText primary="Created" secondary={group.created}/>
+                </ListItem>
+                <ListItem>
+                    <ListItemText primary="Joined" secondary={group.joined}/>
+                </ListItem>
+                <ListItem>
+                    <ListItemText primary="Last changed"
+                                  secondary={group.latest_commit === null ? "never" : group.latest_commit}/>
+                </ListItem>
+            </List>
+        </Paper>
     );
 }

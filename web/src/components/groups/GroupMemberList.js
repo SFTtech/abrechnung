@@ -1,196 +1,208 @@
 import React, {useState} from "react";
 
-import ListGroup from "react-bootstrap/cjs/ListGroup";
-import "react-datetime/css/react-datetime.css";
-import Badge from "react-bootstrap/cjs/Badge";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faPencilAlt} from "@fortawesome/free-solid-svg-icons/faPencilAlt";
-import Modal from "react-bootstrap/Modal";
-import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/cjs/Button";
-import {faTrash} from "@fortawesome/free-solid-svg-icons/faTrash";
 import {useRecoilValue} from "recoil";
-import {groupMembers} from "../../recoil/groups";
-import {userData} from "../../recoil/auth";
+import {groupMembers, setGroupMemberPrivileges} from "../../recoil/groups";
+import {sessionToken, userData} from "../../recoil/auth";
+import Dialog from "@material-ui/core/Dialog";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogActions from "@material-ui/core/DialogActions";
+import Button from "@material-ui/core/Button";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import {Field, Form, Formik} from "formik";
+import {Checkbox} from "formik-material-ui";
+import LinearProgress from "@material-ui/core/LinearProgress";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import Chip from "@material-ui/core/Chip";
+import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
+import ListItemText from "@material-ui/core/ListItemText";
+import Paper from "@material-ui/core/Paper";
+import IconButton from "@material-ui/core/IconButton";
+import Delete from "@material-ui/icons/Delete";
+import Edit from "@material-ui/icons/Edit";
+import {FormControlLabel, makeStyles} from "@material-ui/core";
+import {toast} from "react-toastify";
+
+const useStyles = makeStyles((theme) => ({
+    paper: {
+        padding: theme.spacing(2),
+    },
+}));
 
 export default function GroupMemberList({group}) {
-    const [state, setState] = useState({
-        // edit member vars
-        showEditMemberModal: false,
-        userID: null,
-        canWrite: null,
-        isOwner: null,
-        // remove member vars
-        showRemoveMemberModal: false,
-        removeMember: null,
-    });
+    const classes = useStyles();
+    const [showEditMemberDialog, setShowEditMemberDialog] = useState(false);
+    const [showRemoveMemberDialog, setShowRemoveMemberDialog] = useState(false);
+    const [memberToRemove, setMemberToRemove] = useState(null);
+    const [memberToEdit, setMemberToEdit] = useState(null);
     const members = useRecoilValue(groupMembers(group.group_id));
+    const token = useRecoilValue(sessionToken);
     const currentUser = useRecoilValue(userData);
 
-    const onEditMemberSave = (e) => {
-        e.preventDefault();
-        this.props.setGroupMemberPrivileges({
-            groupID: this.props.group.id,
-            userID: this.state.userID,
-            canWrite: this.state.canWrite,
-            isOwner: this.state.isOwner,
-        });
-    };
+    const handleEditMemberSubmit = (values, {setSubmitting}) => {
+        setGroupMemberPrivileges({
+            sessionToken: token,
+            groupID: group.group_id,
+            userID: values.userID,
+            canWrite: values.canWrite,
+            isOwner: values.isOwner
+        })
+            .then(result => {
+                setShowEditMemberDialog(false);
+                toast.success("Successfully updated group member permissions", {
+                    position: "top-right",
+                    autoClose: 5000,
+                });
+            })
+            .catch(err => {
+
+            })
+    }
 
     const closeEditMemberModal = () => {
-        setState({showEditMemberModal: false, isOwner: null, canWrite: null, userID: null});
+        setShowEditMemberDialog(false);
+        setMemberToEdit(null);
     };
 
     const openEditMemberModal = (userID) => {
-        const user = members.find((user) => user.id === userID);
-        if (user === undefined) {
-            setState({error: "user does not exist"});
-        } else {
-            setState({
-                showEditMemberModal: true,
-                isOwner: user.is_owner,
-                canWrite: user.can_write,
-                userID: user.id,
-            });
-        }
+        const user = members.find(member => member.user_id === userID);
+        // TODO: maybe deal with disappearing users in the list
+        setMemberToEdit(user);
+        setShowEditMemberDialog(true);
     };
 
     const onRemoveMemberSave = () => {
     };
 
     const closeRemoveMemberModal = () => {
-        setState({showRemoveMemberModal: false, removeMember: null});
+        setShowRemoveMemberDialog(false);
+        setMemberToRemove(null);
     };
 
     const openRemoveMemberModal = (userID) => {
-        setState({showRemoveMemberModal: true, removeMember: userID});
+        setMemberToRemove(userID);
+        setShowRemoveMemberDialog(true);
     };
 
     return (
-        <div>
-            <ListGroup variant={"flush"}>
+        <Paper elevation={1} className={classes.paper}>
+            <List>
                 {members.length === 0 ? (
-                    <ListGroup.Item>No Members</ListGroup.Item>
+                    <ListItem><ListItemText primary="No Members"/></ListItem>
                 ) : (
                     members.map((member, index) => (
-                        <ListGroup.Item key={index}>
-                            <div className={"d-flex justify-content-between"}>
-                                <div>
-                                    <span>{member.username}</span>
-                                    <span className={"ml-4"}>
-                                            {member.is_owner ? (
-                                                <Badge className={"ml-2"} variant={"success"}>
-                                                    owner
-                                                </Badge>
-                                            ) : member.can_write ? (
-                                                <Badge className={"ml-2"} variant={"success"}>
-                                                    editor
-                                                </Badge>
-                                            ) : (
-                                                ""
-                                            )}
+                        <ListItem key={index}>
+                            <ListItemText
+                                primary={member.username}
+                                secondary={
+                                    <>
+                                        {member.is_owner ? (
+                                            <Chip size="small" component="span" color="primary" label="owner"
+                                                  variant="outlined"/>
+                                        ) : member.can_write ? (
+                                            <Chip size="small" component="span" color="primary" label="editor"
+                                                  variant="outlined"/>
+                                        ) : null}
                                         {member.username === currentUser.username ? (
-                                            <Badge className={"ml-2"} variant={"primary"}>
-                                                it's you
-                                            </Badge>
+                                            <Chip size="small" component="span" color="primary" label="it's you"/>
                                         ) : (
                                             ""
                                         )}
-                                        </span>
-                                    <br/>
-                                    <small className="text-muted">
-                                        {member.description}, joined {member.joined}
-                                    </small>
-                                </div>
-                                {group.is_owner || group.can_write ? (
-                                    <div>
-                                        <button
-                                            className="btn text-info"
-                                            onClick={() => openEditMemberModal(member.id)}
-                                        >
-                                            <FontAwesomeIcon icon={faPencilAlt}/>
-                                        </button>
-                                        <button
-                                            className="btn text-danger"
-                                            onClick={() => openRemoveMemberModal(member.id)}
-                                        >
-                                            <FontAwesomeIcon icon={faTrash}/>
-                                        </button>
-                                    </div>
-                                ) : (
-                                    ""
-                                )}
-                            </div>
-                        </ListGroup.Item>
+                                        <br/>
+                                        <small className="text-muted">
+                                            {member.description}, joined {member.joined}
+                                        </small>
+                                    </>
+                                }
+                            />
+                            {group.is_owner || group.can_write ? (
+                                <ListItemSecondaryAction>
+                                    <IconButton
+                                        onClick={() => openEditMemberModal(member.user_id)}
+                                    >
+                                        <Edit/>
+                                    </IconButton>
+                                    <IconButton
+                                        onClick={() => openRemoveMemberModal(member.user_id)}
+                                    >
+                                        <Delete/>
+                                    </IconButton>
+                                </ListItemSecondaryAction>
+                            ) : (
+                                ""
+                            )}
+                        </ListItem>
                     ))
                 )}
-            </ListGroup>
-            <Modal show={state.showEditMemberModal} onHide={closeEditMemberModal}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Edit Group Member</Modal.Title>
-                </Modal.Header>
+            </List>
+            <Dialog open={showEditMemberDialog} onClose={closeEditMemberModal}>
+                <DialogTitle>Edit Group Member</DialogTitle>
+                <DialogContent>
+                    <Formik initialValues={{
+                        userID: memberToEdit?.user_id,
+                        isOwner: memberToEdit?.is_owner,
+                        canWrite: memberToEdit?.can_write
+                    }} onSubmit={handleEditMemberSubmit}
+                            enableReinitialize={true}>
+                        {({handleSubmit, isSubmitting}) => (
+                            <Form>
+                                <FormControlLabel control={
+                                    <Field
+                                        type="checkbox"
+                                        margin="normal"
+                                        component={Checkbox}
+                                        name="canWrite"
+                                    />
+                                } label="Can Write"/>
+                                <FormControlLabel control={
+                                    <Field
+                                        type="checkbox"
+                                        margin="normal"
+                                        component={Checkbox}
+                                        name="isOwner"
+                                    />
+                                } label="Is Owner"/>
 
-                <Form onSubmit={onEditMemberSave}>
-                    <Modal.Body>
-                        {group.can_write ? (
-                            <Form.Check
-                                type="switch"
-                                id="can-write"
-                                label="Can Write"
-                                checked={state.canWrite}
-                                onChange={(e) => setState({canWrite: e.target.checked})}
-                            />
-                        ) : (
-                            ""
+                                {isSubmitting && <LinearProgress/>}
+                                <DialogActions>
+                                    <Button color="primary" type="submit" onClick={handleSubmit}>
+                                        Save
+                                    </Button>
+                                    <Button color="secondary" onClick={closeEditMemberModal}>
+                                        Close
+                                    </Button>
+                                </DialogActions>
+
+                            </Form>
                         )}
-                        {group.is_owner ? (
-                            <Form.Check
-                                type="switch"
-                                id="is-owner"
-                                label="Is Owner"
-                                value={state.isOwner}
-                                checked={state.isOwner}
-                                onChange={(e) => setState({isOwner: e.target.checked})}
-                            />
-                        ) : (
-                            ""
-                        )}
-                    </Modal.Body>
+                    </Formik>
+                </DialogContent>
+            </Dialog>
+            <Dialog open={showRemoveMemberDialog} onClose={closeRemoveMemberModal}>
+                <DialogTitle>Remove Member from Group</DialogTitle>
 
-                    <Modal.Footer>
-                        <Button variant="success" type={"submit"}>
-                            Save
-                        </Button>
-                        <Button variant="outline-danger" onClick={closeEditMemberModal}>
-                            Close
-                        </Button>
-                    </Modal.Footer>
-                </Form>
-            </Modal>
-            <Modal show={state.showRemoveMemberModal} onHide={closeRemoveMemberModal}>
-                <Modal.Header closeButton>
-                    <Modal.Title>Remove Member from Group</Modal.Title>
-                </Modal.Header>
+                <DialogContent>
+                    <DialogContentText>
+                        Are you sure you want to remove{" "}
+                        <strong>
+                            {memberToRemove !== null
+                                ? members.find((user) => user.user_id === memberToRemove).username
+                                : ""}
+                        </strong>{" "}
+                        from this group?
+                    </DialogContentText>
+                </DialogContent>
 
-                <Modal.Body>
-                    Are you sure you want to remove{" "}
-                    <strong>
-                        {state.removeMember !== null
-                            ? members.find((user) => user.id === state.removeMember).username
-                            : ""}
-                    </strong>{" "}
-                    from this group?
-                </Modal.Body>
-
-                <Modal.Footer>
-                    <Button variant="success" type={"submit"} onClick={onRemoveMemberSave}>
+                <DialogActions>
+                    <Button color="secondary" type="submit" onClick={onRemoveMemberSave}>
                         Yes I'm sure.
                     </Button>
-                    <Button variant="outline-danger" onClick={closeRemoveMemberModal}>
+                    <Button color="primary" onClick={closeRemoveMemberModal}>
                         On second thought ...
                     </Button>
-                </Modal.Footer>
-            </Modal>
-        </div>
+                </DialogActions>
+            </Dialog>
+        </Paper>
     );
 }

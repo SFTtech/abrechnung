@@ -1,12 +1,16 @@
-import Modal from "react-bootstrap/Modal";
-import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/cjs/Button";
 import React from "react";
-import {Formik} from "formik";
+import {Field, Form, Formik} from "formik";
 import {createAccount, groupAccounts} from "../../recoil/groups";
 import {toast} from "react-toastify";
 import {useRecoilValue, useSetRecoilState} from "recoil";
 import {sessionToken} from "../../recoil/auth";
+import Button from "@material-ui/core/Button";
+import Dialog from "@material-ui/core/Dialog";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogActions from "@material-ui/core/DialogActions";
+import LinearProgress from "@material-ui/core/LinearProgress";
+import {TextField} from "formik-material-ui";
 
 export default function AccountCreateModal({show, onClose, group}) {
     const token = useRecoilValue(sessionToken);
@@ -39,52 +43,48 @@ export default function AccountCreateModal({show, onClose, group}) {
         })
     };
     return (
+        <Dialog open={show} onClose={onClose}>
+            <DialogTitle>Create Account</DialogTitle>
 
-        <Modal show={show} onHide={onClose}>
-            <Modal.Header closeButton>
-                <Modal.Title>Create Account</Modal.Title>
-            </Modal.Header>
+            <DialogContent>
+                <Formik initialValues={{name: "", description: ""}} onSubmit={handleSubmit}>
+                    {({handleSubmit, isSubmitting}) => (
+                        <Form>
+                            <Field
+                                margin="normal"
+                                required
+                                fullWidth
+                                autoFocus
+                                component={TextField}
+                                name="name"
+                                label="Account Name"
+                            />
+                            <Field
+                                margin="normal"
+                                required
+                                fullWidth
+                                component={TextField}
+                                name="description"
+                                label="Description"
+                            />
 
-            <Formik initialValues={{name: "", description: ""}} onSubmit={handleSubmit}>
-                {({values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
-                    <form onSubmit={handleSubmit}>
-                        <Modal.Body>
-                            <Form.Group controlId="name">
-                                <Form.Label>Account name</Form.Label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    className="form-control"
-                                    onBlur={handleBlur}
-                                    onChange={handleChange}
-                                    value={values.name}
-                                />
-                                {errors.name && touched.name && errors.name}
-                            </Form.Group>
-                            <Form.Group controlId="description">
-                                <Form.Label>Description</Form.Label>
-                                <input
-                                    type="text"
-                                    name="description"
-                                    className="form-control"
-                                    onBlur={handleBlur}
-                                    onChange={handleChange}
-                                    value={values.description}
-                                />
-                                {errors.description && touched.description && errors.description}
-                            </Form.Group>
-                        </Modal.Body>
-
-                        <Modal.Footer>
-                            <Button variant="success" type="submit">
-                                {isSubmitting ? "Saving ..." : "Save"}
-                            </Button>
-                            <Button variant="outline-danger" onClick={onClose}>
-                                Close
-                            </Button>
-                        </Modal.Footer>
-                    </form>)}
-            </Formik>
-        </Modal>
+                            {isSubmitting && <LinearProgress/>}
+                            <DialogActions>
+                                <Button color="secondary" onClick={onClose}>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    color="primary"
+                                    disabled={isSubmitting}
+                                    onClick={handleSubmit}
+                                >
+                                    Save
+                                </Button>
+                            </DialogActions>
+                        </Form>)}
+                </Formik>
+            </DialogContent>
+        </Dialog>
     )
 }

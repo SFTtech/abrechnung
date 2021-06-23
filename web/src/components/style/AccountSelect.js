@@ -3,7 +3,7 @@ import Form from "react-bootstrap/cjs/Form";
 
 import "./AccountSelect.css";
 import {useRecoilValue} from "recoil";
-import {groupAccounts} from "../recoil/groups";
+import {groupAccounts} from "../../recoil/groups";
 
 
 export default function AccountSelect({group, placeholder, onChange}) {

@@ -1,22 +1,43 @@
 import React, {useState} from "react";
-import "react-datetime/css/react-datetime.css";
-import Form from "react-bootstrap/Form";
-import ListGroup from "react-bootstrap/cjs/ListGroup";
-import {Button} from "react-bootstrap";
-import Col from "react-bootstrap/Col";
 import {useRecoilValue} from "recoil";
-import {groupLog, groupMembers} from "../../recoil/groups";
+import {createGroupLog, groupLog, groupMembers} from "../../recoil/groups";
+import Switch from "@material-ui/core/Switch";
+import List from "@material-ui/core/List";
+import Button from "@material-ui/core/Button";
+import ListItem from "@material-ui/core/ListItem";
+import TextField from "@material-ui/core/TextField";
+import ListItemText from "@material-ui/core/ListItemText";
+import Paper from "@material-ui/core/Paper";
+import Divider from "@material-ui/core/Divider";
+import Typography from "@material-ui/core/Typography";
+import {FormControlLabel, makeStyles} from "@material-ui/core";
+import {sessionToken} from "../../recoil/auth";
+
+const useStyles = makeStyles((theme) => ({
+    paper: {
+        padding: theme.spacing(2),
+    },
+}));
 
 export default function GroupLog({group}) {
+    const classes = useStyles();
     const [message, setMessage] = useState("");
     const [showAllLogs, setShowAllLogs] = useState(false);
     const logEntries = useRecoilValue(groupLog(group.group_id));
     const members = useRecoilValue(groupMembers(group.group_id));
+    const token = useRecoilValue(sessionToken);
 
-    const onMessageSend = (e) => {
+    const sendMessage = (e) => {
         e.preventDefault();
-        this.props.createGroupLog({groupID: group.group_id, message: message});
-        this.setState({message: ""});
+        createGroupLog({
+            sessionToken: token,
+            groupID: group.group_id,
+            message: message,
+        }).then(result => {
+            setMessage("");
+        }).catch(err => {
+
+        })
     }
 
     const log = showAllLogs
@@ -24,45 +45,43 @@ export default function GroupLog({group}) {
         : logEntries.filter((entry) => entry.type === "text-message");
 
     return (
-        <div>
-            <Col xs={12}>
-                <Form.Check
-                    type={"switch"}
-                    id={"show-all"}
-                    label={"Show all Logs"}
+        <Paper elevation={1} className={classes.paper}>
+            <Typography component="h3" variant="h5">
+                Group Log
+            </Typography>
+            <FormControlLabel control={
+                <Switch
+                    name="showAllLogs"
                     checked={showAllLogs}
+                    color="primary"
                     onChange={e => setShowAllLogs(e.target.checked)}
                 />
-                <Form noValidate className={"mt-3"} onSubmit={onMessageSend}>
-                    <Form.Text
-                        required
-                        as={"textarea"}
-                        id={"new-message"}
-                        name={"new-message"}
-                        className={"w-100"}
-                        placeholder={"Write a message to the group ..."}
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                    />
-                    <Button type={"submit"} variant={"success"} className={"mt-2"}>
-                        Send
-                    </Button>
-                </Form>
-            </Col>
-            <hr/>
-            <ListGroup variant={"flush"} className={"mt-3"}>
+            } label="Show all Logs"/>
+            <form onSubmit={sendMessage}>
+                <TextField
+                    required
+                    fullWidth
+                    name="newMessage"
+                    placeholder="Write a message to the group ..."
+                    value={message}
+                    variant="outlined"
+                    multiline
+                    onChange={(e) => setMessage(e.target.value)}
+                />
+                <Button type="submit" color="primary" onClick={sendMessage}>
+                    Send
+                </Button>
+            </form>
+            <Divider variant="middle"/>
+            <List>
                 {log.map((logEntry) => (
-                    <ListGroup.Item key={logEntry.logentry_id}>
-                        <span>{logEntry.message === "" ? logEntry.type : logEntry.message}</span>
-                        <div className={"d-flex justify-content-between"}>
-                            <small className={"text-muted"}>
-                                by {members.find((user) => user.user_id === logEntry.user_id).username}
-                            </small>
-                            <small className={"text-muted"}>{logEntry.logged}</small>
-                        </div>
-                    </ListGroup.Item>
+                    <ListItem key={logEntry.logentry_id}>
+                        <ListItemText
+                            primary={logEntry.message === "" ? logEntry.type : logEntry.message}
+                            secondary={`by ${members.find((user) => user.user_id === logEntry.user_id).username} ${logEntry.logged}`}/>
+                    </ListItem>
                 ))}
-            </ListGroup>
-        </div>
+            </List>
+        </Paper>
     );
 }

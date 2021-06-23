@@ -148,6 +148,18 @@ end;
 $$ language plpgsql;
 call allow_function('get_uncommited_revisions');
 
+create or replace procedure _commit_revision(
+    revision_id integer
+)
+as $$
+begin
+    -- ensure that the group has no inconsistencies during evaluation with this revision.
+    -- TODO attempt to evaluate in the context of this user and check the consistency flag
+
+    -- set the revision as commited
+    update revision set commited = now() where revision.id = _commit_revision.revision_id;
+end;
+$$ language plpgsql;
 
 -- commits a revision.
 -- this is only allowed if the group evaluation with this change does not
@@ -177,7 +189,8 @@ begin
     -- TODO attempt to evaluate in the context of this user and check the consistency flag
 
     -- set the revision as commited
-    update revision set commited = now() where revision.id = commit_revision.revision_id;
+    perform _commit_revision(commit_revision.revision_id);
+
     -- add a log entry for the commit
     insert into group_log (grp, usr, type, message)
     values (locals.grp, locals.usr, 'commit-revision', concat('commited revision #', commit_revision.revision_id));
@@ -244,7 +257,7 @@ begin
             account.grp = account_list.group_id
             and (revision.commited is not null or revision.usr = locals.usr)
         window wnd as (
-            partition by revision.id order by revision.commited nulls last
+            partition by account.id order by revision.commited nulls last
         );
 end;
 $$ language plpgsql;
@@ -324,7 +337,7 @@ begin
             transaction.grp = transaction_list.group_id
             and (revision.commited is not null or revision.usr = locals.user_id)
         window wnd as (
-            partition by revision.id order by revision.commited nulls last
+            partition by transaction.id order by revision.commited nulls last
         );
 end;
 $$ language plpgsql;
@@ -473,7 +486,7 @@ begin
             creditor_share.transaction = transaction_creditor_shares_list.transaction_id
             and (revision.commited is not null or revision.usr = locals.user_id)
         window wnd as (
-            partition by revision.id order by revision.commited nulls last
+            partition by creditor_share.id order by revision.commited nulls last
         );
 end;
 $$ language plpgsql;
@@ -518,7 +531,7 @@ begin
             debitor_share.transaction = transaction_debitor_shares_list.transaction_id
             and (revision.commited is not null or revision.usr = locals.user_id)
         window wnd as (
-            partition by revision.id order by revision.commited nulls last
+            partition by debitor_share.id order by revision.commited nulls last
         );
 end;
 $$ language plpgsql;
@@ -567,7 +580,7 @@ begin
                     c.id, c.revision
             ) filtered_history on debitor_share_history.id = filtered_history.id and debitor_share_history.revision = filtered_history.revision
         where
-                debitor_share.transaction = transaction_debitor_shares_list.transaction_id;
+            debitor_share.transaction = transaction_debitor_shares_list.transaction_id;
 end;
 $$ language plpgsql;
 call allow_function('transaction_debitor_shares_list');

@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
+import "typeface-roboto";
 import 'react-toastify/dist/ReactToastify.css';
 import App from './App';
 import {RecoilRoot} from "recoil";

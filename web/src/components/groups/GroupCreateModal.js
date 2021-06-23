@@ -1,12 +1,16 @@
-import Modal from "react-bootstrap/Modal";
-import Form from "react-bootstrap/Form";
-import Button from "react-bootstrap/cjs/Button";
 import React from "react";
 import {sessionToken} from "../../recoil/auth";
 import {toast} from "react-toastify";
-import {Formik} from "formik";
+import {Field, Form, Formik} from "formik";
 import {createGroup, groupList} from "../../recoil/groups";
 import {useRecoilValue, useSetRecoilState} from "recoil";
+import Dialog from "@material-ui/core/Dialog";
+import Button from "@material-ui/core/Button";
+import LinearProgress from "@material-ui/core/LinearProgress";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogActions from "@material-ui/core/DialogActions";
+import {TextField} from "formik-material-ui";
 
 export default function GroupCreateModal({show, onClose}) {
     const token = useRecoilValue(sessionToken);
@@ -36,51 +40,49 @@ export default function GroupCreateModal({show, onClose}) {
     };
 
     return (
-        <Modal show={show} onHide={onClose}>
-            <Modal.Header closeButton>
-                <Modal.Title>Create Group</Modal.Title>
-            </Modal.Header>
+        <Dialog open={show} onClose={onClose}>
+            <DialogTitle>Create Group</DialogTitle>
+            <DialogContent>
+                <Formik initialValues={{name: "", description: ""}} onSubmit={handleSubmit}>
+                    {({handleSubmit, isSubmitting}) => (
+                        <Form>
+                            <Field
+                                margin="normal"
+                                required
+                                fullWidth
+                                autoFocus
+                                component={TextField}
+                                type="text"
+                                name="name"
+                                label="Group Name"
+                            />
+                            <Field
+                                margin="normal"
+                                required
+                                fullWidth
+                                component={TextField}
+                                type="text"
+                                name="description"
+                                label="Description"
+                            />
+                            {isSubmitting && <LinearProgress/>}
+                            <DialogActions>
+                                <Button color="secondary" onClick={onClose}>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    color="primary"
+                                    disabled={isSubmitting}
+                                    onClick={handleSubmit}
+                                >
+                                    Save
+                                </Button>
+                            </DialogActions>
+                        </Form>)}
+                </Formik>
+            </DialogContent>
 
-            <Formik initialValues={{name: "", description: ""}} onSubmit={handleSubmit}>
-                {({values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
-                    <form onSubmit={handleSubmit}>
-                        <Modal.Body>
-                            <Form.Group controlId={"name"}>
-                                <Form.Label>Group name</Form.Label>
-                                <input
-                                    type="text"
-                                    name="name"
-                                    className="form-control"
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    value={values.name}
-                                />
-                                {errors.name && touched.name && errors.name}
-                            </Form.Group>
-                            <Form.Group controlId={"description"}>
-                                <Form.Label>Description</Form.Label>
-                                <input
-                                    type="text"
-                                    name="description"
-                                    className="form-control"
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    value={values.description}
-                                />
-                                {errors.description && touched.description && errors.description}
-                            </Form.Group>
-                        </Modal.Body>
-
-                        <Modal.Footer>
-                            <Button variant="success" type={"submit"}>
-                                {isSubmitting ? "Saving ..." : "Save"}
-                            </Button>
-                            <Button variant="outline-danger" onClick={onClose}>
-                                Close
-                            </Button>
-                        </Modal.Footer>
-                    </form>)}
-            </Formik>
-        </Modal>
+        </Dialog>
     )
 }

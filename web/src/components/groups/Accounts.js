@@ -1,68 +1,63 @@
 import React, {useState} from "react";
 
-import Row from "react-bootstrap/cjs/Row";
-import Col from "react-bootstrap/cjs/Col";
-
-import ListGroup from "react-bootstrap/ListGroup";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faTrash} from "@fortawesome/free-solid-svg-icons";
-import Button from "react-bootstrap/cjs/Button";
-import {faPencilAlt} from "@fortawesome/free-solid-svg-icons/faPencilAlt";
-import {faPlus} from "@fortawesome/free-solid-svg-icons/faPlus";
 import {useRecoilValue} from "recoil";
 import {groupAccounts} from "../../recoil/groups";
 import AccountCreateModal from "./AccountCreateModal";
+import List from "@material-ui/core/List";
+import ListItemText from "@material-ui/core/ListItemText";
+import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
+import ListItem from "@material-ui/core/ListItem";
+import Paper from "@material-ui/core/Paper";
+import IconButton from "@material-ui/core/IconButton";
+import Add from "@material-ui/icons/Add";
+import Delete from "@material-ui/icons/Delete";
+import {Edit} from "@material-ui/icons";
+import Grid from "@material-ui/core/Grid";
+import {makeStyles} from "@material-ui/core";
 
+const useStyles = makeStyles((theme) => ({
+    paper: {
+        padding: theme.spacing(2),
+    },
+}));
 
 export default function Accounts({group}) {
+    const classes = useStyles();
     const [showAccountCreationModal, setShowAccountCreationModal] = useState(false);
     const accounts = useRecoilValue(groupAccounts(group.group_id));
 
     return (
-        <Row>
-            <Col xs={12}>
-                <ListGroup variant={"flush"}>
-                    {accounts.length === 0 ? (
-                        <ListGroup.Item key={0}>
-                            <span>No Accounts</span>
-                        </ListGroup.Item>
-                    ) : (
-                        accounts.map(account => {
-                            return (
-                                <ListGroup.Item
-                                    key={account.account_id}
-                                    className={"d-flex justify-content-between"}
-                                >
-                                    <div>
-                                        <span>{account.name}</span>
-                                        <br/>
-                                        <small className="text-muted">{account.description}</small>
-                                    </div>
-                                    <div>
-                                        <button
-                                            className="btn text-info"
-                                        >
-                                            <FontAwesomeIcon icon={faPencilAlt}/>
-                                        </button>
-                                        <button
-                                            className="btn text-danger"
-                                        >
-                                            <FontAwesomeIcon icon={faTrash}/>
-                                        </button>
-                                    </div>
-                                </ListGroup.Item>
-                            );
-                        })
-                    )}
-                </ListGroup>
-                <div className={"d-flex justify-content-center"}>
-                    <Button variant={"outline-success"}
-                            onClick={() => setShowAccountCreationModal(true)}><FontAwesomeIcon
-                        icon={faPlus}/></Button>
-                </div>
-                <AccountCreateModal show={showAccountCreationModal} onClose={() => setShowAccountCreationModal(false)}
-                                    group={group}/>
-            </Col>
-        </Row>
+        <Paper elevation={1} className={classes.paper}>
+            <List>
+                {accounts.length === 0 ? (
+                    <ListItem key={0}>
+                        <ListItemText primary="No Transactions"/>
+                    </ListItem>
+                ) : (
+                    accounts.map(account => (
+                        <ListItem key={account.account_id}>
+                            <ListItemText primary={account.name}
+                                          secondary={account.description}/>
+                            <ListItemSecondaryAction>
+                                <IconButton color="primary">
+                                    <Edit/>
+                                </IconButton>
+                                <IconButton color="secondary">
+                                    <Delete/>
+                                </IconButton>
+                            </ListItemSecondaryAction>
+                        </ListItem>
+                    ))
+                )}
+            </List>
+            <Grid container justify="center">
+                <IconButton color="primary"
+                            onClick={() => setShowAccountCreationModal(true)}>
+                    <Add/>
+                </IconButton>
+            </Grid>
+            <AccountCreateModal show={showAccountCreationModal} onClose={() => setShowAccountCreationModal(false)}
+                                group={group}/>
+        </Paper>
     );
 }

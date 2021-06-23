@@ -1,8 +1,11 @@
-import EditableField from "../EditableField";
 import React from "react";
 import {useRecoilValue} from "recoil";
 import {sessionToken} from "../../recoil/auth";
 import {updateTransaction} from "../../recoil/transactions";
+import List from "@material-ui/core/List";
+import EditableField from "../style/EditableField";
+import TextField from "@material-ui/core/TextField";
+import {toast} from "react-toastify";
 
 export default function TransactionDetail({group, transaction, wipRevision}) {
     const authtoken = useRecoilValue(sessionToken);
@@ -20,6 +23,10 @@ export default function TransactionDetail({group, transaction, wipRevision}) {
                 description: transaction.description,
                 ...params
             }).then(result => {
+                toast.success(`Updated transaction!`, {
+                    position: "top-right",
+                    autoClose: 5000,
+                });
             }).catch(err => {
                 // something else
             })
@@ -27,34 +34,40 @@ export default function TransactionDetail({group, transaction, wipRevision}) {
     }
 
     return (
-        <div>
-            <span className="font-weight-bold">Description</span>
-            <div className="d-flex justify-content-between">
-                {editing ? (
-                    <EditableField value={transaction.description}
-                                   onChange={(newValue) => save({description: newValue})}/>
-                ) : (
-                    <span className="text-field">{transaction.description}</span>
-                )}
-            </div>
-            <span className="font-weight-bold">Value</span>
-            <div className="d-flex justify-content-between">
-                {editing ? (
-                    <EditableField value={transaction.value}
-                                   onChange={(newValue) => save({value: parseFloat(newValue)})}/>
-                ) : (
-                    <span className="text-field">{transaction.value}</span>
-                )}
-            </div>
-            <span className="font-weight-bold">Currency</span>
-            <div className="d-flex justify-content-between">
-                {editing ? (
-                    <EditableField value={transaction.currency_symbol}
-                                   onChange={(newValue) => save({currencySymbol: newValue})}/>
-                ) : (
-                    <span className="text-field">{transaction.currency_symbol}</span>
-                )}
-            </div>
-        </div>
+        <List>
+            {editing ? (
+                <>
+                    <EditableField
+                        label="Description"
+                        margin="normal"
+                        value={transaction.description}
+                        onChange={description => save({description: description})}
+                    />
+
+                    <EditableField
+                        label="Value"
+                        margin="normal"
+                        value={transaction.value}
+                        onChange={value => save({value: parseFloat(value)})}
+                    />
+                </>
+            ) : (
+                <>
+                    <TextField
+                        label="Description"
+                        margin="normal"
+                        value={transaction.description}
+                        disabled={true}
+                    />
+                    <TextField
+                        label="Value"
+                        margin="normal"
+                        value={transaction.value}
+                        disabled={true}
+                    />
+                </>
+            )}
+
+        </List>
     )
 }

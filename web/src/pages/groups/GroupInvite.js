@@ -1,20 +1,13 @@
 import React, {useEffect, useState} from "react";
-import {useHistory, useRouteMatch} from "react-router-dom";
-
-import Row from "react-bootstrap/cjs/Row";
-import Col from "react-bootstrap/cjs/Col";
+import {Link, useHistory, useRouteMatch} from "react-router-dom";
 import "react-datetime/css/react-datetime.css";
 import Spinner from "react-bootstrap/Spinner";
-import Card from "react-bootstrap/cjs/Card";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faCheck, faTimes} from "@fortawesome/free-solid-svg-icons";
-import ListGroup from "react-bootstrap/cjs/ListGroup";
-import {LinkContainer} from "react-router-bootstrap";
 
-import {ws} from "../websocket";
-import Button from "react-bootstrap/Button";
+import {ws} from "../../websocket";
 import {useRecoilValue} from "recoil";
-import {isAuthenticated, sessionToken} from "../recoil/auth";
+import {isAuthenticated, sessionToken} from "../../recoil/auth";
 
 export default function GroupInvite() {
     const [group, setGroup] = useState(null);
@@ -60,8 +53,8 @@ export default function GroupInvite() {
 
 
     return (
-        <Row className={"justify-content-center"}>
-            <Col md={8} xs={12}>
+        <div className="row justify-content-center">
+            <div className="col-md-8 col-xs-12">
                 {status === "loading" ? (
                     <div className="d-flex justify-content-center">
                         <Spinner animation="border" role="status">
@@ -69,34 +62,34 @@ export default function GroupInvite() {
                         </Spinner>
                     </div>
                 ) : (
-                    <Card>
-                        <Card.Body>
+                    <div className="card">
+                        <div className="card-body">
                             {error !== null ? <div className="alert alert-danger">{error}</div> : ""}
                             <h4>You have been invited to group {group.group_name}</h4>
                             <hr/>
-                            <ListGroup variant={"flush"}>
-                                <ListGroup.Item className={"d-flex"}>
-                                    <span className={"font-weight-bold w-25"}>Name</span>
+                            <div className="list-group list-group-flush">
+                                <div className="list-group-item d-flex">
+                                    <span className="font-weight-bold w-25">Name</span>
                                     <span>{group.group_name}</span>
-                                </ListGroup.Item>
-                                <ListGroup.Item className={"d-flex"}>
-                                    <span className={"font-weight-bold w-25"}>Description</span>
+                                </div>
+                                <div className="list-group-item d-flex">
+                                    <span className="font-weight-bold w-25">Description</span>
                                     <span>{group.group_description}</span>
-                                </ListGroup.Item>
-                                <ListGroup.Item className={"d-flex"}>
-                                    <span className={"font-weight-bold w-25"}>Created At</span>
+                                </div>
+                                <div className="list-group-item d-flex">
+                                    <span className="font-weight-bold w-25">Created At</span>
                                     <span>{group.group_created}</span>
-                                </ListGroup.Item>
-                                <ListGroup.Item className={"d-flex"}>
-                                    <span className={"font-weight-bold w-25"}>Invitation Description</span>
+                                </div>
+                                <div className="list-group-item d-flex">
+                                    <span className="font-weight-bold w-25">Invitation Description</span>
                                     <span>{group.invite_description}</span>
-                                </ListGroup.Item>
-                                <ListGroup.Item className={"d-flex"}>
-                                    <span className={"font-weight-bold w-25"}>Invitation Valid Until</span>
+                                </div>
+                                <div className="list-group-item d-flex">
+                                    <span className="font-weight-bold w-25">Invitation Valid Until</span>
                                     <span>{group.invite_valid_until}</span>
-                                </ListGroup.Item>
-                                <ListGroup.Item className={"d-flex"}>
-                                    <span className={"font-weight-bold w-25"}>Invitation Single Use</span>
+                                </div>
+                                <div className="list-group-item d-flex">
+                                    <span className="font-weight-bold w-25">Invitation Single Use</span>
                                     <span>
                                             group.invite_single_use ? (
                                                 <FontAwesomeIcon icon={faCheck}/>
@@ -104,23 +97,21 @@ export default function GroupInvite() {
                                                 <FontAwesomeIcon icon={faTimes}/>
                                             )}
                                         </span>
-                                </ListGroup.Item>
-                            </ListGroup>
+                                </div>
+                            </div>
                             <hr/>
-                            <Row className={"justify-content-center"}>
+                            <div className="row justify-content-center">
                                 {loggedIn ? (
-                                    <Button variant={"success"} onClick={join}>Join</Button>
+                                    <button className="btn btn-success" onClick={join}>Join</button>
                                 ) : (
-                                    <LinkContainer to={"/login?next=" + match.url}>
-                                        <Button variant={"success"}>Join</Button>
-                                    </LinkContainer>
+                                    <Link className="btn btn-success" to={"/login?next=" + match.url}>Join</Link>
                                 )}
-                            </Row>
-                        </Card.Body>
-                    </Card>
+                            </div>
+                        </div>
+                    </div>
                 )}
-            </Col>
-        </Row>
+            </div>
+        </div>
     );
 }
 

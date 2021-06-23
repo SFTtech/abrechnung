@@ -1,13 +1,18 @@
-import Modal from "react-bootstrap/Modal";
-import Form from "react-bootstrap/Form";
-import {Formik} from "formik";
-import Datetime from "react-datetime";
-import Button from "react-bootstrap/cjs/Button";
+import {Field, Form, Formik} from "formik";
 import React from "react";
 import {createInviteToken, groupInviteTokens} from "../../recoil/groups";
 import {toast} from "react-toastify";
 import {useRecoilValue, useSetRecoilState} from "recoil";
 import {sessionToken} from "../../recoil/auth";
+import {Checkbox, TextField} from "formik-material-ui";
+import Button from "@material-ui/core/Button";
+import Dialog from "@material-ui/core/Dialog";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogActions from "@material-ui/core/DialogActions";
+import LinearProgress from "@material-ui/core/LinearProgress";
+import {DateTimePicker} from "formik-material-ui-pickers";
+import {FormControlLabel} from "@material-ui/core";
 
 export default function InviteLinkCreate({show, onClose, group}) {
     const token = useRecoilValue(sessionToken);
@@ -21,7 +26,7 @@ export default function InviteLinkCreate({show, onClose, group}) {
             description: values.description
         })
             .then(result => {
-                toast.success(`Created group ${values.name}`, {
+                toast.success("Successfully created invite token", {
                     position: "top-right",
                     autoClose: 5000,
                 });
@@ -41,55 +46,56 @@ export default function InviteLinkCreate({show, onClose, group}) {
     };
 
     return (
-        <Modal show={show} onHide={onClose}>
-            <Modal.Header closeButton>
-                <Modal.Title>Create Invite Link</Modal.Title>
-            </Modal.Header>
+        <Dialog open={show} onClose={onClose}>
+            <DialogTitle>Create Invite Link</DialogTitle>
 
-            <Formik initialValues={{description: "", validUntil: ""}} onSubmit={handleSubmit}>
-                {({values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
-                    <form onSubmit={handleSubmit}>
-                        <Modal.Body>
-                            <Form.Group controlId={"description"}>
-                                <Form.Label>Description</Form.Label>
-                                <input
-                                    type="text"
-                                    name="description"
-                                    className="form-control"
-                                    onChange={handleChange}
-                                    onBlur={handleBlur}
-                                    value={values.description}
+            <DialogContent>
+                <Formik initialValues={{description: "", validUntil: "", singleUse: false}} onSubmit={handleSubmit}>
+                    {({values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
+                        <Form>
+                            <Field
+                                margin="normal"
+                                required
+                                fullWidth
+                                autoFocus
+                                component={TextField}
+                                name="description"
+                                label="Description"
+                            />
+                            <Field
+                                margin="normal"
+                                required
+                                fullWidth
+                                component={DateTimePicker}
+                                name="singleUse"
+                                label="Valid Until"
+                            />
+                            <FormControlLabel control={
+                                <Field
+                                    margin="normal"
+                                    component={Checkbox}
+                                    name="singleUse"
                                 />
-                            </Form.Group>
-                            <Form.Group controlId={"validUntil"}>
-                                <Form.Label>Valid Until</Form.Label>
-                                <Datetime
-                                    name="validUntil"
-                                    onChange={(date) => handleChange({target: {value: date}})}
-                                    value={values.validUntil}
-                                />
-                            </Form.Group>
-                            <Form.Group controlId={"inviteLinkSingleUse"}>
-                                <Form.Label>Single Use</Form.Label>
-                                <Form.Check
-                                    name={"singleUse"}
-                                    onChange={handleChange}
-                                    checked={values.singleUse}
-                                />
-                            </Form.Group>
-                        </Modal.Body>
+                            } label={"Single Use"}/>
 
-                        <Modal.Footer>
-                            <Button variant="success" type={"submit"}>
-                                {isSubmitting ? "Saving ..." : "Save"}
-                            </Button>
-                            <Button variant="outline-danger" onClick={onClose}>
-                                Close
-                            </Button>
-                        </Modal.Footer>
-                    </form>
-                )}
-            </Formik>
-        </Modal>
+                            {isSubmitting && <LinearProgress/>}
+                            <DialogActions>
+                                <Button color="secondary" onClick={onClose}>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    color="primary"
+                                    disabled={isSubmitting}
+                                    onClick={handleSubmit}
+                                >
+                                    Save
+                                </Button>
+                            </DialogActions>
+                        </Form>
+                    )}
+                </Formik>
+            </DialogContent>
+        </Dialog>
     )
 }

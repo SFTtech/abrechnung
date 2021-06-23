@@ -1,14 +1,45 @@
 import React, {useEffect, useState} from "react";
-import {Link, useHistory} from "react-router-dom";
-import {Formik} from "formik";
+import {Link as RouterLink, useHistory} from "react-router-dom";
+import {Field, Form, Formik} from "formik";
 
 import {useRecoilState} from "recoil";
 import {isAuthenticated, register} from "../../recoil/auth";
 import {toast} from "react-toastify";
-import Loading from "../../components/Loading";
-import Layout from "../../components/Layout";
+import Loading from "../../components/style/Loading";
+import {TextField} from "formik-material-ui";
+import LinearProgress from "@material-ui/core/LinearProgress";
+import Button from "@material-ui/core/Button";
+import CssBaseline from "@material-ui/core/CssBaseline";
+import Avatar from "@material-ui/core/Avatar";
+import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
+import Typography from "@material-ui/core/Typography";
+import Container from "@material-ui/core/Container";
+import Grid from "@material-ui/core/Grid";
+import Link from "@material-ui/core/Link";
+import {makeStyles} from "@material-ui/core";
+
+const useStyles = makeStyles((theme) => ({
+    paper: {
+        marginTop: theme.spacing(8),
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+    },
+    avatar: {
+        margin: theme.spacing(1),
+        backgroundColor: theme.palette.secondary.main,
+    },
+    form: {
+        width: '100%', // Fix IE 11 issue.
+        marginTop: theme.spacing(3),
+    },
+    submit: {
+        margin: theme.spacing(3, 0, 2),
+    },
+}));
 
 export default function Register() {
+    const classes = useStyles();
     const [loggedIn, setLoggedIn] = useRecoilState(isAuthenticated);
     const [loading, setLoading] = useState(true);
     let history = useHistory();
@@ -60,10 +91,6 @@ export default function Register() {
         return errors;
     }
 
-    // if (this.props.isAuthenticated) {
-    //     return <Redirect to="/"/>;
-    // }
-    //
     // if (this.state.status === "success") {
     //     return (
     //         <div className="col-md-6 m-auto">
@@ -81,99 +108,97 @@ export default function Register() {
     return (
         <>
             {loading ? <Loading/> : (<>
-                <Layout title="Register">
-                    <div className="py-4 flex items-center justify-center bg-gray-50">
-                        <div className="max-w-md w-full">
-                            <div>
-                                <h2 className="mt-6 text-center text-3xl leading-9 font-extrabold text-gray-900">
-                                    Register a new account
-                                </h2>
-                                <p className="mt-2 text-center text-sm leading-5 text-gray-600">
-                                    Or <Link to="/login"
-                                             className="font-medium text-indigo-600 hover:text-indigo-500 focus:outline-none focus:underline transition ease-in-out duration-150">
-                                    login here.
-                                </Link>
-                                </p>
-                            </div>
-                            <Formik
-                                validate={validate}
-                                initialValues={{
-                                    username: "",
-                                    email: "",
-                                    password: "",
-                                    password2: "",
-                                }}
-                                onSubmit={handleSubmit}
-                            >
-                                {({values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
+                <Container maxWidth="xs">
+                    <CssBaseline/>
+                    <div className={classes.paper}>
+                        <Avatar className={classes.avatar}>
+                            <LockOutlinedIcon/>
+                        </Avatar>
+                        <Typography component="h1" variant="h5">
+                            Register a new account
+                        </Typography>
+                        <Formik
+                            validate={validate}
+                            initialValues={{
+                                username: "",
+                                email: "",
+                                password: "",
+                                password2: "",
+                            }}
+                            onSubmit={handleSubmit}
+                        >
+                            {({handleSubmit, isSubmitting}) => (
 
-                                    <form onSubmit={handleSubmit} className="mt-8">
-                                        <input type="hidden" name="remember" value="true"/>
-                                        <div className="form-group">
-                                            <label>Username</label>
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                name="username"
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                value={values.username}
-                                            />
-                                            {errors.username && touched.username && errors.username}
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Email</label>
-                                            <input
-                                                type="email"
-                                                className="form-control"
-                                                name="email"
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                value={values.email}
-                                            />
-                                            {errors.email && touched.email && errors.email}
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Password</label>
-                                            <input
-                                                type="password"
-                                                className="form-control"
-                                                name="password"
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                value={values.password}
-                                            />
-                                            {errors.password && touched.password && errors.password}
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Confirm Password</label>
-                                            <input
-                                                type="password"
-                                                className="form-control"
-                                                name="password2"
-                                                onChange={handleChange}
-                                                onBlur={handleBlur}
-                                                value={values.password2}
-                                            />
-                                            {errors.password2 && touched.password2 && errors.password2}
-                                        </div>
-                                        <div className="form-group">
-                                            <button type="submit"
-                                                    className="btn btn-primary"
-                                                    disabled={isSubmitting}>
-                                                {isSubmitting ? "Registering..." : "Register"}
-                                            </button>
-                                        </div>
-                                        <p>
-                                            Already have an account? <Link to="/login">Login</Link>
-                                        </p>
-                                    </form>
-                                )}
-                            </Formik>
+                                <Form>
+                                    <Field
+                                        variant="outlined"
+                                        margin="normal"
+                                        required
+                                        fullWidth
+                                        autoFocus
+                                        component={TextField}
+                                        type="text"
+                                        label="Username"
+                                        name="username"
+                                    />
+                                    <Field
+                                        variant="outlined"
+                                        margin="normal"
+                                        required
+                                        fullWidth
+                                        component={TextField}
+                                        type="email"
+                                        name="email"
+                                        label="E-Mail"
+                                    />
 
-                        </div>
+                                    <Field
+                                        variant="outlined"
+                                        margin="normal"
+                                        required
+                                        fullWidth
+                                        component={TextField}
+                                        type="password"
+                                        name="password"
+                                        label="Password"
+                                    />
+
+                                    <Field
+                                        variant="outlined"
+                                        margin="normal"
+                                        required
+                                        fullWidth
+                                        component={TextField}
+                                        type="password"
+                                        name="password2"
+                                        label="Repeat Password"
+                                    />
+
+                                    {isSubmitting && <LinearProgress/>}
+                                    <Button
+                                        type="submit"
+                                        fullWidth
+                                        variant="contained"
+                                        color="primary"
+                                        disabled={isSubmitting}
+                                        onClick={handleSubmit}
+                                        className={classes.submit}
+                                    >
+                                        Login
+                                    </Button>
+                                    <Grid container justify="flex-end">
+                                        <Grid item>
+                                            <Link to="/login" component={RouterLink} variant="body2">
+                                                Already have an account? Sign in
+                                            </Link>
+                                        </Grid>
+                                    </Grid>
+                                </Form>
+                            )}
+                        </Formik>
                     </div>
-                </Layout>
+                </Container>
+
             </>)}
         </>
     )
