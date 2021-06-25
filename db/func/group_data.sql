@@ -189,7 +189,7 @@ begin
     -- TODO attempt to evaluate in the context of this user and check the consistency flag
 
     -- set the revision as commited
-    perform _commit_revision(commit_revision.revision_id);
+    call _commit_revision(commit_revision.revision_id);
 
     -- add a log entry for the commit
     insert into group_log (grp, usr, type, message)

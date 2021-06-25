@@ -56,12 +56,14 @@ export default function TransactionDetail({group, transaction, wipRevision}) {
                     <TextField
                         label="Description"
                         margin="normal"
+                        fullWidth
                         value={transaction.description}
                         disabled={true}
                     />
                     <TextField
                         label="Value"
                         margin="normal"
+                        fullWidth
                         value={transaction.value}
                         disabled={true}
                     />
