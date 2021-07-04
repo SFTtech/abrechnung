@@ -3,7 +3,10 @@
 """
 sft psql websocket gateway
 
-(c) 2020 Jonas Jelten <jj@sft.lol>
+Basically a websocket bridge to PostgreSQL.
+
+
+(c) 2020-2021 Jonas Jelten <jj@sft.lol>
 
 License: GPLv3 or any later version
 
@@ -11,7 +14,7 @@ License: GPLv3 or any later version
 The database needs these API functions for sftpgws:
 
 * on startup
-  * `channel_name:text forwarder_boot(forwarder:text)`
+  * `channel_id:bigint forwarder_boot(forwarder:text)`
   * `functions:table get_allowed_functions()`
 
 * client connections
@@ -76,6 +79,11 @@ class SFTPGWS(SubCommand):
 
         self.logger = logging.getLogger(__name__)
 
+        # psql notification channel id,
+        # we get this when booting from the db.
+        self.channel_id = None
+        self.channel_name = None
+
     async def run(self):
         """
         run the websocket server
@@ -85,13 +93,17 @@ class SFTPGWS(SubCommand):
 
         async with db_pool.acquire() as conn:
             # register at db
-            channel_id = await conn.fetchval("select * from forwarder_boot($1);",
-                                             self.cfg['websocket']['id'])
+            self.channel_id = await conn.fetchval(
+                "select * from forwarder_boot($1);",
+                self.cfg['websocket']['id']
+            )
 
-            self.logger.info(f'DB gave us channel_id {channel_id!r}')
+            self.logger.info(f'DB gave us channel_id {self.channel_id!r}')
+            self.channel_name = f'channel{self.channel_id}'
 
-            # one global channel for NOTIFY to this db-client
-            await conn.add_listener(channel_id, self.on_psql_notification)
+            # one channel for NOTIFY to this db-client
+            await conn.add_listener(self.channel_name,
+                                    self.on_psql_notification)
 
             for record in await conn.fetch("select * from get_allowed_functions();"):
                 self.function_whitelist[record[0]] = record[1], record[2]
@@ -113,9 +125,30 @@ class SFTPGWS(SubCommand):
 
     def on_psql_notification(self, connection, pid, channel, payload):
         """
-        this is called by psql to handle a notify.
+        this is called by psql to deliver a notify.
+
+        psql sends a json to this notification channel,
+        which it knows by the forwarder id assigned to us on boot.
+
+        expected json message from psql:
+        {
+            -- what connectionids this notification is for
+            "connections": "*" or [connid, ...],
+
+            -- which event this notification describes
+            "event": "...",
+
+            -- event-specific args
+            "args": ...
+        }
+
         """
         del connection, pid  # unused
+
+        if channel != self.channel_name:
+            raise Exception(f"bug: forwarder got a notification "
+                            f"for channel {channel!r}, "
+                            f"but registered is {self.channel_name!r}")
 
         payload_json = json.loads(payload)
 
@@ -146,7 +179,7 @@ class SFTPGWS(SubCommand):
             # register the client connection at the db
             connection_id = await connection.fetchval(
                 "select * from client_connected($1);",
-                self.cfg['websocket']['id']
+                self.channel_id
             )
             self.logger.info(f'[{connection_id}] connected')
 

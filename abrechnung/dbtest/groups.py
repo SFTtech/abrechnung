@@ -502,3 +502,4 @@ async def test(test):
     await remove_user(test, usr1)
     await remove_user(test, usr2)
     await remove_user(test, usr3)
+    await remove_user(test, usr4)

@@ -719,3 +719,30 @@ begin
 end;
 $$ language plpgsql;
 call allow_function('delete_account', is_procedure := true);
+
+
+-- notifications for changes in sessions
+create or replace function session_updated()
+returns trigger
+as $$
+<<locals>>
+declare
+    user_id subscription.user_id%TYPE;
+begin
+    if NEW is NULL then
+        -- deleted session
+        locals.user_id := OLD.usr;
+    else
+        -- updated session or newly created session
+        locals.user_id := NEW.usr;
+    end if;
+
+    call notify_subscribers('session', locals.user_id, locals.user_id, '{}'::json);
+    return NULL;
+end;
+$$ language plpgsql;
+
+create trigger session_update_trig after insert or update or delete
+    on session
+    for each row
+    execute function session_updated();

@@ -8,11 +8,17 @@ create table if not exists schema_version(
 );
 insert into schema_version (version) values (1) on conflict do nothing;
 
+-------------------------------------------------------------------------------
 -- websocket connections
 
+-- maps textual forwarder ids to notification channel identifiers
+-- when a forwarder boots, it's inserted here,
+-- and when it stops, it's removed here.
+-- this table solely exists to delete old connections
+-- when a forwarder hard-crashes and re-registers.
 create table if not exists forwarder(
-    id text primary key,
-    notification_channel_number serial not null
+    id text primary key not null,
+    channel_id serial unique not null
 );
 
 -- tracking of active connections of users to websocket forwarders
@@ -20,11 +26,13 @@ create table if not exists forwarder(
 -- and deleted when they disconnect again.
 create table if not exists connection(
     id bigserial primary key,
-    forwarder text not null references forwarder(id) on delete cascade,
+    channel_id integer not null
+        references forwarder(channel_id) on delete cascade,
     started timestamptz not null default now()
 );
 
--- this table should be populated in the palce where functions are defined
+-- entries in this table are added right after function declarations that
+-- should be allowed to be called by api.
 -- it contains a whitelist of functions that anybody can call publicly through
 -- the websocket forwarder
 create table if not exists allowed_function(
@@ -33,6 +41,8 @@ create table if not exists allowed_function(
     is_procedure boolean not null default false
 );
 
+
+-------------------------------------------------------------------------------
 -- user accounts
 
 create table if not exists password_setting(
@@ -116,8 +126,63 @@ create table if not exists session(
     valid_until timestamptz default null
 );
 
--- media file hosting
+-------------------------------------------------------------------------------
+-- event subscriptions
 
+
+-- which table or event variant is a subscription for.
+create type subscription_type as enum (
+    -- test subscription
+    -- element_id: also a test value
+    'test',
+    -- when sessions of a logged-in user are watched to see changes to logins
+    -- the current sessions are then fetched with list_sessions
+    -- element_id: the user whose sessions we wanna watch
+    'session'
+);
+
+
+-- tracking of update subscriptions
+-- so we know which connection_id on which forwarder channel gets some update.
+--
+-- entries in here have to be validated when the subscription is requested -
+-- so nobody can subscribe on unallowed things.
+create table if not exists subscription(
+    -- the connection this subscription is assigned to
+    connection_id bigint not null references connection(id) on delete cascade,
+
+    -- which user has this subscription
+    -- this is not for permission checks, these happen when the subscription is requested.
+    -- instead its for convenience to figure out the user quickly.
+    --
+    -- relevant e.g. for viewing uncommitted changes or session token listing
+    -- but irrelevant e.g. for group content, so only the editing user can get
+    -- the update.
+    --
+    -- some notifications are for one user (hence we need his id, e.g. for sessions)
+    -- and others are for one element (hence the element_id, e.g. for a transaction).
+    -- for the wip-commits, the enclosing einkauf should only be subscribable to the editing user's session,
+    -- but if that wasn't enforced, that notification would need user and element.
+    user_id integer not null references usr(id) on delete cascade,
+    -- what data to subscribe to
+    subscription_type subscription_type not null,
+    -- what element of the data to subscribe to
+    element_id bigint not null,
+
+    -- on one connection there can't be multiple user_ids for a type+element
+    -- also an index for notification removal
+    constraint subscription_conn_type_elem unique (connection_id, subscription_type, element_id)
+);
+-- notification delivery
+create index subscription_deliver_idx on subscription (
+    user_id,
+    subscription_type,
+    element_id
+) include (connection_id);
+
+
+-------------------------------------------------------------------------------
+-- media file hosting
 create table if not exists hoster(
     id serial primary key,
     -- full URL to file with 'filename' hosted at this hoster: base_url + '/' + filename
@@ -161,6 +226,7 @@ create table if not exists file_uploader(
     deleted bool not null default false
 );
 
+-------------------------------------------------------------------------------
 -- groups
 
 -- groups are typically active for a limited time period;
@@ -241,7 +307,9 @@ create table if not exists group_log (
     affected integer references usr(id) on delete restrict
 );
 
--- group data, the actual purpose of the abrechnung
+
+-------------------------------------------------------------------------------
+-- group data, the real purpose of the abrechnung
 --
 -- all items of group data are organized in two tables:
 -- the base table, and the history table which has the name of the base table

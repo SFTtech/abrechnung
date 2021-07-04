@@ -1302,26 +1302,86 @@ async def test(test):
         'wrong password',
         error_id='bad-login-credentials'
     )
-    # test deleting account successfully
     await test.fetchval(
         'select deleted from usr where usr.id=$1',
         usr1_id,
         expect=False
     )
+
+    # test notifications for user session
+    # bring up virtual websocket gate
+    forwarder_name = "dummy_forwarder"
+    channel_id = await test.fetchval(
+        "select * from forwarder_boot(id := $1)",
+        forwarder_name,
+        column="channel_id"
+    )
+    await test.listen(f'channel{channel_id}')
+
+    usr1_connection = await test.fetchval(
+        "select * from client_connected(channel_id := $1)",
+        channel_id,
+        column="connection_id"
+    )
+
+    # fail to subscribe usr1 for session updates for usr2
+    await test.fetch_expect_error(
+        "call subscribe(connection_id := $1, token := $2, subscription_type := $3, element_id := $4);",
+        usr1_connection,
+        usr1_token,
+        'session',
+        usr2_id,
+        error=asyncpg.exceptions.RaiseError,
+        error_re=r'bad-subscription:session: element_id not token user'
+    )
+
+    # subscribe usr1 for session updates
+    # TODO: simplify subscription/notification testing with helpers..
+    await test.fetch(
+        "call subscribe(connection_id := $1, token := $2, subscription_type := $3, element_id := $4);",
+        usr1_connection,
+        usr1_token,
+        'session',
+        usr1_id
+    )
+
+    # login and see if there's a session update notification!
     await test.fetch(
         'select * from login_with_password(session := $1, password := $2, email := $3)',
         'test a',
         'secure password',
         'newer.foo@bar.baz'
     )
+    test.expect(
+        (await test.get_notification())[1],
+        {
+            "connections": [usr1_connection],
+            "event": 'session',
+            "args": {},
+        }
+    )
+
+    # check that other notifications still work
     await test.fetch(
         'call request_password_recovery(email := $1)',
         'newer.foo@bar.baz'
     )
+    test.expect((await test.get_notification())[1], 'pending_password_recovery')
+
+    # test deleting account successfully
     await test.fetch(
         'call delete_account(authtoken := $1, password := $2)',
         usr1_token,
         'secure password'
+    )
+    # since this deleted the user session, we get a notification
+    test.expect(
+        (await test.get_notification())[1],
+        {
+            "connections": [usr1_connection],
+            "event": 'session',
+            "args": {},
+        }
     )
     await test.fetch_expect_raise(
         'call delete_account(authtoken := $1, password := $2)',
@@ -1340,6 +1400,7 @@ async def test(test):
         usr1_id,
         rowcount=0
     )
+
     # ensure that all pending email change requests are gone
     await test.fetch(
         'select * from pending_email_change where pending_email_change.usr=$1',
@@ -1361,8 +1422,18 @@ async def test(test):
         error_id='bad-login-credentials'
     )
 
+    # shutdown vitual forwarder
+    await test.unlisten(f'channel{channel_id}')
+    await test.fetchval(
+        "select * from forwarder_stop(id := $1)",
+        forwarder_name,
+    )
+
     # clean up all of the test users
     await remove_user(test, usr1_id)
     await remove_user(test, usr2_id)
 
+    # check if asyncpg does the subscription cleanup
     await test.unlisten('email')
+
+    test.expect(test.notification_count(), 0)

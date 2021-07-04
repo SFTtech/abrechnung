@@ -10,40 +10,42 @@ from . import compare
 
 async def test(test):
     forwarder_name = "test forwarder"
-    channel = await test.fetchval(
-        "select * from forwarder_boot(forwarder := $1)",
+    channel_id = await test.fetchval(
+        "select * from forwarder_boot(id := $1)",
         forwarder_name,
-        column="channel_name"
+        column="channel_id"
     )
-    channel_number = await test.fetchval(
-        'select notification_channel_number from forwarder where id = $1;',
-        forwarder_name,
-        column='notification_channel_number',
+    channel_expected = test.expect(
+        await test.fetchval(
+            'select channel_id from forwarder where id = $1;',
+            forwarder_name,
+            column='channel_id',
+        ),
+        channel_id
     )
-    test.expect(channel, f"channel{channel_number}")
 
     # same forwarder should have the same channel
     test.expect(
         await test.fetchval(
-            "select * from forwarder_boot(forwarder := $1)",
+            "select * from forwarder_boot(id := $1)",
             forwarder_name
         ),
-        channel
+        channel_id
     )
 
     # different forwarder should have a different channel
     test.expect(
         await test.fetchval(
-            "select * from forwarder_boot(forwarder := $1)",
+            "select * from forwarder_boot(id := $1)",
             forwarder_name + "_other"
         ),
-        compare.different(channel)
+        compare.different(channel_id)
     )
 
     # connect clients
     connection_id = await test.fetchval(
-        "select * from client_connected(forwarder := $1)",
-        forwarder_name,
+        "select * from client_connected(channel_id := $1)",
+        channel_id,
         column="connection_id"
     )
 
@@ -61,28 +63,29 @@ async def test(test):
 
     # connect two more clients
     connection_id = await test.fetchval(
-        "select * from client_connected(forwarder := $1)",
-        forwarder_name,
+        "select * from client_connected(channel_id := $1)",
+        channel_id,
         column="connection_id"
     )
 
     connection_id_other = await test.fetchval(
-        "select * from client_connected(forwarder := $1)",
-        forwarder_name,
+        "select * from client_connected(channel_id := $1)",
+        channel_id,
         column="connection_id"
     )
 
     test.expect(
         set(await test.fetchvals(
-            "select id from connection where forwarder = $1",
-            forwarder_name,
+            "select id from connection where channel_id = $1",
+            channel_id,
             column="id"
         )),
         {connection_id, connection_id_other}
     )
 
     # test notifications
-    await test.listen(channel)
+    # the notification channel must be a string!
+    await test.listen(f"channel{channel_id}")
 
     await test.fetch(
         "call notify_connections(connection_ids := $1, event := $2, args := $3)",
@@ -147,12 +150,12 @@ async def test(test):
         }
     )
 
-    await test.unlisten(channel)
+    await test.unlisten(f"channel{channel_id}")
 
     # close forwarder
     test.expect(
         await test.fetchval(
-            "select * from forwarder_stop(forwarder := $1)",
+            "select * from forwarder_stop(id := $1)",
             forwarder_name,
             column="deleted_connections"
         ),
@@ -161,19 +164,18 @@ async def test(test):
 
     test.expect(
         set(await test.fetchvals(
-            "select id from connection where forwarder = $1",
-            forwarder_name,
+            "select id from connection where channel_id = $1",
+            channel_id,
             column="id"
         )),
         set()
     )
 
-    # clean up the forwarder entries
+    # clean up the remaining forwarder entry
     await test.fetch(
-        "delete from forwarder where id = $1 or id = $2 returning *",
-        forwarder_name,
+        "delete from forwarder where id = $1 returning *",
         forwarder_name + "_other",
-        rowcount=2
+        rowcount=1
     )
 
     # test if get_allowed_functions returns some meaningful set

@@ -77,12 +77,19 @@ class DBTest(subcommand.SubCommand):
         from . import websocket_connections
         print(f'{util.BOLD}websocket_connections.test{util.NORMAL}')
         await websocket_connections.test(self)
+
         from . import user_accounts
         print(f'{util.BOLD}user_accounts.test{util.NORMAL}')
         await user_accounts.test(self)
+
+        from . import subscriptions
+        print(f'{util.BOLD}subscriptions.test{util.NORMAL}')
+        await subscriptions.test(self)
+
         from . import groups
         print(f'{util.BOLD}groups.test{util.NORMAL}')
         await groups.test(self)
+
         from . import group_data
         print(f'{util.BOLD}group_data.test{util.NORMAL}')
         await group_data.test(self)
@@ -120,7 +127,7 @@ class DBTest(subcommand.SubCommand):
                 self.error(f"expected column(s) {columns!r}, but got {keys!r}")
 
         if rowcount not in (None, len(result)):
-            self.error(f"expected a single row, but got {len(result)} rows")
+            self.error(f"expected {rowcount} rows, but got {len(result)} rows")
 
         return result
 
@@ -214,7 +221,10 @@ class DBTest(subcommand.SubCommand):
         await self.psql.remove_listener(channel_name, self.notification_callback)
 
     def notification_callback(self, connection, pid, channel, payload):
-        """ runs whenever we get a psql notification """
+        """
+        runs whenever we get a psql notification.
+        enqueues (channel, payload).
+        """
         self.expect(connection, compare.identical(self.psql))
         del pid  # unused
         try:
@@ -224,11 +234,11 @@ class DBTest(subcommand.SubCommand):
                   f'invalid json: {payload!r}')
             raise
         print(f'notification on {channel!r}: {payload_json!r}')
-        self.notifications.put_nowait((channel, payload_json, time.time()))
+        self.notifications.put_nowait((channel, payload_json))
 
     async def get_notification(self, ensure_single=True):
         """
-        returns the current next notification as (channel, payloaddict, time)
+        returns the current next notification as (channel, payloaddict)
 
         if ensure_single, ensures that there are no further notifications
         in the queue.
@@ -238,17 +248,41 @@ class DBTest(subcommand.SubCommand):
         except asyncio.exceptions.TimeoutError:
             self.error('expected a notification but did not receive it')
         if ensure_single:
-            # wait a bit for more notifications to arrive
-            await asyncio.sleep(0.05)
-            extra_notifications = []
-            while self.notifications.qsize() > 0:
-                extra_notifications.append(self.notifications.get_nowait())
-            if extra_notifications:
-                self.error(
-                    f'expected only one notification, but got:\n{notification!r}\n' +
-                    '\n'.join(repr(x) for x in extra_notifications)
-                )
+            await self.expect_no_notification()
         return notification
+
+    async def get_notifications(self, count):
+        """
+        returns the given number of notifications as [(channel, payload), ...]
+        """
+        ret = list()
+        for _ in range(count):
+            try:
+                ret.append(await asyncio.wait_for(self.notifications.get(), timeout=0.1))
+            except asyncio.exceptions.TimeoutError:
+                self.error('expected notification within 0.1s')
+        await self.expect_no_notification()
+        return ret
+
+    async def expect_no_notification(self, waittime=0.05):
+        """
+        when called, throws an error when there are notifications within given time.
+        """
+        # wait a bit for notifications to arrive
+        # if we only had some way of knowing there are pending notfications...
+        await asyncio.sleep(waittime)
+        extra_notifications = []
+        while self.notifications.qsize() > 0:
+            extra_notifications.append(self.notifications.get_nowait())
+        if extra_notifications:
+            self.error(
+                f'expected only one notification, but got:\n{notification!r}\n' +
+                '\n'.join(repr(x) for x in extra_notifications)
+            )
+
+    def notification_count(self):
+        """ return how many notifications are to be processed """
+        return self.notifications.qsize()
 
     def terminate_callback(self, connection):
         """ runs when the psql connection is closed """
@@ -283,3 +317,25 @@ class DBTest(subcommand.SubCommand):
             else:
                 self.error(f"expected {expected!r}, but got {actual!r}")
         return actual
+
+    def expect_random(self, actual_iterable, expected_iterable):
+        """
+        when actual_iterable has unforseeable order,
+        use this function to map all expected values to the actual ones.
+        """
+        used_idx = set()
+        for expected in expected_iterable:
+            found = False
+            found_idxreuse = False
+            for idx, actual in enumerate(actual_iterable):
+                if expected == actual:
+                    if idx in used_idx:
+                        found_idxreuse = True
+                    else:
+                        used_idx.add(idx)
+                        found = True
+            if not found:
+                if found_idxreuse:
+                    self.error(f"could not find another instance of {expected!r} in {actual_iterable!r}")
+                else:
+                    self.error(f"could not find expected {expected!r} in {actual_iterable!r}")
