@@ -601,6 +601,7 @@ call allow_function('confirm_email_change', is_procedure := true);
 -- returns the user information for the given user
 create or replace function get_user_info(
     authtoken uuid,
+    out user_id int,
     out email text,
     out registered_at timestamptz,
     out username text,
@@ -615,9 +616,9 @@ declare
 begin
     select session_auth(authtoken) into locals.usr;
     select
-        usr.email, usr.registered_at, usr.username, usr.language, usr.admin, usr.can_upload_files
+        usr.id, usr.email, usr.registered_at, usr.username, usr.language, usr.admin, usr.can_upload_files
         into
-            get_user_info.email, get_user_info.registered_at, get_user_info.username, get_user_info.language, get_user_info.admin, get_user_info.can_upload_files
+            get_user_info.user_id, get_user_info.email, get_user_info.registered_at, get_user_info.username, get_user_info.language, get_user_info.admin, get_user_info.can_upload_files
         from usr
         where usr.id = locals.usr;
 end;
@@ -737,11 +738,12 @@ begin
         locals.user_id := NEW.usr;
     end if;
 
-    call notify_subscribers('session', locals.user_id, locals.user_id, '{}'::json);
+    call notify_subscribers('session', locals.user_id, locals.user_id, json_build_object('element_id', locals.user_id));
     return NULL;
 end;
 $$ language plpgsql;
 
+drop trigger if exists session_update_trig on session;
 create trigger session_update_trig after insert or update or delete
     on session
     for each row

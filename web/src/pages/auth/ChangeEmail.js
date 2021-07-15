@@ -1,7 +1,6 @@
 import React from "react";
 import {ws} from "../../websocket";
-import {useRecoilValue} from "recoil";
-import {sessionToken} from "../../recoil/auth";
+import {fetchToken} from "../../recoil/auth";
 import {Field, Form, Formik} from "formik";
 import Typography from "@material-ui/core/Typography";
 import Paper from "@material-ui/core/Paper";
@@ -18,11 +17,10 @@ const useStyles = makeStyles((theme) => ({
 
 export default function ChangeEmail() {
     const classes = useStyles();
-    const token = useRecoilValue(sessionToken);
 
     const handleSubmit = (values, {setSubmitting}) => {
         ws.call("request_email_change", {
-            authtoken: token,
+            authtoken: fetchToken(),
             password: values.password,
             new_email: values.newEmail,
         })

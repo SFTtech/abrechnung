@@ -7,30 +7,19 @@ import Button from "@material-ui/core/Button";
 import ListItem from "@material-ui/core/ListItem";
 import TextField from "@material-ui/core/TextField";
 import ListItemText from "@material-ui/core/ListItemText";
-import Paper from "@material-ui/core/Paper";
 import Divider from "@material-ui/core/Divider";
 import Typography from "@material-ui/core/Typography";
-import {FormControlLabel, makeStyles} from "@material-ui/core";
-import {sessionToken} from "../../recoil/auth";
-
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-    },
-}));
+import {FormControlLabel} from "@material-ui/core";
 
 export default function GroupLog({group}) {
-    const classes = useStyles();
     const [message, setMessage] = useState("");
     const [showAllLogs, setShowAllLogs] = useState(false);
     const logEntries = useRecoilValue(groupLog(group.group_id));
     const members = useRecoilValue(groupMembers(group.group_id));
-    const token = useRecoilValue(sessionToken);
 
     const sendMessage = (e) => {
         e.preventDefault();
         createGroupLog({
-            sessionToken: token,
             groupID: group.group_id,
             message: message,
         }).then(result => {
@@ -45,7 +34,7 @@ export default function GroupLog({group}) {
         : logEntries.filter((entry) => entry.type === "text-message");
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <div>
             <Typography component="h3" variant="h5">
                 Group Log
             </Typography>
@@ -82,6 +71,6 @@ export default function GroupLog({group}) {
                     </ListItem>
                 ))}
             </List>
-        </Paper>
+        </div>
     );
 }

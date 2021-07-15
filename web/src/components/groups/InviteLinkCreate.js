@@ -2,8 +2,7 @@ import {Field, Form, Formik} from "formik";
 import React from "react";
 import {createInviteToken, groupInviteTokens} from "../../recoil/groups";
 import {toast} from "react-toastify";
-import {useRecoilValue, useSetRecoilState} from "recoil";
-import {sessionToken} from "../../recoil/auth";
+import {useSetRecoilState} from "recoil";
 import {Checkbox, TextField} from "formik-material-ui";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
@@ -15,12 +14,9 @@ import {DateTimePicker} from "formik-material-ui-pickers";
 import {FormControlLabel} from "@material-ui/core";
 
 export default function InviteLinkCreate({show, onClose, group}) {
-    const token = useRecoilValue(sessionToken);
-    const setInviteLinks = useSetRecoilState(groupInviteTokens(group.group_id));
 
     const handleSubmit = (values, {setSubmitting}) => {
         createInviteToken({
-            sessionToken: token,
             groupID: group.group_id,
             name: values.name,
             description: values.description
@@ -30,10 +26,6 @@ export default function InviteLinkCreate({show, onClose, group}) {
                     position: "top-right",
                     autoClose: 5000,
                 });
-                setInviteLinks((oldTokens) => [
-                    ...oldTokens,
-                    result
-                ])
                 setSubmitting(false);
                 onClose();
             }).catch(err => {
@@ -67,12 +59,13 @@ export default function InviteLinkCreate({show, onClose, group}) {
                                 required
                                 fullWidth
                                 component={DateTimePicker}
-                                name="singleUse"
+                                name="validUntil"
                                 label="Valid Until"
                             />
                             <FormControlLabel control={
                                 <Field
                                     margin="normal"
+                                    type="checkbox"
                                     component={Checkbox}
                                     name="singleUse"
                                 />

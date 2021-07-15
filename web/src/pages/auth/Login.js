@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {useHistory} from "react-router-dom";
 import {Field, Form, Formik} from "formik";
-import {fetchUserData, isAuthenticated, login, sessionToken, userData} from "../../recoil/auth";
+import {fetchUserData, isAuthenticated, login, userData} from "../../recoil/auth";
 import {useRecoilState, useSetRecoilState} from "recoil";
 import Loading from "../../components/style/Loading";
 import {toast} from "react-toastify";
@@ -34,7 +34,6 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function Login() {
-    const setSessionToken = useSetRecoilState(sessionToken);
     const [loggedIn, setLoggedIn] = useRecoilState(isAuthenticated);
     const [loading, setLoading] = useState(true);
     const setUserData = useSetRecoilState(userData);
@@ -52,33 +51,16 @@ export default function Login() {
 
     const handleSubmit = (values, {setSubmitting}) => {
         login(values).then(res => {
-            toast.success(`Logged in...`, {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-            });
-            setLoggedIn(true);
-            setSessionToken(res);
+            toast.success(`Logged in...`);
             setSubmitting(false);
-            fetchUserData({authToken: res}).then(result => {
+            fetchUserData().then(result => {
+                setLoggedIn(true);
                 setUserData(result);
                 history.push("/"); // handle next
             }).catch(err => {
             })
         }).catch(err => {
-            toast.error(`${err}`, {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-            });
+            toast.error(`${err}`);
             setSubmitting(false);
         })
     };

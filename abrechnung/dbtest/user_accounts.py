@@ -1357,7 +1357,7 @@ async def test(test):
         {
             "connections": [usr1_connection],
             "event": 'session',
-            "args": {},
+            "args": {'element_id': usr1_id},
         }
     )
 
@@ -1380,7 +1380,7 @@ async def test(test):
         {
             "connections": [usr1_connection],
             "event": 'session',
-            "args": {},
+            "args": {'element_id': usr1_id},
         }
     )
     await test.fetch_expect_raise(

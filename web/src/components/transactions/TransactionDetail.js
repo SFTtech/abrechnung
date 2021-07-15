@@ -1,20 +1,23 @@
-import React from "react";
-import {useRecoilValue} from "recoil";
-import {sessionToken} from "../../recoil/auth";
+import React, {useEffect, useState} from "react";
 import {updateTransaction} from "../../recoil/transactions";
 import List from "@material-ui/core/List";
-import EditableField from "../style/EditableField";
 import TextField from "@material-ui/core/TextField";
 import {toast} from "react-toastify";
 
 export default function TransactionDetail({group, transaction, wipRevision}) {
-    const authtoken = useRecoilValue(sessionToken);
     const editing = wipRevision !== null;
+
+    const [description, setDescription] = useState("");
+    const [transactionValue, setTransactionValue] = useState("");
+
+    useEffect(() => {
+        setDescription(transaction.description);
+        setTransactionValue(transaction.value);
+    }, [transaction, setDescription, setTransactionValue])
 
     const save = (params) => {
         if (wipRevision !== null) {
             updateTransaction({
-                sessionToken: authtoken,
                 transactionID: transaction.transaction_id,
                 revisionID: wipRevision.revision_id,
                 currencyConversionRate: transaction.currency_conversion_rate,
@@ -22,13 +25,9 @@ export default function TransactionDetail({group, transaction, wipRevision}) {
                 value: transaction.value,
                 description: transaction.description,
                 ...params
-            }).then(result => {
-                toast.success(`Updated transaction!`, {
-                    position: "top-right",
-                    autoClose: 5000,
-                });
             }).catch(err => {
                 // something else
+                toast.error(`Error updating transaction: ${err}!`);
             })
         }
     }
@@ -37,18 +36,22 @@ export default function TransactionDetail({group, transaction, wipRevision}) {
         <List>
             {editing ? (
                 <>
-                    <EditableField
+                    <TextField
                         label="Description"
                         margin="normal"
-                        value={transaction.description}
-                        onChange={description => save({description: description})}
+                        fullWidth
+                        onBlur={(event) => save({description: event.target.value})}
+                        value={description}
+                        onChange={event => setDescription(event.target.value)}
                     />
 
-                    <EditableField
+                    <TextField
                         label="Value"
                         margin="normal"
-                        value={transaction.value}
-                        onChange={value => save({value: parseFloat(value)})}
+                        fullWidth
+                        onBlur={(event) => save({value: parseFloat(event.target.value)})}
+                        value={transactionValue}
+                        onChange={event => setTransactionValue(event.target.value)}
                     />
                 </>
             ) : (

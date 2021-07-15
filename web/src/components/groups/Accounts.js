@@ -7,39 +7,43 @@ import List from "@material-ui/core/List";
 import ListItemText from "@material-ui/core/ListItemText";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import ListItem from "@material-ui/core/ListItem";
-import Paper from "@material-ui/core/Paper";
 import IconButton from "@material-ui/core/IconButton";
 import Add from "@material-ui/icons/Add";
 import Delete from "@material-ui/icons/Delete";
 import {Edit} from "@material-ui/icons";
 import Grid from "@material-ui/core/Grid";
-import {makeStyles} from "@material-ui/core";
-
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-    },
-}));
+import AccountEditModal from "./AccountEditModal";
 
 export default function Accounts({group}) {
-    const classes = useStyles();
     const [showAccountCreationModal, setShowAccountCreationModal] = useState(false);
+    const [showAccountEditModal, setShowAccountEditModal] = useState(false);
+    const [accountToEdit, setAccountToEdit] = useState(null);
     const accounts = useRecoilValue(groupAccounts(group.group_id));
 
+    const openAccountEdit = (account) => {
+        setAccountToEdit(account);
+        setShowAccountEditModal(true);
+    }
+
+    const closeAccountEdit = () => {
+        setShowAccountEditModal(false);
+        setAccountToEdit(null);
+    }
+
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <div>
             <List>
                 {accounts.length === 0 ? (
                     <ListItem key={0}>
-                        <ListItemText primary="No Transactions"/>
+                        <ListItemText primary="No Accounts"/>
                     </ListItem>
                 ) : (
                     accounts.map(account => (
-                        <ListItem key={account.account_id}>
+                        <ListItem key={`${account.account_id}-${account.revision_id}`}>
                             <ListItemText primary={account.name}
                                           secondary={account.description}/>
                             <ListItemSecondaryAction>
-                                <IconButton color="primary">
+                                <IconButton color="primary" onClick={() => openAccountEdit(account)}>
                                     <Edit/>
                                 </IconButton>
                                 <IconButton color="secondary">
@@ -58,6 +62,8 @@ export default function Accounts({group}) {
             </Grid>
             <AccountCreateModal show={showAccountCreationModal} onClose={() => setShowAccountCreationModal(false)}
                                 group={group}/>
-        </Paper>
+            <AccountEditModal show={showAccountEditModal} onClose={closeAccountEdit} account={accountToEdit}
+                              group={group}/>
+        </div>
     );
 }

@@ -5,6 +5,7 @@ export class SFTWebsocket {
     constructor(url) {
         this.url = url;
         this.handlers = {};
+        this.notificationHandlers = {}
         this.ws = new WebSocket(this.url);
         this.ws.onopen = this.onopen;
         this.ws.onclose = this.onclose;
@@ -33,33 +34,39 @@ export class SFTWebsocket {
     }
     onmessage = (evt) => {
         const msg = JSON.parse(evt.data)
-        console.log("WS Received message: ", msg);
 
         // TODO: message format validation
-        if (this.handlers.hasOwnProperty(msg.id)) {
-            const { resolve, reject } = this.handlers[msg.id];
-            if (msg.type === 'call-result') {
-                // convert the colums - data response to a JSON object
-                let response = []
-                for (const row of msg.data) {
-                    let obj = {}
-                    for (let i = 0; i < msg.columns.length; i++) {
-                        obj[msg.columns[i]] = row[i];
-                    }
-                    response.push(obj);
+        if (msg.type === "call-result" && this.handlers.hasOwnProperty(msg.id)) {
+            console.log("WS Received call result: ", msg);
+            const {resolve} = this.handlers[msg.id];
+            // convert the colums - data response to a JSON object
+            let response = []
+            for (const row of msg.data) {
+                let obj = {}
+                for (let i = 0; i < msg.columns.length; i++) {
+                    obj[msg.columns[i]] = row[i];
                 }
-                resolve(response);
-            } else if (msg.type === 'call-error') {
-                console.log("received error: ", msg.error);
-                reject(msg.error);
+                response.push(obj);
             }
-            delete this.handlers[msg.id]
+            resolve(response);
+            delete this.handlers[msg.id];
+        } else if (msg.type === "call-error" && this.handlers.hasOwnProperty(msg.id)) {
+            const {reject} = this.handlers[msg.id];
+            console.log("received error: ", msg.error);
+            reject(msg.error);
+            delete this.handlers[msg.id];
+        } else if (msg.type === "notification") {
+            console.log("received notification", msg);
+            if (this.notificationHandlers.hasOwnProperty(msg.event)) {
+                this.notificationHandlers[msg.event](msg.args);
+            }
         }
     }
     send = (msg) => {
         if (this.ws.readyState !== 1) {
             this.msgQueue.push(msg);
         } else {
+            console.log("WS Sent message with args: ", msg)
             this.ws.send(JSON.stringify(msg));
         }
     }
@@ -71,12 +78,30 @@ export class SFTWebsocket {
             args: args,
             id: this.nextId
         };
-        const promise = new Promise((resolve, reject) => {this.handlers[msg.id] = {resolve: resolve, reject: reject}});
+        const promise = new Promise((resolve, reject) => {
+            this.handlers[msg.id] = {resolve: resolve, reject: reject}
+        });
         this.send(msg);
-        console.log("WS Sent message with args: ", msg)
         this.nextId++;
 
         return promise;
+    }
+    subscribe = (token, type, func, args) => {
+        this.notificationHandlers[type] = func;
+        const callArgs = {
+            token: token,
+            subscription_type: type,
+            ...args
+        }
+        return this.call("subscribe", callArgs);
+    }
+    unsubscribe = (type, args) => {
+        delete this.notificationHandlers[type];
+        const callArgs = {
+            subscription_type: type,
+            ...args
+        }
+        return this.call("unsubscribe", callArgs);
     }
 }
 

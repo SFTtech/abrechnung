@@ -1,30 +1,25 @@
-import React from "react";
-import {Link as RouterLink, useRouteMatch} from "react-router-dom";
+import React, {useState} from "react";
+import {Link as RouterLink} from "react-router-dom";
 import {useRecoilValue} from "recoil";
 import {groupTransactions} from "../../recoil/transactions";
 import List from "@material-ui/core/List";
 import IconButton from "@material-ui/core/IconButton";
-import Paper from "@material-ui/core/Paper";
 import Add from "@material-ui/icons/Add";
 import ListItemLink from "../style/ListItemLink";
 import ListItemText from "@material-ui/core/ListItemText";
+import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import Grid from "@material-ui/core/Grid";
-import {makeStyles} from "@material-ui/core";
+import Chip from "@material-ui/core/Chip";
+import TransactionCreateModal from "../groups/TransactionCreateModal";
 
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-    },
-}));
 
 export default function TransactionLog({group}) {
-    const classes = useStyles();
-    const {url} = useRouteMatch();
+    const [showCreateDialog, setShowCreateDialog] = useState(false);
     const transactions = useRecoilValue(groupTransactions(group.group_id));
     // TODO
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <div>
             <List>
                 {transactions.length === 0 ? (
                     <div className="list-group-item" key={0}>No Transactions</div>
@@ -34,15 +29,20 @@ export default function TransactionLog({group}) {
                                       to={`/groups/${group.group_id}/transactions/${transaction.transaction_id}`}>
                             <ListItemText primary={transaction.description}
                                           secondary={`${transaction.value} ${transaction.currency_symbol} `}/>
+                            <ListItemSecondaryAction>
+                                <Chip color="primary" variant="outlined" label={transaction.type}/>
+                            </ListItemSecondaryAction>
                         </ListItemLink>
                     ))
                 )}
             </List>
             <Grid container justify="center">
-                <IconButton color="primary" component={RouterLink} to={`${url}/new`}>
+                <IconButton color="primary" onClick={() => setShowCreateDialog(true)}>
                     <Add/>
                 </IconButton>
             </Grid>
-        </Paper>
+
+            <TransactionCreateModal group={group} show={showCreateDialog} onClose={() => setShowCreateDialog(false)}/>
+        </div>
     );
 }

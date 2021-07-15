@@ -1,6 +1,6 @@
 import React, {useState} from "react";
-import {useRecoilValue, useResetRecoilState} from "recoil";
-import {deleteSession, renameSession, sessionToken, userSessions} from "../../recoil/auth";
+import {useRecoilValue} from "recoil";
+import {deleteSession, renameSession, userSessions} from "../../recoil/auth";
 import Typography from "@material-ui/core/Typography";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
@@ -29,11 +29,9 @@ const useStyles = makeStyles((theme) => ({
 export default function SessionList() {
     const classes = useStyles();
     // TODO: fix editing functions
-    let [editedSessions, setEditedSessions] = useState({});
-    let [sessionToDelete, setSessionToDelete] = useState({show: false, toDelete: null});
+    const [editedSessions, setEditedSessions] = useState({});
+    const [sessionToDelete, setSessionToDelete] = useState({show: false, toDelete: null});
     const sessions = useRecoilValue(userSessions);
-    const authtoken = useRecoilValue(sessionToken);
-    const reloadSessions = useResetRecoilState(userSessions);
 
     const editSession = (id) => {
         if (!editedSessions.hasOwnProperty(id)) {
@@ -57,11 +55,9 @@ export default function SessionList() {
     const performRename = (id) => {
         if (editedSessions.hasOwnProperty(id)) {
             renameSession({
-                authtoken: authtoken,
                 sessionID: id,
                 newName: editedSessions[id],
             }).then(result => {
-                reloadSessions();
             })
             stopEditSession(id);
         }
@@ -73,9 +69,8 @@ export default function SessionList() {
 
     const confirmDeleteSession = () => {
         if (sessionToDelete.toDelete !== null) {
-            deleteSession({authtoken: authtoken, sessionID: sessionToDelete.toDelete})
+            deleteSession({sessionID: sessionToDelete.toDelete})
                 .then(result => {
-                    reloadSessions();
                 });
             setSessionToDelete({show: false, toDelete: null});
         }

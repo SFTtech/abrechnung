@@ -1,14 +1,13 @@
 import React from "react";
 import {ws} from "../../websocket";
-import {sessionToken} from "../../recoil/auth";
 import {Field, Form, Formik} from "formik";
-import {useRecoilValue} from "recoil";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
 import {TextField} from "formik-material-ui";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import {makeStyles} from "@material-ui/core";
+import {fetchToken} from "../../recoil/auth";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -18,7 +17,6 @@ const useStyles = makeStyles((theme) => ({
 
 export default function ChangePassword() {
     const classes = useStyles();
-    const token = useRecoilValue(sessionToken);
 
     const validate = (values) => {
         let errors = {};
@@ -30,7 +28,7 @@ export default function ChangePassword() {
 
     const handleSubmit = (values, {setSubmitting}) => {
         ws.call("change_password", {
-            authtoken: token,
+            authtoken: fetchToken(),
             password: values.password,
             new_password: values.newPassword,
         })

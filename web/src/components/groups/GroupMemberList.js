@@ -2,7 +2,7 @@ import React, {useState} from "react";
 
 import {useRecoilValue} from "recoil";
 import {groupMembers, setGroupMemberPrivileges} from "../../recoil/groups";
-import {sessionToken, userData} from "../../recoil/auth";
+import {userData} from "../../recoil/auth";
 import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
@@ -17,38 +17,29 @@ import ListItem from "@material-ui/core/ListItem";
 import Chip from "@material-ui/core/Chip";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import ListItemText from "@material-ui/core/ListItemText";
-import Paper from "@material-ui/core/Paper";
 import IconButton from "@material-ui/core/IconButton";
 import Delete from "@material-ui/icons/Delete";
 import Edit from "@material-ui/icons/Edit";
-import {FormControlLabel, makeStyles} from "@material-ui/core";
+import {FormControlLabel} from "@material-ui/core";
 import {toast} from "react-toastify";
 
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-    },
-}));
-
 export default function GroupMemberList({group}) {
-    const classes = useStyles();
     const [showEditMemberDialog, setShowEditMemberDialog] = useState(false);
     const [showRemoveMemberDialog, setShowRemoveMemberDialog] = useState(false);
     const [memberToRemove, setMemberToRemove] = useState(null);
     const [memberToEdit, setMemberToEdit] = useState(null);
     const members = useRecoilValue(groupMembers(group.group_id));
-    const token = useRecoilValue(sessionToken);
     const currentUser = useRecoilValue(userData);
 
     const handleEditMemberSubmit = (values, {setSubmitting}) => {
         setGroupMemberPrivileges({
-            sessionToken: token,
             groupID: group.group_id,
             userID: values.userID,
             canWrite: values.canWrite,
             isOwner: values.isOwner
         })
             .then(result => {
+                setSubmitting(false);
                 setShowEditMemberDialog(false);
                 toast.success("Successfully updated group member permissions", {
                     position: "top-right",
@@ -56,7 +47,7 @@ export default function GroupMemberList({group}) {
                 });
             })
             .catch(err => {
-
+                setSubmitting(false);
             })
     }
 
@@ -86,7 +77,7 @@ export default function GroupMemberList({group}) {
     };
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <div>
             <List>
                 {members.length === 0 ? (
                     <ListItem><ListItemText primary="No Members"/></ListItem>
@@ -203,6 +194,6 @@ export default function GroupMemberList({group}) {
                     </Button>
                 </DialogActions>
             </Dialog>
-        </Paper>
+        </div>
     );
 }

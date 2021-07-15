@@ -44,7 +44,6 @@ def main():
     from . import psql
     add_subcommand('psql', psql.PSQL)
 
-
     args = vars(cli.parse_args())
 
     # set up log level

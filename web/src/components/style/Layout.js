@@ -1,9 +1,7 @@
 import clsx from "clsx";
 import React, {useState} from "react";
-import {Container, makeStyles, Menu, MenuItem, useTheme} from "@material-ui/core";
+import {Container, makeStyles, Menu, MenuItem, SwipeableDrawer, useTheme} from "@material-ui/core";
 import {Link as RouterLink} from "react-router-dom";
-import Drawer from '@material-ui/core/Drawer';
-import CssBaseline from '@material-ui/core/CssBaseline';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
 import List from '@material-ui/core/List';
@@ -73,21 +71,21 @@ const useStyles = makeStyles((theme) => ({
             easing: theme.transitions.easing.sharp,
             duration: theme.transitions.duration.leavingScreen,
         }),
-        marginLeft: -drawerWidth,
+        marginLeft: 0,
     },
     contentShift: {
         transition: theme.transitions.create('margin', {
             easing: theme.transitions.easing.easeOut,
             duration: theme.transitions.duration.enteringScreen,
         }),
-        marginLeft: 0,
+        marginLeft: drawerWidth,
     },
 }));
 
 export default function Layout({group = null, children}) {
     const classes = useStyles();
     const theme = useTheme();
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const authenticated = useRecoilValue(isAuthenticated);
     const [anchorEl, setAnchorEl] = useState(null);
     const profileMenuOpen = Boolean(anchorEl);
@@ -110,7 +108,6 @@ export default function Layout({group = null, children}) {
 
     return (
         <div>
-            <CssBaseline/>
             <AppBar
                 position="fixed"
                 className={clsx(classes.appBar, {[classes.appBarShift]: sidebarOpen})}>
@@ -124,9 +121,15 @@ export default function Layout({group = null, children}) {
                     >
                         <MenuIcon/>
                     </IconButton>
-                    <Typography variant="h6" noWrap className={classes.title}>
-                        Persistent drawer
-                    </Typography>
+                    {group !== null ? (
+                        <Button color="inherit" noWrap className={classes.title} component={RouterLink} to={`/groups/${group.group_id}`}>
+                            {group.name}
+                        </Button>
+                    ) : (
+                        <Typography variant="h6" noWrap className={classes.title}>
+                            Abrechnung
+                        </Typography>
+                    )}
                     {authenticated ? (
                         <div>
                             <IconButton
@@ -170,13 +173,13 @@ export default function Layout({group = null, children}) {
             </AppBar>
 
             {authenticated ? (
-                <Drawer
+                <SwipeableDrawer
                     className={classes.drawer}
-                    variant="persistent"
                     disableBackdropTransition={!iOS}
                     disableDiscovery={iOS}
-                    anchor="left"
                     open={sidebarOpen}
+                    onClose={handleSidebarClose}
+                    onOpen={handleSidebarOpen}
                     classes={{
                         paper: classes.drawerPaper,
                     }}
@@ -186,46 +189,17 @@ export default function Layout({group = null, children}) {
                             {theme.direction === 'ltr' ? <ChevronLeftIcon/> : <ChevronRightIcon/>}
                         </IconButton>
                     </div>
-                    {group !== null ? (
-                        <>
-                            <Divider/>
-                            <List>
-                                <ListItemLink to={`/groups/${group.group_id}/transactions`}>
-                                    <ListItemText primary="Transactions"/>
-                                </ListItemLink>
-                                <ListItemLink to={`/groups/${group.group_id}/accounts`}>
-                                    <ListItemText primary="Accounts"/>
-                                </ListItemLink>
-                                <ListItemLink to={`/groups/${group.group_id}/group-detail`}>
-                                    <ListItemText primary="Group Detail"/>
-                                </ListItemLink>
-                                <ListItemLink to={`/groups/${group.group_id}/members`}>
-                                    <ListItemText>Members</ListItemText>
-                                </ListItemLink>
-                                <ListItemLink to={`/groups/${group.group_id}/log`}>
-                                    <ListItemText primary="Log"/>
-                                </ListItemLink>
-                                <ListItemLink to={`/groups/${group.group_id}/invite-tokens`}>
-                                    <ListItemText primary="Invite Links"/>
-                                </ListItemLink>
-                            </List>
-                        </>
-                    ) : null}
                     <Divider/>
                     <List>
                         <ListItemLink to="/">
                             <ListItemText primary="Groups"/>
                         </ListItemLink>
                     </List>
-                </Drawer>
+                </SwipeableDrawer>
             ) : null}
-            <main
-                className={clsx(classes.content, {
-                    [classes.contentShift]: authenticated && sidebarOpen,
-                })}
-            >
+            <main className={classes.content}>
                 <div className={classes.drawerHeader}/>
-                <Container maxWidth="sm">
+                <Container maxWidth="md">
                     {children}
                 </Container>
             </main>

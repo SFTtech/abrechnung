@@ -755,3 +755,140 @@ begin
 end;
 $$ language plpgsql;
 call allow_function('group_leave', is_procedure := true);
+
+-- notifications for changes in sessions
+create or replace function group_updated()
+    returns trigger
+as $$
+<<locals>>
+    declare
+    group_id grp.id%TYPE;
+begin
+    -- TODO: figure out how to notify users of a group deletion as the group membership entries are deleted cascadingly
+    if NEW is NULL then
+        locals.group_id := OLD.id;
+    else
+        locals.group_id := NEW.id;
+    end if;
+
+    call notify_group(
+            'group_detail',
+            locals.group_id,
+            locals.group_id::bigint,
+            json_build_object()
+        );
+    return NULL;
+end;
+$$ language plpgsql;
+
+drop trigger if exists group_update_trig on grp;
+create trigger group_update_trig after update or delete
+    on grp
+    for each row
+execute function group_updated();
+
+-- notifications for changes in group members
+create or replace function group_membership_updated()
+    returns trigger
+as $$
+<<locals>>
+    declare
+    user_id subscription.user_id%TYPE;
+    group_id grp.id%TYPE;
+begin
+    if NEW is NULL then
+        -- removed group membership
+        locals.user_id := OLD.usr;
+        locals.group_id := OLD.grp;
+    else
+        -- updated membership or newly joined member
+        locals.user_id := NEW.usr;
+        locals.group_id := NEW.grp;
+    end if;
+
+    call notify_subscribers(
+        'group',
+        locals.user_id,
+        locals.user_id::bigint,
+        json_build_object('element_id', locals.user_id, 'group_id', locals.group_id)
+    );
+
+    call notify_group(
+        'group_membership',
+        locals.group_id,
+        locals.group_id::bigint,
+        json_build_object('element_id', locals.group_id)
+    );
+    return NULL;
+end;
+$$ language plpgsql;
+
+drop trigger if exists group_membership_update_trig on group_membership;
+create trigger group_membership_update_trig after insert or update or delete
+    on group_membership
+    for each row
+execute function group_membership_updated();
+
+-- notifications for changes in group invites
+create or replace function group_invite_updated()
+    returns trigger
+as $$
+<<locals>>
+    declare
+    group_id grp.id%TYPE;
+begin
+    if NEW is NULL then
+        -- removed group membership
+        locals.group_id := OLD.grp;
+    else
+        -- updated membership or newly joined member
+        locals.group_id := NEW.grp;
+    end if;
+
+    call notify_group(
+            'group_invite',
+            locals.group_id,
+            locals.group_id::bigint,
+            json_build_object('element_id', locals.group_id)
+        );
+    return NULL;
+end;
+$$ language plpgsql;
+
+drop trigger if exists group_invite_update_trig on group_invite;
+create trigger group_invite_update_trig after insert or update or delete
+    on group_invite
+    for each row
+execute function group_invite_updated();
+
+-- notifications for changes in group log
+create or replace function group_log_updated()
+    returns trigger
+as $$
+<<locals>>
+    declare
+    group_id grp.id%TYPE;
+begin
+    if NEW is NULL then
+        -- removed group membership
+        locals.group_id := OLD.grp;
+    else
+        -- updated membership or newly joined member
+        locals.group_id := NEW.grp;
+    end if;
+
+    call notify_group(
+            'group_log',
+            locals.group_id,
+            locals.group_id::bigint,
+            json_build_object('element_id', locals.group_id)
+        );
+    return NULL;
+end;
+$$ language plpgsql;
+
+drop trigger if exists group_log_update_trig on group_log;
+create trigger group_log_update_trig after insert or update or delete
+    on group_log
+    for each row
+execute function group_log_updated();

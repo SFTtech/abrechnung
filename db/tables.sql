@@ -138,7 +138,27 @@ create type subscription_type as enum (
     -- when sessions of a logged-in user are watched to see changes to logins
     -- the current sessions are then fetched with list_sessions
     -- element_id: the user whose sessions we wanna watch
-    'session'
+    'session',
+    -- element_id: the user whose groups we wanna watch
+    'group',
+    -- element_id: the group whose properties we wanna watch
+    'group_detail',
+    -- element_id: the group whose accounts we want to watch
+    'account',
+    -- element_id: the group whose members we want to watch
+    'group_membership',
+    -- element_id: the group whose invites we want to watch
+    'group_invite',
+    -- element_id: the group whose log we want to watch
+    'group_log',
+    -- element_id: the group whose revisions we want to watch
+    'revision',
+    -- element_id: the group whose transactions we want to watch
+    'transaction',
+    -- element_id: the transaction whose creditor shares we want to watch
+    'creditor_share',
+    -- element_id: the transaction whose debitor shares we want to watch
+    'debitor_share'
 );
 
 
@@ -487,21 +507,23 @@ create table if not exists creditor_share (
     id serial primary key,
 
     -- the transaction whose value is credited
-    transaction integer not null references transaction(id) on delete restrict,
-    -- the account that is credited
-    account integer not null references account(id) on delete restrict,
-    constraint creditor_share_transaction_account_unique unique (transaction, account)
+    transaction integer not null references transaction(id) on delete restrict
 );
 
 create table if not exists creditor_share_history (
     id integer references creditor_share(id) on delete restrict,
     revision bigint references revision(id) on delete cascade,
     primary key(id, revision),
+    -- the account that is credited
+    account integer not null references account(id) on delete restrict,
     -- valid can be set to false at any time, but the transaction may
     -- become impossible to evaluate (making commiting impossible).
     valid bool not null default true,
     shares double precision not null default 1.0,
     description text not null default ''
+
+    -- TODO: more sophisticated constraint to actually test the latest valid history entries
+    -- constraint creditor_share_transaction_account_unique unique (transaction, account)
 );
 
 -- a share that a transaction's debitor has in the transaction value
@@ -512,22 +534,24 @@ create table if not exists debitor_share (
     id serial primary key,
 
     -- the transaction whose value is debited
-    transaction integer not null references transaction(id) on delete restrict,
-    -- the account that is debited
-    account integer not null references account(id) on delete restrict,
-    constraint debitor_share_transaction_account_unique unique (transaction, account)
+    transaction integer not null references transaction(id) on delete restrict
 );
 
 create table if not exists debitor_share_history (
     id integer references debitor_share(id) on delete restrict,
     revision bigint references revision(id) on delete cascade,
     primary key(id, revision),
+    -- the account that is debited
+    account integer not null references account(id) on delete restrict,
     -- valid can be set to false if the debited account is not referenced by
     -- any item_consumption, but the transaction may
     -- become impossible to evaluate (making commiting impossible).
     valid bool not null default true,
     shares double precision not null default 1.0,
     description text not null default ''
+
+    -- TODO: more sophisticated constraint to actually test the latest valid history entries
+    --constraint debitor_share_transaction_account_unique unique (transaction, account)
 );
 
 -- an item in a 'purchase'-type transaction
@@ -563,16 +587,16 @@ create table if not exists item_usage (
     id serial primary key,
 
     -- the transaction whose value is debited
-    item integer not null references purchase_item(id) on delete restrict,
-    -- the account that is debited
-    account integer not null references debitor_share(id) on delete restrict,
-    constraint item_usage_transaction_account_unique unique (item, account)
+    item integer not null references purchase_item(id) on delete restrict
 );
 
 create table if not exists item_usage_history (
     id integer references item_usage(id) on delete restrict,
     revision bigint references revision(id) on delete cascade,
     primary key(id, revision),
+    -- the account that is debited
+    account integer not null references account(id) on delete restrict,
+--     constraint item_usage_transaction_account_unique unique (item, account)
     -- valid can be set to false at any time.
     valid bool not null default true,
 

@@ -1,24 +1,26 @@
-import React from "react";
-import {Field, Form, Formik} from "formik";
-import {createAccount} from "../../recoil/groups";
-import {toast} from "react-toastify";
-import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
-import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogActions from "@material-ui/core/DialogActions";
-import LinearProgress from "@material-ui/core/LinearProgress";
+import DialogContent from "@material-ui/core/DialogContent";
+import {Field, Form, Formik} from "formik";
 import {TextField} from "formik-material-ui";
+import LinearProgress from "@material-ui/core/LinearProgress";
+import DialogActions from "@material-ui/core/DialogActions";
+import Button from "@material-ui/core/Button";
+import React from "react";
+import {toast} from "react-toastify";
+import {editAccount} from "../../recoil/groups";
 
-export default function AccountCreateModal({show, onClose, group}) {
+export default function AccountEditModal({group, show, onClose, account}) {
+
     const handleSubmit = (values, {setSubmitting}) => {
-        createAccount({
+        editAccount({
             groupID: group.group_id,
+            accountID: values.accountID,
             name: values.name,
             description: values.description
         })
             .then(result => {
-                toast.success(`Created account ${values.name}`, {
+                toast.success(`Updated account ${values.name}`, {
                     position: "top-right",
                     autoClose: 5000,
                 });
@@ -32,12 +34,18 @@ export default function AccountCreateModal({show, onClose, group}) {
             setSubmitting(false);
         })
     };
-    return (
-        <Dialog open={show} onClose={onClose}>
-            <DialogTitle>Create Account</DialogTitle>
 
+    return (
+
+        <Dialog open={show} onClose={onClose}>
+            <DialogTitle>Edit Account</DialogTitle>
             <DialogContent>
-                <Formik initialValues={{name: "", description: ""}} onSubmit={handleSubmit}>
+                <Formik initialValues={{
+                    accountID: account?.account_id,
+                    name: account?.name,
+                    description: account?.description
+                }} onSubmit={handleSubmit}
+                        enableReinitialize={true}>
                     {({handleSubmit, isSubmitting}) => (
                         <Form>
                             <Field
@@ -60,19 +68,16 @@ export default function AccountCreateModal({show, onClose, group}) {
 
                             {isSubmitting && <LinearProgress/>}
                             <DialogActions>
-                                <Button color="secondary" onClick={onClose}>
-                                    Cancel
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    color="primary"
-                                    disabled={isSubmitting}
-                                    onClick={handleSubmit}
-                                >
+                                <Button color="primary" type="submit" onClick={handleSubmit}>
                                     Save
                                 </Button>
+                                <Button color="secondary" onClick={onClose}>
+                                    Close
+                                </Button>
                             </DialogActions>
-                        </Form>)}
+
+                        </Form>
+                    )}
                 </Formik>
             </DialogContent>
         </Dialog>

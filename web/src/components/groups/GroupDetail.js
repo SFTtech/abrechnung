@@ -9,8 +9,6 @@ import Paper from "@material-ui/core/Paper";
 import {makeStyles} from "@material-ui/core";
 import {updateGroupMetadata} from "../../recoil/groups";
 import {toast} from "react-toastify";
-import {useRecoilValue} from "recoil";
-import {sessionToken} from "../../recoil/auth";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -20,12 +18,10 @@ const useStyles = makeStyles((theme) => ({
 
 export default function GroupDetail({group}) {
     const classes = useStyles();
-    const token = useRecoilValue(sessionToken);
 
     // TODO: actually make the editing part work
     const updateGroup = (name = null, description = null, currencySymbol = null, terms = null) => {
         updateGroupMetadata({
-            sessionToken: token,
             groupID: group.group_id,
             name: name,
             description: description,
@@ -41,7 +37,7 @@ export default function GroupDetail({group}) {
     }
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <>
             {group.is_owner ? (
                 <Alert severity="info">You are an owner of this group</Alert>
             ) : !group.can_write ? (
@@ -88,6 +84,6 @@ export default function GroupDetail({group}) {
                                   secondary={group.latest_commit === null ? "never" : group.latest_commit}/>
                 </ListItem>
             </List>
-        </Paper>
+        </>
     );
 }

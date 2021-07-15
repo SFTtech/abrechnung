@@ -1,18 +1,37 @@
 import {atomFamily, selectorFamily} from "recoil";
-import {ws} from "../../websocket";
-import {sessionToken} from "../auth";
+import {ws} from "../websocket";
+import {fetchToken} from "./auth";
+
+const fetchRevisions = async groupID => {
+    return ws.call("revision_list", {
+        authtoken: fetchToken(),
+        group_id: groupID,
+    });
+}
 
 export const revisions = atomFamily({
     key: "revisions",
     default: selectorFamily({
         key: "revisions/default",
         get: groupID => async ({get}) => {
-            return ws.call("revision_list", {
-                authtoken: get(sessionToken),
-                group_id: groupID,
-            });
+            return await fetchRevisions(groupID);
         }
-    })
+    }),
+    effects_UNSTABLE: groupID => [
+        ({setSelf, trigger}) => {
+            ws.subscribe(fetchToken(), "revision", ({element_id}) => {
+                if (element_id === groupID) {
+                    console.log("reloading revisions")
+                    fetchRevisions(groupID).then(result => setSelf(result));
+                }
+            }, {element_id: groupID})
+            // TODO: handle registration errors
+
+            return () => {
+                ws.unsubscribe("revision", {element_id: groupID});
+            };
+        }
+    ]
 })
 
 export const revision = selectorFamily({

@@ -1,21 +1,37 @@
 import React, {useEffect, useState} from "react";
-import {Link, useHistory, useRouteMatch} from "react-router-dom";
-import "react-datetime/css/react-datetime.css";
-import Spinner from "react-bootstrap/Spinner";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import {faCheck, faTimes} from "@fortawesome/free-solid-svg-icons";
+import {Link as RouterLink, useHistory, useRouteMatch} from "react-router-dom";
 
 import {ws} from "../../websocket";
 import {useRecoilValue} from "recoil";
-import {isAuthenticated, sessionToken} from "../../recoil/auth";
+import {fetchToken, isAuthenticated} from "../../recoil/auth";
+import Loading from "../../components/style/Loading";
+import {makeStyles} from "@material-ui/core";
+import Typography from "@material-ui/core/Typography";
+import Alert from "@material-ui/lab/Alert";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
+import ListItemText from "@material-ui/core/ListItemText";
+import Paper from "@material-ui/core/Paper";
+import ClearIcon from "@material-ui/icons/Clear";
+import CheckIcon from "@material-ui/icons/Check";
+import Grid from "@material-ui/core/Grid";
+import Button from "@material-ui/core/Button";
+import Link from "@material-ui/core/Link";
+
+const useStyles = makeStyles((theme) => ({
+    paper: {
+        padding: theme.spacing(2),
+    },
+}));
 
 export default function GroupInvite() {
     const [group, setGroup] = useState(null);
     const [status, setStatus] = useState("loading");
     const [error, setError] = useState(null);
+    const classes = useStyles();
     const history = useHistory();
     const match = useRouteMatch();
-    const token = useRecoilValue(sessionToken);
     const loggedIn = useRecoilValue(isAuthenticated);
 
     useEffect(() => {
@@ -24,26 +40,26 @@ export default function GroupInvite() {
             invite_token: match.params.inviteToken,
         })
             .then((value) => {
-                setStatus("success");
-                setError(null);
                 setGroup(value[0]);
+                setError(null);
+                setStatus("success");
             })
             .catch((error) => {
-                setStatus("failed");
                 setError(error)
+                setStatus("failed");
             });
-    }, [status, error, setGroup, setStatus, setError, history, match]);
+    }, [setGroup, setStatus, setError, history, match]);
 
     const join = () => {
         console.log("joining group");
         ws.call("group_join", {
-            authtoken: token,
+            authtoken: fetchToken(),
             invite_token: match.params.inviteToken,
         })
             .then((value) => {
                 setStatus("success");
                 setError(null);
-                history.push("/groups");
+                history.push("/");
             })
             .catch((error) => {
                 setStatus("failed");
@@ -51,67 +67,56 @@ export default function GroupInvite() {
             });
     };
 
+    if (status === "loading") {
+        return (
+            <Loading/>
+        )
+    }
 
     return (
-        <div className="row justify-content-center">
-            <div className="col-md-8 col-xs-12">
-                {status === "loading" ? (
-                    <div className="d-flex justify-content-center">
-                        <Spinner animation="border" role="status">
-                            <span className="sr-only">Loading...</span>
-                        </Spinner>
-                    </div>
+        <Paper elevation={1} className={classes.paper}>
+            {error !== null ? <Alert severity="error">{error}</Alert> : ""}
+            <Typography variant="h5">
+                <h4>You have been invited to group {group.group_name}</h4>
+            </Typography>
+            <List>
+                <ListItem>
+                    <ListItemText primary="Name" secondary={group.group_name}/>
+                </ListItem>
+                <ListItem>
+                    <ListItemText primary="Description" secondary={group.group_description}/>
+                </ListItem>
+                <ListItem>
+                    <ListItemText primary="Created At" secondary={group.group_created}/>
+                </ListItem>
+                <ListItem>
+                    <ListItemText primary="Invitation Description" secondary={group.invite_description}/>
+                </ListItem>
+                <ListItem>
+                    <ListItemText primary="Invitation Valid Until" secondary={group.invite_valid_until}/>
+                </ListItem>
+                <ListItem>
+                    <ListItemText primary="Invitation Single Use"/>
+                    <ListItemSecondaryAction>
+                        {group.invite_single_use ? (
+                            <CheckIcon/>
+                        ) : (
+                            <ClearIcon/>
+                        )}
+                    </ListItemSecondaryAction>
+                </ListItem>
+            </List>
+            <Grid container justify="center">
+                {loggedIn ? (
+                    <Button color="primary"
+                            onClick={join}>
+                        Join
+                    </Button>
                 ) : (
-                    <div className="card">
-                        <div className="card-body">
-                            {error !== null ? <div className="alert alert-danger">{error}</div> : ""}
-                            <h4>You have been invited to group {group.group_name}</h4>
-                            <hr/>
-                            <div className="list-group list-group-flush">
-                                <div className="list-group-item d-flex">
-                                    <span className="font-weight-bold w-25">Name</span>
-                                    <span>{group.group_name}</span>
-                                </div>
-                                <div className="list-group-item d-flex">
-                                    <span className="font-weight-bold w-25">Description</span>
-                                    <span>{group.group_description}</span>
-                                </div>
-                                <div className="list-group-item d-flex">
-                                    <span className="font-weight-bold w-25">Created At</span>
-                                    <span>{group.group_created}</span>
-                                </div>
-                                <div className="list-group-item d-flex">
-                                    <span className="font-weight-bold w-25">Invitation Description</span>
-                                    <span>{group.invite_description}</span>
-                                </div>
-                                <div className="list-group-item d-flex">
-                                    <span className="font-weight-bold w-25">Invitation Valid Until</span>
-                                    <span>{group.invite_valid_until}</span>
-                                </div>
-                                <div className="list-group-item d-flex">
-                                    <span className="font-weight-bold w-25">Invitation Single Use</span>
-                                    <span>
-                                            group.invite_single_use ? (
-                                                <FontAwesomeIcon icon={faCheck}/>
-                                            ) : (
-                                                <FontAwesomeIcon icon={faTimes}/>
-                                            )}
-                                        </span>
-                                </div>
-                            </div>
-                            <hr/>
-                            <div className="row justify-content-center">
-                                {loggedIn ? (
-                                    <button className="btn btn-success" onClick={join}>Join</button>
-                                ) : (
-                                    <Link className="btn btn-success" to={"/login?next=" + match.url}>Join</Link>
-                                )}
-                            </div>
-                        </div>
-                    </div>
+                    <Link component={<RouterLink/>} to={"/login?next=" + match.url}>Join</Link>
                 )}
-            </div>
-        </div>
+            </Grid>
+        </Paper>
     );
 }
 

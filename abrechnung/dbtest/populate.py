@@ -47,11 +47,15 @@ async def populate(test: 'DBTest'):
     # create some accounts
     account1, account1_revision = await test.fetchrow(
         'select * from account_create(authtoken := $1, group_id := $2, name := $3, description := $4, priority := $5)',
-        auth1, grp1, 'foo1', 'Main account of foo1', 10
+        auth1, grp1, 'foo1', 'Main account of foo1', 0
     )
     account2, account2_revision = await test.fetchrow(
         'select * from account_create(authtoken := $1, group_id := $2, name := $3, description := $4, priority := $5)',
-        auth2, grp1, 'bar1', 'Main account of bar2', 10
+        auth2, grp1, 'bar1', 'Main account of bar2', 0
+    )
+    account3, account3_revision = await test.fetchrow(
+        'select * from account_create(authtoken := $1, group_id := $2, name := $3, description := $4, priority := $5)',
+        auth2, grp1, 'some other account', 'some random shit account', 0
     )
 
     # create a transfer
@@ -60,10 +64,35 @@ async def populate(test: 'DBTest'):
         auth1, grp1, 'transfer', 'Überweisung foo1 an bar1', '€', 1.0, 40.00
     )
 
+    share1 = await test.fetchrow(
+        'select * from transaction_creditor_share_create(authtoken := $1, transaction_id := $2, account_id := $3, shares := $4, description := $5, revision_id := $6)',
+        auth1, transfer1, account1, 1.0, 'Foo share why ever we need a description here wtf', transfer1_revision
+    )
+
+    share2 = await test.fetchrow(
+        'select * from transaction_debitor_share_create(authtoken := $1, transaction_id := $2, account_id := $3, shares := $4, description := $5, revision_id := $6)',
+        auth1, transfer1, account2, 1.0, 'Foo share why ever we need a description here wtf', transfer1_revision
+    )
+
     # create a purchase
     purchase1, purchase1_revision = await test.fetchrow(
         'select * from transaction_create(authtoken := $1, group_id := $2, type := $3, description := $4, currency_symbol := $5, currency_conversion_rate := $6, value := $7)',
         auth1, grp1, 'purchase', 'Einkauf EDEKA 01.01.1970', '€', 1.0, 35.43
+    )
+
+    share3 = await test.fetchrow(
+        'select * from transaction_creditor_share_create(authtoken := $1, transaction_id := $2, account_id := $3, shares := $4, description := $5, revision_id := $6)',
+        auth1, purchase1, account1, 1.0, 'Foo share why ever we need a description here wtf', purchase1_revision
+    )
+
+    share4 = await test.fetchrow(
+        'select * from transaction_debitor_share_create(authtoken := $1, transaction_id := $2, account_id := $3, shares := $4, description := $5, revision_id := $6)',
+        auth1, purchase1, account2, 1.0, 'Foo share why ever we need a description here wtf', purchase1_revision
+    )
+
+    share5 = await test.fetchrow(
+        'select * from transaction_debitor_share_create(authtoken := $1, transaction_id := $2, account_id := $3, shares := $4, description := $5, revision_id := $6)',
+        auth1, purchase1, account3, 1.0, 'Foo share why ever we need a description here wtf', purchase1_revision
     )
 
     # create a mimo transaction
