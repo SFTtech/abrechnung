@@ -9,9 +9,16 @@ import TextField from "@material-ui/core/TextField";
 import ListItemText from "@material-ui/core/ListItemText";
 import Divider from "@material-ui/core/Divider";
 import Typography from "@material-ui/core/Typography";
-import {FormControlLabel} from "@material-ui/core";
+import { FormControlLabel, makeStyles, Paper } from "@material-ui/core";
+
+const useStyles = makeStyles((theme) => ({
+    paper: {
+        padding: theme.spacing(2),
+    },
+}));
 
 export default function GroupLog({group}) {
+    const classes = useStyles();
     const [message, setMessage] = useState("");
     const [showAllLogs, setShowAllLogs] = useState(false);
     const logEntries = useRecoilValue(groupLog(group.group_id));
@@ -34,7 +41,7 @@ export default function GroupLog({group}) {
         : logEntries.filter((entry) => entry.type === "text-message");
 
     return (
-        <div>
+        <Paper elevation={1} className={classes.paper}>
             <Typography component="h3" variant="h5">
                 Group Log
             </Typography>
@@ -71,6 +78,6 @@ export default function GroupLog({group}) {
                     </ListItem>
                 ))}
             </List>
-        </div>
+        </Paper>
     );
 }

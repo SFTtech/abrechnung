@@ -3,6 +3,7 @@ import {updateTransaction} from "../../recoil/transactions";
 import List from "@material-ui/core/List";
 import TextField from "@material-ui/core/TextField";
 import {toast} from "react-toastify";
+import DisabledTextField from "../style/DisabledTextField";
 
 export default function TransactionDetail({group, transaction, wipRevision}) {
     const editing = wipRevision !== null;
@@ -12,7 +13,7 @@ export default function TransactionDetail({group, transaction, wipRevision}) {
 
     useEffect(() => {
         setDescription(transaction.description);
-        setTransactionValue(transaction.value);
+        setTransactionValue(transaction.value.toFixed(2));
     }, [transaction, setDescription, setTransactionValue])
 
     const save = (params) => {
@@ -56,18 +57,18 @@ export default function TransactionDetail({group, transaction, wipRevision}) {
                 </>
             ) : (
                 <>
-                    <TextField
+                    <DisabledTextField
                         label="Description"
                         margin="normal"
                         fullWidth
                         value={transaction.description}
                         disabled={true}
                     />
-                    <TextField
+                    <DisabledTextField
                         label="Value"
                         margin="normal"
                         fullWidth
-                        value={transaction.value}
+                        value={`${transaction.value.toFixed(2)} ${transaction.currency_symbol}`}
                         disabled={true}
                     />
                 </>

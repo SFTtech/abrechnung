@@ -20,10 +20,20 @@ import ListItemText from "@material-ui/core/ListItemText";
 import IconButton from "@material-ui/core/IconButton";
 import Delete from "@material-ui/icons/Delete";
 import Edit from "@material-ui/icons/Edit";
-import {FormControlLabel} from "@material-ui/core";
+import { FormControlLabel, makeStyles, Paper } from "@material-ui/core";
 import {toast} from "react-toastify";
 
+const useStyles = makeStyles((theme) => ({
+    paper: {
+        padding: theme.spacing(2),
+    },
+    chip: {
+        marginRight: theme.spacing(1),
+    }
+}));
+
 export default function GroupMemberList({group}) {
+    const classes = useStyles();
     const [showEditMemberDialog, setShowEditMemberDialog] = useState(false);
     const [showRemoveMemberDialog, setShowRemoveMemberDialog] = useState(false);
     const [memberToRemove, setMemberToRemove] = useState(null);
@@ -77,7 +87,7 @@ export default function GroupMemberList({group}) {
     };
 
     return (
-        <div>
+        <Paper elevation={1} className={classes.paper}>
             <List>
                 {members.length === 0 ? (
                     <ListItem><ListItemText primary="No Members"/></ListItem>
@@ -89,20 +99,20 @@ export default function GroupMemberList({group}) {
                                 secondary={
                                     <>
                                         {member.is_owner ? (
-                                            <Chip size="small" component="span" color="primary" label="owner"
+                                            <Chip size="small" className={classes.chip} component="span" color="primary" label="owner"
                                                   variant="outlined"/>
                                         ) : member.can_write ? (
-                                            <Chip size="small" component="span" color="primary" label="editor"
+                                            <Chip size="small"  className={classes.chip} component="span" color="primary" label="editor"
                                                   variant="outlined"/>
                                         ) : null}
                                         {member.username === currentUser.username ? (
-                                            <Chip size="small" component="span" color="primary" label="it's you"/>
+                                            <Chip size="small"  className={classes.chip} component="span" color="primary" label="it's you"/>
                                         ) : (
                                             ""
                                         )}
                                         <br/>
                                         <small className="text-muted">
-                                            {member.description}, joined {member.joined}
+                                            {member.description ? `${member.description}, ` : ""}joined {member.joined}
                                         </small>
                                     </>
                                 }
@@ -194,6 +204,6 @@ export default function GroupMemberList({group}) {
                     </Button>
                 </DialogActions>
             </Dialog>
-        </div>
+        </Paper>
     );
 }

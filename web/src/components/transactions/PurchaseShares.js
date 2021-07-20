@@ -65,7 +65,7 @@ export default function PurchaseShares({group, transaction, wipRevision}) {
 
     const debitorValueForAccount = (accountID) => {
         if (!debitorShareValues.hasOwnProperty(accountID) || !debitorShareForAccount(accountID)?.valid) {
-            return 0;
+            return 0.00;
         }
         return (transaction.value / totalDebitorShares * debitorShareValues[accountID]).toFixed(2);
     }
@@ -192,7 +192,7 @@ export default function PurchaseShares({group, transaction, wipRevision}) {
                                         onChange={event => onDebShareValueChange(account.account_id, event.target.value)}
                                     />
                                     <Typography variant="body1" style={{width: 60}} className={classes.shareValue}>
-                                        {debitorValueForAccount(account.account_id)}{transaction.currency_symbol}
+                                        {debitorValueForAccount(account.account_id)} {transaction.currency_symbol}
                                     </Typography>
                                 </div>
                             </Grid>
@@ -207,7 +207,7 @@ export default function PurchaseShares({group, transaction, wipRevision}) {
                                 </Typography>
                                 <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
                                     <Typography variant="body1" style={{width: 60}} className={classes.shareValue}>
-                                        {debitorValueForAccount(account.account_id)}{transaction.currency_symbol}
+                                        {debitorValueForAccount(account.account_id)} {transaction.currency_symbol}
                                     </Typography>
                                 </div>
                             </Grid>

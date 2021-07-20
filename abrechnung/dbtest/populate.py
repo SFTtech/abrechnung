@@ -74,6 +74,11 @@ async def populate(test: 'DBTest'):
         auth1, transfer1, account2, 1.0, 'Foo share why ever we need a description here wtf', transfer1_revision
     )
 
+    await test.fetch(
+        'call commit_revision(authtoken := $1, revision_id := $2)',
+        auth1, transfer1_revision
+    )
+
     # create a purchase
     purchase1, purchase1_revision = await test.fetchrow(
         'select * from transaction_create(authtoken := $1, group_id := $2, type := $3, description := $4, currency_symbol := $5, currency_conversion_rate := $6, value := $7)',
@@ -93,6 +98,11 @@ async def populate(test: 'DBTest'):
     share5 = await test.fetchrow(
         'select * from transaction_debitor_share_create(authtoken := $1, transaction_id := $2, account_id := $3, shares := $4, description := $5, revision_id := $6)',
         auth1, purchase1, account3, 1.0, 'Foo share why ever we need a description here wtf', purchase1_revision
+    )
+
+    await test.fetch(
+        'call commit_revision(authtoken := $1, revision_id := $2)',
+        auth1, purchase1_revision
     )
 
     # create a mimo transaction

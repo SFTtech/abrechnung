@@ -1,8 +1,8 @@
 import React, {Suspense, useState} from "react";
 import {Route, Switch, useRouteMatch} from "react-router-dom";
-import InviteLinkList from "../../components/groups/InviteLinkList";
-import GroupMemberList from "../../components/groups/GroupMemberList";
-import GroupLog from "../../components/groups/GroupLog";
+import GroupInvites from "./GroupInvites";
+import GroupMemberList from "./GroupMemberList";
+import GroupLog from "./GroupLog";
 import Accounts from "../../components/groups/Accounts";
 import TransactionLog from "../../components/transactions/TransactionLog";
 import {useRecoilValue} from "recoil";
@@ -11,7 +11,7 @@ import Layout from "../../components/style/Layout";
 import Loading from "../../components/style/Loading";
 import {AppBar, Box, Paper, Tab, Tabs} from "@material-ui/core";
 import Transaction from "./Transaction";
-import GroupDetail from "../../components/groups/GroupDetail";
+import GroupDetail from "./GroupDetail";
 import Grid from "@material-ui/core/Grid";
 
 function TabPanel(props) {
@@ -55,9 +55,21 @@ export default function Group() {
     return (
         <Layout group={group}>
             <Switch>
+                <Route exact path={`${match.path}/log`}>
+                    <GroupLog group={group} />
+                </Route>
+                <Route exact path={`${match.path}/members`}>
+                    <GroupMemberList group={group} />
+                </Route>
+                <Route exact path={`${match.path}/detail`}>
+                    <GroupDetail group={group} />
+                </Route>
+                <Route exact path={`${match.path}/invites`}>
+                    <GroupInvites group={group} />
+                </Route>
                 <Route exact path={`${match.path}/`}>
                     <Grid container spacing={3}>
-                        <Grid item xs={9}>
+                        <Grid item xs={12}>
                             <Paper elevation={1}>
                                 <AppBar position="static" color="default">
                                     <Tabs
@@ -69,10 +81,6 @@ export default function Group() {
                                     >
                                         <Tab label="Transactions" {...a11yProps(0)} />
                                         <Tab label="Accounts" {...a11yProps(1)} />
-                                        <Tab label="Members" {...a11yProps(2)} />
-                                        <Tab label="Invites" {...a11yProps(3)} />
-                                        <Tab label="Log" {...a11yProps(4)} />
-                                        <Tab label="Detail" {...a11yProps(5)} />
                                     </Tabs>
                                 </AppBar>
                                 <TabPanel value={selectedTab} index={0}>
@@ -85,31 +93,6 @@ export default function Group() {
                                         <Accounts group={group}/>
                                     </Suspense>
                                 </TabPanel>
-                                <TabPanel value={selectedTab} index={2}>
-                                    <Suspense fallback={<Loading/>}>
-                                        <GroupMemberList group={group}/>
-                                    </Suspense>
-                                </TabPanel>
-                                <TabPanel value={selectedTab} index={3}>
-                                    <Suspense fallback={<Loading/>}>
-                                        <InviteLinkList group={group}/>
-                                    </Suspense>
-                                </TabPanel>
-                                <TabPanel value={selectedTab} index={4}>
-                                    <Suspense fallback={<Loading/>}>
-                                        <GroupLog group={group}/>
-                                    </Suspense>
-                                </TabPanel>
-                                <TabPanel value={selectedTab} index={5}>
-                                    <Suspense fallback={<Loading/>}>
-                                        <GroupDetail group={group}/>
-                                    </Suspense>
-                                </TabPanel>
-                            </Paper>
-                        </Grid>
-                        <Grid item xs={3}>
-                            <Paper elevation={1}>
-                                <Accounts group={group} short={true} showActions={false}/>
                             </Paper>
                         </Grid>
                     </Grid>

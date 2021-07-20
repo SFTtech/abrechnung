@@ -4,6 +4,7 @@ import {useRecoilValue} from "recoil";
 import {groupAccounts} from "../../recoil/groups";
 import TextField from "@material-ui/core/TextField";
 import Autocomplete from "@material-ui/lab/Autocomplete";
+import DisabledTextField from "./DisabledTextField";
 
 
 export default function AccountSelect({group, value, onChange, disabled = false, className = null, ...props}) {
@@ -20,7 +21,7 @@ export default function AccountSelect({group, value, onChange, disabled = false,
             disableClearable
             className={className}
             onChange={(event, newValue) => onChange(newValue)}
-            renderInput={(params) => <TextField {...params} {...props} />}
+            renderInput={(params) => <DisabledTextField {...params} {...props} />}
         />
     );
 }

@@ -34,6 +34,14 @@ export const revisions = atomFamily({
     ]
 })
 
+export const uncommitedRevisions = selectorFamily({
+    key: "revision",
+    get: groupID => async ({get}) => {
+        const r = get(revisions(groupID));
+        return r.filter(revision => revision.commited === null);
+    }
+})
+
 export const revision = selectorFamily({
     key: "revision",
     get: ({groupID, revisionID}) => async ({get}) => {

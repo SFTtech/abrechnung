@@ -1,5 +1,5 @@
 import React from "react";
-import EditableField from "../style/EditableField";
+import EditableField from "../../components/style/EditableField";
 
 import {Alert} from "@material-ui/lab";
 import List from "@material-ui/core/List";
@@ -37,7 +37,7 @@ export default function GroupDetail({group}) {
     }
 
     return (
-        <>
+        <Paper elevation={1} className={classes.paper}>
             {group.is_owner ? (
                 <Alert severity="info">You are an owner of this group</Alert>
             ) : !group.can_write ? (
@@ -84,6 +84,6 @@ export default function GroupDetail({group}) {
                                   secondary={group.latest_commit === null ? "never" : group.latest_commit}/>
                 </ListItem>
             </List>
-        </>
+        </Paper>
     );
 }
