@@ -14,7 +14,7 @@ import {Edit} from "@material-ui/icons";
 import Grid from "@material-ui/core/Grid";
 import AccountEditModal from "./AccountEditModal";
 
-export default function Accounts({group}) {
+export default function Accounts({group, showActions = true, short = false}) {
     const [showAccountCreationModal, setShowAccountCreationModal] = useState(false);
     const [showAccountEditModal, setShowAccountEditModal] = useState(false);
     const [accountToEdit, setAccountToEdit] = useState(null);
@@ -40,30 +40,47 @@ export default function Accounts({group}) {
                 ) : (
                     accounts.map(account => (
                         <ListItem key={`${account.account_id}-${account.revision_id}`}>
-                            <ListItemText primary={account.name}
-                                          secondary={account.description}/>
-                            <ListItemSecondaryAction>
-                                <IconButton color="primary" onClick={() => openAccountEdit(account)}>
-                                    <Edit/>
-                                </IconButton>
-                                <IconButton color="secondary">
-                                    <Delete/>
-                                </IconButton>
-                            </ListItemSecondaryAction>
+                            {short ? (
+                                <>
+                                    <ListItemText primary={account.name}/>
+                                    <ListItemText primary={account.balance} color={account.balance >= 0 ? "success" : "danger"}/>
+                                </>
+                            ) : (
+                                <>
+                                    <ListItemText primary={account.name}
+                                                  secondary={account.description}/>
+                                    <ListItemText primary={account.balance}/>
+                                </>
+                            )}
+                            {showActions && (
+                                <ListItemSecondaryAction>
+                                    <IconButton color="primary" onClick={() => openAccountEdit(account)}>
+                                        <Edit/>
+                                    </IconButton>
+                                    <IconButton color="secondary">
+                                        <Delete/>
+                                    </IconButton>
+                                </ListItemSecondaryAction>
+                            )}
                         </ListItem>
                     ))
                 )}
             </List>
-            <Grid container justify="center">
-                <IconButton color="primary"
-                            onClick={() => setShowAccountCreationModal(true)}>
-                    <Add/>
-                </IconButton>
-            </Grid>
-            <AccountCreateModal show={showAccountCreationModal} onClose={() => setShowAccountCreationModal(false)}
-                                group={group}/>
-            <AccountEditModal show={showAccountEditModal} onClose={closeAccountEdit} account={accountToEdit}
-                              group={group}/>
+            {showActions && (
+                <>
+                    <Grid container justify="center">
+                        <IconButton color="primary"
+                                    onClick={() => setShowAccountCreationModal(true)}>
+                            <Add/>
+                        </IconButton>
+                    </Grid>
+                    <AccountCreateModal show={showAccountCreationModal}
+                                        onClose={() => setShowAccountCreationModal(false)}
+                                        group={group}/>
+                    <AccountEditModal show={showAccountEditModal} onClose={closeAccountEdit} account={accountToEdit}
+                                      group={group}/>
+                </>
+            )}
         </div>
     );
 }

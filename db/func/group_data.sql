@@ -1,3 +1,119 @@
+create or replace view latest_account as
+select
+    distinct on (account.id)
+    account.id as account_id,
+    account.grp as group_id,
+    last_value(history.revision) over wnd as revision_id,
+    last_value(history.valid) over wnd as valid,
+    last_value(history.name) over wnd as name,
+    last_value(history.description) over wnd as description,
+    last_value(history.priority) over wnd as priority
+from
+    account_history history
+join
+    account on account.id = history.id
+join
+    revision on revision.id = history.revision
+where
+    revision.commited is not null
+window wnd as (
+    partition by account.id order by revision.commited desc nulls first
+);
+
+create or replace view latest_transaction as
+select
+    distinct on (transaction.id)
+    transaction.id as transaction_id,
+    transaction.grp as group_id,
+    transaction.type::text as type,
+    last_value(transaction_history.revision) over wnd as revision_id,
+    last_value(transaction_history.valid) over wnd as valid,
+    last_value(transaction_history.currency_symbol) over wnd as currency_symbol,
+    last_value(transaction_history.currency_conversion_rate) over wnd as currency_conversion_rate,
+    last_value(transaction_history.value) over wnd as value,
+    last_value(transaction_history.description) over wnd as description
+from
+    transaction
+join
+    transaction_history on transaction.id = transaction_history.id
+join
+    revision on transaction_history.revision = revision.id
+where
+    revision.commited is not null
+window wnd as (
+    partition by transaction.id order by revision.commited desc nulls first
+);
+
+create or replace view latest_creditor_shares as
+select
+    distinct on (creditor_share.id)
+    creditor_share.id as creditor_share_id,
+    creditor_share.transaction as transaction_id,
+    last_value(creditor_share_history.account) over wnd as account_id,
+    last_value(creditor_share_history.revision) over wnd as revision_id,
+    last_value(creditor_share_history.valid) over wnd as valid,
+    last_value(creditor_share_history.shares) over wnd as shares,
+    last_value(creditor_share_history.description) over wnd as description
+from
+    creditor_share
+join
+    creditor_share_history on creditor_share.id = creditor_share_history.id
+join
+    revision on creditor_share_history.revision = revision.id
+where
+    revision.commited is not null
+window wnd as (
+    partition by creditor_share.id order by revision.commited desc nulls first
+);
+
+create or replace view latest_creditor_shares_with_sum as
+select
+    lcs.creditor_share_id as creditor_share_id,
+    lcs.transaction_id as transaction_id,
+    lcs.account_id as account_id,
+    lcs.revision_id as revision_id,
+    lcs.valid as valid,
+    lcs.shares as shares,
+    lcs.description as description,
+    sum(lcs.shares) over (partition by lcs.transaction_id) as total_transaction_shares
+from
+    latest_creditor_shares lcs;
+
+create or replace view latest_debitor_shares as
+select
+    distinct on (debitor_share.id)
+    debitor_share.id as debitor_share_id,
+    debitor_share.transaction as transaction_id,
+    last_value(debitor_share_history.account) over wnd as account_id,
+    last_value(debitor_share_history.revision) over wnd as revision_id,
+    last_value(debitor_share_history.valid) over wnd as valid,
+    last_value(debitor_share_history.shares) over wnd as shares,
+    last_value(debitor_share_history.description) over wnd as description
+from
+    debitor_share
+join
+    debitor_share_history on debitor_share.id = debitor_share_history.id
+join
+    revision on debitor_share_history.revision = revision.id
+where
+    revision.commited is not null
+window wnd as (
+    partition by debitor_share.id order by revision.commited desc
+);
+
+create or replace view latest_debitor_shares_with_sum as
+select
+    lds.debitor_share_id as debitor_share_id,
+    lds.transaction_id as transaction_id,
+    lds.account_id as account_id,
+    lds.revision_id as revision_id,
+    lds.valid as valid,
+    lds.shares as shares,
+    lds.description as description,
+    sum(lds.shares) over (partition by lds.transaction_id) as total_transaction_shares
+from
+    latest_debitor_shares lds;
+
 -- validates an existing login session token,
 -- and returns the usr.id of the user this authenticates as
 -- as well as the group id of the revision.
@@ -234,6 +350,29 @@ end;
 $$ language plpgsql;
 call allow_function('get_uncommited_revisions');
 
+create or replace view balance as
+select
+    account.grp as group_id,
+    account.id as account_id,
+    coalesce(sum(total.balance), 0) as balance
+from account
+left join (
+    select
+        lcs.account_id as account_id,
+        sum(lt.value * lcs.shares / lcs.total_transaction_shares) as balance
+    from latest_transaction lt
+    join latest_creditor_shares_with_sum lcs on lcs.transaction_id = lt.transaction_id
+    group by lt.group_id, lcs.account_id
+    union all
+    select
+        lds.account_id as account_id,
+        sum(- lt.value * lds.shares / lds.total_transaction_shares) as balance
+    from latest_transaction lt
+    join latest_debitor_shares_with_sum lds on lds.transaction_id = lt.transaction_id
+    group by lt.group_id, lds.account_id
+) total on account.id = total.account_id
+group by account.grp, account.id;
+
 create or replace procedure _commit_revision(
     revision_id integer
 )
@@ -355,6 +494,7 @@ create trigger revision_update_trig after insert or update or delete
     for each row
 execute function revision_updated();
 
+
 -- retrieves the accounts in a group essentially returning the last account_history entry for each account
 create or replace function account_list(
     authtoken uuid,
@@ -366,7 +506,8 @@ returns table (
     valid bool,
     name text,
     description text,
-    priority integer
+    priority integer,
+    balance double precision
 )
 as $$
 <<locals>>
@@ -384,11 +525,14 @@ begin
             last_value(history.valid) over wnd as valid,
             last_value(history.name) over wnd as name,
             last_value(history.description) over wnd as description,
-            last_value(history.priority) over wnd as priority
+            last_value(history.priority) over wnd as priority,
+            b.balance as balance
         from
             account_history history
         join
             account on account.id = history.id
+        join
+            balance b on b.account_id = account.id
         join
             revision on revision.id = history.revision
         where
@@ -933,7 +1077,7 @@ begin
 
     return query
         select
-            distinct on (debitor_share_id)
+            distinct on (debitor_share.id)
             debitor_share.id as debitor_share_id,
             last_value(debitor_share_history.account) over wnd as account_id,
             last_value(debitor_share_history.revision) over wnd as revision_id,

@@ -16,7 +16,7 @@ import {useRecoilValue} from "recoil";
 import {isAuthenticated} from "../../recoil/auth";
 import ListItemLink from "./ListItemLink";
 import Button from "@material-ui/core/Button";
-import {AccountCircle} from "@material-ui/icons";
+import MoreVertIcon from "@material-ui/icons/MoreVert";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -88,13 +88,13 @@ export default function Layout({group = null, children}) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const authenticated = useRecoilValue(isAuthenticated);
     const [anchorEl, setAnchorEl] = useState(null);
-    const profileMenuOpen = Boolean(anchorEl);
+    const dotsMenuOpen = Boolean(anchorEl);
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
     }
 
-    const handleProfileMenuClose = (event) => {
+    const handleDotsMenuClose = (event) => {
         setAnchorEl(null);
     }
 
@@ -139,11 +139,11 @@ export default function Layout({group = null, children}) {
                                 onClick={handleProfileMenuOpen}
                                 color="inherit"
                             >
-                                <AccountCircle/>
+                                <MoreVertIcon/>
                             </IconButton>
                             <Menu
                                 id="menu-appbar"
-                                open={profileMenuOpen}
+                                open={dotsMenuOpen}
                                 anchorOrigin={{
                                     vertical: "top",
                                     horizontal: "right",
@@ -154,13 +154,8 @@ export default function Layout({group = null, children}) {
                                     vertical: "top",
                                     horizontal: "right",
                                 }}
-                                onClose={handleProfileMenuClose}
+                                onClose={handleDotsMenuClose}
                             >
-                                <MenuItem component={RouterLink} to="/profile">Profile</MenuItem>
-                                <MenuItem component={RouterLink} to="/profile/sessions">Sessions</MenuItem>
-                                <MenuItem component={RouterLink} to="/profile/change-email">Change E-Mail</MenuItem>
-                                <MenuItem component={RouterLink} to="/profile/change-password">Change
-                                    Password</MenuItem>
                                 <MenuItem component={RouterLink} to="/logout">Sign out</MenuItem>
                             </Menu>
                         </div>
@@ -194,12 +189,29 @@ export default function Layout({group = null, children}) {
                         <ListItemLink to="/">
                             <ListItemText primary="Groups"/>
                         </ListItemLink>
+                        <Divider/>
+                        <ListItemLink to="/profile">
+                            <ListItemText primary="Profile"/>
+                        </ListItemLink>
+                        <ListItemLink to="/profile/sessions">
+                            <ListItemText primary="Sessions"/>
+                        </ListItemLink>
+                        <ListItemLink to="/profile/change-email">
+                            <ListItemText primary="Change E-Mail"/>
+                        </ListItemLink>
+                        <ListItemLink to="/profile/change-password">
+                            <ListItemText primary="Change Password"/>
+                        </ListItemLink>
+                        <Divider/>
+                        <ListItemLink to="/logout">
+                            <ListItemText primary="Sign out"/>
+                        </ListItemLink>
                     </List>
                 </SwipeableDrawer>
             ) : null}
             <main className={classes.content}>
                 <div className={classes.drawerHeader}/>
-                <Container maxWidth="md">
+                <Container maxWidth="lg">
                     {children}
                 </Container>
             </main>
