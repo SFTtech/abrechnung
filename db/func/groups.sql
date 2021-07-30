@@ -33,7 +33,7 @@ call allow_function('group_create');
 -- lists groups that the user is a member of
 create or replace function group_list(authtoken uuid)
 returns table (
-    group_id integer,
+    id integer,
     name text,
     description text,
     currency_symbol text,
@@ -90,7 +90,7 @@ begin
             group by my_groups.grp
         )
     select
-        my_groups.grp as group_id,
+        my_groups.grp as id,
         my_groups.name as name,
         my_groups.description as description,
         my_groups.currency_symbol as currency_symbol,
@@ -107,7 +107,7 @@ begin
     order by
         latest_commit.latest_commit desc,
         my_groups.joined desc,
-        group_id desc;
+        id desc;
 end;
 $$ language plpgsql;
 call allow_function('group_list');

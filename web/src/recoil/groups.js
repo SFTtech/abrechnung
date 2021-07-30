@@ -42,7 +42,7 @@ export const groupById = atomFamily({
                 group_id: groupID,
             }))[0];
             return {
-                ...get(groupList).find(group => group.group_id === groupID),
+                ...get(groupList).find(group => group.id === groupID),
                 ...metadata
             }
         }
@@ -117,7 +117,7 @@ export const groupAccountByID = selectorFamily({
     key: "groupAccountByID",
     get: ({groupID, accountID}) => async ({get}) => {
         const accounts = get(groupAccounts(groupID));
-        return accounts?.find(account => account.account_id === accountID);
+        return accounts?.find(account => account.id === accountID);
     }
 })
 

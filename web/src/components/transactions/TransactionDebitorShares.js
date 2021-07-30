@@ -7,7 +7,7 @@ import ListItemText from "@material-ui/core/ListItemText";
 
 
 export default function TransactionDebitorShares({group, transaction}) {
-    const shares = useRecoilValue(transactionDebitorShares(transaction.transaction_id));
+    const shares = useRecoilValue(transactionDebitorShares(transaction.id));
 
     return (
         <List>

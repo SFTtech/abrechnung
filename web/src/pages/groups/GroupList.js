@@ -30,7 +30,7 @@ export default function GroupList() {
     const groups = useRecoilValue(groupList);
 
     const openGroupDeletionModal = (groupID) => {
-        setGroupToDelete(groups.find(group => group.group_id === groupID));
+        setGroupToDelete(groups.find(group => group.id === groupID));
         setShowGroupDeletionModal(true);
     };
 
@@ -52,11 +52,11 @@ export default function GroupList() {
                 ) : (
                     groups.map(group => {
                         return (
-                            <ListItemLink key={group.group_id} to={`/groups/${group.group_id}`}>
+                            <ListItemLink key={group.id} to={`/groups/${group.id}`}>
                                 <ListItemText primary={group.name} secondary={group.description}/>
                                 <ListItemSecondaryAction>
                                     <IconButton edge="end" aria-label="delete-group"
-                                                onClick={() => openGroupDeletionModal(group.group_id)}>
+                                                onClick={() => openGroupDeletionModal(group.id)}>
                                         <Delete/>
                                     </IconButton>
                                 </ListItemSecondaryAction>

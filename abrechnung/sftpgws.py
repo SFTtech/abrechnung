@@ -36,8 +36,8 @@ from uuid import UUID
 import aiohttp.web
 import asyncpg
 
-from .subcommand import SubCommand
 from . import util
+from .subcommand import SubCommand
 
 
 def encode_json(obj):
@@ -92,6 +92,14 @@ class SFTPGWS(SubCommand):
         db_pool = await db_connect(self.cfg)
 
         async with db_pool.acquire() as conn:
+            # configure automatic decoding of json type postgresql values
+            await conn.set_type_codec(
+                'json',
+                encoder=json.dumps,
+                decoder=json.loads,
+                schema='pg_catalog'
+            )
+
             # register at db
             self.channel_id = await conn.fetchval(
                 "select * from forwarder_boot($1);",
@@ -313,11 +321,17 @@ class SFTPGWS(SubCommand):
                     "error": str(exc)
                 }
 
+            # TODO: BIG TODO: figure out whether this is efficient enough
+            return_types = prepared_query.get_attributes()
+            return_data = [
+                dict((name, json.loads(value) if ret_type.type.name == 'json' and value is not None else value) for ret_type, name, value in
+                     zip(return_types, query_result[0].keys(), record)) for record in query_result
+            ]
+
             return {
                 "type": "call-result",
                 "id": call_id,
-                "columns": tuple(query_result[0].keys()) if query_result else [],
-                "data": [tuple(record) for record in query_result]
+                "data": return_data
             }
 
         elif msg_type == 'trigger':

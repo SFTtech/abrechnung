@@ -2,6 +2,7 @@
 import {ws} from "../websocket";
 import {atomFamily, selectorFamily} from "recoil";
 import {fetchToken} from "./auth";
+import {groupAccounts} from "./groups";
 
 const fetchGroupTransactions = async groupID => {
     return ws.call("transaction_list", {
@@ -39,80 +40,27 @@ export const transaction = selectorFamily({
     key: "transaction",
     get: ({groupID, transactionID}) => async ({get}) => {
         const transactions = get(groupTransactions(groupID));
-        return transactions?.find(transaction => transaction.transaction_id === transactionID);
+        return transactions?.find(transaction => transaction.id === transactionID);
     }
 })
 
-const fetchDebitorShares = async transactionID => {
-    return ws.call("transaction_debitor_shares_list", {
-        authtoken: fetchToken(),
-        transaction_id: transactionID,
-    });
-}
-
-export const transactionDebitorShares = atomFamily({
-    key: "transactionDebitorShares",
-    default: selectorFamily({
-        key: "transactionDebitorShares/default",
-        get: (transactionID) => async ({get}) => {
-            return await fetchDebitorShares(transactionID);
+export const accountBalances = selectorFamily({
+    key: "accountBalances",
+    get: (groupID) => async ({get}) => {
+        const transactions = get(groupTransactions(groupID));
+        const accounts = get(groupAccounts(groupID));
+        let accountBalances = Object.fromEntries(accounts.map(account => [account.id, 0]));
+        for (const transaction of transactions) {
+            console.log(transaction)
+            for (const debitorShare of transaction.debitor_shares) {
+                accountBalances[debitorShare.account_id] -= transaction.value / transaction.total_debitor_shares * debitorShare.shares;
+            }
+            for (const creditorShare of transaction.creditor_shares) {
+                accountBalances[creditorShare.account_id] += transaction.value / transaction.total_creditor_shares * creditorShare.shares;
+            }
         }
-    }),
-    effects_UNSTABLE: transactionID => [
-        ({setSelf, trigger}) => {
-            ws.subscribe(fetchToken(), "debitor_share", ({element_id}) => {
-                if (element_id === transactionID) {
-                    console.log("reloading transactions debitor shares for ID ", transactionID)
-                    fetchDebitorShares(transactionID).then(result => setSelf(result));
-                }
-            }, {element_id: transactionID})
-            // TODO: handle registration errors
-
-            return () => {
-                ws.unsubscribe("debitor_share", {element_id: transactionID});
-            };
-        }
-    ]
-})
-
-export const transactionTotalDebitorShares = selectorFamily({
-    key: "transactionTotalDebitorShares",
-    get: (transactionID) => async ({get}) => {
-        const shares = get(transactionDebitorShares(transactionID));
-        return shares.reduce((acc, currVal) => currVal.valid ? acc + currVal.shares : acc, 0);
+        return accountBalances;
     }
-})
-
-const fetchCreditorShares = async transactionID => {
-    return ws.call("transaction_creditor_shares_list", {
-        authtoken: fetchToken(),
-        transaction_id: transactionID,
-    });
-}
-
-export const transactionCreditorShares = atomFamily({
-    key: "transactionCreditorShares",
-    default: selectorFamily({
-        key: "transactionCreditorShares/default",
-        get: (transactionID) => async ({get}) => {
-            return await fetchCreditorShares(transactionID);
-        }
-    }),
-    effects_UNSTABLE: transactionID => [
-        ({setSelf, trigger}) => {
-            ws.subscribe(fetchToken(), "creditor_share", ({element_id}) => {
-                if (element_id === transactionID) {
-                    console.log("reloading transactions creditor shares for ID ", transactionID)
-                    fetchCreditorShares(transactionID).then(result => setSelf(result));
-                }
-            }, {element_id: transactionID})
-            // TODO: handle registration errors
-
-            return () => {
-                ws.unsubscribe("creditor_share", {element_id: transactionID});
-            };
-        }
-    ]
 })
 
 export const createTransaction = async ({

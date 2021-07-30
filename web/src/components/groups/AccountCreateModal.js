@@ -13,7 +13,7 @@ import {TextField} from "formik-material-ui";
 export default function AccountCreateModal({show, onClose, group}) {
     const handleSubmit = (values, {setSubmitting}) => {
         createAccount({
-            groupID: group.group_id,
+            groupID: group.id,
             name: values.name,
             description: values.description
         })

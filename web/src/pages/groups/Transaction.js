@@ -29,12 +29,12 @@ export default function Transaction({group}) {
     const match = useRouteMatch();
     const transactionID = parseInt(match.params.id);
     const wipRevision = useRecoilValue(uncommitedTransactionRevision({
-        groupID: group.group_id,
+        groupID: group.id,
         transactionID: transactionID
     }));
     const isEditing = wipRevision !== null;
 
-    const t = useRecoilValue(transaction({groupID: group.group_id, transactionID: transactionID}));
+    const t = useRecoilValue(transaction({groupID: group.id, transactionID: transactionID}));
     // TODO: handle 404
     // TODO: wait for transaction to actually load in case we are redirected from create transaction
 
@@ -52,28 +52,22 @@ export default function Transaction({group}) {
 
     const abortEdit = () => {
         if (wipRevision !== null) {
-            discardRevision({revisionID: wipRevision.revision_id})
+            discardRevision({revisionID: wipRevision.id})
                 .then(result => {
                 })
                 .catch(err => {
-                    toast.error(`Error discarding transaction: ${err}!`, {
-                        position: "top-right",
-                        autoClose: 5000,
-                    });
+                    toast.error(`Error discarding transaction: ${err}!`);
                 })
         }
     }
 
     const commitEdit = () => {
         if (wipRevision !== null) {
-            commitRevision({revisionID: wipRevision.revision_id})
+            commitRevision({revisionID: wipRevision.id})
                 .then(result => {
                 })
                 .catch(err => {
-                    toast.error(`Error commiting transaction: ${err}!`, {
-                        position: "top-right",
-                        autoClose: 5000,
-                    });
+                    toast.error(`Error commiting transaction: ${err}!`);
                 })
         }
     }

@@ -40,15 +40,7 @@ export class SFTWebsocket {
             console.log("WS Received call result: ", msg);
             const {resolve} = this.handlers[msg.id];
             // convert the colums - data response to a JSON object
-            let response = []
-            for (const row of msg.data) {
-                let obj = {}
-                for (let i = 0; i < msg.columns.length; i++) {
-                    obj[msg.columns[i]] = row[i];
-                }
-                response.push(obj);
-            }
-            resolve(response);
+            resolve(msg.data);
             delete this.handlers[msg.id];
         } else if (msg.type === "call-error" && this.handlers.hasOwnProperty(msg.id)) {
             const {reject} = this.handlers[msg.id];

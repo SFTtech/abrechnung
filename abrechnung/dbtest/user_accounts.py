@@ -466,7 +466,7 @@ async def test(test):
     session_info_other, session_info_this = await test.fetch(
         "select * from list_sessions(authtoken := $1) order by this",
         usr1_token,
-        columns=['session_id', 'name', 'valid_until', 'last_seen', 'this']
+        columns=['id', 'name', 'valid_until', 'last_seen', 'this']
     )
 
     test.expect(session_info_this['name'], 'testscript-1')
@@ -521,7 +521,7 @@ async def test(test):
     await test.fetch_expect_raise(
         'call rename_session(authtoken := $1, session_id := $2, new_name := $3)',
         'a'*32,
-        session_info_other['session_id'],
+        session_info_other['id'],
         'best session',
         error_id='bad-authtoken'
     )
@@ -530,13 +530,13 @@ async def test(test):
     await test.fetch_expect_raise(
         'call rename_session(authtoken := $1, session_id := $2, new_name := $3)',
         usr2_token,
-        session_info_other['session_id'],
+        session_info_other['id'],
         'best session',
         error_id='bad-session-id'
     )
     await test.fetchval(
         'select name from session where id=$1',
-        session_info_other['session_id'],
+        session_info_other['id'],
         expect=session_info_other['name']
     )
 
@@ -544,12 +544,12 @@ async def test(test):
     await test.fetch(
         'call rename_session(authtoken := $1, session_id := $2, new_name := $3)',
         usr1_token,
-        session_info_other['session_id'],
+        session_info_other['id'],
         'best session'
     )
     await test.fetchval(
         'select name from session where id=$1',
-        session_info_other['session_id'],
+        session_info_other['id'],
         expect='best session'
     )
 
@@ -557,7 +557,7 @@ async def test(test):
     await test.fetch_expect_raise(
         'call logout_session(authtoken := $1, session_id := $2)',
         usr2_token,
-        session_info_other['session_id'],
+        session_info_other['id'],
         error_id='bad-session-id'
     )
     await test.fetchval(
@@ -570,7 +570,7 @@ async def test(test):
     await test.fetch_expect_raise(
         'call logout_session(authtoken := $1, session_id := $2)',
         'a'*32,
-        session_info_other['session_id'],
+        session_info_other['id'],
         error_id='bad-authtoken'
     )
     await test.fetchval(
@@ -581,7 +581,7 @@ async def test(test):
     await test.fetch(
         'call logout_session(authtoken := $1, session_id := $2)',
         usr1_token,
-        session_info_other['session_id']
+        session_info_other['id']
     )
     await test.fetch_expect_raise(
         'select * from session_auth(token := $1)',

@@ -59,12 +59,6 @@ begin
     elseif subscribe.subscription_type = 'transaction' then
         perform from session_auth_group(subscribe.token, subscribe.element_id::int);
 
-    elseif subscribe.subscription_type = 'creditor_share' then
-        perform from session_auth_transaction(subscribe.token, subscribe.element_id::int, false);
-
-    elseif subscribe.subscription_type = 'debitor_share' then
-        perform from session_auth_transaction(subscribe.token, subscribe.element_id::int, false);
-
     else
         raise exception 'bad-subscription:unknown subscription type';
     end if;

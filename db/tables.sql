@@ -154,11 +154,7 @@ create type subscription_type as enum (
     -- element_id: the group whose revisions we want to watch
     'revision',
     -- element_id: the group whose transactions we want to watch
-    'transaction',
-    -- element_id: the transaction whose creditor shares we want to watch
-    'creditor_share',
-    -- element_id: the transaction whose debitor shares we want to watch
-    'debitor_share'
+    'transaction'
 );
 
 
@@ -414,8 +410,6 @@ create table if not exists revision (
 
     started timestamptz not null default now(),
     commited timestamptz default null,
-
-    message text not null,
 
     check ((account is null) <> (transaction is null))
     -- TODO: introduce check that only allows one uncommited revision per transaction / account per user

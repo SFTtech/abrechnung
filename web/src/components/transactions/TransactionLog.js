@@ -22,8 +22,8 @@ const useStyles = makeStyles((theme) => ({
 export default function TransactionLog({ group }) {
     const classes = useStyles();
     const [showCreateDialog, setShowCreateDialog] = useState(false);
-    const transactions = useRecoilValue(groupTransactions(group.group_id));
-    const revisions = useRecoilValue(uncommitedRevisions(group.group_id));
+    const transactions = useRecoilValue(groupTransactions(group.id));
+    const revisions = useRecoilValue(uncommitedRevisions(group.id));
 
     return (
         <div>
@@ -32,12 +32,12 @@ export default function TransactionLog({ group }) {
                     <div className="list-group-item" key={0}>No Transactions</div>
                 ) : (
                     transactions.map(transaction => (
-                        <ListItemLink key={transaction.transaction_id}
-                                      to={`/groups/${group.group_id}/transactions/${transaction.transaction_id}`}>
+                        <ListItemLink key={transaction.id}
+                                      to={`/groups/${group.id}/transactions/${transaction.id}`}>
                             <ListItemText primary={transaction.description}
                                           secondary={`${transaction.value.toFixed(2)} ${transaction.currency_symbol} `} />
                             <ListItemSecondaryAction>
-                                {revisions.find(r => r.revision_id === transaction.revision_id) != null && (
+                                {revisions.find(r => r.id === transaction.revision_id) != null && (
                                     <Chip color="secondary" variant="outlined" label="WIP"
                                           className={classes.propertyPill} />
                                 )}

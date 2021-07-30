@@ -123,7 +123,7 @@ export default function Layout({ group = null, children }) {
                     </IconButton>
                     {group !== null ? (
                         <Button color="inherit" noWrap className={classes.title} component={RouterLink}
-                                to={`/groups/${group.group_id}`}>
+                                to={`/groups/${group.id}`}>
                             {group.name}
                         </Button>
                     ) : (
@@ -192,16 +192,16 @@ export default function Layout({ group = null, children }) {
                     <Divider />
                     {group != null && (
                         <>
-                            <ListItemLink to={`/groups/${group.group_id}/log`}>
+                            <ListItemLink to={`/groups/${group.id}/log`}>
                                 <ListItemText primary="Group Log" />
                             </ListItemLink>
-                            <ListItemLink to={`/groups/${group.group_id}/invites`}>
+                            <ListItemLink to={`/groups/${group.id}/invites`}>
                                 <ListItemText primary="Group Invites" />
                             </ListItemLink>
-                            <ListItemLink to={`/groups/${group.group_id}/detail`}>
+                            <ListItemLink to={`/groups/${group.id}/detail`}>
                                 <ListItemText primary="Group detail" />
                             </ListItemLink>
-                            <ListItemLink to={`/groups/${group.group_id}/members`}>
+                            <ListItemLink to={`/groups/${group.id}/members`}>
                                 <ListItemText primary="Group Members" />
                             </ListItemLink>
                             <Divider />

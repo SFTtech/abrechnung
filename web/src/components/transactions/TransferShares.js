@@ -2,8 +2,6 @@ import {useRecoilValue} from "recoil";
 import {groupAccounts} from "../../recoil/groups";
 import {
     createDebitorShare,
-    transactionCreditorShares,
-    transactionDebitorShares,
     updateDebitorShare
 } from "../../recoil/transactions";
 import AccountSelect from "../style/AccountSelect";
@@ -12,15 +10,15 @@ import TransactionCreditorShare from "./TransactionCreditorShare";
 
 
 export default function TransferShares({group, transaction, wipRevision}) {
-    const accounts = useRecoilValue(groupAccounts(group.group_id));
+    const accounts = useRecoilValue(groupAccounts(group.id));
     // TODO: sanity checking
-    const creditorShares = useRecoilValue(transactionCreditorShares(transaction.transaction_id));
+    const creditorShares = transaction.creditor_shares;
     const creditorShare = creditorShares.length ? creditorShares[0] : null;
-    const debitorShares = useRecoilValue(transactionDebitorShares(transaction.transaction_id));
+    const debitorShares = transaction.debitor_shares;
     const debitorShare = debitorShares.length ? debitorShares[0] : null;
 
     const getAccount = (accountID) => {
-        return accounts.find(account => account.account_id === accountID);
+        return accounts.find(account => account.id === accountID);
     }
 
     const onDebitorChange = (account) => {
@@ -29,10 +27,10 @@ export default function TransferShares({group, transaction, wipRevision}) {
         }
         if (debitorShare) {
             updateDebitorShare({
-                transactionID: transaction.transaction_id,
-                debitorShareID: debitorShare.debitor_share_id,
-                revisionID: wipRevision.revision_id,
-                accountID: account.account_id,
+                transactionID: transaction.id,
+                debitorShareID: debitorShare.id,
+                revisionID: wipRevision.id,
+                accountID: account.id,
                 shares: 1.0,
                 description: ""
             })
@@ -41,9 +39,9 @@ export default function TransferShares({group, transaction, wipRevision}) {
                 })
         } else {
             createDebitorShare({
-                transactionID: transaction.transaction_id,
-                revisionID: wipRevision.revision_id,
-                accountID: account.account_id,
+                transactionID: transaction.id,
+                revisionID: wipRevision.id,
+                accountID: account.id,
                 shares: 1.0,
                 description: ""
             })

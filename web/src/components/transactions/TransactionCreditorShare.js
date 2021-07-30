@@ -7,10 +7,10 @@ import AccountSelect from "../style/AccountSelect";
 
 
 export default function TransactionCreditorShare({group, transaction, creditorShare, wipRevision, ...props}) {
-    const accounts = useRecoilValue(groupAccounts(group.group_id));
+    const accounts = useRecoilValue(groupAccounts(group.id));
 
     const getAccount = (accountID) => {
-        return accounts.find(account => account.account_id === accountID);
+        return accounts.find(account => account.id === accountID);
     }
 
     const onCreditorChange = (account) => {
@@ -19,9 +19,9 @@ export default function TransactionCreditorShare({group, transaction, creditorSh
         }
         if (creditorShare) {
             updateCreditorShare({
-                creditorShareID: creditorShare.creditor_share_id,
-                revisionID: wipRevision.revision_id,
-                accountID: account.account_id,
+                creditorShareID: creditorShare.id,
+                revisionID: wipRevision.id,
+                accountID: account.id,
                 shares: 1.0,
                 description: ""
             })
@@ -33,9 +33,9 @@ export default function TransactionCreditorShare({group, transaction, creditorSh
                 })
         } else {
             createCreditorShare({
-                transactionID: transaction.transaction_id,
-                revisionID: wipRevision.revision_id,
-                accountID: account.account_id,
+                transactionID: transaction.id,
+                revisionID: wipRevision.id,
+                accountID: account.id,
                 shares: 1.0,
                 description: ""
             })
@@ -52,7 +52,7 @@ export default function TransactionCreditorShare({group, transaction, creditorSh
     return (
         <AccountSelect
             group={group}
-            value={creditorShare === null ? null : getAccount(creditorShare.account_id)}
+            value={creditorShare === null ? null : getAccount(creditorShare.id)}
             onChange={onCreditorChange}
             disabled={wipRevision === null}
             {...props}

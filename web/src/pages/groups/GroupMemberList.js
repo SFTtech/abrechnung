@@ -38,12 +38,12 @@ export default function GroupMemberList({group}) {
     const [showRemoveMemberDialog, setShowRemoveMemberDialog] = useState(false);
     const [memberToRemove, setMemberToRemove] = useState(null);
     const [memberToEdit, setMemberToEdit] = useState(null);
-    const members = useRecoilValue(groupMembers(group.group_id));
+    const members = useRecoilValue(groupMembers(group.id));
     const currentUser = useRecoilValue(userData);
 
     const handleEditMemberSubmit = (values, {setSubmitting}) => {
         setGroupMemberPrivileges({
-            groupID: group.group_id,
+            groupID: group.id,
             userID: values.userID,
             canWrite: values.canWrite,
             isOwner: values.isOwner
@@ -188,7 +188,7 @@ export default function GroupMemberList({group}) {
                         Are you sure you want to remove{" "}
                         <strong>
                             {memberToRemove !== null
-                                ? members.find((user) => user.user_id === memberToRemove).username
+                                ? members.find((member) => member.user_id === memberToRemove).username
                                 : ""}
                         </strong>{" "}
                         from this group?

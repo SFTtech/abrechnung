@@ -3,4 +3,6 @@
 \i func/user_accounts.sql
 \i func/groups.sql
 \i func/group_data.sql
+\i func/accounts.sql
+\i func/transactions.sql
 \i func/gc.sql

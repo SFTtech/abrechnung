@@ -22,7 +22,7 @@ export default function GroupDetail({group}) {
     // TODO: actually make the editing part work
     const updateGroup = (name = null, description = null, currencySymbol = null, terms = null) => {
         updateGroupMetadata({
-            groupID: group.group_id,
+            groupID: group.id,
             name: name,
             description: description,
             currency_symbol: currencySymbol,

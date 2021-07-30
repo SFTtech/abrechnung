@@ -63,7 +63,7 @@ export const fetchUserData = async () => {
     const user = await ws.call("get_user_info", {
         authtoken: fetchToken(),
     });
-    localStorage.setItem("userID", user[0].user_id);
+    localStorage.setItem("userID", user[0].id);
     return user[0];
 }
 

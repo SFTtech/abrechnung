@@ -88,21 +88,21 @@ export default function SessionList() {
             </Typography>
             <List>
                 {sessions.map((session) => {
-                    if (editedSessions.hasOwnProperty(session.session_id)) {
+                    if (editedSessions.hasOwnProperty(session.id)) {
                         return (
-                            <ListItem key={session.session_id}>
+                            <ListItem key={session.id}>
                                 <input
                                     type="text"
-                                    value={editedSessions[session.session_id]}
-                                    onChange={(event) => handleEditChange(session.session_id, event.target.value)}
+                                    value={editedSessions[session.id]}
+                                    onChange={(event) => handleEditChange(session.id, event.target.value)}
                                 />
                                 <br/>
                                 <small className="text-muted">Last seen: {session.last_seen}</small>
                                 <ListItemSecondaryAction>
-                                    <Button onClick={() => performRename(session.session_id)}>
+                                    <Button onClick={() => performRename(session.id)}>
                                         <Check/>
                                     </Button>
-                                    <Button onClick={() => stopEditSession(session.session_id)}>
+                                    <Button onClick={() => stopEditSession(session.id)}>
                                         <Close/>
                                     </Button>
                                 </ListItemSecondaryAction>

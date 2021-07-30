@@ -14,23 +14,17 @@ export default function AccountEditModal({group, show, onClose, account}) {
 
     const handleSubmit = (values, {setSubmitting}) => {
         editAccount({
-            groupID: group.group_id,
+            groupID: group.id,
             accountID: values.accountID,
             name: values.name,
             description: values.description
         })
             .then(result => {
-                toast.success(`Updated account ${values.name}`, {
-                    position: "top-right",
-                    autoClose: 5000,
-                });
+                toast.success(`Updated account ${values.name}`);
                 setSubmitting(false);
                 onClose();
             }).catch(err => {
-            toast.error(`${err}`, {
-                position: "top-right",
-                autoClose: 5000,
-            });
+            toast.error(`${err}`);
             setSubmitting(false);
         })
     };
@@ -41,7 +35,7 @@ export default function AccountEditModal({group, show, onClose, account}) {
             <DialogTitle>Edit Account</DialogTitle>
             <DialogContent>
                 <Formik initialValues={{
-                    accountID: account?.account_id,
+                    accountID: account?.id,
                     name: account?.name,
                     description: account?.description
                 }} onSubmit={handleSubmit}

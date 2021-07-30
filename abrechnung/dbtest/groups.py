@@ -65,7 +65,7 @@ async def test(test):
         'select * from group_list(authtoken := $1)',
         auth1,
         columns=[
-            'group_id', 'name', 'description', 'currency_symbol',
+            'id', 'name', 'description', 'currency_symbol',
             'member_count', 'created', 'joined',
             'latest_commit', 'is_owner', 'can_write'
         ]

@@ -16,7 +16,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 export default function TransactionCreateModal({group, show, onClose}) {
     const handleSubmit = (values, {setSubmitting}) => {
         createTransaction({
-            groupID: group.group_id,
+            groupID: group.id,
             type: values.type,
             description: values.description,
             value: values.value,

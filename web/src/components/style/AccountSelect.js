@@ -2,13 +2,12 @@ import React from "react";
 
 import {useRecoilValue} from "recoil";
 import {groupAccounts} from "../../recoil/groups";
-import TextField from "@material-ui/core/TextField";
 import Autocomplete from "@material-ui/lab/Autocomplete";
 import DisabledTextField from "./DisabledTextField";
 
 
 export default function AccountSelect({group, value, onChange, disabled = false, className = null, ...props}) {
-    const accounts = useRecoilValue(groupAccounts(group.group_id));
+    const accounts = useRecoilValue(groupAccounts(group.id));
 
     return (
         <Autocomplete

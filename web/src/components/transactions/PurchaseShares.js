@@ -1,11 +1,5 @@
 import {useRecoilValue} from "recoil";
-import {
-    createDebitorShare,
-    transactionCreditorShares,
-    transactionDebitorShares,
-    transactionTotalDebitorShares,
-    updateDebitorShare,
-} from "../../recoil/transactions";
+import {createDebitorShare, updateDebitorShare,} from "../../recoil/transactions";
 import TransactionCreditorShare from "./TransactionCreditorShare";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
@@ -31,15 +25,15 @@ const useStyles = makeStyles((theme) => ({
 export default function PurchaseShares({group, transaction, wipRevision}) {
     const classes = useStyles();
 
-    const accounts = useRecoilValue(groupAccounts(group.group_id));
+    const accounts = useRecoilValue(groupAccounts(group.id));
     // TODO: sanity checking
-    const creditorShares = useRecoilValue(transactionCreditorShares(transaction.transaction_id));
+    const creditorShares = transaction.creditor_shares;
     const creditorShare = creditorShares.length ? creditorShares[0] : null;
-    const debitorShares = useRecoilValue(transactionDebitorShares(transaction.transaction_id));
-    const totalDebitorShares = useRecoilValue(transactionTotalDebitorShares(transaction.transaction_id));
+    const debitorShares = transaction.debitor_shares;
     const isEditing = wipRevision !== null;
 
     const [debitorShareValues, setDebitorShareValues] = useState({});
+    const totalDebitorShares = Object.values(debitorShareValues).reduce((acc, curr) => acc + curr, 0);
 
     useEffect(() => {
         let shares = {};
@@ -75,8 +69,8 @@ export default function PurchaseShares({group, transaction, wipRevision}) {
         if (checked) {
             if (share) {
                 updateDebitorShare({
-                    debitorShareID: share.debitor_share_id,
-                    revisionID: wipRevision.revision_id,
+                    debitorShareID: share.id,
+                    revisionID: wipRevision.id,
                     accountID: accountID,
                     shares: debitorShareValues[accountID] || 1,
                     description: "",
@@ -87,8 +81,8 @@ export default function PurchaseShares({group, transaction, wipRevision}) {
                     })
             } else {
                 createDebitorShare({
-                    transactionID: transaction.transaction_id,
-                    revisionID: wipRevision.revision_id,
+                    transactionID: transaction.id,
+                    revisionID: wipRevision.id,
                     accountID: accountID,
                     shares: debitorShareValues[accountID] || 1,
                     description: ""
@@ -103,8 +97,8 @@ export default function PurchaseShares({group, transaction, wipRevision}) {
                 // this should not happen, so do nothing
             } else {
                 updateDebitorShare({
-                    debitorShareID: share.debitor_share_id,
-                    revisionID: wipRevision.revision_id,
+                    debitorShareID: share.id,
+                    revisionID: wipRevision.id,
                     accountID: accountID,
                     shares: debitorShareValues[accountID] || 1,
                     description: "",
@@ -127,8 +121,8 @@ export default function PurchaseShares({group, transaction, wipRevision}) {
                 return;
             }
             updateDebitorShare({
-                debitorShareID: share.debitor_share_id,
-                revisionID: wipRevision.revision_id,
+                debitorShareID: share.id,
+                revisionID: wipRevision.id,
                 accountID: accountID,
                 shares: parseInt(shares),
                 description: "",
@@ -138,8 +132,8 @@ export default function PurchaseShares({group, transaction, wipRevision}) {
                 })
         } else {
             createDebitorShare({
-                transactionID: transaction.transaction_id,
-                revisionID: wipRevision.revision_id,
+                transactionID: transaction.id,
+                revisionID: wipRevision.id,
                 accountID: accountID,
                 shares: parseInt(shares),
                 description: ""
@@ -176,38 +170,38 @@ export default function PurchaseShares({group, transaction, wipRevision}) {
                 <Divider variant="middle"/>
                 {isEditing ?
                     accounts.map(account => (
-                        <ListItem key={account.account_id}>
+                        <ListItem key={account.id}>
                             <Grid container direction="row" justify="space-between">
                                 <FormControlLabel
                                     control={<Checkbox name={`${account.name}-checked`}/>}
-                                    checked={debitorShareForAccount(account.account_id) && debitorShareForAccount(account.account_id).valid}
-                                    onChange={event => updateDebShare(account.account_id, event.target.checked)}
+                                    checked={debitorShareForAccount(account.id) && debitorShareForAccount(account.id).valid}
+                                    onChange={event => updateDebShare(account.id, event.target.checked)}
                                     label={account.name}/>
                                 <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
                                     <TextField
                                         margin="dense"
                                         style={{width: 40, marginRight: 14}}
-                                        onBlur={(event) => updateDebShareValue(account.account_id, event.target.value)}
-                                        value={debitorShareValueForAccount(account.account_id)}
-                                        onChange={event => onDebShareValueChange(account.account_id, event.target.value)}
+                                        onBlur={(event) => updateDebShareValue(account.id, event.target.value)}
+                                        value={debitorShareValueForAccount(account.id)}
+                                        onChange={event => onDebShareValueChange(account.id, event.target.value)}
                                     />
                                     <Typography variant="body1" style={{width: 60}} className={classes.shareValue}>
-                                        {debitorValueForAccount(account.account_id)} {transaction.currency_symbol}
+                                        {debitorValueForAccount(account.id)} {transaction.currency_symbol}
                                     </Typography>
                                 </div>
                             </Grid>
                         </ListItem>
                     ))
                     :
-                    accounts.map(account => debitorShareForAccount(account.account_id)?.valid ? (
-                        <ListItem key={account.account_id}>
+                    accounts.map(account => debitorShareForAccount(account.id)?.valid ? (
+                        <ListItem key={account.id}>
                             <Grid container direction="row" justify="space-between">
                                 <Typography variant="subtitle1">
                                     {account.name}
                                 </Typography>
                                 <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
                                     <Typography variant="body1" style={{width: 60}} className={classes.shareValue}>
-                                        {debitorValueForAccount(account.account_id)} {transaction.currency_symbol}
+                                        {debitorValueForAccount(account.id)} {transaction.currency_symbol}
                                     </Typography>
                                 </div>
                             </Grid>

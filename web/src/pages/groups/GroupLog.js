@@ -21,13 +21,13 @@ export default function GroupLog({group}) {
     const classes = useStyles();
     const [message, setMessage] = useState("");
     const [showAllLogs, setShowAllLogs] = useState(false);
-    const logEntries = useRecoilValue(groupLog(group.group_id));
-    const members = useRecoilValue(groupMembers(group.group_id));
+    const logEntries = useRecoilValue(groupLog(group.id));
+    const members = useRecoilValue(groupMembers(group.id));
 
     const sendMessage = (e) => {
         e.preventDefault();
         createGroupLog({
-            groupID: group.group_id,
+            groupID: group.id,
             message: message,
         }).then(result => {
             setMessage("");
@@ -74,7 +74,7 @@ export default function GroupLog({group}) {
                     <ListItem key={logEntry.logentry_id}>
                         <ListItemText
                             primary={logEntry.message === "" ? logEntry.type : logEntry.message}
-                            secondary={`by ${members.find((user) => user.user_id === logEntry.user_id).username} ${logEntry.logged}`}/>
+                            secondary={`by ${members.find((member) => member.user_id === logEntry.user_id).username} ${logEntry.logged}`}/>
                     </ListItem>
                 ))}
             </List>

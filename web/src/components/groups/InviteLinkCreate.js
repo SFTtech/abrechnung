@@ -17,22 +17,16 @@ export default function InviteLinkCreate({show, onClose, group}) {
 
     const handleSubmit = (values, {setSubmitting}) => {
         createInviteToken({
-            groupID: group.group_id,
+            groupID: group.id,
             name: values.name,
             description: values.description
         })
             .then(result => {
-                toast.success("Successfully created invite token", {
-                    position: "top-right",
-                    autoClose: 5000,
-                });
+                toast.success("Successfully created invite token");
                 setSubmitting(false);
                 onClose();
             }).catch(err => {
-            toast.error(`${err}`, {
-                position: "top-right",
-                autoClose: 5000,
-            });
+            toast.error(`${err}`);
             setSubmitting(false);
         })
     };

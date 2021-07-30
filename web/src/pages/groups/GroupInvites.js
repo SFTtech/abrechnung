@@ -24,10 +24,10 @@ const useStyles = makeStyles((theme) => ({
 export default function GroupInvites({group}) {
     const classes = useStyles();
     const [showModal, setShowModal] = useState(false);
-    const tokens = useRecoilValue(groupInviteTokens(group.group_id));
+    const tokens = useRecoilValue(groupInviteTokens(group.id));
 
     const deleteToken = (id) => {
-        deleteInviteToken({groupID: group.group_id, tokenID: id})
+        deleteInviteToken({groupID: group.id, tokenID: id})
             .then(result => {
                 toast.success(`Removed invite link`, {
                     position: "top-right",

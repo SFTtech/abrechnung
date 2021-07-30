@@ -19,8 +19,8 @@ export default function TransactionDetail({group, transaction, wipRevision}) {
     const save = (params) => {
         if (wipRevision !== null) {
             updateTransaction({
-                transactionID: transaction.transaction_id,
-                revisionID: wipRevision.revision_id,
+                transactionID: transaction.id,
+                revisionID: wipRevision.id,
                 currencyConversionRate: transaction.currency_conversion_rate,
                 currencySymbol: transaction.currency_symbol,
                 value: transaction.value,

@@ -238,13 +238,13 @@ $$ language plpgsql;
 
 -- returns a list of all of the user's active sessions
 create or replace function list_sessions(authtoken uuid)
-returns table (session_id integer, name text, valid_until timestamptz, last_seen timestamptz, this boolean)
+returns table (id integer, name text, valid_until timestamptz, last_seen timestamptz, this boolean)
 as $$
     with auth as (
         select user_id from session_auth(list_sessions.authtoken)
     )
     select
-        session.id as session_id,
+        session.id as id,
         session.name as name,
         session.valid_until as valid_until,
         session.last_seen as last_seen,
@@ -601,7 +601,7 @@ call allow_function('confirm_email_change', is_procedure := true);
 -- returns the user information for the given user
 create or replace function get_user_info(
     authtoken uuid,
-    out user_id int,
+    out id int,
     out email text,
     out registered_at timestamptz,
     out username text,
@@ -618,7 +618,7 @@ begin
     select
         usr.id, usr.email, usr.registered_at, usr.username, usr.language, usr.admin, usr.can_upload_files
         into
-            get_user_info.user_id, get_user_info.email, get_user_info.registered_at, get_user_info.username, get_user_info.language, get_user_info.admin, get_user_info.can_upload_files
+            get_user_info.id, get_user_info.email, get_user_info.registered_at, get_user_info.username, get_user_info.language, get_user_info.admin, get_user_info.can_upload_files
         from usr
         where usr.id = locals.usr;
 end;
