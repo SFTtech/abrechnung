@@ -1,7 +1,7 @@
 import React, {Suspense, useEffect, useMemo, useState} from "react";
 import {BrowserRouter as Router, Route, Switch} from "react-router-dom";
 import {toast, ToastContainer} from "react-toastify";
-import MomentUtils from "@date-io/moment";
+import LuxonUtils from "@date-io/luxon";
 import {MuiPickersUtilsProvider} from "@material-ui/pickers";
 import {createMuiTheme, ThemeProvider} from '@material-ui/core/styles';
 
@@ -11,20 +11,21 @@ import Logout from "./pages/auth/Logout";
 import Group from "./pages/groups/Group";
 import Loading from "./components/style/Loading";
 import PageNotFound from "./pages/PageNotFound";
-import {fetchToken, fetchUserData, isAuthenticated, userData} from "./recoil/auth";
-import {useSetRecoilState} from "recoil";
+import {isAuthenticated, userData} from "./recoil/auth";
+import {useRecoilState, useSetRecoilState} from "recoil";
 import AuthenticatedRoute from "./components/AuthenticatedRoute";
 import ChangeEmail from "./pages/auth/ChangeEmail";
 import ChangePassword from "./pages/auth/ChangePassword";
-import SessionList from "./pages/auth/SessionList";
 import GroupList from "./pages/groups/GroupList"
 import Layout from "./components/style/Layout";
 import {CssBaseline, useMediaQuery} from "@material-ui/core";
+import {fetchProfile, removeToken} from "./api";
+import {ws} from "./websocket";
 
 const Profile = React.lazy(() => import("./pages/auth/Profile"));
-const ConfirmEmailChange = React.lazy(() => import("./pages/auth/ConfirmEmailChange"));
-const ConfirmRegistration = React.lazy(() => import("./pages/auth/ConfirmRegistration"));
-const GroupInvite = React.lazy(() => import("./pages/groups/GroupInvite"));
+// const ConfirmEmailChange = React.lazy(() => import("./pages/auth/ConfirmEmailChange"));
+// const ConfirmRegistration = React.lazy(() => import("./pages/auth/ConfirmRegistration"));
+// const GroupInvite = React.lazy(() => import("./pages/groups/GroupInvite"));
 
 const routes = [
     {
@@ -33,11 +34,11 @@ const routes = [
         auth: true,
         exact: true,
     },
-    {
-        path: "/invite/:inviteToken",
-        component: <GroupInvite/>,
-        auth: false,
-    },
+    // {
+    //     path: "/invite/:inviteToken",
+    //     component: <GroupInvite/>,
+    //     auth: false,
+    // },
     {
         path: "/groups/:id",
         component: <Group/>,
@@ -63,28 +64,22 @@ const routes = [
         exact: true,
     },
     {
-        path: "/profile/sessions",
-        component: <SessionList/>,
-        auth: true,
-        exact: true,
-    },
-    {
         path: "/logout",
         component: <Logout/>,
         auth: true,
         exact: true
     },
-    {
-        path: "/confirm-registration/:token",
-        component: <ConfirmRegistration/>,
-        auth: false,
-        layout: false,
-    },
-    {
-        path: "/confirm-email-change/:token",
-        component: <ConfirmEmailChange/>,
-        auth: false,
-    },
+    // {
+    //     path: "/confirm-registration/:token",
+    //     component: <ConfirmRegistration/>,
+    //     auth: false,
+    //     layout: false,
+    // },
+    // {
+    //     path: "/confirm-email-change/:token",
+    //     component: <ConfirmEmailChange/>,
+    //     auth: false,
+    // },
     {
         path: "/register",
         component: <Register/>,
@@ -100,10 +95,9 @@ const routes = [
 ]
 
 export default function App() {
-    const setLoggedIn = useSetRecoilState(isAuthenticated);
+    const [isLoggedIn, setLoggedIn] = useRecoilState(isAuthenticated);
     const setUserData = useSetRecoilState(userData);
-    const authToken = fetchToken();
-    const [loading, setLoading] = useState(authToken !== null);
+    const [loading, setLoading] = useState(!isLoggedIn);
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
 
     const theme = useMemo(
@@ -117,29 +111,29 @@ export default function App() {
     )
 
     useEffect(() => {
-        if (authToken !== null) {
-            fetchUserData()
+        if (isLoggedIn) {
+            fetchProfile()
                 .then(result => {
-                    console.log(localStorage.getItem("userID"))
+                    ws.tryAuthenticate();
                     setUserData(result);
-                    setLoggedIn(true);
                     setLoading(false);
                 })
                 .catch(err => {
                     console.log("error loading user info in root app", err)
                     toast.error(`${err}`);
-                    localStorage.removeItem("sessionToken");
-                    localStorage.removeItem("userID");
+                    removeToken();
                     setLoggedIn(false);
                     setLoading(false);
                 })
+        } else {
+            setLoading(false);
         }
-    }, [authToken, setLoading, setLoggedIn, setUserData])
+    }, [isLoggedIn, setLoading, setLoggedIn, setUserData])
 
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline/>
-            <MuiPickersUtilsProvider utils={MomentUtils}>
+            <MuiPickersUtilsProvider utils={LuxonUtils}>
                 <ToastContainer
                     position="top-right"
                     autoClose={5000}

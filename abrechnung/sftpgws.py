@@ -36,6 +36,7 @@ from uuid import UUID
 import aiohttp.web
 import asyncpg
 
+from abrechnung.database import db_connect
 from . import util
 from .subcommand import SubCommand
 
@@ -47,20 +48,7 @@ def encode_json(obj):
     if isinstance(obj, datetime):
         return obj.isoformat()
 
-    raise TypeError(f'cannot encode object of type {type(obj)}')
-
-
-async def db_connect(cfg):
-    """
-    get a connection pool to the database
-    """
-
-    return await asyncpg.create_pool(
-        user=cfg['database']['user'],
-        password=cfg['database']['password'],
-        database=cfg['database']['dbname'],
-        host=cfg['database']['host']
-    )
+    raise TypeError(f"cannot encode object of type {type(obj)}")
 
 
 class SFTPGWS(SubCommand):
@@ -89,47 +77,49 @@ class SFTPGWS(SubCommand):
         run the websocket server
         """
 
-        db_pool = await db_connect(self.cfg)
+        db_pool = await db_connect(
+            username=self.cfg["database"]["user"],
+            password=self.cfg["database"]["password"],
+            database=self.cfg["database"]["dbname"],
+            host=self.cfg["database"]["host"],
+        )
 
         async with db_pool.acquire() as conn:
             # configure automatic decoding of json type postgresql values
             await conn.set_type_codec(
-                'json',
-                encoder=json.dumps,
-                decoder=json.loads,
-                schema='pg_catalog'
+                "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
             )
 
             # register at db
             self.channel_id = await conn.fetchval(
-                "select * from forwarder_boot($1);",
-                self.cfg['websocket']['id']
+                "select * from forwarder_boot($1);", self.cfg["websocket"]["id"]
             )
 
-            self.logger.info(f'DB gave us channel_id {self.channel_id!r}')
-            self.channel_name = f'channel{self.channel_id}'
+            self.logger.info(f"DB gave us channel_id {self.channel_id!r}")
+            self.channel_name = f"channel{self.channel_id}"
 
             # one channel for NOTIFY to this db-client
-            await conn.add_listener(self.channel_name,
-                                    self.on_psql_notification)
+            await conn.add_listener(self.channel_name, self.on_psql_notification)
 
             for record in await conn.fetch("select * from get_allowed_functions();"):
                 self.function_whitelist[record[0]] = record[1], record[2]
 
             try:
                 app = aiohttp.web.Application()
-                app['pool'] = db_pool
-                app.router.add_route('GET', '/',
-                                     self.handle_ws_connection)
+                app["pool"] = db_pool
+                app.router.add_route("GET", "/", self.handle_ws_connection)
 
-                await aiohttp.web._run_app(app,
-                                           host=self.cfg['websocket']['host'],
-                                           port=self.cfg['websocket']['port'],
-                                           print=None)
+                await aiohttp.web._run_app(
+                    app,
+                    host=self.cfg["websocket"]["host"],
+                    port=self.cfg["websocket"]["port"],
+                    print=None,
+                )
             finally:
                 # deregister at db
-                await conn.execute("select * from forwarder_stop($1);",
-                                   self.cfg['websocket']['id'])
+                await conn.execute(
+                    "select * from forwarder_stop($1);", self.cfg["websocket"]["id"]
+                )
 
     def on_psql_notification(self, connection, pid, channel, payload):
         """
@@ -154,14 +144,16 @@ class SFTPGWS(SubCommand):
         del connection, pid  # unused
 
         if channel != self.channel_name:
-            raise Exception(f"bug: forwarder got a notification "
-                            f"for channel {channel!r}, "
-                            f"but registered is {self.channel_name!r}")
+            raise Exception(
+                f"bug: forwarder got a notification "
+                f"for channel {channel!r}, "
+                f"but registered is {self.channel_name!r}"
+            )
 
         payload_json = json.loads(payload)
 
-        connections = payload_json['connections']
-        for connection_id in self.tx_queues if connections == '*' else connections:
+        connections = payload_json["connections"]
+        for connection_id in self.tx_queues if connections == "*" else connections:
             message = {
                 "type": "notification",
                 "event": payload_json["event"],
@@ -173,7 +165,9 @@ class SFTPGWS(SubCommand):
             except KeyError:
                 pass  # tx queue is no longer available
             except asyncio.QueueFull:
-                self.logger.warning(f'[{connection_id}] tx queue full, skipping notification')
+                self.logger.warning(
+                    f"[{connection_id}] tx queue full, skipping notification"
+                )
 
     async def handle_ws_connection(self, request):
         """
@@ -183,13 +177,12 @@ class SFTPGWS(SubCommand):
         await ws.prepare(request)
 
         # get a database connection
-        async with request.app['pool'].acquire() as connection:
+        async with request.app["pool"].acquire() as connection:
             # register the client connection at the db
             connection_id = await connection.fetchval(
-                "select * from client_connected($1);",
-                self.channel_id
+                "select * from client_connected($1);", self.channel_id
             )
-            self.logger.info(f'[{connection_id}] connected')
+            self.logger.info(f"[{connection_id}] connected")
 
             # create the tx queue and task
             tx_queue = asyncio.Queue(maxsize=1000)
@@ -199,24 +192,30 @@ class SFTPGWS(SubCommand):
             try:
                 async for msg in ws:
                     try:
-                        self.logger.info(f'[{connection_id}] unhandled websocket message {msg.type}, {msg.data}')
+                        self.logger.info(
+                            f"[{connection_id}] unhandled websocket message {msg.type}, {msg.data}"
+                        )
                         if msg.type == aiohttp.WSMsgType.TEXT:
                             msg_obj = json.loads(msg.data)
-                            response = await self.ws_message(connection, connection_id, msg_obj)
+                            response = await self.ws_message(
+                                connection, connection_id, msg_obj
+                            )
                         else:
-                            self.logger.info(f'[{connection_id}] unhandled websocket message {msg.type}')
+                            self.logger.info(
+                                f"[{connection_id}] unhandled websocket message {msg.type}"
+                            )
                             continue
                     except Exception as exc:
                         traceback.print_exc()
                         response = {
-                            'type': 'generic-error',
-                            'error-id': type(exc).__name__,
-                            'error': str(exc)
+                            "type": "generic-error",
+                            "error-id": type(exc).__name__,
+                            "error": str(exc),
                         }
                     try:
                         tx_queue.put_nowait(response)
                     except asyncio.QueueFull:
-                        self.logger.error(f'[{connection_id}] tx queue full')
+                        self.logger.error(f"[{connection_id}] tx queue full")
                         break
             finally:
                 # deregister the client connection
@@ -225,7 +224,7 @@ class SFTPGWS(SubCommand):
                 del self.tx_queues[connection_id]
                 tx_task.cancel()
                 await tx_task
-                self.logger.info(f'[{connection_id}] disconnected')
+                self.logger.info(f"[{connection_id}] disconnected")
 
         return ws
 
@@ -236,21 +235,21 @@ class SFTPGWS(SubCommand):
         """
         while True:
             item = await tx_queue.get()
-            msg = json.dumps(item, default=encode_json) + '\n'
+            msg = json.dumps(item, default=encode_json) + "\n"
             await asyncio.shield(ws.send_str(msg))
 
     async def ws_message(self, connection, connection_id, msg):
         """
         the websocket client sent a message. handle it.
         """
-        msg_type = msg['type']
+        msg_type = msg["type"]
 
-        if msg_type == 'call':
+        if msg_type == "call":
             # call a sql function
 
-            call_id = msg['id']
-            func = msg['func']
-            args = msg['args']
+            call_id = msg["id"]
+            func = msg["func"]
+            args = msg["args"]
 
             # check if func is allowed
             try:
@@ -265,7 +264,7 @@ class SFTPGWS(SubCommand):
 
             # construct the sql query
             if requires_connection_id:
-                args['connection_id'] = connection_id
+                args["connection_id"] = connection_id
 
             # argument variables for the function
             func_args = []
@@ -283,7 +282,7 @@ class SFTPGWS(SubCommand):
                         "error": f"argument name invalid: {name!r}",
                     }
 
-                func_args.append(f'{name} := ${arg_idx + 1:d}')
+                func_args.append(f"{name} := ${arg_idx + 1:d}")
                 query_args.append(value)
 
             if is_procedure:
@@ -291,14 +290,15 @@ class SFTPGWS(SubCommand):
             else:
                 query = f"select * from {func}({', '.join(func_args)});"
 
-            self.logger.info(f"[{connection_id}] {util.BOLD}{query}{util.NORMAL} {query_args!r}")
+            self.logger.info(
+                f"[{connection_id}] {util.BOLD}{query}{util.NORMAL} {query_args!r}"
+            )
 
             prepared_query = await connection.prepare(query)
             for arg_id, arg_info in enumerate(prepared_query.get_parameters()):
-                if arg_info.name == 'timestamptz':
+                if arg_info.name == "timestamptz":
                     query_args[arg_id] = datetime.strptime(
-                        query_args[arg_id],
-                        "%Y-%m-%dT%H:%M:%S.%f%z"
+                        query_args[arg_id], "%Y-%m-%dT%H:%M:%S.%f%z"
                     )
 
             try:
@@ -306,38 +306,44 @@ class SFTPGWS(SubCommand):
                 query_result = await prepared_query.fetch(*query_args, timeout=10)
             except asyncpg.RaiseError as exc:
                 # a specific error was raised in the db
-                error_id, error = exc.args[0].split(':', maxsplit=1)
+                error_id, error = exc.args[0].split(":", maxsplit=1)
                 return {
                     "type": "call-error",
                     "id": call_id,
                     "error-id": error_id,
-                    "error": error
+                    "error": error,
                 }
             except asyncpg.PostgresError as exc:
                 return {
                     "type": "call-error",
                     "id": call_id,
                     "error-id": type(exc).__name__,
-                    "error": str(exc)
+                    "error": str(exc),
                 }
 
             # TODO: BIG TODO: figure out whether this is efficient enough
             return_types = prepared_query.get_attributes()
             return_data = [
-                dict((name, json.loads(value) if ret_type.type.name == 'json' and value is not None else value) for ret_type, name, value in
-                     zip(return_types, query_result[0].keys(), record)) for record in query_result
+                dict(
+                    (
+                        name,
+                        json.loads(value)
+                        if ret_type.type.name == "json" and value is not None
+                        else value,
+                    )
+                    for ret_type, name, value in zip(
+                        return_types, query_result[0].keys(), record
+                    )
+                )
+                for record in query_result
             ]
 
-            return {
-                "type": "call-result",
-                "id": call_id,
-                "data": return_data
-            }
+            return {"type": "call-result", "id": call_id, "data": return_data}
 
-        elif msg_type == 'trigger':
+        elif msg_type == "trigger":
             # set up redirect for notification to a function call
 
-            call_id = msg.get('id')
+            call_id = msg.get("id")
             # TODO notification -> func call setup
             raise NotImplementedError()
 

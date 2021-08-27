@@ -2,8 +2,9 @@ import React, {useEffect, useState} from "react";
 import {Link as RouterLink, useHistory} from "react-router-dom";
 import {Field, Form, Formik} from "formik";
 
-import {useRecoilState} from "recoil";
-import {isAuthenticated, register} from "../../recoil/auth";
+import {useRecoilValue} from "recoil";
+import {isAuthenticated} from "../../recoil/auth";
+import {register} from "../../api";
 import {toast} from "react-toastify";
 import Loading from "../../components/style/Loading";
 import {TextField} from "formik-material-ui";
@@ -40,7 +41,7 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Register() {
     const classes = useStyles();
-    const [loggedIn, setLoggedIn] = useRecoilState(isAuthenticated);
+    const loggedIn = useRecoilValue(isAuthenticated);
     const [loading, setLoading] = useState(true);
     let history = useHistory();
 
@@ -55,30 +56,11 @@ export default function Register() {
 
     const handleSubmit = (values, {setSubmitting}) => {
         register(values).then(res => {
-            if (res.success) {
-                toast.dark(`🐴 Registered successfully...`, {
-                    position: "top-right",
-                    autoClose: 5000,
-                    hideProgressBar: false,
-                    closeOnClick: true,
-                    pauseOnHover: true,
-                    draggable: true,
-                    progress: undefined,
-                });
-                setLoggedIn(true);
-                setSubmitting(false);
-                history.push('/profile');
-            }
+            toast.dark(`🐴 Registered successfully...`);
+            setSubmitting(false);
+            history.push('/login');
         }).catch(err => {
-            toast.dark(`❌ ${err}`, {
-                position: "top-right",
-                autoClose: 5000,
-                hideProgressBar: false,
-                closeOnClick: true,
-                pauseOnHover: true,
-                draggable: true,
-                progress: undefined,
-            });
+            toast.dark(`❌ ${err}`);
             setSubmitting(false);
         })
     };
@@ -90,20 +72,6 @@ export default function Register() {
         }
         return errors;
     }
-
-    // if (this.state.status === "success") {
-    //     return (
-    //         <div className="col-md-6 m-auto">
-    //             <div className="card card-body mt-5">
-    //                 <h4 className="text-center text-success">Registration successful</h4>
-    //                 <p>
-    //                     Registration successful, please confirm the follow link you received via email to confirm
-    //                     your registration.
-    //                 </p>
-    //             </div>
-    //         </div>
-    //     );
-    // }
 
     return (
         <>
@@ -184,7 +152,7 @@ export default function Register() {
                                         onClick={handleSubmit}
                                         className={classes.submit}
                                     >
-                                        Login
+                                        Register
                                     </Button>
                                     <Grid container justify="flex-end">
                                         <Grid item>

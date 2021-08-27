@@ -1,7 +1,6 @@
 import React, {useState} from "react";
 
 import {useRecoilValue} from "recoil";
-import {groupMembers, setGroupMemberPrivileges} from "../../recoil/groups";
 import {userData} from "../../recoil/auth";
 import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
@@ -22,6 +21,9 @@ import Delete from "@material-ui/icons/Delete";
 import Edit from "@material-ui/icons/Edit";
 import { FormControlLabel, makeStyles, Paper } from "@material-ui/core";
 import {toast} from "react-toastify";
+import {updateGroupMemberPrivileges} from "../../api";
+import {DateTime} from "luxon";
+import {currUserPermissions, groupMembers} from "../../recoil/groups";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -38,11 +40,12 @@ export default function GroupMemberList({group}) {
     const [showRemoveMemberDialog, setShowRemoveMemberDialog] = useState(false);
     const [memberToRemove, setMemberToRemove] = useState(null);
     const [memberToEdit, setMemberToEdit] = useState(null);
-    const members = useRecoilValue(groupMembers(group.id));
     const currentUser = useRecoilValue(userData);
+    const members = useRecoilValue(groupMembers(group.id));
+    const permissions = useRecoilValue(currUserPermissions(group.id));
 
     const handleEditMemberSubmit = (values, {setSubmitting}) => {
-        setGroupMemberPrivileges({
+        updateGroupMemberPrivileges({
             groupID: group.id,
             userID: values.userID,
             canWrite: values.canWrite,
@@ -51,10 +54,7 @@ export default function GroupMemberList({group}) {
             .then(result => {
                 setSubmitting(false);
                 setShowEditMemberDialog(false);
-                toast.success("Successfully updated group member permissions", {
-                    position: "top-right",
-                    autoClose: 5000,
-                });
+                toast.success("Successfully updated group member permissions");
             })
             .catch(err => {
                 setSubmitting(false);
@@ -66,8 +66,12 @@ export default function GroupMemberList({group}) {
         setMemberToEdit(null);
     };
 
+    const userForId = (userID) => {
+        return members.find(member => member.id === userID);
+    }
+
     const openEditMemberModal = (userID) => {
-        const user = members.find(member => member.user_id === userID);
+        const user = group.members.find(member => member.user_id === userID);
         // TODO: maybe deal with disappearing users in the list
         setMemberToEdit(user);
         setShowEditMemberDialog(true);
@@ -89,13 +93,13 @@ export default function GroupMemberList({group}) {
     return (
         <Paper elevation={1} className={classes.paper}>
             <List>
-                {members.length === 0 ? (
+                {group.members.length === 0 ? (
                     <ListItem><ListItemText primary="No Members"/></ListItem>
                 ) : (
-                    members.map((member, index) => (
+                    group.members.map((member, index) => (
                         <ListItem key={index}>
                             <ListItemText
-                                primary={member.username}
+                                primary={userForId(member.user_id)?.username}
                                 secondary={
                                     <>
                                         {member.is_owner ? (
@@ -105,19 +109,19 @@ export default function GroupMemberList({group}) {
                                             <Chip size="small"  className={classes.chip} component="span" color="primary" label="editor"
                                                   variant="outlined"/>
                                         ) : null}
-                                        {member.username === currentUser.username ? (
+                                        {member.user_id === currentUser.id ? (
                                             <Chip size="small"  className={classes.chip} component="span" color="primary" label="it's you"/>
                                         ) : (
                                             ""
                                         )}
                                         <br/>
                                         <small className="text-muted">
-                                            {member.description ? `${member.description}, ` : ""}joined {member.joined}
+                                            joined {DateTime.fromISO(member.joined_at).toLocaleString(DateTime.DATETIME_FULL)}
                                         </small>
                                     </>
                                 }
                             />
-                            {group.is_owner || group.can_write ? (
+                            {permissions.is_owner || permissions.can_write ? (
                                 <ListItemSecondaryAction>
                                     <IconButton
                                         onClick={() => openEditMemberModal(member.user_id)}
@@ -188,7 +192,7 @@ export default function GroupMemberList({group}) {
                         Are you sure you want to remove{" "}
                         <strong>
                             {memberToRemove !== null
-                                ? members.find((member) => member.user_id === memberToRemove).username
+                                ? group.members.find((member) => member.user_id === memberToRemove).username
                                 : ""}
                         </strong>{" "}
                         from this group?

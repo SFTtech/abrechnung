@@ -12,6 +12,7 @@ class SubCommand(abc.ABC):
     plus all arguments that were added by argparse_register() as keyword
     arguments.
     """
+
     @staticmethod
     def argparse_register(subparser):
         """

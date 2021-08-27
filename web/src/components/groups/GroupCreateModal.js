@@ -1,7 +1,6 @@
 import React from "react";
 import {toast} from "react-toastify";
 import {Field, Form, Formik} from "formik";
-import {createGroup} from "../../recoil/groups";
 import Dialog from "@material-ui/core/Dialog";
 import Button from "@material-ui/core/Button";
 import LinearProgress from "@material-ui/core/LinearProgress";
@@ -9,6 +8,7 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogActions from "@material-ui/core/DialogActions";
 import {TextField} from "formik-material-ui";
+import {createGroup} from "../../api";
 
 export default function GroupCreateModal({show, onClose}) {
 

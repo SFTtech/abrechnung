@@ -8,12 +8,12 @@ import DialogActions from "@material-ui/core/DialogActions";
 import Button from "@material-ui/core/Button";
 import React from "react";
 import {toast} from "react-toastify";
-import {editAccount} from "../../recoil/groups";
+import {updateAccount} from "../../api";
 
 export default function AccountEditModal({group, show, onClose, account}) {
 
     const handleSubmit = (values, {setSubmitting}) => {
-        editAccount({
+        updateAccount({
             groupID: group.id,
             accountID: values.accountID,
             name: values.name,

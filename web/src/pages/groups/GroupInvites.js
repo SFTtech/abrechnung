@@ -1,7 +1,5 @@
 import React, {useState} from "react";
 
-import {useRecoilValue} from "recoil";
-import {deleteInviteToken, groupInviteTokens} from "../../recoil/groups";
 import InviteLinkCreate from "../../components/groups/InviteLinkCreate";
 import {toast} from "react-toastify";
 import List from "@material-ui/core/List";
@@ -14,6 +12,7 @@ import Typography from "@material-ui/core/Typography";
 import Grid from "@material-ui/core/Grid";
 import AddIcon from "@material-ui/icons/Add";
 import { makeStyles, Paper } from "@material-ui/core";
+import {deleteGroupInvite} from "../../api";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -24,20 +23,13 @@ const useStyles = makeStyles((theme) => ({
 export default function GroupInvites({group}) {
     const classes = useStyles();
     const [showModal, setShowModal] = useState(false);
-    const tokens = useRecoilValue(groupInviteTokens(group.id));
 
     const deleteToken = (id) => {
-        deleteInviteToken({groupID: group.id, tokenID: id})
+        deleteGroupInvite({groupID: group.id, inviteID: id})
             .then(result => {
-                toast.success(`Removed invite link`, {
-                    position: "top-right",
-                    autoClose: 5000,
-                });
+                toast.success(`Removed invite link`);
             }).catch(err => {
-            toast.error(`${err}`, {
-                position: "top-right",
-                autoClose: 5000,
-            });
+            toast.error(`${err}`);
         })
     }
 
@@ -47,16 +39,16 @@ export default function GroupInvites({group}) {
                 Active Invite Links
             </Typography>
             <List>
-                {tokens.length === 0 ? (
+                {group.invites.length === 0 ? (
                     <ListItem><ListItemText primary="No Links"/></ListItem>
                 ) : (
-                    tokens.map((link, index) => (
+                    group.invites.map((link, index) => (
                         <ListItem key={index}>
                             <ListItemText
                                 primary={`${window.location.origin}/invite/${link.token}`}
                                 secondary={link.description}/>
                             <ListItemSecondaryAction>
-                                <IconButton onClick={() => deleteToken(link.invite_id)}>
+                                <IconButton onClick={() => deleteToken(link.id)}>
                                     <Delete/>
                                 </IconButton>
                             </ListItemSecondaryAction>

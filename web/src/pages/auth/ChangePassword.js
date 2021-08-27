@@ -1,5 +1,4 @@
 import React from "react";
-import {ws} from "../../websocket";
 import {Field, Form, Formik} from "formik";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
@@ -7,7 +6,7 @@ import Paper from "@material-ui/core/Paper";
 import {TextField} from "formik-material-ui";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import {makeStyles} from "@material-ui/core";
-import {fetchToken} from "../../recoil/auth";
+import {changePassword} from "../../api";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -27,10 +26,9 @@ export default function ChangePassword() {
     }
 
     const handleSubmit = (values, {setSubmitting}) => {
-        ws.call("change_password", {
-            authtoken: fetchToken(),
-            password: values.password,
-            new_password: values.newPassword,
+        changePassword({
+            oldPassword: values.password,
+            newPassword: values.newPassword,
         })
             .then((res) => {
                 setSubmitting(false);

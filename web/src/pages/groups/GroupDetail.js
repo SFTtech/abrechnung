@@ -7,8 +7,8 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 import Paper from "@material-ui/core/Paper";
 import {makeStyles} from "@material-ui/core";
-import {updateGroupMetadata} from "../../recoil/groups";
 import {toast} from "react-toastify";
+import {updateGroupMetadata} from "../../api";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -29,10 +29,7 @@ export default function GroupDetail({group}) {
             terms: terms
         })
             .catch(err => {
-                toast.error(`Error updating group ${err}!`, {
-                    position: "top-right",
-                    autoClose: 5000,
-                });
+                toast.error(`Error updating group ${err}!`);
             })
     }
 

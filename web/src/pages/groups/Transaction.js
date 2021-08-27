@@ -1,7 +1,7 @@
-import React, {Suspense} from "react";
+import React, {Suspense, useEffect, useState} from "react";
 import {useRouteMatch} from "react-router-dom";
 import {useRecoilValue} from "recoil";
-import {commitRevision, discardRevision, startEditTransaction, transaction} from "../../recoil/transactions";
+import {transactionById} from "../../recoil/transactions";
 import Loading from "../../components/style/Loading";
 import TransactionDetail from "../../components/transactions/TransactionDetail";
 import TransferShares from "../../components/transactions/TransferShares";
@@ -16,7 +16,8 @@ import {toast} from "react-toastify";
 import EditIcon from "@material-ui/icons/Edit";
 import IconButton from "@material-ui/core/IconButton";
 import {Alert} from "@material-ui/lab";
-import {uncommitedTransactionRevision} from "../../recoil/revisions";
+import {userData} from "../../recoil/auth";
+import {commitTransaction, discardTransactionChange} from "../../api";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -27,32 +28,25 @@ const useStyles = makeStyles((theme) => ({
 export default function Transaction({group}) {
     const classes = useStyles();
     const match = useRouteMatch();
-    const transactionID = parseInt(match.params.id);
-    const wipRevision = useRecoilValue(uncommitedTransactionRevision({
-        groupID: group.id,
-        transactionID: transactionID
-    }));
-    const isEditing = wipRevision !== null;
+    const transactionID = match.params.id;
+    const user = useRecoilValue(userData);
 
-    const t = useRecoilValue(transaction({groupID: group.id, transactionID: transactionID}));
+    const transaction = useRecoilValue(transactionById({groupID: group.id, transactionID: transactionID}));
     // TODO: handle 404
-    // TODO: wait for transaction to actually load in case we are redirected from create transaction
+
+    const [isEditing, setEditing] = useState(false);
+
+    useEffect(() => {
+        setEditing(transaction.is_wip)
+    }, [transaction, user])
 
     const edit = () => {
-        startEditTransaction({transactionID: transactionID})
-            .then(result => {
-            })
-            .catch(err => {
-                toast.error(`Error starting transaction edit: ${err}!`, {
-                    position: "top-right",
-                    autoClose: 5000,
-                });
-            })
+        setEditing(true);
     }
 
     const abortEdit = () => {
-        if (wipRevision !== null) {
-            discardRevision({revisionID: wipRevision.id})
+        if (isEditing) {
+            discardTransactionChange({groupID: group.id, transactionID: transaction.id})
                 .then(result => {
                 })
                 .catch(err => {
@@ -62,8 +56,8 @@ export default function Transaction({group}) {
     }
 
     const commitEdit = () => {
-        if (wipRevision !== null) {
-            commitRevision({revisionID: wipRevision.id})
+        if (isEditing) {
+            commitTransaction({groupID: group.id, transactionID: transaction.id})
                 .then(result => {
                 })
                 .catch(err => {
@@ -76,7 +70,7 @@ export default function Transaction({group}) {
         <Paper elevation={1} className={classes.paper}>
             <div>
                 <Grid container justify="space-between">
-                    <Chip color="primary" label={t.type}/>
+                    <Chip color="primary" label={transaction.type}/>
                     {isEditing ? (
                         <div>
                             <Button color="primary" onClick={commitEdit}>Save</Button>
@@ -88,17 +82,17 @@ export default function Transaction({group}) {
                 </Grid>
             </div>
 
-            <TransactionDetail group={group} transaction={t} wipRevision={wipRevision}/>
+            <TransactionDetail group={group} transaction={transaction} isEditing={isEditing}/>
 
             <Suspense fallback={<Loading/>}>
-                {t.type === "transfer" ? (
-                    <TransferShares group={group} transaction={t} wipRevision={wipRevision}/>
-                ) : t.type === "purchase" ? (
-                    <PurchaseShares group={group} transaction={t} wipRevision={wipRevision}/>
-                ) : t.type === "mimo" ? (
-                    <MimoShares group={group} transaction={t} wipRevision={wipRevision}/>
+                {transaction.type === "transfer" ? (
+                    <TransferShares group={group} transaction={transaction} isEditing={isEditing}/>
+                ) : transaction.type === "purchase" ? (
+                    <PurchaseShares group={group} transaction={transaction} isEditing={isEditing}/>
+                ) : transaction.type === "mimo" ? (
+                    <MimoShares group={group} transaction={transaction} isEditing={isEditing}/>
                 ) : (
-                    <Alert severity="danger">Error: Invalid Transaction Type "{t.type}"</Alert>
+                    <Alert severity="danger">Error: Invalid Transaction Type "{transaction.type}"</Alert>
                 )}
             </Suspense>
         </Paper>

@@ -1,12 +1,7 @@
 import {atom, atomFamily, selector, selectorFamily} from "recoil";
+import {fetchAccounts, fetchGroups, fetchMembers} from "../api";
 import {ws} from "../websocket";
-import {fetchToken, fetchUserID} from "./auth";
-
-const fetchGroups = async () => {
-    return await ws.call("group_list", {
-        authtoken: fetchToken(),
-    });
-}
+import {userData} from "./auth";
 
 export const groupList = atom({
     key: "groupList",
@@ -18,15 +13,17 @@ export const groupList = atom({
     }),
     effects_UNSTABLE: [
         ({setSelf, trigger}) => {
-            const userID = fetchUserID();
-            console.log("group subscription user id", userID)
-            ws.subscribe(fetchToken(), "group", () => {
-                fetchGroups().then(result => setSelf(result));
-            }, {element_id: userID})
+            ws.subscribeUser("group", ({scope, group_id}) => {
+                if (scope === "group") {
+                    // fetchGroup({groupID: group_id})
+                    //     .then(result => setSelf(result));
+                    fetchGroups().then(result => setSelf(result));
+                }
+            })
             // TODO: handle registration errors
 
             return () => {
-                ws.unsubscribe("group", {element_id: userID});
+                ws.unsubscribeUser("group");
             };
         }
     ]
@@ -37,56 +34,19 @@ export const groupById = atomFamily({
     default: selectorFamily({
         key: "groupById/default",
         get: groupID => async ({get}) => {
-            const metadata = (await ws.call("group_metadata_get", {
-                authtoken: fetchToken(),
-                group_id: groupID,
-            }))[0];
-            return {
-                ...get(groupList).find(group => group.id === groupID),
-                ...metadata
-            }
+            return get(groupList).find(group => group.id === groupID);
         }
     })
 })
 
-const fetchGroupMembers = async groupID => {
-    return await ws.call("group_member_list", {
-        authtoken: fetchToken(),
-        group_id: groupID,
-    });
-}
-
-export const groupMembers = atomFamily({
-    key: "groupMembers",
-    default: selectorFamily({
-        key: "groupMembers/default",
-        get: groupID => async ({get}) => {
-            return await fetchGroupMembers(groupID);
-        }
-    }),
-    effects_UNSTABLE: groupID => [
-        ({setSelf, trigger}) => {
-            ws.subscribe(fetchToken(), "group_membership", ({element_id}) => {
-                if (element_id === groupID) {
-                    console.log("reloading group members")
-                    fetchGroupMembers(groupID).then(result => setSelf(result));
-                }
-            }, {element_id: groupID})
-            // TODO: handle registration errors
-
-            return () => {
-                ws.unsubscribe("group_membership", {element_id: groupID});
-            };
-        }
-    ]
+export const currUserPermissions = selectorFamily({
+    key: "currUserPermissions",
+    get: groupID => async ({get}) => {
+        const group = get(groupById(groupID));
+        const currUser = get(userData);
+        return group?.members.find(member => member.user_id === currUser.id);
+    }
 })
-
-const fetchAccounts = async groupID => {
-    return await ws.call("account_list", {
-        authtoken: fetchToken(),
-        group_id: groupID,
-    });
-}
 
 export const groupAccounts = atomFamily({
     key: "groupAccounts",
@@ -98,19 +58,46 @@ export const groupAccounts = atomFamily({
     }),
     effects_UNSTABLE: groupID => [
         ({setSelf, trigger}) => {
-            ws.subscribe(fetchToken(), "account", ({element_id}) => {
-                if (element_id === groupID) {
-                    console.log("reloading accounts")
-                    fetchAccounts(groupID).then(result => setSelf(result));
+            ws.subscribe("account", groupID, ({scope, group_id, account_id}) => {
+                if (scope === "account" && group_id === groupID) {
+                    // fetchAccount({groupID: group_id, accountID: account_id})
+                    //     .then(result => setSelf(result));
+                    fetchAccounts(group_id).then(result => setSelf(result));
                 }
-            }, {element_id: groupID})
+            })
             // TODO: handle registration errors
 
             return () => {
-                ws.unsubscribe("account", {element_id: groupID});
+                ws.unsubscribe("account", groupID);
             };
         }
     ]
+})
+
+export const groupMembers = atomFamily({
+    key: "groupMembers",
+    default: selectorFamily({
+        key: "groupMembers/default",
+        get: groupID => async ({get}) => {
+            return await fetchMembers(groupID);
+        }
+    }),
+    // effects_UNSTABLE: groupID => [
+    //     ({setSelf, trigger}) => {
+    //         ws.subscribe("member", groupID, ({scope, group_id, user_id}) => {
+    //             if (scope === "member" && group_id === groupID) {
+    //                 // fetchMember({groupID: group_id, userID: user_id})
+    //                 //     .then(result => setSelf(result));
+    //                 fetchMembers(group_id).then(result => setSelf(result));
+    //             }
+    //         })
+    //         // TODO: handle registration errors
+    //
+    //         return () => {
+    //             ws.unsubscribe("member", groupID);
+    //         };
+    //     }
+    // ]
 })
 
 export const groupAccountByID = selectorFamily({
@@ -121,161 +108,44 @@ export const groupAccountByID = selectorFamily({
     }
 })
 
-const fetchGroupInvites = async groupID => {
-    return await ws.call("group_invite_list", {
-        authtoken: fetchToken(),
-        group_id: groupID,
-        only_mine: false,
-    });
-}
+// const fetchGroupLog = async groupID => {
+//     return await ws.call("group_log_get", {
+//         authtoken: fetchToken(),
+//         group_id: groupID,
+//         from_id: 0,
+//     });
+// }
+//
+// export const groupLog = atomFamily({
+//     key: "groupLog",
+//     default: selectorFamily({
+//         key: "groupLog/default",
+//         get: groupID => async ({get}) => {
+//             return await fetchGroupLog(groupID);
+//         }
+//     }),
+//     effects_UNSTABLE: groupID => [
+//         ({setSelf, trigger}) => {
+//             ws.subscribe(fetchToken(), "group_log", ({element_id}) => {
+//                 if (element_id === groupID) {
+//                     console.log("reloading group log")
+//                     fetchGroupLog(groupID).then(result => setSelf(result));
+//                 }
+//             }, {element_id: groupID})
+//             // TODO: handle registration errors
+//
+//             return () => {
+//                 ws.unsubscribe("group_log", {element_id: groupID});
+//             };
+//         }
+//     ]
+// })
 
-export const groupInviteTokens = atomFamily({
-    key: "groupInviteTokens",
-    default: selectorFamily({
-        key: "groupInviteTokens/default",
-        get: groupID => async ({get}) => {
-            return await fetchGroupInvites(groupID);
-        }
-    }),
-    effects_UNSTABLE: groupID => [
-        ({setSelf, trigger}) => {
-            ws.subscribe(fetchToken(), "group_invite", ({element_id}) => {
-                if (element_id === groupID) {
-                    console.log("reloading group invites")
-                    fetchGroupInvites(groupID).then(result => setSelf(result));
-                }
-            }, {element_id: groupID})
-            // TODO: handle registration errors
-
-            return () => {
-                ws.unsubscribe("group_invite", {element_id: groupID});
-            };
-        }
-    ]
-})
-
-const fetchGroupLog = async groupID => {
-    return await ws.call("group_log_get", {
-        authtoken: fetchToken(),
-        group_id: groupID,
-        from_id: 0,
-    });
-}
-
-export const groupLog = atomFamily({
-    key: "groupLog",
-    default: selectorFamily({
-        key: "groupLog/default",
-        get: groupID => async ({get}) => {
-            return await fetchGroupLog(groupID);
-        }
-    }),
-    effects_UNSTABLE: groupID => [
-        ({setSelf, trigger}) => {
-            ws.subscribe(fetchToken(), "group_log", ({element_id}) => {
-                if (element_id === groupID) {
-                    console.log("reloading group log")
-                    fetchGroupLog(groupID).then(result => setSelf(result));
-                }
-            }, {element_id: groupID})
-            // TODO: handle registration errors
-
-            return () => {
-                ws.unsubscribe("group_log", {element_id: groupID});
-            };
-        }
-    ]
-})
-
-export const createGroup = async ({name, description}) => {
-    return await ws.call("group_create", {
-        authtoken: fetchToken(),
-        name: name,
-        description: description,
-        terms: "",
-        currency_symbol: "€",
-    });
-}
-
-export const deleteGroup = async ({groupID}) => {
-    return await ws.call("delete_group", {
-        authtoken: fetchToken(),
-        group: groupID,
-    });
-}
-
-export const setGroupMemberPrivileges = async ({groupID, userID, canWrite, isOwner}) => {
-    return await ws.call("group_member_privileges_set", {
-        authtoken: fetchToken(),
-        group_id: groupID,
-        user_id: userID,
-        can_write: canWrite === undefined ? null : canWrite,
-        is_owner: isOwner === undefined ? null : isOwner,
-    });
-}
-
-export const updateGroupMetadata = async ({groupID, name, description, currencySymbol, terms}) => {
-    let args = {
-        authtoken: fetchToken(),
-        group_id: groupID,
-    };
-    if (name != null) {
-        args.name = name;
-    }
-    if (description != null) {
-        args.description = description;
-    }
-    if (currencySymbol != null) {
-        args.currency_symbol = currencySymbol;
-    }
-    if (terms != null) {
-        args.terms = terms;
-    }
-    return await ws.call("group_metadata_set", args);
-}
-
-export const createGroupLog = async ({groupID, message}) => {
-    return await ws.call("group_log_post", {
-        authtoken: fetchToken(),
-        group_id: groupID,
-        message: message,
-    });
-}
-
-export const createInviteToken = async ({groupID, description, validUntil, singleUse}) => {
-    return await ws.call("group_invite_create", {
-        authtoken: fetchToken(),
-        group_id: groupID,
-        description: description,
-        valid_until: validUntil,
-        single_use: singleUse,
-    });
-}
-
-export const deleteInviteToken = async ({groupID, tokenID}) => {
-    return await ws.call("group_invite_delete", {
-        authtoken: fetchToken(),
-        group_id: groupID,
-        invite_id: tokenID,
-    });
-}
-
-export const createAccount = async ({groupID, name, description}) => {
-    return await ws.call("account_create", {
-        authtoken: fetchToken(),
-        group_id: groupID,
-        name: name,
-        description: description,
-    });
-}
-
-export const editAccount = async ({groupID, accountID, name, description}) => {
-    return await ws.call("account_edit", {
-        authtoken: fetchToken(),
-        group_id: groupID,
-        account_id: accountID,
-        name: name,
-        description: description,
-    });
-}
-
+//
+// export const createGroupLog = async ({groupID, message}) => {
+//     return await ws.call("group_log_post", {
+//         authtoken: fetchToken(),
+//         group_id: groupID,
+//         message: message,
+//     });
+// }

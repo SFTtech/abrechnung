@@ -1,26 +1,25 @@
 import React, {useEffect, useState} from "react";
-import {updateTransaction} from "../../recoil/transactions";
 import List from "@material-ui/core/List";
 import TextField from "@material-ui/core/TextField";
 import {toast} from "react-toastify";
 import DisabledTextField from "../style/DisabledTextField";
+import {updateTransactionDetails} from "../../api";
 
-export default function TransactionDetail({group, transaction, wipRevision}) {
-    const editing = wipRevision !== null;
-
+export default function TransactionDetail({group, transaction, isEditing}) {
     const [description, setDescription] = useState("");
     const [transactionValue, setTransactionValue] = useState("");
 
     useEffect(() => {
+        // TODO: incorporate pending changes
         setDescription(transaction.description);
         setTransactionValue(transaction.value.toFixed(2));
     }, [transaction, setDescription, setTransactionValue])
 
     const save = (params) => {
-        if (wipRevision !== null) {
-            updateTransaction({
+        if (isEditing) {
+            updateTransactionDetails({
+                groupID: group.id,
                 transactionID: transaction.id,
-                revisionID: wipRevision.id,
                 currencyConversionRate: transaction.currency_conversion_rate,
                 currencySymbol: transaction.currency_symbol,
                 value: transaction.value,
@@ -35,7 +34,7 @@ export default function TransactionDetail({group, transaction, wipRevision}) {
 
     return (
         <List>
-            {editing ? (
+            {isEditing ? (
                 <>
                     <TextField
                         label="Description"

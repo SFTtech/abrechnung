@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from "react";
-import {useHistory} from "react-router-dom";
+import {Link as RouterLink, useHistory} from "react-router-dom";
 import {Field, Form, Formik} from "formik";
-import {fetchUserData, isAuthenticated, login, userData} from "../../recoil/auth";
-import {useRecoilState, useSetRecoilState} from "recoil";
+import {isAuthenticated} from "../../recoil/auth";
+import {useRecoilState} from "recoil";
 import Loading from "../../components/style/Loading";
 import {toast} from "react-toastify";
 import Button from "@material-ui/core/Button";
@@ -12,6 +12,9 @@ import {Container, CssBaseline, makeStyles} from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import Avatar from '@material-ui/core/Avatar';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
+import {login} from "../../api";
+import Grid from "@material-ui/core/Grid";
+import Link from "@material-ui/core/Link";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -36,14 +39,13 @@ const useStyles = makeStyles((theme) => ({
 export default function Login() {
     const [loggedIn, setLoggedIn] = useRecoilState(isAuthenticated);
     const [loading, setLoading] = useState(true);
-    const setUserData = useSetRecoilState(userData);
     let history = useHistory();
     const classes = useStyles();
 
     useEffect(() => {
         if (loggedIn) {
             setLoading(false);
-            history.push('/');
+            history.push('/'); // TODO: handle next page on redirect
         } else {
             setLoading(false);
         }
@@ -53,26 +55,13 @@ export default function Login() {
         login(values).then(res => {
             toast.success(`Logged in...`);
             setSubmitting(false);
-            fetchUserData().then(result => {
-                setLoggedIn(true);
-                setUserData(result);
-                history.push("/"); // handle next
-            }).catch(err => {
-            })
+            setLoggedIn(true);
         }).catch(err => {
             toast.error(`${err}`);
             setSubmitting(false);
+            setLoggedIn(false);
         })
     };
-
-
-    // if (this.props.isAuthenticated) {
-    //     let params = queryString.parse(this.props.location.search);
-    //     if (params.next !== null && params.next !== undefined && params.next.startsWith("/")) {
-    //         return <Redirect to={params.next}/>;
-    //     }
-    //     return <Redirect to="/"/>;
-    // }
 
     if (loading) {
         return <Loading/>
@@ -127,6 +116,13 @@ export default function Login() {
                             >
                                 Login
                             </Button>
+                            <Grid container justify="flex-end">
+                                <Grid item>
+                                    <Link to="/register" component={RouterLink} variant="body2">
+                                        No account? register
+                                    </Link>
+                                </Grid>
+                            </Grid>
                         </Form>
                     )}
                 </Formik>

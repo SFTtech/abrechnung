@@ -2,7 +2,7 @@ import React, {Suspense, useState} from "react";
 import {Route, Switch, useRouteMatch} from "react-router-dom";
 import GroupInvites from "./GroupInvites";
 import GroupMemberList from "./GroupMemberList";
-import GroupLog from "./GroupLog";
+// import GroupLog from "./GroupLog";
 import Accounts from "../../components/groups/Accounts";
 import TransactionLog from "../../components/transactions/TransactionLog";
 import {useRecoilValue} from "recoil";
@@ -13,6 +13,7 @@ import {AppBar, Box, Paper, Tab, Tabs} from "@material-ui/core";
 import Transaction from "./Transaction";
 import GroupDetail from "./GroupDetail";
 import Grid from "@material-ui/core/Grid";
+import {UUID_REGEX} from "../../utils";
 
 function TabPanel(props) {
     const {children, value, index, ...other} = props;
@@ -43,7 +44,7 @@ function a11yProps(index) {
 
 export default function Group() {
     const match = useRouteMatch();
-    const groupID = parseInt(match.params.id);
+    const groupID = match.params.id;
     const group = useRecoilValue(groupById(groupID));
     const [selectedTab, setSelectedTab] = useState(0);
 
@@ -55,9 +56,9 @@ export default function Group() {
     return (
         <Layout group={group}>
             <Switch>
-                <Route exact path={`${match.path}/log`}>
-                    <GroupLog group={group} />
-                </Route>
+                {/*<Route exact path={`${match.path}/log`}>*/}
+                {/*    <GroupLog group={group} />*/}
+                {/*</Route>*/}
                 <Route exact path={`${match.path}/members`}>
                     <GroupMemberList group={group} />
                 </Route>
@@ -97,7 +98,7 @@ export default function Group() {
                         </Grid>
                     </Grid>
                 </Route>
-                <Route path={`${match.path}/transactions/:id([0-9]+)`}>
+                <Route path={`${match.path}/transactions/:id(${UUID_REGEX})`}>
                     <Suspense fallback={<Loading/>}>
                         <Transaction group={group}/>
                     </Suspense>

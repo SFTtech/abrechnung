@@ -1,8 +1,6 @@
 import {Field, Form, Formik} from "formik";
 import React from "react";
-import {createInviteToken, groupInviteTokens} from "../../recoil/groups";
 import {toast} from "react-toastify";
-import {useSetRecoilState} from "recoil";
 import {Checkbox, TextField} from "formik-material-ui";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
@@ -12,14 +10,17 @@ import DialogActions from "@material-ui/core/DialogActions";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import {DateTimePicker} from "formik-material-ui-pickers";
 import {FormControlLabel} from "@material-ui/core";
+import {createGroupInvite} from "../../api";
 
 export default function InviteLinkCreate({show, onClose, group}) {
 
     const handleSubmit = (values, {setSubmitting}) => {
-        createInviteToken({
+        createGroupInvite({
             groupID: group.id,
             name: values.name,
-            description: values.description
+            description: values.description,
+            validUntil: values.validUntil,
+            singleUse: values.singleUse,
         })
             .then(result => {
                 toast.success("Successfully created invite token");

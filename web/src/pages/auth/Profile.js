@@ -31,9 +31,6 @@ export default function Profile() {
                     <ListItemText primary="E-Mail" secondary={user.email}/>
                 </ListItem>
                 <ListItem>
-                    <ListItemText primary="Language" secondary={user.language}/>
-                </ListItem>
-                <ListItem>
                     <ListItemText primary="Registered" secondary={user.registered_at}/>
                 </ListItem>
             </List>

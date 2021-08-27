@@ -8,10 +8,10 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogActions from "@material-ui/core/DialogActions";
 import {Select, TextField} from "formik-material-ui";
-import {createTransaction} from "../../recoil/transactions";
 import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
+import {createTransaction} from "../../api";
 
 export default function TransactionCreateModal({group, show, onClose}) {
     const handleSubmit = (values, {setSubmitting}) => {
@@ -19,7 +19,7 @@ export default function TransactionCreateModal({group, show, onClose}) {
             groupID: group.id,
             type: values.type,
             description: values.description,
-            value: values.value,
+            value: parseFloat(values.value),
             currencySymbol: "€",
             currencyConversionRate: 1.0
         })

@@ -8,9 +8,10 @@ database:
   password: "Mb2.r5oHf-0t"
   dbname: "abrechnung"
 
-websocket:
+api:
+  secret_key: "verysecretsecret"
   host: "localhost"
-  port: 9048
+  port: 8080
   id: default
 
 email:

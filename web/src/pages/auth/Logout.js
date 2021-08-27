@@ -1,7 +1,8 @@
-import React, { useEffect } from "react";
-import {isAuthenticated, logout, userData} from "../../recoil/auth";
+import React, {useEffect} from "react";
+import {isAuthenticated, userData} from "../../recoil/auth";
 import {useSetRecoilState} from "recoil";
-import {Redirect} from "react-router-dom";
+import {logout} from "../../api";
+import Loading from "../../components/style/Loading";
 
 
 export default function Logout() {
@@ -9,13 +10,13 @@ export default function Logout() {
     const setUserState = useSetRecoilState(userData);
 
     useEffect(() => {
-        logout();
-        setLoggedIn(false);
-
-        window.location.assign("/");
+        logout().then(res => {
+            setLoggedIn(false);
+            window.location.assign("/login");
+        });
     }, [setLoggedIn, setUserState])
 
     return (
-        <Redirect to="/login" />
+        <Loading/>
     )
 }

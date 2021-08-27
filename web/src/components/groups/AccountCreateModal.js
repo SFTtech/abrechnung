@@ -1,6 +1,5 @@
 import React from "react";
 import {Field, Form, Formik} from "formik";
-import {createAccount} from "../../recoil/groups";
 import {toast} from "react-toastify";
 import Button from "@material-ui/core/Button";
 import Dialog from "@material-ui/core/Dialog";
@@ -9,6 +8,7 @@ import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogActions from "@material-ui/core/DialogActions";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import {TextField} from "formik-material-ui";
+import {createAccount} from "../../api";
 
 export default function AccountCreateModal({show, onClose, group}) {
     const handleSubmit = (values, {setSubmitting}) => {
@@ -18,17 +18,11 @@ export default function AccountCreateModal({show, onClose, group}) {
             description: values.description
         })
             .then(result => {
-                toast.success(`Created account ${values.name}`, {
-                    position: "top-right",
-                    autoClose: 5000,
-                });
+                toast.success(`Created account ${values.name}`);
                 setSubmitting(false);
                 onClose();
             }).catch(err => {
-            toast.error(`${err}`, {
-                position: "top-right",
-                autoClose: 5000,
-            });
+            toast.error(`${err}`);
             setSubmitting(false);
         })
     };
