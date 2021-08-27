@@ -2,38 +2,19 @@ import asyncio
 import json
 
 import aiohttp
-from aiohttp import web
 from aiohttp.test_utils import unittest_run_loop
 
-from abrechnung.application.groups import Groups, GroupsReader
-from abrechnung.application.users import Users
-from abrechnung.http import create_app
 from abrechnung.http.auth import token_for_user
-from abrechnung.system import create_runner
 from tests.http import BaseHTTPAPITest
 
 
 class WebsocketAPITest(BaseHTTPAPITest):
-    async def get_application(self) -> web.Application:
-        runner = create_runner()
-        runner.start()
-
-        self.group_service = runner.get(Groups)
-        self.group_read_service = runner.get(GroupsReader)
-        self.user_service = runner.get(Users)
-
-        self.jwt_secret_key = "asdf1234"
-
-        app = create_app(runner=runner, secret_key=self.jwt_secret_key)
-
-        return app
-
     @unittest_run_loop
     async def test_websocket_notifications(self):
         user_id = self.user_service.register_user(
             username="user", email="email@email.com", password="password"
         )
-        token = token_for_user(user_id, self.jwt_secret_key)
+        token = token_for_user(user_id, self.secret_key)
 
         ws = await self.client.ws_connect("/api/v1/ws")
         self.assertIsNotNone(ws)

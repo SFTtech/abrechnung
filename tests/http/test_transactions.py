@@ -1,5 +1,3 @@
-from uuid import uuid4, UUID
-
 from aiohttp.test_utils import unittest_run_loop
 
 from tests.http import HTTPAPITest
@@ -8,14 +6,18 @@ from tests.http import HTTPAPITest
 class TransactionAPITest(HTTPAPITest):
     async def _create_group_with_transaction(
         self, transaction_type: str
-    ) -> tuple[UUID, UUID]:
-        group_id = self.group_service.create_group(
-            self.test_user_id, "name", "description", "€", "terms"
+    ) -> tuple[int, int]:
+        group_id = await self.group_service.create_group(
+            user_id=self.test_user_id,
+            name="name",
+            description="description",
+            currency_symbol="€",
+            terms="terms",
         )
-        transaction_id = self.group_service.create_transaction(
-            self.test_user_id,
-            group_id,
-            transaction_type,
+        transaction_id = await self.transaction_service.create_transaction(
+            user_id=self.test_user_id,
+            group_id=group_id,
+            type=transaction_type,
             description="description123",
             currency_symbol="€",
             currency_conversion_rate=1.22,
@@ -24,7 +26,7 @@ class TransactionAPITest(HTTPAPITest):
         return group_id, transaction_id
 
     async def _fetch_transaction(
-        self, group_id: UUID, transaction_id: UUID, expected_status: int = 200
+        self, group_id: int, transaction_id: int, expected_status: int = 200
     ) -> dict:
         resp = await self._get(
             f"/api/v1/groups/{group_id}/transactions/{transaction_id}"
@@ -35,7 +37,7 @@ class TransactionAPITest(HTTPAPITest):
         return ret_data
 
     async def _commit_transaction(
-        self, group_id: UUID, transaction_id: UUID, expected_status: int = 204
+        self, group_id: int, transaction_id: int, expected_status: int = 204
     ) -> None:
         resp = await self._post(
             f"/api/v1/groups/{group_id}/transactions/{transaction_id}/commit"
@@ -44,9 +46,9 @@ class TransactionAPITest(HTTPAPITest):
 
     async def _post_creditor_share(
         self,
-        group_id: UUID,
-        transaction_id: UUID,
-        account_id: UUID,
+        group_id: int,
+        transaction_id: int,
+        account_id: int,
         value: float,
         expected_status: int = 204,
     ) -> None:
@@ -58,9 +60,9 @@ class TransactionAPITest(HTTPAPITest):
 
     async def _switch_creditor_share(
         self,
-        group_id: UUID,
-        transaction_id: UUID,
-        account_id: UUID,
+        group_id: int,
+        transaction_id: int,
+        account_id: int,
         value: float,
         expected_status: int = 204,
     ) -> None:
@@ -72,9 +74,9 @@ class TransactionAPITest(HTTPAPITest):
 
     async def _delete_creditor_sahre(
         self,
-        group_id: UUID,
-        transaction_id: UUID,
-        account_id: UUID,
+        group_id: int,
+        transaction_id: int,
+        account_id: int,
         expected_status: int = 204,
     ) -> None:
         resp = await self._delete(
@@ -85,9 +87,9 @@ class TransactionAPITest(HTTPAPITest):
 
     async def _post_debitor_share(
         self,
-        group_id: UUID,
-        transaction_id: UUID,
-        account_id: UUID,
+        group_id: int,
+        transaction_id: int,
+        account_id: int,
         value: float,
         expected_status: int = 204,
     ) -> None:
@@ -99,9 +101,9 @@ class TransactionAPITest(HTTPAPITest):
 
     async def _switch_debitor_share(
         self,
-        group_id: UUID,
-        transaction_id: UUID,
-        account_id: UUID,
+        group_id: int,
+        transaction_id: int,
+        account_id: int,
         value: float,
         expected_status: int = 204,
     ) -> None:
@@ -113,9 +115,9 @@ class TransactionAPITest(HTTPAPITest):
 
     async def _delete_debitor_share(
         self,
-        group_id: UUID,
-        transaction_id: UUID,
-        account_id: UUID,
+        group_id: int,
+        transaction_id: int,
+        account_id: int,
         expected_status: int = 204,
     ) -> None:
         resp = await self._delete(
@@ -127,7 +129,11 @@ class TransactionAPITest(HTTPAPITest):
     @unittest_run_loop
     async def test_create_transaction(self):
         group_id = self.group_service.create_group(
-            self.test_user_id, "name", "description", "€", "terms"
+            user_id=self.test_user_id,
+            name="name",
+            description="description",
+            currency_symbol="€",
+            terms="terms",
         )
         resp = await self._post(
             f"/api/v1/groups/{group_id}/transactions",
@@ -145,22 +151,26 @@ class TransactionAPITest(HTTPAPITest):
 
     @unittest_run_loop
     async def test_list_transactions(self):
-        group_id = self.group_service.create_group(
-            self.test_user_id, "name", "description", "€", "terms"
+        group_id = await self.group_service.create_group(
+            user_id=self.test_user_id,
+            name="name",
+            description="description",
+            currency_symbol="€",
+            terms="terms",
         )
-        transaction1_id = self.group_service.create_transaction(
-            self.test_user_id,
-            group_id,
-            "purchase",
+        transaction1_id = await self.transaction_service.create_transaction(
+            user_id=self.test_user_id,
+            group_id=group_id,
+            type="purchase",
             description="description123",
             currency_symbol="€",
             currency_conversion_rate=1.22,
             value=122.22,
         )
-        transaction2_id = self.group_service.create_transaction(
-            self.test_user_id,
-            group_id,
-            "purchase",
+        transaction2_id = await self.transaction_service.create_transaction(
+            user_id=self.test_user_id,
+            group_id=group_id,
+            type="purchase",
             description="description123",
             currency_symbol="€",
             currency_conversion_rate=1.22,
@@ -184,22 +194,28 @@ class TransactionAPITest(HTTPAPITest):
         resp = await self._get(f"/api/v1/groups/{group_id}/transactions/asdf1234")
         self.assertEqual(400, resp.status)
 
-        resp = await self._get(
-            f"/api/v1/groups/{uuid4()}/transactions/{transaction_id}"
-        )
+        resp = await self._get(f"/api/v1/groups/foobar/transactions/{transaction_id}")
         self.assertEqual(403, resp.status)
 
-        resp = await self._get(f"/api/v1/groups/{group_id}/transactions/{uuid4()}")
+        resp = await self._get(f"/api/v1/groups/{group_id}/transactions/1332")
         self.assertEqual(403, resp.status)
 
     @unittest_run_loop
     async def test_commit_transaction(self):
         group_id, transaction_id = await self._create_group_with_transaction("purchase")
-        account1_id = self.group_service.create_account(
-            self.test_user_id, group_id, "personal", "account1", "description"
+        account1_id = await self.account_service.create_account(
+            user_id=self.test_user_id,
+            group_id=group_id,
+            type="personal",
+            name="account1",
+            description="description",
         )
-        account2_id = self.group_service.create_account(
-            self.test_user_id, group_id, "personal", "account2", "description"
+        account2_id = await self.account_service.create_account(
+            user_id=self.test_user_id,
+            group_id=group_id,
+            type="personal",
+            name="account2",
+            description="description",
         )
 
         # we should not be able to commit this transaction as we do not have creditor or debitor shares
@@ -236,11 +252,19 @@ class TransactionAPITest(HTTPAPITest):
     @unittest_run_loop
     async def test_creditor_shares(self):
         group_id, transaction_id = await self._create_group_with_transaction("purchase")
-        account1_id = self.group_service.create_account(
-            self.test_user_id, group_id, "personal", "account1", "description"
+        account1_id = await self.account_service.create_account(
+            user_id=self.test_user_id,
+            group_id=group_id,
+            type="personal",
+            name="account1",
+            description="description",
         )
-        account2_id = self.group_service.create_account(
-            self.test_user_id, group_id, "personal", "account2", "description"
+        account2_id = await self.account_service.create_account(
+            user_id=self.test_user_id,
+            group_id=group_id,
+            type="personal",
+            name="account2",
+            description="description",
         )
 
         await self._post_creditor_share(group_id, transaction_id, account1_id, 1.0)
@@ -294,11 +318,19 @@ class TransactionAPITest(HTTPAPITest):
     @unittest_run_loop
     async def test_debitor_shares_purchase(self):
         group_id, transaction_id = await self._create_group_with_transaction("purchase")
-        account1_id = self.group_service.create_account(
-            self.test_user_id, group_id, "personal", "account1", "description"
+        account1_id = await self.account_service.create_account(
+            user_id=self.test_user_id,
+            group_id=group_id,
+            type="personal",
+            name="account1",
+            description="description",
         )
-        account2_id = self.group_service.create_account(
-            self.test_user_id, group_id, "personal", "account2", "description"
+        account2_id = await self.account_service.create_account(
+            user_id=self.test_user_id,
+            group_id=group_id,
+            type="personal",
+            name="account2",
+            description="description",
         )
 
         await self._post_debitor_share(group_id, transaction_id, account1_id, 1.0)
@@ -351,8 +383,12 @@ class TransactionAPITest(HTTPAPITest):
     @unittest_run_loop
     async def test_debitor_shares_transfer(self):
         group_id, transaction_id = await self._create_group_with_transaction("transfer")
-        account_id = self.group_service.create_account(
-            self.test_user_id, group_id, "personal", "account1", "description"
+        account_id = await self.account_service.create_account(
+            user_id=self.test_user_id,
+            group_id=group_id,
+            type="personal",
+            name="account1",
+            description="description",
         )
 
         await self._post_debitor_share(group_id, transaction_id, account_id, 1.0)

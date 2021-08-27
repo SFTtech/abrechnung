@@ -97,6 +97,7 @@ create table if not exists grp (
     -- currency (symbol) to use in the group
     currency_symbol text        not null,
 
+    created_by  integer references usr(id) on delete restrict,
     created_at         timestamptz not null default now()
 );
 
@@ -105,7 +106,7 @@ create table if not exists group_membership (
     group_id    integer references grp (id) on delete cascade,
     primary key (user_id, group_id),
 
-    joined      timestamptz not null default now(),
+    joined_at      timestamptz not null default now(),
 
     -- optional user description text
     description text        not null default '',

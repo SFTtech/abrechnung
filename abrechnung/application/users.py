@@ -1,7 +1,9 @@
+from datetime import datetime, timezone
+
 import bcrypt
 
 from abrechnung.domain.users import User
-from . import Application, NotFoundError
+from . import Application, NotFoundError, CommandError
 
 
 class InvalidPassword(Exception):
@@ -12,14 +14,14 @@ class LoginFailed(Exception):
     pass
 
 
-class Users(Application):
+class UserService(Application):
     @staticmethod
-    async def _hash_password(password: str) -> str:
+    def _hash_password(password: str) -> str:
         salt = bcrypt.gensalt()
         return bcrypt.hashpw(password=password.encode("utf-8"), salt=salt).decode()
 
     @staticmethod
-    async def _check_password(password: str, hashed_password: str) -> bool:
+    def _check_password(password: str, hashed_password: str) -> bool:
         return bcrypt.checkpw(
             password=password.encode("utf-8"),
             hashed_password=hashed_password.encode("utf-8"),
@@ -37,7 +39,7 @@ class Users(Application):
             if user["deleted"] or user["pending"]:
                 return False
 
-            return await self._check_password(password, res["hashed_password"])
+            return self._check_password(password, user["hashed_password"])
 
     async def login_user(self, username: str, password: str) -> tuple[int, str]:
         """
@@ -73,15 +75,37 @@ class Users(Application):
             async with conn.transaction():
                 hashed_password = self._hash_password(password)
                 user_id = await conn.fetchval(
-                    "insert into usr (email, hashed_password, username) values ($1, $2, $3) returning id",
-                    email,
+                    "insert into usr (username, email, hashed_password) values ($1, $2, $3) returning id",
                     username,
+                    email,
                     hashed_password,
                 )
                 if user_id is None:
-                    raise NotFoundError(f"User with id {user_id} does not exist")
+                    raise CommandError(f"Registering new user failed")
+
                 await conn.execute(
                     "insert into pending_registration (user_id) values ($1)", user_id
+                )
+
+                return user_id
+
+    async def confirm_registration(self, token: str) -> int:
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                row = await conn.fetchrow(
+                    "select user_id, valid_until from pending_registration where token = $1",
+                    token,
+                )
+                user_id = row["user_id"]
+                valid_until = row["valid_until"]
+                if valid_until is None or valid_until < datetime.now(tz=timezone.utc):
+                    raise PermissionError
+
+                await conn.execute(
+                    "delete from pending_registration where user_id = $1", user_id
+                )
+                await conn.execute(
+                    "update usr set pending = false where id = $1", user_id
                 )
 
                 return user_id
@@ -129,3 +153,24 @@ class Users(Application):
                 user_id,
                 email,
             )
+
+    async def confirm_email_change(self, token: str) -> int:
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                row = await conn.fetchrow(
+                    "select user_id, new_email, valid_until from pending_email_change where token = $1",
+                    token,
+                )
+                user_id = row["user_id"]
+                valid_until = row["valid_until"]
+                if valid_until is None or valid_until < datetime.now(tz=timezone.utc):
+                    raise PermissionError
+
+                await conn.execute(
+                    "delete from pending_email_change where user_id = $1", user_id
+                )
+                await conn.execute(
+                    "update usr set email = $2 where id = $1", user_id, row["new_email"]
+                )
+
+                return user_id

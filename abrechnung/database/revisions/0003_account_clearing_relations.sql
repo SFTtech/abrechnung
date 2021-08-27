@@ -18,7 +18,7 @@
 -- (cycles could in theory be resolved using linear algebra, but
 --  neither comprehensibility nore numerical stability can be guaranteed).
 create table if not exists account_clearing_relation (
-    grp integer not null references grp(id) on delete cascade,
+    group_id integer not null references grp(id) on delete cascade,
     id serial primary key,
 
     -- the account that is cleared.
@@ -33,10 +33,8 @@ create table if not exists account_clearing_relation (
 
 create table if not exists account_clearing_relation_history (
     id integer references account(id) on delete restrict,
-    revision bigint references revision(id) on delete cascade,
-    primary key(id, revision),
-    -- valid cna be set to false at any time
-    valid bool not null default true,
+    revision_id bigint references account_revision(id) on delete cascade,
+    primary key(id, revision_id),
 
     -- the number of shares of the source account's balance that
     -- should be cleared to this destination account.
@@ -44,5 +42,8 @@ create table if not exists account_clearing_relation_history (
     --   balance of source * (shares / (sum of all shares with this source))
     shares double precision not null,
     constraint account_clearing_relation_history_shares_nonnegative check (shares >= 0),
-    description text not null default ''
+    description text not null default '',
+
+    -- deleted can be set to true at any time
+    deleted bool not null default false
 );

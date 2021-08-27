@@ -1,19 +1,19 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import schema
 from aiohttp import web
 from aiohttp.abc import Request
 from schema import Schema
 
-from abrechnung.application.groups import UserNotFound
+from abrechnung.application import NotFoundError
 from abrechnung.domain import InvalidCommand
 from abrechnung.http.serializers import (
     GroupSerializer,
     UserSerializer,
     AccountSerializer,
+    GroupMemberSerializer,
 )
 from abrechnung.http.utils import validate, json_response
-from abrechnung.utils import parse_url_uuid, parse_url_int
 
 routes = web.RouteTableDef()
 
@@ -21,10 +21,10 @@ routes = web.RouteTableDef()
 @routes.get("/groups")
 async def list_groups(request):
     try:
-        groups = request.app["group_read_service"].list_groups(
-            request["user"]["user_id"]
+        groups = await request.app["group_service"].list_groups(
+            user_id=request["user"]["user_id"]
         )
-    except UserNotFound:
+    except NotFoundError:
         raise web.HTTPForbidden(reason="permission denied")
 
     serializer = GroupSerializer(groups)
@@ -37,20 +37,23 @@ async def list_groups(request):
     Schema({"name": str, "description": str, "currency_symbol": str, "terms": str})
 )
 async def create_group(request: Request, data):
-    group_id = request.app["group_service"].create_group(
-        request["user"]["user_id"], **data
+    group_id = await request.app["group_service"].create_group(
+        user_id=request["user"]["user_id"],
+        name=data["name"],
+        description=data["description"],
+        currency_symbol=data["currency_symbol"],
+        terms=data["terms"],
     )
 
     return json_response(data={"group_id": str(group_id)})
 
 
-@routes.get("/groups/{group_id}")
+@routes.get(r"/groups/{group_id:\d+}")
 async def get_group(request: Request):
-    group_id = parse_url_uuid(request.match_info["group_id"], "Invalid group id")
-
     try:
-        group = request.app["group_read_service"].get_group(
-            request["user"]["user_id"], group_id
+        group = await request.app["group_service"].get_group(
+            user_id=request["user"]["user_id"],
+            group_id=int(request.match_info["group_id"]),
         )
     except PermissionError:
         raise web.HTTPForbidden(reason="permission denied")
@@ -60,29 +63,29 @@ async def get_group(request: Request):
     return json_response(data=serializer.to_repr())
 
 
-@routes.get("/groups/{group_id}/members")
+@routes.get(r"/groups/{group_id:\d+}/members")
 async def list_members(request):
-    group_id = parse_url_uuid(request.match_info["group_id"], "Invalid group id")
 
     try:
-        members = request.app["group_read_service"].list_members(
-            request["user"]["user_id"], group_id
+        members = await request.app["group_service"].list_members(
+            user_id=request["user"]["user_id"],
+            group_id=int(request.match_info["group_id"]),
         )
     except PermissionError:
         raise web.HTTPForbidden(reason="permission denied")
 
-    serializer = UserSerializer(members)
+    serializer = GroupMemberSerializer(members)
 
     return json_response(data=serializer.to_repr())
 
 
-@routes.get("/groups/{group_id}/accounts")
+@routes.get(r"/groups/{group_id:\d+}/accounts")
 async def list_accounts(request):
-    group_id = parse_url_uuid(request.match_info["group_id"], "Invalid group id")
 
     try:
-        accounts = request.app["group_read_service"].list_accounts(
-            request["user"]["user_id"], group_id
+        accounts = await request.app["account_service"].list_accounts(
+            user_id=request["user"]["user_id"],
+            group_id=int(request.match_info["group_id"]),
         )
     except PermissionError:
         raise web.HTTPForbidden(reason="permission denied")
@@ -92,14 +95,17 @@ async def list_accounts(request):
     return json_response(data=serializer.to_repr())
 
 
-@routes.post("/groups/{group_id}/accounts")
+@routes.post(r"/groups/{group_id:\d+}/accounts")
 @validate(Schema({"name": str, "description": str, "type": str}))
 async def create_account(request: Request, data: dict):
-    group_id = parse_url_uuid(request.match_info["group_id"], "Invalid group id")
 
     try:
-        account_id = request.app["group_service"].create_account(
-            request["user"]["user_id"], group_id, **data
+        account_id = await request.app["account_service"].create_account(
+            user_id=request["user"]["user_id"],
+            group_id=int(request.match_info["group_id"]),
+            name=data["name"],
+            description=data["description"],
+            type=data["type"],
         )
     except InvalidCommand as e:
         raise web.HTTPBadRequest(reason=str(e))
@@ -109,15 +115,16 @@ async def create_account(request: Request, data: dict):
     return json_response(data={"account_id": str(account_id)})
 
 
-@routes.get("/groups/{group_id}/accounts/{account_id}")
+@routes.get(r"/groups/{group_id:\d+}/accounts/{account_id:\d+}")
 async def get_account(request: Request):
-    group_id = parse_url_uuid(request.match_info["group_id"], "Invalid group id")
-    account_id = parse_url_uuid(request.match_info["account_id"], "Invalid account id")
-
     try:
-        account = request.app["group_read_service"].get_account(
-            request["user"]["user_id"], group_id, account_id
+        account = await request.app["account_service"].get_account(
+            user_id=request["user"]["user_id"],
+            group_id=int(request.match_info["group_id"]),
+            account_id=int(request.match_info["account_id"]),
         )
+    except NotFoundError as e:
+        raise web.HTTPNotFound(reason=str(e))
     except PermissionError:
         raise web.HTTPForbidden(reason="permission denied")
 
@@ -126,17 +133,14 @@ async def get_account(request: Request):
     return json_response(data=serializer.to_repr())
 
 
-@routes.post("/groups/{group_id}/accounts/{account_id}")
+@routes.post(r"/groups/{group_id:\d+}/accounts/{account_id:\d+}")
 @validate(schema.Schema({"name": str, "description": str}))
 async def update_account(request: Request, data: dict):
-    group_id = parse_url_uuid(request.match_info["group_id"], "Invalid group id")
-    account_id = parse_url_uuid(request.match_info["account_id"], "Invalid account id")
-
     try:
-        request.app["group_service"].update_account(
-            request["user"]["user_id"],
-            group_id=group_id,
-            account_id=account_id,
+        await request.app["account_service"].update_account(
+            user_id=request["user"]["user_id"],
+            group_id=int(request.match_info["group_id"]),
+            account_id=int(request.match_info["account_id"]),
             name=data["name"],
             description=data["description"],
         )
@@ -148,7 +152,7 @@ async def update_account(request: Request, data: dict):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post("/groups/{group_id}/invites")
+@routes.post(r"/groups/{group_id:\d+}/invites")
 @validate(
     schema.Schema(
         {
@@ -159,32 +163,17 @@ async def update_account(request: Request, data: dict):
     )
 )
 async def create_invite(request: Request, data: dict):
-    group_id = parse_url_uuid(request.match_info["group_id"], "Invalid group id")
+    valid_until = datetime.fromisoformat(data["valid_until"])
+    if valid_until.tzinfo is None:
+        valid_until = valid_until.replace(tzinfo=timezone.utc)
 
     try:
-        token = request.app["group_service"].create_invite(
+        await request.app["group_service"].create_invite(
             user_id=request["user"]["user_id"],
-            group_id=group_id,
+            group_id=int(request.match_info["group_id"]),
             description=data["description"],
             single_use=data["single_use"],
-            valid_until=data["valid_until"],
-        )
-    except InvalidCommand as e:
-        raise web.HTTPBadRequest(reason=str(e))
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
-
-    return json_response(data={"token": token})
-
-
-@routes.delete("/groups/{group_id}/invites/{invite_id}")
-async def create_invite(request: Request):
-    group_id = parse_url_uuid(request.match_info["group_id"], "Invalid group id")
-    invite_id = parse_url_int(request.match_info["invite_id"], "Invalid invite id")
-
-    try:
-        request.app["group_service"].delete_invite(
-            user_id=request["user"]["user_id"], group_id=group_id, invite_id=invite_id
+            valid_until=valid_until,
         )
     except InvalidCommand as e:
         raise web.HTTPBadRequest(reason=str(e))
@@ -194,15 +183,29 @@ async def create_invite(request: Request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post("/groups/{group_id}/preview")
+@routes.delete(r"/groups/{group_id:\d+}/invites/{invite_id:\d+}")
+async def create_invite(request: Request):
+    try:
+        await request.app["group_service"].delete_invite(
+            user_id=request["user"]["user_id"],
+            group_id=int(request.match_info["group_id"]),
+            invite_id=int(request.match_info["invite_id"]),
+        )
+    except InvalidCommand as e:
+        raise web.HTTPBadRequest(reason=str(e))
+    except PermissionError:
+        raise web.HTTPForbidden(reason="permission denied")
+
+    return json_response(status=web.HTTPNoContent.status_code)
+
+
+@routes.post(r"/groups/{group_id:\d+}/preview")
 @validate(schema.Schema({"invite_token": str}))
 async def preview_group(request: Request, data: dict):
-    group_id = parse_url_uuid(request.match_info["group_id"], "Invalid group id")
-
     try:
-        group = request.app["group_read_service"].preview_group(
+        group = await request.app["group_service"].preview_group(
             user_id=request["user"]["user_id"],
-            group_id=group_id,
+            group_id=int(request.match_info["group_id"]),
             invite_token=data["invite_token"],
         )
     except InvalidCommand as e:
@@ -215,15 +218,13 @@ async def preview_group(request: Request, data: dict):
     return json_response(data=serializer.to_repr())
 
 
-@routes.post("/groups/{group_id}/join")
+@routes.post(r"/groups/{group_id:\d+}/join")
 @validate(schema.Schema({"invite_token": str}))
 async def preview_group(request: Request, data: dict):
-    group_id = parse_url_uuid(request.match_info["group_id"], "Invalid group id")
-
     try:
-        request.app["group_service"].join_group(
+        await request.app["group_service"].join_group(
             user_id=request["user"]["user_id"],
-            group_id=group_id,
+            group_id=int(request.match_info["group_id"]),
             invite_token=data["invite_token"],
         )
     except InvalidCommand as e:

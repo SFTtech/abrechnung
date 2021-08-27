@@ -5,6 +5,10 @@ import aiohttp_cors as aiohttp_cors
 from aiohttp import web
 from asyncpg.pool import Pool
 
+from abrechnung.application.accounts import AccountService
+from abrechnung.application.groups import GroupService
+from abrechnung.application.transactions import TransactionService
+from abrechnung.application.users import UserService
 from abrechnung.database import db_connect
 from abrechnung.http import groups, transactions, websocket
 from abrechnung.http.auth import jwt_middleware
@@ -30,7 +34,13 @@ def create_app(
     if middlewares is None:
         auth_middleware = jwt_middleware(
             secret=secret_key,
-            whitelist=["/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/ws"],
+            whitelist=[
+                "/api/v1/auth/login",
+                "/api/v1/auth/register",
+                "/api/v1/auth/confirm_registration",
+                "/api/v1/auth/confirm_email_change",
+                "/api/v1/ws",
+            ],
         )
         middlewares = [auth_middleware]
 
@@ -40,12 +50,15 @@ def create_app(
     api_app["secret_key"] = secret_key
     api_app["db_pool"] = db_pool
 
+    api_app["user_service"] = UserService(db_pool=db_pool)
+    api_app["group_service"] = GroupService(db_pool=db_pool)
+    api_app["account_service"] = AccountService(db_pool=db_pool)
+    api_app["transaction_service"] = TransactionService(db_pool=db_pool)
+
     api_app.add_routes(groups.routes)
     api_app.add_routes(transactions.routes)
     api_app.add_routes(auth.routes)
     api_app.add_routes(websocket.routes)
-
-    websocket.init_app(api_app)
 
     app.add_subapp("/api/v1/", api_app)
 

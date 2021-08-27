@@ -4,6 +4,7 @@ from datetime import datetime, date
 from typing import Optional, Any
 from uuid import UUID
 
+import asyncpg
 from aiohttp import web
 from aiohttp.helpers import sentinel
 from aiohttp.typedefs import LooseHeaders
@@ -46,6 +47,10 @@ async def error_middleware(request, handler):
             return response
         message = response.message
         status = response.status
+    except (asyncpg.DataError, asyncpg.IntegrityConstraintViolationError) as ex:
+        # catch underlying bad query inputs to catch schema violations as bad requests
+        status = 400
+        message = str(ex)
     except web.HTTPException as ex:
         if ex.status >= 500:
             raise

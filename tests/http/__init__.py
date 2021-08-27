@@ -1,17 +1,21 @@
+import fcntl
 import logging
 import os
-import secrets
-from uuid import uuid4
+from pathlib import Path
 
-from aiohttp import web
 from aiohttp.abc import Application
 from aiohttp.test_utils import AioHTTPTestCase
 
-from abrechnung.application.groups import Groups, GroupsReader
-from abrechnung.application.users import Users
+from abrechnung.application.accounts import AccountService
+from abrechnung.application.groups import GroupService
+from abrechnung.application.transactions import TransactionService
+from abrechnung.application.users import UserService
 from abrechnung.http import create_app
 from abrechnung.http.auth import token_for_user
-from abrechnung.system import create_runner
+from tests.utils import get_test_db
+
+
+lock_file = Path(f"/run/user/{os.getuid()}/abrechnungs_test_lock")
 
 
 class BaseHTTPAPITest(AioHTTPTestCase):
@@ -20,42 +24,50 @@ class BaseHTTPAPITest(AioHTTPTestCase):
         logging.basicConfig(level=logging.DEBUG)
 
     async def setUpAsync(self) -> None:
-        os.environ["INFRASTRUCTURE_FACTORY"] = "eventsourcing.sqlite:Factory"
+        lock_file.touch(exist_ok=True)
 
-        # use a different in memory sqlite database for every test so that we do not run into collisions
-        os.environ[
-            "SQLITE_DBNAME"
-        ] = f"file::{secrets.token_hex(10)}?mode=memory&cache=shared"
-        os.environ["SQLITE_LOCK_TIMEOUT"] = "1"
+        self.lock_fd = lock_file.open("w")
+        fcntl.lockf(self.lock_fd, fcntl.LOCK_EX)
+
+    async def tearDownAsync(self) -> None:
+        self.lock_fd.close()
+
+    async def _create_test_user(self, username: str, email: str) -> tuple[int, str]:
+        """returns the user id and password"""
+        async with self.db_pool.acquire() as conn:
+            password = "asdf1234"
+            hashed_password = UserService._hash_password(password)
+            user_id = await conn.fetchval(
+                "insert into usr (username, email, hashed_password, pending) values ($1, $2, $3, false) returning id",
+                username,
+                email,
+                hashed_password,
+            )
+
+            return user_id, password
 
     async def get_application(self) -> Application:
-        raise NotImplementedError
+        self.db_pool = await get_test_db()
+
+        self.group_service = GroupService(self.db_pool)
+        self.account_service = AccountService(self.db_pool)
+        self.user_service = UserService(self.db_pool)
+        self.transaction_service = TransactionService(self.db_pool)
+
+        self.secret_key = "asdf1234"
+        app = create_app(secret_key=self.secret_key, db_pool=self.db_pool)
+
+        return app
 
 
 class HTTPAPITest(BaseHTTPAPITest):
-    # @web.middleware
-    # async def mock_auth_middleware(self, request, handler):
-    #     request["user"] = {"user_id": self.test_user_id}
-    #     return await handler(request)
+    async def setUpAsync(self) -> None:
+        await super().setUpAsync()
 
-    async def get_application(self) -> web.Application:
-        runner = create_runner()
-        runner.start()
-
-        self.group_service = runner.get(Groups)
-        self.group_read_service = runner.get(GroupsReader)
-        self.user_service = runner.get(Users)
-
-        self.test_user_id = self.user_service.register_user(
-            "dummy_user", email="dummy_user@stuff.stuff", password="asdf1234"
+        self.test_user_id, _ = await self._create_test_user(
+            "user1", "user1@email.stuff"
         )
-
-        self.secret_key = "asdf1234"
         self.jwt_token = token_for_user(self.test_user_id, self.secret_key)
-
-        app = create_app(runner=runner, secret_key=self.secret_key)
-
-        return app
 
     async def _post(self, *args, **kwargs):
         headers = kwargs.pop("headers", {})

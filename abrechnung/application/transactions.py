@@ -1,8 +1,9 @@
 from abrechnung.application import Application
+from abrechnung.domain.transactions import Transaction
 
 
 class TransactionService(Application):
-    def list_transactions(self, user_id: int, group_id: int) -> list[Group]:
+    def list_transactions(self, user_id: int, group_id: int) -> list[Transaction]:
         if (
             user_id not in self.user_to_groups
             or group_id not in self.user_to_groups[user_id]
@@ -16,7 +17,7 @@ class TransactionService(Application):
 
     def get_transaction(
         self, user_id: int, group_id: int, transaction_id: int
-    ) -> Group:
+    ) -> Transaction:
         if (
             user_id not in self.user_to_groups
             or group_id not in self.user_to_groups[user_id]

@@ -41,7 +41,9 @@ class CLI(subcommand.SubCommand):
 
     @staticmethod
     def argparse_register(subparser):
-        subparser.add_argument("action", choices=["migrate", "attach"], nargs="?")
+        subparser.add_argument(
+            "action", choices=["migrate", "attach", "rebuild"], nargs="?"
+        )
 
     async def _attach(self):
         with contextlib.ExitStack() as exitstack:
@@ -101,6 +103,15 @@ class CLI(subcommand.SubCommand):
                 host=self.config["database"]["host"],
                 password=self.config["database"]["password"],
             )
+            await revisions.apply_revisions(db_pool=db_pool)
+        elif self.action == "rebuild":
+            db_pool = await db_connect(
+                username=self.config["database"]["user"],
+                database=self.config["database"]["dbname"],
+                host=self.config["database"]["host"],
+                password=self.config["database"]["password"],
+            )
+            await revisions.reset_schema(db_pool=db_pool)
             await revisions.apply_revisions(db_pool=db_pool)
         elif self.action == "attach":
             await self._attach()

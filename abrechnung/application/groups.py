@@ -1,12 +1,11 @@
 from datetime import datetime
 
-from abrechnung.application import Application, require_group_permissions
-from abrechnung.domain.groups import Group, GroupMember
-from abrechnung.domain.users import User
+from abrechnung.application import Application, require_group_permissions, NotFoundError
+from abrechnung.domain.groups import Group, GroupMember, GroupPreview
 
 
-class Groups(Application):
-    def create_group(
+class GroupService(Application):
+    async def create_group(
         self,
         user_id: int,
         name: str,
@@ -16,7 +15,7 @@ class Groups(Application):
     ) -> int:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                group_id = conn.fetchval(
+                group_id = await conn.fetchval(
                     "insert into grp (name, description, currency_symbol, terms) "
                     "values ($1, $2, $3, $4) returning id",
                     name,
@@ -24,7 +23,7 @@ class Groups(Application):
                     currency_symbol,
                     terms,
                 )
-                conn.execute(
+                await conn.execute(
                     "insert into group_membership (user_id, group_id, is_owner, can_write, description) "
                     "values ($1, $2, $3, $4, $5)",
                     user_id,
@@ -37,7 +36,7 @@ class Groups(Application):
                 return group_id
 
     @require_group_permissions(can_write=True)
-    def create_invite(
+    async def create_invite(
         self,
         user_id: int,
         group_id: int,
@@ -47,7 +46,7 @@ class Groups(Application):
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                conn.execute(
+                await conn.execute(
                     "insert into group_invite(group_id, description, created_by, valid_until, single_use)"
                     " values ($1, $2, $3, $4, $5)",
                     group_id,
@@ -58,7 +57,7 @@ class Groups(Application):
                 )
 
     @require_group_permissions(can_write=True)
-    def delete_invite(
+    async def delete_invite(
         self,
         user_id: int,
         group_id: int,
@@ -66,64 +65,113 @@ class Groups(Application):
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                conn.execute(
+                await conn.execute(
                     "delete from group_invite where id = $1 and group_id = $2",
                     invite_id,
                     group_id,
                 )
 
-    def join_group(self, user_id: int, group_id: int, invite_token: str):
+    async def join_group(self, user_id: int, group_id: int, invite_token: str):
         pass
 
-    def list_groups(self, user_id: int) -> list[Group]:
+    async def list_groups(self, user_id: int) -> list[Group]:
         async with self.db_pool.acquire() as conn:
-            cur = await conn.cursor(
-                "select id, name, description, terms, currency_symbol, created_at "
-                "from grp "
-                "join group_membership gm on grp.id = gm.group_id where gm.user_id = $1",
-                user_id,
-            )
-            result = []
-            async for group in cur:
-                result.append(
-                    Group(
-                        name=group["name"],
-                        description=group["description"],
-                        currency_symbol=group["currency_symbol"],
-                        terms=group["terms"],
-                        created_at=group["created_at"],
-                    )
+            async with conn.transaction():
+                cur = conn.cursor(
+                    "select grp.id, grp.name, grp.description, grp.terms, grp.currency_symbol, grp.created_at, "
+                    "grp.created_by "
+                    "from grp "
+                    "join group_membership gm on grp.id = gm.group_id where gm.user_id = $1",
+                    user_id,
                 )
+                result = []
+                async for group in cur:
+                    result.append(
+                        Group(
+                            id=group["id"],
+                            name=group["name"],
+                            description=group["description"],
+                            currency_symbol=group["currency_symbol"],
+                            terms=group["terms"],
+                            created_at=group["created_at"],
+                            created_by=group["created_by"],
+                        )
+                    )
 
             return result
 
-    @require_group_permissions
-    def get_group(self, user_id: int, group_id: int) -> Group:
-        if (
-            user_id not in self.user_to_groups
-            or group_id not in self.user_to_groups[user_id]
-        ):
-            raise PermissionError
+    @require_group_permissions()
+    async def get_group(self, user_id: int, group_id: int) -> Group:
+        async with self.db_pool.acquire() as conn:
+            group = await conn.fetchrow(
+                "select id, name, description, terms, currency_symbol, created_at, created_by "
+                "from grp "
+                "where grp.id = $1",
+                group_id,
+            )
+            if not group:
+                raise NotFoundError(f"Group with id {group_id} does not exist")
 
-        return self.repository.get(group_id)
+            return Group(
+                id=group["id"],
+                name=group["name"],
+                description=group["description"],
+                currency_symbol=group["currency_symbol"],
+                terms=group["terms"],
+                created_at=group["created_at"],
+                created_by=group["created_by"],
+            )
 
-    def preview_group(self, group_id: int, invite_token) -> Group:
-        group: Group = self.repository.get(group_id)
+    async def preview_group(self, group_id: int, invite_token: str) -> GroupPreview:
+        async with self.db_pool.acquire() as conn:
+            group = await conn.fetchrow(
+                "select grp.id as group_id, "
+                "grp.name, grp.description, grp.terms, grp.currency_symbol, grp.created_at, "
+                "inv.description as invite_description, inv.valid_until as invite_valid_until, "
+                "inv.single_use as invite_single_use "
+                "from grp "
+                "join group_invite inv on grp.id = inv.group_id "
+                "where grp.id = $1 and inv.token = $2",
+                group_id,
+                invite_token,
+            )
+            if not group:
+                raise PermissionError(f"invalid invite token to preview group")
 
-        if group.is_invite_token_valid(invite_token):
-            return group
+            return GroupPreview(
+                id=group["group_id"],
+                name=group["name"],
+                description=group["description"],
+                terms=group["terms"],
+                currency_symbol=group["currency_symbol"],
+                created_at=group["created_at"],
+                invite_description=group["invite_description"],
+                invite_valid_until=group["invite_valid_until"],
+                invite_single_use=group["invite_single_use"],
+            )
 
-        raise PermissionError
-
-    @require_group_permissions
-    def list_members(self, user_id: int, group_id: int) -> list[GroupMember]:
-        if (
-            user_id not in self.user_to_groups
-            or group_id not in self.user_to_groups[user_id]
-        ):
-            raise PermissionError
-
-        return [
-            self.repository.get(member_id)
-            for member_id in self.group_to_users.get(group_id, set())
-        ]
+    @require_group_permissions()
+    async def list_members(self, user_id: int, group_id: int) -> list[GroupMember]:
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                cur = conn.cursor(
+                    "select usr.id, usr.username, gm.is_owner, gm.can_write, gm.description, gm.invited_by, gm.joined_at "
+                    "from usr "
+                    "join group_membership gm on gm.user_id = usr.id "
+                    "where gm.group_id = $1",
+                    group_id,
+                )
+                result = []
+                async for group in cur:
+                    result.append(
+                        GroupMember(
+                            user_id=group["id"],
+                            username=group["username"],
+                            is_owner=group["is_owner"],
+                            can_write=group["can_write"],
+                            invited_by=group["invited_by"],
+                            joined_at=group["joined_at"],
+                            description=group["description"],
+                        )
+                    )
+                return result

@@ -7,10 +7,10 @@ from jose import jwt
 from aiohttp import web, hdrs
 from schema import Schema
 
+from abrechnung.application import NotFoundError, CommandError
 from abrechnung.application.users import (
-    RegistrationError,
     InvalidPassword,
-    UserNotFound,
+    LoginFailed,
 )
 from abrechnung.http.serializers import UserSerializer
 from abrechnung.http.utils import validate, json_response
@@ -36,10 +36,8 @@ def access_token_expiry() -> datetime:
     return datetime.now() + ACCESS_TOKEN_VALIDITY
 
 
-def token_for_user(user_id: UUID, secret_key: str) -> str:
-    return jwt.encode(
-        {"exp": access_token_expiry(), "user_id": str(user_id)}, secret_key
-    )
+def token_for_user(user_id: int, secret_key: str) -> str:
+    return jwt.encode({"exp": access_token_expiry(), "user_id": user_id}, secret_key)
 
 
 def jwt_middleware(
@@ -89,7 +87,7 @@ def jwt_middleware(
                 raise web.HTTPUnauthorized(reason=msg)
 
             # TODO: improve this to make it more sane
-            decoded["user_id"] = UUID(decoded["user_id"])
+            decoded["user_id"] = decoded["user_id"]
 
             request[REQUEST_AUTH_KEY] = decoded
 
@@ -102,29 +100,56 @@ def jwt_middleware(
 @validate(Schema({"username": str, "password": str}))
 async def login(request, data):
     try:
-        user_id = request.app["user_service"].login_user(**data)
-    except (UserNotFound, InvalidPassword):
-        raise web.HTTPBadRequest()
+        user_id, session_token = await request.app["user_service"].login_user(
+            username=data["username"], password=data["password"]
+        )
+    except (NotFoundError, InvalidPassword) as e:
+        raise web.HTTPBadRequest(reason=str(e))
+    except LoginFailed as e:
+        raise web.HTTPUnauthorized(reason=str(e))
 
     token = token_for_user(user_id, request.app["secret_key"])
 
-    return json_response(data={"user_id": str(user_id), "access_token": token})
+    return json_response(
+        data={
+            "user_id": str(user_id),
+            "access_token": token,
+            "session_token": session_token,
+        }
+    )
 
 
 @routes.post("/auth/register")
 @validate(Schema({"username": str, "password": str, "email": str}))
 async def register(request, data):
     try:
-        user_id = request.app["user_service"].register_user(**data)
-    except RegistrationError as e:
+        user_id = await request.app["user_service"].register_user(
+            username=data["username"],
+            password=data["password"],
+            email=data["email"],
+        )
+    except CommandError as e:
         raise web.HTTPBadRequest(reason=str(e))
 
     return json_response(data={"user_id": str(user_id)})
 
 
+@routes.post("/auth/confirm_registration")
+@validate(Schema({"token": str}))
+async def confirm_registration(request, data):
+    try:
+        await request.app["user_service"].confirm_registration(token=data["token"])
+    except CommandError as e:
+        raise web.HTTPBadRequest(reason=str(e))
+
+    return json_response(status=web.HTTPNoContent.status_code)
+
+
 @routes.get("/profile")
 async def profile(request):
-    user = request.app["user_service"].get_user(user_id=request["user"]["user_id"])
+    user = await request.app["user_service"].get_user(
+        user_id=request["user"]["user_id"]
+    )
 
     serializer = UserSerializer(user)
 
@@ -133,14 +158,14 @@ async def profile(request):
 
 @routes.post("/profile/change_password")
 @validate(Schema({"new_password": str, "old_password": str}))
-async def register(request, data):
+async def change_password(request, data):
     try:
-        request.app["user_service"].change_password(
+        await request.app["user_service"].change_password(
             user_id=request["user"]["user_id"],
             new_password=data["new_password"],
             old_password=data["old_password"],
         )
-    except PermissionError as e:
+    except InvalidPassword as e:
         raise web.HTTPBadRequest(reason=str(e))
 
     return json_response(status=web.HTTPNoContent.status_code)
@@ -148,11 +173,25 @@ async def register(request, data):
 
 @routes.post("/profile/change_email")
 @validate(Schema({"email": str, "password": str}))
-async def register(request, data):
-    request.app["user_service"].change_email(
-        user_id=request["user"]["user_id"],
-        email=data["email"],
-        password=data["password"],
-    )
+async def change_email(request, data):
+    try:
+        await request.app["user_service"].request_email_change(
+            user_id=request["user"]["user_id"],
+            email=data["email"],
+            password=data["password"],
+        )
+    except InvalidPassword as e:
+        raise web.HTTPBadRequest(reason=str(e))
+
+    return json_response(status=web.HTTPNoContent.status_code)
+
+
+@routes.post("/auth/confirm_email_change")
+@validate(Schema({"token": str}))
+async def confirm_email_change(request, data):
+    try:
+        await request.app["user_service"].confirm_email_change(token=data["token"])
+    except CommandError as e:
+        raise web.HTTPBadRequest(reason=str(e))
 
     return json_response(status=web.HTTPNoContent.status_code)
