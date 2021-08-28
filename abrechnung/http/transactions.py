@@ -1,5 +1,3 @@
-from uuid import UUID
-
 import schema
 from aiohttp import web
 from aiohttp.abc import Request
@@ -13,7 +11,7 @@ routes = web.RouteTableDef()
 @routes.get(r"/groups/{group_id:\d+}/transactions")
 async def list_transactions(request):
     group_id: int = int(request.match_info["group_id"])
-    transactions = request.app["group_read_service"].list_transactions(
+    transactions = await request.app["transaction_service"].list_transactions(
         user_id=request["user"]["user_id"], group_id=group_id
     )
 
@@ -36,7 +34,7 @@ async def list_transactions(request):
 async def create_transaction(request: Request, data: dict):
     group_id: int = int(request.match_info["group_id"])
 
-    transaction_id = request.app["transaction_service"].create_transaction(
+    transaction_id = await request.app["transaction_service"].create_transaction(
         user_id=request["user"]["user_id"],
         group_id=group_id,
         description=data["description"],
@@ -53,9 +51,8 @@ async def create_transaction(request: Request, data: dict):
 async def get_transaction(request: Request):
 
     try:
-        transaction = request.app["group_read_service"].get_transaction(
+        transaction = await request.app["transaction_service"].get_transaction(
             user_id=request["user"]["user_id"],
-            group_id=int(request.match_info["group_id"]),
             transaction_id=int(request.match_info["transaction_id"]),
         )
     except PermissionError:
@@ -69,7 +66,7 @@ async def get_transaction(request: Request):
 @routes.post(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/commit")
 async def commit_transaction(request: Request):
     try:
-        request.app["transaction_service"].commit_transaction(
+        await request.app["transaction_service"].commit_transaction(
             user_id=request["user"]["user_id"],
             transaction_id=int(request.match_info["transaction_id"]),
         )
@@ -85,17 +82,17 @@ async def commit_transaction(request: Request):
 @validate(
     schema.Schema(
         {
-            "account_id": schema.Use(UUID),
+            "account_id": int,
             "value": schema.Or(float, int),
         }
     )
 )
 async def add_or_change_creditor_share(request: Request, data: dict):
     try:
-        request.app["transaction_service"].add_or_change_creditor_share(
+        await request.app["transaction_service"].add_or_change_creditor_share(
             user_id=request["user"]["user_id"],
             transaction_id=int(request.match_info["transaction_id"]),
-            account_id=UUID(data["account_id"]),
+            account_id=data["account_id"],
             value=float(data["value"]),
         )
     except PermissionError:
@@ -110,17 +107,17 @@ async def add_or_change_creditor_share(request: Request, data: dict):
 @validate(
     schema.Schema(
         {
-            "account_id": schema.Use(UUID),
+            "account_id": int,
             "value": schema.Or(float, int),
         }
     )
 )
 async def switch_creditor_share(request: Request, data: dict):
     try:
-        request.app["transaction_service"].switch_creditor_share(
+        await request.app["transaction_service"].switch_creditor_share(
             user_id=request["user"]["user_id"],
             transaction_id=int(request.match_info["transaction_id"]),
-            account_id=UUID(data["account_id"]),
+            account_id=data["account_id"],
             value=float(data["value"]),
         )
     except PermissionError:
@@ -135,17 +132,16 @@ async def switch_creditor_share(request: Request, data: dict):
 @validate(
     schema.Schema(
         {
-            "account_id": schema.Use(UUID),
+            "account_id": int,
         }
     )
 )
 async def delete_creditor_share(request: Request, data: dict):
-
     try:
-        request.app["transaction_service"].delete_creditor_share(
+        await request.app["transaction_service"].delete_creditor_share(
             user_id=request["user"]["user_id"],
             transaction_id=int(request.match_info["transaction_id"]),
-            account_id=UUID(data["account_id"]),
+            account_id=data["account_id"],
         )
     except PermissionError:
         raise web.HTTPForbidden(reason="permission denied")
@@ -157,17 +153,17 @@ async def delete_creditor_share(request: Request, data: dict):
 @validate(
     schema.Schema(
         {
-            "account_id": schema.Use(UUID),
+            "account_id": int,
             "value": schema.Or(float, int),
         }
     )
 )
 async def add_or_change_debitor_share(request: Request, data: dict):
     try:
-        request.app["transaction_service"].add_or_change_debitor_share(
+        await request.app["transaction_service"].add_or_change_debitor_share(
             user_id=request["user"]["user_id"],
             transaction_id=int(request.match_info["transaction_id"]),
-            account_id=UUID(data["account_id"]),
+            account_id=data["account_id"],
             value=float(data["value"]),
         )
     except PermissionError:
@@ -182,17 +178,17 @@ async def add_or_change_debitor_share(request: Request, data: dict):
 @validate(
     schema.Schema(
         {
-            "account_id": schema.Use(UUID),
+            "account_id": int,
             "value": schema.Or(float, int),
         }
     )
 )
 async def switch_debitor_share(request: Request, data: dict):
     try:
-        request.app["transaction_service"].switch_debitor_share(
+        await request.app["transaction_service"].switch_debitor_share(
             user_id=request["user"]["user_id"],
             transaction_id=int(request.match_info["transaction_id"]),
-            account_id=UUID(data["account_id"]),
+            account_id=data["account_id"],
             value=float(data["value"]),
         )
     except PermissionError:
@@ -207,16 +203,16 @@ async def switch_debitor_share(request: Request, data: dict):
 @validate(
     schema.Schema(
         {
-            "account_id": schema.Use(UUID),
+            "account_id": int,
         }
     )
 )
 async def delete_debitor_share(request: Request, data: dict):
     try:
-        request.app["transaction_service"].delete_debitor_share(
+        await request.app["transaction_service"].delete_debitor_share(
             user_id=request["user"]["user_id"],
             transaction_id=int(request.match_info["transaction_id"]),
-            account_id=UUID(data["account_id"]),
+            account_id=data["account_id"],
         )
     except PermissionError:
         raise web.HTTPForbidden(reason="permission denied")

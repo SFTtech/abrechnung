@@ -76,7 +76,7 @@ class AccountService(Application):
                 )
                 now = datetime.now(tz=timezone.utc)
                 revision_id = await conn.fetchval(
-                    "insert into account_revision (user_id, account_id, started, commited) "
+                    "insert into account_revision (user_id, account_id, started, committed) "
                     "values ($1, $2, $3, $4) returning id",
                     user_id,
                     account_id,
@@ -118,11 +118,15 @@ class AccountService(Application):
                 if account is None:
                     raise NotFoundError(f"No account with id {account_id} exists")
 
-                if name != account["name"] or description != account["description"] or priority != account["priority"]:
+                if (
+                    name != account["name"]
+                    or description != account["description"]
+                    or priority != account["priority"]
+                ):
                     """if there is something to change initialize a new revision and a new entry in the history table"""
                     now = datetime.now(tz=timezone.utc)
                     revision_id = await conn.fetchval(
-                        "insert into account_revision (user_id, account_id, started, commited) "
+                        "insert into account_revision (user_id, account_id, started, committed) "
                         "values ($1, $2, $3, $4) returning id",
                         user_id,
                         account_id,

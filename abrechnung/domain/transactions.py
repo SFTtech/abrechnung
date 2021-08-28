@@ -19,7 +19,7 @@ class TransactionDetails:
     deleted: bool
 
     changed_by: int
-    changed_at: datetime
+    committed_at: Optional[datetime]
 
     # creditor and debitor shares map account IDs to portions of the communist share pool
     creditor_shares: dict[int, float]
@@ -30,6 +30,6 @@ class TransactionDetails:
 class Transaction:
     id: int
     type: str
-    editable_details: Optional[TransactionDetails]
+    current_state: Optional[TransactionDetails]
     pending_changes: dict[int, TransactionDetails]
-    created_by: int
+    # created_by: int

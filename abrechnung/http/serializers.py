@@ -41,7 +41,6 @@ class GroupSerializer(Serializer):
             "currency_symbol": instance.currency_symbol,
             "terms": instance.terms,
             "created_by": instance.created_by,
-            # "members": members,
         }
 
 
@@ -103,14 +102,15 @@ class TransactionSerializer(Serializer):
         data = {
             "id": instance.id,
             "type": instance.type,
-            "created_by": instance.created_by,
             "pending_changes": {
                 str(uid): self._serialize_change(change)
                 for uid, change in instance.pending_changes.items()
-            },
+            }
+            if instance.pending_changes
+            else {},
         }
-        if instance.editable_details:
-            data.update(self._serialize_change(instance.editable_details))
+        if instance.current_state:
+            data.update(self._serialize_change(instance.current_state))
 
         return data
 

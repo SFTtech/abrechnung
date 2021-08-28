@@ -10,6 +10,9 @@ from aiohttp.helpers import sentinel
 from aiohttp.typedefs import LooseHeaders
 from schema import Schema, SchemaError
 
+from abrechnung.application import NotFoundError
+from abrechnung.domain import InvalidCommand
+
 
 def validate(request_schema: Schema):
     def wrapper(func):
@@ -47,9 +50,18 @@ async def error_middleware(request, handler):
             return response
         message = response.message
         status = response.status
-    except (asyncpg.DataError, asyncpg.IntegrityConstraintViolationError) as ex:
+    except (
+        asyncpg.DataError,
+        asyncpg.RaiseError,
+        asyncpg.IntegrityConstraintViolationError,
+        InvalidCommand,
+    ) as ex:
         # catch underlying bad query inputs to catch schema violations as bad requests
         status = 400
+        message = str(ex)
+    except NotFoundError as ex:
+        # catch underlying bad query inputs to catch schema violations as bad requests
+        status = 404
         message = str(ex)
     except web.HTTPException as ex:
         if ex.status >= 500:
