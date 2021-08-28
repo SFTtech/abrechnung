@@ -129,8 +129,8 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual(204, resp.status)
 
         a = await self._fetch_account(group_id, account_id)
-        self.assertEqual(a["name"], "new_name")
-        self.assertEqual(a["description"], "description")
+        self.assertEqual("new_name", a["name"])
+        self.assertEqual("description", a["description"])
 
         resp = await self._post(
             f"/api/v1/groups/{group_id}/accounts/{account_id}",
@@ -141,8 +141,8 @@ class GroupAPITest(HTTPAPITest):
         )
         self.assertEqual(204, resp.status)
         a = await self._fetch_account(group_id, account_id)
-        self.assertEqual(a["name"], "new_name2")
-        self.assertEqual(a["description"], "description1")
+        self.assertEqual("new_name2", a["name"])
+        self.assertEqual("description1", a["description"])
 
     @unittest_run_loop
     async def test_list_accounts(self):
@@ -231,15 +231,21 @@ class GroupAPITest(HTTPAPITest):
         )
         self.assertEqual(204, resp.status)
 
-        g = await self._fetch_group(group_id)
-        self.assertEqual(1, len(g["invites"]))
+        resp = await self._get(f"/api/v1/groups/{group_id}/invites")
+        self.assertEqual(200, resp.status)
+        invites = await resp.json()
+        self.assertEqual(1, len(invites))
 
         # we hardcode assume the invite id is 0 to check if the id counting works as expected
-        resp = await self._delete(f"/api/v1/groups/{group_id}/invites/0")
+        resp = await self._delete(
+            f"/api/v1/groups/{group_id}/invites/{invites[0]['id']}"
+        )
         self.assertEqual(204, resp.status)
 
-        g = await self._fetch_group(group_id)
-        self.assertEqual(0, len(g["invites"]))
+        resp = await self._get(f"/api/v1/groups/{group_id}/invites")
+        self.assertEqual(200, resp.status)
+        invites = await resp.json()
+        self.assertEqual(0, len(invites))
 
         # now check that we can actually preview the group as a different user
         resp = await self._post(
@@ -250,15 +256,16 @@ class GroupAPITest(HTTPAPITest):
                 "valid_until": (datetime.now() + timedelta(hours=1)).isoformat(),
             },
         )
+        self.assertEqual(204, resp.status)
+
+        resp = await self._get(f"/api/v1/groups/{group_id}/invites")
         self.assertEqual(200, resp.status)
+        invites = await resp.json()
+        self.assertEqual(1, len(invites))
+        invite_token = invites[0]["token"]
+        self.assertIsNotNone(invite_token)
 
-        g = await self._fetch_group(group_id)
-        self.assertEqual(1, len(g["invites"]))
-        invite_token = g["invites"]["token"]
-
-        user2_id = await self.user_service.register_user(
-            username="user2", email="email2@email.com", password="asdf1234"
-        )
+        user2_id, _ = await self._create_test_user("user", "email2@email.stuff")
         jwt_token = token_for_user(user2_id, self.secret_key)
         resp = await self.client.post(
             f"/api/v1/groups/{group_id}/preview",
@@ -268,4 +275,11 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual(200, resp.status)
         prev_group_data = await resp.json()
         self.assertEqual("group1", prev_group_data["name"])
-        self.assertEqual(str(group_id), prev_group_data["id"])
+        self.assertEqual(group_id, prev_group_data["id"])
+
+        resp = await self.client.post(
+            f"/api/v1/groups/{group_id}/join",
+            json={"invite_token": invite_token},
+            headers={"Authorization": f"Bearer {jwt_token}"},
+        )
+        self.assertEqual(204, resp.status)

@@ -76,8 +76,10 @@ class AccountService(Application):
                 )
                 now = datetime.now(tz=timezone.utc)
                 revision_id = await conn.fetchval(
-                    "insert into account_revision (user_id, started, commited) values ($1, $2, $3) returning id",
+                    "insert into account_revision (user_id, account_id, started, commited) "
+                    "values ($1, $2, $3, $4) returning id",
                     user_id,
+                    account_id,
                     now,
                     now,
                 )
@@ -101,5 +103,38 @@ class AccountService(Application):
         name: str,
         description: str,
         priority: int = 0,
-    ) -> int:
-        pass
+    ):
+        # TODO: figure out the more complex logic once we have accounts stuck in uncommitted states
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                account = await conn.fetchrow(
+                    "select id, type, revision_id, name, description, priority "
+                    "from latest_account "
+                    "where group_id = $1 and user_id = $2 and id = $3 and deleted = false",
+                    group_id,
+                    user_id,
+                    account_id,
+                )
+                if account is None:
+                    raise NotFoundError(f"No account with id {account_id} exists")
+
+                if name != account["name"] or description != account["description"] or priority != account["priority"]:
+                    """if there is something to change initialize a new revision and a new entry in the history table"""
+                    now = datetime.now(tz=timezone.utc)
+                    revision_id = await conn.fetchval(
+                        "insert into account_revision (user_id, account_id, started, commited) "
+                        "values ($1, $2, $3, $4) returning id",
+                        user_id,
+                        account_id,
+                        now,
+                        now,
+                    )
+                    await conn.execute(
+                        "insert into account_history (id, revision_id, name, description, priority) "
+                        "values ($1, $2, $3, $4, $5)",
+                        account_id,
+                        revision_id,
+                        name,
+                        description,
+                        priority,
+                    )

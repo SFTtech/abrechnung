@@ -2,7 +2,7 @@ import abc
 from typing import Union, Type
 
 from abrechnung.domain.accounts import Account
-from abrechnung.domain.groups import Group, GroupMember
+from abrechnung.domain.groups import Group, GroupMember, GroupInvite, GroupPreview
 from abrechnung.domain.transactions import Transaction, TransactionDetails
 from abrechnung.domain.users import User
 
@@ -33,17 +33,6 @@ class GroupSerializer(Serializer):
         #     }
         #     for user_id, m in instance.members.items()
         # ]
-        # invites = [
-        #     {
-        #         "id": i.id,
-        #         "created_by": i.created_by,
-        #         "token": i.token,
-        #         "valid_until": i.valid_until,
-        #         "single_use": i.single_use,
-        #         "description": i.description,
-        #     }
-        #     for i in instance.invites
-        # ]
 
         return {
             "id": instance.id,
@@ -53,7 +42,21 @@ class GroupSerializer(Serializer):
             "terms": instance.terms,
             "created_by": instance.created_by,
             # "members": members,
-            # "invites": invites,
+        }
+
+
+class GroupPreviewSerializer(Serializer):
+    def _to_repr(self, instance: GroupPreview) -> dict:
+        return {
+            "id": instance.id,
+            "name": instance.name,
+            "description": instance.description,
+            "currency_symbol": instance.currency_symbol,
+            "terms": instance.terms,
+            "created_at": instance.created_at,
+            "invite_single_use": instance.invite_single_use,
+            "invite_valid_until": instance.invite_valid_until,
+            "invite_description": instance.invite_description,
         }
 
 
@@ -66,6 +69,18 @@ class AccountSerializer(Serializer):
             "description": instance.description,
             "priority": instance.priority,
             "deleted": instance.deleted,
+        }
+
+
+class GroupInviteSerializer(Serializer):
+    def _to_repr(self, instance: GroupInvite) -> dict:
+        return {
+            "id": instance.id,
+            "created_by": instance.created_by,
+            "single_use": instance.single_use,
+            "valid_until": instance.valid_until,
+            "token": instance.token,
+            "description": instance.description,
         }
 
 

@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from abrechnung.application import Application, require_group_permissions, NotFoundError
-from abrechnung.domain.groups import Group, GroupMember, GroupPreview
+from abrechnung.domain.groups import Group, GroupMember, GroupPreview, GroupInvite
 
 
 class GroupService(Application):
@@ -65,11 +65,13 @@ class GroupService(Application):
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                await conn.execute(
-                    "delete from group_invite where id = $1 and group_id = $2",
+                deleted_id = await conn.fetchval(
+                    "delete from group_invite where id = $1 and group_id = $2 returning id",
                     invite_id,
                     group_id,
                 )
+                if not deleted_id:
+                    raise NotFoundError(f"No invite with the given id exists")
 
     async def join_group(self, user_id: int, group_id: int, invite_token: str):
         pass
@@ -151,11 +153,38 @@ class GroupService(Application):
             )
 
     @require_group_permissions()
+    async def list_invites(self, user_id: int, group_id: int) -> list[GroupInvite]:
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                cur = conn.cursor(
+                    "select id, case when created_by = $1 then token else null end as token, description, created_by, "
+                    "valid_until, single_use "
+                    "from group_invite gi "
+                    "where gi.group_id = $2",
+                    user_id,
+                    group_id,
+                )
+                result = []
+                async for invite in cur:
+                    result.append(
+                        GroupInvite(
+                            id=invite["id"],
+                            token=invite["token"],
+                            created_by=invite["created_by"],
+                            valid_until=invite["valid_until"],
+                            single_use=invite["single_use"],
+                            description=invite["description"],
+                        )
+                    )
+                return result
+
+    @require_group_permissions()
     async def list_members(self, user_id: int, group_id: int) -> list[GroupMember]:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 cur = conn.cursor(
-                    "select usr.id, usr.username, gm.is_owner, gm.can_write, gm.description, gm.invited_by, gm.joined_at "
+                    "select usr.id, usr.username, gm.is_owner, gm.can_write, gm.description, "
+                    "gm.invited_by, gm.joined_at "
                     "from usr "
                     "join group_membership gm on gm.user_id = usr.id "
                     "where gm.group_id = $1",

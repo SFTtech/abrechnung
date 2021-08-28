@@ -33,4 +33,3 @@ class Transaction:
     editable_details: Optional[TransactionDetails]
     pending_changes: dict[int, TransactionDetails]
     created_by: int
-    deleted: bool

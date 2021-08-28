@@ -97,8 +97,8 @@ create table if not exists grp (
     -- currency (symbol) to use in the group
     currency_symbol text        not null,
 
-    created_by  integer references usr(id) on delete restrict,
-    created_at         timestamptz not null default now()
+    created_by      integer references usr (id) on delete restrict,
+    created_at      timestamptz not null default now()
 );
 
 create table if not exists group_membership (
@@ -106,7 +106,7 @@ create table if not exists group_membership (
     group_id    integer references grp (id) on delete cascade,
     primary key (user_id, group_id),
 
-    joined_at      timestamptz not null default now(),
+    joined_at   timestamptz not null default now(),
 
     -- optional user description text
     description text        not null default '',
@@ -202,15 +202,17 @@ create table if not exists account (
 );
 
 create table if not exists account_revision (
-    id       bigserial primary key,
+    id        bigserial primary key,
 
     -- users that have created changes cannot be deleted
-    user_id  integer     not null references usr (id) on delete restrict,
+    user_id   integer     not null references usr (id) on delete restrict,
 
-    -- account integer references account(id) on delete cascade,
+    account   integer references account (id) on delete cascade,
 
-    started  timestamptz not null default now(),
-    commited timestamptz          default null
+    started   timestamptz not null default now(),
+    committed timestamptz          default null
+
+    -- TODO: add constraint allowing only une uncommitted change per account per user
 );
 
 create table if not exists account_history (
@@ -244,8 +246,8 @@ create or replace view latest_account as
         join account_revision r on r.id = history.revision_id
         join group_membership gm on account.group_id = gm.group_id
     where
-        (r.commited is null and r.user_id = gm.user_id)
-        or r.commited is not null window wnd as ( partition by account.id order by r.commited desc nulls first );
+        (r.committed is null and r.user_id = gm.user_id)
+        or r.committed is not null window wnd as ( partition by account.id order by r.committed desc nulls first );
 
 -- a regular 'purchase' transaction, where multiple people purchased
 -- things, and one person paid the balance.
@@ -302,21 +304,24 @@ create table if not exists transaction (
 );
 
 -- every data and history entry in a group references a change as a foreign key.
--- entries that have just been added, but not yet commited, reference a change
--- where the commited timestamp is null;
--- these uncommited changes are only visible if a user explicitly requests
+-- entries that have just been added, but not yet committed, reference a change
+-- where the committed timestamp is null;
+-- these uncommitted changes are only visible if a user explicitly requests
 -- to see them.
--- uncommited changes are created when users start to change a group,
--- and receive a 'commited' timestamp when the user clicks 'commit'.
--- changes that have been commited can no longer be modified.
+-- uncommitted changes are created when users start to change a group,
+-- and receive a 'committed' timestamp when the user clicks 'commit'.
+-- changes that have been committed can no longer be modified.
 create table if not exists transaction_revision (
-    id       bigserial primary key,
+    id             bigserial primary key,
 
     -- users that have created changes cannot be deleted
-    user_id  integer     not null references usr (id) on delete restrict,
+    user_id        integer     not null references usr (id) on delete restrict,
+    transaction_id integer     not null references transaction (id) on delete restrict,
 
-    started  timestamptz not null default now(),
-    commited timestamptz          default null
+    started        timestamptz not null default now(),
+    committed      timestamptz          default null
+
+    -- TODO: add a constraint allowing only one uncommitted change per user per transaction
 );
 
 create table if not exists transaction_history (
@@ -368,6 +373,95 @@ create table if not exists debitor_share (
 
     shares         double precision not null default 1.0
 );
+
+create or replace view creditor_shares_as_json as
+    select
+        cs.revision_id    as revision_id,
+        cs.transaction_id as transaction_id,
+        json_agg(cs)      as shares
+    from
+        creditor_share cs
+    group by
+        cs.revision_id, cs.transaction_id;
+
+
+create or replace view debitor_shares_as_json as
+    select
+        ds.revision_id    as revision_id,
+        ds.transaction_id as transaction_id,
+        json_agg(ds)      as shares
+    from
+        debitor_share ds
+    group by
+        ds.revision_id, ds.transaction_id;
+
+create or replace view pending_transaction_revisions as
+    select distinct on (transaction.id, gm.user_id)
+        transaction.id                                        as id,
+        transaction.type                                      as type,
+        transaction.group_id                                  as group_id,
+        last_value(history.revision_id) over wnd              as revision_id,
+        last_value(r.started) over wnd                        as revision_started,
+        last_value(r.committed) over wnd                      as revision_committed,
+        last_value(history.deleted) over wnd                  as deleted,
+        last_value(history.description) over wnd              as description,
+        last_value(history.value) over wnd                    as value,
+        last_value(history.currency_symbol) over wnd          as currency_symbol,
+        last_value(history.currency_conversion_rate) over wnd as currency_conversion_rate,
+        last_value(cs.shares) over wnd                        as creditor_shares,
+        last_value(ds.shares) over wnd                        as debitor_shares,
+        gm.user_id                                            as user_id
+    from
+        transaction_history history
+        join transaction on transaction.id = history.id
+        join transaction_revision r on r.id = history.revision_id
+        join creditor_shares_as_json cs on cs.revision_id = r.id and cs.transaction_id = transaction.id
+        join debitor_shares_as_json ds on ds.revision_id = r.id and ds.transaction_id = transaction.id
+        join group_membership gm on transaction.group_id = gm.group_id
+    where
+        r.committed is null
+        and r.user_id = gm.user_id window wnd as ( partition by transaction.id );
+
+create or replace view current_transaction_state as
+    select distinct on (transaction.id)
+        transaction.id                                        as id,
+        transaction.type                                      as type,
+        transaction.group_id                                  as group_id,
+        last_value(history.revision_id) over wnd              as revision_id,
+        last_value(history.deleted) over wnd                  as deleted,
+        last_value(history.description) over wnd              as description,
+        last_value(history.value) over wnd                    as value,
+        last_value(r.committed) over wnd                      as last_changed_at,
+        last_value(r.user_id) over wnd                        as last_changed_by,
+        last_value(history.currency_symbol) over wnd          as currency_symbol,
+        last_value(history.currency_conversion_rate) over wnd as currency_conversion_rate,
+        last_value(cs.shares) over wnd                        as creditor_shares,
+        last_value(ds.shares) over wnd                        as debitor_shares
+    from
+        transaction_history history
+        join transaction on transaction.id = history.id
+        join transaction_revision r on r.id = history.revision_id
+        join creditor_shares_as_json cs on cs.revision_id = r.id and cs.transaction_id = transaction.id
+        join debitor_shares_as_json ds on ds.revision_id = r.id and ds.transaction_id = transaction.id
+    where
+        r.committed is not null window wnd as ( partition by transaction.id order by r.committed desc );
+
+
+create or replace view current_transaction_state as
+    select
+        transaction.id        as id,
+        transaction.type      as type,
+        transaction.group_id  as group_id,
+        curr_state_json.state as current_state,
+        pending_json.state    as pending_changes
+    from
+        transaction
+        join (
+            select id, json_agg(curr_state) as state from current_transaction_state curr_state group by id
+             ) curr_state_json on curr_state_json.id = transaction.id
+        join (
+            select id, json_agg(pending) as state from pending_transaction_revisions pending group by id
+             ) pending_json on pending_json.id = transaction.id;
 
 -- an item in a 'purchase'-type transaction
 create table if not exists purchase_item (

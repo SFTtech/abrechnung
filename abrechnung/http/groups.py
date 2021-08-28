@@ -12,6 +12,8 @@ from abrechnung.http.serializers import (
     UserSerializer,
     AccountSerializer,
     GroupMemberSerializer,
+    GroupInviteSerializer,
+    GroupPreviewSerializer,
 )
 from abrechnung.http.utils import validate, json_response
 
@@ -79,77 +81,20 @@ async def list_members(request):
     return json_response(data=serializer.to_repr())
 
 
-@routes.get(r"/groups/{group_id:\d+}/accounts")
-async def list_accounts(request):
+@routes.get(r"/groups/{group_id:\d+}/invites")
+async def list_invites(request):
 
     try:
-        accounts = await request.app["account_service"].list_accounts(
+        invites = await request.app["group_service"].list_invites(
             user_id=request["user"]["user_id"],
             group_id=int(request.match_info["group_id"]),
         )
     except PermissionError:
         raise web.HTTPForbidden(reason="permission denied")
 
-    serializer = AccountSerializer(accounts)
+    serializer = GroupInviteSerializer(invites)
 
     return json_response(data=serializer.to_repr())
-
-
-@routes.post(r"/groups/{group_id:\d+}/accounts")
-@validate(Schema({"name": str, "description": str, "type": str}))
-async def create_account(request: Request, data: dict):
-
-    try:
-        account_id = await request.app["account_service"].create_account(
-            user_id=request["user"]["user_id"],
-            group_id=int(request.match_info["group_id"]),
-            name=data["name"],
-            description=data["description"],
-            type=data["type"],
-        )
-    except InvalidCommand as e:
-        raise web.HTTPBadRequest(reason=str(e))
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
-
-    return json_response(data={"account_id": str(account_id)})
-
-
-@routes.get(r"/groups/{group_id:\d+}/accounts/{account_id:\d+}")
-async def get_account(request: Request):
-    try:
-        account = await request.app["account_service"].get_account(
-            user_id=request["user"]["user_id"],
-            group_id=int(request.match_info["group_id"]),
-            account_id=int(request.match_info["account_id"]),
-        )
-    except NotFoundError as e:
-        raise web.HTTPNotFound(reason=str(e))
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
-
-    serializer = AccountSerializer(account)
-
-    return json_response(data=serializer.to_repr())
-
-
-@routes.post(r"/groups/{group_id:\d+}/accounts/{account_id:\d+}")
-@validate(schema.Schema({"name": str, "description": str}))
-async def update_account(request: Request, data: dict):
-    try:
-        await request.app["account_service"].update_account(
-            user_id=request["user"]["user_id"],
-            group_id=int(request.match_info["group_id"]),
-            account_id=int(request.match_info["account_id"]),
-            name=data["name"],
-            description=data["description"],
-        )
-    except InvalidCommand as e:
-        raise web.HTTPBadRequest(reason=str(e))
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
-
-    return json_response(status=web.HTTPNoContent.status_code)
 
 
 @routes.post(r"/groups/{group_id:\d+}/invites")
@@ -184,7 +129,7 @@ async def create_invite(request: Request, data: dict):
 
 
 @routes.delete(r"/groups/{group_id:\d+}/invites/{invite_id:\d+}")
-async def create_invite(request: Request):
+async def delete_invite(request: Request):
     try:
         await request.app["group_service"].delete_invite(
             user_id=request["user"]["user_id"],
@@ -203,8 +148,7 @@ async def create_invite(request: Request):
 @validate(schema.Schema({"invite_token": str}))
 async def preview_group(request: Request, data: dict):
     try:
-        group = await request.app["group_service"].preview_group(
-            user_id=request["user"]["user_id"],
+        group_preview = await request.app["group_service"].preview_group(
             group_id=int(request.match_info["group_id"]),
             invite_token=data["invite_token"],
         )
@@ -213,7 +157,7 @@ async def preview_group(request: Request, data: dict):
     except PermissionError:
         raise web.HTTPForbidden(reason="permission denied")
 
-    serializer = GroupSerializer(group)
+    serializer = GroupPreviewSerializer(group_preview)
 
     return json_response(data=serializer.to_repr())
 

@@ -10,7 +10,7 @@ from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.database import db_connect
-from abrechnung.http import groups, transactions, websocket
+from abrechnung.http import groups, transactions, websocket, accounts
 from abrechnung.http.auth import jwt_middleware
 from abrechnung.http.utils import error_middleware
 from abrechnung.subcommand import SubCommand
@@ -59,6 +59,7 @@ def create_app(
     api_app.add_routes(transactions.routes)
     api_app.add_routes(auth.routes)
     api_app.add_routes(websocket.routes)
+    api_app.add_routes(accounts.routes)
 
     app.add_subapp("/api/v1/", api_app)
 

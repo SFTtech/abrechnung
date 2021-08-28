@@ -4,16 +4,27 @@ from abrechnung.domain.transactions import Transaction
 
 class TransactionService(Application):
     def list_transactions(self, user_id: int, group_id: int) -> list[Transaction]:
-        if (
-            user_id not in self.user_to_groups
-            or group_id not in self.user_to_groups[user_id]
-        ):
-            raise PermissionError
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                cur = conn.cursor(
+                    "select id, type, revision_id, description, value, currency_symbol, currency_conversion_rate "
+                    "from current_transaction_state "
+                    "where group_id = $1 and user_id = $2 and deleted = false",
+                    group_id,
+                    user_id,
+                )
+                result = []
+                async for account in cur:
+                    result.append(
+                        Transaction(
+                            id=account["id"],
+                            type=account["type"],
+                            curr
+                            deleted=False,
+                        )
+                    )
 
-        return [
-            self.repository.get(transaction_id)
-            for transaction_id in self.group_to_transactions.get(group_id, set())
-        ]
+                return result
 
     def get_transaction(
         self, user_id: int, group_id: int, transaction_id: int
