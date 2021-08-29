@@ -43,10 +43,6 @@ def main():
 
     add_subcommand("mailer", mailer.Mailer)
 
-    from . import sftpgws
-
-    add_subcommand("websocket", sftpgws.SFTPGWS)
-
     from . import http
 
     add_subcommand("api", http.HTTPService)

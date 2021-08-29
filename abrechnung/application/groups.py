@@ -7,6 +7,7 @@ from abrechnung.domain.groups import Group, GroupMember, GroupPreview, GroupInvi
 class GroupService(Application):
     async def create_group(
         self,
+        *,
         user_id: int,
         name: str,
         description: str,
@@ -38,17 +39,18 @@ class GroupService(Application):
     @require_group_permissions(can_write=True)
     async def create_invite(
         self,
+        *,
         user_id: int,
         group_id: int,
         description: str,
         single_use: bool,
         valid_until: datetime,
-    ):
+    ) -> int:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                await conn.execute(
+                return await conn.fetchval(
                     "insert into group_invite(group_id, description, created_by, valid_until, single_use)"
-                    " values ($1, $2, $3, $4, $5)",
+                    " values ($1, $2, $3, $4, $5) returning id",
                     group_id,
                     description,
                     user_id,
@@ -59,6 +61,7 @@ class GroupService(Application):
     @require_group_permissions(can_write=True)
     async def delete_invite(
         self,
+        *,
         user_id: int,
         group_id: int,
         invite_id: int,
@@ -103,7 +106,7 @@ class GroupService(Application):
             return result
 
     @require_group_permissions()
-    async def get_group(self, user_id: int, group_id: int) -> Group:
+    async def get_group(self, *, user_id: int, group_id: int) -> Group:
         async with self.db_pool.acquire() as conn:
             group = await conn.fetchrow(
                 "select id, name, description, terms, currency_symbol, created_at, created_by "
@@ -153,7 +156,7 @@ class GroupService(Application):
             )
 
     @require_group_permissions()
-    async def list_invites(self, user_id: int, group_id: int) -> list[GroupInvite]:
+    async def list_invites(self, *, user_id: int, group_id: int) -> list[GroupInvite]:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 cur = conn.cursor(
@@ -179,7 +182,7 @@ class GroupService(Application):
                 return result
 
     @require_group_permissions()
-    async def list_members(self, user_id: int, group_id: int) -> list[GroupMember]:
+    async def list_members(self, *, user_id: int, group_id: int) -> list[GroupMember]:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 cur = conn.cursor(

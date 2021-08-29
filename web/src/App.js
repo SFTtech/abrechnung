@@ -1,6 +1,6 @@
-import React, {Suspense, useEffect, useMemo, useState} from "react";
+import React, {Suspense, useMemo} from "react";
 import {BrowserRouter as Router, Route, Switch} from "react-router-dom";
-import {toast, ToastContainer} from "react-toastify";
+import {ToastContainer} from "react-toastify";
 import LuxonUtils from "@date-io/luxon";
 import {MuiPickersUtilsProvider} from "@material-ui/pickers";
 import {createMuiTheme, ThemeProvider} from '@material-ui/core/styles';
@@ -11,20 +11,16 @@ import Logout from "./pages/auth/Logout";
 import Group from "./pages/groups/Group";
 import Loading from "./components/style/Loading";
 import PageNotFound from "./pages/PageNotFound";
-import {isAuthenticated, userData} from "./recoil/auth";
-import {useRecoilState, useSetRecoilState} from "recoil";
 import AuthenticatedRoute from "./components/AuthenticatedRoute";
 import ChangeEmail from "./pages/auth/ChangeEmail";
 import ChangePassword from "./pages/auth/ChangePassword";
 import GroupList from "./pages/groups/GroupList"
 import Layout from "./components/style/Layout";
 import {CssBaseline, useMediaQuery} from "@material-ui/core";
-import {fetchProfile, removeToken} from "./api";
-import {ws} from "./websocket";
 
 const Profile = React.lazy(() => import("./pages/auth/Profile"));
-// const ConfirmEmailChange = React.lazy(() => import("./pages/auth/ConfirmEmailChange"));
-// const ConfirmRegistration = React.lazy(() => import("./pages/auth/ConfirmRegistration"));
+const ConfirmEmailChange = React.lazy(() => import("./pages/auth/ConfirmEmailChange"));
+const ConfirmRegistration = React.lazy(() => import("./pages/auth/ConfirmRegistration"));
 // const GroupInvite = React.lazy(() => import("./pages/groups/GroupInvite"));
 
 const routes = [
@@ -40,7 +36,7 @@ const routes = [
     //     auth: false,
     // },
     {
-        path: "/groups/:id",
+        path: "/groups/:id([0-9]+)",
         component: <Group/>,
         auth: true,
         layout: false,
@@ -69,17 +65,16 @@ const routes = [
         auth: true,
         exact: true
     },
-    // {
-    //     path: "/confirm-registration/:token",
-    //     component: <ConfirmRegistration/>,
-    //     auth: false,
-    //     layout: false,
-    // },
-    // {
-    //     path: "/confirm-email-change/:token",
-    //     component: <ConfirmEmailChange/>,
-    //     auth: false,
-    // },
+    {
+        path: "/confirm-registration/:token",
+        component: <ConfirmRegistration/>,
+        auth: false,
+    },
+    {
+        path: "/confirm-email-change/:token",
+        component: <ConfirmEmailChange/>,
+        auth: false,
+    },
     {
         path: "/register",
         component: <Register/>,
@@ -95,9 +90,6 @@ const routes = [
 ]
 
 export default function App() {
-    const [isLoggedIn, setLoggedIn] = useRecoilState(isAuthenticated);
-    const setUserData = useSetRecoilState(userData);
-    const [loading, setLoading] = useState(!isLoggedIn);
     const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
 
     const theme = useMemo(
@@ -109,26 +101,6 @@ export default function App() {
             }),
         [prefersDarkMode]
     )
-
-    useEffect(() => {
-        if (isLoggedIn) {
-            fetchProfile()
-                .then(result => {
-                    ws.tryAuthenticate();
-                    setUserData(result);
-                    setLoading(false);
-                })
-                .catch(err => {
-                    console.log("error loading user info in root app", err)
-                    toast.error(`${err}`);
-                    removeToken();
-                    setLoggedIn(false);
-                    setLoading(false);
-                })
-        } else {
-            setLoading(false);
-        }
-    }, [isLoggedIn, setLoading, setLoggedIn, setUserData])
 
     return (
         <ThemeProvider theme={theme}>
@@ -146,31 +118,29 @@ export default function App() {
                     pauseOnHover
                 >
                 </ToastContainer>
-                {loading ? <Loading/> : (
-                    <Router>
-                        <Switch>
-                            {routes.map(route => {
-                                const authRoute = route.auth ? (
-                                    <AuthenticatedRoute>{route.component}</AuthenticatedRoute>
-                                ) : route.component;
+                <Router>
+                    <Switch>
+                        {routes.map(route => {
+                            const authRoute = route.auth ? (
+                                <AuthenticatedRoute>{route.component}</AuthenticatedRoute>
+                            ) : route.component;
 
-                                const layoutRoute = route.layout === undefined || route.layout ? (
-                                    <Layout><Suspense fallback={<Loading/>}>{authRoute}</Suspense></Layout>
-                                ) : (
-                                    <Suspense fallback={<Loading/>}>{authRoute}</Suspense>
-                                );
+                            const layoutRoute = route.layout === undefined || route.layout ? (
+                                <Layout><Suspense fallback={<Loading/>}>{authRoute}</Suspense></Layout>
+                            ) : (
+                                <Suspense fallback={<Loading/>}>{authRoute}</Suspense>
+                            );
 
-                                return (
-                                    <Route key={route.path} exact={route.exact !== undefined && route.exact}
-                                           path={route.path}>
-                                        {layoutRoute}
-                                    </Route>
-                                )
-                            })}
-                            <Route exact path="/404"><PageNotFound/></Route>
-                        </Switch>
-                    </Router>
-                )}
+                            return (
+                                <Route key={route.path} exact={route.exact !== undefined && route.exact}
+                                       path={route.path}>
+                                    {layoutRoute}
+                                </Route>
+                            )
+                        })}
+                        <Route exact path="/404"><PageNotFound/></Route>
+                    </Switch>
+                </Router>
             </MuiPickersUtilsProvider>
         </ThemeProvider>
     );

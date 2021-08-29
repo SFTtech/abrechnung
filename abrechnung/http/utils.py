@@ -71,7 +71,7 @@ async def error_middleware(request, handler):
     return web.json_response({"error": message}, status=status)
 
 
-def json_serializer(obj):
+def encode_json(obj):
     if isinstance(obj, (datetime, date)):
         return obj.isoformat()
     if isinstance(obj, UUID):
@@ -98,5 +98,5 @@ def json_response(
         reason=reason,
         headers=headers,
         content_type=content_type,
-        dumps=lambda x: json.dumps(x, default=json_serializer),
+        dumps=lambda x: json.dumps(x, default=encode_json),
     )

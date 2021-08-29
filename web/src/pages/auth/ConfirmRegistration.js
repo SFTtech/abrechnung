@@ -1,11 +1,11 @@
 import React, {useState} from "react";
 import {Link as RouterLink, useParams} from "react-router-dom";
-import {ws} from "../../websocket";
 import Loading from "../../components/style/Loading";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
 import Link from "@material-ui/core/Link";
 import {Alert} from "@material-ui/lab";
+import {confirmRegistration} from "../../api";
 
 
 export default function ConfirmRegistration() {
@@ -16,14 +16,12 @@ export default function ConfirmRegistration() {
     const confirmEmail = (e) => {
         e.preventDefault();
         setStatus("loading");
-        ws.call("confirm_registration", {
-            token: token,
-        })
-            .then((value) => {
+        confirmRegistration({token: token})
+            .then(value => {
                 setError(null);
                 setStatus("success");
             })
-            .catch((err) => {
+            .catch(err => {
                 setError(err);
                 setStatus("failed")
             });

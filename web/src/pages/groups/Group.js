@@ -13,7 +13,6 @@ import {AppBar, Box, Paper, Tab, Tabs} from "@material-ui/core";
 import Transaction from "./Transaction";
 import GroupDetail from "./GroupDetail";
 import Grid from "@material-ui/core/Grid";
-import {UUID_REGEX} from "../../utils";
 
 function TabPanel(props) {
     const {children, value, index, ...other} = props;
@@ -45,7 +44,7 @@ function a11yProps(index) {
 export default function Group() {
     const match = useRouteMatch();
     const groupID = match.params.id;
-    const group = useRecoilValue(groupById(groupID));
+    const group = useRecoilValue(groupById(parseInt(groupID)));
     const [selectedTab, setSelectedTab] = useState(0);
 
     const handleTabChange = (event, newValue) => {
@@ -98,7 +97,7 @@ export default function Group() {
                         </Grid>
                     </Grid>
                 </Route>
-                <Route path={`${match.path}/transactions/:id(${UUID_REGEX})`}>
+                <Route path={`${match.path}/transactions/:id([0-9]+)`}>
                     <Suspense fallback={<Loading/>}>
                         <Transaction group={group}/>
                     </Suspense>

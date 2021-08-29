@@ -1,4 +1,3 @@
-import asyncpg
 from aiohttp.test_utils import unittest_run_loop
 
 from tests.http import HTTPAPITest
@@ -26,6 +25,15 @@ class TransactionAPITest(HTTPAPITest):
         )
         return group_id, transaction_id
 
+    async def _create_account(self, group_id: int, name: str) -> int:
+        return await self.account_service.create_account(
+            user_id=self.test_user_id,
+            group_id=group_id,
+            type="personal",
+            name=name,
+            description=f"account {name} description",
+        )
+
     async def _fetch_transaction(
         self, group_id: int, transaction_id: int, expected_status: int = 200
     ) -> dict:
@@ -35,6 +43,29 @@ class TransactionAPITest(HTTPAPITest):
         self.assertEqual(expected_status, resp.status)
         ret_data = await resp.json()
         self.assertEqual(transaction_id, ret_data["id"])
+        return ret_data
+
+    async def _update_transaction(
+        self,
+        group_id: int,
+        transaction_id: int,
+        value: float,
+        description: str,
+        currency_symbol: str,
+        currency_conversion_rate: float,
+        expected_status: int = 204,
+    ) -> dict:
+        resp = await self._post(
+            f"/api/v1/groups/{group_id}/transactions/{transaction_id}",
+            json={
+                "value": value,
+                "description": description,
+                "currency_symbol": currency_symbol,
+                "currency_conversion_rate": currency_conversion_rate,
+            },
+        )
+        self.assertEqual(expected_status, resp.status)
+        ret_data = await resp.json()
         return ret_data
 
     async def _commit_transaction(
@@ -202,22 +233,58 @@ class TransactionAPITest(HTTPAPITest):
         self.assertEqual(404, resp.status)
 
     @unittest_run_loop
+    async def test_update_transaction(self):
+        group_id, transaction_id = await self._create_group_with_transaction("transfer")
+        await self._update_transaction(
+            group_id, transaction_id, 200.0, "some description", "$", 2.0
+        )
+        account1_id = await self._create_account(group_id, "account1")
+        account2_id = await self._create_account(group_id, "account2")
+
+        t = await self._fetch_transaction(group_id, transaction_id)
+        self.assertEqual(200.0, t["pending_changes"][str(self.test_user_id)]["value"])
+        self.assertEqual(
+            "some description",
+            t["pending_changes"][str(self.test_user_id)]["description"],
+        )
+        self.assertEqual(
+            "$", t["pending_changes"][str(self.test_user_id)]["currency_symbol"]
+        )
+        self.assertEqual(
+            2.0,
+            t["pending_changes"][str(self.test_user_id)]["currency_conversion_rate"],
+        )
+
+        await self._post_debitor_share(group_id, transaction_id, account1_id, 1.0)
+        await self._post_creditor_share(group_id, transaction_id, account2_id, 1.0)
+
+        await self._commit_transaction(group_id, transaction_id)
+
+        t = await self._fetch_transaction(group_id, transaction_id)
+        self.assertEqual(0, len(t["pending_changes"]))
+
+        await self._update_transaction(
+            group_id, transaction_id, 100.0, "foobar", "€", 1.0
+        )
+        t = await self._fetch_transaction(group_id, transaction_id)
+        self.assertEqual(100.0, t["pending_changes"][str(self.test_user_id)]["value"])
+        self.assertEqual(
+            "foobar",
+            t["pending_changes"][str(self.test_user_id)]["description"],
+        )
+        self.assertEqual(
+            "€", t["pending_changes"][str(self.test_user_id)]["currency_symbol"]
+        )
+        self.assertEqual(
+            1.0,
+            t["pending_changes"][str(self.test_user_id)]["currency_conversion_rate"],
+        )
+
+    @unittest_run_loop
     async def test_commit_transaction(self):
         group_id, transaction_id = await self._create_group_with_transaction("purchase")
-        account1_id = await self.account_service.create_account(
-            user_id=self.test_user_id,
-            group_id=group_id,
-            type="personal",
-            name="account1",
-            description="description",
-        )
-        account2_id = await self.account_service.create_account(
-            user_id=self.test_user_id,
-            group_id=group_id,
-            type="personal",
-            name="account2",
-            description="description",
-        )
+        account1_id = await self._create_account(group_id, "account1")
+        account2_id = await self._create_account(group_id, "account2")
 
         # we should not be able to commit this transaction as we do not have creditor or debitor shares
         await self._commit_transaction(group_id, transaction_id, expected_status=400)

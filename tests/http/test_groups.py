@@ -89,7 +89,11 @@ class GroupAPITest(HTTPAPITest):
     @unittest_run_loop
     async def test_create_account(self):
         group_id = await self.group_service.create_group(
-            self.test_user_id, "name", "description", "€", "terms"
+            user_id=self.test_user_id,
+            name="name",
+            description="description",
+            currency_symbol="€",
+            terms="terms",
         )
         resp = await self._post(
             f"/api/v1/groups/{group_id}/accounts",
@@ -176,7 +180,11 @@ class GroupAPITest(HTTPAPITest):
     @unittest_run_loop
     async def test_list_members(self):
         group_id = await self.group_service.create_group(
-            self.test_user_id, "name", "description", "€", "terms"
+            user_id=self.test_user_id,
+            name="name",
+            description="description",
+            currency_symbol="€",
+            terms="terms",
         )
         resp = await self._get(f"/api/v1/groups/{group_id}/members")
         self.assertEqual(200, resp.status)

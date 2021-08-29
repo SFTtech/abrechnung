@@ -9,7 +9,7 @@ import ListItemText from "@material-ui/core/ListItemText";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import Grid from "@material-ui/core/Grid";
 import Chip from "@material-ui/core/Chip";
-import TransactionCreateModal from "../groups/TransactionCreateModal";
+import TransactionCreateModal from "./TransactionCreateModal";
 import {makeStyles} from "@material-ui/core";
 
 const useStyles = makeStyles((theme) => ({

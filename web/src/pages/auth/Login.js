@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from "react";
 import {Link as RouterLink, useHistory} from "react-router-dom";
 import {Field, Form, Formik} from "formik";
-import {isAuthenticated} from "../../recoil/auth";
-import {useRecoilState} from "recoil";
+import {isAuthenticated, userData} from "../../recoil/auth";
+import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
 import Loading from "../../components/style/Loading";
 import {toast} from "react-toastify";
 import Button from "@material-ui/core/Button";
@@ -12,7 +12,7 @@ import {Container, CssBaseline, makeStyles} from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import Avatar from '@material-ui/core/Avatar';
 import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
-import {login} from "../../api";
+import {fetchProfile, login, removeToken} from "../../api";
 import Grid from "@material-ui/core/Grid";
 import Link from "@material-ui/core/Link";
 
@@ -37,29 +37,42 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function Login() {
-    const [loggedIn, setLoggedIn] = useRecoilState(isAuthenticated);
+    const setUserData = useSetRecoilState(userData);
+    const isLoggedIn = useRecoilValue(isAuthenticated);
     const [loading, setLoading] = useState(true);
     let history = useHistory();
     const classes = useStyles();
 
     useEffect(() => {
-        if (loggedIn) {
+        if (isLoggedIn) {
             setLoading(false);
             history.push('/'); // TODO: handle next page on redirect
         } else {
             setLoading(false);
         }
-    }, [loggedIn, history])
+    }, [isLoggedIn, history])
 
     const handleSubmit = (values, {setSubmitting}) => {
         login(values).then(res => {
             toast.success(`Logged in...`);
             setSubmitting(false);
-            setLoggedIn(true);
+            fetchProfile()
+                .then(result => {
+                    setUserData(result);
+                    setLoading(false);
+                })
+                .catch(err => {
+                    console.log("error loading user info in root app", err)
+                    toast.error(`${err}`);
+                    removeToken();
+                    setUserData(null);
+                    setLoading(false);
+                })
         }).catch(err => {
             toast.error(`${err}`);
             setSubmitting(false);
-            setLoggedIn(false);
+            removeToken();
+            setUserData(null);
         })
     };
 

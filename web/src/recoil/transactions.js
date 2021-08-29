@@ -10,16 +10,14 @@ export const groupTransactions = atomFamily({
     default: selectorFamily({
         key: "groupTransactions/default",
         get: groupID => async ({get}) => {
-            return await fetchTransactions(groupID);
+            return await fetchTransactions({groupID: groupID});
         }
     }),
     effects_UNSTABLE: groupID => [
         ({setSelf, trigger}) => {
-            ws.subscribe("transaction", groupID, ({scope, group_id, transaction_id}) => {
-                if (scope === "transaction" && group_id === groupID) {
-                    // fetchTransaction({groupID: group_id, transactionID: transaction_id})
-                    //     .then(result => setSelf(result));
-                    fetchTransactions(group_id).then(result => setSelf(result));
+            ws.subscribe("transaction", groupID, ({subscription_type, transaction_id, element_id}) => {
+                if (subscription_type === "transaction" && element_id === groupID) {
+                    fetchTransactions({groupID: element_id}).then(result => setSelf(result));
                 }
             })
             // TODO: handle registration errors

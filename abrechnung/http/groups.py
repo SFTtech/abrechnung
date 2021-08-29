@@ -9,8 +9,6 @@ from abrechnung.application import NotFoundError
 from abrechnung.domain import InvalidCommand
 from abrechnung.http.serializers import (
     GroupSerializer,
-    UserSerializer,
-    AccountSerializer,
     GroupMemberSerializer,
     GroupInviteSerializer,
     GroupPreviewSerializer,
@@ -67,7 +65,6 @@ async def get_group(request: Request):
 
 @routes.get(r"/groups/{group_id:\d+}/members")
 async def list_members(request):
-
     try:
         members = await request.app["group_service"].list_members(
             user_id=request["user"]["user_id"],
@@ -83,7 +80,6 @@ async def list_members(request):
 
 @routes.get(r"/groups/{group_id:\d+}/invites")
 async def list_invites(request):
-
     try:
         invites = await request.app["group_service"].list_invites(
             user_id=request["user"]["user_id"],

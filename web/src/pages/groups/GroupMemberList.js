@@ -66,12 +66,8 @@ export default function GroupMemberList({group}) {
         setMemberToEdit(null);
     };
 
-    const userForId = (userID) => {
-        return members.find(member => member.id === userID);
-    }
-
     const openEditMemberModal = (userID) => {
-        const user = group.members.find(member => member.user_id === userID);
+        const user = members.find(member => member.user_id === userID);
         // TODO: maybe deal with disappearing users in the list
         setMemberToEdit(user);
         setShowEditMemberDialog(true);
@@ -93,13 +89,13 @@ export default function GroupMemberList({group}) {
     return (
         <Paper elevation={1} className={classes.paper}>
             <List>
-                {group.members.length === 0 ? (
+                {members.length === 0 ? (
                     <ListItem><ListItemText primary="No Members"/></ListItem>
                 ) : (
-                    group.members.map((member, index) => (
+                    members.map((member, index) => (
                         <ListItem key={index}>
                             <ListItemText
-                                primary={userForId(member.user_id)?.username}
+                                primary={member.username}
                                 secondary={
                                     <>
                                         {member.is_owner ? (
@@ -192,7 +188,7 @@ export default function GroupMemberList({group}) {
                         Are you sure you want to remove{" "}
                         <strong>
                             {memberToRemove !== null
-                                ? group.members.find((member) => member.user_id === memberToRemove).username
+                                ? members.find((member) => member.user_id === memberToRemove).username
                                 : ""}
                         </strong>{" "}
                         from this group?

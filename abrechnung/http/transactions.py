@@ -63,6 +63,34 @@ async def get_transaction(request: Request):
     return json_response(data=serializer.to_repr())
 
 
+@routes.post(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}")
+@validate(
+    schema.Schema(
+        {
+            "description": str,
+            "value": schema.Or(float, int),
+            "currency_symbol": str,
+            "currency_conversion_rate": schema.Or(float, int),
+        }
+    )
+)
+async def update_transaction(request: Request, data: dict):
+
+    try:
+        await request.app["transaction_service"].update_transaction(
+            user_id=request["user"]["user_id"],
+            transaction_id=int(request.match_info["transaction_id"]),
+            value=data["value"],
+            description=data["description"],
+            currency_symbol=data["currency_symbol"],
+            currency_conversion_rate=data["currency_conversion_rate"],
+        )
+    except PermissionError:
+        raise web.HTTPForbidden(reason="permission denied")
+
+    return json_response(status=web.HTTPNoContent.status_code)
+
+
 @routes.post(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/commit")
 async def commit_transaction(request: Request):
     try:

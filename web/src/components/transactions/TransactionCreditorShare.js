@@ -24,9 +24,6 @@ export default function TransactionCreditorShare({group, transaction, isEditing,
             accountID: account.id,
             value: 1.0,
         })
-            .then(() => {
-                toast.success(`Updated share!`);
-            })
             .catch(err => {
                 toast.error(`Error updating creditor: ${err}!`);
             })
@@ -36,7 +33,7 @@ export default function TransactionCreditorShare({group, transaction, isEditing,
     return (
         <AccountSelect
             group={group}
-            value={shareAccountID === null ? null : getAccount(shareAccountID)}
+            value={shareAccountID === null ? null : getAccount(parseInt(shareAccountID))}
             onChange={onCreditorChange}
             disabled={!isEditing}
             {...props}

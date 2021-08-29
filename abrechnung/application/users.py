@@ -96,10 +96,13 @@ class UserService(Application):
                     "select user_id, valid_until from pending_registration where token = $1",
                     token,
                 )
+                if row is None:
+                    raise PermissionError(f"Invalid registration token")
+
                 user_id = row["user_id"]
                 valid_until = row["valid_until"]
                 if valid_until is None or valid_until < datetime.now(tz=timezone.utc):
-                    raise PermissionError
+                    raise PermissionError(f"Invalid registration token")
 
                 await conn.execute(
                     "delete from pending_registration where user_id = $1", user_id

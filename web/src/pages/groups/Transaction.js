@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
 export default function Transaction({group}) {
     const classes = useStyles();
     const match = useRouteMatch();
-    const transactionID = match.params.id;
+    const transactionID = parseInt(match.params.id);
     const user = useRecoilValue(userData);
 
     const transaction = useRecoilValue(transactionById({groupID: group.id, transactionID: transactionID}));

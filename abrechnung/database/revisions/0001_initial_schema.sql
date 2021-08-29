@@ -14,6 +14,27 @@ values (
 )
 on conflict do nothing;
 
+-------------------------------------------------------------------------------
+-- websocket connections
+
+-- maps textual forwarder ids to notification channel identifiers
+-- when a forwarder boots, it's inserted here,
+-- and when it stops, it's removed here.
+-- this table solely exists to delete old connections
+-- when a forwarder hard-crashes and re-registers.
+create table if not exists forwarder(
+    id text primary key not null,
+    channel_id serial unique not null
+);
+
+-- tracking of active connections of users to websocket forwarders
+-- rows are added when somebody connects to a forwarder,
+-- and deleted when they disconnect again.
+create table if not exists connection(
+    id bigserial primary key,
+    channel_id integer not null references forwarder(channel_id) on delete cascade,
+    started timestamptz not null default now()
+);
 
 -------------------------------------------------------------------------------
 -- user accounts
@@ -62,6 +83,55 @@ create table if not exists pending_email_change (
     -- if not NULL, the next attempt to send the mail should be attempted at that time
     mail_next_attempt timestamptz          default now()
 );
+
+-- notify the mailer service on inserts or updates in the above tables
+create or replace function pending_registration_updated() returns trigger as
+$$
+begin
+    perform pg_notify('mailer', 'pending_registration');
+
+    return null;
+end;
+$$ language plpgsql;
+
+drop trigger if exists pending_registration_trig on pending_registration;
+create trigger pending_registration_trig
+    after insert or update
+    on pending_registration
+    for each row
+execute function pending_registration_updated();
+
+create or replace function pending_password_recovery_updated() returns trigger as
+$$
+begin
+    perform pg_notify('mailer', 'pending_password_recovery');
+
+    return null;
+end;
+$$ language plpgsql;
+
+drop trigger if exists pending_password_recovery_trig on pending_password_recovery;
+create trigger pending_password_recovery_trig
+    after insert or update
+    on pending_password_recovery
+    for each row
+execute function pending_password_recovery_updated();
+
+create or replace function pending_email_change_updated() returns trigger as
+$$
+begin
+    perform pg_notify('mailer', 'pending_email_change');
+
+    return null;
+end;
+$$ language plpgsql;
+
+drop trigger if exists pending_email_change_trig on pending_email_change;
+create trigger pending_email_change_trig
+    after insert or update
+    on pending_email_change
+    for each row
+execute function pending_email_change_updated();
 
 -- tracking of login sessions
 -- authtokens authenticate users directly
@@ -127,7 +197,7 @@ create table if not exists group_invite (
     id          bigserial unique,
 
     -- the group that the token grants access to
-    group_id    integer references grp (id) on delete cascade,
+    group_id    integer not null references grp (id) on delete cascade,
     token       uuid primary key default gen_random_uuid(),
     -- description text for the authtoken
     description text not null,
@@ -330,7 +400,8 @@ begin
     end if;
 
     perform from transaction_revision tr
-    where tr.id != check_committed_transactions.revision_id
+    where tr.transaction_id = check_committed_transactions.transaction_id
+      and tr.id != check_committed_transactions.revision_id
       and check_committed_transactions.started <= tr.committed
       and tr.committed <= check_committed_transactions.committed;
 

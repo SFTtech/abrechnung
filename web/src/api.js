@@ -20,6 +20,16 @@ export const fetchToken = () => {
     return null;
 }
 
+export const getUserIDFromToken = () => {
+    const token = fetchToken();
+    if (token == null) {
+        return null;
+    }
+
+    const {user_id: userID} = JSON.parse(atob(token.split(".")[1]));
+    return userID
+}
+
 export const api = axios.create({
     baseURL: "http://localhost:8080/api/v1"
 })
@@ -56,15 +66,36 @@ export async function fetchProfile() {
     return resp.data;
 }
 
-export async function changeEmail({newEmail}) {
-    const resp = await api.post("/auth/profile/change_email", {email: newEmail});
+export async function changeEmail({password, newEmail}) {
+    const resp = await api.post("/profile/change_email", {password: password, email: newEmail});
     return resp.data;
 }
 
 export async function changePassword({oldPassword, newPassword}) {
-    const resp = await api.post("/auth/profile/change_password", {
+    const resp = await api.post("/profile/change_password", {
         old_password: oldPassword,
         new_password: newPassword
+    });
+    return resp.data;
+}
+
+export async function confirmRegistration({token}) {
+    const resp = await api.post("/auth/confirm_registration", {
+        token: token
+    });
+    return resp.data;
+}
+
+export async function confirmEmailChange({token}) {
+    const resp = await api.post("/auth/confirm_email_change", {
+        token: token
+    });
+    return resp.data;
+}
+
+export async function confirmPasswordReset({token}) {
+    const resp = await api.post("/auth/confirm_password_reset", {
+        token: token
     });
     return resp.data;
 }
@@ -74,7 +105,7 @@ export async function fetchGroups() {
     return resp.data;
 }
 
-export async function fetchGroup({groupID}) {
+export async function fetchGroup(groupID) {
     const resp = await api.get(`/groups/${groupID}`);
     return resp.data;
 }
@@ -109,6 +140,12 @@ export async function updateGroupMemberPrivileges({groupID, userID, isOwner, can
     return resp.data;
 }
 
+export async function fetchInvites({groupID}) {
+    const resp = await api.get(`/groups/${groupID}/invites`);
+    return resp.data;
+}
+
+
 export async function createGroupInvite({groupID, description, validUntil, singleUse}) {
     const resp = await api.post(`/groups/${groupID}/invites`, {
         description: description,
@@ -123,12 +160,12 @@ export async function deleteGroupInvite({groupID, inviteID}) {
     return resp.data;
 }
 
-export async function fetchMembers(groupID) {
+export async function fetchMembers({groupID}) {
     const resp = await api.get(`/groups/${groupID}/members`);
     return resp.data;
 }
 
-export async function fetchAccounts(groupID) {
+export async function fetchAccounts({groupID}) {
     const resp = await api.get(`/groups/${groupID}/accounts`);
     return resp.data;
 }
@@ -150,7 +187,7 @@ export async function updateAccount({groupID, accountID, name, description}) {
     return resp.data;
 }
 
-export async function fetchTransactions(groupID) {
+export async function fetchTransactions({groupID}) {
     const resp = await api.get(`/groups/${groupID}/transactions`);
     return resp.data;
 }

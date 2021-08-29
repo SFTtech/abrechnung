@@ -1,17 +1,28 @@
 import {atom, selector} from "recoil";
-import {fetchToken} from "../api";
+import {fetchProfile, fetchToken} from "../api";
 
 export const userData = atom({
     key: "userData",
-    default: {},
-})
-
-export const isAuthenticated = atom({
-    key: "isAuthenticated",
     default: selector({
-        key: "isAuthenticated/default",
+        key: "userData/default",
         get: async ({get}) => {
-            return fetchToken() !== null;
+            const token = fetchToken();
+            if (token === null) {
+                return null;
+            }
+            try {
+                return await fetchProfile();
+            } catch (err) {
+                return null;
+            }
         }
     })
+})
+
+export const isAuthenticated = selector({
+    key: "isAuthenticated",
+    get: async ({get}) => {
+        const user = get(userData);
+        return user !== null;
+    }
 })

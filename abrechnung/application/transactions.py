@@ -185,6 +185,39 @@ class TransactionService(Application):
                     revision_id,
                 )
 
+    async def update_transaction(
+        self,
+        *,
+        user_id: int,
+        transaction_id: int,
+        value: float,
+        description: str,
+        currency_symbol: str,
+        currency_conversion_rate: float,
+    ):
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                await self._check_transaction_permissions(
+                    conn=conn,
+                    user_id=user_id,
+                    transaction_id=transaction_id,
+                    can_write=True,
+                )
+                revision_id = await self._get_or_create_pending_change(
+                    conn=conn, user_id=user_id, transaction_id=transaction_id
+                )
+                await conn.execute(
+                    "update transaction_history th "
+                    "set value = $3, description = $4, currency_symbol = $5, currency_conversion_rate = $6 "
+                    "where th.id = $1 and th.revision_id = $2",
+                    transaction_id,
+                    revision_id,
+                    value,
+                    description,
+                    currency_symbol,
+                    currency_conversion_rate,
+                )
+
     async def _get_or_create_pending_change(
         self, conn: asyncpg.Connection, user_id: int, transaction_id: int
     ) -> int:
@@ -345,9 +378,11 @@ class TransactionService(Application):
                 )
 
                 r = await conn.fetchval(
-                    "delete from creditor_share where transaction_id = $1 and revision_id = $2 returning revision_id",
+                    "delete from creditor_share where transaction_id = $1 and revision_id = $2 and account_id = $3 "
+                    "returning revision_id",
                     transaction_id,
                     revision_id,
+                    account_id,
                 )
                 if not r:
                     raise NotFoundError(f"Creditor share does not exist")
@@ -417,9 +452,11 @@ class TransactionService(Application):
                 )
 
                 r = await conn.fetchval(
-                    "delete from debitor_share where transaction_id = $1 and revision_id = $2 returning revision_id",
+                    "delete from debitor_share where transaction_id = $1 and revision_id = $2 and account_id = $3 "
+                    "returning revision_id",
                     transaction_id,
                     revision_id,
+                    account_id,
                 )
                 if not r:
                     raise NotFoundError(f"Debitor share does not exist")

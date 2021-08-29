@@ -52,7 +52,7 @@ export default function TransactionCreateModal({group, show, onClose}) {
                                 >
                                     <MenuItem value="purchase">Purchase</MenuItem>
                                     <MenuItem value="transfer">Transfer</MenuItem>
-                                    <MenuItem value="mimo">MIMO</MenuItem>
+                                    {/*<MenuItem value="mimo">MIMO</MenuItem>*/}
                                 </Field>
                             </FormControl>
                             <Field

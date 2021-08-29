@@ -39,7 +39,7 @@ export default function TransferShares({group, transaction, isEditing}) {
             />
             <AccountSelect
                 group={group}
-                value={debitorShareAccountID === null ? null : getAccount(debitorShareAccountID)}
+                value={debitorShareAccountID === null ? null : getAccount(parseInt(debitorShareAccountID))}
                 onChange={onDebitorChange}
                 disabled={!isEditing}
                 margin="normal"

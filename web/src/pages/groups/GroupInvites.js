@@ -13,6 +13,8 @@ import Grid from "@material-ui/core/Grid";
 import AddIcon from "@material-ui/icons/Add";
 import { makeStyles, Paper } from "@material-ui/core";
 import {deleteGroupInvite} from "../../api";
+import {groupInvites} from "../../recoil/groups";
+import {useRecoilValue} from "recoil";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -23,6 +25,7 @@ const useStyles = makeStyles((theme) => ({
 export default function GroupInvites({group}) {
     const classes = useStyles();
     const [showModal, setShowModal] = useState(false);
+    const invites = useRecoilValue(groupInvites(group.id));
 
     const deleteToken = (id) => {
         deleteGroupInvite({groupID: group.id, inviteID: id})
@@ -39,10 +42,10 @@ export default function GroupInvites({group}) {
                 Active Invite Links
             </Typography>
             <List>
-                {group.invites.length === 0 ? (
+                {invites.length === 0 ? (
                     <ListItem><ListItemText primary="No Links"/></ListItem>
                 ) : (
-                    group.invites.map((link, index) => (
+                    invites.map((link, index) => (
                         <ListItem key={index}>
                             <ListItemText
                                 primary={`${window.location.origin}/invite/${link.token}`}

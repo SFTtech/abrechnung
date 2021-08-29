@@ -40,6 +40,10 @@ def token_for_user(user_id: int, secret_key: str) -> str:
     return jwt.encode({"exp": access_token_expiry(), "user_id": user_id}, secret_key)
 
 
+def decode_jwt_token(token: str, secret: str) -> dict:
+    return jwt.decode(token, secret, algorithms="HS256")
+
+
 def jwt_middleware(
     secret,
     whitelist=tuple(),
@@ -70,26 +74,25 @@ def jwt_middleware(
             if not re.match(auth_scheme, scheme):
                 raise web.HTTPForbidden(reason="Invalid token scheme")
 
-        if not token:
+        if token is None:
             raise web.HTTPUnauthorized(
                 reason="Missing authorization token",
             )
 
-        if token is not None:
-            if not isinstance(token, bytes):
-                token = token.encode()
+        if not isinstance(token, bytes):
+            token = token.encode()
 
-            try:
-                decoded = jwt.decode(token, secret, algorithms="HS256")
-            except jwt.JWTError as exc:
-                logger.info(f"Received invalid authorization token: {exc}")
-                msg = "Invalid authorization token, " + str(exc)
-                raise web.HTTPUnauthorized(reason=msg)
+        try:
+            decoded = decode_jwt_token(token, secret)
+        except jwt.JWTError as exc:
+            logger.info(f"Received invalid authorization token: {exc}")
+            msg = "Invalid authorization token, " + str(exc)
+            raise web.HTTPUnauthorized(reason=msg)
 
-            # TODO: improve this to make it more sane
-            decoded["user_id"] = decoded["user_id"]
+        # TODO: improve this to make it more sane
+        decoded["user_id"] = decoded["user_id"]
 
-            request[REQUEST_AUTH_KEY] = decoded
+        request[REQUEST_AUTH_KEY] = decoded
 
         return await handler(request)
 
@@ -139,7 +142,7 @@ async def register(request, data):
 async def confirm_registration(request, data):
     try:
         await request.app["user_service"].confirm_registration(token=data["token"])
-    except CommandError as e:
+    except (PermissionError, CommandError) as e:
         raise web.HTTPBadRequest(reason=str(e))
 
     return json_response(status=web.HTTPNoContent.status_code)
@@ -191,6 +194,17 @@ async def change_email(request, data):
 async def confirm_email_change(request, data):
     try:
         await request.app["user_service"].confirm_email_change(token=data["token"])
+    except CommandError as e:
+        raise web.HTTPBadRequest(reason=str(e))
+
+    return json_response(status=web.HTTPNoContent.status_code)
+
+
+@routes.post("/auth/confirm_password_reset")
+@validate(Schema({"token": str}))
+async def confirm_email_change(request, data):
+    try:
+        await request.app["user_service"].confirm_password_reset(token=data["token"])
     except CommandError as e:
         raise web.HTTPBadRequest(reason=str(e))
 

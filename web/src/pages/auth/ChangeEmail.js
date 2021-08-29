@@ -7,6 +7,7 @@ import Button from "@material-ui/core/Button";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import {makeStyles} from "@material-ui/core";
 import {changeEmail} from "../../api";
+import {toast} from "react-toastify";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -24,9 +25,11 @@ export default function ChangeEmail() {
         })
             .then((res) => {
                 setSubmitting(false);
+                toast.success("Requested email change, you should receive an email with a confirmation link soon");
             })
             .catch((error) => {
                 setSubmitting(false);
+                toast.error(`Error updating creditor: ${error}!`);
             });
     };
 
