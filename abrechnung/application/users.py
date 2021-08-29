@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Optional
 
 import bcrypt
 
@@ -41,11 +42,22 @@ class UserService(Application):
 
             return self._check_password(password, user["hashed_password"])
 
-    async def login_user(self, username: str, password: str) -> tuple[int, str]:
+    async def is_session_token_valid(self, token: str) -> Optional[tuple[int, int]]:
+        """returns the session id"""
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                row = await conn.fetchrow(
+                    "select user_id, id from session where token = $1 and valid_until is null or valid_until > now()",
+                    token
+                )
+
+                return row
+
+    async def login_user(self, username: str, password: str) -> tuple[int, int, str]:
         """
         validate whether a given user can login
 
-        If successful return the user id and a session token
+        If successful return the user id, a new session id and a session token
         """
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -62,12 +74,12 @@ class UserService(Application):
                 if user["pending"] or user["deleted"]:
                     raise LoginFailed(f"User is not permitted to login")
 
-                session_token = await conn.fetchval(
-                    "insert into session (user_id) values ($1) returning token",
+                session_token, session_id = await conn.fetchrow(
+                    "insert into session (user_id) values ($1) returning token, id",
                     user["id"],
                 )
 
-                return user["id"], session_token
+                return user["id"], session_id, session_token
 
     async def register_user(self, username: str, email: str, password: str) -> int:
         """Register a new user, returning the newly created user id and creating a pending registration entry"""

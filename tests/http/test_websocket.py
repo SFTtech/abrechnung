@@ -19,10 +19,11 @@ class WebsocketAPITest(BaseHTTPAPITest):
 
     @unittest_run_loop
     async def test_websocket_notifications(self):
-        user_id = await self.user_service.register_user(
-            username="user", email="email@email.com", password="password"
+        user_id, password = await self._create_test_user(
+            username="user", email="email@email.com"
         )
-        token = token_for_user(user_id, self.secret_key)
+        _, session_id, _ = await self.user_service.login_user("user", password=password)
+        token = token_for_user(user_id, session_id=session_id, secret_key=self.secret_key)
 
         ws = await self.client.ws_connect("/api/v1/ws")
         self.assertIsNotNone(ws)

@@ -575,7 +575,7 @@ begin
         call notify_group('group_member', OLD.group_id, OLD.group_id::bigint,
                           json_build_object('element_id', OLD.group_id, 'user_id', OLD.user_id));
     else
-        call notify_user('group', NEW.user_id, NEW.group_id::bigint,
+        call notify_user('group', NEW.user_id, NEW.user_id::bigint,
                          json_build_object('element_id', NEW.user_id, 'group_id', NEW.group_id));
         call notify_group('group_member', NEW.group_id, NEW.group_id::bigint,
                           json_build_object('element_id', NEW.group_id, 'user_id', NEW.user_id));

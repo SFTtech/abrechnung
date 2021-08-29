@@ -44,7 +44,7 @@ async def create_transaction(request: Request, data: dict):
         value=float(data["value"]),
     )
 
-    return json_response(data={"transaction_id": str(transaction_id)})
+    return json_response(data={"transaction_id": transaction_id})
 
 
 @routes.get(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}")

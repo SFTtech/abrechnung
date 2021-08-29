@@ -1,14 +1,16 @@
 from datetime import datetime, timezone
 
 from abrechnung.domain.accounts import Account
-from . import Application, require_group_permissions, NotFoundError
+from . import Application, NotFoundError, check_group_permissions
 
 
 class AccountService(Application):
-    @require_group_permissions()
     async def list_accounts(self, *, user_id: int, group_id: int) -> list[Account]:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
+                await check_group_permissions(
+                    conn=conn, group_id=group_id, user_id=user_id
+                )
                 cur = conn.cursor(
                     "select id, type, revision_id, name, description, priority "
                     "from latest_account "
@@ -31,11 +33,11 @@ class AccountService(Application):
 
                 return result
 
-    @require_group_permissions()
     async def get_account(
         self, *, user_id: int, group_id: int, account_id: int
     ) -> Account:
         async with self.db_pool.acquire() as conn:
+            await check_group_permissions(conn=conn, group_id=group_id, user_id=user_id)
             account = await conn.fetchrow(
                 "select id, type, revision_id, name, description, priority "
                 "from latest_account "
@@ -56,7 +58,6 @@ class AccountService(Application):
                 deleted=False,
             )
 
-    @require_group_permissions(can_write=True)
     async def create_account(
         self,
         *,
@@ -69,6 +70,9 @@ class AccountService(Application):
     ) -> int:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
+                await check_group_permissions(
+                    conn=conn, group_id=group_id, user_id=user_id, can_write=True
+                )
                 account_id = await conn.fetchval(
                     "insert into account (group_id, type) values ($1, $2) returning id",
                     group_id,
@@ -94,7 +98,6 @@ class AccountService(Application):
                 )
                 return account_id
 
-    @require_group_permissions(can_write=True)
     async def update_account(
         self,
         user_id: int,
@@ -107,6 +110,9 @@ class AccountService(Application):
         # TODO: figure out the more complex logic once we have accounts stuck in uncommitted states
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
+                await check_group_permissions(
+                    conn=conn, group_id=group_id, user_id=user_id, can_write=True
+                )
                 account = await conn.fetchrow(
                     "select id, type, revision_id, name, description, priority "
                     "from latest_account "

@@ -42,7 +42,7 @@ async def create_account(request: web.Request, data: dict):
     except PermissionError:
         raise web.HTTPForbidden(reason="permission denied")
 
-    return json_response(data={"account_id": str(account_id)})
+    return json_response(data={"account_id": account_id})
 
 
 @routes.get(r"/groups/{group_id:\d+}/accounts/{account_id:\d+}")

@@ -9,6 +9,8 @@ import Paper from "@material-ui/core/Paper";
 import {makeStyles} from "@material-ui/core";
 import {toast} from "react-toastify";
 import {updateGroupMetadata} from "../../api";
+import {currUserPermissions} from "../../recoil/groups";
+import {useRecoilValue} from "recoil";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -19,14 +21,16 @@ const useStyles = makeStyles((theme) => ({
 export default function GroupDetail({group}) {
     const classes = useStyles();
 
+    const userPermissions = useRecoilValue(currUserPermissions(group.id));
+
     // TODO: actually make the editing part work
-    const updateGroup = (name = null, description = null, currencySymbol = null, terms = null) => {
+    const updateGroup = ({name = null, description = null, currencySymbol = null, terms = null}) => {
         updateGroupMetadata({
             groupID: group.id,
-            name: name,
-            description: description,
-            currency_symbol: currencySymbol,
-            terms: terms
+            name: name ? name : group.name,
+            description: description ? description : group.description,
+            currencySymbol: currencySymbol ? currencySymbol : group.currency_symbol,
+            terms: terms ? terms : group.terms
         })
             .catch(err => {
                 toast.error(`Error updating group ${err}!`);
@@ -35,9 +39,9 @@ export default function GroupDetail({group}) {
 
     return (
         <Paper elevation={1} className={classes.paper}>
-            {group.is_owner ? (
+            {userPermissions.is_owner ? (
                 <Alert severity="info">You are an owner of this group</Alert>
-            ) : !group.can_write ? (
+            ) : !userPermissions.can_write ? (
                 <Alert severity="info">You only have read access to this group</Alert>
             ) : null}
 
@@ -45,42 +49,38 @@ export default function GroupDetail({group}) {
                 label="Name"
                 margin="normal"
                 value={group.name}
-                onChange={updateGroup}
+                onChange={name => updateGroup({name: name})}
             />
 
             <EditableField
                 label="Description"
                 margin="normal"
                 value={group.description}
-                onChange={updateGroup}
+                onChange={description => updateGroup({description: description})}
             />
 
             <EditableField
                 label="Currency Symbol"
                 margin="normal"
                 value={group.currency_symbol}
-                onChange={updateGroup}
+                onChange={currencySymbol => updateGroup({currencySymbol: currencySymbol})}
             />
 
             <EditableField
                 label="Terms"
                 margin="normal"
                 value={group.terms}
-                onChange={updateGroup}
+                onChange={terms => updateGroup({terms: terms})}
             />
 
-            <List>
-                <ListItem>
-                    <ListItemText primary="Created" secondary={group.created}/>
-                </ListItem>
-                <ListItem>
-                    <ListItemText primary="Joined" secondary={group.joined}/>
-                </ListItem>
-                <ListItem>
-                    <ListItemText primary="Last changed"
-                                  secondary={group.latest_commit === null ? "never" : group.latest_commit}/>
-                </ListItem>
-            </List>
+            {/*<List>*/}
+            {/*    <ListItem>*/}
+            {/*        <ListItemText primary="Created" secondary={group.created}/>*/}
+            {/*    </ListItem>*/}
+            {/*    <ListItem>*/}
+            {/*        <ListItemText primary="Joined" secondary={group.joined}/>*/}
+            {/*    </ListItem>*/}
+            {/*</List>*/}
         </Paper>
     );
 }

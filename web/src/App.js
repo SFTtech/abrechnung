@@ -21,7 +21,7 @@ import {CssBaseline, useMediaQuery} from "@material-ui/core";
 const Profile = React.lazy(() => import("./pages/auth/Profile"));
 const ConfirmEmailChange = React.lazy(() => import("./pages/auth/ConfirmEmailChange"));
 const ConfirmRegistration = React.lazy(() => import("./pages/auth/ConfirmRegistration"));
-// const GroupInvite = React.lazy(() => import("./pages/groups/GroupInvite"));
+const GroupInvite = React.lazy(() => import("./pages/groups/GroupInvite"));
 
 const routes = [
     {
@@ -30,11 +30,11 @@ const routes = [
         auth: true,
         exact: true,
     },
-    // {
-    //     path: "/invite/:inviteToken",
-    //     component: <GroupInvite/>,
-    //     auth: false,
-    // },
+    {
+        path: "/invite/:inviteToken",
+        component: <GroupInvite/>,
+        auth: true,
+    },
     {
         path: "/groups/:id([0-9]+)",
         component: <Group/>,

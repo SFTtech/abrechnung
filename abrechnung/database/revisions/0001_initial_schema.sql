@@ -1,19 +1,5 @@
 -- abrechnung psql db
 
--- versioning of table schema, for db migrations
-
-create table if not exists schema_version (
-    version   integer primary key,
-    timestamp timestamptz not null default now()
-);
-insert into schema_version (
-    version
-)
-values (
-    1
-)
-on conflict do nothing;
-
 -------------------------------------------------------------------------------
 -- websocket connections
 

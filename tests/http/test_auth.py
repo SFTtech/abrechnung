@@ -92,7 +92,8 @@ class AuthAPITest(BaseHTTPAPITest):
     @unittest_run_loop
     async def test_profile_management(self):
         user_id, password = await self._create_test_user("user", "user@email.stuff")
-        token = token_for_user(user_id, self.secret_key)
+        _, session_id, _ = await self.user_service.login_user("user", password=password)
+        token = token_for_user(user_id, session_id, self.secret_key)
 
         headers = {"Authorization": f"Bearer {token}"}
 

@@ -117,6 +117,7 @@ class HTTPService(SubCommand):
                 whitelist=[
                     "/api/v1/auth/login",
                     "/api/v1/auth/register",
+                    "/api/v1/auth/fetch_access_token",
                     "/api/v1/auth/confirm_registration",
                     "/api/v1/auth/confirm_email_change",
                     "/api/v1/auth/confirm_password_reset",

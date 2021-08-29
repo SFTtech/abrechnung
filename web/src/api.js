@@ -36,19 +36,32 @@ export const api = axios.create({
 
 api.defaults.headers.common["Content-Type"] = "application/json"
 
-export function setToken(token) {
+export function setAccessToken(token) {
     localStorage.setItem("access_token", token);
     api.defaults.headers.common["Authorization"] = `Bearer ${token}`
+}
+
+export function setToken(token, sessionToken) {
+    localStorage.setItem("session_token", sessionToken);
+    setAccessToken(token);
 }
 
 export function removeToken() {
     console.log("deleting access token from local storage ...")
     localStorage.removeItem("access_token");
+    localStorage.removeItem("session_token");
 }
 
 export async function login({username, password}) {
     const resp = await api.post("/auth/login", {username: username, password: password})
-    setToken(resp.data.access_token);
+    setToken(resp.data.access_token, resp.data.session_token);
+    return resp.data
+}
+
+export async function fetchAccessToken() {
+    const sessionToken = localStorage.getItem("session_token");
+    const resp = await api.post("/auth/fetch_access_token", {token: sessionToken})
+    setAccessToken(resp.data.access_token)
     return resp.data
 }
 
@@ -136,6 +149,20 @@ export async function updateGroupMemberPrivileges({groupID, userID, isOwner, can
         user_id: userID,
         is_owner: isOwner,
         can_write: canWrite,
+    });
+    return resp.data;
+}
+
+export async function fetchGroupPreview({token}) {
+    const resp = await api.post(`/groups/preview`, {
+        invite_token: token
+    });
+    return resp.data;
+}
+
+export async function joinGroup({token}) {
+    const resp = await api.post(`/groups/join`, {
+        invite_token: token
     });
     return resp.data;
 }

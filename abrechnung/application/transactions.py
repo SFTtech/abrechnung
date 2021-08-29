@@ -3,7 +3,7 @@ from typing import Optional, Union
 
 import asyncpg
 
-from abrechnung.application import Application, require_group_permissions, NotFoundError
+from abrechnung.application import Application, NotFoundError, check_group_permissions
 from abrechnung.domain import InvalidCommand
 from abrechnung.domain.transactions import Transaction, TransactionDetails
 
@@ -87,12 +87,14 @@ class TransactionService(Application):
             pending_changes=pending_changes,
         )
 
-    @require_group_permissions()
     async def list_transactions(
         self, *, user_id: int, group_id: int
     ) -> list[Transaction]:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
+                await check_group_permissions(
+                    conn=conn, group_id=group_id, user_id=user_id
+                )
                 cur = conn.cursor(
                     "select id, type, current_state, pending_changes "
                     "from current_transaction_state "
@@ -126,7 +128,6 @@ class TransactionService(Application):
 
             return self._transaction_db_row(transaction)
 
-    @require_group_permissions(can_write=True)
     async def create_transaction(
         self,
         *,
@@ -140,6 +141,9 @@ class TransactionService(Application):
     ) -> int:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
+                await check_group_permissions(
+                    conn=conn, group_id=group_id, user_id=user_id
+                )
                 transaction_id = await conn.fetchval(
                     "insert into transaction (group_id, type) values ($1, $2) returning id",
                     group_id,

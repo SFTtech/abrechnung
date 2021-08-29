@@ -85,7 +85,7 @@ export const groupMembers = atomFamily({
     effects_UNSTABLE: groupID => [
         ({setSelf, trigger}) => {
             ws.subscribe("group_member", groupID, ({subscription_type, user_id, element_id}) => {
-                if (subscription_type === "group_member" && user_id === groupID) {
+                if (subscription_type === "group_member" && element_id === groupID) {
                     fetchMembers({groupID: element_id}).then(result => setSelf(result));
                 }
             })

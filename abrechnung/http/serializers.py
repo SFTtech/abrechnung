@@ -24,16 +24,6 @@ class Serializer(abc.ABC):
 
 class GroupSerializer(Serializer):
     def _to_repr(self, instance: Group) -> dict:
-        # members = [
-        #     {
-        #         "user_id": user_id,
-        #         "is_owner": m.is_owner,
-        #         "can_write": m.can_write,
-        #         "joined_at": m.joined_at,
-        #     }
-        #     for user_id, m in instance.members.items()
-        # ]
-
         return {
             "id": instance.id,
             "name": instance.name,

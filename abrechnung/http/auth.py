@@ -36,8 +36,8 @@ def access_token_expiry() -> datetime:
     return datetime.now() + ACCESS_TOKEN_VALIDITY
 
 
-def token_for_user(user_id: int, secret_key: str) -> str:
-    return jwt.encode({"exp": access_token_expiry(), "user_id": user_id}, secret_key)
+def token_for_user(user_id: int, session_id: int, secret_key: str) -> str:
+    return jwt.encode({"exp": access_token_expiry(), "user_id": user_id, "session_id": session_id}, secret_key)
 
 
 def decode_jwt_token(token: str, secret: str) -> dict:
@@ -89,10 +89,20 @@ def jwt_middleware(
             msg = "Invalid authorization token, " + str(exc)
             raise web.HTTPUnauthorized(reason=msg)
 
-        # TODO: improve this to make it more sane
-        decoded["user_id"] = decoded["user_id"]
+        if "user_id" not in decoded or "session_id" not in decoded:
+            raise web.HTTPUnauthorized(reason="Invalid token claims")
 
-        request[REQUEST_AUTH_KEY] = decoded
+        async with request.app["db_pool"].acquire() as conn:
+            session_id = await conn.fetchval(
+                "select id from session where id = $1 and valid_until is null or valid_until > now()",
+                decoded["session_id"]
+            )
+            if not session_id:
+                raise web.HTTPUnauthorized(reason="provided access token without associated session")
+
+        request[REQUEST_AUTH_KEY] = {
+            "user_id": decoded["user_id"]
+        }
 
         return await handler(request)
 
@@ -103,7 +113,7 @@ def jwt_middleware(
 @validate(Schema({"username": str, "password": str}))
 async def login(request, data):
     try:
-        user_id, session_token = await request.app["user_service"].login_user(
+        user_id, session_id, session_token = await request.app["user_service"].login_user(
             username=data["username"], password=data["password"]
         )
     except (NotFoundError, InvalidPassword) as e:
@@ -111,13 +121,34 @@ async def login(request, data):
     except LoginFailed as e:
         raise web.HTTPUnauthorized(reason=str(e))
 
-    token = token_for_user(user_id, request.app["secret_key"])
+    token = token_for_user(user_id=user_id, session_id=session_id, secret_key=request.app["secret_key"])
 
     return json_response(
         data={
-            "user_id": str(user_id),
+            "user_id": user_id,
             "access_token": token,
             "session_token": session_token,
+        }
+    )
+
+
+@routes.post("/auth/fetch_access_token")
+@validate(Schema({"token": str}))
+async def fetch_access_token(request, data):
+    row = await request.app["user_service"].is_session_token_valid(
+        token=data["token"]
+    )
+    if row is None:
+        raise web.HTTPBadRequest(reason="invalid session token")
+
+    user_id, session_id = row
+
+    token = token_for_user(user_id=user_id, session_id=session_id, secret_key=request.app["secret_key"])
+
+    return json_response(
+        data={
+            "user_id": user_id,
+            "access_token": token,
         }
     )
 

@@ -32,6 +32,9 @@ export class SFTWebsocket {
         while (this.msgQueue.length > 0) {
             this.send(this.msgQueue.pop());
         }
+        Object.entries(this.notificationHandlers).forEach(([subscriptionType, values]) => {
+            this.sendSubscriptionRequest(subscriptionType, values["elementID"]);
+        })
     }
     onclose = () => {
         console.log("WS Disconnected");
@@ -48,7 +51,7 @@ export class SFTWebsocket {
             console.log("received notification", msg);
             const subscriptionType = msg.data.subscription_type;
             if (this.notificationHandlers.hasOwnProperty(subscriptionType)) {
-                this.notificationHandlers[subscriptionType](msg.data)
+                this.notificationHandlers[subscriptionType].func(msg.data)
             }
         }
     }
@@ -61,8 +64,7 @@ export class SFTWebsocket {
         }
     }
 
-    subscribe = (subscriptionType, elementID, func) => {
-        this.notificationHandlers[subscriptionType] = func;
+    sendSubscriptionRequest = (subscriptionType, elementID) => {
         return this.send({
             type: "subscribe",
             token: fetchToken(),
@@ -71,6 +73,15 @@ export class SFTWebsocket {
                 element_id: elementID
             }
         });
+    }
+
+    subscribe = (subscriptionType, elementID, func) => {
+        this.notificationHandlers[subscriptionType] = {
+            subscriptionType: subscriptionType,
+            elementID: elementID,
+            func: func
+        };
+        return this.sendSubscriptionRequest(subscriptionType, elementID)
     }
     unsubscribe = (subscriptionType, elementID) => {
         return this.send({

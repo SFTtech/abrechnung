@@ -45,7 +45,7 @@ async def create_group(request: Request, data):
         terms=data["terms"],
     )
 
-    return json_response(data={"group_id": str(group_id)})
+    return json_response(data={"group_id": group_id})
 
 
 @routes.get(r"/groups/{group_id:\d+}")
@@ -63,8 +63,28 @@ async def get_group(request: Request):
     return json_response(data=serializer.to_repr())
 
 
+@routes.post(r"/groups/{group_id:\d+}")
+@validate(
+    Schema({"name": str, "description": str, "currency_symbol": str, "terms": str})
+)
+async def update_group(request: Request, data: dict):
+    try:
+        await request.app["group_service"].update_group(
+            user_id=request["user"]["user_id"],
+            group_id=int(request.match_info["group_id"]),
+            name=data["name"],
+            description=data["description"],
+            currency_symbol=data["currency_symbol"],
+            terms=data["terms"],
+        )
+    except PermissionError:
+        raise web.HTTPForbidden(reason="permission denied")
+
+    return web.Response(status=web.HTTPNoContent.status_code)
+
+
 @routes.get(r"/groups/{group_id:\d+}/members")
-async def list_members(request):
+async def list_members(request: web.Request):
     try:
         members = await request.app["group_service"].list_members(
             user_id=request["user"]["user_id"],
@@ -76,6 +96,23 @@ async def list_members(request):
     serializer = GroupMemberSerializer(members)
 
     return json_response(data=serializer.to_repr())
+
+
+@routes.post(r"/groups/{group_id:\d+}/members")
+@validate(Schema({"user_id": int, "can_write": bool, "is_owner": bool}))
+async def update_member_permissions(request: web.Request, data: dict):
+    try:
+        await request.app["group_service"].update_member_permissions(
+            user_id=request["user"]["user_id"],
+            group_id=int(request.match_info["group_id"]),
+            member_id=data["user_id"],
+            can_write=data["can_write"],
+            is_owner=data["is_owner"],
+        )
+    except PermissionError:
+        raise web.HTTPForbidden(reason="permission denied")
+
+    return web.Response(status=web.HTTPNoContent.status_code)
 
 
 @routes.get(r"/groups/{group_id:\d+}/invites")
@@ -140,12 +177,11 @@ async def delete_invite(request: Request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post(r"/groups/{group_id:\d+}/preview")
+@routes.post(r"/groups/preview")
 @validate(schema.Schema({"invite_token": str}))
 async def preview_group(request: Request, data: dict):
     try:
         group_preview = await request.app["group_service"].preview_group(
-            group_id=int(request.match_info["group_id"]),
             invite_token=data["invite_token"],
         )
     except InvalidCommand as e:
@@ -158,13 +194,12 @@ async def preview_group(request: Request, data: dict):
     return json_response(data=serializer.to_repr())
 
 
-@routes.post(r"/groups/{group_id:\d+}/join")
+@routes.post(r"/groups/join")
 @validate(schema.Schema({"invite_token": str}))
-async def preview_group(request: Request, data: dict):
+async def join_group(request: Request, data: dict):
     try:
         await request.app["group_service"].join_group(
             user_id=request["user"]["user_id"],
-            group_id=int(request.match_info["group_id"]),
             invite_token=data["invite_token"],
         )
     except InvalidCommand as e:
