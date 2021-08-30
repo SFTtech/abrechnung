@@ -380,6 +380,7 @@ as $$
     n_debitor_shares integer;
     is_valid boolean;
     transaction_type text;
+    transaction_deleted boolean;
 begin
     if committed is null then
         return true;
@@ -395,6 +396,9 @@ begin
         raise 'another change was committed earlier, committing is not possible due to conflicts';
     end if;
 
+    select th.deleted into locals.transaction_deleted
+    from transaction_history th where th.revision_id = check_committed_transactions.revision_id;
+
     select count(*) into locals.n_creditor_shares
     from creditor_share cs
     join transaction_revision tr on cs.transaction_id = tr.transaction_id and cs.revision_id = check_committed_transactions.revision_id;
@@ -403,7 +407,13 @@ begin
     from debitor_share ds
     join transaction_revision tr on ds.transaction_id = tr.transaction_id and ds.revision_id = check_committed_transactions.revision_id;
 
-    select (t.type in ('transfer', 'purchase') and locals.n_creditor_shares = 1 or locals.n_creditor_shares >= 1) and (t.type in ('transfer') and locals.n_debitor_shares = 1 or locals.n_debitor_shares >= 1), t.type
+    -- check that the number of shares fits the transaction type and that deleted transactions have 0 shares.
+    -- TODO: maybe improve error messages from exceptions
+    select
+        ((t.type in ('transfer', 'purchase') and locals.n_creditor_shares = 1 or locals.n_creditor_shares >= 1)
+               and (t.type in ('transfer') and locals.n_debitor_shares = 1 or locals.n_debitor_shares >= 1) and not locals.transaction_deleted)
+            or (locals.transaction_deleted and locals.n_creditor_shares = 0 and locals.n_debitor_shares = 0),
+        t.type
     into locals.is_valid, locals.transaction_type
     from transaction t
     where t.id = transaction_id;
@@ -413,6 +423,33 @@ begin
     end if;
 
     return locals.is_valid;
+end
+$$ language plpgsql;
+
+
+create or replace function check_transaction_revisions_change_per_user(
+    transaction_id integer,
+    user_id integer,
+    committed timestamptz
+) returns boolean
+as $$
+<<locals>>
+    declare
+begin
+    if committed is not null then
+        return true;
+    end if;
+
+    perform from transaction_revision tr
+    where tr.transaction_id = check_transaction_revisions_change_per_user.transaction_id
+        and tr.user_id = check_transaction_revisions_change_per_user.user_id
+        and tr.committed is null;
+
+    if found then
+        raise 'users can only have one pending change per transaction';
+    end if;
+
+    return true;
 end
 $$ language plpgsql;
 
@@ -426,8 +463,8 @@ create table if not exists transaction_revision (
     started        timestamptz not null default now(),
     committed      timestamptz          default null,
 
-    check(check_committed_transactions(id, transaction_id, started, committed))
-    -- TODO: add a constraint allowing only one uncommitted change per user per transaction
+    check(check_committed_transactions(id, transaction_id, started, committed)),
+    check(check_transaction_revisions_change_per_user(transaction_id, user_id, committed))
 );
 
 create table if not exists transaction_history (

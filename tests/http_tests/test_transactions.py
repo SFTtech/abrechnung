@@ -76,6 +76,22 @@ class TransactionAPITest(HTTPAPITest):
         )
         self.assertEqual(expected_status, resp.status)
 
+    async def _delete_transaction(
+        self, group_id: int, transaction_id: int, expected_status: int = 204
+    ) -> None:
+        resp = await self._delete(
+            f"/api/v1/groups/{group_id}/transactions/{transaction_id}"
+        )
+        self.assertEqual(expected_status, resp.status)
+
+    async def _discard_transaction_change(
+        self, group_id: int, transaction_id: int, expected_status: int = 204
+    ) -> None:
+        resp = await self._post(
+            f"/api/v1/groups/{group_id}/transactions/{transaction_id}/discard"
+        )
+        self.assertEqual(expected_status, resp.status)
+
     async def _post_creditor_share(
         self,
         group_id: int,
@@ -315,6 +331,35 @@ class TransactionAPITest(HTTPAPITest):
         # check that we can commit this
         await self._commit_transaction(group_id, transaction_id)
         t = await self._fetch_transaction(group_id, transaction_id)
+        self.assertEqual(0, len(t["pending_changes"]))
+
+        # try another edit and discard that
+        await self._delete_debitor_share(group_id, transaction_id, account1_id)
+        await self._discard_transaction_change(group_id, transaction_id)
+        t = await self._fetch_transaction(group_id, transaction_id)
+        self.assertEqual(0, len(t["pending_changes"]))
+
+        # try delete the transaction
+        await self._delete_transaction(group_id, transaction_id)
+        t = await self._fetch_transaction(group_id, transaction_id)
+        self.assertTrue(t["deleted"])
+
+    @unittest_run_loop
+    async def test_discard_newly_created_transaction(self):
+        group_id, transaction_id = await self._create_group_with_transaction("purchase")
+        account1_id = await self._create_account(group_id, "account1")
+        account2_id = await self._create_account(group_id, "account2")
+
+        await self._post_debitor_share(group_id, transaction_id, account1_id, 1.0)
+        await self._post_creditor_share(group_id, transaction_id, account2_id, 1.0)
+
+        # we should not be able to discard this transaction, only delete it
+        await self._discard_transaction_change(
+            group_id, transaction_id, expected_status=400
+        )
+        await self._delete_transaction(group_id, transaction_id)
+        t = await self._fetch_transaction(group_id, transaction_id)
+        self.assertTrue(t["deleted"])
         self.assertEqual(0, len(t["pending_changes"]))
 
     @unittest_run_loop

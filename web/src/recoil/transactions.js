@@ -17,7 +17,10 @@ export const groupTransactions = atomFamily({
         ({setSelf, trigger}) => {
             ws.subscribe("transaction", groupID, ({subscription_type, transaction_id, element_id}) => {
                 if (subscription_type === "transaction" && element_id === groupID) {
-                    fetchTransactions({groupID: element_id}).then(result => setSelf(result));
+                    fetchTransactions({groupID: element_id}).then(result => {
+                        // only show non deleted transactions
+                        setSelf(result.filter(transaction => !transaction.deleted))
+                    });
                 }
             })
             // TODO: handle registration errors
@@ -74,6 +77,9 @@ export const accountBalances = selectorFamily({
         const accounts = get(groupAccounts(groupID));
         let accountBalances = Object.fromEntries(accounts.map(account => [account.id, 0]));
         for (const transaction of transactions) {
+            if (transaction.deleted) {
+                continue; // ignore deleted transactions
+            }
             const totalDebitorShares = Object.values(transaction.debitor_shares).reduce((acc, curr) => acc + curr, 0);
             const totalCreditorShares = Object.values(transaction.creditor_shares).reduce((acc, curr) => acc + curr, 0);
 

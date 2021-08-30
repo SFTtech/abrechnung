@@ -94,6 +94,26 @@ async def commit_transaction(request: Request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
+@routes.delete(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}")
+async def delete_transaction(request: Request):
+    await request.app["transaction_service"].delete_transaction(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+    )
+
+    return json_response(status=web.HTTPNoContent.status_code)
+
+
+@routes.post(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/discard")
+async def discard_transaction_change(request: Request):
+    await request.app["transaction_service"].discard_transaction_changes(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+    )
+
+    return json_response(status=web.HTTPNoContent.status_code)
+
+
 @routes.post(
     r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/creditor_shares"
 )

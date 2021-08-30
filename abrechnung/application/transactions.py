@@ -226,6 +226,126 @@ class TransactionService(Application):
                     currency_conversion_rate,
                 )
 
+    async def discard_transaction_changes(self, user_id: int, transaction_id: int):
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                await self._check_transaction_permissions(
+                    conn=conn,
+                    user_id=user_id,
+                    transaction_id=transaction_id,
+                    can_write=True,
+                )
+
+                revision_id = await conn.fetchval(
+                    "select id "
+                    "from transaction_revision tr where tr.user_id = $1 and tr.transaction_id = $2 "
+                    "   and tr.committed is null",
+                    user_id,
+                    transaction_id,
+                )
+                if revision_id is None:
+                    raise InvalidCommand(
+                        f"No changes to discard for transaction {transaction_id}"
+                    )
+
+                last_committed_revision = await conn.fetchval(
+                    "select id "
+                    "from transaction_revision tr where tr.transaction_id = $1 and tr.committed is not null",
+                    transaction_id,
+                )
+                if (
+                    last_committed_revision is None
+                ):  # we have a newly created transaction - disallow discarding changes
+                    raise InvalidCommand(
+                        f"Cannot discard changes on a transaction without committed changes"
+                    )
+
+                await conn.execute(
+                    "delete from transaction_revision tr " "where tr.id = $1",
+                    revision_id,
+                )
+
+    async def delete_transaction(self, user_id: int, transaction_id: int):
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                await self._check_transaction_permissions(
+                    conn=conn,
+                    user_id=user_id,
+                    transaction_id=transaction_id,
+                    can_write=True,
+                )
+
+                row = await conn.fetchrow(
+                    "select revision_id, deleted "
+                    "from committed_transaction_history th "
+                    "where th.id = $1",
+                    transaction_id,
+                )
+                if row is not None and row["deleted"]:
+                    raise InvalidCommand(
+                        f"Cannot delete transaction {transaction_id} as it already is deleted"
+                    )
+
+                if (
+                    row is None
+                ):  # the transaction has no committed changes, we can only delete it if we created it
+                    revision_id = await conn.fetchval(
+                        "update transaction_revision tr set committed = now()"
+                        "where tr.user_id = $1 and tr.transaction_id = $2 and tr.committed is null returning id",
+                        user_id,
+                        transaction_id,
+                    )
+                    if revision_id is None:
+                        raise InvalidCommand(
+                            f"Cannot delete uncommitted transaction {transaction_id} of another user"
+                        )
+
+                    # here we assume there has already been a transaction_history entry, if not something weird has
+                    # happened
+                    t_id = await conn.fetchval(
+                        "update transaction_history th set deleted = true "
+                        "where th.id = $1 and th.revision_id = $2 returning id",
+                        transaction_id,
+                        revision_id,
+                    )
+                    if t_id is None:
+                        raise InvalidCommand(
+                            f"something weird has happened deleting uncommitted transaction "
+                            f"{transaction_id}, please consult your local IT admin"
+                        )
+
+                    # now remove all shares that still are attached to this history entry
+                    await conn.execute(
+                        "delete from creditor_share cs where cs.transaction_id = $1 and cs.revision_id = $2",
+                        transaction_id,
+                        revision_id,
+                    )
+                    await conn.execute(
+                        "delete from debitor_share ds where ds.transaction_id = $1 and ds.revision_id = $2",
+                        transaction_id,
+                        revision_id,
+                    )
+
+                    return
+                else:  # we have at least one committed change for this transaction
+                    last_committed_revision = row["revision_id"]
+
+                    revision_id = await conn.fetchval(
+                        "insert into transaction_revision (started, committed, transaction_id, user_id) "
+                        "values (now(), now(), $1, $2) returning id",
+                        transaction_id,
+                        user_id,
+                    )
+
+                    await conn.execute(
+                        "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, description, value, deleted)"
+                        "select id, $1, currency_symbol, currency_conversion_rate, description, value, true "
+                        "from transaction_history where id = $2 and revision_id = $3",
+                        revision_id,
+                        transaction_id,
+                        last_committed_revision,
+                    )
+
     async def _get_or_create_pending_change(
         self, conn: asyncpg.Connection, user_id: int, transaction_id: int
     ) -> int:

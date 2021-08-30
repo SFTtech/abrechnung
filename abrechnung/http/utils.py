@@ -69,9 +69,9 @@ async def error_middleware(request, handler):
     except web.HTTPException as ex:
         message = ex.reason
         status = ex.status
-    except Exception as ex:  # TODO: deliberate whether this is such a good idea, but it guarantees json responses
-        status = web.HTTPInternalServerError.status_code
-        message = str(ex)
+    # except Exception as ex:  # TODO: deliberate whether this is such a good idea, but it guarantees json responses
+    #     status = web.HTTPInternalServerError.status_code
+    #     message = str(ex)
 
     return web.json_response({"error": message}, status=status)
 

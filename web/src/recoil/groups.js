@@ -62,7 +62,10 @@ export const groupAccounts = atomFamily({
                 if (subscription_type === "account" && element_id === groupID) {
                     // fetchAccount({groupID: group_id, accountID: account_id})
                     //     .then(result => setSelf(result));
-                    fetchAccounts({groupID: element_id}).then(result => setSelf(result));
+                    fetchAccounts({groupID: element_id}).then(result => {
+                        // only show accounts that haven't been deleted
+                        setSelf(result.filter(account => !account.deleted));
+                    });
                 }
             })
             // TODO: handle registration errors

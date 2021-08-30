@@ -79,6 +79,7 @@ class TransactionSerializer(Serializer):
             "value": change.value,
             "currency_symbol": change.currency_symbol,
             "currency_conversion_rate": change.currency_conversion_rate,
+            "deleted": change.deleted,
             "creditor_shares": {
                 str(uid): val for uid, val in change.creditor_shares.items()
             },
