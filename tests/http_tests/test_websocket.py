@@ -7,7 +7,7 @@ from aiohttp import web
 from aiohttp.test_utils import unittest_run_loop
 
 from abrechnung.http.auth import token_for_user
-from tests.http import BaseHTTPAPITest
+from tests.http_tests import BaseHTTPAPITest
 
 
 class WebsocketAPITest(BaseHTTPAPITest):
@@ -23,7 +23,9 @@ class WebsocketAPITest(BaseHTTPAPITest):
             username="user", email="email@email.com"
         )
         _, session_id, _ = await self.user_service.login_user("user", password=password)
-        token = token_for_user(user_id, session_id=session_id, secret_key=self.secret_key)
+        token = token_for_user(
+            user_id, session_id=session_id, secret_key=self.secret_key
+        )
 
         ws = await self.client.ws_connect("/api/v1/ws")
         self.assertIsNotNone(ws)

@@ -2,7 +2,7 @@ from aiohttp.test_utils import unittest_run_loop
 from jose import jwt
 
 from abrechnung.http.auth import token_for_user
-from tests.http import BaseHTTPAPITest
+from tests.http_tests import BaseHTTPAPITest
 
 
 class AuthAPITest(BaseHTTPAPITest):
@@ -90,25 +90,66 @@ class AuthAPITest(BaseHTTPAPITest):
         self.assertEqual(401, resp.status)
 
     @unittest_run_loop
-    async def test_profile_management(self):
+    async def test_change_password(self):
         user_id, password = await self._create_test_user("user", "user@email.stuff")
         _, session_id, _ = await self.user_service.login_user("user", password=password)
         token = token_for_user(user_id, session_id, self.secret_key)
 
         headers = {"Authorization": f"Bearer {token}"}
 
+        # check that we cannot change anything without providing the correct password
+        resp = await self.client.post(
+            f"/api/v1/profile/change_password",
+            headers=headers,
+            json={"old_password": "foobar", "new_password": "password3"},
+        )
+        self.assertEqual(400, resp.status)
+
+        resp = await self.client.post(
+            f"/api/v1/profile/change_password",
+            headers=headers,
+            json={"old_password": password, "new_password": "password2"},
+        )
+        self.assertEqual(204, resp.status)
+
+        # check that we can login with the new password
+        resp = await self.client.post(
+            f"/api/v1/auth/login",
+            json={"username": "user", "password": "password2"},
+        )
+        self.assertEqual(200, resp.status)
+
+    @unittest_run_loop
+    async def test_change_email(self):
+        username = "user1"
+        old_email = "user@email.stuff"
+        new_email = "new_email@email.stuffs"
+        user_id, password = await self._create_test_user(username, old_email)
+        _, session_id, _ = await self.user_service.login_user(
+            username=username, password=password
+        )
+        token = token_for_user(user_id, session_id, self.secret_key)
+
+        headers = {"Authorization": f"Bearer {token}"}
         resp = await self.client.post(
             f"/api/v1/profile/change_email",
             headers=headers,
-            json={"email": "new_email@email.stuff", "password": password},
+            json={"email": new_email, "password": password},
         )
         self.assertEqual(204, resp.status)
+
+        resp = await self.client.post(
+            f"/api/v1/profile/change_email",
+            headers=headers,
+            json={"email": new_email, "password": "asdf1234"},
+        )
+        self.assertEqual(400, resp.status)
 
         resp = await self.client.get(f"/api/v1/profile", headers=headers)
         self.assertEqual(200, resp.status)
         profile = await resp.json()
         # we still have the old email
-        self.assertEqual("user@email.stuff", profile["email"])
+        self.assertEqual(old_email, profile["email"])
 
         # confirm the email change
         # fetch the registration token from the database
@@ -116,6 +157,10 @@ class AuthAPITest(BaseHTTPAPITest):
             token = await conn.fetchval(
                 "select token from pending_email_change where user_id = $1", user_id
             )
+        resp = await self.client.post(
+            f"/api/v1/auth/confirm_email_change", json={"token": "foobar lol"}
+        )
+        self.assertEqual(400, resp.status)
 
         resp = await self.client.post(
             f"/api/v1/auth/confirm_email_change", json={"token": str(token)}
@@ -127,19 +172,50 @@ class AuthAPITest(BaseHTTPAPITest):
         self.assertEqual(200, resp.status)
         profile = await resp.json()
         # we still have the old email
-        self.assertEqual("new_email@email.stuff", profile["email"])
+        self.assertEqual(new_email, profile["email"])
+
+    @unittest_run_loop
+    async def test_reset_password(self):
+        user_email = "user@email.email"
+        username = "user1"
+        user_id, password = await self._create_test_user(username, user_email)
+        resp = await self.client.post(
+            f"/api/v1/auth/recover_password",
+            json={"email": "fooo@lulz.lul"},
+        )
+        self.assertEqual(403, resp.status)
 
         resp = await self.client.post(
-            f"/api/v1/profile/change_password",
-            headers=headers,
-            json={"old_password": password, "new_password": "password2"},
+            f"/api/v1/auth/recover_password",
+            json={"email": user_email},
         )
         self.assertEqual(204, resp.status)
 
-        # check that we cannot change anything without providing the correct password
+        # confirm the email change
+        # fetch the registration token from the database
+        async with self.db_pool.acquire() as conn:
+            token = await conn.fetchval(
+                "select token from pending_password_recovery where user_id = $1",
+                user_id,
+            )
+
+        self.assertIsNotNone(token)
+
         resp = await self.client.post(
-            f"/api/v1/profile/change_password",
-            headers=headers,
-            json={"old_password": password, "new_password": "password3"},
+            f"/api/v1/auth/confirm_password_recovery",
+            json={"token": "foobar", "new_password": "secret secret"},
         )
         self.assertEqual(400, resp.status)
+
+        resp = await self.client.post(
+            f"/api/v1/auth/confirm_password_recovery",
+            json={"token": str(token), "new_password": "new_password"},
+        )
+        self.assertEqual(204, resp.status)
+
+        # check that we can login with the new password
+        resp = await self.client.post(
+            f"/api/v1/auth/login",
+            json={"username": username, "password": "new_password"},
+        )
+        self.assertEqual(200, resp.status)

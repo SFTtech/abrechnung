@@ -1,5 +1,3 @@
-from functools import wraps
-
 import asyncpg
 from asyncpg.pool import Pool
 
@@ -8,7 +6,7 @@ class NotFoundError(Exception):
     pass
 
 
-class CommandError(Exception):
+class InvalidCommand(Exception):
     pass
 
 

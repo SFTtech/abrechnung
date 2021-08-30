@@ -61,7 +61,7 @@ def main():
     loop.set_debug(args["debug"])
 
     config_path = args.pop("config_path")
-    with open(config_path) as config_file:
+    with open(config_path, "r", encoding="utf-8") as config_file:
         config = yaml.safe_load(config_file)
 
     try:

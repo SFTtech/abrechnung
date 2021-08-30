@@ -1,6 +1,6 @@
 from aiohttp.test_utils import unittest_run_loop
 
-from tests.http import HTTPAPITest
+from tests.http_tests import HTTPAPITest
 
 
 class TransactionAPITest(HTTPAPITest):

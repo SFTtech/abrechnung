@@ -4,7 +4,7 @@ from typing import Optional
 import bcrypt
 
 from abrechnung.domain.users import User
-from . import Application, NotFoundError, CommandError
+from . import Application, NotFoundError, InvalidCommand
 
 
 class InvalidPassword(Exception):
@@ -48,7 +48,7 @@ class UserService(Application):
             async with conn.transaction():
                 row = await conn.fetchrow(
                     "select user_id, id from session where token = $1 and valid_until is null or valid_until > now()",
-                    token
+                    token,
                 )
 
                 return row
@@ -93,7 +93,7 @@ class UserService(Application):
                     hashed_password,
                 )
                 if user_id is None:
-                    raise CommandError(f"Registering new user failed")
+                    raise InvalidCommand(f"Registering new user failed")
 
                 await conn.execute(
                     "insert into pending_registration (user_id) values ($1)", user_id
@@ -186,6 +186,44 @@ class UserService(Application):
                 )
                 await conn.execute(
                     "update usr set email = $2 where id = $1", user_id, row["new_email"]
+                )
+
+                return user_id
+
+    async def request_password_recovery(self, email: str):
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                user_id = await conn.fetchval(
+                    "select id from usr where email = $1", email
+                )
+                if not user_id:
+                    raise PermissionError
+
+                await conn.execute(
+                    "insert into pending_password_recovery (user_id) values ($1)",
+                    user_id,
+                )
+
+    async def confirm_password_recovery(self, token: str, new_password: str) -> int:
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                row = await conn.fetchrow(
+                    "select user_id, valid_until from pending_password_recovery where token = $1",
+                    token,
+                )
+                user_id = row["user_id"]
+                valid_until = row["valid_until"]
+                if valid_until is None or valid_until < datetime.now(tz=timezone.utc):
+                    raise PermissionError
+
+                await conn.execute(
+                    "delete from pending_password_recovery where user_id = $1", user_id
+                )
+                hashed_password = self._hash_password(password=new_password)
+                await conn.execute(
+                    "update usr set hashed_password = $2 where id = $1",
+                    user_id,
+                    hashed_password,
                 )
 
                 return user_id

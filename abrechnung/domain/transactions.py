@@ -31,5 +31,5 @@ class Transaction:
     id: int
     type: str
     current_state: Optional[TransactionDetails]
-    pending_changes: dict[int, TransactionDetails]
+    pending_changes: Optional[dict[int, TransactionDetails]]
     # created_by: int

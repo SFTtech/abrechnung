@@ -50,13 +50,10 @@ async def create_transaction(request: Request, data: dict):
 @routes.get(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}")
 async def get_transaction(request: Request):
 
-    try:
-        transaction = await request.app["transaction_service"].get_transaction(
-            user_id=request["user"]["user_id"],
-            transaction_id=int(request.match_info["transaction_id"]),
-        )
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    transaction = await request.app["transaction_service"].get_transaction(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+    )
 
     serializer = TransactionSerializer(transaction)
 
@@ -75,31 +72,24 @@ async def get_transaction(request: Request):
     )
 )
 async def update_transaction(request: Request, data: dict):
-
-    try:
-        await request.app["transaction_service"].update_transaction(
-            user_id=request["user"]["user_id"],
-            transaction_id=int(request.match_info["transaction_id"]),
-            value=data["value"],
-            description=data["description"],
-            currency_symbol=data["currency_symbol"],
-            currency_conversion_rate=data["currency_conversion_rate"],
-        )
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    await request.app["transaction_service"].update_transaction(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+        value=data["value"],
+        description=data["description"],
+        currency_symbol=data["currency_symbol"],
+        currency_conversion_rate=data["currency_conversion_rate"],
+    )
 
     return json_response(status=web.HTTPNoContent.status_code)
 
 
 @routes.post(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/commit")
 async def commit_transaction(request: Request):
-    try:
-        await request.app["transaction_service"].commit_transaction(
-            user_id=request["user"]["user_id"],
-            transaction_id=int(request.match_info["transaction_id"]),
-        )
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    await request.app["transaction_service"].commit_transaction(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+    )
 
     return json_response(status=web.HTTPNoContent.status_code)
 
@@ -116,15 +106,12 @@ async def commit_transaction(request: Request):
     )
 )
 async def add_or_change_creditor_share(request: Request, data: dict):
-    try:
-        await request.app["transaction_service"].add_or_change_creditor_share(
-            user_id=request["user"]["user_id"],
-            transaction_id=int(request.match_info["transaction_id"]),
-            account_id=data["account_id"],
-            value=float(data["value"]),
-        )
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    await request.app["transaction_service"].add_or_change_creditor_share(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+        account_id=data["account_id"],
+        value=float(data["value"]),
+    )
 
     return json_response(status=web.HTTPNoContent.status_code)
 
@@ -141,15 +128,12 @@ async def add_or_change_creditor_share(request: Request, data: dict):
     )
 )
 async def switch_creditor_share(request: Request, data: dict):
-    try:
-        await request.app["transaction_service"].switch_creditor_share(
-            user_id=request["user"]["user_id"],
-            transaction_id=int(request.match_info["transaction_id"]),
-            account_id=data["account_id"],
-            value=float(data["value"]),
-        )
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    await request.app["transaction_service"].switch_creditor_share(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+        account_id=data["account_id"],
+        value=float(data["value"]),
+    )
 
     return json_response(status=web.HTTPNoContent.status_code)
 
@@ -165,14 +149,11 @@ async def switch_creditor_share(request: Request, data: dict):
     )
 )
 async def delete_creditor_share(request: Request, data: dict):
-    try:
-        await request.app["transaction_service"].delete_creditor_share(
-            user_id=request["user"]["user_id"],
-            transaction_id=int(request.match_info["transaction_id"]),
-            account_id=data["account_id"],
-        )
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    await request.app["transaction_service"].delete_creditor_share(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+        account_id=data["account_id"],
+    )
 
     return json_response(status=web.HTTPNoContent.status_code)
 
@@ -187,15 +168,12 @@ async def delete_creditor_share(request: Request, data: dict):
     )
 )
 async def add_or_change_debitor_share(request: Request, data: dict):
-    try:
-        await request.app["transaction_service"].add_or_change_debitor_share(
-            user_id=request["user"]["user_id"],
-            transaction_id=int(request.match_info["transaction_id"]),
-            account_id=data["account_id"],
-            value=float(data["value"]),
-        )
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    await request.app["transaction_service"].add_or_change_debitor_share(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+        account_id=data["account_id"],
+        value=float(data["value"]),
+    )
 
     return json_response(status=web.HTTPNoContent.status_code)
 
@@ -212,15 +190,12 @@ async def add_or_change_debitor_share(request: Request, data: dict):
     )
 )
 async def switch_debitor_share(request: Request, data: dict):
-    try:
-        await request.app["transaction_service"].switch_debitor_share(
-            user_id=request["user"]["user_id"],
-            transaction_id=int(request.match_info["transaction_id"]),
-            account_id=data["account_id"],
-            value=float(data["value"]),
-        )
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    await request.app["transaction_service"].switch_debitor_share(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+        account_id=data["account_id"],
+        value=float(data["value"]),
+    )
 
     return json_response(status=web.HTTPNoContent.status_code)
 
@@ -236,13 +211,10 @@ async def switch_debitor_share(request: Request, data: dict):
     )
 )
 async def delete_debitor_share(request: Request, data: dict):
-    try:
-        await request.app["transaction_service"].delete_debitor_share(
-            user_id=request["user"]["user_id"],
-            transaction_id=int(request.match_info["transaction_id"]),
-            account_id=data["account_id"],
-        )
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    await request.app["transaction_service"].delete_debitor_share(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+        account_id=data["account_id"],
+    )
 
     return json_response(status=web.HTTPNoContent.status_code)

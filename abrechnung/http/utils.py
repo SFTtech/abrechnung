@@ -10,8 +10,7 @@ from aiohttp.helpers import sentinel
 from aiohttp.typedefs import LooseHeaders
 from schema import Schema, SchemaError
 
-from abrechnung.application import NotFoundError
-from abrechnung.domain import InvalidCommand
+from abrechnung.application import NotFoundError, InvalidCommand
 
 
 def validate(request_schema: Schema):
@@ -57,17 +56,23 @@ async def error_middleware(request, handler):
         InvalidCommand,
     ) as ex:
         # catch underlying bad query inputs to catch schema violations as bad requests
-        status = 400
+        status = web.HTTPBadRequest.status_code
         message = str(ex)
     except NotFoundError as ex:
         # catch underlying bad query inputs to catch schema violations as bad requests
-        status = 404
+        status = web.HTTPNotFound.status_code
+        message = str(ex)
+    except PermissionError as ex:
+        # catch underlying permission errors
+        status = web.HTTPForbidden.status_code
         message = str(ex)
     except web.HTTPException as ex:
-        if ex.status >= 500:
-            raise
         message = ex.reason
         status = ex.status
+    except Exception as ex:  # TODO: deliberate whether this is such a good idea, but it guarantees json responses
+        status = web.HTTPInternalServerError.status_code
+        message = str(ex)
+
     return web.json_response({"error": message}, status=status)
 
 

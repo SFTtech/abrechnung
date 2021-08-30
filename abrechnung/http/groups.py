@@ -6,7 +6,6 @@ from aiohttp.abc import Request
 from schema import Schema
 
 from abrechnung.application import NotFoundError
-from abrechnung.domain import InvalidCommand
 from abrechnung.http.serializers import (
     GroupSerializer,
     GroupMemberSerializer,
@@ -68,30 +67,24 @@ async def get_group(request: Request):
     Schema({"name": str, "description": str, "currency_symbol": str, "terms": str})
 )
 async def update_group(request: Request, data: dict):
-    try:
-        await request.app["group_service"].update_group(
-            user_id=request["user"]["user_id"],
-            group_id=int(request.match_info["group_id"]),
-            name=data["name"],
-            description=data["description"],
-            currency_symbol=data["currency_symbol"],
-            terms=data["terms"],
-        )
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    await request.app["group_service"].update_group(
+        user_id=request["user"]["user_id"],
+        group_id=int(request.match_info["group_id"]),
+        name=data["name"],
+        description=data["description"],
+        currency_symbol=data["currency_symbol"],
+        terms=data["terms"],
+    )
 
     return web.Response(status=web.HTTPNoContent.status_code)
 
 
 @routes.get(r"/groups/{group_id:\d+}/members")
 async def list_members(request: web.Request):
-    try:
-        members = await request.app["group_service"].list_members(
-            user_id=request["user"]["user_id"],
-            group_id=int(request.match_info["group_id"]),
-        )
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    members = await request.app["group_service"].list_members(
+        user_id=request["user"]["user_id"],
+        group_id=int(request.match_info["group_id"]),
+    )
 
     serializer = GroupMemberSerializer(members)
 
@@ -101,29 +94,23 @@ async def list_members(request: web.Request):
 @routes.post(r"/groups/{group_id:\d+}/members")
 @validate(Schema({"user_id": int, "can_write": bool, "is_owner": bool}))
 async def update_member_permissions(request: web.Request, data: dict):
-    try:
-        await request.app["group_service"].update_member_permissions(
-            user_id=request["user"]["user_id"],
-            group_id=int(request.match_info["group_id"]),
-            member_id=data["user_id"],
-            can_write=data["can_write"],
-            is_owner=data["is_owner"],
-        )
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    await request.app["group_service"].update_member_permissions(
+        user_id=request["user"]["user_id"],
+        group_id=int(request.match_info["group_id"]),
+        member_id=data["user_id"],
+        can_write=data["can_write"],
+        is_owner=data["is_owner"],
+    )
 
     return web.Response(status=web.HTTPNoContent.status_code)
 
 
 @routes.get(r"/groups/{group_id:\d+}/invites")
 async def list_invites(request):
-    try:
-        invites = await request.app["group_service"].list_invites(
-            user_id=request["user"]["user_id"],
-            group_id=int(request.match_info["group_id"]),
-        )
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    invites = await request.app["group_service"].list_invites(
+        user_id=request["user"]["user_id"],
+        group_id=int(request.match_info["group_id"]),
+    )
 
     serializer = GroupInviteSerializer(invites)
 
@@ -145,34 +132,24 @@ async def create_invite(request: Request, data: dict):
     if valid_until.tzinfo is None:
         valid_until = valid_until.replace(tzinfo=timezone.utc)
 
-    try:
-        await request.app["group_service"].create_invite(
-            user_id=request["user"]["user_id"],
-            group_id=int(request.match_info["group_id"]),
-            description=data["description"],
-            single_use=data["single_use"],
-            valid_until=valid_until,
-        )
-    except InvalidCommand as e:
-        raise web.HTTPBadRequest(reason=str(e))
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    await request.app["group_service"].create_invite(
+        user_id=request["user"]["user_id"],
+        group_id=int(request.match_info["group_id"]),
+        description=data["description"],
+        single_use=data["single_use"],
+        valid_until=valid_until,
+    )
 
     return json_response(status=web.HTTPNoContent.status_code)
 
 
 @routes.delete(r"/groups/{group_id:\d+}/invites/{invite_id:\d+}")
 async def delete_invite(request: Request):
-    try:
-        await request.app["group_service"].delete_invite(
-            user_id=request["user"]["user_id"],
-            group_id=int(request.match_info["group_id"]),
-            invite_id=int(request.match_info["invite_id"]),
-        )
-    except InvalidCommand as e:
-        raise web.HTTPBadRequest(reason=str(e))
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    await request.app["group_service"].delete_invite(
+        user_id=request["user"]["user_id"],
+        group_id=int(request.match_info["group_id"]),
+        invite_id=int(request.match_info["invite_id"]),
+    )
 
     return json_response(status=web.HTTPNoContent.status_code)
 
@@ -180,14 +157,9 @@ async def delete_invite(request: Request):
 @routes.post(r"/groups/preview")
 @validate(schema.Schema({"invite_token": str}))
 async def preview_group(request: Request, data: dict):
-    try:
-        group_preview = await request.app["group_service"].preview_group(
-            invite_token=data["invite_token"],
-        )
-    except InvalidCommand as e:
-        raise web.HTTPBadRequest(reason=str(e))
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    group_preview = await request.app["group_service"].preview_group(
+        invite_token=data["invite_token"],
+    )
 
     serializer = GroupPreviewSerializer(group_preview)
 
@@ -197,14 +169,9 @@ async def preview_group(request: Request, data: dict):
 @routes.post(r"/groups/join")
 @validate(schema.Schema({"invite_token": str}))
 async def join_group(request: Request, data: dict):
-    try:
-        await request.app["group_service"].join_group(
-            user_id=request["user"]["user_id"],
-            invite_token=data["invite_token"],
-        )
-    except InvalidCommand as e:
-        raise web.HTTPBadRequest(reason=str(e))
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    await request.app["group_service"].join_group(
+        user_id=request["user"]["user_id"],
+        invite_token=data["invite_token"],
+    )
 
     return json_response(status=web.HTTPNoContent.status_code)

@@ -10,9 +10,11 @@ from . import subcommand
 
 
 class Mailer(subcommand.SubCommand):
-    def __init__(self, config, **args):
+    def __init__(self, config: dict, **args):  # pylint: disable=super-init-not-called
+        del args  # unused
+
         self.config = config
-        self.events = asyncio.Queue()
+        self.events: asyncio.Queue = asyncio.Queue()
         self.psql = None
         self.mailer = None
         self.logger = logging.getLogger(__name__)
@@ -56,6 +58,7 @@ class Mailer(subcommand.SubCommand):
             password=self.config["database"]["password"],
             host=self.config["database"]["host"],
             database=self.config["database"]["dbname"],
+            port=self.config["database"].get("port", 5432),
         )
         self.psql.add_termination_listener(self.terminate_callback)
         self.psql.add_log_listener(self.log_callback)
@@ -91,7 +94,10 @@ class Mailer(subcommand.SubCommand):
         """runs when the psql connection is closed"""
         assert connection is self.psql
         self.logger.info("psql connection closed")
-        self.events.clear()
+        # proper way of clearing asyncio queue
+        for _ in range(self.events.qsize()):
+            self.events.get_nowait()
+            self.events.task_done()
         self.events.put_nowait(StopIteration)
 
     async def log_callback(self, connection: asyncpg.Connection, message: str):
@@ -118,7 +124,7 @@ class Mailer(subcommand.SubCommand):
         msg["Subject"] = f"[{self.config['service']['name']}] {subject}"
         msg["To"] = dest_address
         msg["From"] = self.config["email"]["address"]
-        self.mailer.send_message(msg)
+        self.mailer.send_message(msg)  # type: ignore
 
     def greeting_lines(self, name: str):
         return f"Beloved {name},", ""
@@ -165,7 +171,7 @@ class Mailer(subcommand.SubCommand):
 
     async def on_user_password_recovery_notification(self):
         unsent_mails = await self.psql.fetch(
-            "select usr.id, usr.email, ppr.token, ppr.valid_until "
+            "select usr.id, usr.username, usr.email, ppr.token, ppr.valid_until "
             "from pending_password_recovery ppr join usr on usr.id = ppr.user_id "
             "where ppr.mail_next_attempt is not null and ppr.mail_next_attempt < NOW() and ppr.valid_until > NOW()"
         )
@@ -202,7 +208,8 @@ class Mailer(subcommand.SubCommand):
 
     async def on_user_email_update_notification(self):
         unsent_mails = await self.psql.fetch(
-            "select usr.id, usr.username, usr.email as old_email, pec.new_email as new_email, pec.token, pec.valid_until "
+            "select usr.id, usr.username, usr.email as old_email, pec.new_email as new_email, pec.token, "
+            "   pec.valid_until "
             "from pending_email_change pec join usr on usr.id = pec.user_id "
             "where pec.mail_next_attempt is not null and pec.mail_next_attempt < NOW() and pec.valid_until > NOW()"
         )

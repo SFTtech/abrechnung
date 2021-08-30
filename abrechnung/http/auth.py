@@ -1,13 +1,12 @@
 import logging
 import re
 from datetime import timedelta, datetime
-from uuid import UUID
 
-from jose import jwt
 from aiohttp import web, hdrs
+from jose import jwt
 from schema import Schema
 
-from abrechnung.application import NotFoundError, CommandError
+from abrechnung.application import NotFoundError, InvalidCommand
 from abrechnung.application.users import (
     InvalidPassword,
     LoginFailed,
@@ -18,7 +17,6 @@ from abrechnung.http.utils import validate, json_response
 logger = logging.getLogger(__name__)
 
 routes = web.RouteTableDef()
-
 
 REQUEST_AUTH_KEY = "user"
 ACCESS_TOKEN_VALIDITY = timedelta(hours=24)
@@ -37,7 +35,10 @@ def access_token_expiry() -> datetime:
 
 
 def token_for_user(user_id: int, session_id: int, secret_key: str) -> str:
-    return jwt.encode({"exp": access_token_expiry(), "user_id": user_id, "session_id": session_id}, secret_key)
+    return jwt.encode(
+        {"exp": access_token_expiry(), "user_id": user_id, "session_id": session_id},
+        secret_key,
+    )
 
 
 def decode_jwt_token(token: str, secret: str) -> dict:
@@ -95,14 +96,14 @@ def jwt_middleware(
         async with request.app["db_pool"].acquire() as conn:
             session_id = await conn.fetchval(
                 "select id from session where id = $1 and valid_until is null or valid_until > now()",
-                decoded["session_id"]
+                decoded["session_id"],
             )
             if not session_id:
-                raise web.HTTPUnauthorized(reason="provided access token without associated session")
+                raise web.HTTPUnauthorized(
+                    reason="provided access token without associated session"
+                )
 
-        request[REQUEST_AUTH_KEY] = {
-            "user_id": decoded["user_id"]
-        }
+        request[REQUEST_AUTH_KEY] = {"user_id": decoded["user_id"]}
 
         return await handler(request)
 
@@ -113,15 +114,17 @@ def jwt_middleware(
 @validate(Schema({"username": str, "password": str}))
 async def login(request, data):
     try:
-        user_id, session_id, session_token = await request.app["user_service"].login_user(
-            username=data["username"], password=data["password"]
-        )
+        user_id, session_id, session_token = await request.app[
+            "user_service"
+        ].login_user(username=data["username"], password=data["password"])
     except (NotFoundError, InvalidPassword) as e:
         raise web.HTTPBadRequest(reason=str(e))
     except LoginFailed as e:
         raise web.HTTPUnauthorized(reason=str(e))
 
-    token = token_for_user(user_id=user_id, session_id=session_id, secret_key=request.app["secret_key"])
+    token = token_for_user(
+        user_id=user_id, session_id=session_id, secret_key=request.app["secret_key"]
+    )
 
     return json_response(
         data={
@@ -135,15 +138,15 @@ async def login(request, data):
 @routes.post("/auth/fetch_access_token")
 @validate(Schema({"token": str}))
 async def fetch_access_token(request, data):
-    row = await request.app["user_service"].is_session_token_valid(
-        token=data["token"]
-    )
+    row = await request.app["user_service"].is_session_token_valid(token=data["token"])
     if row is None:
         raise web.HTTPBadRequest(reason="invalid session token")
 
     user_id, session_id = row
 
-    token = token_for_user(user_id=user_id, session_id=session_id, secret_key=request.app["secret_key"])
+    token = token_for_user(
+        user_id=user_id, session_id=session_id, secret_key=request.app["secret_key"]
+    )
 
     return json_response(
         data={
@@ -156,14 +159,11 @@ async def fetch_access_token(request, data):
 @routes.post("/auth/register")
 @validate(Schema({"username": str, "password": str, "email": str}))
 async def register(request, data):
-    try:
-        user_id = await request.app["user_service"].register_user(
-            username=data["username"],
-            password=data["password"],
-            email=data["email"],
-        )
-    except CommandError as e:
-        raise web.HTTPBadRequest(reason=str(e))
+    user_id = await request.app["user_service"].register_user(
+        username=data["username"],
+        password=data["password"],
+        email=data["email"],
+    )
 
     return json_response(data={"user_id": str(user_id)})
 
@@ -173,7 +173,7 @@ async def register(request, data):
 async def confirm_registration(request, data):
     try:
         await request.app["user_service"].confirm_registration(token=data["token"])
-    except (PermissionError, CommandError) as e:
+    except (PermissionError, InvalidCommand) as e:
         raise web.HTTPBadRequest(reason=str(e))
 
     return json_response(status=web.HTTPNoContent.status_code)
@@ -223,20 +223,32 @@ async def change_email(request, data):
 @routes.post("/auth/confirm_email_change")
 @validate(Schema({"token": str}))
 async def confirm_email_change(request, data):
+    await request.app["user_service"].confirm_email_change(token=data["token"])
+
+    return json_response(status=web.HTTPNoContent.status_code)
+
+
+@routes.post("/auth/recover_password")
+@validate(Schema({"email": str}))
+async def recover_password(request, data):
     try:
-        await request.app["user_service"].confirm_email_change(token=data["token"])
-    except CommandError as e:
+        await request.app["user_service"].request_password_recovery(
+            email=data["email"],
+        )
+    except InvalidPassword as e:
         raise web.HTTPBadRequest(reason=str(e))
 
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post("/auth/confirm_password_reset")
-@validate(Schema({"token": str}))
-async def confirm_email_change(request, data):
+@routes.post("/auth/confirm_password_recovery")
+@validate(Schema({"token": str, "new_password": str}))
+async def confirm_password_recovery(request, data):
     try:
-        await request.app["user_service"].confirm_password_reset(token=data["token"])
-    except CommandError as e:
+        await request.app["user_service"].confirm_password_recovery(
+            token=data["token"], new_password=data["new_password"]
+        )
+    except PermissionError as e:
         raise web.HTTPBadRequest(reason=str(e))
 
     return json_response(status=web.HTTPNoContent.status_code)

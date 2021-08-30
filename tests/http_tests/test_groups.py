@@ -3,7 +3,7 @@ from datetime import timedelta, datetime
 from aiohttp.test_utils import unittest_run_loop
 
 from abrechnung.http.auth import token_for_user
-from tests.http import HTTPAPITest
+from tests.http_tests import HTTPAPITest
 
 
 class GroupAPITest(HTTPAPITest):
@@ -334,7 +334,9 @@ class GroupAPITest(HTTPAPITest):
 
         user2_id, password = await self._create_test_user("user", "email2@email.stuff")
         _, session_id, _ = await self.user_service.login_user("user", password=password)
-        jwt_token = token_for_user(user2_id, session_id=session_id, secret_key=self.secret_key)
+        jwt_token = token_for_user(
+            user2_id, session_id=session_id, secret_key=self.secret_key
+        )
         resp = await self.client.post(
             f"/api/v1/groups/preview",
             json={"invite_token": invite_token},

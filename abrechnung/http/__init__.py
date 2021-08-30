@@ -17,7 +17,7 @@ from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.database import db_connect
-from abrechnung.http import groups, transactions, websocket, accounts
+from abrechnung.http import auth, groups, transactions, websocket, accounts
 from abrechnung.http.auth import jwt_middleware, decode_jwt_token
 from abrechnung.http.utils import error_middleware, encode_json
 from abrechnung.subcommand import SubCommand
@@ -32,14 +32,14 @@ class HTTPService(SubCommand):
         self.cfg = config
 
         # map connection_id -> tx queue
-        self.tx_queues = dict()
+        self.tx_queues: dict[int, asyncio.Queue] = dict()
 
         self.logger = logging.getLogger(__name__)
 
         # psql notification channel id,
         # we get this when booting from the db.
-        self.channel_id = None
-        self.channel_name = None
+        self.channel_id: Optional[int] = None
+        self.channel_name: Optional[str] = None
 
     async def run(self):
         """
@@ -120,7 +120,8 @@ class HTTPService(SubCommand):
                     "/api/v1/auth/fetch_access_token",
                     "/api/v1/auth/confirm_registration",
                     "/api/v1/auth/confirm_email_change",
-                    "/api/v1/auth/confirm_password_reset",
+                    "/api/v1/auth/recover_password",
+                    "/api/v1/auth/confirm_password_recovery",
                     "/api/v1/ws",
                 ],
             )

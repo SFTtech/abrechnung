@@ -1,7 +1,11 @@
 from datetime import datetime
 
-from abrechnung.application import Application, NotFoundError, check_group_permissions
-from abrechnung.domain import InvalidCommand
+from abrechnung.application import (
+    Application,
+    NotFoundError,
+    check_group_permissions,
+    InvalidCommand,
+)
 from abrechnung.domain.groups import Group, GroupMember, GroupPreview, GroupInvite
 
 
@@ -87,7 +91,7 @@ class GroupService(Application):
                 invite = await conn.fetchrow(
                     "select group_id, created_by from group_invite gi "
                     "where gi.token = $1",
-                    invite_token
+                    invite_token,
                 )
                 if not invite:
                     raise PermissionError(f"Invalid invite token")
@@ -97,7 +101,7 @@ class GroupService(Application):
                     "values ($1, $2, $3, false, false)",
                     user_id,
                     invite["group_id"],
-                    invite["created_by"]
+                    invite["created_by"],
                 )
 
     async def list_groups(self, user_id: int) -> list[Group]:

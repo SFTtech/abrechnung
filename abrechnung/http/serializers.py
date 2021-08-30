@@ -9,7 +9,6 @@ from abrechnung.domain.users import User
 
 class Serializer(abc.ABC):
     def __init__(self, instance: Union[list[object], Type[object]]):
-        self.many = isinstance(instance, list)
         self.instance = instance
 
     @abc.abstractmethod
@@ -17,7 +16,7 @@ class Serializer(abc.ABC):
         pass
 
     def to_repr(self) -> Union[dict, list]:
-        if self.many:
+        if isinstance(self.instance, list):
             return [self._to_repr(i) for i in self.instance]
         return self._to_repr(self.instance)
 

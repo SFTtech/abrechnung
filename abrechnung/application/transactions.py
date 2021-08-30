@@ -3,8 +3,12 @@ from typing import Optional, Union
 
 import asyncpg
 
-from abrechnung.application import Application, NotFoundError, check_group_permissions
-from abrechnung.domain import InvalidCommand
+from abrechnung.application import (
+    Application,
+    NotFoundError,
+    check_group_permissions,
+    InvalidCommand,
+)
 from abrechnung.domain.transactions import Transaction, TransactionDetails
 
 

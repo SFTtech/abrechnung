@@ -1,11 +1,12 @@
-import fcntl
 import logging
-import os
-from pathlib import Path
 
-import asyncpg
-from aiohttp.abc import Application
-from aiohttp.test_utils import AioHTTPTestCase
+from aiohttp import web
+from aiohttp.test_utils import (
+    setup_test_loop,
+    teardown_test_loop,
+    TestServer,
+    TestClient,
+)
 
 from abrechnung.application.accounts import AccountService
 from abrechnung.application.groups import GroupService
@@ -13,13 +14,55 @@ from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.http import HTTPService
 from abrechnung.http.auth import token_for_user
-from tests.utils import get_test_db
+from tests import AsyncTestCase
 
 
-lock_file = Path(f"/run/user/{os.getuid()}/abrechnungs_test_lock")
+class AsyncHTTPTestCase(AsyncTestCase):
+    async def get_application(self) -> web.Application:
+        """
+        This method should be overridden
+        to return the aiohttp.web.Application
+        object to test.
+
+        """
+        return self.get_app()
+
+    def get_app(self) -> web.Application:
+        """Obsolete method used to constructing web application.
+
+        Use .get_application() coroutine instead
+
+        """
+        raise RuntimeError("Did you forget to define get_application()?")
+
+    def setUp(self) -> None:
+        self.loop = setup_test_loop()
+
+        self.loop.run_until_complete(self._setup_db())
+        self.app = self.loop.run_until_complete(self.get_application())
+        self.server = self.loop.run_until_complete(self.get_server(self.app))
+        self.client = self.loop.run_until_complete(self.get_client(self.server))
+
+        self.loop.run_until_complete(self.client.start_server())
+
+        self.loop.run_until_complete(self.setUpAsync())
+
+    def tearDown(self) -> None:
+        self.loop.run_until_complete(self.tearDownAsync())
+        self.loop.run_until_complete(self.client.close())
+        self.loop.run_until_complete(self._teardown_db())
+        teardown_test_loop(self.loop)
+
+    async def get_server(self, app: web.Application) -> TestServer:
+        """Return a TestServer instance."""
+        return TestServer(app, loop=self.loop)
+
+    async def get_client(self, server: TestServer) -> TestClient:
+        """Return a TestClient instance."""
+        return TestClient(server, loop=self.loop)
 
 
-class BaseHTTPAPITest(AioHTTPTestCase):
+class BaseHTTPAPITest(AsyncHTTPTestCase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         logging.basicConfig(level=logging.DEBUG)
@@ -28,36 +71,10 @@ class BaseHTTPAPITest(AioHTTPTestCase):
         await self.http_service._unregister_forwarder(
             self.db_conn, forwarder_id="test_forwarder"
         )
-        await self.db_conn.close()
 
-        self.lock_fd.close()
-
-    async def _create_test_user(self, username: str, email: str) -> tuple[int, str]:
-        """returns the user id and password"""
-        async with self.db_pool.acquire() as conn:
-            password = "asdf1234"
-            hashed_password = UserService._hash_password(password)
-            user_id = await conn.fetchval(
-                "insert into usr (username, email, hashed_password, pending) values ($1, $2, $3, false) returning id",
-                username,
-                email,
-                hashed_password,
-            )
-
-            return user_id, password
-
-    async def get_application(self) -> Application:
-        self.db_pool = await get_test_db()
-
+    async def get_application(self) -> web.Application:
         self.secret_key = "asdf1234"
         self.http_service = HTTPService(config={"api": {"secret_key": self.secret_key}})
-
-        lock_file.touch(exist_ok=True)
-
-        self.lock_fd = lock_file.open("w")
-        fcntl.lockf(self.lock_fd, fcntl.LOCK_EX)
-
-        self.db_conn: asyncpg.Connection = await self.db_pool.acquire()
         await self.http_service._register_forwarder(
             self.db_conn, forwarder_id="test_forwarder"
         )
@@ -81,7 +98,9 @@ class HTTPAPITest(BaseHTTPAPITest):
         self.test_user_id, password = await self._create_test_user(
             "user1", "user1@email.stuff"
         )
-        _, session_id, _ = await self.user_service.login_user("user1", password=password)
+        _, session_id, _ = await self.user_service.login_user(
+            "user1", password=password
+        )
         self.jwt_token = token_for_user(self.test_user_id, session_id, self.secret_key)
 
     async def _post(self, *args, **kwargs):

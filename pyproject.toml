@@ -1,0 +1,20 @@
+[build-system]
+requires = [
+    'setuptools>=42',
+    'wheel'
+]
+build-backend = 'setuptools.build_meta'
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.pylint.messages_control]
+disable = [
+    'C',
+    'R',
+    'logging-fstring-interpolation'
+]
+
+[tool.mypy]
+ignore_missing_imports = true
+pretty = true
