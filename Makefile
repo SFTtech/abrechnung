@@ -1,6 +1,7 @@
 .PHONY: test
 test:
-	python -m unittest
+	coverage run -m unittest discover
+	coverage report
 
 .PHONY: format
 format:
