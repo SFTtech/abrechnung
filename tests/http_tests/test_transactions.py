@@ -342,16 +342,15 @@ class TransactionAPITest(HTTPAPITest):
         # try delete the transaction
         await self._delete_transaction(group_id, transaction_id)
         t = await self._fetch_transaction(group_id, transaction_id)
-        self.assertTrue(t["deleted"])
+        self.assertTrue(t["current_state"]["deleted"])
 
     @unittest_run_loop
     async def test_discard_newly_created_transaction(self):
         group_id, transaction_id = await self._create_group_with_transaction("purchase")
         account1_id = await self._create_account(group_id, "account1")
-        account2_id = await self._create_account(group_id, "account2")
 
+        # one share for the sake of having it
         await self._post_debitor_share(group_id, transaction_id, account1_id, 1.0)
-        await self._post_creditor_share(group_id, transaction_id, account2_id, 1.0)
 
         # we should not be able to discard this transaction, only delete it
         await self._discard_transaction_change(
@@ -359,7 +358,7 @@ class TransactionAPITest(HTTPAPITest):
         )
         await self._delete_transaction(group_id, transaction_id)
         t = await self._fetch_transaction(group_id, transaction_id)
-        self.assertTrue(t["deleted"])
+        self.assertTrue(t["current_state"]["deleted"])
         self.assertEqual(0, len(t["pending_changes"]))
 
     @unittest_run_loop

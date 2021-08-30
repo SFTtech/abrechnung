@@ -361,3 +361,8 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual(200, resp.status)
         groups = await resp.json()
         self.assertEqual(1, len(groups))
+
+        resp = await self._get(f"/api/v1/groups/{group_id}/invites")
+        self.assertEqual(200, resp.status)
+        invites = await resp.json()
+        self.assertEqual(0, len(invites))

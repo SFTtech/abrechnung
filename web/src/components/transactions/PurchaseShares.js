@@ -1,28 +1,74 @@
-import {useRecoilValue} from "recoil";
+import { useRecoilValue } from "recoil";
 import TransactionCreditorShare from "./TransactionCreditorShare";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
-import {groupAccounts} from "../../recoil/groups";
+import { groupAccounts } from "../../recoil/groups";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
-import {Checkbox, FormControlLabel, makeStyles, TextField} from "@material-ui/core";
+import { Checkbox, FormControlLabel, makeStyles, TextField } from "@material-ui/core";
 import Divider from "@material-ui/core/Divider";
-import {toast} from "react-toastify";
-import {useEffect, useState} from "react";
-import {createOrUpdateDebitorShare, deleteDebitorShare} from "../../api";
+import { toast } from "react-toastify";
+import { useEffect, useState } from "react";
+import { createOrUpdateDebitorShare, deleteDebitorShare } from "../../api";
+import { isNaN } from "formik";
 
 const useStyles = makeStyles((theme) => ({
     shareValue: {
         marginTop: 8,
-        marginBottom: 9,
+        marginBottom: 9
     },
     checkboxLabel: {
         marginTop: 7,
-        marginBottom: 7,
+        marginBottom: 7
     }
 }));
 
-export default function PurchaseShares({group, transaction, isEditing}) {
+function ShareInput({ value, onChange }) {
+    const [currValue, setValue] = useState(0);
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+        setValue(value);
+        setError(!validate(value));
+    }, [value]);
+
+    const onSave = () => {
+        if (!error) {
+            onChange(parseFloat(currValue));
+        }
+    };
+
+    const onValueChange = (event) => {
+        const val = event.target.value;
+        setValue(val);
+        setError(!validate(value))
+    };
+
+    const validate = (value) => {
+        return !(value === null || value === undefined || value === "" || isNaN(parseFloat(value))|| parseFloat(value) < 0) ;
+    }
+
+    const onKeyUp = (key) => {
+        if (key.keyCode === 13) {
+            onSave();
+        }
+    };
+
+    return (
+        <TextField
+            error={error}
+            margin="dense"
+            style={{ width: 40, marginRight: 14 }}
+            onBlur={onSave}
+            value={currValue}
+            onChange={onValueChange}
+            helperText={error ? "float > 0 required" : null}
+            onKeyUp={onKeyUp}
+        />
+    );
+}
+
+export default function PurchaseShares({ group, transaction, isEditing }) {
     const classes = useStyles();
 
     const accounts = useRecoilValue(groupAccounts(group.id));
@@ -32,24 +78,18 @@ export default function PurchaseShares({group, transaction, isEditing}) {
 
     useEffect(() => {
         setDebitorShareValues(transaction.debitor_shares);
-    }, [transaction])
-
-    const onDebShareValueChange = (accountID, value) => {
-        setDebitorShareValues((prevState) => {
-            return {...prevState, [accountID]: parseInt(value)}
-        })
-    }
+    }, [transaction]);
 
     const debitorShareValueForAccount = (accountID) => {
         return debitorShareValues.hasOwnProperty(accountID) ? debitorShareValues[accountID] : 0;
-    }
+    };
 
     const debitorValueForAccount = (accountID) => {
         if (!debitorShareValues.hasOwnProperty(accountID)) {
             return 0.00;
         }
         return (transaction.value / totalDebitorShares * debitorShareValues[accountID]).toFixed(2);
-    }
+    };
 
     const updateDebShare = (accountID, checked) => {
         if (checked) {
@@ -57,38 +97,48 @@ export default function PurchaseShares({group, transaction, isEditing}) {
                 groupID: group.id,
                 transactionID: transaction.id,
                 accountID: accountID,
-                value: debitorShareValues[accountID] || 1,
+                value: debitorShareValues[accountID] || 1
             })
                 .catch(err => {
-                    toast.error(`Error updating debitor: ${err}!`);
-                })
+                    toast.error(err);
+                });
         } else {
             // TODO: delete debitor share
+            deleteDebitorShare({
+                groupID: group.id,
+                transactionID: transaction.id,
+                accountID: accountID
+            })
+                .catch(err => {
+                    toast.error(err);
+                });
+        }
+        console.log("update checked", accountID, checked);
+    };
+
+    const updateDebShareValue = (accountID, shares) => {
+        console.log("update value", accountID, shares);
+        if (shares === 0 && debitorShareValues.hasOwnProperty(accountID)) {
             deleteDebitorShare({
                 groupID: group.id,
                 transactionID: transaction.id,
                 accountID: accountID,
             })
                 .catch(err => {
-                    toast.error(`Error updating debitor: ${err}!`);
-                })
-        }
-        console.log("update checked", accountID, checked)
-    }
-
-    const updateDebShareValue = (accountID, shares) => {
-        console.log("update value", accountID, shares)
-        // TODO: automatically disable share when shares = 0
-        createOrUpdateDebitorShare({
-            groupID: group.id,
-            transactionID: transaction.id,
-            accountID: accountID,
-            value: parseInt(shares),
-        })
-            .catch(err => {
-                toast.error(`Error updating creditor: ${err}!`);
+                    toast.error(err);
+                });
+        } else if (shares > 0) {
+            createOrUpdateDebitorShare({
+                groupID: group.id,
+                transactionID: transaction.id,
+                accountID: accountID,
+                value: shares
             })
-    }
+                .catch(err => {
+                    toast.error(err);
+                });
+        }
+    };
 
     return (
         <div>
@@ -103,8 +153,8 @@ export default function PurchaseShares({group, transaction, isEditing}) {
                     <Grid container direction="row" justify="space-between">
                         {isEditing ? (
                             <FormControlLabel
-                                control={<Checkbox color="default" name={`check-all`}/>}
-                                label="For whom"/>
+                                control={<Checkbox color="default" name={`check-all`} />}
+                                label="For whom" />
                         ) : (
                             <Typography variant="subtitle1" className={classes.checkboxLabel}>
                                 For whom
@@ -112,25 +162,22 @@ export default function PurchaseShares({group, transaction, isEditing}) {
                         )}
                     </Grid>
                 </ListItem>
-                <Divider variant="middle"/>
+                <Divider variant="middle" />
                 {isEditing ?
                     accounts.map(account => (
                         <ListItem key={account.id}>
                             <Grid container direction="row" justify="space-between">
                                 <FormControlLabel
-                                    control={<Checkbox name={`${account.name}-checked`}/>}
+                                    control={<Checkbox name={`${account.name}-checked`} />}
                                     checked={transaction.debitor_shares.hasOwnProperty(account.id)}
                                     onChange={event => updateDebShare(account.id, event.target.checked)}
-                                    label={account.name}/>
-                                <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
-                                    <TextField
-                                        margin="dense"
-                                        style={{width: 40, marginRight: 14}}
-                                        onBlur={(event) => updateDebShareValue(account.id, event.target.value)}
+                                    label={account.name} />
+                                <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                                    <ShareInput
+                                        onChange={(value) => updateDebShareValue(account.id, value)}
                                         value={debitorShareValueForAccount(account.id)}
-                                        onChange={event => onDebShareValueChange(account.id, event.target.value)}
                                     />
-                                    <Typography variant="body1" style={{width: 60}} className={classes.shareValue}>
+                                    <Typography variant="body1" style={{ width: 60 }} className={classes.shareValue}>
                                         {debitorValueForAccount(account.id)} {transaction.currency_symbol}
                                     </Typography>
                                 </div>
@@ -144,8 +191,8 @@ export default function PurchaseShares({group, transaction, isEditing}) {
                                 <Typography variant="subtitle1">
                                     {account.name}
                                 </Typography>
-                                <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
-                                    <Typography variant="body1" style={{width: 60}} className={classes.shareValue}>
+                                <div style={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
+                                    <Typography variant="body1" style={{ width: 60 }} className={classes.shareValue}>
                                         {debitorValueForAccount(account.id)} {transaction.currency_symbol}
                                     </Typography>
                                 </div>
@@ -155,5 +202,5 @@ export default function PurchaseShares({group, transaction, isEditing}) {
                 }
             </List>
         </div>
-    )
+    );
 }

@@ -3,7 +3,6 @@ import {Route, Switch, useRouteMatch} from "react-router-dom";
 import GroupInvites from "./GroupInvites";
 import GroupMemberList from "./GroupMemberList";
 // import GroupLog from "./GroupLog";
-import Accounts from "../../components/groups/Accounts";
 import TransactionLog from "../../components/transactions/TransactionLog";
 import {useRecoilValue} from "recoil";
 import {groupById} from "../../recoil/groups";
@@ -13,6 +12,8 @@ import {AppBar, Box, Paper, Tab, Tabs} from "@material-ui/core";
 import Transaction from "./Transaction";
 import GroupDetail from "./GroupDetail";
 import Grid from "@material-ui/core/Grid";
+import Balances from "../../components/groups/Balances";
+import Accounts from "./Accounts";
 
 function TabPanel(props) {
     const {children, value, index, ...other} = props;
@@ -58,6 +59,9 @@ export default function Group() {
                 {/*<Route exact path={`${match.path}/log`}>*/}
                 {/*    <GroupLog group={group} />*/}
                 {/*</Route>*/}
+                <Route exact path={`${match.path}/accounts`}>
+                    <Accounts group={group} />
+                </Route>
                 <Route exact path={`${match.path}/members`}>
                     <GroupMemberList group={group} />
                 </Route>
@@ -80,7 +84,7 @@ export default function Group() {
                                         onChange={handleTabChange}
                                     >
                                         <Tab label="Transactions" {...a11yProps(0)} />
-                                        <Tab label="Accounts" {...a11yProps(1)} />
+                                        <Tab label="Balances" {...a11yProps(1)} />
                                     </Tabs>
                                 </AppBar>
                                 <TabPanel value={selectedTab} index={0}>
@@ -90,7 +94,7 @@ export default function Group() {
                                 </TabPanel>
                                 <TabPanel value={selectedTab} index={1}>
                                     <Suspense fallback={<Loading/>}>
-                                        <Accounts group={group}/>
+                                        <Balances group={group}/>
                                     </Suspense>
                                 </TabPanel>
                             </Paper>

@@ -56,11 +56,11 @@ export default function Register() {
 
     const handleSubmit = (values, {setSubmitting}) => {
         register(values).then(res => {
-            toast.dark(`🐴 Registered successfully...`);
+            toast.success(`🐴 Registered successfully...`);
             setSubmitting(false);
             history.push('/login');
         }).catch(err => {
-            toast.dark(`❌ ${err}`);
+            toast.error(err);
             setSubmitting(false);
         })
     };
@@ -68,7 +68,7 @@ export default function Register() {
     const validate = (values) => {
         let errors = {};
         if (values.password !== values.password2) {
-            errors.password = "Passwords do not match";
+            errors.password2 = "Passwords do not match";
         }
         return errors;
     }

@@ -6,10 +6,9 @@ from aiohttp import web, hdrs
 from jose import jwt
 from schema import Schema
 
-from abrechnung.application import NotFoundError, InvalidCommand
+from abrechnung.application import InvalidCommand
 from abrechnung.application.users import (
     InvalidPassword,
-    LoginFailed,
 )
 from abrechnung.http.serializers import UserSerializer
 from abrechnung.http.utils import validate, json_response
@@ -113,14 +112,9 @@ def jwt_middleware(
 @routes.post("/auth/login")
 @validate(Schema({"username": str, "password": str}))
 async def login(request, data):
-    try:
-        user_id, session_id, session_token = await request.app[
-            "user_service"
-        ].login_user(username=data["username"], password=data["password"])
-    except (NotFoundError, InvalidPassword) as e:
-        raise web.HTTPBadRequest(reason=str(e))
-    except LoginFailed as e:
-        raise web.HTTPUnauthorized(reason=str(e))
+    user_id, session_id, session_token = await request.app["user_service"].login_user(
+        username=data["username"], password=data["password"]
+    )
 
     token = token_for_user(
         user_id=user_id, session_id=session_id, secret_key=request.app["secret_key"]

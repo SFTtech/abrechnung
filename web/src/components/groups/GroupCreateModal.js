@@ -19,7 +19,7 @@ export default function GroupCreateModal({show, onClose}) {
                 onClose();
             })
             .catch(err => {
-                toast.error(`${err}`);
+                toast.error(err);
                 setSubmitting(false);
             })
     };

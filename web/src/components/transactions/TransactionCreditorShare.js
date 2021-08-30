@@ -25,7 +25,7 @@ export default function TransactionCreditorShare({group, transaction, isEditing,
             value: 1.0,
         })
             .catch(err => {
-                toast.error(`Error updating creditor: ${err}!`);
+                toast.error(err);
             })
     }
 

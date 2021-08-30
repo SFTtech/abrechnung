@@ -1,6 +1,6 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 
-import {makeStyles} from "@material-ui/core";
+import { makeStyles } from "@material-ui/core";
 import IconButton from "@material-ui/core/IconButton";
 import Check from "@material-ui/icons/Check";
 import Close from "@material-ui/icons/Close";
@@ -9,63 +9,83 @@ import TextField from "@material-ui/core/TextField";
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        padding: '2px 4px',
-        display: 'flex',
-        alignItems: 'center',
+        padding: "2px 4px",
+        display: "flex",
+        alignItems: "center"
     },
     input: {
         flex: 1
     }
 }));
 
-export default function EditableField({value, onChange, ...props}) {
+export default function EditableField({ value, onChange, validate, helperText, ...props }) {
     const [currentValue, setValue] = useState(null);
     const [editing, setEditing] = useState(false);
+    const [error, setError] = useState(false);
     const classes = useStyles();
 
     useEffect(() => {
         setValue(value);
-    }, [value])
+    }, [value]);
 
     const onSave = () => {
-        onChange(currentValue);
-        setValue(null);
-        setEditing(false);
-    }
+        if (!error) {
+            console.log("on save current value: ", { value: currentValue });
+            onChange(currentValue);
+            setValue(null);
+            setEditing(false);
+        }
+    };
 
     const startEditing = () => {
         setValue(value);
-        setEditing(true)
-    }
+        setEditing(true);
+    };
 
     const stopEditing = () => {
         setValue(value);
         setEditing(false);
-    }
+    };
+
+    const onValueChange = (event) => {
+        setValue(event.target.value);
+        if (validate) {
+            setError(!validate(event.target.value));
+        }
+    };
+
+    const onKeyUp = (key) => {
+        if (key.keyCode === 13) {
+            onSave();
+        }
+    };
 
     return (
         <div className={classes.root}>
             <TextField
+                error={error}
                 value={currentValue}
                 disabled={!editing}
-                onChange={event => setValue(event.target.value)}
+                onChange={onValueChange}
                 className={classes.input}
+                helperText={error ? helperText : null}
+                onKeyUp={onKeyUp}
                 {...props}
             />
             {editing ? (
                 <>
                     <IconButton color="primary" onClick={onSave}>
-                        <Check/>
+                        <Check />
                     </IconButton>
                     <IconButton color="secondary" onClick={stopEditing}>
-                        <Close/>
+                        <Close />
                     </IconButton>
                 </>
             ) : (
                 <IconButton color="primary" onClick={startEditing}>
-                    <Edit/>
+                    <Edit />
                 </IconButton>
             )}
         </div>
-    )
+    );
 }

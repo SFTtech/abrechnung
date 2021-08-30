@@ -2,7 +2,7 @@
 // TODO: make this pretty
 import {fetchToken} from "./api";
 
-export const URL = "ws://localhost:8080/api/v1/ws";
+export const URL = "ws://10.150.9.148:8080/api/v1/ws";
 
 
 export class SFTWebsocket {

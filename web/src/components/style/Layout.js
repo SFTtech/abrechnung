@@ -1,6 +1,6 @@
 import clsx from "clsx";
-import React, { useState } from "react";
-import { Container, makeStyles, Menu, MenuItem, SwipeableDrawer, useTheme } from "@material-ui/core";
+import React, { useEffect, useState } from "react";
+import { Container, makeStyles, Menu, MenuItem, SwipeableDrawer, useMediaQuery, useTheme } from "@material-ui/core";
 import { Link as RouterLink } from "react-router-dom";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -85,10 +85,16 @@ const useStyles = makeStyles((theme) => ({
 export default function Layout({ group = null, children }) {
     const classes = useStyles();
     const theme = useTheme();
-    const [sidebarOpen, setSidebarOpen] = useState(false);
     const authenticated = useRecoilValue(isAuthenticated);
     const [anchorEl, setAnchorEl] = useState(null);
     const dotsMenuOpen = Boolean(anchorEl);
+
+    const isLargeScreen = useMediaQuery(theme.breakpoints.up("sm"));
+    const [sidebarOpen, setSidebarOpen] = useState(isLargeScreen);
+
+    useEffect(() => {
+        setSidebarOpen(isLargeScreen);
+    }, [isLargeScreen])
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -110,7 +116,7 @@ export default function Layout({ group = null, children }) {
         <div>
             <AppBar
                 position="fixed"
-                className={clsx(classes.appBar, { [classes.appBarShift]: sidebarOpen })}>
+                className={clsx(classes.appBar, { [classes.appBarShift]: sidebarOpen && isLargeScreen })}>
                 <Toolbar>
                     <IconButton
                         color="inherit"
@@ -160,7 +166,8 @@ export default function Layout({ group = null, children }) {
                                 <MenuItem component={RouterLink} to="/profile">Profile</MenuItem>
                                 <MenuItem component={RouterLink} to="/profile/sessions">Sessions</MenuItem>
                                 <MenuItem component={RouterLink} to="/profile/change-email">Change E-Mail</MenuItem>
-                                <MenuItem component={RouterLink} to="/profile/change-password">Change Password</MenuItem>
+                                <MenuItem component={RouterLink} to="/profile/change-password">Change
+                                    Password</MenuItem>
                                 <MenuItem component={RouterLink} to="/logout">Sign out</MenuItem>
                             </Menu>
                         </div>
@@ -180,6 +187,7 @@ export default function Layout({ group = null, children }) {
                     open={sidebarOpen}
                     onClose={handleSidebarClose}
                     onOpen={handleSidebarOpen}
+                    variant={isLargeScreen ? "persistent" : "temporary"}
                     classes={{
                         paper: classes.drawerPaper
                     }}
@@ -192,17 +200,23 @@ export default function Layout({ group = null, children }) {
                     <Divider />
                     {group != null && (
                         <>
-                            <ListItemLink to={`/groups/${group.id}/log`}>
-                                <ListItemText primary="Group Log" />
+                            <ListItemLink to={`/groups/${group.id}/`}>
+                                <ListItemText primary="Transactions" />
                             </ListItemLink>
-                            <ListItemLink to={`/groups/${group.id}/invites`}>
-                                <ListItemText primary="Group Invites" />
+                            <ListItemLink to={`/groups/${group.id}/accounts`}>
+                                <ListItemText primary="Accounts" />
                             </ListItemLink>
                             <ListItemLink to={`/groups/${group.id}/detail`}>
                                 <ListItemText primary="Group detail" />
                             </ListItemLink>
                             <ListItemLink to={`/groups/${group.id}/members`}>
                                 <ListItemText primary="Group Members" />
+                            </ListItemLink>
+                            <ListItemLink to={`/groups/${group.id}/invites`}>
+                                <ListItemText primary="Group Invites" />
+                            </ListItemLink>
+                            <ListItemLink to={`/groups/${group.id}/log`}>
+                                <ListItemText primary="Group Log" />
                             </ListItemLink>
                             <Divider />
                         </>
@@ -218,7 +232,9 @@ export default function Layout({ group = null, children }) {
                     </List>
                 </SwipeableDrawer>
             ) : null}
-            <main className={classes.content}>
+            <main className={clsx(classes.content, {
+                [classes.contentShift]: sidebarOpen && isLargeScreen
+            })}>
                 <div className={classes.drawerHeader} />
                 <Container maxWidth="lg">
                     {children}

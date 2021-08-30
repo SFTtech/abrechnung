@@ -1,20 +1,20 @@
 import React from "react";
-import {toast} from "react-toastify";
-import {Field, Form, Formik} from "formik";
+import { toast } from "react-toastify";
+import { Field, Form, Formik } from "formik";
 import Dialog from "@material-ui/core/Dialog";
 import Button from "@material-ui/core/Button";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogActions from "@material-ui/core/DialogActions";
-import {Select, TextField} from "formik-material-ui";
+import { Select, TextField } from "formik-material-ui";
 import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
-import {createTransaction} from "../../api";
+import { createTransaction } from "../../api";
 
-export default function TransactionCreateModal({group, show, onClose}) {
-    const handleSubmit = (values, {setSubmitting}) => {
+export default function TransactionCreateModal({ group, show, onClose }) {
+    const handleSubmit = (values, { setSubmitting }) => {
         createTransaction({
             groupID: group.id,
             type: values.type,
@@ -28,17 +28,30 @@ export default function TransactionCreateModal({group, show, onClose}) {
                 onClose();
             })
             .catch(err => {
-                toast.error(`${err}`);
+                toast.error(err);
                 setSubmitting(false);
-            })
+            });
+    };
+
+    const validate = (values) => {
+        let errors = {};
+        const floatValue = parseFloat(values.value);
+        if (isNaN(floatValue) || floatValue <= 0) {
+            errors.value = "please input a valid decimal number";
+        }
+        if (values.description === null || values.description === undefined || values.description === '') {
+            errors.description = "please input a description";
+        }
+        return errors;
     };
 
     return (
         <Dialog open={show} onClose={onClose}>
             <DialogTitle>Create Transaction</DialogTitle>
             <DialogContent>
-                <Formik initialValues={{type: "purchase", description: "", value: "0.0"}} onSubmit={handleSubmit}>
-                    {({handleSubmit, isSubmitting}) => (
+                <Formik validate={validate} initialValues={{ type: "purchase", description: "", value: "0.0" }}
+                        onSubmit={handleSubmit}>
+                    {({ handleSubmit, isSubmitting }) => (
                         <Form>
                             <FormControl>
                                 <InputLabel>Type</InputLabel>
@@ -72,7 +85,7 @@ export default function TransactionCreateModal({group, show, onClose}) {
                                 name="value"
                                 label="Value"
                             />
-                            {isSubmitting && <LinearProgress/>}
+                            {isSubmitting && <LinearProgress />}
                             <DialogActions>
                                 <Button color="secondary" onClick={onClose}>
                                     Cancel
@@ -90,5 +103,5 @@ export default function TransactionCreateModal({group, show, onClose}) {
                 </Formik>
             </DialogContent>
         </Dialog>
-    )
+    );
 }

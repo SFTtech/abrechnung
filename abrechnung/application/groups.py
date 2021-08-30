@@ -89,7 +89,7 @@ class GroupService(Application):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 invite = await conn.fetchrow(
-                    "select group_id, created_by from group_invite gi "
+                    "select id, group_id, created_by, single_use from group_invite gi "
                     "where gi.token = $1",
                     invite_token,
                 )
@@ -103,6 +103,11 @@ class GroupService(Application):
                     invite["group_id"],
                     invite["created_by"],
                 )
+
+                if invite["single_use"]:
+                    await conn.execute(
+                        "delete from group_invite where id = $1", invite["id"]
+                    )
 
     async def list_groups(self, user_id: int) -> list[Group]:
         async with self.db_pool.acquire() as conn:

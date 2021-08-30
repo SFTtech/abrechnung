@@ -1,22 +1,21 @@
-import React, {useEffect} from "react";
-import {isAuthenticated, userData} from "../../recoil/auth";
-import {useSetRecoilState} from "recoil";
-import {logout} from "../../api";
+import React, { useEffect } from "react";
+import { userData } from "../../recoil/auth";
+import { useSetRecoilState } from "recoil";
+import { logout } from "../../api";
 import Loading from "../../components/style/Loading";
 
 
 export default function Logout() {
-    const setLoggedIn = useSetRecoilState(isAuthenticated);
     const setUserState = useSetRecoilState(userData);
 
     useEffect(() => {
         logout().then(res => {
-            setLoggedIn(false);
+            setUserState(null);
             window.location.assign("/login");
         });
-    }, [setLoggedIn, setUserState])
+    }, [setUserState]);
 
     return (
-        <Loading/>
-    )
+        <Loading />
+    );
 }

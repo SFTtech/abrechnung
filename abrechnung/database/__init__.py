@@ -24,6 +24,7 @@ async def db_connect(
         database=database,
         host=host,
         port=port,
+        max_size=100
     )
 
 

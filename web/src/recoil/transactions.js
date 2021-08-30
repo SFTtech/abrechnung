@@ -1,9 +1,9 @@
 // transaction handling
-import {atomFamily, selectorFamily} from "recoil";
-import {groupAccounts} from "./groups";
-import {fetchTransactions} from "../api";
-import {ws} from "../websocket";
-import {userData} from "./auth";
+import { atomFamily, selectorFamily } from "recoil";
+import { groupAccounts } from "./groups";
+import { fetchTransactions } from "../api";
+import { ws } from "../websocket";
+import { userData } from "./auth";
 
 export const groupTransactions = atomFamily({
     key: "groupTransactions",
@@ -18,8 +18,7 @@ export const groupTransactions = atomFamily({
             ws.subscribe("transaction", groupID, ({subscription_type, transaction_id, element_id}) => {
                 if (subscription_type === "transaction" && element_id === groupID) {
                     fetchTransactions({groupID: element_id}).then(result => {
-                        // only show non deleted transactions
-                        setSelf(result.filter(transaction => !transaction.deleted))
+                        setSelf(result);
                     });
                 }
             })
@@ -37,25 +36,34 @@ export const transactionsSeenByUser = selectorFamily({
     get: groupID => async ({get}) => {
         const user = get(userData);
         const transactions = get(groupTransactions(groupID));
-        return transactions.map(transaction => {
+
+        return transactions
+            .filter(transaction => {
+                if (transaction.current_state && transaction.current_state.deleted) {
+                    return false;
+                }
+                if (transaction.pending_changes.hasOwnProperty(user.id)) {
+                    return true;
+                } else if (transaction.current_state === null) {
+                    return false;
+                }
+                return true;
+            })
+            .map(transaction => {
             if (transaction.pending_changes.hasOwnProperty(user.id)) {
-                let t = {
-                    ...transaction,
+                return {
+                    id: transaction.id,
+                    type: transaction.type,
                     ...transaction.pending_changes[user.id],
                     is_wip: true,
-                }
-                delete t.pending_changes;
-                delete t.editable_data;
-                return t;
+                };
             } else {
-                let t = {
-                    ...transaction,
-                    ...transaction.editable_data,
+                return {
+                    id: transaction.id,
+                    type: transaction.type,
+                    ...transaction.current_state,
                     is_wip: false,
-                }
-                delete t.pending_changes;
-                delete t.editable_data;
-                return t;
+                };
             }
 
         })

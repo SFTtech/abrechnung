@@ -1,11 +1,11 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import List from "@material-ui/core/List";
-import TextField from "@material-ui/core/TextField";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 import DisabledTextField from "../style/DisabledTextField";
-import {updateTransactionDetails} from "../../api";
+import { updateTransactionDetails } from "../../api";
+import EditableField from "../style/EditableField";
 
-export default function TransactionDetail({group, transaction, isEditing}) {
+export default function TransactionDetail({ group, transaction, isEditing }) {
     const [description, setDescription] = useState("");
     const [transactionValue, setTransactionValue] = useState("");
 
@@ -13,7 +13,7 @@ export default function TransactionDetail({group, transaction, isEditing}) {
         // TODO: incorporate pending changes
         setDescription(transaction.description);
         setTransactionValue(transaction.value.toFixed(2));
-    }, [transaction, setDescription, setTransactionValue])
+    }, [transaction, setDescription, setTransactionValue]);
 
     const save = (params) => {
         if (isEditing) {
@@ -27,31 +27,29 @@ export default function TransactionDetail({group, transaction, isEditing}) {
                 ...params
             }).catch(err => {
                 // something else
-                toast.error(`Error updating transaction: ${err}!`);
-            })
+                toast.error(err);
+            });
         }
-    }
+    };
 
     return (
         <List>
             {isEditing ? (
                 <>
-                    <TextField
+                    <EditableField
                         label="Description"
                         margin="normal"
-                        fullWidth
-                        onBlur={(event) => save({description: event.target.value})}
+                        onChange={(description) => save({ description: description })}
                         value={description}
-                        onChange={event => setDescription(event.target.value)}
                     />
 
-                    <TextField
+                    <EditableField
                         label="Value"
                         margin="normal"
-                        fullWidth
-                        onBlur={(event) => save({value: parseFloat(event.target.value)})}
+                        validate={value => !isNaN(parseFloat(value))}
+                        helperText="please input a valid decimal number"
+                        onChange={(value) => save({ value: parseFloat(value) })}
                         value={transactionValue}
-                        onChange={event => setTransactionValue(event.target.value)}
                     />
                 </>
             ) : (
@@ -74,5 +72,5 @@ export default function TransactionDetail({group, transaction, isEditing}) {
             )}
 
         </List>
-    )
+    );
 }

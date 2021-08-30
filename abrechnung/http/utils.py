@@ -73,7 +73,7 @@ async def error_middleware(request, handler):
     #     status = web.HTTPInternalServerError.status_code
     #     message = str(ex)
 
-    return web.json_response({"error": message}, status=status)
+    return web.json_response({"code": status, "msg": message}, status=status)
 
 
 def encode_json(obj):

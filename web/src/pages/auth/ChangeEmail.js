@@ -29,7 +29,7 @@ export default function ChangeEmail() {
             })
             .catch((error) => {
                 setSubmitting(false);
-                toast.error(`Error updating creditor: ${error}!`);
+                toast.error(error);
             });
     };
 

@@ -121,7 +121,7 @@ async def discard_transaction_change(request: Request):
     schema.Schema(
         {
             "account_id": int,
-            "value": schema.Or(float, int),
+            "value": float,
         }
     )
 )
@@ -143,7 +143,7 @@ async def add_or_change_creditor_share(request: Request, data: dict):
     schema.Schema(
         {
             "account_id": int,
-            "value": schema.Or(float, int),
+            "value": float,
         }
     )
 )
@@ -183,7 +183,7 @@ async def delete_creditor_share(request: Request, data: dict):
     schema.Schema(
         {
             "account_id": int,
-            "value": schema.Or(float, int),
+            "value": float,
         }
     )
 )
@@ -205,7 +205,7 @@ async def add_or_change_debitor_share(request: Request, data: dict):
     schema.Schema(
         {
             "account_id": int,
-            "value": schema.Or(float, int),
+            "value": float,
         }
     )
 )

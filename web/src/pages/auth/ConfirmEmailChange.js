@@ -1,24 +1,24 @@
-import React, {useState} from "react";
-import {useParams, useRouteMatch} from "react-router-dom";
-import {toast} from "react-toastify";
+import React, { useState } from "react";
+import { useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 import Loading from "../../components/style/Loading";
 import Typography from "@material-ui/core/Typography";
 import Button from "@material-ui/core/Button";
-import {confirmEmailChange} from "../../api";
+import { confirmEmailChange } from "../../api";
 
 export default function ConfirmEmailChange() {
     const [status, setStatus] = useState("idle");
-    const {token} = useParams();
+    const { token } = useParams();
 
     const confirmEmail = (e) => {
         e.preventDefault();
         setStatus("loading");
-        confirmEmailChange({token: token})
+        confirmEmailChange({ token: token })
             .then(value => {
                 setStatus("success");
             })
             .catch(error => {
-                toast.error(`${error}`);
+                toast.error(error);
             });
     };
 

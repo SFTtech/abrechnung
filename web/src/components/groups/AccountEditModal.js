@@ -24,7 +24,7 @@ export default function AccountEditModal({group, show, onClose, account}) {
                 setSubmitting(false);
                 onClose();
             }).catch(err => {
-            toast.error(`${err}`);
+            toast.error(err);
             setSubmitting(false);
         })
     };

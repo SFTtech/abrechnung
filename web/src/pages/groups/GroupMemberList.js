@@ -58,6 +58,7 @@ export default function GroupMemberList({group}) {
             })
             .catch(err => {
                 setSubmitting(false);
+                toast.error(err);
             })
     }
 

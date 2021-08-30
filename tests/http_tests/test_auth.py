@@ -32,15 +32,17 @@ class AuthAPITest(BaseHTTPAPITest):
 
     @unittest_run_loop
     async def test_login_user(self):
+        user_name = "user"
+        email = "email@email.com"
         user_id = await self.user_service.register_user(
-            username="user", email="email@email.com", password="password"
+            username=user_name, email=email, password="password"
         )
         resp = await self.client.post(
             f"/api/v1/auth/login",
-            json={"username": "user", "password": "password"},
+            json={"username": user_name, "password": "password"},
         )
         # we cannot login yet as the registration is still pending
-        self.assertEqual(401, resp.status)
+        self.assertEqual(400, resp.status)
 
         # fetch the registration token from the database
         async with self.db_pool.acquire() as conn:
@@ -56,13 +58,19 @@ class AuthAPITest(BaseHTTPAPITest):
         # now we should be able to login and get a session token
         resp = await self.client.post(
             f"/api/v1/auth/login",
-            json={"username": "user", "password": "password"},
+            json={"username": email, "password": "password"},
         )
         self.assertEqual(200, resp.status)
         ret_data = await resp.json()
         self.assertIsNotNone(ret_data["user_id"])
         self.assertIsNotNone(ret_data["access_token"])
         self.assertIsNotNone(ret_data["session_token"])
+
+        resp = await self.client.post(
+            f"/api/v1/auth/login",
+            json={"username": "user", "password": "password"},
+        )
+        self.assertEqual(200, resp.status)
 
         token = ret_data["access_token"]
         # now check that we can actually fetch our profile with the token
@@ -72,8 +80,8 @@ class AuthAPITest(BaseHTTPAPITest):
         self.assertEqual(200, resp.status)
         ret_data = await resp.json()
         self.assertEqual(user_id, ret_data["id"])
-        self.assertEqual("user", ret_data["username"])
-        self.assertEqual("email@email.com", ret_data["email"])
+        self.assertEqual(user_name, ret_data["username"])
+        self.assertEqual(email, ret_data["email"])
 
         # also check that a random token does not pass
         resp = await self.client.get(

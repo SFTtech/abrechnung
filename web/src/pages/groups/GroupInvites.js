@@ -32,7 +32,7 @@ export default function GroupInvites({group}) {
             .then(result => {
                 toast.success(`Removed invite link`);
             }).catch(err => {
-            toast.error(`${err}`);
+            toast.error(err);
         })
     }
 

@@ -426,7 +426,6 @@ begin
 end
 $$ language plpgsql;
 
-
 create or replace function check_transaction_revisions_change_per_user(
     transaction_id integer,
     user_id integer,
@@ -724,8 +723,8 @@ create table if not exists purchase_item_history (
     id                integer references purchase_item (id) on delete restrict,
     revision_id       bigint references transaction_revision (id) on delete cascade,
     primary key (id, revision_id),
-    -- valid can be set to false at any time.
-    valid             bool             not null default true,
+    -- deleted can be set to false at any time.
+    deleted             bool             not null default true,
 
     -- the name of the item
     name              text             not null,
@@ -744,24 +743,15 @@ create table if not exists purchase_item_history (
 -- an usage of an item by an account,
 -- causing part of the item price to be debited to that account.
 create table if not exists item_usage (
-    id   serial primary key,
-
-    -- the transaction whose value is debited
-    item integer not null references purchase_item (id) on delete restrict
-);
-
-create table if not exists item_usage_history (
-    id          integer references item_usage (id) on delete restrict,
+    item_id integer not null references purchase_item (id) on delete restrict,
     revision_id bigint references transaction_revision (id) on delete cascade,
-    primary key (id, revision_id),
+
     -- the account that is debited
     account_id  integer          not null references account (id) on delete restrict,
---     constraint item_usage_transaction_account_unique unique (item, account)
-    -- valid can be set to false at any time.
-    valid       bool             not null default true,
+    primary key (item_id, revision_id, account_id),
 
     -- the absolute amount (of the item amount) to debit to this account.
-    amount      double precision not null default 0,
+    amount      double precision not null default 0.0,
     -- the number of shares of the item to debit to this account.
     -- first, all 'amount'-based shares are debited.
     -- the remaining amount is debited to accounts based on shares.

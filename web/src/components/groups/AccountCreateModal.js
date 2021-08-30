@@ -22,7 +22,7 @@ export default function AccountCreateModal({show, onClose, group}) {
                 setSubmitting(false);
                 onClose();
             }).catch(err => {
-            toast.error(`${err}`);
+            toast.error(err);
             setSubmitting(false);
         })
     };

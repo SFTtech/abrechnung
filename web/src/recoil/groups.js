@@ -53,7 +53,7 @@ export const groupAccounts = atomFamily({
     default: selectorFamily({
         key: "groupAccounts/default",
         get: groupID => async ({get}) => {
-            return await fetchAccounts({groupID: groupID});
+            return (await fetchAccounts({groupID: groupID})).filter(account => !account.deleted);
         }
     }),
     effects_UNSTABLE: groupID => [

@@ -1,39 +1,39 @@
-import React, {useEffect, useState} from "react";
-import {Link as RouterLink, useHistory} from "react-router-dom";
-import {Field, Form, Formik} from "formik";
-import {isAuthenticated, userData} from "../../recoil/auth";
-import {useRecoilState, useRecoilValue, useSetRecoilState} from "recoil";
+import React, { useEffect, useState } from "react";
+import { Link as RouterLink, useHistory } from "react-router-dom";
+import { Field, Form, Formik } from "formik";
+import { isAuthenticated, userData } from "../../recoil/auth";
+import { useRecoilValue, useSetRecoilState } from "recoil";
 import Loading from "../../components/style/Loading";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 import Button from "@material-ui/core/Button";
 import LinearProgress from "@material-ui/core/LinearProgress";
-import {TextField} from "formik-material-ui";
-import {Container, CssBaseline, makeStyles} from "@material-ui/core";
+import { TextField } from "formik-material-ui";
+import { Container, CssBaseline, makeStyles } from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
-import Avatar from '@material-ui/core/Avatar';
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
-import {fetchProfile, login, removeToken} from "../../api";
+import Avatar from "@material-ui/core/Avatar";
+import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
+import { fetchProfile, login, removeToken } from "../../api";
 import Grid from "@material-ui/core/Grid";
 import Link from "@material-ui/core/Link";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
         marginTop: theme.spacing(8),
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center"
     },
     avatar: {
         margin: theme.spacing(1),
-        backgroundColor: theme.palette.secondary.main,
+        backgroundColor: theme.palette.secondary.main
     },
     form: {
-        width: '100%', // Fix IE 11 issue.
-        marginTop: theme.spacing(1),
+        width: "100%", // Fix IE 11 issue.
+        marginTop: theme.spacing(1)
     },
     submit: {
-        margin: theme.spacing(3, 0, 2),
-    },
+        margin: theme.spacing(3, 0, 2)
+    }
 }));
 
 export default function Login() {
@@ -46,13 +46,13 @@ export default function Login() {
     useEffect(() => {
         if (isLoggedIn) {
             setLoading(false);
-            history.push('/'); // TODO: handle next page on redirect
+            history.push("/"); // TODO: handle next page on redirect
         } else {
             setLoading(false);
         }
-    }, [isLoggedIn, history])
+    }, [isLoggedIn, history]);
 
-    const handleSubmit = (values, {setSubmitting}) => {
+    const handleSubmit = (values, { setSubmitting }) => {
         login(values).then(res => {
             toast.success(`Logged in...`);
             setSubmitting(false);
@@ -62,38 +62,38 @@ export default function Login() {
                     setLoading(false);
                 })
                 .catch(err => {
-                    console.log("error loading user info in root app", err)
-                    toast.error(`${err}`);
+                    console.log("error loading user info in root app", err);
+                    toast.error(err);
                     removeToken();
                     setUserData(null);
                     setLoading(false);
-                })
+                });
         }).catch(err => {
-            toast.error(`${err}`);
+            toast.error(err);
             setSubmitting(false);
             removeToken();
             setUserData(null);
-        })
+        });
     };
 
     if (loading) {
-        return <Loading/>
+        return <Loading />;
     }
 
     return (
         <Container component="main" maxWidth="xs">
-            <CssBaseline/>
+            <CssBaseline />
             <div className={classes.paper}>
                 <Avatar className={classes.avatar}>
-                    <LockOutlinedIcon/>
+                    <LockOutlinedIcon />
                 </Avatar>
                 <Typography component="h1" variant="h5">
                     Sign in
                 </Typography>
-                <Formik initialValues={{password: "", username: ""}} onSubmit={handleSubmit}>
-                    {({handleSubmit, isSubmitting}) => (
+                <Formik initialValues={{ password: "", username: "" }} onSubmit={handleSubmit}>
+                    {({ handleSubmit, isSubmitting }) => (
                         <Form onSubmit={handleSubmit}>
-                            <input type="hidden" name="remember" value="true"/>
+                            <input type="hidden" name="remember" value="true" />
                             <Field
                                 variant="outlined"
                                 margin="normal"
@@ -117,7 +117,7 @@ export default function Login() {
                                 label="Password"
                             />
 
-                            {isSubmitting && <LinearProgress/>}
+                            {isSubmitting && <LinearProgress />}
                             <Button
                                 type="submit"
                                 fullWidth

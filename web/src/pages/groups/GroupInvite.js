@@ -1,21 +1,19 @@
-import React, {useEffect, useState} from "react";
-import {useHistory, useParams} from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useHistory, useParams } from "react-router-dom";
 import Loading from "../../components/style/Loading";
-import {ListItem, ListItemSecondaryAction, ListItemText, makeStyles} from "@material-ui/core";
+import { ListItem, ListItemText, makeStyles } from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import Alert from "@material-ui/lab/Alert";
 import Paper from "@material-ui/core/Paper";
-import {fetchGroupPreview, joinGroup} from "../../api";
+import { fetchGroupPreview, joinGroup } from "../../api";
 import List from "@material-ui/core/List";
 import Button from "@material-ui/core/Button";
 import Grid from "@material-ui/core/Grid";
-import CheckIcon from "@material-ui/icons/Check";
-import ClearIcon from "@material-ui/icons/Clear";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
-        padding: theme.spacing(2),
-    },
+        padding: theme.spacing(2)
+    }
 }));
 
 export default function GroupInvite() {
@@ -23,10 +21,10 @@ export default function GroupInvite() {
     const [error, setError] = useState(null);
     const classes = useStyles();
     const history = useHistory();
-    const {inviteToken} = useParams();
+    const { inviteToken } = useParams();
 
     useEffect(() => {
-        fetchGroupPreview({token: inviteToken})
+        fetchGroupPreview({ token: inviteToken })
             .then(res => {
                 setGroup(res);
                 setError(null);
@@ -34,18 +32,18 @@ export default function GroupInvite() {
             .catch(err => {
                 setError(err);
                 setGroup(null);
-            })
+            });
     }, [setGroup, setError, history, inviteToken]);
 
     const join = () => {
         console.log("joining group");
-        joinGroup({token: inviteToken})
+        joinGroup({ token: inviteToken })
             .then(value => {
                 setError(null);
                 history.push("/");
             })
             .catch(err => {
-                setError(err)
+                setError(err);
             });
     };
 
@@ -54,7 +52,7 @@ export default function GroupInvite() {
             {error !== null ? (
                 <Alert severity="error">{error}</Alert>
             ) : group === null ? (
-                <Loading/>
+                <Loading />
             ) : (
                 <>
                     <Typography variant="h5">
@@ -62,22 +60,23 @@ export default function GroupInvite() {
                     </Typography>
                     <List>
                         <ListItem>
-                            <ListItemText primary="Name" secondary={group.name}/>
+                            <ListItemText primary="Name" secondary={group.name} />
                         </ListItem>
                         <ListItem>
-                            <ListItemText primary="Description" secondary={group.description}/>
+                            <ListItemText primary="Description" secondary={group.description} />
                         </ListItem>
                         <ListItem>
-                            <ListItemText primary="Created At" secondary={group.created_at}/>
+                            <ListItemText primary="Created At" secondary={group.created_at} />
                         </ListItem>
                         <ListItem>
-                            <ListItemText primary="Invitation Description" secondary={group.invite_description}/>
+                            <ListItemText primary="Invitation Description" secondary={group.invite_description} />
                         </ListItem>
                         <ListItem>
-                            <ListItemText primary="Invitation Valid Until" secondary={group.invite_valid_until}/>
+                            <ListItemText primary="Invitation Valid Until" secondary={group.invite_valid_until} />
                         </ListItem>
                         <ListItem>
-                            <ListItemText primary="Invitation Single Use" secondary={group.invite_single_use ? "yes": "no"}/>
+                            <ListItemText primary="Invitation Single Use"
+                                          secondary={group.invite_single_use ? "yes" : "no"} />
                         </ListItem>
                     </List>
                     <Grid container justify="center">

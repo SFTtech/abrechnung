@@ -7,6 +7,7 @@ import {TextField} from "formik-material-ui";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import {makeStyles} from "@material-ui/core";
 import {changePassword} from "../../api";
+import { toast } from "react-toastify";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -32,9 +33,11 @@ export default function ChangePassword() {
         })
             .then((res) => {
                 setSubmitting(false);
+                toast.success("Successfully changed password");
             })
             .catch((error) => {
                 setSubmitting(false);
+                toast.error(error);
             });
     };
 

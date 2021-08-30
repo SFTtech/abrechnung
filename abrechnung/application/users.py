@@ -59,20 +59,20 @@ class UserService(Application):
 
         If successful return the user id, a new session id and a session token
         """
-        async with self.db_pool.acquire() as conn:
+        async with self.db_pool.acquire(timeout=1) as conn:
             async with conn.transaction():
                 user = await conn.fetchrow(
-                    "select id, hashed_password, pending, deleted from usr where username = $1",
+                    "select id, hashed_password, pending, deleted from usr where username = $1 or email = $1",
                     username,
                 )
                 if user is None:
-                    raise NotFoundError(f"User with username {username} does not exist")
+                    raise InvalidCommand(f"Login failed")
 
                 if not self._check_password(password, user["hashed_password"]):
-                    raise InvalidPassword
+                    raise InvalidCommand(f"Login failed")
 
                 if user["pending"] or user["deleted"]:
-                    raise LoginFailed(f"User is not permitted to login")
+                    raise InvalidCommand(f"User is not permitted to login")
 
                 session_token, session_id = await conn.fetchrow(
                     "insert into session (user_id) values ($1) returning token, id",

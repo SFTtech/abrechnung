@@ -1,30 +1,27 @@
 import React from "react";
 import EditableField from "../../components/style/EditableField";
 
-import {Alert} from "@material-ui/lab";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
+import { Alert } from "@material-ui/lab";
 import Paper from "@material-ui/core/Paper";
-import {makeStyles} from "@material-ui/core";
-import {toast} from "react-toastify";
-import {updateGroupMetadata} from "../../api";
-import {currUserPermissions} from "../../recoil/groups";
-import {useRecoilValue} from "recoil";
+import { makeStyles } from "@material-ui/core";
+import { toast } from "react-toastify";
+import { updateGroupMetadata } from "../../api";
+import { currUserPermissions } from "../../recoil/groups";
+import { useRecoilValue } from "recoil";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
-        padding: theme.spacing(2),
-    },
+        padding: theme.spacing(2)
+    }
 }));
 
-export default function GroupDetail({group}) {
+export default function GroupDetail({ group }) {
     const classes = useStyles();
 
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
 
     // TODO: actually make the editing part work
-    const updateGroup = ({name = null, description = null, currencySymbol = null, terms = null}) => {
+    const updateGroup = ({ name = null, description = null, currencySymbol = null, terms = null }) => {
         updateGroupMetadata({
             groupID: group.id,
             name: name ? name : group.name,
@@ -33,9 +30,9 @@ export default function GroupDetail({group}) {
             terms: terms ? terms : group.terms
         })
             .catch(err => {
-                toast.error(`Error updating group ${err}!`);
-            })
-    }
+                toast.error(err);
+            });
+    };
 
     return (
         <Paper elevation={1} className={classes.paper}>
@@ -49,28 +46,28 @@ export default function GroupDetail({group}) {
                 label="Name"
                 margin="normal"
                 value={group.name}
-                onChange={name => updateGroup({name: name})}
+                onChange={name => updateGroup({ name: name })}
             />
 
             <EditableField
                 label="Description"
                 margin="normal"
                 value={group.description}
-                onChange={description => updateGroup({description: description})}
+                onChange={description => updateGroup({ description: description })}
             />
 
             <EditableField
                 label="Currency Symbol"
                 margin="normal"
                 value={group.currency_symbol}
-                onChange={currencySymbol => updateGroup({currencySymbol: currencySymbol})}
+                onChange={currencySymbol => updateGroup({ currencySymbol: currencySymbol })}
             />
 
             <EditableField
                 label="Terms"
                 margin="normal"
                 value={group.terms}
-                onChange={terms => updateGroup({terms: terms})}
+                onChange={terms => updateGroup({ terms: terms })}
             />
 
             {/*<List>*/}

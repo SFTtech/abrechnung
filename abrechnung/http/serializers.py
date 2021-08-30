@@ -95,12 +95,9 @@ class TransactionSerializer(Serializer):
             "pending_changes": {
                 str(uid): self._serialize_change(change)
                 for uid, change in instance.pending_changes.items()
-            }
-            if instance.pending_changes
-            else {},
+            } if instance.pending_changes else {},
+            "current_state": self._serialize_change(instance.current_state) if instance.current_state else None
         }
-        if instance.current_state:
-            data.update(self._serialize_change(instance.current_state))
 
         return data
 

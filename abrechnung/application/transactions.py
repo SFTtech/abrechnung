@@ -290,8 +290,8 @@ class TransactionService(Application):
                     row is None
                 ):  # the transaction has no committed changes, we can only delete it if we created it
                     revision_id = await conn.fetchval(
-                        "update transaction_revision tr set committed = now()"
-                        "where tr.user_id = $1 and tr.transaction_id = $2 and tr.committed is null returning id",
+                        "select id from transaction_revision tr "
+                        "where tr.user_id = $1 and tr.transaction_id = $2 and tr.committed is null",
                         user_id,
                         transaction_id,
                     )
@@ -326,7 +326,15 @@ class TransactionService(Application):
                         revision_id,
                     )
 
+                    # now commit this change
+                    await conn.execute(
+                        "update transaction_revision tr set committed = now() "
+                        "where tr.user_id = $1 and tr.transaction_id = $2 and tr.committed is null",
+                        user_id,
+                        transaction_id,
+                    )
                     return
+
                 else:  # we have at least one committed change for this transaction
                     last_committed_revision = row["revision_id"]
 
