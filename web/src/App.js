@@ -17,6 +17,7 @@ import ChangePassword from "./pages/auth/ChangePassword";
 import GroupList from "./pages/groups/GroupList"
 import Layout from "./components/style/Layout";
 import {CssBaseline, useMediaQuery} from "@material-ui/core";
+import SessionList from "./pages/auth/SessionList";
 
 const Profile = React.lazy(() => import("./pages/auth/Profile"));
 const ConfirmEmailChange = React.lazy(() => import("./pages/auth/ConfirmEmailChange"));
@@ -50,6 +51,12 @@ const routes = [
     {
         path: "/profile/change-email",
         component: <ChangeEmail/>,
+        auth: true,
+        exact: true,
+    },
+    {
+        path: "/profile/sessions",
+        component: <SessionList/>,
         auth: true,
         exact: true,
     },

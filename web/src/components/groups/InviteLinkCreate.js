@@ -11,6 +11,7 @@ import LinearProgress from "@material-ui/core/LinearProgress";
 import {DateTimePicker} from "formik-material-ui-pickers";
 import {FormControlLabel} from "@material-ui/core";
 import {createGroupInvite} from "../../api";
+import {DateTime} from "luxon";
 
 export default function InviteLinkCreate({show, onClose, group}) {
 
@@ -32,12 +33,16 @@ export default function InviteLinkCreate({show, onClose, group}) {
         })
     };
 
+    const nowPlusOneHour = () => {
+        return DateTime.now().plus({hours: 1});
+    }
+
     return (
         <Dialog open={show} onClose={onClose}>
             <DialogTitle>Create Invite Link</DialogTitle>
 
             <DialogContent>
-                <Formik initialValues={{description: "", validUntil: "", singleUse: false}} onSubmit={handleSubmit}>
+                <Formik initialValues={{description: "", validUntil: nowPlusOneHour(), singleUse: false}} onSubmit={handleSubmit}>
                     {({values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
                         <Form>
                             <Field

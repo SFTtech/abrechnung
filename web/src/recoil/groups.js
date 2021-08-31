@@ -48,12 +48,12 @@ export const currUserPermissions = selectorFamily({
     }
 })
 
-export const groupAccounts = atomFamily({
-    key: "groupAccounts",
+export const groupAccountsRaw = atomFamily({
+    key: "groupAccountsRaw",
     default: selectorFamily({
-        key: "groupAccounts/default",
+        key: "groupAccountsRaw/default",
         get: groupID => async ({get}) => {
-            return (await fetchAccounts({groupID: groupID})).filter(account => !account.deleted);
+            return await fetchAccounts({groupID: groupID});
         }
     }),
     effects_UNSTABLE: groupID => [
@@ -64,7 +64,7 @@ export const groupAccounts = atomFamily({
                     //     .then(result => setSelf(result));
                     fetchAccounts({groupID: element_id}).then(result => {
                         // only show accounts that haven't been deleted
-                        setSelf(result.filter(account => !account.deleted));
+                        setSelf(result);
                     });
                 }
             })
@@ -75,6 +75,14 @@ export const groupAccounts = atomFamily({
             };
         }
     ]
+})
+
+export const groupAccounts = selectorFamily({
+    key: "groupAccounts",
+    get: groupID => async ({get}) => {
+        const accounts = await get(groupAccountsRaw(groupID));
+        return accounts.filter(account => !account.deleted);
+    }
 })
 
 export const groupMembers = atomFamily({

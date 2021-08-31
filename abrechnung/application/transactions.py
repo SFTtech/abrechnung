@@ -226,6 +226,19 @@ class TransactionService(Application):
                     currency_conversion_rate,
                 )
 
+    async def create_transaction_change(self, user_id: int, transaction_id: int):
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                await self._check_transaction_permissions(
+                    conn=conn,
+                    user_id=user_id,
+                    transaction_id=transaction_id,
+                    can_write=True,
+                )
+                await self._get_or_create_pending_change(
+                    conn=conn, user_id=user_id, transaction_id=transaction_id
+                )
+
     async def discard_transaction_changes(self, user_id: int, transaction_id: int):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():

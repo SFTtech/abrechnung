@@ -76,6 +76,14 @@ class TransactionAPITest(HTTPAPITest):
         )
         self.assertEqual(expected_status, resp.status)
 
+    async def _create_change(
+        self, group_id: int, transaction_id: int, expected_status: int = 204
+    ) -> None:
+        resp = await self._post(
+            f"/api/v1/groups/{group_id}/transactions/{transaction_id}/new_change"
+        )
+        self.assertEqual(expected_status, resp.status)
+
     async def _delete_transaction(
         self, group_id: int, transaction_id: int, expected_status: int = 204
     ) -> None:
@@ -296,6 +304,43 @@ class TransactionAPITest(HTTPAPITest):
             t["pending_changes"][str(self.test_user_id)]["currency_conversion_rate"],
         )
 
+        await self._commit_transaction(group_id, transaction_id)
+        t = await self._fetch_transaction(group_id, transaction_id)
+        self.assertEqual(0, len(t["pending_changes"]))
+
+        await self._create_change(group_id, transaction_id)
+        t = await self._fetch_transaction(group_id, transaction_id)
+        self.assertEqual(1, len(t["pending_changes"]))
+        await self._update_transaction(
+            group_id, transaction_id, 200.0, "foofoo", "$", 2.0
+        )
+
+        t = await self._fetch_transaction(group_id, transaction_id)
+        self.assertEqual(200.0, t["pending_changes"][str(self.test_user_id)]["value"])
+        self.assertEqual(
+            "foofoo",
+            t["pending_changes"][str(self.test_user_id)]["description"],
+        )
+        self.assertEqual(
+            "$", t["pending_changes"][str(self.test_user_id)]["currency_symbol"]
+        )
+        self.assertEqual(
+            2.0,
+            t["pending_changes"][str(self.test_user_id)]["currency_conversion_rate"],
+        )
+        await self._commit_transaction(group_id, transaction_id)
+        t = await self._fetch_transaction(group_id, transaction_id)
+        self.assertEqual(200.0, t["current_state"]["value"])
+        self.assertEqual(
+            "foofoo",
+            t["current_state"]["description"],
+        )
+        self.assertEqual("$", t["current_state"]["currency_symbol"])
+        self.assertEqual(
+            2.0,
+            t["current_state"]["currency_conversion_rate"],
+        )
+
     @unittest_run_loop
     async def test_commit_transaction(self):
         group_id, transaction_id = await self._create_group_with_transaction("purchase")
@@ -356,6 +401,7 @@ class TransactionAPITest(HTTPAPITest):
         await self._discard_transaction_change(
             group_id, transaction_id, expected_status=400
         )
+
         await self._delete_transaction(group_id, transaction_id)
         t = await self._fetch_transaction(group_id, transaction_id)
         self.assertTrue(t["current_state"]["deleted"])

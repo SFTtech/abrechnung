@@ -1,3 +1,5 @@
+-- revision: 2fd852b5
+-- requires: 1f1033da
 
 -- clearing relations between accounts.
 -- accounts can be clearing accounts ("verrechnungskonto"),

@@ -3,6 +3,13 @@ from datetime import datetime
 
 
 @dataclass
+class Session:
+    id: int
+    name: str
+    valid_until: datetime
+
+
+@dataclass
 class User:
     id: int
     username: str
@@ -10,3 +17,4 @@ class User:
     registered_at: datetime
     deleted: bool
     pending: bool
+    sessions: list[Session]

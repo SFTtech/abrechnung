@@ -6,6 +6,34 @@ from tests.http_tests import BaseHTTPAPITest
 
 
 class AuthAPITest(BaseHTTPAPITest):
+    async def _login(
+        self,
+        username: str,
+        password: str,
+        session_name: str = "dummy session",
+        expected_status: int = 200,
+    ):
+        resp = await self.client.post(
+            f"/api/v1/auth/login",
+            json={
+                "username": username,
+                "password": password,
+                "session_name": session_name,
+            },
+        )
+        self.assertEqual(expected_status, resp.status)
+        return await resp.json()
+
+    async def _fetch_profile(self, token: str, expected_status: int = 200):
+        resp = await self.client.get(
+            f"/api/v1/profile", headers={"Authorization": f"Bearer {token}"}
+        )
+        self.assertEqual(expected_status, resp.status)
+        if resp.status < 400:
+            return await resp.json()
+
+        return None
+
     @unittest_run_loop
     async def test_register_user(self):
         resp = await self.client.post(
@@ -37,12 +65,7 @@ class AuthAPITest(BaseHTTPAPITest):
         user_id = await self.user_service.register_user(
             username=user_name, email=email, password="password"
         )
-        resp = await self.client.post(
-            f"/api/v1/auth/login",
-            json={"username": user_name, "password": "password"},
-        )
-        # we cannot login yet as the registration is still pending
-        self.assertEqual(400, resp.status)
+        await self._login(user_name, "password", expected_status=400)
 
         # fetch the registration token from the database
         async with self.db_pool.acquire() as conn:
@@ -56,51 +79,36 @@ class AuthAPITest(BaseHTTPAPITest):
         self.assertEqual(204, resp.status)
 
         # now we should be able to login and get a session token
-        resp = await self.client.post(
-            f"/api/v1/auth/login",
-            json={"username": email, "password": "password"},
-        )
-        self.assertEqual(200, resp.status)
-        ret_data = await resp.json()
-        self.assertIsNotNone(ret_data["user_id"])
-        self.assertIsNotNone(ret_data["access_token"])
-        self.assertIsNotNone(ret_data["session_token"])
+        resp = await self._login(email, "password")
+        self.assertIsNotNone(resp["user_id"])
+        self.assertIsNotNone(resp["access_token"])
+        self.assertIsNotNone(resp["session_token"])
 
-        resp = await self.client.post(
-            f"/api/v1/auth/login",
-            json={"username": "user", "password": "password"},
-        )
-        self.assertEqual(200, resp.status)
+        resp = await self._login("user", "password")
 
-        token = ret_data["access_token"]
+        token = resp["access_token"]
         # now check that we can actually fetch our profile with the token
-        resp = await self.client.get(
-            f"/api/v1/profile", headers={"Authorization": f"Bearer {token}"}
-        )
-        self.assertEqual(200, resp.status)
-        ret_data = await resp.json()
+        ret_data = await self._fetch_profile(token)
         self.assertEqual(user_id, ret_data["id"])
         self.assertEqual(user_name, ret_data["username"])
         self.assertEqual(email, ret_data["email"])
+        # we logged in twice, once with our email, once with our username
+        self.assertEqual(2, len(ret_data["sessions"]))
 
         # also check that a random token does not pass
-        resp = await self.client.get(
-            f"/api/v1/profile", headers={"Authorization": f"Bearer foolol"}
-        )
-        self.assertEqual(401, resp.status)
+        await self._fetch_profile("foolol", expected_status=401)
 
         invalid_token = jwt.encode(
             {"user_id": user_id}, key="very_secret_invalid_key", algorithm="HS256"
         )
-        resp = await self.client.get(
-            f"/api/v1/profile", headers={"Authorization": f"Bearer {invalid_token}"}
-        )
-        self.assertEqual(401, resp.status)
+        await self._fetch_profile(invalid_token, expected_status=401)
 
     @unittest_run_loop
     async def test_change_password(self):
         user_id, password = await self._create_test_user("user", "user@email.stuff")
-        _, session_id, _ = await self.user_service.login_user("user", password=password)
+        _, session_id, _ = await self.user_service.login_user(
+            "user", password=password, session_name="session1"
+        )
         token = token_for_user(user_id, session_id, self.secret_key)
 
         headers = {"Authorization": f"Bearer {token}"}
@@ -121,11 +129,7 @@ class AuthAPITest(BaseHTTPAPITest):
         self.assertEqual(204, resp.status)
 
         # check that we can login with the new password
-        resp = await self.client.post(
-            f"/api/v1/auth/login",
-            json={"username": "user", "password": "password2"},
-        )
-        self.assertEqual(200, resp.status)
+        await self._login("user", "password2")
 
     @unittest_run_loop
     async def test_change_email(self):
@@ -134,7 +138,7 @@ class AuthAPITest(BaseHTTPAPITest):
         new_email = "new_email@email.stuffs"
         user_id, password = await self._create_test_user(username, old_email)
         _, session_id, _ = await self.user_service.login_user(
-            username=username, password=password
+            username=username, password=password, session_name="session1"
         )
         token = token_for_user(user_id, session_id, self.secret_key)
 
@@ -222,8 +226,39 @@ class AuthAPITest(BaseHTTPAPITest):
         self.assertEqual(204, resp.status)
 
         # check that we can login with the new password
+        await self._login(username, "new_password")
+
+    @unittest_run_loop
+    async def test_sessions(self):
+        user_email = "user@email.email"
+        username = "user1"
+        user_id, password = await self._create_test_user(username, user_email)
+
+        resp = await self._login(username, password, session_name="session1")
+        token = resp["access_token"]
+        headers = {"Authorization": f"Bearer {token}"}
+
+        profile = await self._fetch_profile(token)
+        self.assertEqual(1, len(profile["sessions"]))
+        self.assertEqual("session1", profile["sessions"][0]["name"])
+        session_id = profile["sessions"][0]["id"]
+
         resp = await self.client.post(
-            f"/api/v1/auth/login",
-            json={"username": username, "password": "new_password"},
+            "/api/v1/auth/rename_session",
+            json={"session_id": session_id, "name": "new_session_name"},
+            headers=headers,
         )
-        self.assertEqual(200, resp.status)
+        self.assertEqual(204, resp.status)
+
+        profile = await self._fetch_profile(token)
+        self.assertEqual(1, len(profile["sessions"]))
+        self.assertEqual("new_session_name", profile["sessions"][0]["name"])
+        session_id = profile["sessions"][0]["id"]
+
+        resp = await self.client.post(
+            "/api/v1/auth/delete_session",
+            json={"session_id": session_id},
+            headers=headers,
+        )
+        self.assertEqual(204, resp.status)
+        await self._fetch_profile(token, expected_status=403)

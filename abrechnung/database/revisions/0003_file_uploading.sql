@@ -1,3 +1,6 @@
+-- revision: 1f1033da
+-- requires: 83a50a30
+
 -------------------------------------------------------------------------------
 -- media file hosting
 create table if not exists hoster(

@@ -104,6 +104,16 @@ async def delete_transaction(request: Request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
+@routes.post(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/new_change")
+async def create_transaction_change(request: Request):
+    await request.app["transaction_service"].create_transaction_change(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+    )
+
+    return json_response(status=web.HTTPNoContent.status_code)
+
+
 @routes.post(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/discard")
 async def discard_transaction_change(request: Request):
     await request.app["transaction_service"].discard_transaction_changes(
@@ -121,7 +131,7 @@ async def discard_transaction_change(request: Request):
     schema.Schema(
         {
             "account_id": int,
-            "value": float,
+            "value": schema.Or(float, int),
         }
     )
 )
@@ -143,7 +153,7 @@ async def add_or_change_creditor_share(request: Request, data: dict):
     schema.Schema(
         {
             "account_id": int,
-            "value": float,
+            "value": schema.Or(float, int),
         }
     )
 )
@@ -183,7 +193,7 @@ async def delete_creditor_share(request: Request, data: dict):
     schema.Schema(
         {
             "account_id": int,
-            "value": float,
+            "value": schema.Or(float, int),
         }
     )
 )
@@ -205,7 +215,7 @@ async def add_or_change_debitor_share(request: Request, data: dict):
     schema.Schema(
         {
             "account_id": int,
-            "value": float,
+            "value": schema.Or(float, int),
         }
     )
 )

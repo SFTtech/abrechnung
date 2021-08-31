@@ -99,7 +99,7 @@ class HTTPAPITest(BaseHTTPAPITest):
             "user1", "user1@email.stuff"
         )
         _, session_id, _ = await self.user_service.login_user(
-            "user1", password=password
+            "user1", password=password, session_name="session1"
         )
         self.jwt_token = token_for_user(self.test_user_id, session_id, self.secret_key)
 

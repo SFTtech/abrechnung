@@ -1,29 +1,55 @@
-import { useRecoilValue } from "recoil";
-import { groupAccounts } from "../../recoil/groups";
-import { accountBalances } from "../../recoil/transactions";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
+import {useRecoilValue} from "recoil";
+import {groupAccounts} from "../../recoil/groups";
+import {accountBalances} from "../../recoil/transactions";
+import {Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
 import React from "react";
 
 
-export default function Balances({ group }) {
+export default function Balances({group}) {
     const accounts = useRecoilValue(groupAccounts(group.id));
     const balances = useRecoilValue(accountBalances(group.id));
+
+    const colorGreen = "#689f38";
+    const colorRed = "#ff4242"
+
+    const chartData = Object.entries(balances).map(([accountID, balance]) => {
+        return {
+            name: accounts.find(acc => acc.id === parseInt(accountID)).name,
+            balance: balance
+        }
+    });
+
     return (
-        <List>
-            {accounts.length === 0 ? (
-                <ListItem key={0}>
-                    <ListItemText primary="No Accounts" />
-                </ListItem>
-            ) : (
-                accounts.map(account => (
-                    <ListItem key={account.id}>
-                        <ListItemText primary={account.name} />
-                        <ListItemText primary={`${balances[account.id].toFixed(2)} ${group.currency_symbol}`} />
-                    </ListItem>
-                ))
-            )}
-        </List>
+        <div className="area-chart-wrapper" style={{width: "100%", height: "600px"}}>
+            <ResponsiveContainer>
+                <BarChart
+                    data={chartData}
+                    margin={{top: 20, right: 20, bottom: 20, left: 20}}
+                    layout="vertical"
+                >
+
+                    <XAxis type="number" unit={group.currency_symbol}/>
+                    <YAxis dataKey="name" type="category"/>
+                    <Tooltip formatter={label => parseFloat(label).toFixed(2) + ` ${group.currency_symbol}`}/>
+                    <Bar dataKey="balance">
+                        <>
+                            {
+                                chartData.map((entry, index) => {
+                                    return (
+                                        <Cell key={`cell-${index}`}
+                                              fill={entry["balance"] >= 0 ? colorGreen : colorRed}/>
+                                    )
+                                })
+                            }
+                            <LabelList
+                                dataKey={entry => `${entry["balance"].toFixed(2)}${group.currency_symbol}`}
+                                position="insideLeft"
+                                fill="#000000"
+                            />
+                        </>
+                    </Bar>
+                </BarChart>
+            </ResponsiveContainer>
+        </div>
     );
 }

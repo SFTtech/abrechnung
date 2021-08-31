@@ -11,10 +11,11 @@ import Delete from "@material-ui/icons/Delete";
 import Typography from "@material-ui/core/Typography";
 import Grid from "@material-ui/core/Grid";
 import AddIcon from "@material-ui/icons/Add";
-import { makeStyles, Paper } from "@material-ui/core";
+import {makeStyles, Paper} from "@material-ui/core";
 import {deleteGroupInvite} from "../../api";
-import {groupInvites} from "../../recoil/groups";
+import {groupInvites, groupMembers} from "../../recoil/groups";
 import {useRecoilValue} from "recoil";
+import {DateTime} from "luxon";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -26,6 +27,7 @@ export default function GroupInvites({group}) {
     const classes = useStyles();
     const [showModal, setShowModal] = useState(false);
     const invites = useRecoilValue(groupInvites(group.id));
+    const members = useRecoilValue(groupMembers(group.id));
 
     const deleteToken = (id) => {
         deleteGroupInvite({groupID: group.id, inviteID: id})
@@ -45,13 +47,23 @@ export default function GroupInvites({group}) {
                 {invites.length === 0 ? (
                     <ListItem><ListItemText primary="No Links"/></ListItem>
                 ) : (
-                    invites.map((link, index) => (
-                        <ListItem key={index}>
+                    invites.map(invite => (
+                        <ListItem key={invite.id}>
                             <ListItemText
-                                primary={`${window.location.origin}/invite/${link.token}`}
-                                secondary={link.description}/>
+                                primary={`${window.location.origin}/invite/${invite.token}`}
+                                secondary={
+                                    <>
+                                        {invite.description},
+                                        created
+                                        by {members.find(member => member.user_id === invite.created_by)?.username},
+                                        valid
+                                        until {DateTime.fromISO(invite.valid_until).toLocaleString(DateTime.DATETIME_FULL)}
+                                        {invite.single_use && ", single use"}
+                                    </>
+                                }
+                            />
                             <ListItemSecondaryAction>
-                                <IconButton onClick={() => deleteToken(link.id)}>
+                                <IconButton onClick={() => deleteToken(invite.id)}>
                                     <Delete/>
                                 </IconButton>
                             </ListItemSecondaryAction>

@@ -60,16 +60,24 @@ export default function Group() {
                 {/*    <GroupLog group={group} />*/}
                 {/*</Route>*/}
                 <Route exact path={`${match.path}/accounts`}>
-                    <Accounts group={group} />
+                    <Suspense fallback={<Loading/>}>
+                        <Accounts group={group}/>
+                    </Suspense>
                 </Route>
                 <Route exact path={`${match.path}/members`}>
-                    <GroupMemberList group={group} />
+                    <Suspense fallback={<Loading/>}>
+                        <GroupMemberList group={group}/>
+                    </Suspense>
                 </Route>
                 <Route exact path={`${match.path}/detail`}>
-                    <GroupDetail group={group} />
+                    <Suspense fallback={<Loading/>}>
+                        <GroupDetail group={group}/>
+                    </Suspense>
                 </Route>
                 <Route exact path={`${match.path}/invites`}>
-                    <GroupInvites group={group} />
+                    <Suspense fallback={<Loading/>}>
+                        <GroupInvites group={group}/>
+                    </Suspense>
                 </Route>
                 <Route exact path={`${match.path}/`}>
                     <Grid container spacing={3}>

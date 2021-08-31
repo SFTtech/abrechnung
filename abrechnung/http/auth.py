@@ -98,7 +98,7 @@ def jwt_middleware(
                 decoded["session_id"],
             )
             if not session_id:
-                raise web.HTTPUnauthorized(
+                raise web.HTTPForbidden(
                     reason="provided access token without associated session"
                 )
 
@@ -110,10 +110,12 @@ def jwt_middleware(
 
 
 @routes.post("/auth/login")
-@validate(Schema({"username": str, "password": str}))
+@validate(Schema({"username": str, "password": str, "session_name": str}))
 async def login(request, data):
     user_id, session_id, session_token = await request.app["user_service"].login_user(
-        username=data["username"], password=data["password"]
+        username=data["username"],
+        password=data["password"],
+        session_name=data["session_name"],
     )
 
     token = token_for_user(
@@ -244,5 +246,27 @@ async def confirm_password_recovery(request, data):
         )
     except PermissionError as e:
         raise web.HTTPBadRequest(reason=str(e))
+
+    return json_response(status=web.HTTPNoContent.status_code)
+
+
+@routes.post("/auth/delete_session")
+@validate(Schema({"session_id": int}))
+async def delete_session(request, data):
+    await request.app["user_service"].delete_session(
+        user_id=request["user"]["user_id"], session_id=data["session_id"]
+    )
+
+    return json_response(status=web.HTTPNoContent.status_code)
+
+
+@routes.post("/auth/rename_session")
+@validate(Schema({"session_id": int, "name": str}))
+async def rename_session(request, data):
+    await request.app["user_service"].rename_session(
+        user_id=request["user"]["user_id"],
+        session_id=data["session_id"],
+        name=data["name"],
+    )
 
     return json_response(status=web.HTTPNoContent.status_code)

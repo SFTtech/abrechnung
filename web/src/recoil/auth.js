@@ -1,5 +1,6 @@
 import {atom, selector} from "recoil";
-import {fetchProfile, fetchToken} from "../api";
+import {fetchProfile, fetchToken, getUserIDFromToken} from "../api";
+import {ws} from "../websocket";
 
 export const userData = atom({
     key: "userData",
@@ -16,7 +17,26 @@ export const userData = atom({
                 return null;
             }
         }
-    })
+    }),
+    effects_UNSTABLE: [
+        ({setSelf, trigger}) => {
+            const userID = getUserIDFromToken();
+            if (userID !== null) {
+                ws.subscribe("user", userID, ({subscription_type, element_id}) => {
+                    if (subscription_type === "user" && element_id === userID) {
+                        fetchProfile().then(result => {
+                            setSelf(result);
+                        });
+                    }
+                })
+                // TODO: handle registration errors
+
+                return () => {
+                    ws.unsubscribe("user", userID);
+                };
+            }
+        }
+    ]
 })
 
 export const isAuthenticated = selector({

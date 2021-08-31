@@ -1,4 +1,5 @@
--- abrechnung psql db
+-- revision: 62df6b55
+-- requires: null
 
 -------------------------------------------------------------------------------
 -- websocket connections
@@ -131,7 +132,7 @@ create table if not exists session (
     -- last time this session token has been used
 --     last_seen timestamptz not null default now(),
     -- informational session name, chosen when logging in
---     name text not null,
+    name text not null,
     -- can and should be NULL for infinite validity
     -- gc should delete this row when valid_until < now()
     valid_until timestamptz default null

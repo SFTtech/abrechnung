@@ -1,4 +1,7 @@
 import axios from "axios";
+import {DateTime} from "luxon";
+
+export const baseURL = !process.env.NODE_ENV || process.env.NODE_ENV === 'development' ? "http://localhost:8080" : window.location.origin;
 
 export const fetchToken = () => {
     const token = localStorage.getItem("access_token");
@@ -20,29 +23,41 @@ export const fetchToken = () => {
     return null;
 };
 
-export const getUserIDFromToken = () => {
+export const getTokenJSON = () => {
     const token = fetchToken();
     if (token == null) {
         return null;
     }
 
-    const { user_id: userID } = JSON.parse(atob(token.split(".")[1]));
+    return JSON.parse(atob(token.split(".")[1]));
+}
+
+export const getUserIDFromToken = () => {
+    const token = getTokenJSON();
+
+    const { user_id: userID } = token;
     return userID;
 };
 
-export const api = axios.create({
-    baseURL: "http://10.150.9.148:8080/api/v1"
-    // baseURL: "http://localhost:8080/api/v1"
+const api = axios.create({
+    baseURL: `${baseURL}/api/v1`
+});
+const bareApi = axios.create({
+    baseURL: `${baseURL}/api/v1`
 });
 
-api.defaults.headers.common["Content-Type"] = "application/json";
-api.interceptors.response.use(response => response, error => {
+
+axios.defaults.headers.common["Content-Type"] = "application/json";
+bareApi.defaults.headers.common["Content-Type"] = "application/json";
+axios.interceptors.response.use(response => response, error => {
     console.log(error.response.data, error.response.data.hasOwnProperty("msg"))
     if (error.response.data.hasOwnProperty("msg")) {
         return Promise.reject(error.response.data.msg);
     }
     return Promise.reject(error);
 })
+
+api.defaults.headers.common["Content-Type"] = "application/json";
 
 export function setAccessToken(token) {
     localStorage.setItem("access_token", token);
@@ -60,16 +75,44 @@ export function removeToken() {
     localStorage.removeItem("session_token");
 }
 
-export async function login({ username, password }) {
-    const resp = await api.post("/auth/login", { username: username, password: password });
-    setToken(resp.data.access_token, resp.data.session_token);
+export async function fetchAccessToken(sessionToken) {
+    const resp = await bareApi.post("/auth/fetch_access_token", { token: sessionToken });
+    setAccessToken(resp.data.access_token);
     return resp.data;
 }
 
-export async function fetchAccessToken() {
+async function refreshToken() {
+    const token = getTokenJSON();
     const sessionToken = localStorage.getItem("session_token");
-    const resp = await api.post("/auth/fetch_access_token", { token: sessionToken });
-    setAccessToken(resp.data.access_token);
+    if (token == null || sessionToken == null) {
+        return Promise.reject("cannot refresh access token")
+    }
+    const {exp: tokenExpiry} = token;
+    if (DateTime.fromSeconds(tokenExpiry) <= DateTime.now().plus({minutes: 3})) {
+        const resp = await bareApi.post("/auth/fetch_access_token", { token: sessionToken });
+        setAccessToken(resp.data.access_token);
+    }
+}
+
+async function makePost(url, data) {
+    await refreshToken();
+    return await api.post(url, data);
+}
+
+async function makeGet(url) {
+    await refreshToken();
+    return await api.get(url);
+}
+
+async function makeDelete(url, data = null) {
+    await refreshToken();
+    return await api.delete(url, data);
+}
+
+export async function login({ username, password }) {
+    const sessionName = navigator.appVersion + " " + navigator.userAgent + " " + navigator.appName;
+    const resp = await bareApi.post("/auth/login", { username: username, password: password, session_name: sessionName });
+    setToken(resp.data.access_token, resp.data.session_token);
     return resp.data;
 }
 
@@ -78,22 +121,32 @@ export async function logout() {
 }
 
 export async function register({ username, email, password }) {
-    const resp = await api.post("/auth/register", { username: username, email: email, password: password });
+    const resp = await bareApi.post("/auth/register", { username: username, email: email, password: password });
     return resp.data;
 }
 
 export async function fetchProfile() {
-    const resp = await api.get("/profile");
+    const resp = await makeGet("/profile");
+    return resp.data;
+}
+
+export async function deleteSession({sessionID}) {
+    const resp = await makePost("/auth/delete_session", {session_id: sessionID});
+    return resp.data;
+}
+
+export async function renameSession({sessionID, name}) {
+    const resp = await makePost("/auth/rename_session", {session_id: sessionID, name: name});
     return resp.data;
 }
 
 export async function changeEmail({ password, newEmail }) {
-    const resp = await api.post("/profile/change_email", { password: password, email: newEmail });
+    const resp = await makePost("/profile/change_email", { password: password, email: newEmail });
     return resp.data;
 }
 
 export async function changePassword({ oldPassword, newPassword }) {
-    const resp = await api.post("/profile/change_password", {
+    const resp = await makePost("/profile/change_password", {
         old_password: oldPassword,
         new_password: newPassword
     });
@@ -101,39 +154,39 @@ export async function changePassword({ oldPassword, newPassword }) {
 }
 
 export async function confirmRegistration({ token }) {
-    const resp = await api.post("/auth/confirm_registration", {
+    const resp = await bareApi.post("/auth/confirm_registration", {
         token: token
     });
     return resp.data;
 }
 
 export async function confirmEmailChange({ token }) {
-    const resp = await api.post("/auth/confirm_email_change", {
+    const resp = await bareApi.post("/auth/confirm_email_change", {
         token: token
     });
     return resp.data;
 }
 
 export async function confirmPasswordReset({ token }) {
-    const resp = await api.post("/auth/confirm_password_reset", {
+    const resp = await bareApi.post("/auth/confirm_password_reset", {
         token: token
     });
     return resp.data;
 }
 
 export async function fetchGroups() {
-    const resp = await api.get("/groups");
+    const resp = await makeGet("/groups");
     return resp.data;
 }
 
 export async function fetchGroup(groupID) {
-    const resp = await api.get(`/groups/${groupID}`);
+    const resp = await makeGet(`/groups/${groupID}`);
     return resp.data;
 }
 
 
 export async function createGroup({ name, description, currencySymbol = "€", terms = "" }) {
-    const resp = await api.post("/groups", {
+    const resp = await makePost("/groups", {
         name: name,
         description: description,
         currency_symbol: currencySymbol,
@@ -143,7 +196,7 @@ export async function createGroup({ name, description, currencySymbol = "€", t
 }
 
 export async function updateGroupMetadata({ groupID, name, description, currencySymbol, terms }) {
-    const resp = await api.post(`/groups/${groupID}`, {
+    const resp = await makePost(`/groups/${groupID}`, {
         name: name,
         description: description,
         currency_symbol: currencySymbol,
@@ -153,7 +206,7 @@ export async function updateGroupMetadata({ groupID, name, description, currency
 }
 
 export async function updateGroupMemberPrivileges({ groupID, userID, isOwner, canWrite }) {
-    const resp = await api.post(`/groups/${groupID}/members`, {
+    const resp = await makePost(`/groups/${groupID}/members`, {
         user_id: userID,
         is_owner: isOwner,
         can_write: canWrite
@@ -162,27 +215,27 @@ export async function updateGroupMemberPrivileges({ groupID, userID, isOwner, ca
 }
 
 export async function fetchGroupPreview({ token }) {
-    const resp = await api.post(`/groups/preview`, {
+    const resp = await makePost(`/groups/preview`, {
         invite_token: token
     });
     return resp.data;
 }
 
 export async function joinGroup({ token }) {
-    const resp = await api.post(`/groups/join`, {
+    const resp = await makePost(`/groups/join`, {
         invite_token: token
     });
     return resp.data;
 }
 
 export async function fetchInvites({ groupID }) {
-    const resp = await api.get(`/groups/${groupID}/invites`);
+    const resp = await makeGet(`/groups/${groupID}/invites`);
     return resp.data;
 }
 
 
 export async function createGroupInvite({ groupID, description, validUntil, singleUse }) {
-    const resp = await api.post(`/groups/${groupID}/invites`, {
+    const resp = await makePost(`/groups/${groupID}/invites`, {
         description: description,
         valid_until: validUntil,
         single_use: singleUse
@@ -191,22 +244,22 @@ export async function createGroupInvite({ groupID, description, validUntil, sing
 }
 
 export async function deleteGroupInvite({ groupID, inviteID }) {
-    const resp = await api.delete(`/groups/${groupID}/invites/${inviteID}`);
+    const resp = await makeDelete(`/groups/${groupID}/invites/${inviteID}`);
     return resp.data;
 }
 
 export async function fetchMembers({ groupID }) {
-    const resp = await api.get(`/groups/${groupID}/members`);
+    const resp = await makeGet(`/groups/${groupID}/members`);
     return resp.data;
 }
 
 export async function fetchAccounts({ groupID }) {
-    const resp = await api.get(`/groups/${groupID}/accounts`);
+    const resp = await makeGet(`/groups/${groupID}/accounts`);
     return resp.data;
 }
 
 export async function createAccount({ groupID, name, description, accountType = "personal" }) {
-    const resp = await api.post(`/groups/${groupID}/accounts`, {
+    const resp = await makePost(`/groups/${groupID}/accounts`, {
         name: name,
         description: description,
         type: accountType
@@ -215,7 +268,7 @@ export async function createAccount({ groupID, name, description, accountType = 
 }
 
 export async function updateAccount({ groupID, accountID, name, description }) {
-    const resp = await api.post(`/groups/${groupID}/accounts/${accountID}`, {
+    const resp = await makePost(`/groups/${groupID}/accounts/${accountID}`, {
         name: name,
         description: description
     });
@@ -223,7 +276,7 @@ export async function updateAccount({ groupID, accountID, name, description }) {
 }
 
 export async function fetchTransactions({ groupID }) {
-    const resp = await api.get(`/groups/${groupID}/transactions`);
+    const resp = await makeGet(`/groups/${groupID}/transactions`);
     return resp.data;
 }
 
@@ -235,7 +288,7 @@ export async function createTransaction({
                                             currencySymbol = "€",
                                             currencyConversionRate = 1.0
                                         }) {
-    const resp = await api.post(`/groups/${groupID}/transactions`, {
+    const resp = await makePost(`/groups/${groupID}/transactions`, {
         description: description,
         value: value,
         type: type,
@@ -253,7 +306,7 @@ export async function updateTransactionDetails({
                                                    currencySymbol,
                                                    currencyConversionRate
                                                }) {
-    const resp = await api.post(`/groups/${groupID}/transactions/${transactionID}`, {
+    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}`, {
         description: description,
         value: value,
         currency_symbol: currencySymbol,
@@ -263,7 +316,7 @@ export async function updateTransactionDetails({
 }
 
 export async function createOrUpdateCreditorShare({ groupID, transactionID, accountID, value }) {
-    const resp = await api.post(`/groups/${groupID}/transactions/${transactionID}/creditor_shares`, {
+    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}/creditor_shares`, {
         account_id: accountID,
         value: value
     });
@@ -271,7 +324,7 @@ export async function createOrUpdateCreditorShare({ groupID, transactionID, acco
 }
 
 export async function switchCreditorShare({ groupID, transactionID, accountID, value }) {
-    const resp = await api.post(`/groups/${groupID}/transactions/${transactionID}/creditor_shares/switch`, {
+    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}/creditor_shares/switch`, {
         account_id: accountID,
         value: value
     });
@@ -279,7 +332,7 @@ export async function switchCreditorShare({ groupID, transactionID, accountID, v
 }
 
 export async function deleteCreditorShare({ groupID, transactionID, accountID }) {
-    const resp = await api.delete(`/groups/${groupID}/transactions/${transactionID}/creditor_shares`, {
+    const resp = await makeDelete(`/groups/${groupID}/transactions/${transactionID}/creditor_shares`, {
         data: {
             account_id: accountID
         }
@@ -288,7 +341,7 @@ export async function deleteCreditorShare({ groupID, transactionID, accountID })
 }
 
 export async function createOrUpdateDebitorShare({ groupID, transactionID, accountID, value }) {
-    const resp = await api.post(`/groups/${groupID}/transactions/${transactionID}/debitor_shares`, {
+    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}/debitor_shares`, {
         account_id: accountID,
         value: value
     });
@@ -296,7 +349,7 @@ export async function createOrUpdateDebitorShare({ groupID, transactionID, accou
 }
 
 export async function switchDebitorShare({ groupID, transactionID, accountID, value }) {
-    const resp = await api.post(`/groups/${groupID}/transactions/${transactionID}/debitor_shares/switch`, {
+    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}/debitor_shares/switch`, {
         account_id: accountID,
         value: value
     });
@@ -304,7 +357,7 @@ export async function switchDebitorShare({ groupID, transactionID, accountID, va
 }
 
 export async function deleteDebitorShare({ groupID, transactionID, accountID }) {
-    const resp = await api.delete(`/groups/${groupID}/transactions/${transactionID}/debitor_shares`, {
+    const resp = await makeDelete(`/groups/${groupID}/transactions/${transactionID}/debitor_shares`, {
         data: {
             account_id: accountID
         }
@@ -313,17 +366,22 @@ export async function deleteDebitorShare({ groupID, transactionID, accountID }) 
 }
 
 export async function commitTransaction({ groupID, transactionID }) {
-    const resp = await api.post(`/groups/${groupID}/transactions/${transactionID}/commit`);
+    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}/commit`);
+    return resp.data;
+}
+
+export async function createTransactionChange({ groupID, transactionID }) {
+    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}/new_change`);
     return resp.data;
 }
 
 export async function discardTransactionChange({ groupID, transactionID }) {
-    const resp = await api.post(`/groups/${groupID}/transactions/${transactionID}/discard`);
+    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}/discard`);
     return resp.data;
 }
 
 export async function deleteTransaction({ groupID, transactionID }) {
-    const resp = await api.delete(`/groups/${groupID}/transactions/${transactionID}`);
+    const resp = await makeDelete(`/groups/${groupID}/transactions/${transactionID}`);
     return resp.data;
 }
 

@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState} from "react";
 
-import { makeStyles } from "@material-ui/core";
+import {makeStyles} from "@material-ui/core";
 import IconButton from "@material-ui/core/IconButton";
 import Check from "@material-ui/icons/Check";
 import Close from "@material-ui/icons/Close";
 import Edit from "@material-ui/icons/Edit";
-import TextField from "@material-ui/core/TextField";
+import DisabledTextField from "./DisabledTextField";
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -18,7 +18,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-export default function EditableField({ value, onChange, validate, helperText, ...props }) {
+export default function EditableField({value, onChange, validate, helperText, onStopEdit, ...props}) {
     const [currentValue, setValue] = useState(null);
     const [editing, setEditing] = useState(false);
     const [error, setError] = useState(false);
@@ -30,7 +30,7 @@ export default function EditableField({ value, onChange, validate, helperText, .
 
     const onSave = () => {
         if (!error) {
-            console.log("on save current value: ", { value: currentValue });
+            console.log("on save current value: ", {value: currentValue});
             onChange(currentValue);
             setValue(null);
             setEditing(false);
@@ -45,6 +45,9 @@ export default function EditableField({ value, onChange, validate, helperText, .
     const stopEditing = () => {
         setValue(value);
         setEditing(false);
+        if (onStopEdit) {
+            onStopEdit();
+        }
     };
 
     const onValueChange = (event) => {
@@ -62,7 +65,7 @@ export default function EditableField({ value, onChange, validate, helperText, .
 
     return (
         <div className={classes.root}>
-            <TextField
+            <DisabledTextField
                 error={error}
                 value={currentValue}
                 disabled={!editing}
@@ -75,15 +78,15 @@ export default function EditableField({ value, onChange, validate, helperText, .
             {editing ? (
                 <>
                     <IconButton color="primary" onClick={onSave}>
-                        <Check />
+                        <Check/>
                     </IconButton>
                     <IconButton color="secondary" onClick={stopEditing}>
-                        <Close />
+                        <Close/>
                     </IconButton>
                 </>
             ) : (
                 <IconButton color="primary" onClick={startEditing}>
-                    <Edit />
+                    <Edit/>
                 </IconButton>
             )}
         </div>

@@ -22,7 +22,9 @@ class WebsocketAPITest(BaseHTTPAPITest):
         user_id, password = await self._create_test_user(
             username="user", email="email@email.com"
         )
-        _, session_id, _ = await self.user_service.login_user("user", password=password)
+        _, session_id, _ = await self.user_service.login_user(
+            "user", password=password, session_name="session1"
+        )
         token = token_for_user(
             user_id, session_id=session_id, secret_key=self.secret_key
         )

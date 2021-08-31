@@ -1,3 +1,6 @@
+-- revision: 83a50a30
+-- requires: 62df6b55
+
 -- functions for managing websocket connections
 -- these should be used by the websocket forwarder
 
@@ -119,7 +122,7 @@ values (
     -- when sessions of a logged-in user are watched to see changes to logins
     -- the current sessions are then fetched with list_sessions
     -- element_id: the user whose sessions we wanna watch
-    'session'
+    'user'
 ), (
     -- element_id: the user whose groups we wanna watch
     'group'
@@ -228,9 +231,9 @@ begin
         -- only allow element_id == user_id
         if subscribe.element_id != subscribe.user_id then raise 'test requires correct element_id'; end if;
 
-    elseif subscribe.subscription_type = 'session' then -- session_auth is enough for session subscriptions
+    elseif subscribe.subscription_type = 'user' then
     -- but the element we watch has to be the user id
-        if subscribe.element_id != subscribe.user_id then raise 'session: element_id not token user'; end if;
+        if subscribe.element_id != subscribe.user_id then raise 'element_id not logged in user user'; end if;
 
     elseif subscribe.subscription_type = 'group' then
         if subscribe.element_id != subscribe.user_id then
@@ -614,3 +617,49 @@ create trigger group_invite_update_trig
     on group_invite
     for each row
 execute function group_invite_updated();
+
+-- notifications for changes in sessions
+create or replace function user_sessions_updated() returns trigger as
+$$
+begin
+    --     raise 'notifying group invite for element id % and group_id %', NEW.id, NEW.group_id;
+    if NEW is null then
+        call notify_user('user', OLD.user_id, OLD.user_id::bigint,
+                          json_build_object('element_id', OLD.user_id, 'session_id', OLD.id));
+    else
+        call notify_user('user', NEW.user_id, NEW.user_id::bigint,
+                          json_build_object('element_id', NEW.user_id, 'session_id', NEW.id));
+    end if;
+    return NULL;
+end;
+$$ language plpgsql;
+
+drop trigger if exists session_update_trig on session;
+create trigger session_update_trig
+    after insert or update or delete
+    on session
+    for each row
+execute function user_sessions_updated();
+
+-- notifications for changes in a users profile details
+create or replace function user_updated() returns trigger as
+$$
+begin
+    --     raise 'notifying group invite for element id % and group_id %', NEW.id, NEW.group_id;
+    if NEW is null then
+        call notify_user('user', OLD.id, OLD.id::bigint,
+                         json_build_object('element_id', OLD.id));
+    else
+        call notify_user('user', NEW.id, NEW.id::bigint,
+                         json_build_object('element_id', NEW.id));
+    end if;
+    return NULL;
+end;
+$$ language plpgsql;
+
+drop trigger if exists user_update_trig on usr;
+create trigger user_update_trig
+    after update
+    on usr
+    for each row
+execute function user_updated();

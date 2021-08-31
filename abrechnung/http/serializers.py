@@ -95,8 +95,12 @@ class TransactionSerializer(Serializer):
             "pending_changes": {
                 str(uid): self._serialize_change(change)
                 for uid, change in instance.pending_changes.items()
-            } if instance.pending_changes else {},
-            "current_state": self._serialize_change(instance.current_state) if instance.current_state else None
+            }
+            if instance.pending_changes
+            else {},
+            "current_state": self._serialize_change(instance.current_state)
+            if instance.current_state
+            else None,
         }
 
         return data
@@ -108,6 +112,14 @@ class UserSerializer(Serializer):
             "id": instance.id,
             "username": instance.username,
             "email": instance.email,
+            "sessions": [
+                {
+                    "id": session.id,
+                    "name": session.name,
+                    "valid_until": session.valid_until,
+                }
+                for session in instance.sessions
+            ],
         }
 
 

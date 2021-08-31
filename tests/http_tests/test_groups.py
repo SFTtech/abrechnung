@@ -333,7 +333,9 @@ class GroupAPITest(HTTPAPITest):
         self.assertIsNotNone(invite_token)
 
         user2_id, password = await self._create_test_user("user", "email2@email.stuff")
-        _, session_id, _ = await self.user_service.login_user("user", password=password)
+        _, session_id, _ = await self.user_service.login_user(
+            "user", password=password, session_name="session1"
+        )
         jwt_token = token_for_user(
             user2_id, session_id=session_id, secret_key=self.secret_key
         )

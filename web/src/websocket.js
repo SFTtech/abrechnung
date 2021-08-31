@@ -1,8 +1,9 @@
 
 // TODO: make this pretty
-import {fetchToken} from "./api";
+import {baseURL, fetchToken} from "./api";
 
-export const URL = "ws://10.150.9.148:8080/api/v1/ws";
+const host = baseURL.split("//")[1]
+const URL = `ws://${host}/api/v1/ws`;
 
 
 export class SFTWebsocket {
@@ -42,7 +43,6 @@ export class SFTWebsocket {
     }
     onmessage = (evt) => {
         const msg = JSON.parse(evt.data)
-        console.log("WS received message:", msg)
 
         // TODO: message format validation
         if (msg.type === "error") {
@@ -53,6 +53,8 @@ export class SFTWebsocket {
             if (this.notificationHandlers.hasOwnProperty(subscriptionType)) {
                 this.notificationHandlers[subscriptionType].func(msg.data)
             }
+        } else {
+            console.log("WS received unhandled message", msg);
         }
     }
     send = (msg) => {

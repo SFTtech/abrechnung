@@ -3,7 +3,7 @@ from typing import Optional
 
 import bcrypt
 
-from abrechnung.domain.users import User
+from abrechnung.domain.users import User, Session
 from . import Application, NotFoundError, InvalidCommand
 
 
@@ -53,7 +53,9 @@ class UserService(Application):
 
                 return row
 
-    async def login_user(self, username: str, password: str) -> tuple[int, int, str]:
+    async def login_user(
+        self, username: str, password: str, session_name: str
+    ) -> tuple[int, int, str]:
         """
         validate whether a given user can login
 
@@ -75,8 +77,9 @@ class UserService(Application):
                     raise InvalidCommand(f"User is not permitted to login")
 
                 session_token, session_id = await conn.fetchrow(
-                    "insert into session (user_id) values ($1) returning token, id",
+                    "insert into session (user_id, name) values ($1, $2) returning token, id",
                     user["id"],
+                    session_name,
                 )
 
                 return user["id"], session_id, session_token
@@ -135,6 +138,14 @@ class UserService(Application):
             if user is None:
                 raise NotFoundError(f"User with id {user_id} does not exist")
 
+            rows = await conn.fetch(
+                "select id, name, valid_until from session where user_id = $1", user_id
+            )
+            sessions = [
+                Session(id=row["id"], name=row["name"], valid_until=row["valid_until"])
+                for row in rows
+            ]
+
             return User(
                 id=user["id"],
                 email=user["email"],
@@ -142,7 +153,31 @@ class UserService(Application):
                 username=user["username"],
                 pending=user["pending"],
                 deleted=user["deleted"],
+                sessions=sessions,
             )
+
+    async def delete_session(self, user_id: int, session_id: int):
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                sess_id = await conn.fetchval(
+                    "delete from session where id = $1 and user_id = $2 returning id",
+                    session_id,
+                    user_id,
+                )
+                if not sess_id:
+                    raise NotFoundError(f"no such session found with id {session_id}")
+
+    async def rename_session(self, user_id: int, session_id: int, name: str):
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                sess_id = await conn.fetchval(
+                    "update session set name = $3 where id = $1 and user_id = $2 returning id",
+                    session_id,
+                    user_id,
+                    name,
+                )
+                if not sess_id:
+                    raise NotFoundError(f"no such session found with id {session_id}")
 
     async def change_password(self, user_id: int, old_password: str, new_password: str):
         async with self.db_pool.acquire() as conn:

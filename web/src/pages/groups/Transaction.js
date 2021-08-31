@@ -18,7 +18,7 @@ import MoreVertIcon from "@material-ui/icons/MoreVert";
 import IconButton from "@material-ui/core/IconButton";
 import { Alert } from "@material-ui/lab";
 import { userData } from "../../recoil/auth";
-import { commitTransaction, deleteTransaction, discardTransactionChange } from "../../api";
+import {commitTransaction, createTransactionChange, deleteTransaction, discardTransactionChange} from "../../api";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -36,14 +36,8 @@ export default function Transaction({ group }) {
     const match = useRouteMatch();
     const transactionID = parseInt(match.params.id);
 
-    const user = useRecoilValue(userData);
     const transaction = useRecoilValue(transactionById({ groupID: group.id, transactionID: transactionID }));
-    const [isEditing, setEditing] = useState(false);
     // TODO: handle 404
-
-    useEffect(() => {
-        setEditing(transaction.is_wip);
-    }, [transaction, user]);
 
     const openMoreActionsMenu = (event) => {
         setAcionsAnchorEl(event.currentTarget);
@@ -54,24 +48,25 @@ export default function Transaction({ group }) {
     };
 
     const edit = () => {
-        setEditing(true);
+        if (!transaction.is_wip) {
+            createTransactionChange({groupID: group.id, transactionID: transaction.id})
+                .catch(err => {
+                    toast.error(err);
+                });
+        }
     };
 
     const abortEdit = () => {
-        if (isEditing) {
-            if (transaction.is_wip) {
-                discardTransactionChange({ groupID: group.id, transactionID: transaction.id })
-                    .catch(err => {
-                        toast.error(err);
-                    });
-            } else {
-                setEditing(false);
-            }
+        if (transaction.is_wip) {
+            discardTransactionChange({groupID: group.id, transactionID: transaction.id})
+                .catch(err => {
+                    toast.error(err);
+                });
         }
     };
 
     const commitEdit = () => {
-        if (isEditing) {
+        if (transaction.is_wip) {
             commitTransaction({ groupID: group.id, transactionID: transaction.id })
                 .catch(err => {
                     toast.error(err);
@@ -96,7 +91,7 @@ export default function Transaction({ group }) {
                     <Grid container justify="space-between">
                         <Chip color="primary" label={transaction.type} />
                         <div>
-                            {isEditing ? (
+                            {transaction.is_wip ? (
                                 <>
                                     <Button color="primary" onClick={commitEdit}>Save</Button>
                                     <Button color="secondary" onClick={abortEdit}>Cancel</Button>
@@ -127,15 +122,15 @@ export default function Transaction({ group }) {
                     </Grid>
                 </div>
 
-                <TransactionDetail group={group} transaction={transaction} isEditing={isEditing} />
+                <TransactionDetail group={group} transaction={transaction} isEditing={transaction.is_wip} />
 
                 <Suspense fallback={<Loading />}>
                     {transaction.type === "transfer" ? (
-                        <TransferShares group={group} transaction={transaction} isEditing={isEditing} />
+                        <TransferShares group={group} transaction={transaction} isEditing={transaction.is_wip} />
                     ) : transaction.type === "purchase" ? (
-                        <PurchaseShares group={group} transaction={transaction} isEditing={isEditing} />
+                        <PurchaseShares group={group} transaction={transaction} isEditing={transaction.is_wip} />
                     ) : transaction.type === "mimo" ? (
-                        <MimoShares group={group} transaction={transaction} isEditing={isEditing} />
+                        <MimoShares group={group} transaction={transaction} isEditing={transaction.is_wip} />
                     ) : (
                         <Alert severity="danger">Error: Invalid Transaction Type "{transaction.type}"</Alert>
                     )}
