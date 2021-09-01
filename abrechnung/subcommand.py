@@ -3,6 +3,8 @@ Provides the SubCommand abstract base class
 """
 import abc
 
+from abrechnung.config import Config
+
 
 class SubCommand(abc.ABC):
     """
@@ -38,7 +40,7 @@ class SubCommand(abc.ABC):
         del args, error_cb  # unused
 
     @abc.abstractmethod
-    def __init__(self, config, **kwargs):
+    def __init__(self, config: Config, **kwargs):
         del self, config, kwargs  # unused
         raise NotImplementedError
 

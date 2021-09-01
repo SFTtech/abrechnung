@@ -24,7 +24,9 @@ class SchemaRevision:
         self.requires = requires
 
     async def apply(self, conn: asyncpg.Connection):
-        logger.info(f"Applying revision {self.file_name.name} with version {self.version}")
+        logger.info(
+            f"Applying revision {self.file_name.name} with version {self.version}"
+        )
         if self.requires:
             version = await conn.fetchval(
                 f"update {REVISION_TABLE} set version = $1 where version = $2 returning version",
@@ -142,4 +144,6 @@ async def apply_revisions(db_pool: Pool):
                     found = True
 
             if not found:
-                raise ValueError(f"Unknown revision {curr_revision} present in database")
+                raise ValueError(
+                    f"Unknown revision {curr_revision} present in database"
+                )

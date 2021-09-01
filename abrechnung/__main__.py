@@ -1,8 +1,10 @@
 import argparse
 import asyncio
+from pathlib import Path
 
 import yaml
 
+from abrechnung.config import Config
 from abrechnung.util import log_setup
 
 
@@ -61,8 +63,7 @@ def main():
     loop.set_debug(args["debug"])
 
     config_path = args.pop("config_path")
-    with open(config_path, "r", encoding="utf-8") as config_file:
-        config = yaml.safe_load(config_file)
+    config = Config.from_file(Path(config_path))
 
     try:
         subcommand_class = args.pop("subcommand_class")

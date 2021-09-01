@@ -16,6 +16,7 @@ from abrechnung.application.accounts import AccountService
 from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
+from abrechnung.config import Config
 from abrechnung.database import db_connect
 from abrechnung.http import auth, groups, transactions, websocket, accounts
 from abrechnung.http.auth import jwt_middleware, decode_jwt_token
@@ -28,7 +29,7 @@ class HTTPService(SubCommand):
     sft psql websocket gateway
     """
 
-    def __init__(self, config: dict, **kwargs):
+    def __init__(self, config: Config, **kwargs):
         self.cfg = config
 
         # map connection_id -> tx queue
@@ -63,7 +64,9 @@ class HTTPService(SubCommand):
 
             try:
                 app = self.create_app(
-                    db_pool=db_pool, secret_key=self.cfg["api"]["secret_key"]
+                    db_pool=db_pool,
+                    secret_key=self.cfg["api"]["secret_key"],
+                    enable_cors=self.cfg["api"].get("enable_cors", False),
                 )
                 app.router.add_route("GET", "/", self.handle_ws_connection)
 
@@ -105,7 +108,11 @@ class HTTPService(SubCommand):
         await connection.execute("select * from forwarder_stop($1)", forwarder_id)
 
     def create_app(
-        self, db_pool: Pool, secret_key: str, middlewares: Optional[list] = None
+        self,
+        db_pool: Pool,
+        secret_key: str,
+        middlewares: Optional[list] = None,
+        enable_cors: bool = False,
     ) -> web.Application:
         app = web.Application()
         app["secret_key"] = secret_key
@@ -133,17 +140,6 @@ class HTTPService(SubCommand):
         api_app["secret_key"] = secret_key
         api_app["db_pool"] = db_pool
 
-        cors = aiohttp_cors.setup(
-            api_app,
-            defaults={
-                "*": aiohttp_cors.ResourceOptions(
-                    allow_credentials=True,
-                    expose_headers="*",
-                    allow_headers="*",
-                    allow_methods="*",
-                )
-            },
-        )
         api_app["user_service"] = UserService(db_pool=db_pool)
         api_app["group_service"] = GroupService(db_pool=db_pool)
         api_app["account_service"] = AccountService(db_pool=db_pool)
@@ -156,9 +152,21 @@ class HTTPService(SubCommand):
 
         api_app.router.add_route("GET", "/ws", self.handle_ws_connection)
 
-        # add all routes to cors exemptions
-        for route in list(api_app.router.routes()):
-            cors.add(route)
+        if enable_cors:
+            cors = aiohttp_cors.setup(
+                api_app,
+                defaults={
+                    "*": aiohttp_cors.ResourceOptions(
+                        allow_credentials=True,
+                        expose_headers="*",
+                        allow_headers="*",
+                        allow_methods="*",
+                    )
+                },
+            )
+            # add all routes to cors exemptions
+            for route in list(api_app.router.routes()):
+                cors.add(route)
 
         app.add_subapp("/api/v1/", api_app)
 

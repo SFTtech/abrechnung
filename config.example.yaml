@@ -20,5 +20,5 @@ email:
   port: 587
   mode: "smtp-starttls"
   auth:
-    "user": "abrechnung"
-    "pass": "Mb2.r5oHf-0t"
+    "username": "abrechnung"
+    "password": "Mb2.r5oHf-0t"

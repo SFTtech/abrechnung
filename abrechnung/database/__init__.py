@@ -8,7 +8,7 @@ from asyncpg.pool import Pool
 
 from abrechnung import subcommand
 from abrechnung import util
-
+from abrechnung.config import Config
 from . import revisions
 
 
@@ -35,7 +35,7 @@ class CLI(subcommand.SubCommand):
     Runs the 'psql' tool with the appropriate parameters.
     """
 
-    def __init__(self, config: dict, **args):
+    def __init__(self, config: Config, **args):
         self.config = config
         self.action = args["action"]
         self.revision_dir = os.path.join(os.path.dirname(__file__), "revisions")

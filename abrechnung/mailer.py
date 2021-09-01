@@ -7,10 +7,11 @@ import smtplib
 import asyncpg
 
 from . import subcommand
+from .config import Config
 
 
 class Mailer(subcommand.SubCommand):
-    def __init__(self, config: dict, **args):  # pylint: disable=super-init-not-called
+    def __init__(self, config: Config, **args):  # pylint: disable=super-init-not-called
         del args  # unused
 
         self.config = config
@@ -50,8 +51,8 @@ class Mailer(subcommand.SubCommand):
 
         if "auth" in self.config["email"]:
             self.mailer.login(
-                user=self.config["email"]["auth"]["user"],
-                password=self.config["email"]["auth"]["pass"],
+                user=self.config["email"]["auth"]["username"],
+                password=self.config["email"]["auth"]["password"],
             )
         self.psql = await asyncpg.connect(
             user=self.config["database"]["user"],
