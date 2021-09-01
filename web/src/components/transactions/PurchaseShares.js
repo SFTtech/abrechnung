@@ -214,7 +214,7 @@ export default function PurchaseShares({group, transaction, isEditing}) {
                                         align="right"
                                         className={classes.shareValue}
                                     >
-                                        {debitorValueForAccount(account.id).toFixed()} {transaction.currency_symbol}
+                                        {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
                                     </Typography>
                                 </div>
                             </Grid>
