@@ -1,9 +1,8 @@
-
 // TODO: make this pretty
-import {baseURL, fetchToken} from "./api";
+import {fetchToken, siteHost} from "./api";
 
-const host = baseURL.split("//")[1]
-const URL = `ws://${host}/api/v1/ws`;
+const URL = `${window.location.protocol === "https" ? "wss" : "ws"}://${siteHost}/api/v1/ws`;
+console.log(URL)
 
 
 export class SFTWebsocket {
