@@ -36,6 +36,9 @@ export const getTokenJSON = () => {
 
 export const getUserIDFromToken = () => {
     const token = getTokenJSON();
+    if (token === null) {
+        return null;
+    }
 
     const {user_id: userID} = token;
     return userID;
