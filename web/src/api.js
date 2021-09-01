@@ -2,8 +2,9 @@ import axios from "axios";
 import {DateTime} from "luxon";
 
 
-export const siteHost = !process.env.NODE_ENV || process.env.NODE_ENV === 'development' ? `${window.location.hostname}:8080` : window.location.host;
-export const baseURL = `${window.location.protocol}://${siteHost}`;
+export const siteHost = !process.env.NODE_ENV || process.env.NODE_ENV === "development" ? `${window.location.hostname}:8080` : window.location.host;
+export const baseURL = `${window.location.protocol}//${siteHost}`;
+console.log("API Base URL", baseURL)
 
 export const fetchToken = () => {
     const token = localStorage.getItem("access_token");
