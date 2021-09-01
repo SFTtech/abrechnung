@@ -21,10 +21,11 @@ export default function AccountCreateModal({show, onClose, group}) {
                 toast.success(`Created account ${values.name}`);
                 setSubmitting(false);
                 onClose();
-            }).catch(err => {
-            toast.error(err);
-            setSubmitting(false);
-        })
+            })
+            .catch(err => {
+                toast.error(err);
+                setSubmitting(false);
+            })
     };
     return (
         <Dialog open={show} onClose={onClose}>

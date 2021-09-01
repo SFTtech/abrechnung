@@ -55,14 +55,17 @@ const bareApi = axios.create({
 
 axios.defaults.headers.common["Content-Type"] = "application/json";
 bareApi.defaults.headers.common["Content-Type"] = "application/json";
-axios.interceptors.response.use(response => response, error => {
+
+const errorInterceptor = error => {
     console.log(error.response.data, error.response.data.hasOwnProperty("msg"))
     if (error.response.data.hasOwnProperty("msg")) {
         return Promise.reject(error.response.data.msg);
     }
     return Promise.reject(error);
-})
+}
 
+bareApi.interceptors.response.use(response => response, errorInterceptor);
+api.interceptors.response.use(response => response, errorInterceptor);
 api.defaults.headers.common["Content-Type"] = "application/json";
 
 export function setAccessToken(token) {
