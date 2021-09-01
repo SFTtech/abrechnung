@@ -21,7 +21,6 @@ import Check from "@material-ui/icons/Check";
 import {makeStyles, TextField} from "@material-ui/core";
 import {deleteSession, renameSession} from "../../api";
 import {DateTime} from "luxon";
-import EditableField from "../../components/style/EditableField";
 import {toast} from "react-toastify";
 
 const useStyles = makeStyles((theme) => ({

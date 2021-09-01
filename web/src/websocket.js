@@ -1,7 +1,7 @@
 // TODO: make this pretty
 import {fetchToken, siteHost} from "./api";
 
-const URL = `${window.location.protocol === "https" ? "wss" : "ws"}://${siteHost}/api/v1/ws`;
+const URL = `${window.location.protocol === "https:" ? "wss" : "ws"}://${siteHost}/api/v1/ws`;
 console.log(URL)
 
 
