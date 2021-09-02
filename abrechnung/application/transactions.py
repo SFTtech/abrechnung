@@ -269,9 +269,7 @@ class TransactionService(Application):
                 if (
                     last_committed_revision is None
                 ):  # we have a newly created transaction - disallow discarding changes
-                    await self.delete_transaction(
-                        user_id=user_id, transaction_id=transaction_id
-                    )
+                    raise InvalidCommand(f"Cannot discard transaction changes without any committed changes")
                 else:
                     await conn.execute(
                         "delete from transaction_revision tr " "where tr.id = $1",

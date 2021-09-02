@@ -41,8 +41,7 @@ class SubCommand(abc.ABC):
 
     @abc.abstractmethod
     def __init__(self, config: Config, **kwargs):
-        del self, config, kwargs  # unused
-        raise NotImplementedError
+        pass
 
     @abc.abstractmethod
     async def run(self):
@@ -50,5 +49,4 @@ class SubCommand(abc.ABC):
         This is the entry point that will be called after the program has been
         initialized.
         """
-        del self  # unused
-        raise NotImplementedError
+        pass

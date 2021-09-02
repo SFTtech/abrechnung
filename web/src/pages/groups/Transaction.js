@@ -50,15 +50,17 @@ export default function Transaction({group}) {
 
     const abortEdit = () => {
         if (transaction.is_wip) {
-            discardTransactionChange({groupID: group.id, transactionID: transaction.id})
-                .then(res => {
-                    if (!transaction.has_committed_changes) {
+            if (transaction.has_committed_changes) {
+                discardTransactionChange({groupID: group.id, transactionID: transaction.id})
+                    .then(res => {
                         history.push(`/groups/${group.id}/`);
-                    }
-                })
-                .catch(err => {
-                    toast.error(err);
-                });
+                    })
+                    .catch(err => {
+                        toast.error(err);
+                    });
+            } else {
+                history.push(`/groups/${group.id}/`);
+            }
         }
     };
 

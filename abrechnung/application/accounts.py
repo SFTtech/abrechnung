@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from abrechnung.domain.accounts import Account
-from . import Application, NotFoundError, check_group_permissions
+from . import Application, NotFoundError, check_group_permissions, InvalidCommand
 
 
 class AccountService(Application):
@@ -148,3 +148,58 @@ class AccountService(Application):
                         description,
                         priority,
                     )
+
+    async def delete_account(
+        self,
+        user_id: int,
+        group_id: int,
+        account_id: int,
+    ):
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                await check_group_permissions(
+                    conn=conn, group_id=group_id, user_id=user_id, can_write=True
+                )
+                balance = await conn.fetchval(
+                    "select balance from account_balance where account_id = $1",
+                    account_id,
+                )
+
+                if balance is None:
+                    raise InvalidCommand(f"Cannot delete a non existing account")
+
+                if balance != 0:
+                    raise InvalidCommand(
+                        f"Cannot delete an account with a balance != 0"
+                    )
+
+                row = await conn.fetchrow(
+                    "select revision_id, deleted from latest_account where id = $1 and group_id = $2",
+                    account_id,
+                    group_id,
+                )
+                if row is None:
+                    raise InvalidCommand(
+                        f"Cannot delete an account without any committed changes"
+                    )
+
+                if row["deleted"]:
+                    raise InvalidCommand(f"Cannot delete an already deleted account")
+
+                now = datetime.now(tz=timezone.utc)
+                revision_id = await conn.fetchval(
+                    "insert into account_revision (user_id, account_id, started, committed) "
+                    "values ($1, $2, $3, $4) returning id",
+                    user_id,
+                    account_id,
+                    now,
+                    now,
+                )
+                await conn.execute(
+                    "insert into account_history (id, revision_id, name, description, priority, deleted) "
+                    "select $1, $2, name, description, priority, true "
+                    "from account_history ah where ah.id = $1 and ah.revision_id = $3 ",
+                    account_id,
+                    revision_id,
+                    row["revision_id"],
+                )

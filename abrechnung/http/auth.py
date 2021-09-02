@@ -103,7 +103,10 @@ def jwt_middleware(
                     reason="provided access token for expired or logged out session"
                 )
 
-        request[REQUEST_AUTH_KEY] = {"user_id": decoded["user_id"], "session_id": decoded["session_id"]}
+        request[REQUEST_AUTH_KEY] = {
+            "user_id": decoded["user_id"],
+            "session_id": decoded["session_id"],
+        }
 
         return await handler(request)
 
@@ -135,8 +138,7 @@ async def login(request, data):
 @routes.post("/auth/logout")
 async def logout(request):
     await request.app["user_service"].logout_user(
-        session_id=request["user"]["session_id"],
-        user_id=request["user"]["user_id"]
+        session_id=request["user"]["session_id"], user_id=request["user"]["user_id"]
     )
     return web.Response(status=web.HTTPNoContent.status_code)
 

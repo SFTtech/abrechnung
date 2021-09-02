@@ -73,8 +73,11 @@ class UserService(Application):
                 if not self._check_password(password, user["hashed_password"]):
                     raise InvalidCommand(f"Login failed")
 
-                if user["pending"] or user["deleted"]:
+                if user["deleted"]:
                     raise InvalidCommand(f"User is not permitted to login")
+
+                if user["pending"]:
+                    raise InvalidCommand(f"You need to confirm your email before logging in")
 
                 session_token, session_id = await conn.fetchrow(
                     "insert into session (user_id, name) values ($1, $2) returning token, id",
@@ -90,7 +93,7 @@ class UserService(Application):
                 sess_id = await conn.fetchval(
                     "delete from session where id = $1 and user_id = $2 returning id",
                     session_id,
-                    user_id
+                    user_id,
                 )
                 if sess_id is None:
                     raise InvalidCommand(f"Already logged out")

@@ -61,3 +61,14 @@ async def update_account(request: web.Request, data: dict):
     )
 
     return json_response(status=web.HTTPNoContent.status_code)
+
+
+@routes.delete(r"/groups/{group_id:\d+}/accounts/{account_id:\d+}")
+async def delete_account(request: web.Request):
+    await request.app["account_service"].delete_account(
+        user_id=request["user"]["user_id"],
+        group_id=int(request.match_info["group_id"]),
+        account_id=int(request.match_info["account_id"]),
+    )
+
+    return json_response(status=web.HTTPNoContent.status_code)

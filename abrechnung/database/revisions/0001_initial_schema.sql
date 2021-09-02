@@ -9,18 +9,18 @@
 -- and when it stops, it's removed here.
 -- this table solely exists to delete old connections
 -- when a forwarder hard-crashes and re-registers.
-create table if not exists forwarder(
-    id text primary key not null,
-    channel_id serial unique not null
+create table if not exists forwarder (
+    id         text primary key not null,
+    channel_id serial unique    not null
 );
 
 -- tracking of active connections of users to websocket forwarders
 -- rows are added when somebody connects to a forwarder,
 -- and deleted when they disconnect again.
-create table if not exists connection(
-    id bigserial primary key,
-    channel_id integer not null references forwarder(channel_id) on delete cascade,
-    started timestamptz not null default now()
+create table if not exists connection (
+    id         bigserial primary key,
+    channel_id integer     not null references forwarder (channel_id) on delete cascade,
+    started    timestamptz not null default now()
 );
 
 -------------------------------------------------------------------------------
@@ -132,7 +132,7 @@ create table if not exists session (
     -- last time this session token has been used
 --     last_seen timestamptz not null default now(),
     -- informational session name, chosen when logging in
-    name text not null,
+    name        text    not null,
     -- can and should be NULL for infinite validity
     -- gc should delete this row when valid_until < now()
     valid_until timestamptz default null
@@ -187,7 +187,7 @@ create table if not exists group_invite (
     group_id    integer not null references grp (id) on delete cascade,
     token       uuid primary key default gen_random_uuid(),
     -- description text for the authtoken
-    description text not null,
+    description text    not null,
     -- the user who has created the invite token
     created_by  integer references usr (id) on delete cascade,
     -- can be NULL for infinite validity
@@ -259,15 +259,15 @@ create table if not exists account (
 );
 
 create table if not exists account_revision (
-    id        bigserial primary key,
+    id         bigserial primary key,
 
     -- users that have created changes cannot be deleted
-    user_id   integer     not null references usr (id) on delete restrict,
+    user_id    integer     not null references usr (id) on delete restrict,
 
-    account_id   integer references account (id) on delete cascade,
+    account_id integer references account (id) on delete cascade,
 
-    started   timestamptz not null default now(),
-    committed timestamptz          default null
+    started    timestamptz not null default now(),
+    committed  timestamptz          default null
 
     -- TODO: add constraint allowing only une uncommitted change per account per user
 );
@@ -373,39 +373,53 @@ create or replace function check_committed_transactions(
     transaction_id integer,
     started timestamptz,
     committed timestamptz
-) returns boolean
-as $$
-<<locals>>
-    declare
-    n_creditor_shares integer;
-    n_debitor_shares integer;
-    transaction_type text;
+) returns boolean as
+$$
+<<locals>> declare
+    n_creditor_shares   integer;
+    n_debitor_shares    integer;
+    transaction_type    text;
     transaction_deleted boolean;
 begin
-    if committed is null then
-        return true;
-    end if;
+    if committed is null then return true; end if;
 
-    perform from transaction_revision tr
-    where tr.transaction_id = check_committed_transactions.transaction_id
-      and tr.id != check_committed_transactions.revision_id
-      and tr.committed between check_committed_transactions.started and check_committed_transactions.committed;
+    perform
+    from
+        transaction_revision tr
+    where
+        tr.transaction_id = check_committed_transactions.transaction_id
+        and tr.id != check_committed_transactions.revision_id
+        and tr.committed between check_committed_transactions.started and check_committed_transactions.committed;
 
-    if found then
-        raise 'another change was committed earlier, committing is not possible due to conflicts';
-    end if;
+    if found then raise 'another change was committed earlier, committing is not possible due to conflicts'; end if;
 
-    select t.type, th.deleted into locals.transaction_type, locals.transaction_deleted
-    from transaction_history th join transaction t on t.id = th.id
-    where th.revision_id = check_committed_transactions.revision_id;
+    select
+        t.type,
+        th.deleted
+    into locals.transaction_type, locals.transaction_deleted
+    from
+        transaction_history th
+        join transaction t on t.id = th.id
+    where
+        th.revision_id = check_committed_transactions.revision_id;
 
-    select count(cs.account_id) into locals.n_creditor_shares
-    from creditor_share cs
-    where cs.transaction_id = check_committed_transactions.transaction_id and cs.revision_id = check_committed_transactions.revision_id;
+    select
+        count(cs.account_id)
+    into locals.n_creditor_shares
+    from
+        creditor_share cs
+    where
+        cs.transaction_id = check_committed_transactions.transaction_id
+        and cs.revision_id = check_committed_transactions.revision_id;
 
-    select count(ds.account_id) into locals.n_debitor_shares
-    from debitor_share ds
-    where ds.transaction_id = check_committed_transactions.transaction_id and ds.revision_id = check_committed_transactions.revision_id;
+    select
+        count(ds.account_id)
+    into locals.n_debitor_shares
+    from
+        debitor_share ds
+    where
+        ds.transaction_id = check_committed_transactions.transaction_id
+        and ds.revision_id = check_committed_transactions.revision_id;
 
     -- check that the number of shares fits the transaction type and that deleted transactions have 0 shares.
     if locals.transaction_deleted then
@@ -452,23 +466,21 @@ create or replace function check_transaction_revisions_change_per_user(
     transaction_id integer,
     user_id integer,
     committed timestamptz
-) returns boolean
-as $$
-<<locals>>
-    declare
+) returns boolean as
+$$
+<<locals>> declare
 begin
-    if committed is not null then
-        return true;
-    end if;
+    if committed is not null then return true; end if;
 
-    perform from transaction_revision tr
-    where tr.transaction_id = check_transaction_revisions_change_per_user.transaction_id
+    perform
+    from
+        transaction_revision tr
+    where
+            tr.transaction_id = check_transaction_revisions_change_per_user.transaction_id
         and tr.user_id = check_transaction_revisions_change_per_user.user_id
         and tr.committed is null;
 
-    if found then
-        raise 'users can only have one pending change per transaction';
-    end if;
+    if found then raise 'users can only have one pending change per transaction'; end if;
 
     return true;
 end
@@ -484,8 +496,8 @@ create table if not exists transaction_revision (
     started        timestamptz not null default now(),
     committed      timestamptz          default null,
 
-    check(check_committed_transactions(id, transaction_id, started, committed)),
-    check(check_transaction_revisions_change_per_user(transaction_id, user_id, committed))
+    check (check_committed_transactions(id, transaction_id, started, committed)),
+    check (check_transaction_revisions_change_per_user(transaction_id, user_id, committed))
 );
 
 create table if not exists transaction_history (
@@ -514,26 +526,34 @@ create or replace function check_creditor_shares(
     transaction_id integer,
     revision_id bigint,
     account_id integer
-) returns boolean
-as $$
-<<locals>>
-    declare
+) returns boolean as
+$$
+<<locals>> declare
     is_valid boolean;
 begin
     with relevant_entries as (
         select *
-        from creditor_share cs
-        where cs.transaction_id = check_creditor_shares.transaction_id
-          and cs.revision_id = check_creditor_shares.revision_id
-          and cs.account_id != check_creditor_shares.account_id
-    )
-    select not (t.type in ('purchase', 'transfer') and cs_counts.share_count >= 1) into locals.is_valid
-    from transaction t
-    join (
-        select cs.transaction_id, cs.revision_id, count(*) as share_count
-        from relevant_entries cs
-        group by cs.transaction_id, cs.revision_id
-    ) cs_counts on cs_counts.transaction_id = t.id;
+        from
+            creditor_share cs
+        where
+            cs.transaction_id = check_creditor_shares.transaction_id
+            and cs.revision_id = check_creditor_shares.revision_id
+            and cs.account_id != check_creditor_shares.account_id
+                             )
+    select
+        not (t.type in ('purchase', 'transfer') and cs_counts.share_count >= 1)
+    into locals.is_valid
+    from
+        transaction t
+        join (
+            select
+                cs.transaction_id,
+                cs.revision_id,
+                count(*) as share_count
+            from
+                relevant_entries cs
+            group by cs.transaction_id, cs.revision_id
+             ) cs_counts on cs_counts.transaction_id = t.id;
 
     if not locals.is_valid then
         raise '"purchase" and "transfer" type transactions can only have one creditor share';
@@ -565,30 +585,36 @@ create or replace function check_debitor_shares(
     transaction_id integer,
     revision_id bigint,
     account_id integer
-) returns boolean
-as $$
-<<locals>>
-    declare
+) returns boolean as
+$$
+<<locals>> declare
     is_valid boolean;
 begin
     with relevant_entries as (
         select *
-        from debitor_share cs
-        where cs.transaction_id = check_debitor_shares.transaction_id
-          and cs.revision_id = check_debitor_shares.revision_id
-          and cs.account_id != check_debitor_shares.account_id
-    )
-    select not (t.type in ('transfer') and cs_counts.share_count >= 1) into locals.is_valid
-    from transaction t
-             join (
-        select cs.transaction_id, cs.revision_id, count(*) as share_count
-        from relevant_entries cs
-        group by cs.transaction_id, cs.revision_id
-    ) cs_counts on cs_counts.transaction_id = t.id;
+        from
+            debitor_share cs
+        where
+            cs.transaction_id = check_debitor_shares.transaction_id
+            and cs.revision_id = check_debitor_shares.revision_id
+            and cs.account_id != check_debitor_shares.account_id
+                             )
+    select
+        not (t.type in ('transfer') and cs_counts.share_count >= 1)
+    into locals.is_valid
+    from
+        transaction t
+        join (
+            select
+                cs.transaction_id,
+                cs.revision_id,
+                count(*) as share_count
+            from
+                relevant_entries cs
+            group by cs.transaction_id, cs.revision_id
+             ) cs_counts on cs_counts.transaction_id = t.id;
 
-    if not locals.is_valid then
-        raise '"transfer" type transactions can only have one debitor share';
-    end if;
+    if not locals.is_valid then raise '"transfer" type transactions can only have one debitor share'; end if;
 
     return locals.is_valid;
 end
@@ -612,6 +638,7 @@ create or replace view creditor_shares_as_json as
     select
         cs.revision_id    as revision_id,
         cs.transaction_id as transaction_id,
+        sum(cs.shares)    as n_shares,
         json_agg(cs)      as shares
     from
         creditor_share cs
@@ -623,6 +650,7 @@ create or replace view debitor_shares_as_json as
     select
         ds.revision_id    as revision_id,
         ds.transaction_id as transaction_id,
+        sum(ds.shares)    as n_shares,
         json_agg(ds)      as shares
     from
         debitor_share ds
@@ -651,7 +679,7 @@ create or replace view pending_transaction_history as
         join group_membership gm on transaction.group_id = gm.group_id
     where
         r.committed is null
-      and r.user_id = gm.user_id window wnd as ( partition by transaction.id );
+        and r.user_id = gm.user_id window wnd as ( partition by transaction.id );
 
 create or replace view pending_transaction_revisions as
     select
@@ -667,6 +695,8 @@ create or replace view pending_transaction_revisions as
         history.last_changed_by          as last_changed_by,
         history.currency_symbol          as currency_symbol,
         history.currency_conversion_rate as currency_conversion_rate,
+        cs.n_shares                      as n_creditor_shares,
+        ds.n_shares                      as n_debitor_shares,
         coalesce(cs.shares, '[]'::json)  as creditor_shares,
         coalesce(ds.shares, '[]'::json)  as debitor_shares,
         history.user_id                  as user_id
@@ -712,6 +742,8 @@ create or replace view committed_transaction_state as
         history.last_changed_by          as last_changed_by,
         history.currency_symbol          as currency_symbol,
         history.currency_conversion_rate as currency_conversion_rate,
+        cs.n_shares                      as n_creditor_shares,
+        ds.n_shares                      as n_debitor_shares,
         coalesce(cs.shares, '[]'::json)  as creditor_shares,
         coalesce(ds.shares, '[]'::json)  as debitor_shares
     from
@@ -730,10 +762,41 @@ create or replace view current_transaction_state as
         transaction
         left join (
             select id, json_agg(curr_state) as state from committed_transaction_state curr_state group by id
-             ) curr_state_json on curr_state_json.id = transaction.id
+                  ) curr_state_json on curr_state_json.id = transaction.id
         left join (
             select id, json_agg(pending) as state from pending_transaction_revisions pending group by id
-             ) pending_json on pending_json.id = transaction.id;
+                  ) pending_json on pending_json.id = transaction.id;
+
+create or replace view account_balance as
+    select
+        a.id                                                               as account_id,
+        a.group_id                                                         as group_id,
+        coalesce(cb.creditor_balance, 0) + coalesce(db.debitor_balance, 0) as balance
+    from
+        account a
+        left join (
+            select
+                cs.account_id                                               as account_id,
+                sum(cs.shares / coalesce(t.n_creditor_shares, 1) * t.value) as creditor_balance
+            from
+                committed_transaction_state t
+                join creditor_share cs on t.revision_id = cs.revision_id and t.id = cs.transaction_id
+            where
+                t.deleted = false
+            group by cs.account_id
+                  ) cb on a.id = cb.account_id
+        left join (
+            select
+                ds.account_id                                               as account_id,
+                -sum(ds.shares / coalesce(t.n_debitor_shares, 1) * t.value) as debitor_balance
+            from
+                committed_transaction_state t
+                join debitor_share ds on t.revision_id = ds.revision_id and t.id = ds.transaction_id
+            where
+                t.deleted = false
+            group by ds.account_id
+                  ) db on a.id = db.account_id;
+
 
 -- an item in a 'purchase'-type transaction
 create table if not exists purchase_item (
@@ -746,7 +809,7 @@ create table if not exists purchase_item_history (
     revision_id       bigint references transaction_revision (id) on delete cascade,
     primary key (id, revision_id),
     -- deleted can be set to false at any time.
-    deleted             bool             not null default true,
+    deleted           bool             not null default true,
 
     -- the name of the item
     name              text             not null,
@@ -765,7 +828,7 @@ create table if not exists purchase_item_history (
 -- an usage of an item by an account,
 -- causing part of the item price to be debited to that account.
 create table if not exists item_usage (
-    item_id integer not null references purchase_item (id) on delete restrict,
+    item_id     integer          not null references purchase_item (id) on delete restrict,
     revision_id bigint references transaction_revision (id) on delete cascade,
 
     -- the account that is debited

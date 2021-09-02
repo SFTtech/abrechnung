@@ -12,7 +12,10 @@ import AccountEditModal from "../../components/groups/AccountEditModal";
 import React, {useState} from "react";
 import {useRecoilValue} from "recoil";
 import {currUserPermissions, groupAccounts} from "../../recoil/groups";
-import {makeStyles, Paper} from "@material-ui/core";
+import {Dialog, DialogActions, DialogContent, DialogTitle, makeStyles, Paper} from "@material-ui/core";
+import Button from "@material-ui/core/Button";
+import {deleteAccount} from "../../api";
+import {toast} from "react-toastify";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -25,6 +28,7 @@ export default function Accounts({group}) {
     const [showAccountEditModal, setShowAccountEditModal] = useState(false);
     const [accountToEdit, setAccountToEdit] = useState(null);
     const accounts = useRecoilValue(groupAccounts(group.id));
+    const [accountToDelete, setAccountToDelete] = useState(null);
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
     const classes = useStyles();
 
@@ -38,6 +42,17 @@ export default function Accounts({group}) {
         setAccountToEdit(null);
     };
 
+    const confirmDeleteAccount = () => {
+        if (accountToDelete !== null) {
+            deleteAccount({groupID: group.id, accountID: accountToDelete})
+                .then(res => {
+                    setAccountToDelete(null);
+                })
+                .catch(err => {
+                    toast.error(err);
+                })
+        }
+    }
 
     return (
         <Paper elevation={1} className={classes.paper}>
@@ -56,7 +71,7 @@ export default function Accounts({group}) {
                                     <IconButton color="primary" onClick={() => openAccountEdit(account)}>
                                         <Edit/>
                                     </IconButton>
-                                    <IconButton color="secondary">
+                                    <IconButton color="secondary" onClick={() => setAccountToDelete(account.id)}>
                                         <Delete/>
                                     </IconButton>
                                 </ListItemSecondaryAction>
@@ -80,6 +95,25 @@ export default function Accounts({group}) {
                                       group={group}/>
                 </>
             )}
+            <Dialog
+                maxWidth="xs"
+                aria-labelledby="confirmation-dialog-title"
+                open={accountToDelete !== null}
+            >
+                <DialogTitle id="confirmation-dialog-title">Confirm delete transaction</DialogTitle>
+                <DialogContent dividers>
+                    Are you sure you want to delete the account
+                    "{accounts.find(acc => acc.id === accountToDelete)?.name}"
+                </DialogContent>
+                <DialogActions>
+                    <Button autoFocus onClick={() => setAccountToDelete(null)} color="primary">
+                        Cancel
+                    </Button>
+                    <Button onClick={confirmDeleteAccount} color="secondary">
+                        Ok
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Paper>
     );
 }

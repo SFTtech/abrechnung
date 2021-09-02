@@ -288,6 +288,12 @@ export async function updateAccount({groupID, accountID, name, description}) {
     return resp.data;
 }
 
+export async function deleteAccount({groupID, accountID}) {
+    const resp = await makeDelete(`/groups/${groupID}/accounts/${accountID}`);
+    return resp.data;
+}
+
+
 export async function fetchTransactions({groupID}) {
     const resp = await makeGet(`/groups/${groupID}/transactions`);
     return resp.data;
