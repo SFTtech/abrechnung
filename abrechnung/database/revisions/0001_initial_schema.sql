@@ -291,11 +291,11 @@ create or replace view latest_account as
         account.id                               as id,
         account.type                             as type,
         account.group_id                         as group_id,
-        last_value(history.revision_id) over wnd as revision_id,
-        last_value(history.deleted) over wnd     as deleted,
-        last_value(history.name) over wnd        as name,
-        last_value(history.description) over wnd as description,
-        last_value(history.priority) over wnd    as priority,
+        first_value(history.revision_id) over wnd as revision_id,
+        first_value(history.deleted) over wnd     as deleted,
+        first_value(history.name) over wnd        as name,
+        first_value(history.description) over wnd as description,
+        first_value(history.priority) over wnd    as priority,
         gm.user_id                               as user_id
     from
         account_history history
@@ -303,8 +303,8 @@ create or replace view latest_account as
         join account_revision r on r.id = history.revision_id
         join group_membership gm on account.group_id = gm.group_id
     where
-        (r.committed is null and r.user_id = gm.user_id)
-        or r.committed is not null window wnd as ( partition by account.id order by r.committed desc nulls first );
+        ((r.committed is null and r.user_id = gm.user_id)
+        or r.committed is not null) window wnd as ( partition by account.id, gm.user_id order by r.committed desc nulls first );
 
 -- a regular 'purchase' transaction, where multiple people purchased
 -- things, and one person paid the balance.
@@ -662,24 +662,23 @@ create or replace view pending_transaction_history as
         transaction.id                                        as id,
         transaction.type                                      as type,
         transaction.group_id                                  as group_id,
-        last_value(history.revision_id) over wnd              as revision_id,
-        last_value(r.started) over wnd                        as revision_started,
-        last_value(r.committed) over wnd                      as revision_committed,
-        last_value(history.deleted) over wnd                  as deleted,
-        last_value(history.description) over wnd              as description,
-        last_value(history.value) over wnd                    as value,
-        last_value(r.user_id) over wnd                        as last_changed_by,
-        last_value(history.currency_symbol) over wnd          as currency_symbol,
-        last_value(history.currency_conversion_rate) over wnd as currency_conversion_rate,
+        history.revision_id              as revision_id,
+        r.started                        as revision_started,
+        r.committed                      as revision_committed,
+        history.deleted                  as deleted,
+        history.description              as description,
+        history.value                    as value,
+        r.user_id                        as last_changed_by,
+        history.currency_symbol          as currency_symbol,
+        history.currency_conversion_rate as currency_conversion_rate,
         gm.user_id                                            as user_id
     from
         transaction_history history
         join transaction on transaction.id = history.id
         join transaction_revision r on r.id = history.revision_id
-        join group_membership gm on transaction.group_id = gm.group_id
+        join group_membership gm on transaction.group_id = gm.group_id and gm.user_id = r.user_id
     where
-        r.committed is null
-        and r.user_id = gm.user_id window wnd as ( partition by transaction.id );
+        r.committed is null;
 
 create or replace view pending_transaction_revisions as
     select
@@ -710,15 +709,15 @@ create or replace view committed_transaction_history as
         transaction.id                                        as id,
         transaction.type                                      as type,
         transaction.group_id                                  as group_id,
-        last_value(history.revision_id) over wnd              as revision_id,
-        last_value(r.started) over wnd                        as revision_started,
-        last_value(r.committed) over wnd                      as revision_committed,
-        last_value(history.deleted) over wnd                  as deleted,
-        last_value(history.description) over wnd              as description,
-        last_value(history.value) over wnd                    as value,
-        last_value(r.user_id) over wnd                        as last_changed_by,
-        last_value(history.currency_symbol) over wnd          as currency_symbol,
-        last_value(history.currency_conversion_rate) over wnd as currency_conversion_rate
+        first_value(history.revision_id) over wnd              as revision_id,
+        first_value(r.started) over wnd                        as revision_started,
+        first_value(r.committed) over wnd                      as revision_committed,
+        first_value(history.deleted) over wnd                  as deleted,
+        first_value(history.description) over wnd              as description,
+        first_value(history.value) over wnd                    as value,
+        first_value(r.user_id) over wnd                        as last_changed_by,
+        first_value(history.currency_symbol) over wnd          as currency_symbol,
+        first_value(history.currency_conversion_rate) over wnd as currency_conversion_rate
     from
         transaction_history history
         join transaction on transaction.id = history.id
