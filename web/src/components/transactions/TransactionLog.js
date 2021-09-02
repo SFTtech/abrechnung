@@ -11,6 +11,7 @@ import Grid from "@material-ui/core/Grid";
 import Chip from "@material-ui/core/Chip";
 import TransactionCreateModal from "./TransactionCreateModal";
 import {makeStyles} from "@material-ui/core";
+import {currUserPermissions} from "../../recoil/groups";
 
 const useStyles = makeStyles((theme) => ({
     propertyPill: {
@@ -22,6 +23,7 @@ export default function TransactionLog({group}) {
     const classes = useStyles();
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const transactions = useRecoilValue(transactionsSeenByUser(group.id));
+    const userPermissions = useRecoilValue(currUserPermissions(group.id));
 
     return (
         <div>
@@ -45,13 +47,18 @@ export default function TransactionLog({group}) {
                     ))
                 )}
             </List>
-            <Grid container justify="center">
-                <IconButton color="primary" onClick={() => setShowCreateDialog(true)}>
-                    <Add/>
-                </IconButton>
-            </Grid>
+            {userPermissions.can_write && (
+                <>
+                    <Grid container justify="center">
+                        <IconButton color="primary" onClick={() => setShowCreateDialog(true)}>
+                            <Add/>
+                        </IconButton>
+                    </Grid>
 
-            <TransactionCreateModal group={group} show={showCreateDialog} onClose={() => setShowCreateDialog(false)}/>
+                    <TransactionCreateModal group={group} show={showCreateDialog}
+                                            onClose={() => setShowCreateDialog(false)}/>
+                </>
+            )}
         </div>
     );
 }

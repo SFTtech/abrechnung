@@ -397,12 +397,9 @@ class TransactionAPITest(HTTPAPITest):
         # one share for the sake of having it
         await self._post_debitor_share(group_id, transaction_id, account1_id, 1.0)
 
-        # we should not be able to discard this transaction, only delete it
-        await self._discard_transaction_change(
-            group_id, transaction_id, expected_status=400
-        )
+        # we should be able to discard the change leading to the transaction being deleted
+        await self._discard_transaction_change(group_id, transaction_id)
 
-        await self._delete_transaction(group_id, transaction_id)
         t = await self._fetch_transaction(group_id, transaction_id)
         self.assertTrue(t["current_state"]["deleted"])
         self.assertEqual(0, len(t["pending_changes"]))

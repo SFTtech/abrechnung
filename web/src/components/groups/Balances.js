@@ -19,8 +19,11 @@ export default function Balances({group}) {
         }
     });
 
+    const chartHeight = Math.min(600, Object.keys(balances).length * 100);
+
     return (
-        <div className="area-chart-wrapper" style={{width: "100%", height: "600px"}}>
+        <div className="area-chart-wrapper"
+             style={{width: "100%", height: `${chartHeight}px`}}>
             <ResponsiveContainer>
                 <BarChart
                     data={chartData}

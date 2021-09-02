@@ -57,8 +57,7 @@ axios.defaults.headers.common["Content-Type"] = "application/json";
 bareApi.defaults.headers.common["Content-Type"] = "application/json";
 
 const errorInterceptor = error => {
-    console.log(error.response.data, error.response.data.hasOwnProperty("msg"))
-    if (error.response.data.hasOwnProperty("msg")) {
+    if (error.hasOwnProperty("response") && error.response.hasOwnProperty("data") && error.response.data.hasOwnProperty("msg")) {
         return Promise.reject(error.response.data.msg);
     }
     return Promise.reject(error);
@@ -126,6 +125,11 @@ export async function login({username, password}) {
 }
 
 export async function logout() {
+    try {
+        await makePost("/auth/logout");
+    } catch {
+        // do nothing
+    }
     removeToken();
 }
 

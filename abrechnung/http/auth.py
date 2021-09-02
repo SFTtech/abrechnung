@@ -94,15 +94,16 @@ def jwt_middleware(
 
         async with request.app["db_pool"].acquire() as conn:
             session_id = await conn.fetchval(
-                "select id from session where id = $1 and valid_until is null or valid_until > now()",
+                "select id from session where id = $1 and user_id = $2 and valid_until is null or valid_until > now()",
                 decoded["session_id"],
+                decoded["user_id"],
             )
             if not session_id:
-                raise web.HTTPForbidden(
-                    reason="provided access token without associated session"
+                raise web.HTTPUnauthorized(
+                    reason="provided access token for expired or logged out session"
                 )
 
-        request[REQUEST_AUTH_KEY] = {"user_id": decoded["user_id"]}
+        request[REQUEST_AUTH_KEY] = {"user_id": decoded["user_id"], "session_id": decoded["session_id"]}
 
         return await handler(request)
 
@@ -129,6 +130,15 @@ async def login(request, data):
             "session_token": session_token,
         }
     )
+
+
+@routes.post("/auth/logout")
+async def logout(request):
+    await request.app["user_service"].logout_user(
+        session_id=request["user"]["session_id"],
+        user_id=request["user"]["user_id"]
+    )
+    return web.Response(status=web.HTTPNoContent.status_code)
 
 
 @routes.post("/auth/fetch_access_token")

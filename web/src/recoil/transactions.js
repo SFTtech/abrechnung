@@ -56,6 +56,7 @@ export const transactionsSeenByUser = selectorFamily({
                     type: transaction.type,
                     ...transaction.pending_changes[user.id],
                     is_wip: true,
+                    has_committed_changes: transaction.current_state != null,
                 };
             } else {
                 return {
@@ -63,6 +64,7 @@ export const transactionsSeenByUser = selectorFamily({
                     type: transaction.type,
                     ...transaction.current_state,
                     is_wip: false,
+                    has_committed_changes: true,
                 };
             }
 

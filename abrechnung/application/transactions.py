@@ -48,10 +48,10 @@ class TransactionService(Application):
             transaction_id,
         )
         if not result:
-            raise NotFoundError
+            raise NotFoundError(f"user is not a member of this group")
 
         if can_write and not (result["can_write"] or result["is_owner"]):
-            raise PermissionError
+            raise PermissionError(f"user does not have write permissions")
 
         if transaction_type:
             type_check = (
@@ -226,7 +226,7 @@ class TransactionService(Application):
                     currency_conversion_rate,
                 )
 
-    async def create_transaction_change(self, user_id: int, transaction_id: int):
+    async def create_transaction_change(self, *, user_id: int, transaction_id: int):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 await self._check_transaction_permissions(
@@ -239,7 +239,7 @@ class TransactionService(Application):
                     conn=conn, user_id=user_id, transaction_id=transaction_id
                 )
 
-    async def discard_transaction_changes(self, user_id: int, transaction_id: int):
+    async def discard_transaction_changes(self, *, user_id: int, transaction_id: int):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 await self._check_transaction_permissions(
@@ -269,16 +269,16 @@ class TransactionService(Application):
                 if (
                     last_committed_revision is None
                 ):  # we have a newly created transaction - disallow discarding changes
-                    raise InvalidCommand(
-                        f"Cannot discard changes on a transaction without committed changes"
+                    await self.delete_transaction(
+                        user_id=user_id, transaction_id=transaction_id
+                    )
+                else:
+                    await conn.execute(
+                        "delete from transaction_revision tr " "where tr.id = $1",
+                        revision_id,
                     )
 
-                await conn.execute(
-                    "delete from transaction_revision tr " "where tr.id = $1",
-                    revision_id,
-                )
-
-    async def delete_transaction(self, user_id: int, transaction_id: int):
+    async def delete_transaction(self, *, user_id: int, transaction_id: int):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 await self._check_transaction_permissions(
@@ -488,6 +488,7 @@ class TransactionService(Application):
 
     async def switch_creditor_share(
         self,
+        *,
         user_id: int,
         transaction_id: int,
         account_id: int,
@@ -518,7 +519,7 @@ class TransactionService(Application):
                 )
 
     async def delete_creditor_share(
-        self, user_id: int, transaction_id: int, account_id: int
+        self, *, user_id: int, transaction_id: int, account_id: int
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -538,6 +539,7 @@ class TransactionService(Application):
 
     async def add_or_change_debitor_share(
         self,
+        *,
         user_id: int,
         transaction_id: int,
         account_id: int,
@@ -564,7 +566,7 @@ class TransactionService(Application):
                 )
 
     async def switch_debitor_share(
-        self, user_id: int, transaction_id: int, account_id: int, value: float
+        self, *, user_id: int, transaction_id: int, account_id: int, value: float
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -591,7 +593,7 @@ class TransactionService(Application):
                 )
 
     async def delete_debitor_share(
-        self, user_id: int, transaction_id: int, account_id: int
+        self, *, user_id: int, transaction_id: int, account_id: int
     ):
 
         async with self.db_pool.acquire() as conn:

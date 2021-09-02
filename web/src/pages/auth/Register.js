@@ -56,7 +56,7 @@ export default function Register() {
 
     const handleSubmit = (values, {setSubmitting}) => {
         register(values).then(res => {
-            toast.success(`🐴 Registered successfully...`);
+            toast.success(`Registered successfully, please confirm your email before logging in...`, {autoClose: 20000});
             setSubmitting(false);
             history.push('/login');
         }).catch(err => {

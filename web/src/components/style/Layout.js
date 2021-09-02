@@ -40,6 +40,14 @@ const useStyles = makeStyles((theme) => ({
             duration: theme.transitions.duration.enteringScreen
         })
     },
+    appBarShiftSmallScreen: {
+        width: "100%",
+        marginLeft: 0,
+        transition: theme.transitions.create(["margin", "width"], {
+            easing: theme.transitions.easing.easeOut,
+            duration: theme.transitions.duration.enteringScreen
+        })
+    },
     menuButton: {
         marginRight: theme.spacing(2)
     },
@@ -79,6 +87,13 @@ const useStyles = makeStyles((theme) => ({
             duration: theme.transitions.duration.enteringScreen
         }),
         marginLeft: drawerWidth
+    },
+    contentShiftSmallScreen: {
+        transition: theme.transitions.create("margin", {
+            easing: theme.transitions.easing.easeOut,
+            duration: theme.transitions.duration.enteringScreen
+        }),
+        marginLeft: 0
     }
 }));
 
@@ -93,10 +108,8 @@ export default function Layout({group = null, children}) {
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
     useEffect(() => {
-        if (sidebarOpen !== isLargeScreen) {
-            setSidebarOpen(isLargeScreen);
-        }
-    }, [sidebarOpen, isLargeScreen])
+        setSidebarOpen(isLargeScreen);
+    }, [isLargeScreen])
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -118,7 +131,11 @@ export default function Layout({group = null, children}) {
         <div>
             <AppBar
                 position="fixed"
-                className={clsx(classes.appBar, {[classes.appBarShift]: sidebarOpen && isLargeScreen && authenticated})}>
+                className={clsx(classes.appBar, {
+                    [classes.appBarShift]: authenticated && sidebarOpen && isLargeScreen,
+                    [classes.appBarShiftSmallScreen]: authenticated && sidebarOpen && !isLargeScreen
+                })}
+            >
                 <Toolbar>
                     <IconButton
                         color="inherit"
@@ -235,7 +252,8 @@ export default function Layout({group = null, children}) {
                 </SwipeableDrawer>
             ) : null}
             <main className={clsx(classes.content, {
-                [classes.contentShift]: sidebarOpen && isLargeScreen && authenticated
+                [classes.contentShift]: sidebarOpen && isLargeScreen,
+                [classes.contentShiftSmallScreen]: sidebarOpen && !isLargeScreen,
             })}>
                 <div className={classes.drawerHeader}/>
                 <Container maxWidth="lg">

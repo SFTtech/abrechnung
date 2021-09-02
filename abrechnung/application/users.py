@@ -84,6 +84,17 @@ class UserService(Application):
 
                 return user["id"], session_id, session_token
 
+    async def logout_user(self, *, user_id: int, session_id: int):
+        async with self.db_pool.acquire(timeout=1) as conn:
+            async with conn.transaction():
+                sess_id = await conn.fetchval(
+                    "delete from session where id = $1 and user_id = $2 returning id",
+                    session_id,
+                    user_id
+                )
+                if sess_id is None:
+                    raise InvalidCommand(f"Already logged out")
+
     async def register_user(self, username: str, email: str, password: str) -> int:
         """Register a new user, returning the newly created user id and creating a pending registration entry"""
         async with self.db_pool.acquire() as conn:

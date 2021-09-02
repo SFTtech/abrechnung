@@ -1,5 +1,6 @@
 import asyncio
 import email.message
+import email.utils
 import itertools
 import logging
 import smtplib
@@ -33,27 +34,9 @@ class Mailer(subcommand.SubCommand):
         }
 
     async def run(self):
-        mode = self.config["email"].get("mode")
+        # just try to connect to the mailing server once
+        _ = self.get_mailer_instance()
 
-        if mode == "local":
-            mail_sender_class = smtplib.LMTP
-        elif mode == "smtp-ssl":
-            mail_sender_class = smtplib.SMTP_SSL
-        else:
-            mail_sender_class = smtplib.SMTP
-
-        self.mailer = mail_sender_class(
-            host=self.config["email"]["host"],
-            port=self.config["email"]["port"],
-        )
-        if mode == "smtp-starttls":
-            self.mailer.starttls()
-
-        if "auth" in self.config["email"]:
-            self.mailer.login(
-                user=self.config["email"]["auth"]["username"],
-                password=self.config["email"]["auth"]["password"],
-            )
         self.psql = await asyncpg.connect(
             user=self.config["database"]["user"],
             password=self.config["database"]["password"],
@@ -83,6 +66,30 @@ class Mailer(subcommand.SubCommand):
         await self.psql.remove_listener("mailer", self.notification_callback)
         await self.psql.close()
 
+    def get_mailer_instance(self):
+        mode = self.config["email"].get("mode")
+
+        if mode == "local":
+            mail_sender_class = smtplib.LMTP
+        elif mode == "smtp-ssl":
+            mail_sender_class = smtplib.SMTP_SSL
+        else:
+            mail_sender_class = smtplib.SMTP
+
+        mailer = mail_sender_class(
+            host=self.config["email"]["host"],
+            port=self.config["email"]["port"],
+        )
+        if mode == "smtp-starttls":
+            mailer.starttls()
+
+        if "auth" in self.config["email"]:
+            mailer.login(
+                user=self.config["email"]["auth"]["username"],
+                password=self.config["email"]["auth"]["password"],
+            )
+        return mailer
+
     def notification_callback(
         self, connection: asyncpg.Connection, pid: int, channel: str, payload: str
     ):
@@ -111,8 +118,11 @@ class Mailer(subcommand.SubCommand):
     ):
         self.logger.info(f"sending email to {dest_address}, subject: {subject}")
 
-        msg = email.message.EmailMessage()
+        # we do this to not have one long hanging open connection with the mail server
+        mailer = self.get_mailer_instance()
 
+        from_addr = self.config["email"]["address"]
+        msg = email.message.EmailMessage()
         msg.set_content(
             "\n".join(
                 itertools.chain(
@@ -124,8 +134,10 @@ class Mailer(subcommand.SubCommand):
         )
         msg["Subject"] = f"[{self.config['service']['name']}] {subject}"
         msg["To"] = dest_address
-        msg["From"] = self.config["email"]["address"]
-        self.mailer.send_message(msg)  # type: ignore
+        msg["From"] = from_addr
+        msg["Date"] = email.utils.localtime()
+        msg["Message-ID"] = email.utils.make_msgid(domain=from_addr.split("@")[-1])
+        mailer.send_message(msg)  # type: ignore
 
     def greeting_lines(self, name: str):
         return f"Beloved {name},", ""

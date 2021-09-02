@@ -13,7 +13,7 @@ import Grid from "@material-ui/core/Grid";
 import AddIcon from "@material-ui/icons/Add";
 import {makeStyles, Paper} from "@material-ui/core";
 import {deleteGroupInvite} from "../../api";
-import {groupInvites, groupMembers} from "../../recoil/groups";
+import {currUserPermissions, groupInvites, groupMembers} from "../../recoil/groups";
 import {useRecoilValue} from "recoil";
 import {DateTime} from "luxon";
 
@@ -28,14 +28,13 @@ export default function GroupInvites({group}) {
     const [showModal, setShowModal] = useState(false);
     const invites = useRecoilValue(groupInvites(group.id));
     const members = useRecoilValue(groupMembers(group.id));
+    const userPermissions = useRecoilValue(currUserPermissions(group.id));
 
     const deleteToken = (id) => {
         deleteGroupInvite({groupID: group.id, inviteID: id})
-            .then(result => {
-                toast.success(`Removed invite link`);
-            }).catch(err => {
-            toast.error(err);
-        })
+            .catch(err => {
+                toast.error(err);
+            })
     }
 
     return (
@@ -50,7 +49,11 @@ export default function GroupInvites({group}) {
                     invites.map(invite => (
                         <ListItem key={invite.id}>
                             <ListItemText
-                                primary={`${window.location.origin}/invite/${invite.token}`}
+                                primary={invite.token === null ? (
+                                    <span>token hidden, was created by another member</span>
+                                ) : (
+                                    <span>{window.location.origin}/invite/{invite.token}</span>
+                                )}
                                 secondary={
                                     <>
                                         {invite.description},
@@ -62,22 +65,28 @@ export default function GroupInvites({group}) {
                                     </>
                                 }
                             />
-                            <ListItemSecondaryAction>
-                                <IconButton onClick={() => deleteToken(invite.id)}>
-                                    <Delete/>
-                                </IconButton>
-                            </ListItemSecondaryAction>
+                            {userPermissions.can_write && (
+                                <ListItemSecondaryAction>
+                                    <IconButton onClick={() => deleteToken(invite.id)}>
+                                        <Delete/>
+                                    </IconButton>
+                                </ListItemSecondaryAction>
+                            )}
                         </ListItem>
                     ))
                 )}
             </List>
-            <Grid container justify="center">
-                <IconButton color="primary"
-                            onClick={() => setShowModal(true)}>
-                    <AddIcon/>
-                </IconButton>
-            </Grid>
-            <InviteLinkCreate show={showModal} onClose={() => setShowModal(false)} group={group}/>
+            {userPermissions.can_write && (
+                <>
+                    <Grid container justify="center">
+                        <IconButton color="primary"
+                                    onClick={() => setShowModal(true)}>
+                            <AddIcon/>
+                        </IconButton>
+                    </Grid>
+                    <InviteLinkCreate show={showModal} onClose={() => setShowModal(false)} group={group}/>
+                </>
+            )}
         </Paper>
     );
 }

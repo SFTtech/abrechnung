@@ -10,14 +10,15 @@ import MimoShares from "../../components/transactions/MimoShares";
 import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
 import Chip from "@material-ui/core/Chip";
-import {Dialog, DialogActions, DialogContent, DialogTitle, makeStyles, Menu, MenuItem} from "@material-ui/core";
+import {Dialog, DialogActions, DialogContent, DialogTitle, makeStyles} from "@material-ui/core";
 import Grid from "@material-ui/core/Grid";
 import {toast} from "react-toastify";
 import EditIcon from "@material-ui/icons/Edit";
-import MoreVertIcon from "@material-ui/icons/MoreVert";
 import IconButton from "@material-ui/core/IconButton";
+import DeleteButton from "@material-ui/icons/Delete";
 import {Alert} from "@material-ui/lab";
 import {commitTransaction, createTransactionChange, deleteTransaction, discardTransactionChange} from "../../api";
+import {currUserPermissions} from "../../recoil/groups";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -27,8 +28,6 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Transaction({group}) {
     const classes = useStyles();
-    const [actionsAnchorEl, setAcionsAnchorEl] = useState(null);
-    const moreActionsMenuOpen = Boolean(actionsAnchorEl);
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
 
     const history = useHistory();
@@ -36,15 +35,9 @@ export default function Transaction({group}) {
     const transactionID = parseInt(match.params.id);
 
     const transaction = useRecoilValue(transactionById({groupID: group.id, transactionID: transactionID}));
+    const userPermissions = useRecoilValue(currUserPermissions(group.id));
+
     // TODO: handle 404
-
-    const openMoreActionsMenu = (event) => {
-        setAcionsAnchorEl(event.currentTarget);
-    };
-
-    const closeMoreActionsMenu = () => {
-        setAcionsAnchorEl(null);
-    };
 
     const edit = () => {
         if (!transaction.is_wip) {
@@ -58,6 +51,11 @@ export default function Transaction({group}) {
     const abortEdit = () => {
         if (transaction.is_wip) {
             discardTransactionChange({groupID: group.id, transactionID: transaction.id})
+                .then(res => {
+                    if (!transaction.has_committed_changes) {
+                        history.push(`/groups/${group.id}/`);
+                    }
+                })
                 .catch(err => {
                     toast.error(err);
                 });
@@ -90,33 +88,24 @@ export default function Transaction({group}) {
                     <Grid container justify="space-between">
                         <Chip color="primary" label={transaction.type}/>
                         <div>
-                            {transaction.is_wip ? (
+                            {userPermissions.can_write && (
                                 <>
-                                    <Button color="primary" onClick={commitEdit}>Save</Button>
-                                    <Button color="secondary" onClick={abortEdit}>Cancel</Button>
+                                    {transaction.is_wip ? (
+                                        <>
+                                            <Button color="primary" onClick={commitEdit}>Save</Button>
+                                            <Button color="secondary" onClick={abortEdit}>Cancel</Button>
+                                        </>
+                                    ) : (
+                                        <IconButton color="primary" onClick={edit}><EditIcon/></IconButton>
+                                    )}
+                                    <IconButton
+                                        color="secondary"
+                                        onClick={() => setConfirmDeleteDialogOpen(true)}
+                                    >
+                                        <DeleteButton/>
+                                    </IconButton>
                                 </>
-                            ) : (
-                                <IconButton color="primary" onClick={edit}><EditIcon/></IconButton>
                             )}
-                            <IconButton
-                                aria-label="more"
-                                aria-controls="long-menu"
-                                aria-haspopup="true"
-                                onClick={openMoreActionsMenu}
-                            >
-                                <MoreVertIcon/>
-                            </IconButton>
-                            <Menu
-                                id="long-menu"
-                                anchorEl={actionsAnchorEl}
-                                keepMounted
-                                open={moreActionsMenuOpen}
-                                onClose={closeMoreActionsMenu}
-                            >
-                                <MenuItem key="delete" onClick={() => setConfirmDeleteDialogOpen(true)}>
-                                    delete
-                                </MenuItem>
-                            </Menu>
                         </div>
                     </Grid>
                 </div>

@@ -103,6 +103,13 @@ class AuthAPITest(BaseHTTPAPITest):
         )
         await self._fetch_profile(invalid_token, expected_status=401)
 
+        # now check that we can logout and afterwards not fetch the profile anymore
+        resp = await self.client.post(
+            f"/api/v1/auth/logout", headers={"Authorization": f"Bearer {token}"}
+        )
+        self.assertEqual(204, resp.status)
+        await self._fetch_profile(token, expected_status=401)
+
     @unittest_run_loop
     async def test_change_password(self):
         user_id, password = await self._create_test_user("user", "user@email.stuff")
@@ -261,4 +268,4 @@ class AuthAPITest(BaseHTTPAPITest):
             headers=headers,
         )
         self.assertEqual(204, resp.status)
-        await self._fetch_profile(token, expected_status=403)
+        await self._fetch_profile(token, expected_status=401)
