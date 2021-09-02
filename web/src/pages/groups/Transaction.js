@@ -52,9 +52,6 @@ export default function Transaction({group}) {
         if (transaction.is_wip) {
             if (transaction.has_committed_changes) {
                 discardTransactionChange({groupID: group.id, transactionID: transaction.id})
-                    .then(res => {
-                        history.push(`/groups/${group.id}/`);
-                    })
                     .catch(err => {
                         toast.error(err);
                     });

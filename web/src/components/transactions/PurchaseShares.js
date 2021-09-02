@@ -176,26 +176,26 @@ export default function PurchaseShares({group, transaction, isEditing}) {
                     accounts.map(account => (
                         <ListItem key={account.id} className={classes.listItem}>
                             <Grid container direction="row" justify="space-between">
-                                <FormControlLabel
-                                    control={<Checkbox name={`${account.name}-checked`}/>}
-                                    checked={transaction.debitor_shares.hasOwnProperty(account.id)}
-                                    onChange={event => updateDebShare(account.id, event.target.checked)}
-                                    label={account.name}/>
                                 <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
+                                    <Typography
+                                        variant="body1"
+                                        style={{width: 90, marginRight: "10px"}}
+                                        align="right"
+                                        className={classes.shareValue}
+                                    >
+                                        {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
+                                    </Typography>
                                     {showAdvanced && (
                                         <ShareInput
                                             onChange={(value) => updateDebShareValue(account.id, value)}
                                             value={debitorShareValueForAccount(account.id)}
                                         />
                                     )}
-                                    <Typography
-                                        variant="body1"
-                                        style={{width: 100}}
-                                        align="right"
-                                        className={classes.shareValue}
-                                    >
-                                        {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
-                                    </Typography>
+                                    <FormControlLabel
+                                        control={<Checkbox name={`${account.name}-checked`}/>}
+                                        checked={transaction.debitor_shares.hasOwnProperty(account.id)}
+                                        onChange={event => updateDebShare(account.id, event.target.checked)}
+                                        label={account.name}/>
                                 </div>
                             </Grid>
                         </ListItem>
@@ -204,9 +204,6 @@ export default function PurchaseShares({group, transaction, isEditing}) {
                     accounts.map(account => transaction.debitor_shares.hasOwnProperty(account.id) ? (
                         <ListItem key={account.id} className={classes.listItem}>
                             <Grid container direction="row" justify="space-between">
-                                <Typography variant="subtitle1">
-                                    {account.name}
-                                </Typography>
                                 <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
                                     <Typography
                                         variant="body1"
@@ -217,6 +214,9 @@ export default function PurchaseShares({group, transaction, isEditing}) {
                                         {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
                                     </Typography>
                                 </div>
+                                <Typography variant="subtitle1">
+                                    {account.name}
+                                </Typography>
                             </Grid>
                         </ListItem>
                     ) : null)
