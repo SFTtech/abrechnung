@@ -1,8 +1,7 @@
-import fcntl
 import logging
 import os
+import threading
 import unittest
-from pathlib import Path
 
 import asyncpg
 from aiohttp.test_utils import (
@@ -14,7 +13,7 @@ from asyncpg.pool import Pool
 from abrechnung.application.users import UserService
 from abrechnung.database import revisions
 
-lock_file = Path(f"/run/user/{os.getuid()}/abrechnungs_test_lock")
+lock = threading.Lock()
 
 
 def get_test_db_config() -> dict:
@@ -55,9 +54,9 @@ class AsyncTestCase(unittest.TestCase):
         """returns the user id and password"""
         async with self.db_pool.acquire() as conn:
             password = "asdf1234"
-            hashed_password = (
-                UserService._hash_password(password)  # pylint: disable=protected-access
-            )
+            hashed_password = UserService._hash_password(
+                password
+            )  # pylint: disable=protected-access
             user_id = await conn.fetchval(
                 "insert into usr (username, email, hashed_password, pending) values ($1, $2, $3, false) returning id",
                 username,
@@ -74,11 +73,7 @@ class AsyncTestCase(unittest.TestCase):
         self.loop.run_until_complete(self.setUpAsync())
 
     async def _setup_db(self):
-        lock_file.parent.mkdir(parents=True, exist_ok=True)
-        lock_file.touch(exist_ok=True)
-
-        self.lock_fd = lock_file.open("w")
-        fcntl.lockf(self.lock_fd, fcntl.LOCK_EX)
+        lock.acquire()
 
         self.db_pool = await get_test_db()
         self.db_conn: asyncpg.Connection = await self.db_pool.acquire()
@@ -86,7 +81,7 @@ class AsyncTestCase(unittest.TestCase):
     async def _teardown_db(self):
         await self.db_conn.close()
 
-        self.lock_fd.close()
+        lock.release()
 
     async def setUpAsync(self) -> None:
         pass

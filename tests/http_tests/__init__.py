@@ -75,7 +75,9 @@ class BaseHTTPAPITest(AsyncHTTPTestCase):
 
     async def get_application(self) -> web.Application:
         self.secret_key = "asdf1234"
-        self.http_service = HTTPService(config=Config({"api": {"secret_key": self.secret_key}}))
+        self.http_service = HTTPService(
+            config=Config({"api": {"secret_key": self.secret_key}})
+        )
         await self.http_service._register_forwarder(
             self.db_conn, forwarder_id="test_forwarder"
         )
