@@ -11,6 +11,7 @@ from abrechnung.http.serializers import (
     GroupMemberSerializer,
     GroupInviteSerializer,
     GroupPreviewSerializer,
+    GroupLogSerializer,
 )
 from abrechnung.http.utils import validate, json_response
 
@@ -89,6 +90,30 @@ async def list_members(request: web.Request):
     serializer = GroupMemberSerializer(members)
 
     return json_response(data=serializer.to_repr())
+
+
+@routes.get(r"/groups/{group_id:\d+}/logs")
+async def list_log(request: web.Request):
+    logs = await request.app["group_service"].list_log(
+        user_id=request["user"]["user_id"],
+        group_id=int(request.match_info["group_id"]),
+    )
+
+    serializer = GroupLogSerializer(logs)
+
+    return json_response(data=serializer.to_repr())
+
+
+@routes.post(r"/groups/{group_id:\d+}/send_message")
+@validate(Schema({"message": str}))
+async def send_group_message(request: web.Request, data):
+    await request.app["group_service"].send_group_message(
+        user_id=request["user"]["user_id"],
+        group_id=int(request.match_info["group_id"]),
+        message=data["message"],
+    )
+
+    return web.Response(status=web.HTTPNoContent.status_code)
 
 
 @routes.post(r"/groups/{group_id:\d+}/members")

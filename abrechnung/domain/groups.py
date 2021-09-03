@@ -36,6 +36,16 @@ class Group:
 
 
 @dataclass
+class GroupLog:
+    id: int
+    user_id: int
+    logged_at: datetime
+    type: str
+    message: str
+    affected: Optional[int]
+
+
+@dataclass
 class GroupPreview:
     id: int
     name: str

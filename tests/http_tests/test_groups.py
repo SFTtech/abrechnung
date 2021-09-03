@@ -368,3 +368,36 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual(200, resp.status)
         invites = await resp.json()
         self.assertEqual(0, len(invites))
+
+        resp = await self._get(f"/api/v1/groups/{group_id}/logs")
+        self.assertEqual(200, resp.status)
+        logs = await resp.json()
+        self.assertEqual(6, len(logs))
+        self.assertEqual(
+            {"group-created", "member-joined", "invite-created", "invite-deleted"},
+            set([log["type"] for log in logs]),
+        )
+
+    @unittest_run_loop
+    async def test_group_log(self):
+        group_id = await self.group_service.create_group(
+            user_id=self.test_user_id,
+            name="group1",
+            description="description",
+            currency_symbol="€",
+            terms="terms",
+        )
+
+        resp = await self._post(f"/api/v1/groups/{group_id}/send_message", json={
+            "message": "test message"
+        })
+        self.assertEqual(204, resp.status)
+
+        resp = await self._get(f"/api/v1/groups/{group_id}/logs")
+        self.assertEqual(200, resp.status)
+        logs = await resp.json()
+        self.assertEqual(3, len(logs))
+        self.assertEqual(
+            {"group-created", "member-joined", "text-message"},
+            set([log["type"] for log in logs]),
+        )

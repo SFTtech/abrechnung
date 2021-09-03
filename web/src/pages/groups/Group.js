@@ -2,7 +2,7 @@ import React, {Suspense, useState} from "react";
 import {Route, Switch, useRouteMatch} from "react-router-dom";
 import GroupInvites from "./GroupInvites";
 import GroupMemberList from "./GroupMemberList";
-// import GroupLog from "./GroupLog";
+import GroupLog from "./GroupLog";
 import TransactionLog from "../../components/transactions/TransactionLog";
 import {useRecoilValue} from "recoil";
 import {groupById} from "../../recoil/groups";
@@ -56,9 +56,9 @@ export default function Group() {
     return (
         <Layout group={group}>
             <Switch>
-                {/*<Route exact path={`${match.path}/log`}>*/}
-                {/*    <GroupLog group={group} />*/}
-                {/*</Route>*/}
+                <Route exact path={`${match.path}/log`}>
+                    <GroupLog group={group} />
+                </Route>
                 <Route exact path={`${match.path}/accounts`}>
                     <Suspense fallback={<Loading/>}>
                         <Accounts group={group}/>

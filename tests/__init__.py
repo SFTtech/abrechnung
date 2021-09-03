@@ -74,6 +74,7 @@ class AsyncTestCase(unittest.TestCase):
         self.loop.run_until_complete(self.setUpAsync())
 
     async def _setup_db(self):
+        lock_file.parent.mkdir(parents=True, exist_ok=True)
         lock_file.touch(exist_ok=True)
 
         self.lock_fd = lock_file.open("w")

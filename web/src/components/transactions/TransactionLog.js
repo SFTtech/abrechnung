@@ -6,12 +6,12 @@ import IconButton from "@material-ui/core/IconButton";
 import Add from "@material-ui/icons/Add";
 import ListItemLink from "../style/ListItemLink";
 import ListItemText from "@material-ui/core/ListItemText";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import Grid from "@material-ui/core/Grid";
 import Chip from "@material-ui/core/Chip";
 import TransactionCreateModal from "./TransactionCreateModal";
-import {makeStyles} from "@material-ui/core";
-import {currUserPermissions} from "../../recoil/groups";
+import {makeStyles, Typography} from "@material-ui/core";
+import {currUserPermissions, groupAccounts} from "../../recoil/groups";
+import {DateTime} from "luxon";
 
 const useStyles = makeStyles((theme) => ({
     propertyPill: {
@@ -24,9 +24,21 @@ export default function TransactionLog({group}) {
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const transactions = useRecoilValue(transactionsSeenByUser(group.id));
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
+    const accounts = useRecoilValue(groupAccounts(group.id));
+
+    const accountNamesFromShares = (shares) => {
+        return shares.map(s => accounts.find(a => a.id === parseInt(s))?.name).join(", ");
+    }
 
     return (
         <div>
+            {userPermissions.can_write && (
+                <Grid container justify="center">
+                    <IconButton color="primary" onClick={() => setShowCreateDialog(true)}>
+                        <Add/>
+                    </IconButton>
+                </Grid>
+            )}
             <List>
                 {transactions.length === 0 ? (
                     <div className="list-group-item" key={0}>No Transactions</div>
@@ -34,31 +46,37 @@ export default function TransactionLog({group}) {
                     transactions.map(transaction => (
                         <ListItemLink key={transaction.id}
                                       to={`/groups/${group.id}/transactions/${transaction.id}`}>
-                            <ListItemText primary={transaction.description}
-                                          secondary={`${transaction.value.toFixed(2)} ${transaction.currency_symbol} `}/>
-                            <ListItemSecondaryAction>
-                                {transaction.is_wip && (
-                                    <Chip color="secondary" variant="outlined" label="WIP"
-                                          className={classes.propertyPill}/>
-                                )}
-                                <Chip color="primary" variant="outlined" label={transaction.type}/>
-                            </ListItemSecondaryAction>
+                            <ListItemText primary={(
+                                <>
+                                    <Typography variant="body1">
+                                        <Chip style={{marginRight: "5px"}} color="primary" variant="outlined"
+                                              size="small" label={transaction.type}/>
+                                        {transaction.is_wip && (
+                                            <Chip color="secondary" variant="outlined" label="WIP" size="small"
+                                                  className={classes.propertyPill}/>
+                                        )}
+                                        {transaction.description}
+                                    </Typography>
+                                </>
+                            )}
+                                          secondary={(
+                                              <>
+                                                  <span>{transaction.value.toFixed(2)} {transaction.currency_symbol}, </span>
+                                                  <span>by {accountNamesFromShares(Object.keys(transaction.creditor_shares))}, </span>
+                                                  <span>for {accountNamesFromShares(Object.keys(transaction.debitor_shares))}</span>
+                                              </>
+                                          )}/>
+                            <ListItemText>
+                                <Typography align="right" variant="body2">
+                                    {DateTime.fromISO(transaction.billed_at).toLocaleString(DateTime.DATE_FULL)}
+                                </Typography>
+                            </ListItemText>
                         </ListItemLink>
                     ))
                 )}
             </List>
-            {userPermissions.can_write && (
-                <>
-                    <Grid container justify="center">
-                        <IconButton color="primary" onClick={() => setShowCreateDialog(true)}>
-                            <Add/>
-                        </IconButton>
-                    </Grid>
-
-                    <TransactionCreateModal group={group} show={showCreateDialog}
-                                            onClose={() => setShowCreateDialog(false)}/>
-                </>
-            )}
+            <TransactionCreateModal group={group} show={showCreateDialog}
+                                    onClose={() => setShowCreateDialog(false)}/>
         </div>
     );
 }

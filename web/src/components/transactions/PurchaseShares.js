@@ -64,7 +64,7 @@ function ShareInput({value, onChange}) {
         <TextField
             error={error}
             margin="dense"
-            style={{width: 40, marginRight: 14}}
+            style={{width: 40, paddingTop: 1, marginRight: 2}}
             onBlur={onSave}
             value={currValue}
             onChange={onValueChange}
@@ -86,6 +86,12 @@ export default function PurchaseShares({group, transaction, isEditing}) {
 
     useEffect(() => {
         setDebitorShareValues(transaction.debitor_shares);
+        for (const share of Object.values(transaction.debitor_shares)) {
+            if (share !== 1) {
+                setShowAdvanced(true);
+                break;
+            }
+        }
     }, [transaction]);
 
     const debitorShareValueForAccount = (accountID) => {
@@ -175,46 +181,54 @@ export default function PurchaseShares({group, transaction, isEditing}) {
                 {isEditing ?
                     accounts.map(account => (
                         <ListItem key={account.id} className={classes.listItem}>
-                            <Grid container direction="row" justify="space-between">
-                                <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
-                                    <Typography
-                                        variant="body1"
-                                        style={{width: 90, marginRight: "10px"}}
-                                        align="right"
-                                        className={classes.shareValue}
-                                    >
-                                        {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
-                                    </Typography>
-                                    {showAdvanced && (
-                                        <ShareInput
-                                            onChange={(value) => updateDebShareValue(account.id, value)}
-                                            value={debitorShareValueForAccount(account.id)}
-                                        />
-                                    )}
-                                    <FormControlLabel
-                                        control={<Checkbox name={`${account.name}-checked`}/>}
+                            <Grid container direction="row">
+                                <Typography
+                                    variant="body1"
+                                    style={{width: 90, marginRight: "10px"}}
+                                    align="right"
+                                    className={classes.shareValue}
+                                >
+                                    {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
+                                </Typography>
+                                {showAdvanced ? (
+                                    <ShareInput
+                                        onChange={(value) => updateDebShareValue(account.id, value)}
+                                        value={debitorShareValueForAccount(account.id)}
+                                    />
+                                ) : (
+                                    <Checkbox
+                                        name={`${account.name}-checked`}
                                         checked={transaction.debitor_shares.hasOwnProperty(account.id)}
                                         onChange={event => updateDebShare(account.id, event.target.checked)}
-                                        label={account.name}/>
-                                </div>
+                                    />
+                                )}
+                                <Typography variant="body1" className={classes.shareValue}>
+                                    {account.name}
+                                </Typography>
                             </Grid>
                         </ListItem>
                     ))
                     :
                     accounts.map(account => transaction.debitor_shares.hasOwnProperty(account.id) ? (
                         <ListItem key={account.id} className={classes.listItem}>
-                            <Grid container direction="row" justify="space-between">
-                                <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
+                            <Grid container direction="row">
+                                <Typography
+                                    variant="body1"
+                                    style={{width: 90, marginRight: "10px"}}
+                                    align="right"
+                                    className={classes.shareValue}
+                                >
+                                    {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
+                                </Typography>
+                                {showAdvanced && (
                                     <Typography
+                                        style={{marginRight: 10}}
                                         variant="body1"
-                                        style={{width: 100}}
-                                        align="right"
-                                        className={classes.shareValue}
-                                    >
-                                        {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
+                                        className={classes.shareValue}>
+                                        {debitorShareValueForAccount(account.id)}
                                     </Typography>
-                                </div>
-                                <Typography variant="subtitle1">
+                                )}
+                                <Typography variant="body1" className={classes.shareValue}>
                                     {account.name}
                                 </Typography>
                             </Grid>

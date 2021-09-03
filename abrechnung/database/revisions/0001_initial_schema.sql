@@ -201,6 +201,43 @@ create table if not exists group_invite (
 -- log entries for the group.
 -- holds messages about group membership changes,
 -- group data changes, text messages, ...
+create table if not exists group_log_type (
+    name text not null primary key
+);
+insert into group_log_type (
+    name
+)
+values (
+    'group-created'
+), (
+    'write-granted'
+), (
+    'owner-granted'
+), (
+    'owner-revoked'
+), (
+    'write-revoked'
+), (
+    'transaction-committed'
+), (
+    'transaction-deleted'
+), (
+    'account-committed'
+), (
+    'account-deleted'
+), (
+    'member-joined'
+), (
+    'group-updated'
+), (
+    'invite-created'
+), (
+    'invite-deleted'
+), (
+    'text-message'
+)
+on conflict do nothing;
+
 create table if not exists group_log (
     id       bigserial primary key,
 
@@ -208,13 +245,13 @@ create table if not exists group_log (
     -- user that's responsible for this log entry
     user_id  integer     not null references usr (id) on delete restrict,
 
-    logged   timestamptz not null default now(),
+    logged_at   timestamptz not null default now(),
 
     -- type of the entry.
     -- e.g.: 'create-group', 'grant-write', 'revoke-owner',
     --       'create-change', 'commit-change'
-    type     text        not null,
-    message  text                 default '',
+    type     text        not null references group_log_type(name) on delete restrict,
+    message  text        not null default '',
 
     -- user that was affected by the event (can be null, depends on event type)
     affected integer references usr (id) on delete restrict
@@ -258,6 +295,54 @@ create table if not exists account (
     type     text    not null references account_type (name)
 );
 
+create or replace function check_committed_accounts(
+    revision_id bigint,
+    account_id integer,
+    started timestamptz,
+    committed timestamptz
+) returns boolean as
+$$
+begin
+    if committed is null then return true; end if;
+
+    perform
+    from
+        account_revision ar
+    where
+        ar.account_id = check_committed_accounts.account_id
+        and ar.id != check_committed_accounts.revision_id
+        and ar.committed between check_committed_accounts.started and check_committed_accounts.committed;
+
+    if found then raise 'another change was committed earlier, committing is not possible due to conflicts'; end if;
+
+    return true;
+end
+$$ language plpgsql;
+
+create or replace function check_account_revisions_change_per_user(
+    account_id integer,
+    user_id integer,
+    committed timestamptz
+) returns boolean as
+$$
+<<locals>> declare
+begin
+    if committed is not null then return true; end if;
+
+    perform
+    from
+        account_revision ar
+    where
+        ar.account_id = check_account_revisions_change_per_user.account_id
+        and ar.user_id = check_account_revisions_change_per_user.user_id
+        and ar.committed is null;
+
+    if found then raise 'users can only have one pending change per account'; end if;
+
+    return true;
+end
+$$ language plpgsql;
+
 create table if not exists account_revision (
     id         bigserial primary key,
 
@@ -267,9 +352,10 @@ create table if not exists account_revision (
     account_id integer references account (id) on delete cascade,
 
     started    timestamptz not null default now(),
-    committed  timestamptz          default null
+    committed  timestamptz          default null,
 
-    -- TODO: add constraint allowing only une uncommitted change per account per user
+    check (check_committed_accounts(id, account_id, started, committed)),
+    check (check_account_revisions_change_per_user(account_id, user_id, committed))
 );
 
 create table if not exists account_history (
@@ -288,23 +374,23 @@ create table if not exists account_history (
 
 create or replace view latest_account as
     select distinct on (account.id, gm.user_id)
-        account.id                               as id,
-        account.type                             as type,
-        account.group_id                         as group_id,
+        account.id                                as id,
+        account.type                              as type,
+        account.group_id                          as group_id,
         first_value(history.revision_id) over wnd as revision_id,
         first_value(history.deleted) over wnd     as deleted,
         first_value(history.name) over wnd        as name,
         first_value(history.description) over wnd as description,
         first_value(history.priority) over wnd    as priority,
-        gm.user_id                               as user_id
+        gm.user_id                                as user_id
     from
         account_history history
         join account on account.id = history.id
         join account_revision r on r.id = history.revision_id
         join group_membership gm on account.group_id = gm.group_id
     where
-        ((r.committed is null and r.user_id = gm.user_id)
-        or r.committed is not null) window wnd as ( partition by account.id, gm.user_id order by r.committed desc nulls first );
+        ((r.committed is null and r.user_id = gm.user_id) or
+         r.committed is not null) window wnd as ( partition by account.id, gm.user_id order by r.committed desc nulls first );
 
 -- a regular 'purchase' transaction, where multiple people purchased
 -- things, and one person paid the balance.
@@ -512,6 +598,8 @@ create table if not exists transaction_history (
     -- total value of the transaction, in the transaction currency
     value                    double precision not null check ( value > 0 ),
 
+    billed_at                date             not null,
+
     description              text             not null default '',
 
     -- deleted can be set to true at any time
@@ -659,19 +747,20 @@ create or replace view debitor_shares_as_json as
 
 create or replace view pending_transaction_history as
     select distinct on (transaction.id, gm.user_id)
-        transaction.id                                        as id,
-        transaction.type                                      as type,
-        transaction.group_id                                  as group_id,
+        transaction.id                   as id,
+        transaction.type                 as type,
+        transaction.group_id             as group_id,
         history.revision_id              as revision_id,
         r.started                        as revision_started,
         r.committed                      as revision_committed,
         history.deleted                  as deleted,
         history.description              as description,
         history.value                    as value,
+        history.billed_at                as billed_at,
         r.user_id                        as last_changed_by,
         history.currency_symbol          as currency_symbol,
         history.currency_conversion_rate as currency_conversion_rate,
-        gm.user_id                                            as user_id
+        gm.user_id                       as user_id
     from
         transaction_history history
         join transaction on transaction.id = history.id
@@ -691,6 +780,7 @@ create or replace view pending_transaction_revisions as
         history.deleted                  as deleted,
         history.description              as description,
         history.value                    as value,
+        history.billed_at                as billed_at,
         history.last_changed_by          as last_changed_by,
         history.currency_symbol          as currency_symbol,
         history.currency_conversion_rate as currency_conversion_rate,
@@ -706,14 +796,15 @@ create or replace view pending_transaction_revisions as
 
 create or replace view committed_transaction_history as
     select distinct on (transaction.id)
-        transaction.id                                        as id,
-        transaction.type                                      as type,
-        transaction.group_id                                  as group_id,
+        transaction.id                                         as id,
+        transaction.type                                       as type,
+        transaction.group_id                                   as group_id,
         first_value(history.revision_id) over wnd              as revision_id,
         first_value(r.started) over wnd                        as revision_started,
         first_value(r.committed) over wnd                      as revision_committed,
         first_value(history.deleted) over wnd                  as deleted,
         first_value(history.description) over wnd              as description,
+        first_value(history.billed_at) over wnd                as billed_at,
         first_value(history.value) over wnd                    as value,
         first_value(r.user_id) over wnd                        as last_changed_by,
         first_value(history.currency_symbol) over wnd          as currency_symbol,
@@ -738,6 +829,7 @@ create or replace view committed_transaction_state as
         history.deleted                  as deleted,
         history.description              as description,
         history.value                    as value,
+        history.billed_at                as billed_at,
         history.last_changed_by          as last_changed_by,
         history.currency_symbol          as currency_symbol,
         history.currency_conversion_rate as currency_conversion_rate,
@@ -795,52 +887,3 @@ create or replace view account_balance as
                 t.deleted = false
             group by ds.account_id
                   ) db on a.id = db.account_id;
-
-
--- an item in a 'purchase'-type transaction
-create table if not exists purchase_item (
-    transaction_id integer not null references transaction (id) on delete restrict,
-    id             serial primary key
-);
-
-create table if not exists purchase_item_history (
-    id                integer references purchase_item (id) on delete restrict,
-    revision_id       bigint references transaction_revision (id) on delete cascade,
-    primary key (id, revision_id),
-    -- deleted can be set to false at any time.
-    deleted           bool             not null default true,
-
-    -- the name of the item
-    name              text             not null,
-    -- the amount of the item (in 'unit').
-    amount            double precision not null,
-    -- the unit in which the amount is given. null means pieces.
-    unit              text                      default null,
-    -- the price - either per unit or in total, in the transaction currency.
-    price             double precision not null,
-    -- if true, the price is per unit. if false, the price is for the entirety.
-    price_is_per_unit boolean          not null default true,
-
-    description       text             not null default ''
-);
-
--- an usage of an item by an account,
--- causing part of the item price to be debited to that account.
-create table if not exists item_usage (
-    item_id     integer          not null references purchase_item (id) on delete restrict,
-    revision_id bigint references transaction_revision (id) on delete cascade,
-
-    -- the account that is debited
-    account_id  integer          not null references account (id) on delete restrict,
-    primary key (item_id, revision_id, account_id),
-
-    -- the absolute amount (of the item amount) to debit to this account.
-    amount      double precision not null default 0.0,
-    -- the number of shares of the item to debit to this account.
-    -- first, all 'amount'-based shares are debited.
-    -- the remaining amount is debited to accounts based on shares.
-    -- if no share-based item usages are defined for the account at all,
-    -- the purchases' debitor shares are used.
-    -- otherwise, the item-specific shares are used.
-    shares      double precision          default null
-);

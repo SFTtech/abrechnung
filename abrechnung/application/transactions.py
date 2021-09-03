@@ -1,5 +1,6 @@
 import json
 from typing import Optional, Union
+from datetime import date
 
 import asyncpg
 
@@ -8,6 +9,7 @@ from abrechnung.application import (
     NotFoundError,
     check_group_permissions,
     InvalidCommand,
+    create_group_log,
 )
 from abrechnung.domain.transactions import Transaction, TransactionDetails
 
@@ -22,6 +24,7 @@ class TransactionService(Application):
             currency_conversion_rate=db_json["currency_conversion_rate"],
             deleted=db_json["deleted"],
             committed_at=db_json["revision_committed"],
+            billed_at=date.fromisoformat(db_json["billed_at"]),
             creditor_shares={
                 cred["account_id"]: cred["shares"]
                 for cred in db_json["creditor_shares"]
@@ -139,6 +142,7 @@ class TransactionService(Application):
         group_id: int,
         type: str,
         description: str,
+        billed_at: date,
         currency_symbol: str,
         currency_conversion_rate: float,
         value: float,
@@ -160,21 +164,22 @@ class TransactionService(Application):
                     transaction_id,
                 )
                 await conn.execute(
-                    "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, value, description) "
-                    "values ($1, $2, $3, $4, $5, $6)",
+                    "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, value, description, billed_at) "
+                    "values ($1, $2, $3, $4, $5, $6, $7)",
                     transaction_id,
                     revision_id,
                     currency_symbol,
                     currency_conversion_rate,
                     value,
                     description,
+                    billed_at,
                 )
                 return transaction_id
 
     async def commit_transaction(self, *, user_id: int, transaction_id: int) -> None:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                await self._check_transaction_permissions(
+                group_id = await self._check_transaction_permissions(
                     conn=conn, user_id=user_id, transaction_id=transaction_id
                 )
                 revision_id = await conn.fetchval(
@@ -192,6 +197,13 @@ class TransactionService(Application):
                     "set committed = now() where id = $1",
                     revision_id,
                 )
+                await create_group_log(
+                    conn=conn,
+                    group_id=group_id,
+                    user_id=user_id,
+                    type="transaction-committed",
+                    message=f"updated transaction with id {transaction_id}",
+                )
 
     async def update_transaction(
         self,
@@ -200,6 +212,7 @@ class TransactionService(Application):
         transaction_id: int,
         value: float,
         description: str,
+        billed_at: date,
         currency_symbol: str,
         currency_conversion_rate: float,
     ):
@@ -216,7 +229,7 @@ class TransactionService(Application):
                 )
                 await conn.execute(
                     "update transaction_history th "
-                    "set value = $3, description = $4, currency_symbol = $5, currency_conversion_rate = $6 "
+                    "set value = $3, description = $4, currency_symbol = $5, currency_conversion_rate = $6, billed_at = $7 "
                     "where th.id = $1 and th.revision_id = $2",
                     transaction_id,
                     revision_id,
@@ -224,6 +237,7 @@ class TransactionService(Application):
                     description,
                     currency_symbol,
                     currency_conversion_rate,
+                    billed_at,
                 )
 
     async def create_transaction_change(self, *, user_id: int, transaction_id: int):
@@ -269,7 +283,9 @@ class TransactionService(Application):
                 if (
                     last_committed_revision is None
                 ):  # we have a newly created transaction - disallow discarding changes
-                    raise InvalidCommand(f"Cannot discard transaction changes without any committed changes")
+                    raise InvalidCommand(
+                        f"Cannot discard transaction changes without any committed changes"
+                    )
                 else:
                     await conn.execute(
                         "delete from transaction_revision tr " "where tr.id = $1",
@@ -279,7 +295,7 @@ class TransactionService(Application):
     async def delete_transaction(self, *, user_id: int, transaction_id: int):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                await self._check_transaction_permissions(
+                group_id = await self._check_transaction_permissions(
                     conn=conn,
                     user_id=user_id,
                     transaction_id=transaction_id,
@@ -287,7 +303,7 @@ class TransactionService(Application):
                 )
 
                 row = await conn.fetchrow(
-                    "select revision_id, deleted "
+                    "select description, revision_id, deleted "
                     "from committed_transaction_history th "
                     "where th.id = $1",
                     transaction_id,
@@ -296,6 +312,14 @@ class TransactionService(Application):
                     raise InvalidCommand(
                         f"Cannot delete transaction {transaction_id} as it already is deleted"
                     )
+
+                await create_group_log(
+                    conn=conn,
+                    group_id=group_id,
+                    user_id=user_id,
+                    type="transaction-deleted",
+                    message=f"deleted transaction with id {transaction_id}",
+                )
 
                 if (
                     row is None
@@ -357,8 +381,8 @@ class TransactionService(Application):
                     )
 
                     await conn.execute(
-                        "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, description, value, deleted)"
-                        "select id, $1, currency_symbol, currency_conversion_rate, description, value, true "
+                        "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, description, value, billed_at, deleted)"
+                        "select id, $1, currency_symbol, currency_conversion_rate, description, value, billed_at, true "
                         "from transaction_history where id = $2 and revision_id = $3",
                         revision_id,
                         transaction_id,
@@ -398,8 +422,8 @@ class TransactionService(Application):
 
         # copy all existing transaction data into a new history entry
         await conn.execute(
-            "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, description, value, deleted)"
-            "select id, $1, currency_symbol, currency_conversion_rate, description, value, deleted "
+            "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, description, value, billed_at, deleted)"
+            "select id, $1, currency_symbol, currency_conversion_rate, description, value, billed_at, deleted "
             "from transaction_history where id = $2 and revision_id = $3",
             revision_id,
             transaction_id,

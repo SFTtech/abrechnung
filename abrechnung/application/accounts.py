@@ -1,7 +1,13 @@
 from datetime import datetime, timezone
 
 from abrechnung.domain.accounts import Account
-from . import Application, NotFoundError, check_group_permissions, InvalidCommand
+from . import (
+    Application,
+    NotFoundError,
+    check_group_permissions,
+    InvalidCommand,
+    create_group_log,
+)
 
 
 class AccountService(Application):
@@ -96,6 +102,13 @@ class AccountService(Application):
                     description,
                     priority,
                 )
+                await create_group_log(
+                    conn=conn,
+                    group_id=group_id,
+                    user_id=user_id,
+                    type="account-committed",
+                    message=f"created account {name}",
+                )
                 return account_id
 
     async def update_account(
@@ -148,6 +161,13 @@ class AccountService(Application):
                         description,
                         priority,
                     )
+                    await create_group_log(
+                        conn=conn,
+                        group_id=group_id,
+                        user_id=user_id,
+                        type="account-committed",
+                        message=f"updated account account {name}",
+                    )
 
     async def delete_account(
         self,
@@ -174,7 +194,7 @@ class AccountService(Application):
                     )
 
                 row = await conn.fetchrow(
-                    "select revision_id, deleted from latest_account where id = $1 and group_id = $2",
+                    "select name, revision_id, deleted from latest_account where id = $1 and group_id = $2",
                     account_id,
                     group_id,
                 )
@@ -202,4 +222,12 @@ class AccountService(Application):
                     account_id,
                     revision_id,
                     row["revision_id"],
+                )
+
+                await create_group_log(
+                    conn=conn,
+                    group_id=group_id,
+                    user_id=user_id,
+                    type="account-deleted",
+                    message=f"deleted account account {row['name']}",
                 )

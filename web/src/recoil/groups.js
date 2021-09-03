@@ -1,5 +1,5 @@
 import {atom, atomFamily, selector, selectorFamily} from "recoil";
-import {fetchAccounts, fetchGroups, fetchInvites, fetchMembers, getUserIDFromToken} from "../api";
+import {fetchAccounts, fetchGroups, fetchInvites, fetchLog, fetchMembers, getUserIDFromToken} from "../api";
 import {ws} from "../websocket";
 import {userData} from "./auth";
 
@@ -141,27 +141,26 @@ export const groupAccountByID = selectorFamily({
     }
 })
 
-// export const groupLog = atomFamily({
-//     key: "groupLog",
-//     default: selectorFamily({
-//         key: "groupLog/default",
-//         get: groupID => async ({get}) => {
-//             return await fetchGroupLog(groupID);
-//         }
-//     }),
-//     effects_UNSTABLE: groupID => [
-//         ({setSelf, trigger}) => {
-//             ws.subscribe(fetchToken(), "group_log", ({element_id}) => {
-//                 if (element_id === groupID) {
-//                     console.log("reloading group log")
-//                     fetchGroupLog(groupID).then(result => setSelf(result));
-//                 }
-//             }, {element_id: groupID})
-//             // TODO: handle registration errors
-//
-//             return () => {
-//                 ws.unsubscribe("group_log", {element_id: groupID});
-//             };
-//         }
-//     ]
-// })
+export const groupLog = atomFamily({
+    key: "groupLog",
+    default: selectorFamily({
+        key: "groupLog/default",
+        get: groupID => async ({get}) => {
+            return await fetchLog({groupID: groupID});
+        }
+    }),
+    effects_UNSTABLE: groupID => [
+        ({setSelf, trigger}) => {
+            ws.subscribe("group_log", groupID, ({subscription_type, log_id, element_id}) => {
+                if (subscription_type === "group_log" && element_id === groupID) {
+                    fetchLog({groupID: element_id}).then(result => setSelf(result));
+                }
+            })
+            // TODO: handle registration errors
+
+            return () => {
+                ws.unsubscribe("group_log", groupID);
+            };
+        }
+    ]
+})

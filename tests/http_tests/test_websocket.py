@@ -1,6 +1,6 @@
 import asyncio
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 
 import aiohttp
 from aiohttp import web
@@ -137,6 +137,7 @@ class WebsocketAPITest(BaseHTTPAPITest):
             value=1.2,
             currency_symbol="€",
             currency_conversion_rate=1.0,
+            billed_at=date.today(),
             description="asdf",
         )
 

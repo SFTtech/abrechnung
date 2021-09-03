@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import {useRecoilValue} from "recoil";
-import {createGroupLog, groupLog, groupMembers} from "../../recoil/groups";
+import {groupLog, groupMembers} from "../../recoil/groups";
 import Switch from "@material-ui/core/Switch";
 import List from "@material-ui/core/List";
 import Button from "@material-ui/core/Button";
@@ -9,7 +9,10 @@ import TextField from "@material-ui/core/TextField";
 import ListItemText from "@material-ui/core/ListItemText";
 import Divider from "@material-ui/core/Divider";
 import Typography from "@material-ui/core/Typography";
-import { FormControlLabel, makeStyles, Paper } from "@material-ui/core";
+import {FormControlLabel, makeStyles, Paper} from "@material-ui/core";
+import {sendGroupMessage} from "../../api";
+import {toast} from "react-toastify";
+import {DateTime} from "luxon";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -26,13 +29,13 @@ export default function GroupLog({group}) {
 
     const sendMessage = (e) => {
         e.preventDefault();
-        createGroupLog({
+        sendGroupMessage({
             groupID: group.id,
             message: message,
         }).then(result => {
             setMessage("");
         }).catch(err => {
-
+            toast.error(err);
         })
     }
 
@@ -71,10 +74,11 @@ export default function GroupLog({group}) {
             <Divider variant="middle"/>
             <List>
                 {log.map((logEntry) => (
-                    <ListItem key={logEntry.logentry_id}>
+                    <ListItem key={logEntry.id}>
                         <ListItemText
                             primary={logEntry.message === "" ? logEntry.type : logEntry.message}
-                            secondary={`by ${members.find((member) => member.user_id === logEntry.user_id).username} ${logEntry.logged}`}/>
+                            secondary={`by ${members.find((member) => member.user_id === logEntry.user_id).username} 
+                            on ${DateTime.fromISO(logEntry.logged_at).toLocaleString(DateTime.DATETIME_FULL)}`}/>
                     </ListItem>
                 ))}
             </List>

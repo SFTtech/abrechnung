@@ -77,7 +77,9 @@ class UserService(Application):
                     raise InvalidCommand(f"User is not permitted to login")
 
                 if user["pending"]:
-                    raise InvalidCommand(f"You need to confirm your email before logging in")
+                    raise InvalidCommand(
+                        f"You need to confirm your email before logging in"
+                    )
 
                 session_token, session_id = await conn.fetchrow(
                     "insert into session (user_id, name) values ($1, $2) returning token, id",

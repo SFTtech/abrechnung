@@ -663,3 +663,26 @@ create trigger user_update_trig
     on usr
     for each row
 execute function user_updated();
+
+-- notifications for changes in group logs entries
+create or replace function group_log_updated() returns trigger as
+$$
+begin
+    --     raise 'notifying group invite for element id % and group_id %', NEW.id, NEW.group_id;
+    if NEW is null then
+        call notify_group('group_log', OLD.group_id, OLD.group_id::bigint,
+                          json_build_object('element_id', OLD.group_id, 'log-id', OLD.id));
+    else
+        call notify_group('group_log', NEW.group_id, NEW.group_id::bigint,
+                          json_build_object('element_id', NEW.group_id, 'log_id', NEW.id));
+    end if;
+    return NULL;
+end;
+$$ language plpgsql;
+
+drop trigger if exists group_log_update_trig on group_log;
+create trigger group_log_update_trig
+    after insert or update or delete
+    on group_log
+    for each row
+execute function group_log_updated();

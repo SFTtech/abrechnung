@@ -266,6 +266,18 @@ export async function fetchMembers({groupID}) {
     return resp.data;
 }
 
+export async function fetchLog({groupID}) {
+    const resp = await makeGet(`/groups/${groupID}/logs`);
+    return resp.data;
+}
+
+export async function sendGroupMessage({groupID, message}) {
+    const resp = await makePost(`/groups/${groupID}/send_message`, {
+        message: message
+    });
+    return resp.data;
+}
+
 export async function fetchAccounts({groupID}) {
     const resp = await makeGet(`/groups/${groupID}/accounts`);
     return resp.data;
@@ -304,6 +316,7 @@ export async function createTransaction({
                                             type,
                                             description,
                                             value,
+    billedAt,
                                             currencySymbol = "€",
                                             currencyConversionRate = 1.0
                                         }) {
@@ -311,6 +324,7 @@ export async function createTransaction({
         description: description,
         value: value,
         type: type,
+        billed_at: billedAt,
         currency_symbol: currencySymbol,
         currency_conversion_rate: currencyConversionRate
     });
@@ -322,12 +336,14 @@ export async function updateTransactionDetails({
                                                    transactionID,
                                                    description,
                                                    value,
+    billedAt,
                                                    currencySymbol,
                                                    currencyConversionRate
                                                }) {
     const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}`, {
         description: description,
         value: value,
+        billed_at: billedAt,
         currency_symbol: currencySymbol,
         currency_conversion_rate: currencyConversionRate
     });

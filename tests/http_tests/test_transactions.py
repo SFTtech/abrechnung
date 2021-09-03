@@ -1,3 +1,5 @@
+from datetime import date
+
 from aiohttp.test_utils import unittest_run_loop
 
 from tests.http_tests import HTTPAPITest
@@ -21,6 +23,7 @@ class TransactionAPITest(HTTPAPITest):
             description="description123",
             currency_symbol="€",
             currency_conversion_rate=1.22,
+            billed_at=date.today(),
             value=122.22,
         )
         return group_id, transaction_id
@@ -51,6 +54,7 @@ class TransactionAPITest(HTTPAPITest):
         transaction_id: int,
         value: float,
         description: str,
+        billed_at: date,
         currency_symbol: str,
         currency_conversion_rate: float,
         expected_status: int = 204,
@@ -62,6 +66,7 @@ class TransactionAPITest(HTTPAPITest):
                 "description": description,
                 "currency_symbol": currency_symbol,
                 "currency_conversion_rate": currency_conversion_rate,
+                "billed_at": billed_at.isoformat(),
             },
         )
         self.assertEqual(expected_status, resp.status)
@@ -90,6 +95,7 @@ class TransactionAPITest(HTTPAPITest):
         resp = await self._delete(
             f"/api/v1/groups/{group_id}/transactions/{transaction_id}"
         )
+        print(await resp.json())
         self.assertEqual(expected_status, resp.status)
 
     async def _discard_transaction_change(
@@ -198,6 +204,7 @@ class TransactionAPITest(HTTPAPITest):
                 "type": "purchase",
                 "currency_symbol": "€",
                 "value": 123.22,
+                "billed_at": date.today().isoformat(),
                 "currency_conversion_rate": 1.33,
             },
         )
@@ -220,6 +227,7 @@ class TransactionAPITest(HTTPAPITest):
             type="purchase",
             description="description123",
             currency_symbol="€",
+            billed_at=date.today(),
             currency_conversion_rate=1.22,
             value=122.22,
         )
@@ -229,6 +237,7 @@ class TransactionAPITest(HTTPAPITest):
             type="purchase",
             description="description123",
             currency_symbol="€",
+            billed_at=date.today(),
             currency_conversion_rate=1.22,
             value=122.22,
         )
@@ -260,7 +269,7 @@ class TransactionAPITest(HTTPAPITest):
     async def test_update_transaction(self):
         group_id, transaction_id = await self._create_group_with_transaction("transfer")
         await self._update_transaction(
-            group_id, transaction_id, 200.0, "some description", "$", 2.0
+            group_id, transaction_id, 200.0, "some description", date.today(), "$", 2.0
         )
         account1_id = await self._create_account(group_id, "account1")
         account2_id = await self._create_account(group_id, "account2")
@@ -288,7 +297,7 @@ class TransactionAPITest(HTTPAPITest):
         self.assertEqual(0, len(t["pending_changes"]))
 
         await self._update_transaction(
-            group_id, transaction_id, 100.0, "foobar", "€", 1.0
+            group_id, transaction_id, 100.0, "foobar", date.today(), "€", 1.0
         )
         t = await self._fetch_transaction(group_id, transaction_id)
         self.assertEqual(100.0, t["pending_changes"][str(self.test_user_id)]["value"])
@@ -312,7 +321,7 @@ class TransactionAPITest(HTTPAPITest):
         t = await self._fetch_transaction(group_id, transaction_id)
         self.assertEqual(1, len(t["pending_changes"]))
         await self._update_transaction(
-            group_id, transaction_id, 200.0, "foofoo", "$", 2.0
+            group_id, transaction_id, 200.0, "foofoo", date.today(), "$", 2.0
         )
 
         t = await self._fetch_transaction(group_id, transaction_id)
@@ -398,7 +407,9 @@ class TransactionAPITest(HTTPAPITest):
         await self._post_debitor_share(group_id, transaction_id, account1_id, 1.0)
 
         # we should not be able to discard this transaction as it does not have any committed changes
-        await self._discard_transaction_change(group_id, transaction_id, expected_status=400)
+        await self._discard_transaction_change(
+            group_id, transaction_id, expected_status=400
+        )
 
         await self._delete_transaction(group_id, transaction_id)
 
@@ -620,6 +631,7 @@ class TransactionAPITest(HTTPAPITest):
             description="description123",
             currency_symbol="€",
             currency_conversion_rate=1,
+            billed_at=date.today(),
             value=50,
         )
         account3_id = await self.account_service.create_account(

@@ -35,6 +35,23 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_PASSWORD: password
+          POSTGRES_USER: "abrechnung-test"
+          POSTGRES_DB: "abrechnung-test"
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      TEST_DB_USER: "abrechnung-test"
+      TEST_DB_HOST: "postgres"
+      TEST_DB_DATABASE: "abrechnung-test"
+      TEST_DB_PASSWORD: "password"
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python 3.9

@@ -1,3 +1,5 @@
+from datetime import date
+
 import schema
 from aiohttp import web
 from aiohttp.abc import Request
@@ -27,6 +29,7 @@ async def list_transactions(request):
             "type": str,
             "value": schema.Or(float, int),
             "currency_symbol": str,
+            "billed_at": schema.Use(date.fromisoformat),
             "currency_conversion_rate": schema.Or(float, int),
         }
     )
@@ -41,6 +44,7 @@ async def create_transaction(request: Request, data: dict):
         type=data["type"],
         currency_symbol=data["currency_symbol"],
         currency_conversion_rate=float(data["currency_conversion_rate"]),
+        billed_at=date.fromisoformat(data["billed_at"]),
         value=float(data["value"]),
     )
 
@@ -67,6 +71,7 @@ async def get_transaction(request: Request):
             "description": str,
             "value": schema.Or(float, int),
             "currency_symbol": str,
+            "billed_at": schema.Use(date.fromisoformat),
             "currency_conversion_rate": schema.Or(float, int),
         }
     )
@@ -79,6 +84,7 @@ async def update_transaction(request: Request, data: dict):
         description=data["description"],
         currency_symbol=data["currency_symbol"],
         currency_conversion_rate=data["currency_conversion_rate"],
+        billed_at=date.fromisoformat(data["billed_at"]),
     )
 
     return json_response(status=web.HTTPNoContent.status_code)

@@ -2,7 +2,13 @@ import abc
 from typing import Union, Type
 
 from abrechnung.domain.accounts import Account
-from abrechnung.domain.groups import Group, GroupMember, GroupInvite, GroupPreview
+from abrechnung.domain.groups import (
+    Group,
+    GroupMember,
+    GroupInvite,
+    GroupPreview,
+    GroupLog,
+)
 from abrechnung.domain.transactions import Transaction, TransactionDetails
 from abrechnung.domain.users import User
 
@@ -72,6 +78,18 @@ class GroupInviteSerializer(Serializer):
         }
 
 
+class GroupLogSerializer(Serializer):
+    def _to_repr(self, instance: GroupLog) -> dict:
+        return {
+            "id": instance.id,
+            "type": instance.type,
+            "message": instance.message,
+            "user_id": instance.user_id,
+            "logged_at": instance.logged_at,
+            "affected_user_id": instance.affected,
+        }
+
+
 class TransactionSerializer(Serializer):
     def _serialize_change(self, change: TransactionDetails):
         return {
@@ -80,6 +98,7 @@ class TransactionSerializer(Serializer):
             "currency_symbol": change.currency_symbol,
             "currency_conversion_rate": change.currency_conversion_rate,
             "deleted": change.deleted,
+            "billed_at": change.billed_at.isoformat(),
             "creditor_shares": {
                 str(uid): val for uid, val in change.creditor_shares.items()
             },

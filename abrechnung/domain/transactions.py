@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, date
 from enum import Enum
 from typing import Optional
 
@@ -16,6 +16,7 @@ class TransactionDetails:
     value: float
     currency_symbol: str
     currency_conversion_rate: float
+    billed_at: date
     deleted: bool
 
     changed_by: int

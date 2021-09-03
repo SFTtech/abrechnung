@@ -1,3 +1,5 @@
+from typing import Optional
+
 import asyncpg
 from asyncpg.pool import Pool
 
@@ -37,3 +39,22 @@ async def check_group_permissions(
         raise PermissionError(f"owner access to group denied")
 
     return membership["can_write"], membership["is_owner"]
+
+
+async def create_group_log(
+    conn: asyncpg.Connection,
+    group_id: int,
+    user_id: int,
+    type: str,
+    message: Optional[str] = None,
+    affected_user_id: Optional[int] = None,
+):
+    await conn.execute(
+        "insert into group_log (group_id, user_id, type, message, affected) "
+        "values ($1, $2, $3, $4, $5)",
+        group_id,
+        user_id,
+        type,
+        "" if message is None else message,
+        affected_user_id,
+    )

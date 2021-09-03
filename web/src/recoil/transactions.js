@@ -1,9 +1,10 @@
 // transaction handling
-import { atomFamily, selectorFamily } from "recoil";
-import { groupAccounts } from "./groups";
-import { fetchTransactions } from "../api";
-import { ws } from "../websocket";
-import { userData } from "./auth";
+import {atomFamily, selectorFamily} from "recoil";
+import {groupAccounts} from "./groups";
+import {fetchTransactions} from "../api";
+import {ws} from "../websocket";
+import {userData} from "./auth";
+import {DateTime} from "luxon";
 
 export const groupTransactions = atomFamily({
     key: "groupTransactions",
@@ -50,25 +51,26 @@ export const transactionsSeenByUser = selectorFamily({
                 return true;
             })
             .map(transaction => {
-            if (transaction.pending_changes.hasOwnProperty(user.id)) {
-                return {
-                    id: transaction.id,
-                    type: transaction.type,
-                    ...transaction.pending_changes[user.id],
-                    is_wip: true,
-                    has_committed_changes: transaction.current_state != null,
-                };
-            } else {
-                return {
-                    id: transaction.id,
-                    type: transaction.type,
-                    ...transaction.current_state,
-                    is_wip: false,
-                    has_committed_changes: true,
-                };
-            }
+                if (transaction.pending_changes.hasOwnProperty(user.id)) {
+                    return {
+                        id: transaction.id,
+                        type: transaction.type,
+                        ...transaction.pending_changes[user.id],
+                        is_wip: true,
+                        has_committed_changes: transaction.current_state != null,
+                    };
+                } else {
+                    return {
+                        id: transaction.id,
+                        type: transaction.type,
+                        ...transaction.current_state,
+                        is_wip: false,
+                        has_committed_changes: true,
+                    };
+                }
 
-        })
+            })
+            .sort((t1, t2) => DateTime.fromISO(t1.billed_at) < DateTime.fromISO(t2.billed_at))
     }
 })
 

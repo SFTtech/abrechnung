@@ -5,8 +5,15 @@ from abrechnung.application import (
     NotFoundError,
     check_group_permissions,
     InvalidCommand,
+    create_group_log,
 )
-from abrechnung.domain.groups import Group, GroupMember, GroupPreview, GroupInvite
+from abrechnung.domain.groups import (
+    Group,
+    GroupMember,
+    GroupPreview,
+    GroupInvite,
+    GroupLog,
+)
 
 
 class GroupService(Application):
@@ -38,6 +45,16 @@ class GroupService(Application):
                     True,
                     "group founder",
                 )
+                await create_group_log(
+                    conn=conn, group_id=group_id, user_id=user_id, type="group-created"
+                )
+                await create_group_log(
+                    conn=conn,
+                    group_id=group_id,
+                    user_id=user_id,
+                    type="member-joined",
+                    affected_user_id=user_id,
+                )
 
                 return group_id
 
@@ -54,6 +71,9 @@ class GroupService(Application):
             async with conn.transaction():
                 await check_group_permissions(
                     conn=conn, group_id=group_id, user_id=user_id, can_write=True
+                )
+                await create_group_log(
+                    conn=conn, group_id=group_id, user_id=user_id, type="invite-created"
                 )
                 return await conn.fetchval(
                     "insert into group_invite(group_id, description, created_by, valid_until, single_use)"
@@ -84,6 +104,9 @@ class GroupService(Application):
                 )
                 if not deleted_id:
                     raise NotFoundError(f"No invite with the given id exists")
+                await create_group_log(
+                    conn=conn, group_id=group_id, user_id=user_id, type="invite-deleted"
+                )
 
     async def join_group(self, user_id: int, invite_token: str):
         async with self.db_pool.acquire() as conn:
@@ -102,6 +125,13 @@ class GroupService(Application):
                     user_id,
                     invite["group_id"],
                     invite["created_by"],
+                )
+                await create_group_log(
+                    conn=conn,
+                    group_id=invite["group_id"],
+                    user_id=user_id,
+                    type="member-joined",
+                    affected_user_id=user_id,
                 )
 
                 if invite["single_use"]:
@@ -168,18 +198,22 @@ class GroupService(Application):
         terms: str,
     ):
         async with self.db_pool.acquire() as conn:
-            await check_group_permissions(
-                conn=conn, group_id=group_id, user_id=user_id, can_write=True
-            )
-            await conn.execute(
-                "update grp set name = $2, description = $3, currency_symbol = $4, terms = $5 "
-                "where grp.id = $1",
-                group_id,
-                name,
-                description,
-                currency_symbol,
-                terms,
-            )
+            async with conn.transaction():
+                await check_group_permissions(
+                    conn=conn, group_id=group_id, user_id=user_id, can_write=True
+                )
+                await conn.execute(
+                    "update grp set name = $2, description = $3, currency_symbol = $4, terms = $5 "
+                    "where grp.id = $1",
+                    group_id,
+                    name,
+                    description,
+                    currency_symbol,
+                    terms,
+                )
+                await create_group_log(
+                    conn=conn, group_id=group_id, user_id=user_id, type="group-updated"
+                )
 
     async def update_member_permissions(
         self,
@@ -225,6 +259,48 @@ class GroupService(Application):
                 if is_owner and not user_is_owner:
                     raise PermissionError(
                         f"group members cannot promote others to owner without being an owner"
+                    )
+
+                if is_owner:
+                    await create_group_log(
+                        conn=conn,
+                        group_id=group_id,
+                        user_id=user_id,
+                        type="owner-granted",
+                        affected_user_id=member_id,
+                    )
+                elif can_write:
+                    if membership["is_owner"]:
+                        await create_group_log(
+                            conn=conn,
+                            group_id=group_id,
+                            user_id=user_id,
+                            type="owner-revoked",
+                            affected_user_id=member_id,
+                        )
+                    else:
+                        await create_group_log(
+                            conn=conn,
+                            group_id=group_id,
+                            user_id=user_id,
+                            type="write-granted",
+                            affected_user_id=member_id,
+                        )
+                else:
+                    if membership["is_owner"]:
+                        await create_group_log(
+                            conn=conn,
+                            group_id=group_id,
+                            user_id=user_id,
+                            type="owner-revoked",
+                            affected_user_id=member_id,
+                        )
+                    await create_group_log(
+                        conn=conn,
+                        group_id=group_id,
+                        user_id=user_id,
+                        type="write-revoked",
+                        affected_user_id=member_id,
                     )
 
                 await conn.execute(
@@ -319,3 +395,44 @@ class GroupService(Application):
                         )
                     )
                 return result
+
+    async def list_log(self, *, user_id: int, group_id: int) -> list[GroupLog]:
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                await check_group_permissions(
+                    conn=conn, group_id=group_id, user_id=user_id
+                )
+                cur = conn.cursor(
+                    "select id, user_id, logged_at, type, message, affected "
+                    "from group_log "
+                    "where group_id = $1",
+                    group_id,
+                )
+
+                result = []
+                async for log in cur:
+                    result.append(
+                        GroupLog(
+                            id=log["id"],
+                            user_id=log["user_id"],
+                            logged_at=log["logged_at"],
+                            type=log["type"],
+                            message=log["message"],
+                            affected=log["affected"],
+                        )
+                    )
+                return result
+
+    async def send_group_message(self, *, user_id: int, group_id: int, message: str):
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                await check_group_permissions(
+                    conn=conn, group_id=group_id, user_id=user_id, can_write=True
+                )
+                await conn.execute(
+                    "insert into group_log (group_id, user_id, type, message) "
+                    "values ($1, $2, 'text-message', $3)",
+                    group_id,
+                    user_id,
+                    message
+                )
