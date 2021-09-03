@@ -49,4 +49,3 @@ class SubCommand(abc.ABC):
         This is the entry point that will be called after the program has been
         initialized.
         """
-        pass

@@ -434,5 +434,5 @@ class GroupService(Application):
                     "values ($1, $2, 'text-message', $3)",
                     group_id,
                     user_id,
-                    message
+                    message,
                 )

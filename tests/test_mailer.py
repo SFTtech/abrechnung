@@ -7,6 +7,7 @@ from aiosmtpd import smtp
 from aiosmtpd.controller import Controller
 
 from abrechnung.application.users import UserService
+from abrechnung.config import Config
 from abrechnung.mailer import Mailer
 from tests import AsyncTestCase, get_test_db_config
 
@@ -44,7 +45,7 @@ class MailerTest(AsyncTestCase):
         self.smtp = Controller(self.smtp_handler)
         self.smtp.start()
 
-        self.mailer_config = {
+        self.mailer_config = Config({
             "email": {
                 "host": self.smtp.hostname,
                 "port": self.smtp.port,
@@ -55,7 +56,7 @@ class MailerTest(AsyncTestCase):
                 "url": "https://abrechnung.example.lol",
                 "name": "Test Abrechnung",
             },
-        }
+        })
         self.mailer = Mailer(config=self.mailer_config)
 
         self.mailer_task = asyncio.create_task(self.mailer.run())

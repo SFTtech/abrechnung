@@ -2,8 +2,6 @@ import argparse
 import asyncio
 from pathlib import Path
 
-import yaml
-
 from abrechnung.config import Config
 from abrechnung.util import log_setup
 

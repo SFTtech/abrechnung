@@ -12,6 +12,7 @@ from abrechnung.application.accounts import AccountService
 from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
+from abrechnung.config import Config
 from abrechnung.http import HTTPService
 from abrechnung.http.auth import token_for_user
 from tests import AsyncTestCase
@@ -74,7 +75,7 @@ class BaseHTTPAPITest(AsyncHTTPTestCase):
 
     async def get_application(self) -> web.Application:
         self.secret_key = "asdf1234"
-        self.http_service = HTTPService(config={"api": {"secret_key": self.secret_key}})
+        self.http_service = HTTPService(config=Config({"api": {"secret_key": self.secret_key}}))
         await self.http_service._register_forwarder(
             self.db_conn, forwarder_id="test_forwarder"
         )

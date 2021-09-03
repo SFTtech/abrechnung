@@ -75,7 +75,7 @@ class SchemaRevision:
                 )
 
             version = version_match["version"]
-            requires = requires_match["version"]
+            requires: Optional[str] = requires_match["version"]
 
             if requires == "null":
                 requires = None

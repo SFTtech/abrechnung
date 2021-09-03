@@ -388,9 +388,9 @@ class GroupAPITest(HTTPAPITest):
             terms="terms",
         )
 
-        resp = await self._post(f"/api/v1/groups/{group_id}/send_message", json={
-            "message": "test message"
-        })
+        resp = await self._post(
+            f"/api/v1/groups/{group_id}/send_message", json={"message": "test message"}
+        )
         self.assertEqual(204, resp.status)
 
         resp = await self._get(f"/api/v1/groups/{group_id}/logs")
