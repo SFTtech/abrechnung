@@ -1,13 +1,19 @@
-import React from "react";
+import React, { useState } from "react";
 import EditableField from "../../components/style/EditableField";
 
 import { Alert } from "@material-ui/lab";
 import Paper from "@material-ui/core/Paper";
-import { makeStyles } from "@material-ui/core";
+import { Button, DialogActions, makeStyles } from "@material-ui/core";
 import { toast } from "react-toastify";
-import { updateGroupMetadata } from "../../api";
+import { leaveGroup, updateGroupMetadata } from "../../api";
 import { currUserPermissions } from "../../recoil/groups";
 import { useRecoilValue } from "recoil";
+import Dialog from "@material-ui/core/Dialog";
+import DialogTitle from "@material-ui/core/DialogTitle";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import Grid from "@material-ui/core/Grid";
+import { useHistory } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -17,6 +23,9 @@ const useStyles = makeStyles((theme) => ({
 
 export default function GroupDetail({ group }) {
     const classes = useStyles();
+
+    const [showLeaveModal, setShowLeaveModal] = useState(false);
+    const history = useHistory();
 
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
 
@@ -29,6 +38,16 @@ export default function GroupDetail({ group }) {
             currencySymbol: currencySymbol ? currencySymbol : group.currency_symbol,
             terms: terms ? terms : group.terms
         })
+            .catch(err => {
+                toast.error(err);
+            });
+    };
+
+    const confirmLeaveGroup = () => {
+        leaveGroup({ groupID: group.id })
+            .then(res => {
+                history.push("/")
+            })
             .catch(err => {
                 toast.error(err);
             });
@@ -78,6 +97,29 @@ export default function GroupDetail({ group }) {
             {/*        <ListItemText primary="Joined" secondary={group.joined}/>*/}
             {/*    </ListItem>*/}
             {/*</List>*/}
+
+            <Grid container justify="center" style={{marginTop: 20}}>
+                <Button color="secondary" variant="contained" onClick={() => setShowLeaveModal(true)}>
+                    Leave Group
+                </Button>
+            </Grid>
+
+            <Dialog open={showLeaveModal} onClose={() => setShowLeaveModal(false)}>
+                <DialogTitle>Leave Group</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        <span>Are you sure you want to leave the group {group.name}. If you are the last member to leave this group it will be deleted and its transaction will be lost forever...</span>
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button color="secondary" onClick={confirmLeaveGroup}>
+                        Yes pls
+                    </Button>
+                    <Button color="primary" onClick={() => setShowLeaveModal(false)}>
+                        No
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Paper>
     );
 }

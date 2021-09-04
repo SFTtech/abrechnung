@@ -76,6 +76,41 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual("new terms", group["terms"])
 
     @unittest_run_loop
+    async def test_delete_group(self):
+        user2_id, user2_password = await self._create_test_user("user2", "user2@test.com")
+        _, session_id, _ = await self.user_service.login_user(
+            "user2", password=user2_password, session_name="foobar"
+        )
+        user2_token = token_for_user(user2_id, session_id, self.secret_key)
+        group_id = await self.group_service.create_group(user_id=self.test_user_id, name="foobar", description="foobar", currency_symbol="€", terms="foo")
+        async with self.db_pool.acquire() as conn:
+            await conn.execute(
+                "insert into group_membership (user_id, group_id, is_owner, can_write) "
+                "values ($1, $2, true, true)",
+                user2_id,
+                group_id
+            )
+
+        resp = await self._delete(f"/api/v1/groups/{group_id}")
+        self.assertEqual(403, resp.status)
+
+        resp = await self._post(f"/api/v1/groups/{group_id}/leave")
+        self.assertEqual(204, resp.status)
+
+        await self._fetch_group(group_id, expected_status=404)
+
+        resp = await self.client.delete(f"/api/v1/groups/{group_id}", headers={
+            "Authorization": f"Bearer {user2_token}"
+        })
+        self.assertEqual(204, resp.status)
+
+        async with self.db_pool.acquire() as conn:
+            gid = await conn.fetchval(
+                "select id from grp where grp.id = $1", group_id
+            )
+            self.assertIsNone(gid)
+
+    @unittest_run_loop
     async def test_list_groups(self):
         resp = await self._get(f"/api/v1/groups")
         self.assertEqual(200, resp.status)

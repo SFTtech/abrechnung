@@ -4,13 +4,21 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import Button from "@material-ui/core/Button";
-import {DialogActions} from "@material-ui/core";
+import { DialogActions } from "@material-ui/core";
+import { deleteGroup } from "../../api";
+import { toast } from "react-toastify";
 
-export default function GroupDeleteModal({show, onClose, groupToDelete}) {
+export default function GroupDeleteModal({ show, onClose, groupToDelete }) {
 
-    const deleteGroup = () => {
-
-    }
+    const confirmDeleteGroup = () => {
+        deleteGroup({ groupID: groupToDelete.id })
+            .then(res => {
+                onClose();
+            })
+            .catch(err => {
+                toast.error(err);
+            });
+    };
 
     return (
         <Dialog open={show} onClose={onClose}>
@@ -23,7 +31,7 @@ export default function GroupDeleteModal({show, onClose, groupToDelete}) {
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
-                <Button color="secondary" onClick={deleteGroup}>
+                <Button color="secondary" onClick={confirmDeleteGroup}>
                     Yes pls
                 </Button>
                 <Button color="primary" onClick={onClose}>
@@ -31,5 +39,5 @@ export default function GroupDeleteModal({show, onClose, groupToDelete}) {
                 </Button>
             </DialogActions>
         </Dialog>
-    )
+    );
 }

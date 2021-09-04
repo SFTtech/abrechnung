@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import asyncpg
+
 from abrechnung.application import (
     Application,
     NotFoundError,
@@ -200,7 +202,7 @@ class GroupService(Application):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 await check_group_permissions(
-                    conn=conn, group_id=group_id, user_id=user_id, can_write=True
+                    conn=conn, group_id=group_id, user_id=user_id, is_owner=True
                 )
                 await conn.execute(
                     "update grp set name = $2, description = $3, currency_symbol = $4, terms = $5 "
@@ -311,6 +313,48 @@ class GroupService(Application):
                     can_write,
                     is_owner,
                 )
+
+    async def delete_group(self, *, user_id: int, group_id: int):
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                await check_group_permissions(
+                    conn=conn, group_id=group_id, user_id=user_id, is_owner=True
+                )
+
+                n_members = await conn.fetchval(
+                    "select count(user_id) from group_membership gm where gm.group_id = $1",
+                    group_id
+                )
+                if n_members != 1:
+                    raise PermissionError(f"Can only delete a group when you are the last member")
+
+                await conn.execute(
+                    "delete from grp where id = $1",
+                    group_id
+                )
+
+    async def leave_group(self, *, user_id: int, group_id: int):
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                await check_group_permissions(
+                    conn=conn, group_id=group_id, user_id=user_id
+                )
+
+                n_members = await conn.fetchval(
+                    "select count(user_id) from group_membership gm where gm.group_id = $1",
+                    group_id
+                )
+                if n_members == 1:  # our user is the last member -> delete the group, membership will be cascaded
+                    await conn.execute(
+                        "delete from grp where id = $1",
+                        group_id
+                    )
+                else:
+                    await conn.execute(
+                        "delete from group_membership gm where gm.group_id = $1 and gm.user_id = $2",
+                        group_id,
+                        user_id
+                    )
 
     async def preview_group(self, invite_token: str) -> GroupPreview:
         async with self.db_pool.acquire() as conn:

@@ -50,13 +50,10 @@ async def create_group(request: Request, data):
 
 @routes.get(r"/groups/{group_id:\d+}")
 async def get_group(request: Request):
-    try:
-        group = await request.app["group_service"].get_group(
-            user_id=request["user"]["user_id"],
-            group_id=int(request.match_info["group_id"]),
-        )
-    except PermissionError:
-        raise web.HTTPForbidden(reason="permission denied")
+    group = await request.app["group_service"].get_group(
+        user_id=request["user"]["user_id"],
+        group_id=int(request.match_info["group_id"]),
+    )
 
     serializer = GroupSerializer(group)
 
@@ -75,6 +72,26 @@ async def update_group(request: Request, data: dict):
         description=data["description"],
         currency_symbol=data["currency_symbol"],
         terms=data["terms"],
+    )
+
+    return web.Response(status=web.HTTPNoContent.status_code)
+
+
+@routes.delete(r"/groups/{group_id:\d+}")
+async def delete_group(request: Request):
+    await request.app["group_service"].delete_group(
+        user_id=request["user"]["user_id"],
+        group_id=int(request.match_info["group_id"]),
+    )
+
+    return web.Response(status=web.HTTPNoContent.status_code)
+
+
+@routes.post(r"/groups/{group_id:\d+}/leave")
+async def delete_group(request: Request):
+    await request.app["group_service"].leave_group(
+        user_id=request["user"]["user_id"],
+        group_id=int(request.match_info["group_id"]),
     )
 
     return web.Response(status=web.HTTPNoContent.status_code)

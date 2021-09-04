@@ -221,6 +221,16 @@ export async function updateGroupMetadata({ groupID, name, description, currency
     return resp.data;
 }
 
+export async function leaveGroup({ groupID }) {
+    const resp = await makePost(`/groups/${groupID}/leave`);
+    return resp.data;
+}
+
+export async function deleteGroup({ groupID }) {
+    const resp = await makeDelete(`/groups/${groupID}`);
+    return resp.data;
+}
+
 export async function updateGroupMemberPrivileges({ groupID, userID, isOwner, canWrite }) {
     const resp = await makePost(`/groups/${groupID}/members`, {
         user_id: userID,

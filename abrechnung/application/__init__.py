@@ -30,7 +30,7 @@ async def check_group_permissions(
         user_id,
     )
     if membership is None:
-        raise PermissionError(f"access to group denied")
+        raise NotFoundError(f"group not found")
 
     if can_write and not (membership["is_owner"] or membership["can_write"]):
         raise PermissionError(f"write access to group denied")

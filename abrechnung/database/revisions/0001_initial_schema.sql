@@ -359,7 +359,7 @@ create table if not exists account_revision (
 );
 
 create table if not exists account_history (
-    id          integer references account (id) on delete restrict,
+    id          integer references account (id) on delete cascade,
     revision_id bigint references account_revision (id) on delete cascade,
     primary key (id, revision_id),
 
@@ -577,7 +577,7 @@ create table if not exists transaction_revision (
 
     -- users that have created changes cannot be deleted
     user_id        integer     not null references usr (id) on delete restrict,
-    transaction_id integer     not null references transaction (id) on delete restrict,
+    transaction_id integer     not null references transaction (id) on delete cascade,
 
     started        timestamptz not null default now(),
     committed      timestamptz          default null,
@@ -587,7 +587,7 @@ create table if not exists transaction_revision (
 );
 
 create table if not exists transaction_history (
-    id                       integer references transaction (id) on delete restrict,
+    id                       integer references transaction (id) on delete cascade,
     revision_id              bigint references transaction_revision (id) on delete cascade,
     primary key (id, revision_id),
     -- currency (symbol) of the values inside this transaction
@@ -652,11 +652,11 @@ end
 $$ language plpgsql;
 
 create table if not exists creditor_share (
-    transaction_id integer references transaction (id) on delete restrict,
+    transaction_id integer references transaction (id) on delete cascade,
     revision_id    bigint references transaction_revision (id) on delete cascade,
 
     -- the account that is credited
-    account_id     integer          not null references account (id) on delete restrict,
+    account_id     integer          not null references account (id) on delete cascade,
 
     primary key (transaction_id, revision_id, account_id),
 
@@ -709,11 +709,11 @@ end
 $$ language plpgsql;
 
 create table if not exists debitor_share (
-    transaction_id integer references transaction (id) on delete restrict,
+    transaction_id integer references transaction (id) on delete cascade,
     revision_id    bigint references transaction_revision (id) on delete cascade,
 
     -- the account that is credited
-    account_id     integer          not null references account (id) on delete restrict,
+    account_id     integer          not null references account (id) on delete cascade,
 
     primary key (transaction_id, revision_id, account_id),
 

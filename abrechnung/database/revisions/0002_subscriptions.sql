@@ -543,10 +543,35 @@ $$ language plpgsql;
 
 drop trigger if exists group_update_trig on grp;
 create trigger group_update_trig
-    after insert or update or delete
+    after insert or update
     on grp
     for each row
 execute function group_updated();
+
+create or replace function group_deleted() returns trigger as
+$$
+<<locals>> declare
+    user_info record;
+begin
+    for user_info in select
+                          user_id
+                      from
+                          group_membership gm
+                      where
+                          gm.group_id = OLD.id loop
+        call notify_user('group', user_info.user_id, user_info.user_id::bigint, json_build_object('element_id', user_info.user_id));
+    end loop;
+
+    return OLD;
+end;
+$$ language plpgsql;
+
+drop trigger if exists group_delete_trig on grp;
+create trigger group_delete_trig
+    before delete
+    on grp
+    for each row
+execute function group_deleted();
 
 -- notifications for changes in sessions
 create or replace function session_updated() returns trigger as
