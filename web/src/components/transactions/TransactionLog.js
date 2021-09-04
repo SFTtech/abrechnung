@@ -12,6 +12,7 @@ import TransactionCreateModal from "./TransactionCreateModal";
 import {makeStyles, Typography} from "@material-ui/core";
 import {currUserPermissions, groupAccounts} from "../../recoil/groups";
 import {DateTime} from "luxon";
+import Divider from "@material-ui/core/Divider";
 
 const useStyles = makeStyles((theme) => ({
     propertyPill: {
@@ -39,6 +40,7 @@ export default function TransactionLog({group}) {
                     </IconButton>
                 </Grid>
             )}
+            <Divider variant="middle"/>
             <List>
                 {transactions.length === 0 ? (
                     <div className="list-group-item" key={0}>No Transactions</div>
@@ -61,7 +63,7 @@ export default function TransactionLog({group}) {
                             )}
                                           secondary={(
                                               <>
-                                                  <span>{transaction.value.toFixed(2)} {transaction.currency_symbol}, </span>
+                                                  <span>{transaction.value.toFixed(2)} {transaction.currency_symbol} - </span>
                                                   <span>by {accountNamesFromShares(Object.keys(transaction.creditor_shares))}, </span>
                                                   <span>for {accountNamesFromShares(Object.keys(transaction.debitor_shares))}</span>
                                               </>

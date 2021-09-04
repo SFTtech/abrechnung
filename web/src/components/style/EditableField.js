@@ -9,7 +9,6 @@ import DisabledTextField from "./DisabledTextField";
 
 const useStyles = makeStyles((theme) => ({
     root: {
-        padding: "2px 4px",
         display: "flex",
         alignItems: "center"
     },
@@ -30,7 +29,6 @@ export default function EditableField({value, onChange, validate, helperText, on
 
     const onSave = () => {
         if (!error) {
-            console.log("on save current value: ", {value: currentValue});
             onChange(currentValue);
             setValue(null);
             setEditing(false);

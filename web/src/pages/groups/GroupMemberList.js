@@ -19,7 +19,7 @@ import ListItemText from "@material-ui/core/ListItemText";
 import IconButton from "@material-ui/core/IconButton";
 import Delete from "@material-ui/icons/Delete";
 import Edit from "@material-ui/icons/Edit";
-import { FormControlLabel, makeStyles, Paper } from "@material-ui/core";
+import {FormControlLabel, makeStyles, Paper} from "@material-ui/core";
 import {toast} from "react-toastify";
 import {updateGroupMemberPrivileges} from "../../api";
 import {DateTime} from "luxon";
@@ -96,26 +96,30 @@ export default function GroupMemberList({group}) {
                     members.map((member, index) => (
                         <ListItem key={index}>
                             <ListItemText
-                                primary={member.username}
-                                secondary={
+                                primary={(
                                     <>
+                                        <span style={{marginRight: 5}}>{member.username}</span>
                                         {member.is_owner ? (
-                                            <Chip size="small" className={classes.chip} component="span" color="primary" label="owner"
+                                            <Chip size="small" className={classes.chip} component="span" color="primary"
+                                                  label="owner"
                                                   variant="outlined"/>
                                         ) : member.can_write ? (
-                                            <Chip size="small"  className={classes.chip} component="span" color="primary" label="editor"
+                                            <Chip size="small" className={classes.chip} component="span" color="primary"
+                                                  label="editor"
                                                   variant="outlined"/>
                                         ) : null}
                                         {member.user_id === currentUser.id ? (
-                                            <Chip size="small"  className={classes.chip} component="span" color="primary" label="it's you"/>
+                                            <Chip size="small" className={classes.chip} component="span" color="primary"
+                                                  label="it's you"/>
                                         ) : (
                                             ""
                                         )}
-                                        <br/>
-                                        <small className="text-muted">
-                                            joined {DateTime.fromISO(member.joined_at).toLocaleString(DateTime.DATETIME_FULL)}
-                                        </small>
                                     </>
+                                )}
+                                secondary={
+                                    <small className="text-muted">
+                                        joined {DateTime.fromISO(member.joined_at).toLocaleString(DateTime.DATETIME_FULL)}
+                                    </small>
                                 }
                             />
                             {permissions.is_owner || permissions.can_write ? (
@@ -125,11 +129,11 @@ export default function GroupMemberList({group}) {
                                     >
                                         <Edit/>
                                     </IconButton>
-                                    <IconButton
-                                        onClick={() => openRemoveMemberModal(member.user_id)}
-                                    >
-                                        <Delete/>
-                                    </IconButton>
+                                    {/*<IconButton*/}
+                                    {/*    onClick={() => openRemoveMemberModal(member.user_id)}*/}
+                                    {/*>*/}
+                                    {/*    <Delete/>*/}
+                                    {/*</IconButton>*/}
                                 </ListItemSecondaryAction>
                             ) : (
                                 ""

@@ -5,7 +5,18 @@ import ListItem from "@material-ui/core/ListItem";
 import {groupAccounts} from "../../recoil/groups";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
-import {Checkbox, FormControlLabel, makeStyles, TextField} from "@material-ui/core";
+import {
+    Checkbox,
+    FormControlLabel,
+    makeStyles,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TextField
+} from "@material-ui/core";
 import Divider from "@material-ui/core/Divider";
 import {toast} from "react-toastify";
 import {useEffect, useState} from "react";
@@ -74,7 +85,7 @@ function ShareInput({value, onChange}) {
     );
 }
 
-export default function PurchaseShares({group, transaction, isEditing}) {
+export default function PurchaseDebitorShares({group, transaction, isEditing}) {
     const classes = useStyles();
 
     const accounts = useRecoilValue(groupAccounts(group.id));
@@ -156,12 +167,6 @@ export default function PurchaseShares({group, transaction, isEditing}) {
 
     return (
         <div>
-            <TransactionCreditorShare
-                group={group}
-                transaction={transaction}
-                isEditing={isEditing}
-                label="Paid for by"
-            />
             <List>
                 <ListItem className={classes.listItem}>
                     <Grid container direction="row" justify="space-between">
@@ -178,63 +183,82 @@ export default function PurchaseShares({group, transaction, isEditing}) {
                     </Grid>
                 </ListItem>
                 <Divider variant="middle" className={classes.divider}/>
-                {isEditing ?
-                    accounts.map(account => (
-                        <ListItem key={account.id} className={classes.listItem}>
-                            <Grid container direction="row">
-                                <Typography
-                                    variant="body1"
-                                    style={{width: 90, marginRight: "10px"}}
-                                    align="right"
-                                    className={classes.shareValue}
-                                >
-                                    {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
-                                </Typography>
-                                {showAdvanced ? (
-                                    <ShareInput
-                                        onChange={(value) => updateDebShareValue(account.id, value)}
-                                        value={debitorShareValueForAccount(account.id)}
-                                    />
-                                ) : (
-                                    <Checkbox
-                                        name={`${account.name}-checked`}
-                                        checked={transaction.debitor_shares.hasOwnProperty(account.id)}
-                                        onChange={event => updateDebShare(account.id, event.target.checked)}
-                                    />
-                                )}
-                                <Typography variant="body1" className={classes.shareValue}>
-                                    {account.name}
-                                </Typography>
-                            </Grid>
-                        </ListItem>
-                    ))
-                    :
-                    accounts.map(account => transaction.debitor_shares.hasOwnProperty(account.id) ? (
-                        <ListItem key={account.id} className={classes.listItem}>
-                            <Grid container direction="row">
-                                <Typography
-                                    variant="body1"
-                                    style={{width: 90, marginRight: "10px"}}
-                                    align="right"
-                                    className={classes.shareValue}
-                                >
-                                    {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
-                                </Typography>
-                                {showAdvanced && (
-                                    <Typography
-                                        style={{marginRight: 10}}
-                                        variant="body1"
-                                        className={classes.shareValue}>
-                                        {debitorShareValueForAccount(account.id)}
-                                    </Typography>
-                                )}
-                                <Typography variant="body1" className={classes.shareValue}>
-                                    {account.name}
-                                </Typography>
-                            </Grid>
-                        </ListItem>
-                    ) : null)
-                }
+                {isEditing ? (
+                    <TableContainer>
+                        <Table size="small">
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell width="100px">Value</TableCell>
+                                    <TableCell width="100px">Shares</TableCell>
+                                    <TableCell>Account</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {accounts.map(account => (
+                                    <TableRow key={account.id}>
+                                        <TableCell
+                                            width="100px"
+                                            align="right"
+                                        >
+                                            {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
+                                        </TableCell>
+                                        <TableCell
+                                            width="100px"
+                                        >
+                                            {showAdvanced ? (
+                                                <ShareInput
+                                                    onChange={(value) => updateDebShareValue(account.id, value)}
+                                                    value={debitorShareValueForAccount(account.id)}
+                                                />
+                                            ) : (
+                                                <Checkbox
+                                                    name={`${account.name}-checked`}
+                                                    checked={transaction.debitor_shares.hasOwnProperty(account.id)}
+                                                    onChange={event => updateDebShare(account.id, event.target.checked)}
+                                                />
+                                            )}
+                                        </TableCell>
+                                        <TableCell>{account.name}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                ) : (
+                    <TableContainer>
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableCell>Value</TableCell>
+                                    {showAdvanced && (
+                                        <TableCell>Shares</TableCell>
+                                    )}
+                                    <TableCell>Account</TableCell>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {accounts.map(account => transaction.debitor_shares.hasOwnProperty(account.id) ? (
+                                    <TableRow key={account.id}>
+                                        <TableCell
+                                            width="100px"
+                                            align="right"
+                                        >
+                                            {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
+                                        </TableCell>
+                                        {showAdvanced && (
+                                            <TableCell
+                                                width="50px"
+                                            >
+                                                {debitorShareValueForAccount(account.id)}
+                                            </TableCell>
+                                        )}
+                                        <TableCell>{account.name}</TableCell>
+                                    </TableRow>
+                                ) : null)}
+                            </TableBody>
+                        </Table>
+                    </TableContainer>
+                )}
             </List>
         </div>
     );

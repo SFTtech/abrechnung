@@ -1,12 +1,8 @@
 import React, {Suspense, useState} from "react";
-import {useHistory, useRouteMatch} from "react-router-dom";
+import {Link as RouterLink, useHistory, useRouteMatch} from "react-router-dom";
 import {useRecoilValue} from "recoil";
 import {transactionById} from "../../recoil/transactions";
 import Loading from "../../components/style/Loading";
-import TransactionDetail from "../../components/transactions/TransactionDetail";
-import TransferShares from "../../components/transactions/TransferShares";
-import PurchaseShares from "../../components/transactions/PurchaseShares";
-import MimoShares from "../../components/transactions/MimoShares";
 import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
 import Chip from "@material-ui/core/Chip";
@@ -19,6 +15,9 @@ import DeleteButton from "@material-ui/icons/Delete";
 import {Alert} from "@material-ui/lab";
 import {commitTransaction, createTransactionChange, deleteTransaction, discardTransactionChange} from "../../api";
 import {currUserPermissions} from "../../recoil/groups";
+import {ChevronLeft} from "@material-ui/icons";
+import TransferDetails from "../../components/transactions/TransferDetails";
+import PurchaseDetails from "../../components/transactions/PurchaseDetails";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -85,7 +84,12 @@ export default function Transaction({group}) {
             <Paper elevation={1} className={classes.paper}>
                 <div>
                     <Grid container justify="space-between">
-                        <Chip color="primary" label={transaction.type}/>
+                        <div>
+                            <IconButton component={RouterLink} to={`/groups/${group.id}/`}>
+                                <ChevronLeft/>
+                            </IconButton>
+                            <Chip color="primary" label={transaction.type}/>
+                        </div>
                         <div>
                             {userPermissions.can_write && (
                                 <>
@@ -109,15 +113,13 @@ export default function Transaction({group}) {
                     </Grid>
                 </div>
 
-                <TransactionDetail group={group} transaction={transaction} isEditing={transaction.is_wip}/>
-
                 <Suspense fallback={<Loading/>}>
                     {transaction.type === "transfer" ? (
-                        <TransferShares group={group} transaction={transaction} isEditing={transaction.is_wip}/>
+                        <TransferDetails group={group} transaction={transaction}/>
                     ) : transaction.type === "purchase" ? (
-                        <PurchaseShares group={group} transaction={transaction} isEditing={transaction.is_wip}/>
+                        <PurchaseDetails group={group} transaction={transaction}/>
                     ) : transaction.type === "mimo" ? (
-                        <MimoShares group={group} transaction={transaction} isEditing={transaction.is_wip}/>
+                        <Alert severity="danger">Error: MIMO handling is not implemented yet</Alert>
                     ) : (
                         <Alert severity="danger">Error: Invalid Transaction Type "{transaction.type}"</Alert>
                     )}

@@ -52,11 +52,10 @@ class AsyncTestCase(unittest.TestCase):
 
     async def _create_test_user(self, username: str, email: str) -> tuple[int, str]:
         """returns the user id and password"""
+        # pylint: disable=protected-access
         async with self.db_pool.acquire() as conn:
             password = "asdf1234"
-            hashed_password = UserService._hash_password(
-                password
-            )  # pylint: disable=protected-access
+            hashed_password = UserService._hash_password(password)
             user_id = await conn.fetchval(
                 "insert into usr (username, email, hashed_password, pending) values ($1, $2, $3, false) returning id",
                 username,
