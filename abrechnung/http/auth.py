@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import timedelta, datetime
+from datetime import timedelta, datetime, timezone
 
 from aiohttp import web, hdrs
 from jose import jwt
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 routes = web.RouteTableDef()
 
 REQUEST_AUTH_KEY = "user"
-ACCESS_TOKEN_VALIDITY = timedelta(hours=24)
+ACCESS_TOKEN_VALIDITY = timedelta(hours=1)
 
 
 def check_request(request, entries):
@@ -30,7 +30,7 @@ def check_request(request, entries):
 
 
 def access_token_expiry() -> datetime:
-    return datetime.now() + ACCESS_TOKEN_VALIDITY
+    return datetime.now(tz=timezone.utc) + ACCESS_TOKEN_VALIDITY
 
 
 def token_for_user(user_id: int, session_id: int, secret_key: str) -> str:

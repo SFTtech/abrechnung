@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 import bcrypt
+from asyncpg.pool import Pool
 
 from abrechnung.domain.users import User, Session
 from . import Application, NotFoundError, InvalidCommand
@@ -16,6 +17,17 @@ class LoginFailed(Exception):
 
 
 class UserService(Application):
+    def __init__(
+        self,
+        db_pool: Pool,
+        enable_registration: bool,
+        valid_email_domains: Optional[list[str]] = None,
+    ):
+        super().__init__(db_pool=db_pool)
+
+        self.enable_registration = enable_registration
+        self.valid_email_domains = valid_email_domains
+
     @staticmethod
     def _hash_password(password: str) -> str:
         salt = bcrypt.gensalt()
@@ -50,6 +62,10 @@ class UserService(Application):
                     "select user_id, id from session where token = $1 and valid_until is null or valid_until > now()",
                     token,
                 )
+                if row:
+                    await conn.execute(
+                        "update session set last_seen = now() where token = $1", token
+                    )
 
                 return row
 
@@ -102,6 +118,21 @@ class UserService(Application):
 
     async def register_user(self, username: str, email: str, password: str) -> int:
         """Register a new user, returning the newly created user id and creating a pending registration entry"""
+        if not self.enable_registration:
+            raise PermissionError(f"User registrations are disabled on this server")
+
+        if self.valid_email_domains is not None:
+            splitted = email.split("@")
+            if len(splitted) == 0:
+                raise InvalidCommand(f"Invalid email {email}")
+
+            domain = splitted[-1]
+            if domain not in self.valid_email_domains:
+                raise PermissionError(
+                    f"Only users with emails out of the following domains are "
+                    f"allowed: {self.valid_email_domains}"
+                )
+
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 hashed_password = self._hash_password(password)
@@ -155,10 +186,16 @@ class UserService(Application):
                 raise NotFoundError(f"User with id {user_id} does not exist")
 
             rows = await conn.fetch(
-                "select id, name, valid_until from session where user_id = $1", user_id
+                "select id, name, valid_until, last_seen from session where user_id = $1",
+                user_id,
             )
             sessions = [
-                Session(id=row["id"], name=row["name"], valid_until=row["valid_until"])
+                Session(
+                    id=row["id"],
+                    name=row["name"],
+                    valid_until=row["valid_until"],
+                    last_seen=row["last_seen"],
+                )
                 for row in rows
             ]
 

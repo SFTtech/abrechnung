@@ -13,6 +13,7 @@ api:
   host: "localhost"
   port: 8080
   id: default
+  enable_registration: true
 
 email:
   address: "abrechnung@example.lol"

@@ -1,20 +1,20 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import List from "@material-ui/core/List";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 import DisabledTextField from "../style/DisabledTextField";
-import {updateTransactionDetails} from "../../api";
-import EditableField from "../style/EditableField";
+import { updateTransactionDetails } from "../../api";
+import { TextField } from "@material-ui/core";
 
-export default function TransactionDescription({group, transaction}) {
+export default function TransactionDescription({ group, transaction }) {
     const [description, setDescription] = useState("");
+    const [error, setError] = useState(false);
 
     useEffect(() => {
-        // TODO: incorporate pending changes
         setDescription(transaction.description);
     }, [transaction, setDescription]);
 
-    const save = (description) => {
-        if (transaction.is_wip) {
+    const save = () => {
+        if (!error && transaction.is_wip && description !== transaction.description) {
             updateTransactionDetails({
                 groupID: group.id,
                 transactionID: transaction.id,
@@ -22,20 +22,40 @@ export default function TransactionDescription({group, transaction}) {
                 currencySymbol: transaction.currency_symbol,
                 billedAt: transaction.billed_at,
                 value: transaction.value,
-                description: description,
+                description: description
             }).catch(err => {
-                // something else
                 toast.error(err);
             });
         }
     };
 
+    const onKeyUp = (key) => {
+        if (key.keyCode === 13) {
+            save();
+        }
+    };
+
+    const onChange = (event) => {
+        const value = event.target.value;
+        if (value == null || value === "") {
+            setError(true);
+        } else {
+            setError(false);
+        }
+        setDescription(value);
+    };
+
     return (
         <List>
             {transaction.is_wip ? (
-                <EditableField
+                <TextField
                     label="Description"
-                    onChange={save}
+                    error={error}
+                    helperText={error ? "please input a description" : null}
+                    fullWidth
+                    onChange={onChange}
+                    onKeyUp={onKeyUp}
+                    onBlur={save}
                     value={description}
                 />
             ) : (

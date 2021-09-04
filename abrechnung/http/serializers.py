@@ -136,6 +136,7 @@ class UserSerializer(Serializer):
                     "id": session.id,
                     "name": session.name,
                     "valid_until": session.valid_until,
+                    "last_seen": session.last_seen,
                 }
                 for session in instance.sessions
             ],

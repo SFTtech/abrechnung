@@ -19,6 +19,8 @@ CONFIG_SCHEMA = schema.Schema(
             "port": int,
             "id": str,
             schema.Optional("enable_cors"): bool,
+            schema.Optional("enable_registration"): bool,
+            schema.Optional("valid_email_domains"): [str],
         },
         "email": {
             "address": str,

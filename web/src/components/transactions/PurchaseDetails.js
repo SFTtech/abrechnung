@@ -4,22 +4,12 @@ import TransactionCreditorShare from "./TransactionCreditorShare";
 import TransactionDescription from "./TransactionDescription";
 import TransactionBilledAt from "./TransactionBilledAt";
 import TransactionValue from "./TransactionValue";
-import {makeStyles} from "@material-ui/core";
 
-const useStyles = makeStyles((theme) => ({
-    shares: {
-        marginBottom: theme.spacing(2)
-    }
-}));
-
-
-export default function PurchaseDetails({group, transaction}) {
-    const classes = useStyles();
-
+export default function PurchaseDetails({ group, transaction }) {
     return (
         <>
-            <TransactionDescription group={group} transaction={transaction}/>
-            <TransactionBilledAt group={group} transaction={transaction}/>
+            <TransactionDescription group={group} transaction={transaction} />
+            <TransactionBilledAt group={group} transaction={transaction} />
 
             <TransactionCreditorShare
                 group={group}
@@ -28,9 +18,9 @@ export default function PurchaseDetails({group, transaction}) {
                 label="Paid for by"
             />
 
-            <TransactionValue group={group} transaction={transaction}/>
+            <TransactionValue group={group} transaction={transaction} />
 
-            <PurchaseDebitorShares group={group} transaction={transaction} isEditing={transaction.is_wip}/>
+            <PurchaseDebitorShares group={group} transaction={transaction} isEditing={transaction.is_wip} />
         </>
     );
 }

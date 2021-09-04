@@ -63,11 +63,7 @@ class HTTPService(SubCommand):
             await self._register_forwarder(conn, forwarder_id=self.cfg["api"]["id"])
 
             try:
-                app = self.create_app(
-                    db_pool=db_pool,
-                    secret_key=self.cfg["api"]["secret_key"],
-                    enable_cors=self.cfg["api"].get("enable_cors", False),
-                )
+                app = self.create_app(db_pool=db_pool)
                 app.router.add_route("GET", "/", self.handle_ws_connection)
 
                 await web._run_app(
@@ -110,17 +106,15 @@ class HTTPService(SubCommand):
     def create_app(
         self,
         db_pool: Pool,
-        secret_key: str,
         middlewares: Optional[list] = None,
-        enable_cors: bool = False,
     ) -> web.Application:
         app = web.Application()
-        app["secret_key"] = secret_key
+        app["secret_key"] = self.cfg["api"]["secret_key"]
         app["db_pool"] = db_pool
 
         if middlewares is None:
             auth_middleware = jwt_middleware(
-                secret=secret_key,
+                secret=self.cfg["api"]["secret_key"],
                 whitelist=[
                     "/api/v1/auth/login",
                     "/api/v1/auth/register",
@@ -137,10 +131,14 @@ class HTTPService(SubCommand):
         middlewares += [error_middleware]
 
         api_app = web.Application(middlewares=middlewares)
-        api_app["secret_key"] = secret_key
+        api_app["secret_key"] = self.cfg["api"]["secret_key"]
         api_app["db_pool"] = db_pool
 
-        api_app["user_service"] = UserService(db_pool=db_pool)
+        api_app["user_service"] = UserService(
+            db_pool=db_pool,
+            enable_registration=self.cfg["api"].get("enable_registration", True),
+            valid_email_domains=self.cfg["api"].get("valid_email_domains"),
+        )
         api_app["group_service"] = GroupService(db_pool=db_pool)
         api_app["account_service"] = AccountService(db_pool=db_pool)
         api_app["transaction_service"] = TransactionService(db_pool=db_pool)
@@ -152,7 +150,7 @@ class HTTPService(SubCommand):
 
         api_app.router.add_route("GET", "/ws", self.handle_ws_connection)
 
-        if enable_cors:
+        if self.cfg["api"].get("enable_cors", False):
             cors = aiohttp_cors.setup(
                 api_app,
                 defaults={
@@ -231,7 +229,6 @@ class HTTPService(SubCommand):
         ws = aiohttp.web.WebSocketResponse()
         await ws.prepare(request)
 
-        # get a database connection
         async with request.app["db_pool"].acquire() as connection:
             # register the client connection at the db
             connection_id = await connection.fetchval(
@@ -239,56 +236,56 @@ class HTTPService(SubCommand):
             )
             self.logger.info(f"Websocket client connected with id {connection_id}")
 
-            # create the tx queue and task
-            tx_queue = asyncio.Queue(maxsize=1000)
-            self.tx_queues[connection_id] = tx_queue
-            tx_task = asyncio.create_task(self.tx_task(ws, tx_queue))
+        # create the tx queue and task
+        tx_queue = asyncio.Queue(maxsize=1000)
+        self.tx_queues[connection_id] = tx_queue
+        tx_task = asyncio.create_task(self.tx_task(ws, tx_queue))
 
-            try:
-                async for msg in ws:
-                    try:
-                        if msg.type == aiohttp.WSMsgType.TEXT:
-                            msg_obj = json.loads(msg.data)
-                            websocket.CLIENT_SCHEMA.validate(msg_obj)
+        try:
+            async for msg in ws:
+                try:
+                    if msg.type == aiohttp.WSMsgType.TEXT:
+                        msg_obj = json.loads(msg.data)
+                        websocket.CLIENT_SCHEMA.validate(msg_obj)
 
+                        async with request.app["db_pool"].acquire() as connection:
                             response = await self.ws_message(
                                 connection, connection_id, msg_obj
                             )
-                        else:
-                            self.logger.info(
-                                f"websocket got unhandled websocket message on connection id {connection_id}: {msg.type}"
-                            )
-                            continue
-                    except (
-                        asyncpg.DataError,
-                        json.JSONDecodeError,
-                        schema.SchemaError,
-                    ) as exc:
-                        response = websocket.make_error_msg(
-                            code=web.HTTPBadRequest.status_code, msg=str(exc)
+                    else:
+                        self.logger.info(
+                            f"websocket got unhandled websocket message on connection id {connection_id}: {msg.type}"
                         )
-                    except Exception as exc:
-                        traceback.print_exc()
-                        response = websocket.make_error_msg(
-                            code=web.HTTPInternalServerError.status_code, msg=str(exc)
-                        )
-                    try:
-                        tx_queue.put_nowait(response)
-                    except asyncio.QueueFull:
-                        self.logger.error(
-                            f"websocket with id {connection_id} error: tx queue full"
-                        )
-                        break
-            finally:
+                        continue
+                except (
+                    asyncpg.DataError,
+                    json.JSONDecodeError,
+                    schema.SchemaError,
+                ) as exc:
+                    response = websocket.make_error_msg(
+                        code=web.HTTPBadRequest.status_code, msg=str(exc)
+                    )
+                except Exception as exc:
+                    traceback.print_exc()
+                    response = websocket.make_error_msg(
+                        code=web.HTTPInternalServerError.status_code, msg=str(exc)
+                    )
+                try:
+                    tx_queue.put_nowait(response)
+                except asyncio.QueueFull:
+                    self.logger.error(
+                        f"websocket with id {connection_id} error: tx queue full"
+                    )
+                    break
+        finally:
+            async with request.app["db_pool"].acquire() as connection:
                 # deregister the client connection
                 await connection.execute("call client_disconnected($1)", connection_id)
-                # stop the tx task
-                del self.tx_queues[connection_id]
-                tx_task.cancel()
-                await tx_task
-                self.logger.info(
-                    f"websocket client with id {connection_id} disconnected"
-                )
+            # stop the tx task
+            del self.tx_queues[connection_id]
+            tx_task.cancel()
+            await tx_task
+            self.logger.info(f"websocket client with id {connection_id} disconnected")
 
         return ws
 

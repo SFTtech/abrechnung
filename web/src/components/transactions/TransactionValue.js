@@ -1,42 +1,61 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import List from "@material-ui/core/List";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 import DisabledTextField from "../style/DisabledTextField";
-import {updateTransactionDetails} from "../../api";
-import EditableField from "../style/EditableField";
+import { updateTransactionDetails } from "../../api";
+import { TextField } from "@material-ui/core";
 
-export default function TransactionValue({group, transaction}) {
+export default function TransactionValue({ group, transaction }) {
     const [transactionValue, setTransactionValue] = useState("");
+    const [error, setError] = useState(false);
 
     useEffect(() => {
         setTransactionValue(transaction.value.toFixed(2));
     }, [transaction, setTransactionValue]);
 
-    const save = (value) => {
-        if (transaction.is_wip) {
+    const save = () => {
+        if (!error && transaction.is_wip && transactionValue !== transaction.value) {
             updateTransactionDetails({
                 groupID: group.id,
                 transactionID: transaction.id,
                 currencyConversionRate: transaction.currency_conversion_rate,
                 currencySymbol: transaction.currency_symbol,
                 billedAt: transaction.billed_at,
-                value: value,
-                description: transaction.description,
+                value: parseFloat(transactionValue),
+                description: transaction.description
             }).catch(err => {
-                // something else
                 toast.error(err);
             });
         }
     };
 
+    const onKeyUp = (key) => {
+        if (key.keyCode === 13) {
+            save();
+        }
+    };
+
+    const onChange = (event) => {
+        const value = parseFloat(event.target.value);
+        if (isNaN(value)) {
+            setError(true);
+        } else {
+            setError(false);
+        }
+        setTransactionValue(event.target.value);
+    };
+
     return (
         <List>
             {transaction.is_wip ? (
-                <EditableField
+                <TextField
                     label="Value"
-                    validate={value => !isNaN(parseFloat(value))}
-                    helperText="please input a valid decimal number"
-                    onChange={value => save(parseFloat(value))}
+                    helperText={error ? "please input a valid decimal number" : null}
+                    fullWidth
+                    error={error}
+                    onChange={onChange}
+                    onKeyUp={onKeyUp}
+                    onBlur={save}
                     value={transactionValue}
                 />
             ) : (

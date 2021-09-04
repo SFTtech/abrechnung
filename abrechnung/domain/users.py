@@ -7,6 +7,7 @@ class Session:
     id: int
     name: str
     valid_until: datetime
+    last_seen: datetime
 
 
 @dataclass

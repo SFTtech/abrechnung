@@ -1,8 +1,7 @@
-import {useRecoilValue} from "recoil";
-import TransactionCreditorShare from "./TransactionCreditorShare";
+import { useRecoilValue } from "recoil";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
-import {groupAccounts} from "../../recoil/groups";
+import { groupAccounts } from "../../recoil/groups";
 import Grid from "@material-ui/core/Grid";
 import Typography from "@material-ui/core/Typography";
 import {
@@ -18,29 +17,29 @@ import {
     TextField
 } from "@material-ui/core";
 import Divider from "@material-ui/core/Divider";
-import {toast} from "react-toastify";
-import {useEffect, useState} from "react";
-import {createOrUpdateDebitorShare, deleteDebitorShare} from "../../api";
-import {isNaN} from "formik";
+import { toast } from "react-toastify";
+import { useEffect, useState } from "react";
+import { createOrUpdateDebitorShare, deleteDebitorShare } from "../../api";
+import { isNaN } from "formik";
 
 const useStyles = makeStyles((theme) => ({
     shareValue: {
         marginTop: 8,
-        marginBottom: 9,
+        marginBottom: 9
     },
     checkboxLabel: {
         marginTop: 7,
-        marginBottom: 7,
+        marginBottom: 7
     },
     listItem: {
-        paddingLeft: 0,
+        paddingLeft: 0
     },
     divider: {
-        marginLeft: 0,
+        marginLeft: 0
     }
 }));
 
-function ShareInput({value, onChange}) {
+function ShareInput({ value, onChange }) {
     const [currValue, setValue] = useState(0);
     const [error, setError] = useState(false);
 
@@ -58,12 +57,12 @@ function ShareInput({value, onChange}) {
     const onValueChange = (event) => {
         const val = event.target.value;
         setValue(val);
-        setError(!validate(value))
+        setError(!validate(value));
     };
 
     const validate = (value) => {
         return !(value === null || value === undefined || value === "" || isNaN(parseFloat(value)) || parseFloat(value) < 0);
-    }
+    };
 
     const onKeyUp = (key) => {
         if (key.keyCode === 13) {
@@ -75,7 +74,7 @@ function ShareInput({value, onChange}) {
         <TextField
             error={error}
             margin="dense"
-            style={{width: 40, paddingTop: 1, marginRight: 2}}
+            style={{ width: 40, paddingTop: 1, marginRight: 2 }}
             onBlur={onSave}
             value={currValue}
             onChange={onValueChange}
@@ -85,7 +84,7 @@ function ShareInput({value, onChange}) {
     );
 }
 
-export default function PurchaseDebitorShares({group, transaction, isEditing}) {
+export default function PurchaseDebitorShares({ group, transaction, isEditing }) {
     const classes = useStyles();
 
     const accounts = useRecoilValue(groupAccounts(group.id));
@@ -138,16 +137,14 @@ export default function PurchaseDebitorShares({group, transaction, isEditing}) {
                     toast.error(err);
                 });
         }
-        console.log("update checked", accountID, checked);
     };
 
     const updateDebShareValue = (accountID, shares) => {
-        console.log("update value", accountID, shares);
         if (shares === 0 && debitorShareValues.hasOwnProperty(accountID)) {
             deleteDebitorShare({
                 groupID: group.id,
                 transactionID: transaction.id,
-                accountID: accountID,
+                accountID: accountID
             })
                 .catch(err => {
                     toast.error(err);
@@ -175,14 +172,14 @@ export default function PurchaseDebitorShares({group, transaction, isEditing}) {
                         </Typography>
                         {isEditing && (
                             <FormControlLabel
-                                control={<Checkbox name={`show-advanced`}/>}
+                                control={<Checkbox name={`show-advanced`} />}
                                 checked={showAdvanced}
                                 onChange={event => setShowAdvanced(event.target.checked)}
-                                label="Advanced"/>
+                                label="Advanced" />
                         )}
                     </Grid>
                 </ListItem>
-                <Divider variant="middle" className={classes.divider}/>
+                <Divider variant="middle" className={classes.divider} />
                 {isEditing ? (
                     <TableContainer>
                         <Table size="small">

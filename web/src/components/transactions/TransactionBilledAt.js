@@ -1,34 +1,38 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import List from "@material-ui/core/List";
-import {toast} from "react-toastify";
+import { toast } from "react-toastify";
 import DisabledTextField from "../style/DisabledTextField";
-import {updateTransactionDetails} from "../../api";
-import {KeyboardDatePicker} from "@material-ui/pickers";
-import {DateTime} from "luxon";
+import { updateTransactionDetails } from "../../api";
+import { KeyboardDatePicker } from "@material-ui/pickers";
+import { DateTime } from "luxon";
 
-export default function TransactionBilledAt({group, transaction}) {
+export default function TransactionBilledAt({ group, transaction }) {
     const [billedAt, setBilledAt] = useState(DateTime.now());
 
     useEffect(() => {
         // TODO: incorporate pending changes
-        setBilledAt(transaction.billed_at)
+        setBilledAt(transaction.billed_at);
     }, [transaction, setBilledAt]);
 
-    const save = (billed) => {
-        if (transaction.is_wip) {
+    const save = () => {
+        if (transaction.is_wip && billedAt !== transaction.billed_at) {
             updateTransactionDetails({
                 groupID: group.id,
                 transactionID: transaction.id,
                 currencyConversionRate: transaction.currency_conversion_rate,
                 currencySymbol: transaction.currency_symbol,
-                billedAt: billed.toISODate(),
+                billedAt: billedAt.toISODate(),
                 value: transaction.value,
-                description: transaction.description,
+                description: transaction.description
             }).catch(err => {
                 // something else
                 toast.error(err);
             });
         }
+    };
+
+    const onChange = (billed) => {
+        setBilledAt(billed);
     };
 
     return (
@@ -41,9 +45,10 @@ export default function TransactionBilledAt({group, transaction}) {
                     fullWidth
                     format="yyyy-MM-dd"
                     value={billedAt}
-                    onChange={save}
+                    onBlur={save}
+                    onChange={onChange}
                     KeyboardButtonProps={{
-                        'aria-label': 'change date',
+                        "aria-label": "change date"
                     }}
                 />
             ) : (

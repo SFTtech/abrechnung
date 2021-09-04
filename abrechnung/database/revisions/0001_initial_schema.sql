@@ -130,7 +130,7 @@ create table if not exists session (
     -- authtoken
     token       uuid unique default gen_random_uuid(),
     -- last time this session token has been used
---     last_seen timestamptz not null default now(),
+    last_seen timestamptz not null default now(),
     -- informational session name, chosen when logging in
     name        text    not null,
     -- can and should be NULL for infinite validity

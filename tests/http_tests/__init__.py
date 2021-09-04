@@ -84,12 +84,10 @@ class BaseHTTPAPITest(AsyncHTTPTestCase):
 
         self.group_service = GroupService(self.db_pool)
         self.account_service = AccountService(self.db_pool)
-        self.user_service = UserService(self.db_pool)
+        self.user_service = UserService(self.db_pool, enable_registration=True)
         self.transaction_service = TransactionService(self.db_pool)
 
-        app = self.http_service.create_app(
-            secret_key=self.secret_key, db_pool=self.db_pool
-        )
+        app = self.http_service.create_app(db_pool=self.db_pool)
 
         return app
 
