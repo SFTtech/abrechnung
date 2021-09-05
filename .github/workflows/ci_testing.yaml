@@ -39,18 +39,13 @@ jobs:
       postgres:
         image: postgres
         env:
-          POSTGRES_PASSWORD: password
-          POSTGRES_USER: "abrechnung-test"
-          POSTGRES_DB: "abrechnung-test"
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
+          POSTGRES_PASSWORD: "password"
+          POSTGRES_USER: "abrechnung"
+          POSTGRES_DB: "abrechnung"
     env:
-      TEST_DB_USER: "abrechnung-test"
+      TEST_DB_USER: "abrechnung"
       TEST_DB_HOST: "postgres"
-      TEST_DB_DATABASE: "abrechnung-test"
+      TEST_DB_DATABASE: "abrechnung"
       TEST_DB_PASSWORD: "password"
     steps:
       - uses: actions/checkout@v2
