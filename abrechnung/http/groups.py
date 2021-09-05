@@ -109,17 +109,6 @@ async def list_members(request: web.Request):
     return json_response(data=serializer.to_repr())
 
 
-@routes.delete(r"/groups/{group_id:\d+}/members/{member_id:\d+}")
-async def remove_member(request: web.Request):
-    await request.app["group_service"].remove_member(
-        user_id=request["user"]["user_id"],
-        group_id=int(request.match_info["group_id"]),
-        member_id=int(request.match_info["member_id"]),
-    )
-
-    return web.Response(status=web.HTTPNoContent.status_code)
-
-
 @routes.get(r"/groups/{group_id:\d+}/logs")
 async def list_log(request: web.Request):
     logs = await request.app["group_service"].list_log(

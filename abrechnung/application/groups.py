@@ -253,11 +253,6 @@ class GroupService(Application):
                 ):  # no changes
                     return
 
-                if membership["is_owner"] and not user_is_owner:
-                    raise PermissionError(
-                        f"group members cannot degrade other owners without being an owner"
-                    )
-
                 if is_owner and not user_is_owner:
                     raise PermissionError(
                         f"group members cannot promote others to owner without being an owner"
@@ -323,15 +318,14 @@ class GroupService(Application):
 
                 n_members = await conn.fetchval(
                     "select count(user_id) from group_membership gm where gm.group_id = $1",
-                    group_id
+                    group_id,
                 )
                 if n_members != 1:
-                    raise PermissionError(f"Can only delete a group when you are the last member")
+                    raise PermissionError(
+                        f"Can only delete a group when you are the last member"
+                    )
 
-                await conn.execute(
-                    "delete from grp where id = $1",
-                    group_id
-                )
+                await conn.execute("delete from grp where id = $1", group_id)
 
     async def leave_group(self, *, user_id: int, group_id: int):
         async with self.db_pool.acquire() as conn:
@@ -342,47 +336,18 @@ class GroupService(Application):
 
                 n_members = await conn.fetchval(
                     "select count(user_id) from group_membership gm where gm.group_id = $1",
-                    group_id
+                    group_id,
                 )
-                if n_members == 1:  # our user is the last member -> delete the group, membership will be cascaded
-                    await conn.execute(
-                        "delete from grp where id = $1",
-                        group_id
-                    )
+                if (
+                    n_members == 1
+                ):  # our user is the last member -> delete the group, membership will be cascaded
+                    await conn.execute("delete from grp where id = $1", group_id)
                 else:
                     await conn.execute(
                         "delete from group_membership gm where gm.group_id = $1 and gm.user_id = $2",
                         group_id,
-                        user_id
+                        user_id,
                     )
-
-    async def remove_member(self, *, user_id: int, group_id: int, member_id: int):
-        if user_id == member_id:
-            raise InvalidCommand(f"Cannot remove yourself from the group, use the leave button for that.")
-
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                await check_group_permissions(
-                    conn=conn, group_id=group_id, user_id=user_id, is_owner=True
-                )
-
-                membership = await conn.fetchrow(
-                    "select user_id, is_owner from group_membership gm where gm.user_id = $1 and gm.group_id = $2",
-                    member_id,
-                    group_id
-                )
-
-                if membership is None:
-                    raise NotFoundError(f"No such member")
-
-                if membership["is_owner"]:
-                    raise PermissionError(f"Cannot remove another group owner from the group")
-
-                await conn.execute(
-                    "delete from group_membership gm where gm.group_id = $1 and gm.user_id = $2",
-                    group_id,
-                    member_id
-                )
 
     async def preview_group(self, invite_token: str) -> GroupPreview:
         async with self.db_pool.acquire() as conn:

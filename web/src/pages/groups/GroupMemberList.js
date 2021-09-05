@@ -1,15 +1,14 @@
-import React, {useState} from "react";
+import React, { useState } from "react";
 
-import {useRecoilValue} from "recoil";
-import {userData} from "../../recoil/auth";
+import { useRecoilValue } from "recoil";
+import { userData } from "../../recoil/auth";
 import Dialog from "@material-ui/core/Dialog";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import DialogContent from "@material-ui/core/DialogContent";
 import DialogActions from "@material-ui/core/DialogActions";
 import Button from "@material-ui/core/Button";
-import DialogContentText from "@material-ui/core/DialogContentText";
-import {Field, Form, Formik} from "formik";
-import {Checkbox} from "formik-material-ui";
+import { Field, Form, Formik } from "formik";
+import { Checkbox } from "formik-material-ui";
 import LinearProgress from "@material-ui/core/LinearProgress";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
@@ -18,12 +17,11 @@ import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import ListItemText from "@material-ui/core/ListItemText";
 import IconButton from "@material-ui/core/IconButton";
 import Edit from "@material-ui/icons/Edit";
-import {FormControlLabel, makeStyles, Paper} from "@material-ui/core";
-import {toast} from "react-toastify";
-import {removeMember, updateGroupMemberPrivileges} from "../../api";
-import {DateTime} from "luxon";
-import {currUserPermissions, groupMembers} from "../../recoil/groups";
-import DeleteIcon from "@material-ui/icons/Delete";
+import { FormControlLabel, makeStyles, Paper } from "@material-ui/core";
+import { toast } from "react-toastify";
+import { updateGroupMemberPrivileges } from "../../api";
+import { DateTime } from "luxon";
+import { currUserPermissions, groupMembers } from "../../recoil/groups";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -34,17 +32,16 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-export default function GroupMemberList({group}) {
+export default function GroupMemberList({ group }) {
     const classes = useStyles();
     const [showEditMemberDialog, setShowEditMemberDialog] = useState(false);
     const [showRemoveMemberDialog, setShowRemoveMemberDialog] = useState(false);
-    const [memberToRemove, setMemberToRemove] = useState(null);
     const [memberToEdit, setMemberToEdit] = useState(null);
     const currentUser = useRecoilValue(userData);
     const members = useRecoilValue(groupMembers(group.id));
     const permissions = useRecoilValue(currUserPermissions(group.id));
 
-    const handleEditMemberSubmit = (values, {setSubmitting}) => {
+    const handleEditMemberSubmit = (values, { setSubmitting }) => {
         updateGroupMemberPrivileges({
             groupID: group.id,
             userID: values.userID,
@@ -74,56 +71,30 @@ export default function GroupMemberList({group}) {
         setShowEditMemberDialog(true);
     };
 
-    const onRemoveMemberSave = () => {
-        if (memberToRemove !== null) {
-            removeMember({
-                groupID: group.id,
-                memberID: memberToRemove,
-            })
-                .then(result => {
-                    setShowRemoveMemberDialog(false);
-                    toast.success("Successfully removed group member");
-                })
-                .catch(err => {
-                    toast.error(err);
-                });
-        }
-    };
-
-    const closeRemoveMemberModal = () => {
-        setShowRemoveMemberDialog(false);
-        setMemberToRemove(null);
-    };
-
-    const openRemoveMemberModal = (userID) => {
-        setMemberToRemove(userID);
-        setShowRemoveMemberDialog(true);
-    };
-
     return (
         <Paper elevation={1} className={classes.paper}>
             <List>
                 {members.length === 0 ? (
-                    <ListItem><ListItemText primary="No Members"/></ListItem>
+                    <ListItem><ListItemText primary="No Members" /></ListItem>
                 ) : (
                     members.map((member, index) => (
                         <ListItem key={index}>
                             <ListItemText
                                 primary={(
                                     <>
-                                        <span style={{marginRight: 5}}>{member.username}</span>
+                                        <span style={{ marginRight: 5 }}>{member.username}</span>
                                         {member.is_owner ? (
                                             <Chip size="small" className={classes.chip} component="span" color="primary"
                                                   label="owner"
-                                                  variant="outlined"/>
+                                                  variant="outlined" />
                                         ) : member.can_write ? (
                                             <Chip size="small" className={classes.chip} component="span" color="primary"
                                                   label="editor"
-                                                  variant="outlined"/>
+                                                  variant="outlined" />
                                         ) : null}
                                         {member.user_id === currentUser.id ? (
                                             <Chip size="small" className={classes.chip} component="span" color="primary"
-                                                  label="it's you"/>
+                                                  label="it's you" />
                                         ) : (
                                             ""
                                         )}
@@ -140,15 +111,8 @@ export default function GroupMemberList({group}) {
                                     <IconButton
                                         onClick={() => openEditMemberModal(member.user_id)}
                                     >
-                                        <Edit/>
+                                        <Edit />
                                     </IconButton>
-                                    {permissions.is_owner && (
-                                        <IconButton
-                                            onClick={() => openRemoveMemberModal(member.user_id)}
-                                        >
-                                            <DeleteIcon/>
-                                        </IconButton>
-                                    )}
                                 </ListItemSecondaryAction>
                             ) : (
                                 ""
@@ -166,7 +130,7 @@ export default function GroupMemberList({group}) {
                         canWrite: memberToEdit?.can_write
                     }} onSubmit={handleEditMemberSubmit}
                             enableReinitialize={true}>
-                        {({handleSubmit, isSubmitting}) => (
+                        {({ handleSubmit, isSubmitting }) => (
                             <Form>
                                 <FormControlLabel control={
                                     <Field
@@ -175,7 +139,7 @@ export default function GroupMemberList({group}) {
                                         component={Checkbox}
                                         name="canWrite"
                                     />
-                                } label="Can Write"/>
+                                } label="Can Write" />
                                 <FormControlLabel control={
                                     <Field
                                         type="checkbox"
@@ -183,9 +147,9 @@ export default function GroupMemberList({group}) {
                                         component={Checkbox}
                                         name="isOwner"
                                     />
-                                } label="Is Owner"/>
+                                } label="Is Owner" />
 
-                                {isSubmitting && <LinearProgress/>}
+                                {isSubmitting && <LinearProgress />}
                                 <DialogActions>
                                     <Button color="primary" type="submit" onClick={handleSubmit}>
                                         Save
@@ -199,30 +163,6 @@ export default function GroupMemberList({group}) {
                         )}
                     </Formik>
                 </DialogContent>
-            </Dialog>
-            <Dialog open={showRemoveMemberDialog} onClose={closeRemoveMemberModal}>
-                <DialogTitle>Remove Member from Group</DialogTitle>
-
-                <DialogContent>
-                    <DialogContentText>
-                        Are you sure you want to remove{" "}
-                        <strong>
-                            {memberToRemove !== null
-                                ? members.find((member) => member.user_id === memberToRemove).username
-                                : ""}
-                        </strong>{" "}
-                        from this group?
-                    </DialogContentText>
-                </DialogContent>
-
-                <DialogActions>
-                    <Button color="secondary" type="submit" onClick={onRemoveMemberSave}>
-                        Yes I'm sure.
-                    </Button>
-                    <Button color="primary" onClick={closeRemoveMemberModal}>
-                        On second thought ...
-                    </Button>
-                </DialogActions>
             </Dialog>
         </Paper>
     );

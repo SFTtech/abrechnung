@@ -180,17 +180,46 @@ class AccountService(Application):
                 await check_group_permissions(
                     conn=conn, group_id=group_id, user_id=user_id, can_write=True
                 )
-                balance = await conn.fetchval(
-                    "select balance from account_balance where account_id = $1",
+
+                n_committed_creditor = await conn.fetchval(
+                    "select count(cs.account_id) "
+                    "from creditor_share cs "
+                    "join committed_transaction_history t on t.id = cs.transaction_id "
+                    "   and t.revision_id = cs.revision_id "
+                    "where cs.account_id = $1",
+                    account_id,
+                )
+                n_committed_debitor = await conn.fetchval(
+                    "select count(ds.account_id) "
+                    "from debitor_share ds "
+                    "join committed_transaction_history t on t.id = ds.transaction_id "
+                    "   and t.revision_id = ds.revision_id "
+                    "where ds.account_id = $1",
+                    account_id,
+                )
+                n_pending_creditor = await conn.fetchval(
+                    "select count(cs.account_id) "
+                    "from creditor_share cs "
+                    "join pending_transaction_history t on t.id = cs.transaction_id and t.revision_id = cs.revision_id "
+                    "where cs.account_id = $1",
+                    account_id,
+                )
+                n_pending_debitor = await conn.fetchval(
+                    "select count(ds.account_id) "
+                    "from debitor_share ds "
+                    "join pending_transaction_history t on t.id = ds.transaction_id and t.revision_id = ds.revision_id "
+                    "where ds.account_id = $1",
                     account_id,
                 )
 
-                if balance is None:
-                    raise InvalidCommand(f"Cannot delete a non existing account")
-
-                if balance != 0:
+                if (
+                    n_pending_debitor != 0
+                    or n_pending_creditor != 0
+                    or n_committed_creditor != 0
+                    or n_committed_debitor != 0
+                ):
                     raise InvalidCommand(
-                        f"Cannot delete an account with a balance != 0"
+                        f"Cannot delete an account that is references by a transaction"
                     )
 
                 row = await conn.fetchrow(

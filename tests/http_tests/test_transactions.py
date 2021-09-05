@@ -616,46 +616,17 @@ class TransactionAPITest(HTTPAPITest):
             description="description",
         )
 
-        await self._post_debitor_share(group_id, transaction1_id, account2_id, 1.0)
+        await self._post_debitor_share(group_id, transaction1_id, account1_id, 1.0)
         await self._post_creditor_share(group_id, transaction1_id, account2_id, 1.0)
         await self._commit_transaction(group_id, transaction1_id)
 
-        # we should now still be able to delete the account as its balance should be 0
+        # we should not be able to delete this account as changes depend on it
+        resp = await self._delete(f"/api/v1/groups/{group_id}/accounts/{account2_id}")
+        self.assertEqual(400, resp.status)
+
+        await self._switch_creditor_share(group_id, transaction1_id, account1_id, 1.0)
+        await self._commit_transaction(group_id, transaction1_id)
+
+        # now we should be able to delete the account as nothing depends on it
         resp = await self._delete(f"/api/v1/groups/{group_id}/accounts/{account2_id}")
         self.assertEqual(204, resp.status)
-
-        transaction2_id = await self.transaction_service.create_transaction(
-            user_id=self.test_user_id,
-            group_id=group_id,
-            type="purchase",
-            description="description123",
-            currency_symbol="€",
-            currency_conversion_rate=1,
-            billed_at=date.today(),
-            value=50,
-        )
-        account3_id = await self.account_service.create_account(
-            user_id=self.test_user_id,
-            group_id=group_id,
-            type="personal",
-            name="account3",
-            description="description",
-        )
-        account4_id = await self.account_service.create_account(
-            user_id=self.test_user_id,
-            group_id=group_id,
-            type="personal",
-            name="account4",
-            description="description",
-        )
-
-        await self._post_debitor_share(group_id, transaction2_id, account3_id, 1.0)
-        await self._post_creditor_share(group_id, transaction2_id, account4_id, 1.0)
-        await self._commit_transaction(group_id, transaction2_id)
-
-        # we should now not be able to delete either of the two new accounts as both have a balance != 0
-        resp = await self._delete(f"/api/v1/groups/{group_id}/accounts/{account3_id}")
-        self.assertEqual(400, resp.status)
-
-        resp = await self._delete(f"/api/v1/groups/{group_id}/accounts/{account4_id}")
-        self.assertEqual(400, resp.status)
