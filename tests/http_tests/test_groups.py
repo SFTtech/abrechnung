@@ -56,7 +56,7 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual("name", group["name"])
 
         await self._fetch_group("asdf1234", 404)
-        await self._fetch_group(13333, 403)
+        await self._fetch_group(13333, 404)
 
         resp = await self._post(
             f"/api/v1/groups/{group_id}",
@@ -285,6 +285,22 @@ class GroupAPITest(HTTPAPITest):
         self.assertTrue(
             list(filter(lambda x: x["user_id"] == user2_id, members))[0]["is_owner"]
         )
+
+        # try to kick the other member, which we should not be able to do as he is also a group owner
+        resp = await self._delete(f"/api/v1/groups/{group_id}/members/{user2_id}")
+        self.assertEqual(403, resp.status)
+
+        async with self.db_pool.acquire() as conn:
+            await conn.execute(
+                "update group_membership set is_owner = false where group_id = $1 and user_id = $2",
+                group_id,
+                user2_id
+            )
+        # now we should be able to kick the second member
+        resp = await self._delete(f"/api/v1/groups/{group_id}/members/{user2_id}")
+        self.assertEqual(204, resp.status)
+        members = await self._fetch_members(group_id)
+        self.assertEqual(1, len(members))
 
     @unittest_run_loop
     async def test_get_account(self):

@@ -3,6 +3,7 @@ from typing import Optional
 
 import bcrypt
 from asyncpg.pool import Pool
+from email_validator import validate_email, EmailNotValidError
 
 from abrechnung.domain.users import User, Session
 from . import Application, NotFoundError, InvalidCommand
@@ -133,6 +134,12 @@ class UserService(Application):
                     f"allowed: {self.valid_email_domains}"
                 )
 
+        try:
+            valid = validate_email(email)
+            email = valid.email
+        except EmailNotValidError as e:
+            raise InvalidCommand(str(e))
+
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 hashed_password = self._hash_password(password)
@@ -246,6 +253,12 @@ class UserService(Application):
             )
 
     async def request_email_change(self, user_id: int, password: str, email: str):
+        try:
+            valid = validate_email(email)
+            email = valid.email
+        except EmailNotValidError as e:
+            raise InvalidCommand(str(e))
+
         async with self.db_pool.acquire() as conn:
             valid_pw = await self._verify_user_password(user_id, password)
             if not valid_pw:

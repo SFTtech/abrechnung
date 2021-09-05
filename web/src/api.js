@@ -240,6 +240,11 @@ export async function updateGroupMemberPrivileges({ groupID, userID, isOwner, ca
     return resp.data;
 }
 
+export async function removeMember({ groupID, memberID }) {
+    const resp = await makeDelete(`/groups/${groupID}/members/${memberID}`);
+    return resp.data;
+}
+
 export async function fetchGroupPreview({ token }) {
     const resp = await makePost(`/groups/preview`, {
         invite_token: token

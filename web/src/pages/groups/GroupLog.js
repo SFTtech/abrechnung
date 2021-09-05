@@ -39,6 +39,14 @@ export default function GroupLog({group}) {
         })
     }
 
+    const getMemberUsername = (member_id) => {
+        const member = members.find(member => member.user_id === member_id);
+        if (member === undefined) {
+            return "unknown";
+        }
+        return member.username
+    }
+
     const log = showAllLogs
         ? logEntries
         : logEntries.filter((entry) => entry.type === "text-message");
@@ -77,7 +85,7 @@ export default function GroupLog({group}) {
                     <ListItem key={logEntry.id}>
                         <ListItemText
                             primary={logEntry.message === "" ? logEntry.type : logEntry.message}
-                            secondary={`by ${members.find((member) => member.user_id === logEntry.user_id).username} 
+                            secondary={`by ${getMemberUsername(logEntry.user_id)} 
                             on ${DateTime.fromISO(logEntry.logged_at).toLocaleString(DateTime.DATETIME_FULL)}`}/>
                     </ListItem>
                 ))}

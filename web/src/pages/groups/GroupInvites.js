@@ -37,6 +37,14 @@ export default function GroupInvites({group}) {
             })
     }
 
+    const getMemberUsername = (member_id) => {
+        const member = members.find(member => member.user_id === member_id);
+        if (member === undefined) {
+            return "unknown";
+        }
+        return member.username
+    }
+
     return (
         <Paper elevation={1} className={classes.paper}>
             <Typography component="h3" variant="h5">
@@ -58,7 +66,7 @@ export default function GroupInvites({group}) {
                                     <>
                                         {invite.description},
                                         created
-                                        by {members.find(member => member.user_id === invite.created_by)?.username},
+                                        by {getMemberUsername(invite.created_by)},
                                         valid
                                         until {DateTime.fromISO(invite.valid_until).toLocaleString(DateTime.DATETIME_FULL)}
                                         {invite.single_use && ", single use"}

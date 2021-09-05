@@ -5,3 +5,4 @@ bcrypt~=3.2
 python-jose~=3.3
 PyYAML~=5.3
 schema~=0.7
+email-validator~=1.1.3

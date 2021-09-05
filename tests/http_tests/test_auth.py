@@ -141,8 +141,8 @@ class AuthAPITest(BaseHTTPAPITest):
     @unittest_run_loop
     async def test_change_email(self):
         username = "user1"
-        old_email = "user@email.stuff"
-        new_email = "new_email@email.stuffs"
+        old_email = "user@stusta.de"
+        new_email = "new_email@stusta.de"
         user_id, password = await self._create_test_user(username, old_email)
         _, session_id, _ = await self.user_service.login_user(
             username=username, password=password, session_name="session1"
@@ -195,12 +195,12 @@ class AuthAPITest(BaseHTTPAPITest):
 
     @unittest_run_loop
     async def test_reset_password(self):
-        user_email = "user@email.email"
+        user_email = "user@stusta.de"
         username = "user1"
         user_id, password = await self._create_test_user(username, user_email)
         resp = await self.client.post(
             f"/api/v1/auth/recover_password",
-            json={"email": "fooo@lulz.lul"},
+            json={"email": "fooo@stusta.de"},
         )
         self.assertEqual(403, resp.status)
 

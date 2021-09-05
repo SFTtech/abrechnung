@@ -356,6 +356,34 @@ class GroupService(Application):
                         user_id
                     )
 
+    async def remove_member(self, *, user_id: int, group_id: int, member_id: int):
+        if user_id == member_id:
+            raise InvalidCommand(f"Cannot remove yourself from the group, use the leave button for that.")
+
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                await check_group_permissions(
+                    conn=conn, group_id=group_id, user_id=user_id, is_owner=True
+                )
+
+                membership = await conn.fetchrow(
+                    "select user_id, is_owner from group_membership gm where gm.user_id = $1 and gm.group_id = $2",
+                    member_id,
+                    group_id
+                )
+
+                if membership is None:
+                    raise NotFoundError(f"No such member")
+
+                if membership["is_owner"]:
+                    raise PermissionError(f"Cannot remove another group owner from the group")
+
+                await conn.execute(
+                    "delete from group_membership gm where gm.group_id = $1 and gm.user_id = $2",
+                    group_id,
+                    member_id
+                )
+
     async def preview_group(self, invite_token: str) -> GroupPreview:
         async with self.db_pool.acquire() as conn:
             group = await conn.fetchrow(
