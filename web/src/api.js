@@ -156,6 +156,16 @@ export async function renameSession({ sessionID, name }) {
     return resp.data;
 }
 
+export async function requestPasswordRecovery({ email }) {
+    const resp = await makePost("/auth/recover_password", { email: email });
+    return resp.data;
+}
+
+export async function confirmPasswordRecovery({ token, newPassword }) {
+    const resp = await makePost("/auth/confirm_password_recovery", { token: token, new_password: newPassword });
+    return resp.data;
+}
+
 export async function changeEmail({ password, newEmail }) {
     const resp = await makePost("/profile/change_email", { password: password, email: newEmail });
     return resp.data;

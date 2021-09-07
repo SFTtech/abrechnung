@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { useRecoilValue } from "recoil";
-import { userData } from "../../recoil/auth";
+import React, {useState} from "react";
+import {useRecoilValue} from "recoil";
+import {userData} from "../../recoil/auth";
 import Typography from "@material-ui/core/Typography";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
@@ -18,10 +18,10 @@ import DialogContentText from "@material-ui/core/DialogContentText";
 import Button from "@material-ui/core/Button";
 import Close from "@material-ui/icons/Close";
 import Check from "@material-ui/icons/Check";
-import { makeStyles, TextField } from "@material-ui/core";
-import { deleteSession, renameSession } from "../../api";
-import { DateTime } from "luxon";
-import { toast } from "react-toastify";
+import {makeStyles, TextField} from "@material-ui/core";
+import {deleteSession, renameSession} from "../../api";
+import {DateTime} from "luxon";
+import {toast} from "react-toastify";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -33,27 +33,27 @@ export default function SessionList() {
     const classes = useStyles();
     // TODO: fix editing functions
     const [editedSessions, setEditedSessions] = useState({});
-    const [sessionToDelete, setSessionToDelete] = useState({ show: false, toDelete: null });
+    const [sessionToDelete, setSessionToDelete] = useState({show: false, toDelete: null});
     const user = useRecoilValue(userData);
     const sessions = user.sessions;
 
     const editSession = (id) => {
         if (!editedSessions.hasOwnProperty(id)) {
-            const newSessions = { ...editedSessions, [id]: sessions.find(session => session.id === id)?.name };
+            const newSessions = {...editedSessions, [id]: sessions.find(session => session.id === id)?.name};
             setEditedSessions(newSessions);
         }
     };
 
     const stopEditSession = (id) => {
         if (editedSessions.hasOwnProperty(id)) {
-            let newEditedSessions = { ...editedSessions };
+            let newEditedSessions = {...editedSessions};
             delete newEditedSessions[id];
             setEditedSessions(newEditedSessions);
         }
     };
 
     const closeDeleteSessionModal = () => {
-        setSessionToDelete({ show: false, toDelete: null });
+        setSessionToDelete({show: false, toDelete: null});
     };
 
     const performRename = (id) => {
@@ -61,30 +61,37 @@ export default function SessionList() {
             renameSession({
                 sessionID: id,
                 name: editedSessions[id]
-            }).catch(err => {
-                toast.error(err);
-            });
+            })
+                .catch(err => {
+                    toast.error(err);
+                });
             stopEditSession(id);
         }
     };
 
     const openDeleteSessionModal = (id) => {
-        setSessionToDelete({ show: true, toDelete: id });
+        setSessionToDelete({show: true, toDelete: id});
     };
 
     const confirmDeleteSession = () => {
         if (sessionToDelete.toDelete !== null) {
-            deleteSession({ sessionID: sessionToDelete.toDelete })
+            deleteSession({sessionID: sessionToDelete.toDelete})
                 .catch(err => {
                     toast.error(err);
                 });
-            setSessionToDelete({ show: false, toDelete: null });
+            setSessionToDelete({show: false, toDelete: null});
         }
     };
 
     const handleEditChange = (id, value) => {
-        const newEditedSessions = { ...editedSessions, [id]: value };
+        const newEditedSessions = {...editedSessions, [id]: value};
         setEditedSessions(newEditedSessions);
+    };
+
+    const onKeyUp = (id) => (key) => {
+        if (key.keyCode === 13) {
+            performRename(id);
+        }
     };
 
     return (
@@ -100,15 +107,16 @@ export default function SessionList() {
                                 <TextField
                                     margin="normal"
                                     fullWidth
+                                    onKeyUp={onKeyUp(session.id)}
                                     value={editedSessions[session.id]}
                                     onChange={(event) => handleEditChange(session.id, event.target.value)}
                                 />
                                 <ListItemSecondaryAction>
                                     <Button onClick={() => performRename(session.id)}>
-                                        <Check />
+                                        <Check/>
                                     </Button>
                                     <Button onClick={() => stopEditSession(session.id)}>
-                                        <Close />
+                                        <Close/>
                                     </Button>
                                 </ListItemSecondaryAction>
                             </ListItem>
@@ -116,20 +124,21 @@ export default function SessionList() {
                     } else {
                         return (
                             <ListItem key={session.id}>
-                                <ListItemText primary={session.name}
-                                              secondary={(
-                                                  <>
-                                                      <span>Valid until {DateTime.fromISO(session.valid_until).toLocaleString(DateTime.DATETIME_FULL) && "indefinitely"}, </span>
-                                                      <span>Last seen on {DateTime.fromISO(session.last_seen).toLocaleString(DateTime.DATETIME_FULL)}</span>
-                                                  </>
-                                              )} />
+                                <ListItemText
+                                    primary={session.name}
+                                    secondary={(
+                                        <>
+                                            <span>Valid until {DateTime.fromISO(session.valid_until).toLocaleString(DateTime.DATETIME_FULL) && "indefinitely"}, </span>
+                                            <span>Last seen on {DateTime.fromISO(session.last_seen).toLocaleString(DateTime.DATETIME_FULL)}</span>
+                                        </>
+                                    )}/>
                                 <ListItemSecondaryAction>
                                     <IconButton onClick={() => editSession(session.id)}>
-                                        <Edit />
+                                        <Edit/>
                                     </IconButton>
                                     <IconButton
                                         onClick={() => openDeleteSessionModal(session.id)}>
-                                        <Delete />
+                                        <Delete/>
                                     </IconButton>
                                 </ListItemSecondaryAction>
                             </ListItem>

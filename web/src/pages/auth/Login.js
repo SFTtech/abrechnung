@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from "react";
-import { Link as RouterLink, useHistory } from "react-router-dom";
-import { Field, Form, Formik } from "formik";
-import { isAuthenticated, userData } from "../../recoil/auth";
-import { useRecoilValue, useSetRecoilState } from "recoil";
-import Loading from "../../components/style/Loading";
-import { toast } from "react-toastify";
+import React, {useEffect} from "react";
+import {Link as RouterLink, useHistory} from "react-router-dom";
+import {Field, Form, Formik} from "formik";
+import {isAuthenticated, userData} from "../../recoil/auth";
+import {useRecoilValue, useSetRecoilState} from "recoil";
+import {toast} from "react-toastify";
 import Button from "@material-ui/core/Button";
 import LinearProgress from "@material-ui/core/LinearProgress";
-import { TextField } from "formik-material-ui";
-import { Container, CssBaseline, makeStyles } from "@material-ui/core";
+import {TextField} from "formik-material-ui";
+import {Container, CssBaseline, makeStyles} from "@material-ui/core";
 import Typography from "@material-ui/core/Typography";
 import Avatar from "@material-ui/core/Avatar";
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
-import { fetchProfile, login, removeToken } from "../../api";
+import {fetchProfile, login, removeToken} from "../../api";
 import Grid from "@material-ui/core/Grid";
 import Link from "@material-ui/core/Link";
+import {useQuery} from "../../utils";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -39,34 +39,33 @@ const useStyles = makeStyles((theme) => ({
 export default function Login() {
     const setUserData = useSetRecoilState(userData);
     const isLoggedIn = useRecoilValue(isAuthenticated);
-    const [loading, setLoading] = useState(true);
-    let history = useHistory();
+    const query = useQuery();
+    const history = useHistory();
     const classes = useStyles();
 
     useEffect(() => {
         if (isLoggedIn) {
-            setLoading(false);
-            history.push("/"); // TODO: handle next page on redirect
-        } else {
-            setLoading(false);
+            if (query.get("next") !== null && query.get("next") !== undefined) {
+                history.push(query.get("next"));
+            } else {
+                history.push("/");
+            }
         }
-    }, [isLoggedIn, history]);
+    }, [isLoggedIn, history, query]);
 
-    const handleSubmit = (values, { setSubmitting }) => {
+    const handleSubmit = (values, {setSubmitting}) => {
         login(values).then(res => {
             toast.success(`Logged in...`);
             setSubmitting(false);
             fetchProfile()
                 .then(result => {
                     setUserData(result);
-                    setLoading(false);
                 })
                 .catch(err => {
                     console.log("error loading user info in root app", err);
                     toast.error(err);
                     removeToken();
                     setUserData(null);
-                    setLoading(false);
                 });
         }).catch(err => {
             toast.error(err);
@@ -76,24 +75,20 @@ export default function Login() {
         });
     };
 
-    if (loading) {
-        return <Loading />;
-    }
-
     return (
         <Container component="main" maxWidth="xs">
-            <CssBaseline />
+            <CssBaseline/>
             <div className={classes.paper}>
                 <Avatar className={classes.avatar}>
-                    <LockOutlinedIcon />
+                    <LockOutlinedIcon/>
                 </Avatar>
                 <Typography component="h1" variant="h5">
                     Sign in
                 </Typography>
-                <Formik initialValues={{ password: "", username: "" }} onSubmit={handleSubmit}>
-                    {({ handleSubmit, isSubmitting }) => (
+                <Formik initialValues={{password: "", username: ""}} onSubmit={handleSubmit}>
+                    {({handleSubmit, isSubmitting}) => (
                         <Form onSubmit={handleSubmit}>
-                            <input type="hidden" name="remember" value="true" />
+                            <input type="hidden" name="remember" value="true"/>
                             <Field
                                 variant="outlined"
                                 margin="normal"
@@ -117,7 +112,7 @@ export default function Login() {
                                 label="Password"
                             />
 
-                            {isSubmitting && <LinearProgress />}
+                            {isSubmitting && <LinearProgress/>}
                             <Button
                                 type="submit"
                                 fullWidth
@@ -133,6 +128,13 @@ export default function Login() {
                                 <Grid item>
                                     <Link to="/register" component={RouterLink} variant="body2">
                                         No account? register
+                                    </Link>
+                                </Grid>
+                            </Grid>
+                            <Grid container justify="flex-end">
+                                <Grid item>
+                                    <Link to="/recover-password" component={RouterLink} variant="body2">
+                                        Forgot your password?
                                     </Link>
                                 </Grid>
                             </Grid>

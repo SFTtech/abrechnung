@@ -234,7 +234,7 @@ class HTTPService(SubCommand):
             connection_id = await connection.fetchval(
                 "select connection_id from client_connected($1)", self.channel_id
             )
-            self.logger.info(f"Websocket client connected with id {connection_id}")
+            self.logger.debug(f"Websocket client connected with id {connection_id}")
 
         # create the tx queue and task
         tx_queue = asyncio.Queue(maxsize=1000)
@@ -285,7 +285,7 @@ class HTTPService(SubCommand):
             del self.tx_queues[connection_id]
             tx_task.cancel()
             await tx_task
-            self.logger.info(f"websocket client with id {connection_id} disconnected")
+            self.logger.debug(f"websocket client with id {connection_id} disconnected")
 
         return ws
 

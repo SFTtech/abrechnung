@@ -6,7 +6,7 @@ from typing import Optional
 import asyncpg
 from asyncpg.pool import Pool
 
-revision_dir = Path(__file__).parent
+REVISION_DIR = Path(__file__).parent
 logger = logging.getLogger(__name__)
 
 REVISION_VERSION_RE = re.compile(r"^-- revision: (?P<version>\w+)$")
@@ -57,7 +57,7 @@ class SchemaRevision:
         returns an ordered list of revisions with their dependencies resolved
         """
         revisions = []
-        for revision in sorted(revision_dir.glob("*.sql")):
+        for revision in sorted(REVISION_DIR.glob("*.sql")):
             revision_content = revision.read_text("utf-8")
             lines = revision_content.splitlines()
             if not len(lines) > 2:
@@ -121,7 +121,7 @@ async def reset_schema(db_pool: Pool):
 
 
 async def apply_revisions(db_pool: Pool):
-    revisions = SchemaRevision.revisions_from_dir(revision_dir)
+    revisions = SchemaRevision.revisions_from_dir(REVISION_DIR)
 
     async with db_pool.acquire() as conn:
         async with conn.transaction():

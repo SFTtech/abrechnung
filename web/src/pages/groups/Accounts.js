@@ -100,7 +100,7 @@ export default function Accounts({group}) {
                 aria-labelledby="confirmation-dialog-title"
                 open={accountToDelete !== null}
             >
-                <DialogTitle id="confirmation-dialog-title">Confirm delete transaction</DialogTitle>
+                <DialogTitle id="confirmation-dialog-title">Confirm delete account</DialogTitle>
                 <DialogContent dividers>
                     Are you sure you want to delete the account
                     "{accounts.find(acc => acc.id === accountToDelete)?.name}"

@@ -2,6 +2,7 @@ import {atom, atomFamily, selector, selectorFamily} from "recoil";
 import {fetchAccounts, fetchGroups, fetchInvites, fetchLog, fetchMembers, getUserIDFromToken} from "../api";
 import {ws} from "../websocket";
 import {userData} from "./auth";
+import {DateTime} from "luxon";
 
 export const groupList = atom({
     key: "groupList",
@@ -85,19 +86,23 @@ export const groupAccounts = selectorFamily({
     }
 })
 
+const sortMembers = (members) => {
+    return members.sort((m1, m2) => DateTime.fromISO(m1.joined_at) < DateTime.fromISO(m2.joined_at));
+}
+
 export const groupMembers = atomFamily({
     key: "groupMembers",
     default: selectorFamily({
         key: "groupMembers/default",
         get: groupID => async ({get}) => {
-            return await fetchMembers({groupID: groupID});
+            return sortMembers(await fetchMembers({groupID: groupID}));
         }
     }),
     effects_UNSTABLE: groupID => [
         ({setSelf, trigger}) => {
             ws.subscribe("group_member", groupID, ({subscription_type, user_id, element_id}) => {
                 if (subscription_type === "group_member" && element_id === groupID) {
-                    fetchMembers({groupID: element_id}).then(result => setSelf(result));
+                    fetchMembers({groupID: element_id}).then(result => setSelf(sortMembers(result)));
                 }
             })
             // TODO: handle registration errors

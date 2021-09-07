@@ -1,0 +1,106 @@
+import React, {useEffect, useState} from "react";
+import {useHistory} from "react-router-dom";
+import {Field, Form, Formik} from "formik";
+import {isAuthenticated} from "../../recoil/auth";
+import {useRecoilValue} from "recoil";
+import Button from "@material-ui/core/Button";
+import LinearProgress from "@material-ui/core/LinearProgress";
+import {TextField} from "formik-material-ui";
+import {Container, CssBaseline, makeStyles} from "@material-ui/core";
+import Typography from "@material-ui/core/Typography";
+import {requestPasswordRecovery} from "../../api";
+import Alert from "@material-ui/lab/Alert";
+
+const useStyles = makeStyles((theme) => ({
+    paper: {
+        marginTop: theme.spacing(8),
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center"
+    },
+    submit: {
+        margin: theme.spacing(3, 0, 2)
+    },
+    alert: {
+        marginTop: theme.spacing(4)
+    }
+}));
+
+export default function RequestPasswordRecovery() {
+    const isLoggedIn = useRecoilValue(isAuthenticated);
+    const [status, setStatus] = useState("initial");
+    const [error, setError] = useState(null);
+    const history = useHistory();
+    const classes = useStyles();
+
+    useEffect(() => {
+        if (isLoggedIn) {
+            history.push("/");
+        }
+    }, [isLoggedIn, history]);
+
+    const handleSubmit = (values, {setSubmitting}) => {
+        requestPasswordRecovery(values)
+            .then(res => {
+                setStatus("success");
+                setError(null);
+                setSubmitting(false);
+            })
+            .catch(err => {
+                setStatus("error");
+                setError(err);
+                setSubmitting(false);
+            })
+    };
+
+    return (
+        <Container component="main" maxWidth="xs">
+            <CssBaseline/>
+            <div className={classes.paper}>
+                <Typography component="h1" variant="h5">
+                    Recover Password
+                </Typography>
+                <Typography component="p" variant="body1">
+                    Please enter your email. A recovery link will be sent shortly after.
+                </Typography>
+                {error && (
+                    <Alert className={classes.alert} severity="error">{error}</Alert>
+                )}
+                {status === "success" ? (
+                    <Alert className={classes.alert} severity="success">A recovery link has been sent to you via
+                        email.</Alert>
+                ) : (
+                    <Formik initialValues={{email: ""}} onSubmit={handleSubmit}>
+                        {({handleSubmit, isSubmitting}) => (
+                            <Form onSubmit={handleSubmit}>
+                                <Field
+                                    variant="outlined"
+                                    margin="normal"
+                                    required
+                                    fullWidth
+                                    autoFocus
+                                    component={TextField}
+                                    type="text"
+                                    label="E-Mail"
+                                    name="email"
+                                />
+                                {isSubmitting && <LinearProgress/>}
+                                <Button
+                                    type="submit"
+                                    fullWidth
+                                    variant="contained"
+                                    color="primary"
+                                    disabled={isSubmitting}
+                                    onClick={handleSubmit}
+                                    className={classes.submit}
+                                >
+                                    Confirm
+                                </Button>
+                            </Form>
+                        )}
+                    </Formik>
+                )}
+            </div>
+        </Container>
+    );
+}

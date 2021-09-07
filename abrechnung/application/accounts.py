@@ -166,7 +166,7 @@ class AccountService(Application):
                         group_id=group_id,
                         user_id=user_id,
                         type="account-committed",
-                        message=f"updated account account {name}",
+                        message=f"updated account {name}",
                     )
 
     async def delete_account(

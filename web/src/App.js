@@ -18,6 +18,8 @@ import GroupList from "./pages/groups/GroupList"
 import Layout from "./components/style/Layout";
 import {CssBaseline, useMediaQuery} from "@material-ui/core";
 import SessionList from "./pages/auth/SessionList";
+import ConfirmPasswordRecovery from "./pages/auth/ConfirmPasswordRecovery";
+import RequestPasswordRecovery from "./pages/auth/RequestPasswordRecovery";
 
 const Profile = React.lazy(() => import("./pages/auth/Profile"));
 const ConfirmEmailChange = React.lazy(() => import("./pages/auth/ConfirmEmailChange"));
@@ -75,6 +77,16 @@ const routes = [
     {
         path: "/confirm-registration/:token",
         component: <ConfirmRegistration/>,
+        auth: false,
+    },
+    {
+        path: "/recover-password",
+        component: <RequestPasswordRecovery/>,
+        auth: false,
+    },
+    {
+        path: "/confirm-password-recovery/:token",
+        component: <ConfirmPasswordRecovery/>,
         auth: false,
     },
     {

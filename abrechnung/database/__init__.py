@@ -38,7 +38,6 @@ class CLI(subcommand.SubCommand):
     def __init__(self, config: Config, **args):
         self.config = config
         self.action = args["action"]
-        self.revision_dir = os.path.join(os.path.dirname(__file__), "revisions")
 
     @staticmethod
     def argparse_register(subparser):
@@ -87,7 +86,8 @@ class CLI(subcommand.SubCommand):
                 # if pgcli is installed, use that instead!
                 command = ["pgcli"]
 
-            ret = await util.run_as_fg_process(command, env=env, cwd=self.revision_dir)
+            cwd = os.path.join(os.path.dirname(__file__), "revisions")
+            ret = await util.run_as_fg_process(command, env=env, cwd=cwd)
 
             if ret != 0:
                 print(util.format_error("psql failed"))

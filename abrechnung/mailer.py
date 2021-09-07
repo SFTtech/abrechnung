@@ -199,7 +199,7 @@ class Mailer(subcommand.SubCommand):
                     "",
                     "To set a new one, visit",
                     "",
-                    f"{self.config['service']['url']}/password_reset.html?token={row['token']}",
+                    f"{self.config['service']['url']}/confirm-password-recovery/{row['token']}",
                     "",
                     f"Your request will time out {row['valid_until']}.",
                     "If you do not want to reset your password, just ignore this email.",
