@@ -9,7 +9,12 @@ from abrechnung.domain.groups import (
     GroupPreview,
     GroupLog,
 )
-from abrechnung.domain.transactions import Transaction, TransactionDetails
+from abrechnung.domain.transactions import (
+    Transaction,
+    TransactionDetails,
+    PurchaseItemDetails,
+    PurchaseItem,
+)
 from abrechnung.domain.users import User
 
 
@@ -90,8 +95,39 @@ class GroupLogSerializer(Serializer):
         }
 
 
+class PurchaseItemSerializer(Serializer):
+    @staticmethod
+    def _serialize_change(change: PurchaseItemDetails):
+        return {
+            "price": change.price,
+            "communist_shares": change.communist_shares,
+            "deleted": change.deleted,
+            "name": change.name,
+            "usages": {
+                str(account_id): val for account_id, val in change.usages.items()
+            },
+        }
+
+    def _to_repr(self, instance: PurchaseItem) -> dict:
+        data = {
+            "id": instance.id,
+            "pending_changes": {
+                str(user_id): self._serialize_change(change)
+                for user_id, change in instance.pending_changes.items()
+            }
+            if instance.pending_changes
+            else {},
+            "current_state": self._serialize_change(instance.current_state)
+            if instance.current_state
+            else None,
+        }
+
+        return data
+
+
 class TransactionSerializer(Serializer):
-    def _serialize_change(self, change: TransactionDetails):
+    @staticmethod
+    def _serialize_change(change: TransactionDetails):
         return {
             "description": change.description,
             "value": change.value,

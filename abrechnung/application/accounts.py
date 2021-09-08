@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Optional
 
 from abrechnung.domain.accounts import Account
 from . import (

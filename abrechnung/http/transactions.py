@@ -4,7 +4,7 @@ import schema
 from aiohttp import web
 from aiohttp.abc import Request
 
-from abrechnung.http.serializers import TransactionSerializer
+from abrechnung.http.serializers import TransactionSerializer, PurchaseItemSerializer
 from abrechnung.http.utils import json_response, validate
 
 routes = web.RouteTableDef()
@@ -51,7 +51,7 @@ async def create_transaction(request: Request, data: dict):
     return json_response(data={"transaction_id": transaction_id})
 
 
-@routes.get(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}")
+@routes.get(r"/transactions/{transaction_id:\d+}")
 async def get_transaction(request: Request):
 
     transaction = await request.app["transaction_service"].get_transaction(
@@ -64,7 +64,7 @@ async def get_transaction(request: Request):
     return json_response(data=serializer.to_repr())
 
 
-@routes.post(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}")
+@routes.post(r"/transactions/{transaction_id:\d+}")
 @validate(
     schema.Schema(
         {
@@ -90,7 +90,7 @@ async def update_transaction(request: Request, data: dict):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/commit")
+@routes.post(r"/transactions/{transaction_id:\d+}/commit")
 async def commit_transaction(request: Request):
     await request.app["transaction_service"].commit_transaction(
         user_id=request["user"]["user_id"],
@@ -100,7 +100,7 @@ async def commit_transaction(request: Request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.delete(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}")
+@routes.delete(r"/transactions/{transaction_id:\d+}")
 async def delete_transaction(request: Request):
     await request.app["transaction_service"].delete_transaction(
         user_id=request["user"]["user_id"],
@@ -110,7 +110,7 @@ async def delete_transaction(request: Request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/new_change")
+@routes.post(r"/transactions/{transaction_id:\d+}/new_change")
 async def create_transaction_change(request: Request):
     await request.app["transaction_service"].create_transaction_change(
         user_id=request["user"]["user_id"],
@@ -120,7 +120,7 @@ async def create_transaction_change(request: Request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/discard")
+@routes.post(r"/transactions/{transaction_id:\d+}/discard")
 async def discard_transaction_change(request: Request):
     await request.app["transaction_service"].discard_transaction_changes(
         user_id=request["user"]["user_id"],
@@ -130,9 +130,7 @@ async def discard_transaction_change(request: Request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post(
-    r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/creditor_shares"
-)
+@routes.post(r"/transactions/{transaction_id:\d+}/creditor_shares")
 @validate(
     schema.Schema(
         {
@@ -152,9 +150,7 @@ async def add_or_change_creditor_share(request: Request, data: dict):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post(
-    r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/creditor_shares/switch"
-)
+@routes.post(r"/transactions/{transaction_id:\d+}/creditor_shares/switch")
 @validate(
     schema.Schema(
         {
@@ -174,9 +170,7 @@ async def switch_creditor_share(request: Request, data: dict):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.delete(
-    r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/creditor_shares"
-)
+@routes.delete(r"/transactions/{transaction_id:\d+}/creditor_shares")
 @validate(
     schema.Schema(
         {
@@ -194,7 +188,7 @@ async def delete_creditor_share(request: Request, data: dict):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post(r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/debitor_shares")
+@routes.post(r"/transactions/{transaction_id:\d+}/debitor_shares")
 @validate(
     schema.Schema(
         {
@@ -214,9 +208,7 @@ async def add_or_change_debitor_share(request: Request, data: dict):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post(
-    r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/debitor_shares/switch"
-)
+@routes.post(r"/transactions/{transaction_id:\d+}/debitor_shares/switch")
 @validate(
     schema.Schema(
         {
@@ -236,9 +228,7 @@ async def switch_debitor_share(request: Request, data: dict):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.delete(
-    r"/groups/{group_id:\d+}/transactions/{transaction_id:\d+}/debitor_shares"
-)
+@routes.delete(r"/transactions/{transaction_id:\d+}/debitor_shares")
 @validate(
     schema.Schema(
         {
@@ -254,3 +244,118 @@ async def delete_debitor_share(request: Request, data: dict):
     )
 
     return json_response(status=web.HTTPNoContent.status_code)
+
+
+@routes.get(r"/transactions/{transaction_id:\d+}/purchase_items")
+async def list_purchase_items(request: Request):
+    purchase_items = await request.app["transaction_service"].list_purchase_items(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+    )
+
+    serializer = PurchaseItemSerializer(instance=purchase_items)
+
+    return json_response(data=serializer.to_repr())
+
+
+@routes.post(r"/transactions/{transaction_id:\d+}/purchase_items")
+@validate(
+    schema.Schema(
+        {
+            "name": str,
+            "price": schema.Or(int, float),
+            "communist_shares": schema.Or(int, float),
+        }
+    )
+)
+async def create_purchase_item(request: Request, data: dict):
+    item_id = await request.app["transaction_service"].create_purchase_item(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+        name=data["name"],
+        price=data["price"],
+        communist_shares=data["communist_shares"],
+    )
+
+    return json_response(data={"item_id": item_id})
+
+
+@routes.get(r"/purchase_items/{item_id:\d+}")
+async def get_purchase_item(request: Request):
+    purchase_item = await request.app["transaction_service"].get_purchase_item(
+        user_id=request["user"]["user_id"],
+        item_id=int(request.match_info["item_id"]),
+    )
+
+    serializer = PurchaseItemSerializer(instance=purchase_item)
+
+    return json_response(data=serializer.to_repr())
+
+
+@routes.post(r"/purchase_items/{item_id:\d+}")
+@validate(
+    schema.Schema(
+        {
+            "name": str,
+            "price": schema.Or(int, float),
+            "communist_shares": schema.Or(int, float),
+        }
+    )
+)
+async def update_purchase_item(request: Request, data: dict):
+    await request.app["transaction_service"].update_purchase_item(
+        user_id=request["user"]["user_id"],
+        item_id=int(request.match_info["item_id"]),
+        name=data["name"],
+        price=data["price"],
+        communist_shares=data["communist_shares"],
+    )
+
+    return web.Response(status=web.HTTPNoContent.status_code)
+
+
+@routes.post(r"/purchase_items/{item_id:\d+}/shares")
+@validate(
+    schema.Schema(
+        {
+            "account_id": int,
+            "share_amount": schema.Or(int, float),
+        }
+    )
+)
+async def add_or_change_item_share(request: Request, data: dict):
+    await request.app["transaction_service"].add_or_change_item_share(
+        user_id=request["user"]["user_id"],
+        item_id=int(request.match_info["item_id"]),
+        account_id=data["account_id"],
+        share_amount=data["share_amount"],
+    )
+
+    return web.Response(status=web.HTTPNoContent.status_code)
+
+
+@routes.delete(r"/purchase_items/{item_id:\d+}/shares")
+@validate(
+    schema.Schema(
+        {
+            "account_id": int,
+        }
+    )
+)
+async def delete_item_share(request: Request, data: dict):
+    await request.app["transaction_service"].delete_item_share(
+        user_id=request["user"]["user_id"],
+        item_id=int(request.match_info["item_id"]),
+        account_id=data["account_id"],
+    )
+
+    return web.Response(status=web.HTTPNoContent.status_code)
+
+
+@routes.delete(r"/purchase_items/{item_id:\d+}")
+async def delete_purchase_item(request: Request):
+    await request.app["transaction_service"].delete_purchase_item(
+        user_id=request["user"]["user_id"], item_id=int(request.match_info["item_id"])
+    )
+
+    return web.Response(status=web.HTTPNoContent.status_code)

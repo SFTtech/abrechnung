@@ -813,8 +813,6 @@ create or replace view committed_transaction_history as
         transaction_history history
         join transaction on transaction.id = history.id
         join transaction_revision r on r.id = history.revision_id
-        left join creditor_shares_as_json cs on cs.revision_id = r.id and cs.transaction_id = transaction.id
-        left join debitor_shares_as_json ds on ds.revision_id = r.id and ds.transaction_id = transaction.id
     where
         r.committed is not null window wnd as ( partition by transaction.id order by r.committed desc );
 

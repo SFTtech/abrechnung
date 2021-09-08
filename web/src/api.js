@@ -355,7 +355,6 @@ export async function createTransaction({
 }
 
 export async function updateTransactionDetails({
-                                                   groupID,
                                                    transactionID,
                                                    description,
                                                    value,
@@ -363,7 +362,7 @@ export async function updateTransactionDetails({
                                                    currencySymbol,
                                                    currencyConversionRate
                                                }) {
-    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}`, {
+    const resp = await makePost(`/transactions/${transactionID}`, {
         description: description,
         value: value,
         billed_at: billedAt,
@@ -373,24 +372,24 @@ export async function updateTransactionDetails({
     return resp.data;
 }
 
-export async function createOrUpdateCreditorShare({ groupID, transactionID, accountID, value }) {
-    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}/creditor_shares`, {
+export async function createOrUpdateCreditorShare({ transactionID, accountID, value }) {
+    const resp = await makePost(`/transactions/${transactionID}/creditor_shares`, {
         account_id: accountID,
         value: value
     });
     return resp.data;
 }
 
-export async function switchCreditorShare({ groupID, transactionID, accountID, value }) {
-    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}/creditor_shares/switch`, {
+export async function switchCreditorShare({ transactionID, accountID, value }) {
+    const resp = await makePost(`/transactions/${transactionID}/creditor_shares/switch`, {
         account_id: accountID,
         value: value
     });
     return resp.data;
 }
 
-export async function deleteCreditorShare({ groupID, transactionID, accountID }) {
-    const resp = await makeDelete(`/groups/${groupID}/transactions/${transactionID}/creditor_shares`, {
+export async function deleteCreditorShare({ transactionID, accountID }) {
+    const resp = await makeDelete(`/transactions/${transactionID}/creditor_shares`, {
         data: {
             account_id: accountID
         }
@@ -398,24 +397,24 @@ export async function deleteCreditorShare({ groupID, transactionID, accountID })
     return resp.data;
 }
 
-export async function createOrUpdateDebitorShare({ groupID, transactionID, accountID, value }) {
-    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}/debitor_shares`, {
+export async function createOrUpdateDebitorShare({ transactionID, accountID, value }) {
+    const resp = await makePost(`/transactions/${transactionID}/debitor_shares`, {
         account_id: accountID,
         value: value
     });
     return resp.data;
 }
 
-export async function switchDebitorShare({ groupID, transactionID, accountID, value }) {
-    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}/debitor_shares/switch`, {
+export async function switchDebitorShare({ transactionID, accountID, value }) {
+    const resp = await makePost(`/transactions/${transactionID}/debitor_shares/switch`, {
         account_id: accountID,
         value: value
     });
     return resp.data;
 }
 
-export async function deleteDebitorShare({ groupID, transactionID, accountID }) {
-    const resp = await makeDelete(`/groups/${groupID}/transactions/${transactionID}/debitor_shares`, {
+export async function deleteDebitorShare({ transactionID, accountID }) {
+    const resp = await makeDelete(`/transactions/${transactionID}/debitor_shares`, {
         data: {
             account_id: accountID
         }
@@ -423,23 +422,23 @@ export async function deleteDebitorShare({ groupID, transactionID, accountID }) 
     return resp.data;
 }
 
-export async function commitTransaction({ groupID, transactionID }) {
-    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}/commit`);
+export async function commitTransaction({ transactionID }) {
+    const resp = await makePost(`/transactions/${transactionID}/commit`);
     return resp.data;
 }
 
-export async function createTransactionChange({ groupID, transactionID }) {
-    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}/new_change`);
+export async function createTransactionChange({ transactionID }) {
+    const resp = await makePost(`/transactions/${transactionID}/new_change`);
     return resp.data;
 }
 
-export async function discardTransactionChange({ groupID, transactionID }) {
-    const resp = await makePost(`/groups/${groupID}/transactions/${transactionID}/discard`);
+export async function discardTransactionChange({ transactionID }) {
+    const resp = await makePost(`/transactions/${transactionID}/discard`);
     return resp.data;
 }
 
-export async function deleteTransaction({ groupID, transactionID }) {
-    const resp = await makeDelete(`/groups/${groupID}/transactions/${transactionID}`);
+export async function deleteTransaction({ transactionID }) {
+    const resp = await makeDelete(`/transactions/${transactionID}`);
     return resp.data;
 }
 
