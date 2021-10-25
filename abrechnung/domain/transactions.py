@@ -11,6 +11,19 @@ class TransactionType(Enum):
 
 
 @dataclass
+class PurchaseItem:
+    id: int
+
+    name: str
+    price: float
+    communist_shares: float
+    deleted: bool
+
+    # usages map account IDs to portions of the item share pool
+    usages: dict[int, float]
+
+
+@dataclass
 class TransactionDetails:
     description: str
     value: float
@@ -26,6 +39,8 @@ class TransactionDetails:
     creditor_shares: dict[int, float]
     debitor_shares: dict[int, float]
 
+    purchase_items: Optional[list[PurchaseItem]]
+
 
 @dataclass
 class Transaction:
@@ -34,22 +49,3 @@ class Transaction:
     current_state: Optional[TransactionDetails]
     pending_changes: Optional[dict[int, TransactionDetails]]
     # created_by: int
-
-
-@dataclass
-class PurchaseItemDetails:
-    name: str
-    price: float
-    communist_shares: float
-    deleted: bool
-
-    # usages map account IDs to portions of the item share pool
-    usages: dict[int, float]
-
-
-@dataclass
-class PurchaseItem:
-    id: int
-
-    current_state: Optional[PurchaseItemDetails]
-    pending_changes: Optional[dict[int, PurchaseItemDetails]]

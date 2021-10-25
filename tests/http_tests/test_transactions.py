@@ -617,14 +617,14 @@ class TransactionAPITest(HTTPAPITest):
             group_id=group_id,
             type="personal",
             name="account1",
-            description="foobar"
+            description="foobar",
         )
         account2_id = await self.account_service.create_account(
             user_id=self.test_user_id,
             group_id=group_id,
             type="personal",
             name="account2",
-            description="foobar"
+            description="foobar",
         )
         await self._post_debitor_share(transaction_id, account1_id, 1.0)
         await self._post_creditor_share(transaction_id, account2_id, 1.0)
@@ -660,13 +660,12 @@ class TransactionAPITest(HTTPAPITest):
         )
         self.assertEqual(204, resp.status)
 
-        resp = await self._get(f"/api/v1/transactions/{transaction_id}/purchase_items")
-        self.assertEqual(200, resp.status)
-        items = await resp.json()
-        self.assertEqual(1, len(items))
-        self.assertEqual(item_id, items[0]["id"])
-        self.assertIsNotNone(items[0]["current_state"])
-        self.assertIn(str(self.test_user_id), items[0]["pending_changes"])
+        t = await self._fetch_transaction(transaction_id)
+        self.assertIsNotNone(t["current_state"]["purchase_items"])
+        self.assertEqual(1, len(t["current_state"]["purchase_items"]))
+        self.assertEqual("carrots", t["current_state"]["purchase_items"][0]["name"])
+        self.assertEqual(1, len(t["pending_changes"][str(self.test_user_id)]["purchase_items"]))
+        self.assertEqual(0, t["pending_changes"][str(self.test_user_id)]["purchase_items"][0]["communist_shares"])
 
         resp = await self._post(
             f"/api/v1/purchase_items/{item_id}/shares",
@@ -676,6 +675,11 @@ class TransactionAPITest(HTTPAPITest):
 
         await self._commit_transaction(transaction_id=transaction_id)
 
+        t = await self._fetch_transaction(transaction_id)
+        self.assertIsNotNone(t["current_state"]["purchase_items"])
+        self.assertEqual(1, len(t["current_state"]["purchase_items"]))
+        self.assertIn(str(account2_id), t["current_state"]["purchase_items"][0]["usages"])
+
         resp = await self._delete(
             f"/api/v1/purchase_items/{item_id}",
         )
@@ -683,17 +687,7 @@ class TransactionAPITest(HTTPAPITest):
 
         await self._commit_transaction(transaction_id=transaction_id)
 
-        resp = await self._get(f"/api/v1/transactions/{transaction_id}/purchase_items")
-        self.assertEqual(200, resp.status)
-        items = await resp.json()
-        self.assertEqual(1, len(items))
-        self.assertEqual(item_id, items[0]["id"])
-        self.assertTrue(items[0]["current_state"]["deleted"])
-        self.assertIsNotNone(items[0]["current_state"])
-        self.assertEqual(dict(), items[0]["pending_changes"])
-
-        resp = await self._get(f"/api/v1/purchase_items/{item_id}")
-        self.assertEqual(200, resp.status)
-        item = await resp.json()
-        self.assertEqual(items[0], item)
-
+        t = await self._fetch_transaction(transaction_id)
+        self.assertIsNotNone(t["current_state"]["purchase_items"])
+        self.assertEqual(1, len(t["current_state"]["purchase_items"]))
+        self.assertTrue(t["current_state"]["purchase_items"][0]["deleted"])

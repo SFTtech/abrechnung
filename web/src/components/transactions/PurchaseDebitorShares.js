@@ -20,7 +20,6 @@ import Divider from "@material-ui/core/Divider";
 import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
 import { createOrUpdateDebitorShare, deleteDebitorShare } from "../../api";
-import { isNaN } from "formik";
 
 const useStyles = makeStyles((theme) => ({
     shareValue: {

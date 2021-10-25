@@ -15,13 +15,30 @@ from abrechnung.domain.transactions import (
     Transaction,
     TransactionDetails,
     PurchaseItem,
-    PurchaseItemDetails,
 )
 
 
 class TransactionService(Application):
     @staticmethod
     def _transaction_detail_from_db_json(db_json: dict) -> TransactionDetails:
+        purchase_items = None
+
+        if db_json.get("purchase_items") is not None:
+            purchase_items = [
+                PurchaseItem(
+                    id=p["id"],
+                    name=p["name"],
+                    price=p["price"],
+                    communist_shares=p["communist_shares"],
+                    deleted=p["deleted"],
+                    usages={
+                        usage["account_id"]: usage["share_amount"]
+                        for usage in p["usages"]
+                    },
+                )
+                for p in db_json["purchase_items"]
+            ]
+
         return TransactionDetails(
             description=db_json["description"],
             value=db_json["value"],
@@ -38,6 +55,7 @@ class TransactionService(Application):
                 deb["account_id"]: deb["shares"] for deb in db_json["debitor_shares"]
             },
             changed_by=db_json["last_changed_by"],
+            purchase_items=purchase_items,
         )
 
     @staticmethod
@@ -649,84 +667,6 @@ class TransactionService(Application):
                 )
                 if not r:
                     raise NotFoundError(f"Debitor share does not exist")
-
-    @staticmethod
-    def _purchase_item_detail_from_db_json(db_json: dict) -> PurchaseItemDetails:
-        return PurchaseItemDetails(
-            name=db_json["name"],
-            communist_shares=db_json["communist_shares"],
-            price=db_json["price"],
-            deleted=db_json["deleted"],
-            usages={
-                usage["account_id"]: usage["share_amount"]
-                for usage in db_json["usages"]
-            },
-        )
-
-    def _purchase_item_db_row(self, purchase_item: asyncpg.Record) -> PurchaseItem:
-        changes = purchase_item["pending_changes"]
-        if changes is None:
-            pending_changes = None
-        else:
-            pending_changes = {
-                c["last_changed_by"]: self._purchase_item_detail_from_db_json(c)
-                for c in json.loads(changes)
-            }
-
-        current_state = (
-            self._purchase_item_detail_from_db_json(
-                json.loads(purchase_item["current_state"])[0]
-            )
-            if purchase_item["current_state"] is not None
-            else None
-        )
-
-        return PurchaseItem(
-            id=purchase_item["id"],
-            current_state=current_state,
-            pending_changes=pending_changes,
-        )
-
-    async def list_purchase_items(
-        self, *, user_id: int, transaction_id: int
-    ) -> list[PurchaseItem]:
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                await self._check_transaction_permissions(
-                    conn=conn, transaction_id=transaction_id, user_id=user_id
-                )
-                cur = conn.cursor(
-                    "select id, transaction_id, current_state, pending_changes "
-                    "from current_purchase_item_state "
-                    "where transaction_id = $1",
-                    transaction_id,
-                )
-                result = []
-                async for purchase_item in cur:
-                    result.append(self._purchase_item_db_row(purchase_item))
-
-                return result
-
-    async def get_purchase_item(self, *, user_id: int, item_id: int) -> PurchaseItem:
-        async with self.db_pool.acquire() as conn:
-            group_id, transaction_id = await self._check_purchase_item_permissions(
-                conn=conn,
-                user_id=user_id,
-                item_id=item_id,
-                can_write=False,
-            )
-            purchase_item = await conn.fetchrow(
-                "select id, current_state, pending_changes "
-                "from current_purchase_item_state "
-                "where group_id = $1 and id = $2 and transaction_id = $3",
-                group_id,
-                item_id,
-                transaction_id
-            )
-            if purchase_item is None:
-                raise NotFoundError(f"Purchase Item with id '{item_id}' does not exist")
-
-            return self._purchase_item_db_row(purchase_item)
 
     async def create_purchase_item(
         self,

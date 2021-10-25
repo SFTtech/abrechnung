@@ -4,7 +4,7 @@ import schema
 from aiohttp import web
 from aiohttp.abc import Request
 
-from abrechnung.http.serializers import TransactionSerializer, PurchaseItemSerializer
+from abrechnung.http.serializers import TransactionSerializer
 from abrechnung.http.utils import json_response, validate
 
 routes = web.RouteTableDef()
@@ -246,18 +246,6 @@ async def delete_debitor_share(request: Request, data: dict):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.get(r"/transactions/{transaction_id:\d+}/purchase_items")
-async def list_purchase_items(request: Request):
-    purchase_items = await request.app["transaction_service"].list_purchase_items(
-        user_id=request["user"]["user_id"],
-        transaction_id=int(request.match_info["transaction_id"]),
-    )
-
-    serializer = PurchaseItemSerializer(instance=purchase_items)
-
-    return json_response(data=serializer.to_repr())
-
-
 @routes.post(r"/transactions/{transaction_id:\d+}/purchase_items")
 @validate(
     schema.Schema(
@@ -278,18 +266,6 @@ async def create_purchase_item(request: Request, data: dict):
     )
 
     return json_response(data={"item_id": item_id})
-
-
-@routes.get(r"/purchase_items/{item_id:\d+}")
-async def get_purchase_item(request: Request):
-    purchase_item = await request.app["transaction_service"].get_purchase_item(
-        user_id=request["user"]["user_id"],
-        item_id=int(request.match_info["item_id"]),
-    )
-
-    serializer = PurchaseItemSerializer(instance=purchase_item)
-
-    return json_response(data=serializer.to_repr())
 
 
 @routes.post(r"/purchase_items/{item_id:\d+}")
