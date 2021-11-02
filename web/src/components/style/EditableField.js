@@ -1,11 +1,9 @@
 import React, {useEffect, useState} from "react";
 
-import {makeStyles} from "@material-ui/core";
-import IconButton from "@material-ui/core/IconButton";
-import Check from "@material-ui/icons/Check";
-import Close from "@material-ui/icons/Close";
-import Edit from "@material-ui/icons/Edit";
 import DisabledTextField from "./DisabledTextField";
+import { IconButton } from "@mui/material";
+import { Check, Close, Edit } from "@mui/icons-material";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     root: {

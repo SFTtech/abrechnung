@@ -1,27 +1,30 @@
-import {Field, Form, Formik} from "formik";
+import { Field, Form, Formik } from "formik";
 import React from "react";
-import {toast} from "react-toastify";
-import {Checkbox, TextField} from "formik-material-ui";
-import Button from "@material-ui/core/Button";
-import Dialog from "@material-ui/core/Dialog";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogActions from "@material-ui/core/DialogActions";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import {DateTimePicker} from "formik-material-ui-pickers";
-import {FormControlLabel} from "@material-ui/core";
-import {createGroupInvite} from "../../api";
-import {DateTime} from "luxon";
+import { toast } from "react-toastify";
+import { createGroupInvite } from "../../api";
+import { DateTime } from "luxon";
+import {
+    Button,
+    Checkbox,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControlLabel,
+    LinearProgress,
+    TextField
+} from "@mui/material";
+import { DateTimePicker } from "@mui/lab";
 
-export default function InviteLinkCreate({show, onClose, group}) {
+export default function InviteLinkCreate({ show, onClose, group }) {
 
-    const handleSubmit = (values, {setSubmitting}) => {
+    const handleSubmit = (values, { setSubmitting }) => {
         createGroupInvite({
             groupID: group.id,
             name: values.name,
             description: values.description,
             validUntil: values.validUntil,
-            singleUse: values.singleUse,
+            singleUse: values.singleUse
         })
             .then(result => {
                 toast.success("Successfully created invite token");
@@ -30,48 +33,55 @@ export default function InviteLinkCreate({show, onClose, group}) {
             }).catch(err => {
             toast.error(err);
             setSubmitting(false);
-        })
+        });
     };
 
     const nowPlusOneHour = () => {
-        return DateTime.now().plus({hours: 1});
-    }
+        return DateTime.now().plus({ hours: 1 });
+    };
 
     return (
         <Dialog open={show} onClose={onClose}>
             <DialogTitle>Create Invite Link</DialogTitle>
 
             <DialogContent>
-                <Formik initialValues={{description: "", validUntil: nowPlusOneHour(), singleUse: false}} onSubmit={handleSubmit}>
-                    {({values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
+                <Formik initialValues={{ description: "", validUntil: nowPlusOneHour(), singleUse: false }}
+                        onSubmit={handleSubmit}>
+                    {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
                         <Form>
-                            <Field
+                            <TextField
                                 margin="normal"
                                 required
                                 fullWidth
                                 autoFocus
-                                component={TextField}
+                                variant="standard"
                                 name="description"
                                 label="Description"
+                                value={values.description}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
                             />
-                            <Field
+                            <DateTimePicker
                                 margin="normal"
-                                required
-                                fullWidth
-                                component={DateTimePicker}
-                                name="validUntil"
-                                label="Valid Until"
+                                label="Valid until"
+                                value={values.validUntil}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                renderInput={(props) => <TextField variant="standard" fullWidth {...props} />}
                             />
                             <FormControlLabel control={
-                                <Field
+                                <Checkbox
                                     margin="normal"
                                     type="checkbox"
-                                    component={Checkbox}
+                                    variant="standard"
                                     name="singleUse"
+                                    value={values.singleUse}
+                                    onChange={handleChange}
+                                    onBlur={handleBlur}
                                 />
-                            } label={"Single Use"}/>
+                            } label={"Single Use"} />
 
-                            {isSubmitting && <LinearProgress/>}
+                            {isSubmitting && <LinearProgress />}
                             <DialogActions>
                                 <Button color="secondary" onClick={onClose}>
                                     Cancel
@@ -90,5 +100,5 @@ export default function InviteLinkCreate({show, onClose, group}) {
                 </Formik>
             </DialogContent>
         </Dialog>
-    )
+    );
 }

@@ -1,18 +1,13 @@
 import React, {useState} from "react";
 import {useRecoilValue} from "recoil";
 import {transactionsSeenByUser} from "../../recoil/transactions";
-import List from "@material-ui/core/List";
-import IconButton from "@material-ui/core/IconButton";
-import Add from "@material-ui/icons/Add";
 import ListItemLink from "../style/ListItemLink";
-import ListItemText from "@material-ui/core/ListItemText";
-import Grid from "@material-ui/core/Grid";
-import Chip from "@material-ui/core/Chip";
 import TransactionCreateModal from "./TransactionCreateModal";
-import {makeStyles, Typography} from "@material-ui/core";
 import {currUserPermissions, groupAccounts} from "../../recoil/groups";
 import {DateTime} from "luxon";
-import Divider from "@material-ui/core/Divider";
+import { Chip, Divider, Grid, IconButton, List, ListItemText, Typography } from "@mui/material";
+import { Add } from "@mui/icons-material";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     propertyPill: {
@@ -34,7 +29,7 @@ export default function TransactionLog({group}) {
     return (
         <div>
             {userPermissions.can_write && (
-                <Grid container justify="center">
+                <Grid container justifyContent="center">
                     <IconButton color="primary" onClick={() => setShowCreateDialog(true)}>
                         <Add/>
                     </IconButton>

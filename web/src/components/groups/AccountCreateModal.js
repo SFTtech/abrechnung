@@ -1,14 +1,9 @@
 import React from "react";
 import {Field, Form, Formik} from "formik";
 import {toast} from "react-toastify";
-import Button from "@material-ui/core/Button";
-import Dialog from "@material-ui/core/Dialog";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogActions from "@material-ui/core/DialogActions";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import {TextField} from "formik-material-ui";
+import {TextField} from "formik-mui";
 import {createAccount} from "../../api";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress } from "@mui/material";
 
 export default function AccountCreateModal({show, onClose, group}) {
     const handleSubmit = (values, {setSubmitting}) => {
@@ -40,6 +35,7 @@ export default function AccountCreateModal({show, onClose, group}) {
                                 required
                                 fullWidth
                                 autoFocus
+                                variant="standard"
                                 component={TextField}
                                 name="name"
                                 label="Account Name"
@@ -48,6 +44,7 @@ export default function AccountCreateModal({show, onClose, group}) {
                                 margin="normal"
                                 required
                                 fullWidth
+                                variant="standard"
                                 component={TextField}
                                 name="description"
                                 label="Description"

@@ -1,12 +1,7 @@
 import React from "react";
-import Dialog from "@material-ui/core/Dialog";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContentText from "@material-ui/core/DialogContentText";
-import Button from "@material-ui/core/Button";
-import { DialogActions } from "@material-ui/core";
 import { deleteGroup } from "../../api";
 import { toast } from "react-toastify";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 
 export default function GroupDeleteModal({ show, onClose, groupToDelete }) {
 

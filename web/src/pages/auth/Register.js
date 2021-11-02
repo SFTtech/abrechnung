@@ -7,17 +7,19 @@ import {isAuthenticated} from "../../recoil/auth";
 import {register} from "../../api";
 import {toast} from "react-toastify";
 import Loading from "../../components/style/Loading";
-import {TextField} from "formik-material-ui";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import Button from "@material-ui/core/Button";
-import CssBaseline from "@material-ui/core/CssBaseline";
-import Avatar from "@material-ui/core/Avatar";
-import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
-import Typography from "@material-ui/core/Typography";
-import Container from "@material-ui/core/Container";
-import Grid from "@material-ui/core/Grid";
-import Link from "@material-ui/core/Link";
-import {makeStyles} from "@material-ui/core";
+import {TextField} from "formik-mui";
+import {
+    Avatar,
+    Button,
+    Container,
+    CssBaseline,
+    Grid,
+    LinearProgress,
+    Link,
+    Typography
+} from "@mui/material";
+import { LockOutlined } from "@mui/icons-material";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -80,7 +82,7 @@ export default function Register() {
                     <CssBaseline/>
                     <div className={classes.paper}>
                         <Avatar className={classes.avatar}>
-                            <LockOutlinedIcon/>
+                            <LockOutlined/>
                         </Avatar>
                         <Typography component="h1" variant="h5">
                             Register a new account

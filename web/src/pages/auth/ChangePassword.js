@@ -1,18 +1,14 @@
 import React from "react";
-import {Field, Form, Formik} from "formik";
-import Typography from "@material-ui/core/Typography";
-import Button from "@material-ui/core/Button";
-import Paper from "@material-ui/core/Paper";
-import {TextField} from "formik-material-ui";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import {makeStyles} from "@material-ui/core";
-import {changePassword} from "../../api";
+import { Form, Formik } from "formik";
+import { changePassword } from "../../api";
 import { toast } from "react-toastify";
+import { Button, LinearProgress, Paper, TextField, Typography } from "@mui/material";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
-        padding: theme.spacing(2),
-    },
+        padding: theme.spacing(2)
+    }
 }));
 
 export default function ChangePassword() {
@@ -24,12 +20,12 @@ export default function ChangePassword() {
             errors.newPassword = "Passwords do not match";
         }
         return errors;
-    }
+    };
 
-    const handleSubmit = (values, {setSubmitting}) => {
+    const handleSubmit = (values, { setSubmitting }) => {
         changePassword({
             oldPassword: values.password,
-            newPassword: values.newPassword,
+            newPassword: values.newPassword
         })
             .then((res) => {
                 setSubmitting(false);
@@ -46,42 +42,51 @@ export default function ChangePassword() {
             <Typography component="h3" variant="h5">
                 Change Password
             </Typography>
-            <Formik validate={validate} initialValues={{password: "", newPassword: "", newPassword2: ""}}
+            <Formik validate={validate} initialValues={{ password: "", newPassword: "", newPassword2: "" }}
                     onSubmit={handleSubmit}>
-                {({handleSubmit, isSubmitting}) => (
+                {({ values, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
                     <Form>
-                        <Field
+                        <TextField
                             required
                             fullWidth
                             autoFocus
                             margin="normal"
                             type="password"
                             name="password"
-                            component={TextField}
                             label="Password"
+                            variant="standard"
+                            value={values.password}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
                         />
 
-                        <Field
+                        <TextField
                             required
                             fullWidth
                             margin="normal"
                             type="password"
                             name="newPassword"
-                            component={TextField}
                             label="New Password"
+                            variant="standard"
+                            value={values.newPassword}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
                         />
 
-                        <Field
+                        <TextField
                             required
                             fullWidth
+                            variant="standard"
+                            value={values.newPassword2}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
                             margin="normal"
                             type="password"
                             name="newPassword2"
-                            component={TextField}
                             label="Repeat Password"
                         />
 
-                        {isSubmitting && <LinearProgress/>}
+                        {isSubmitting && <LinearProgress />}
                         <Button
                             type="submit"
                             color="primary"

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-import List from "@material-ui/core/List";
 import { toast } from "react-toastify";
 import DisabledTextField from "../style/DisabledTextField";
 import { updateTransactionDetails } from "../../api";
-import { TextField } from "@material-ui/core";
+import { TextField } from "@mui/material";
 
 export default function TransactionValue({ group, transaction }) {
     const [transactionValue, setTransactionValue] = useState("");
@@ -46,11 +45,12 @@ export default function TransactionValue({ group, transaction }) {
     };
 
     return (
-        <List>
+        <>
             {transaction.is_wip ? (
                 <TextField
                     label="Value"
                     helperText={error ? "please input a valid decimal number" : null}
+                    variant="standard"
                     fullWidth
                     error={error}
                     onChange={onChange}
@@ -61,12 +61,13 @@ export default function TransactionValue({ group, transaction }) {
             ) : (
                 <DisabledTextField
                     label="Value"
+                    variant="standard"
                     fullWidth
                     value={`${transaction.value.toFixed(2)} ${transaction.currency_symbol}`}
                     disabled={true}
                 />
             )}
 
-        </List>
+        </>
     );
 }

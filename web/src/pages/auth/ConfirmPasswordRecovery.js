@@ -1,16 +1,11 @@
 import React, {useState} from "react";
-import {Link as RouterLink, useParams} from "react-router-dom";
-import Typography from "@material-ui/core/Typography";
-import Button from "@material-ui/core/Button";
+import { Link as RouterLink, useParams } from "react-router-dom";
 import {confirmPasswordRecovery} from "../../api";
-import Container from "@material-ui/core/Container";
-import CssBaseline from "@material-ui/core/CssBaseline";
 import {Field, Form, Formik} from "formik";
-import {TextField} from "formik-material-ui";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import {makeStyles} from "@material-ui/core";
-import Alert from "@material-ui/lab/Alert";
-import Link from "@material-ui/core/Link";
+import {TextField} from "formik-mui";
+import { Button, Container, CssBaseline, LinearProgress, Link, Typography } from "@mui/material";
+import { Alert } from "@mui/lab";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {

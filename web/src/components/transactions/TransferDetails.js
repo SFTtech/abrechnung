@@ -4,7 +4,7 @@ import TransactionDescription from "./TransactionDescription";
 import TransactionBilledAt from "./TransactionBilledAt";
 import TransactionValue from "./TransactionValue";
 import TransactionDebitorShare from "./TransactionDebitorShare";
-import {makeStyles} from "@material-ui/core";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     shares: {
@@ -12,14 +12,14 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-export default function TransferDetails({group, transaction}) {
+export default function TransferDetails({ group, transaction }) {
     const classes = useStyles();
 
     return (
         <>
-            <TransactionDescription group={group} transaction={transaction}/>
-            <TransactionValue group={group} transaction={transaction}/>
-            <TransactionBilledAt group={group} transaction={transaction}/>
+            <TransactionDescription group={group} transaction={transaction} />
+            <TransactionValue group={group} transaction={transaction} />
+            <TransactionBilledAt group={group} transaction={transaction} />
 
             <TransactionCreditorShare
                 group={group}

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import List from "@material-ui/core/List";
+import { List, TextField } from "@mui/material";
 import { toast } from "react-toastify";
 import DisabledTextField from "../style/DisabledTextField";
 import { updateTransactionDetails } from "../../api";
-import { KeyboardDatePicker } from "@material-ui/pickers";
 import { DateTime } from "luxon";
+import DatePicker from "@mui/lab/DatePicker";
 
 export default function TransactionBilledAt({ group, transaction }) {
     const [billedAt, setBilledAt] = useState(DateTime.now());
@@ -38,22 +38,18 @@ export default function TransactionBilledAt({ group, transaction }) {
     return (
         <List>
             {transaction.is_wip ? (
-                <KeyboardDatePicker
-                    disableToolbar
-                    variant="inline"
+                <DatePicker
                     label="Billed At"
-                    fullWidth
-                    format="yyyy-MM-dd"
+                    views={["day"]}
                     value={billedAt}
                     onBlur={save}
                     onChange={onChange}
-                    KeyboardButtonProps={{
-                        "aria-label": "change date"
-                    }}
+                    renderInput={(params) => <TextField variant="standard" fullWidth {...params} helperText={null} />}
                 />
             ) : (
                 <DisabledTextField
                     label="Billed At"
+                    variant="standard"
                     fullWidth
                     value={transaction.billed_at}
                     disabled={true}

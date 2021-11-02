@@ -1,6 +1,6 @@
 import React from "react";
-import ListItem from "@material-ui/core/ListItem";
 import {Link as RouterLink} from "react-router-dom";
+import { ListItem } from "@mui/material";
 
 export default function ListItemLink(props) {
     const {to, children} = props;

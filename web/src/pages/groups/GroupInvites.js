@@ -2,20 +2,22 @@ import React, {useState} from "react";
 
 import InviteLinkCreate from "../../components/groups/InviteLinkCreate";
 import {toast} from "react-toastify";
-import List from "@material-ui/core/List";
-import IconButton from "@material-ui/core/IconButton";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
-import Delete from "@material-ui/icons/Delete";
-import Typography from "@material-ui/core/Typography";
-import Grid from "@material-ui/core/Grid";
-import AddIcon from "@material-ui/icons/Add";
-import {makeStyles, Paper} from "@material-ui/core";
 import {deleteGroupInvite} from "../../api";
 import {currUserPermissions, groupInvites, groupMembers} from "../../recoil/groups";
 import {useRecoilValue} from "recoil";
 import {DateTime} from "luxon";
+import {
+    Grid,
+    IconButton,
+    List,
+    ListItem,
+    ListItemSecondaryAction,
+    ListItemText,
+    Paper,
+    Typography
+} from "@mui/material";
+import { Add, Delete } from "@mui/icons-material";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -86,10 +88,10 @@ export default function GroupInvites({group}) {
             </List>
             {userPermissions.can_write && (
                 <>
-                    <Grid container justify="center">
+                    <Grid container justifyContent="center">
                         <IconButton color="primary"
                                     onClick={() => setShowModal(true)}>
-                            <AddIcon/>
+                            <Add/>
                         </IconButton>
                     </Grid>
                     <InviteLinkCreate show={showModal} onClose={() => setShowModal(false)} group={group}/>

@@ -1,21 +1,23 @@
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
-import Grid from "@material-ui/core/Grid";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
-import IconButton from "@material-ui/core/IconButton";
-import {Edit} from "@material-ui/icons";
-import Delete from "@material-ui/icons/Delete";
-import Add from "@material-ui/icons/Add";
 import AccountCreateModal from "../../components/groups/AccountCreateModal";
 import AccountEditModal from "../../components/groups/AccountEditModal";
 import React, {useState} from "react";
 import {useRecoilValue} from "recoil";
 import {currUserPermissions, groupAccounts} from "../../recoil/groups";
-import {Dialog, DialogActions, DialogContent, DialogTitle, makeStyles, Paper} from "@material-ui/core";
-import Button from "@material-ui/core/Button";
 import {deleteAccount} from "../../api";
 import {toast} from "react-toastify";
+import {
+    Button,
+    Dialog, DialogActions, DialogContent, DialogTitle,
+    Grid,
+    IconButton,
+    List,
+    ListItem,
+    ListItemSecondaryAction,
+    ListItemText,
+    Paper
+} from "@mui/material";
+import { Add, Delete, Edit } from "@mui/icons-material";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -82,7 +84,7 @@ export default function Accounts({group}) {
             </List>
             {userPermissions.can_write && (
                 <>
-                    <Grid container justify="center">
+                    <Grid container justifyContent="center">
                         <IconButton color="primary"
                                     onClick={() => setShowAccountCreationModal(true)}>
                             <Add/>

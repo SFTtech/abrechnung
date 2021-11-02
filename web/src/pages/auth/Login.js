@@ -4,17 +4,21 @@ import {Field, Form, Formik} from "formik";
 import {isAuthenticated, userData} from "../../recoil/auth";
 import {useRecoilValue, useSetRecoilState} from "recoil";
 import {toast} from "react-toastify";
-import Button from "@material-ui/core/Button";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import {TextField} from "formik-material-ui";
-import {Container, CssBaseline, makeStyles} from "@material-ui/core";
-import Typography from "@material-ui/core/Typography";
-import Avatar from "@material-ui/core/Avatar";
-import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
+import {TextField} from "formik-mui";
 import {fetchProfile, login, removeToken} from "../../api";
-import Grid from "@material-ui/core/Grid";
-import Link from "@material-ui/core/Link";
 import {useQuery} from "../../utils";
+import {
+    Avatar,
+    Button,
+    Container,
+    CssBaseline,
+    Grid,
+    LinearProgress,
+    Link,
+    Typography
+} from "@mui/material";
+import { LockOutlined } from "@mui/icons-material";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -62,7 +66,6 @@ export default function Login() {
                     setUserData(result);
                 })
                 .catch(err => {
-                    console.log("error loading user info in root app", err);
                     toast.error(err);
                     removeToken();
                     setUserData(null);
@@ -80,7 +83,7 @@ export default function Login() {
             <CssBaseline/>
             <div className={classes.paper}>
                 <Avatar className={classes.avatar}>
-                    <LockOutlinedIcon/>
+                    <LockOutlined/>
                 </Avatar>
                 <Typography component="h1" variant="h5">
                     Sign in

@@ -1,19 +1,20 @@
 import React from "react";
 import { toast } from "react-toastify";
-import { Field, Form, Formik } from "formik";
-import Dialog from "@material-ui/core/Dialog";
-import Button from "@material-ui/core/Button";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogActions from "@material-ui/core/DialogActions";
-import { Select, TextField } from "formik-material-ui";
-import FormControl from "@material-ui/core/FormControl";
-import InputLabel from "@material-ui/core/InputLabel";
-import MenuItem from "@material-ui/core/MenuItem";
+import { Form, Formik } from "formik";
 import { createTransaction } from "../../api";
-import { KeyboardDatePicker } from "formik-material-ui-pickers";
 import { DateTime } from "luxon";
+import {
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    LinearProgress,
+    MenuItem,
+    Select,
+    TextField
+} from "@mui/material";
+import { DateTimePicker } from "@mui/lab";
 
 export default function TransactionCreateModal({ group, show, onClose }) {
     const handleSubmit = (values, { setSubmitting }) => {
@@ -58,48 +59,58 @@ export default function TransactionCreateModal({ group, show, onClose }) {
                 <Formik validate={validate}
                         initialValues={{ type: "purchase", description: "", value: "0.0", billedAt: DateTime.now() }}
                         onSubmit={handleSubmit}>
-                    {({ handleSubmit, isSubmitting }) => (
+                    {({ values, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
                         <Form>
-                            <FormControl>
-                                <InputLabel>Type</InputLabel>
-                                <Field
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    autoFocus
-                                    component={Select}
-                                    name="type"
-                                >
-                                    <MenuItem value="purchase">Purchase</MenuItem>
-                                    <MenuItem value="transfer">Transfer</MenuItem>
-                                    {/*<MenuItem value="mimo">MIMO</MenuItem>*/}
-                                </Field>
-                            </FormControl>
-                            <Field
+                            <Select
+                                margin="normal"
+                                required
+                                autoFocus
+                                value={values.type}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                variant="standard"
+                                name="type"
+                            >
+                                <MenuItem value="purchase">Purchase</MenuItem>
+                                <MenuItem value="transfer">Transfer</MenuItem>
+                                {/*<MenuItem value="mimo">MIMO</MenuItem>*/}
+                            </Select>
+                            <TextField
                                 margin="normal"
                                 required
                                 fullWidth
-                                component={TextField}
+                                variant="standard"
                                 name="description"
                                 label="Description"
+                                value={values.description}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
                             />
-                            <Field
+                            <DateTimePicker
                                 margin="normal"
                                 required
                                 fullWidth
-                                format="yyyy-MM-dd"
-                                component={KeyboardDatePicker}
+                                variant="standard"
                                 name="billedAt"
+                                views={["day"]}
+                                renderInput={(params) => <TextField variant="standard" fullWidth {...params}
+                                                                    helperText={null} />}
                                 label="Billed at"
+                                value={values.billedAt}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
                             />
-                            <Field
+                            <TextField
                                 margin="normal"
                                 required
                                 fullWidth
                                 type="number"
-                                component={TextField}
+                                variant="standard"
                                 name="value"
                                 label="Value"
+                                value={values.value}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
                             />
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>

@@ -1,12 +1,10 @@
 import React, {useState} from "react";
 import {Link as RouterLink, useParams} from "react-router-dom";
 import Loading from "../../components/style/Loading";
-import Typography from "@material-ui/core/Typography";
-import Button from "@material-ui/core/Button";
-import Link from "@material-ui/core/Link";
-import {Alert} from "@material-ui/lab";
 import {confirmRegistration} from "../../api";
-import {Container, makeStyles, Paper} from "@material-ui/core";
+import { Button, Container, Link, Paper, Typography } from "@mui/material";
+import { Alert } from "@mui/lab";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {

@@ -89,7 +89,7 @@ export async function fetchAccessToken(sessionToken) {
     return resp.data;
 }
 
-async function refreshToken() {
+export async function refreshToken() {
     const token = localStorage.getItem("access_token");
     if (token == null || String(token) === "null" || String(token) === "undefined" || DateTime.fromSeconds(JSON.parse(atob(token.split(".")[1])).exp) <= DateTime.now().plus({minutes: 1})) {
         const sessionToken = localStorage.getItem("session_token");

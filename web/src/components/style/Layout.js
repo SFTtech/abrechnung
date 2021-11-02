@@ -1,22 +1,32 @@
 import clsx from "clsx";
-import React, {useEffect, useState} from "react";
-import {Container, makeStyles, Menu, MenuItem, SwipeableDrawer, useMediaQuery, useTheme} from "@material-ui/core";
-import {Link as RouterLink} from "react-router-dom";
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
-import List from "@material-ui/core/List";
-import Typography from "@material-ui/core/Typography";
-import Divider from "@material-ui/core/Divider";
-import IconButton from "@material-ui/core/IconButton";
-import MenuIcon from "@material-ui/icons/Menu";
-import ChevronLeftIcon from "@material-ui/icons/ChevronLeft";
-import ChevronRightIcon from "@material-ui/icons/ChevronRight";
-import ListItemText from "@material-ui/core/ListItemText";
-import {useRecoilValue} from "recoil";
-import {isAuthenticated} from "../../recoil/auth";
+import React, { useEffect, useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
+import { useRecoilValue } from "recoil";
+import { isAuthenticated } from "../../recoil/auth";
 import ListItemLink from "./ListItemLink";
-import Button from "@material-ui/core/Button";
-import AccountCircleIcon from "@material-ui/icons/AccountCircle";
+import {
+    AppBar,
+    Button,
+    Container,
+    Divider,
+    IconButton,
+    List,
+    ListItemText,
+    Menu,
+    MenuItem,
+    SwipeableDrawer,
+    Toolbar,
+    Typography,
+    useMediaQuery,
+    useTheme
+} from "@mui/material";
+import {
+    AccountCircle as AccountCircleIcon,
+    ChevronLeft as ChevronLeftIcon,
+    ChevronRight as ChevronRightIcon,
+    Menu as MenuIcon
+} from "@mui/icons-material";
+import { makeStyles } from "@mui/styles";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 
@@ -97,7 +107,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-export default function Layout({group = null, children}) {
+export default function Layout({ group = null, children }) {
     const classes = useStyles();
     const theme = useTheme();
     const authenticated = useRecoilValue(isAuthenticated);
@@ -109,7 +119,7 @@ export default function Layout({group = null, children}) {
 
     useEffect(() => {
         setSidebarOpen(isLargeScreen);
-    }, [isLargeScreen])
+    }, [isLargeScreen]);
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -144,7 +154,7 @@ export default function Layout({group = null, children}) {
                         edge="start"
                         className={clsx(classes.menuButton, sidebarOpen && classes.hide)}
                     >
-                        <MenuIcon/>
+                        <MenuIcon />
                     </IconButton>
                     {group !== null ? (
                         <Button color="inherit" noWrap className={classes.title} component={RouterLink}
@@ -165,7 +175,7 @@ export default function Layout({group = null, children}) {
                                 onClick={handleProfileMenuOpen}
                                 color="inherit"
                             >
-                                <AccountCircleIcon/>
+                                <AccountCircleIcon />
                             </IconButton>
                             <Menu
                                 id="menu-appbar"
@@ -213,49 +223,49 @@ export default function Layout({group = null, children}) {
                 >
                     <div className={classes.drawerHeader}>
                         <IconButton onClick={handleSidebarClose}>
-                            {theme.direction === "ltr" ? <ChevronLeftIcon/> : <ChevronRightIcon/>}
+                            {theme.direction === "ltr" ? <ChevronLeftIcon /> : <ChevronRightIcon />}
                         </IconButton>
                     </div>
-                    <Divider/>
+                    <Divider />
                     {group != null && (
                         <>
                             <ListItemLink to={`/groups/${group.id}/`}>
-                                <ListItemText primary="Transactions"/>
+                                <ListItemText primary="Transactions" />
                             </ListItemLink>
                             <ListItemLink to={`/groups/${group.id}/accounts`}>
-                                <ListItemText primary="Accounts"/>
+                                <ListItemText primary="Accounts" />
                             </ListItemLink>
                             <ListItemLink to={`/groups/${group.id}/detail`}>
-                                <ListItemText primary="Group detail"/>
+                                <ListItemText primary="Group detail" />
                             </ListItemLink>
                             <ListItemLink to={`/groups/${group.id}/members`}>
-                                <ListItemText primary="Group Members"/>
+                                <ListItemText primary="Group Members" />
                             </ListItemLink>
                             <ListItemLink to={`/groups/${group.id}/invites`}>
-                                <ListItemText primary="Group Invites"/>
+                                <ListItemText primary="Group Invites" />
                             </ListItemLink>
                             <ListItemLink to={`/groups/${group.id}/log`}>
-                                <ListItemText primary="Group Log"/>
+                                <ListItemText primary="Group Log" />
                             </ListItemLink>
-                            <Divider/>
+                            <Divider />
                         </>
                     )}
                     <List>
                         <ListItemLink to="/">
-                            <ListItemText primary="Groups"/>
+                            <ListItemText primary="Groups" />
                         </ListItemLink>
-                        <Divider/>
+                        <Divider />
                         <ListItemLink to="/logout">
-                            <ListItemText primary="Sign out"/>
+                            <ListItemText primary="Sign out" />
                         </ListItemLink>
                     </List>
                 </SwipeableDrawer>
             ) : null}
             <main className={clsx(classes.content, {
                 [classes.contentShift]: sidebarOpen && isLargeScreen,
-                [classes.contentShiftSmallScreen]: sidebarOpen && !isLargeScreen,
+                [classes.contentShiftSmallScreen]: sidebarOpen && !isLargeScreen
             })}>
-                <div className={classes.drawerHeader}/>
+                <div className={classes.drawerHeader} />
                 <Container maxWidth="lg">
                     {children}
                 </Container>

@@ -3,13 +3,11 @@ import {useHistory} from "react-router-dom";
 import {Field, Form, Formik} from "formik";
 import {isAuthenticated} from "../../recoil/auth";
 import {useRecoilValue} from "recoil";
-import Button from "@material-ui/core/Button";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import {TextField} from "formik-material-ui";
-import {Container, CssBaseline, makeStyles} from "@material-ui/core";
-import Typography from "@material-ui/core/Typography";
+import {TextField} from "formik-mui";
 import {requestPasswordRecovery} from "../../api";
-import Alert from "@material-ui/lab/Alert";
+import { Button, Container, CssBaseline, LinearProgress, Typography } from "@mui/material";
+import { Alert } from "@mui/lab";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {

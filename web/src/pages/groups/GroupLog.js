@@ -1,26 +1,30 @@
-import React, {useState} from "react";
-import {useRecoilValue} from "recoil";
-import {groupLog, groupMembers} from "../../recoil/groups";
-import Switch from "@material-ui/core/Switch";
-import List from "@material-ui/core/List";
-import Button from "@material-ui/core/Button";
-import ListItem from "@material-ui/core/ListItem";
-import TextField from "@material-ui/core/TextField";
-import ListItemText from "@material-ui/core/ListItemText";
-import Divider from "@material-ui/core/Divider";
-import Typography from "@material-ui/core/Typography";
-import {FormControlLabel, makeStyles, Paper} from "@material-ui/core";
-import {sendGroupMessage} from "../../api";
-import {toast} from "react-toastify";
-import {DateTime} from "luxon";
+import React, { useState } from "react";
+import { useRecoilValue } from "recoil";
+import { groupLog, groupMembers } from "../../recoil/groups";
+import { sendGroupMessage } from "../../api";
+import { toast } from "react-toastify";
+import { DateTime } from "luxon";
+import {
+    Button,
+    Divider,
+    FormControlLabel,
+    List,
+    ListItem,
+    ListItemText,
+    Paper,
+    Switch,
+    TextField,
+    Typography
+} from "@mui/material";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
-        padding: theme.spacing(2),
-    },
+        padding: theme.spacing(2)
+    }
 }));
 
-export default function GroupLog({group}) {
+export default function GroupLog({ group }) {
     const classes = useStyles();
     const [message, setMessage] = useState("");
     const [showAllLogs, setShowAllLogs] = useState(false);
@@ -30,21 +34,21 @@ export default function GroupLog({group}) {
     const sendMessage = () => {
         sendGroupMessage({
             groupID: group.id,
-            message: message,
+            message: message
         }).then(result => {
             setMessage("");
         }).catch(err => {
             toast.error(err);
-        })
-    }
+        });
+    };
 
     const getMemberUsername = (member_id) => {
         const member = members.find(member => member.user_id === member_id);
         if (member === undefined) {
             return "unknown";
         }
-        return member.username
-    }
+        return member.username;
+    };
 
     const onKeyUp = (key) => {
         key.preventDefault();
@@ -69,7 +73,7 @@ export default function GroupLog({group}) {
                     color="primary"
                     onChange={e => setShowAllLogs(e.target.checked)}
                 />
-            } label="Show all Logs"/>
+            } label="Show all Logs" />
             <TextField
                 required
                 fullWidth
@@ -84,14 +88,14 @@ export default function GroupLog({group}) {
             <Button type="submit" color="primary" onClick={sendMessage}>
                 Send
             </Button>
-            <Divider variant="middle"/>
+            <Divider variant="middle" />
             <List>
                 {log.map((logEntry) => (
                     <ListItem key={logEntry.id}>
                         <ListItemText
                             primary={logEntry.message === "" ? logEntry.type : logEntry.message}
                             secondary={`by ${getMemberUsername(logEntry.user_id)} 
-                            on ${DateTime.fromISO(logEntry.logged_at).toLocaleString(DateTime.DATETIME_FULL)}`}/>
+                            on ${DateTime.fromISO(logEntry.logged_at).toLocaleString(DateTime.DATETIME_FULL)}`} />
                     </ListItem>
                 ))}
             </List>

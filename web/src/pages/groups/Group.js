@@ -8,12 +8,11 @@ import {useRecoilValue} from "recoil";
 import {groupById} from "../../recoil/groups";
 import Layout from "../../components/style/Layout";
 import Loading from "../../components/style/Loading";
-import {AppBar, Box, Paper, Tab, Tabs} from "@material-ui/core";
 import Transaction from "./Transaction";
 import GroupDetail from "./GroupDetail";
-import Grid from "@material-ui/core/Grid";
 import Balances from "../../components/groups/Balances";
 import Accounts from "./Accounts";
+import { AppBar, Box, Grid, Paper, Tab, Tabs } from "@mui/material";
 
 function TabPanel(props) {
     const {children, value, index, ...other} = props;

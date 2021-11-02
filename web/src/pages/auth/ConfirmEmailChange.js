@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Loading from "../../components/style/Loading";
-import Typography from "@material-ui/core/Typography";
-import Button from "@material-ui/core/Button";
 import { confirmEmailChange } from "../../api";
+import { Button, Typography } from "@mui/material";
 
 export default function ConfirmEmailChange() {
     const [status, setStatus] = useState("idle");

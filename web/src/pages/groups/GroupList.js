@@ -1,20 +1,21 @@
 import React, {useState} from "react";
 import {useRecoilValue} from "recoil";
 import {groupList} from "../../recoil/groups";
-import Typography from "@material-ui/core/Typography";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
-import ListItemText from "@material-ui/core/ListItemText";
-import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import ListItemLink from "../../components/style/ListItemLink";
-import IconButton from "@material-ui/core/IconButton";
-import Delete from "@material-ui/icons/Delete";
 import GroupCreateModal from "../../components/groups/GroupCreateModal";
 import GroupDeleteModal from "../../components/groups/GroupDeleteModal";
-import Grid from "@material-ui/core/Grid";
-import Paper from "@material-ui/core/Paper";
-import Add from "@material-ui/icons/Add";
-import {makeStyles} from "@material-ui/core";
+import {
+    Grid,
+    IconButton,
+    List,
+    ListItem,
+    ListItemSecondaryAction,
+    ListItemText,
+    Paper,
+    Typography
+} from "@mui/material";
+import { Add, Delete } from "@mui/icons-material";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -65,7 +66,7 @@ export default function GroupList() {
                     })
                 )}
             </List>
-            <Grid container justify="center">
+            <Grid container justifyContent="center">
                 <IconButton color="primary"
                             onClick={() => setShowGroupCreationModal(true)}>
                     <Add/>

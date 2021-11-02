@@ -3,21 +3,25 @@ import {Link as RouterLink, useHistory, useRouteMatch} from "react-router-dom";
 import {useRecoilValue} from "recoil";
 import {transactionById} from "../../recoil/transactions";
 import Loading from "../../components/style/Loading";
-import Button from "@material-ui/core/Button";
-import Paper from "@material-ui/core/Paper";
-import Chip from "@material-ui/core/Chip";
-import {Dialog, DialogActions, DialogContent, DialogTitle, makeStyles} from "@material-ui/core";
-import Grid from "@material-ui/core/Grid";
 import {toast} from "react-toastify";
-import EditIcon from "@material-ui/icons/Edit";
-import IconButton from "@material-ui/core/IconButton";
-import DeleteButton from "@material-ui/icons/Delete";
-import {Alert} from "@material-ui/lab";
+import {Alert} from "@mui/lab";
 import {commitTransaction, createTransactionChange, deleteTransaction, discardTransactionChange} from "../../api";
 import {currUserPermissions} from "../../recoil/groups";
-import {ChevronLeft} from "@material-ui/icons";
+import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
 import TransferDetails from "../../components/transactions/TransferDetails";
 import PurchaseDetails from "../../components/transactions/PurchaseDetails";
+import {
+    Button,
+    Chip,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Grid,
+    IconButton,
+    Paper
+} from "@mui/material";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -83,7 +87,7 @@ export default function Transaction({group}) {
         <>
             <Paper elevation={1} className={classes.paper}>
                 <div>
-                    <Grid container justify="space-between">
+                    <Grid container justifyContent="space-between">
                         <div>
                             <IconButton component={RouterLink} to={`/groups/${group.id}/`}>
                                 <ChevronLeft/>
@@ -99,13 +103,13 @@ export default function Transaction({group}) {
                                             <Button color="secondary" onClick={abortEdit}>Cancel</Button>
                                         </>
                                     ) : (
-                                        <IconButton color="primary" onClick={edit}><EditIcon/></IconButton>
+                                        <IconButton color="primary" onClick={edit}><Edit/></IconButton>
                                     )}
                                     <IconButton
                                         color="secondary"
                                         onClick={() => setConfirmDeleteDialogOpen(true)}
                                     >
-                                        <DeleteButton/>
+                                        <Delete/>
                                     </IconButton>
                                 </>
                             )}

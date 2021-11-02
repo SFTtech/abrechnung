@@ -1,19 +1,23 @@
 import React, { useState } from "react";
 import EditableField from "../../components/style/EditableField";
 
-import { Alert } from "@material-ui/lab";
-import Paper from "@material-ui/core/Paper";
-import { Button, DialogActions, makeStyles } from "@material-ui/core";
 import { toast } from "react-toastify";
 import { leaveGroup, updateGroupMetadata } from "../../api";
 import { currUserPermissions } from "../../recoil/groups";
 import { useRecoilValue } from "recoil";
-import Dialog from "@material-ui/core/Dialog";
-import DialogTitle from "@material-ui/core/DialogTitle";
-import DialogContent from "@material-ui/core/DialogContent";
-import DialogContentText from "@material-ui/core/DialogContentText";
-import Grid from "@material-ui/core/Grid";
 import { useHistory } from "react-router-dom";
+import { Alert } from "@mui/lab";
+import {
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    Grid,
+    Paper
+} from "@mui/material";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -64,6 +68,7 @@ export default function GroupDetail({ group }) {
             <EditableField
                 label="Name"
                 margin="normal"
+                variant="standard"
                 value={group.name}
                 onChange={name => updateGroup({ name: name })}
             />
@@ -71,6 +76,7 @@ export default function GroupDetail({ group }) {
             <EditableField
                 label="Description"
                 margin="normal"
+                variant="standard"
                 value={group.description}
                 onChange={description => updateGroup({ description: description })}
             />
@@ -78,6 +84,7 @@ export default function GroupDetail({ group }) {
             <EditableField
                 label="Currency Symbol"
                 margin="normal"
+                variant="standard"
                 value={group.currency_symbol}
                 onChange={currencySymbol => updateGroup({ currencySymbol: currencySymbol })}
             />
@@ -85,6 +92,7 @@ export default function GroupDetail({ group }) {
             <EditableField
                 label="Terms"
                 margin="normal"
+                variant="standard"
                 value={group.terms}
                 onChange={terms => updateGroup({ terms: terms })}
             />
@@ -98,8 +106,8 @@ export default function GroupDetail({ group }) {
             {/*    </ListItem>*/}
             {/*</List>*/}
 
-            <Grid container justify="center" style={{marginTop: 20}}>
-                <Button color="secondary" variant="contained" onClick={() => setShowLeaveModal(true)}>
+            <Grid container justifyContent="center" style={{marginTop: 20}}>
+                <Button variant="contained" onClick={() => setShowLeaveModal(true)}>
                     Leave Group
                 </Button>
             </Grid>

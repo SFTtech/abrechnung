@@ -1,13 +1,9 @@
 import React from "react";
-import {Field, Form, Formik} from "formik";
-import Typography from "@material-ui/core/Typography";
-import Paper from "@material-ui/core/Paper";
-import {TextField} from "formik-material-ui";
-import Button from "@material-ui/core/Button";
-import LinearProgress from "@material-ui/core/LinearProgress";
-import {makeStyles} from "@material-ui/core";
+import {Form, Formik} from "formik";
 import {changeEmail} from "../../api";
 import {toast} from "react-toastify";
+import { Button, LinearProgress, Paper, TextField, Typography } from "@mui/material";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -40,26 +36,32 @@ export default function ChangeEmail() {
             </Typography>
             <Formik initialValues={{password: "", newEmail: ""}}
                     onSubmit={handleSubmit}>
-                {({handleSubmit, isSubmitting}) => (
+                {({values, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
                     <Form>
-                        <Field
+                        <TextField
                             required
                             fullWidth
                             margin="normal"
                             autoFocus
                             type="password"
                             name="password"
-                            component={TextField}
+                            variant="standard"
+                            value={values.password}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
                             label="Password"
                         />
 
-                        <Field
+                        <TextField
                             required
                             fullWidth
                             margin="normal"
                             type="email"
                             name="newEmail"
-                            component={TextField}
+                            variant="standard"
+                            value={values.newEmail}
+                            onChange={handleChange}
+                            onBlur={handleBlur}
                             label="New E-Mail"
                         />
 

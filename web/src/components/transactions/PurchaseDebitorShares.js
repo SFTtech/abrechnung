@@ -1,25 +1,25 @@
 import { useRecoilValue } from "recoil";
-import List from "@material-ui/core/List";
-import ListItem from "@material-ui/core/ListItem";
 import { groupAccounts } from "../../recoil/groups";
-import Grid from "@material-ui/core/Grid";
-import Typography from "@material-ui/core/Typography";
 import {
     Checkbox,
+    Divider,
     FormControlLabel,
-    makeStyles,
+    Grid,
+    List,
+    ListItem,
     Table,
     TableBody,
     TableCell,
     TableContainer,
     TableHead,
     TableRow,
-    TextField
-} from "@material-ui/core";
-import Divider from "@material-ui/core/Divider";
+    TextField,
+    Typography
+} from "@mui/material";
 import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
 import { createOrUpdateDebitorShare, deleteDebitorShare } from "../../api";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     shareValue: {
@@ -73,6 +73,7 @@ function ShareInput({ value, onChange }) {
         <TextField
             error={error}
             margin="dense"
+            variant="standard"
             style={{ width: 40, paddingTop: 1, marginRight: 2 }}
             onBlur={onSave}
             value={currValue}
@@ -165,7 +166,7 @@ export default function PurchaseDebitorShares({ group, transaction, isEditing })
         <div>
             <List>
                 <ListItem className={classes.listItem}>
-                    <Grid container direction="row" justify="space-between">
+                    <Grid container direction="row" justifyContent="space-between">
                         <Typography variant="subtitle1" className={classes.checkboxLabel}>
                             For whom
                         </Typography>

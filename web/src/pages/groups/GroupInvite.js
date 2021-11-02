@@ -1,14 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import Loading from "../../components/style/Loading";
-import { ListItem, ListItemText, makeStyles } from "@material-ui/core";
-import Typography from "@material-ui/core/Typography";
-import Alert from "@material-ui/lab/Alert";
-import Paper from "@material-ui/core/Paper";
 import { fetchGroupPreview, joinGroup } from "../../api";
-import List from "@material-ui/core/List";
-import Button from "@material-ui/core/Button";
-import Grid from "@material-ui/core/Grid";
+import { Button, Grid, ListItem, ListItemText, Paper, Typography } from "@mui/material";
+import { Alert } from "@mui/lab";
+import { List } from "@mui/icons-material";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -36,7 +33,6 @@ export default function GroupInvite() {
     }, [setGroup, setError, history, inviteToken]);
 
     const join = () => {
-        console.log("joining group");
         joinGroup({ token: inviteToken })
             .then(value => {
                 setError(null);
