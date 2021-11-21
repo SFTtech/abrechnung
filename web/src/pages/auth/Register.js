@@ -1,13 +1,12 @@
-import React, {useEffect, useState} from "react";
-import {Link as RouterLink, useHistory} from "react-router-dom";
-import {Field, Form, Formik} from "formik";
+import React, { useEffect, useState } from "react";
+import { Link as RouterLink, useHistory } from "react-router-dom";
+import { Form, Formik } from "formik";
 
-import {useRecoilValue} from "recoil";
-import {isAuthenticated} from "../../recoil/auth";
-import {register} from "../../api";
-import {toast} from "react-toastify";
+import { useRecoilValue } from "recoil";
+import { isAuthenticated } from "../../recoil/auth";
+import { register } from "../../api";
+import { toast } from "react-toastify";
 import Loading from "../../components/style/Loading";
-import {TextField} from "formik-mui";
 import {
     Avatar,
     Button,
@@ -16,6 +15,7 @@ import {
     Grid,
     LinearProgress,
     Link,
+    TextField,
     Typography
 } from "@mui/material";
 import { LockOutlined } from "@mui/icons-material";
@@ -24,21 +24,21 @@ import { makeStyles } from "@mui/styles";
 const useStyles = makeStyles((theme) => ({
     paper: {
         marginTop: theme.spacing(8),
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center"
     },
     avatar: {
         margin: theme.spacing(1),
-        backgroundColor: theme.palette.secondary.main,
+        backgroundColor: theme.palette.secondary.main
     },
     form: {
-        width: '100%', // Fix IE 11 issue.
-        marginTop: theme.spacing(3),
+        width: "100%", // Fix IE 11 issue.
+        marginTop: theme.spacing(3)
     },
     submit: {
-        margin: theme.spacing(3, 0, 2),
-    },
+        margin: theme.spacing(3, 0, 2)
+    }
 }));
 
 export default function Register() {
@@ -50,21 +50,21 @@ export default function Register() {
     useEffect(() => {
         if (loggedIn) {
             setLoading(false);
-            history.push('/');
+            history.push("/");
         } else {
             setLoading(false);
         }
-    }, [loggedIn, history])
+    }, [loggedIn, history]);
 
-    const handleSubmit = (values, {setSubmitting}) => {
+    const handleSubmit = (values, { setSubmitting }) => {
         register(values).then(res => {
-            toast.success(`Registered successfully, please confirm your email before logging in...`, {autoClose: 20000});
+            toast.success(`Registered successfully, please confirm your email before logging in...`, { autoClose: 20000 });
             setSubmitting(false);
-            history.push('/login');
+            history.push("/login");
         }).catch(err => {
             toast.error(err);
             setSubmitting(false);
-        })
+        });
     };
 
     const validate = (values) => {
@@ -73,16 +73,16 @@ export default function Register() {
             errors.password2 = "Passwords do not match";
         }
         return errors;
-    }
+    };
 
     return (
         <>
-            {loading ? <Loading/> : (<>
+            {loading ? <Loading /> : (<>
                 <Container maxWidth="xs">
-                    <CssBaseline/>
+                    <CssBaseline />
                     <div className={classes.paper}>
                         <Avatar className={classes.avatar}>
-                            <LockOutlined/>
+                            <LockOutlined />
                         </Avatar>
                         <Typography component="h1" variant="h5">
                             Register a new account
@@ -93,58 +93,66 @@ export default function Register() {
                                 username: "",
                                 email: "",
                                 password: "",
-                                password2: "",
+                                password2: ""
                             }}
                             onSubmit={handleSubmit}
                         >
-                            {({handleSubmit, isSubmitting}) => (
+                            {({ values, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
 
                                 <Form>
-                                    <Field
+                                    <TextField
                                         variant="outlined"
                                         margin="normal"
                                         required
                                         fullWidth
                                         autoFocus
-                                        component={TextField}
                                         type="text"
                                         label="Username"
                                         name="username"
+                                        onBlur={handleBlur}
+                                        onChange={handleChange}
+                                        value={values.username}
                                     />
-                                    <Field
+                                    <TextField
                                         variant="outlined"
                                         margin="normal"
                                         required
                                         fullWidth
-                                        component={TextField}
                                         type="email"
                                         name="email"
                                         label="E-Mail"
+                                        onBlur={handleBlur}
+                                        onChange={handleChange}
+                                        value={values.email}
                                     />
 
-                                    <Field
+                                    <TextField
                                         variant="outlined"
                                         margin="normal"
                                         required
                                         fullWidth
-                                        component={TextField}
                                         type="password"
                                         name="password"
                                         label="Password"
+                                        onBlur={handleBlur}
+                                        onChange={handleChange}
+                                        value={values.password}
                                     />
 
-                                    <Field
+                                    <TextField
                                         variant="outlined"
                                         margin="normal"
                                         required
                                         fullWidth
-                                        component={TextField}
                                         type="password"
                                         name="password2"
                                         label="Repeat Password"
+                                        onBlur={handleBlur}
+                                        onChange={handleChange}
+                                        value={values.password2}
                                     />
 
-                                    {isSubmitting && <LinearProgress/>}
+                                    {isSubmitting && <LinearProgress />}
                                     <Button
                                         type="submit"
                                         fullWidth
@@ -171,5 +179,5 @@ export default function Register() {
 
             </>)}
         </>
-    )
+    );
 }

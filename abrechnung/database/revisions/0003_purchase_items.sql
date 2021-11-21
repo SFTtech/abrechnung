@@ -281,7 +281,7 @@ $$ language plpgsql;
 drop trigger if exists purchase_item_trig on purchase_item;
 create trigger purchase_item_trig
     after insert or update or delete
-    on purchase_item
+    on purchase_item_history
     for each row
 execute function purchase_item_updated();
 
@@ -291,7 +291,6 @@ $$
     group_id       grp.id%TYPE;
     transaction_id integer;
 begin
-    -- A deletion should not be possible therefore NEW should never be NULL
     if NEW is null then
         select
             transaction.group_id,

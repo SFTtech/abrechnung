@@ -779,7 +779,7 @@ class TransactionService(Application):
                     "where purchase_item_usage.item_id = $1 "
                     "   and purchase_item_usage.revision_id = $2 "
                     "   and purchase_item_usage.account_id = $3",
-                    transaction_id,
+                    item_id,
                     revision_id,
                     account_id,
                     share_amount,
@@ -804,7 +804,7 @@ class TransactionService(Application):
                 r = await conn.fetchval(
                     "delete from purchase_item_usage where item_id = $1 and revision_id = $2 and account_id = $3 "
                     "returning revision_id",
-                    transaction_id,
+                    item_id,
                     revision_id,
                     account_id,
                 )

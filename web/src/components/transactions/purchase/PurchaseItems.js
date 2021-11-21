@@ -1,10 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from "@mui/material";
+import { IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from "@mui/material";
 import { useRecoilValue } from "recoil";
 import { groupAccounts } from "../../../recoil/groups";
-import { addOrChangePurchaseItemShare, deletePurchaseItemShare, updatePurchaseItem } from "../../../api";
+import {
+    addOrChangePurchaseItemShare,
+    createPurchaseItem,
+    deletePurchaseItem,
+    deletePurchaseItemShare,
+    updatePurchaseItem
+} from "../../../api";
 import { toast } from "react-toastify";
 import { makeStyles } from "@mui/styles";
+import { Add, Delete } from "@mui/icons-material";
+import AccountSelect from "../../style/AccountSelect";
 
 
 const useStyles = makeStyles({
@@ -17,14 +25,14 @@ function ShareInput({ value, onChange }) {
     const [currValue, setValue] = useState(0);
     const [error, setError] = useState(false);
 
-    const validate = (value) => {
-        return !(value === null || value === undefined || value === "" || isNaN(parseFloat(value)) || parseFloat(value) < 0);
-    };
+    function validate(val) {
+        return !(val === null || val === undefined || val === "" || isNaN(parseFloat(val)) || parseFloat(val) < 0);
+    }
 
     useEffect(() => {
         setValue(value);
         setError(!validate(value));
-    }, [value, validate]);
+    }, [value]);
 
     const onSave = () => {
         if (!error) {
@@ -34,6 +42,7 @@ function ShareInput({ value, onChange }) {
 
     const onValueChange = (event) => {
         const val = event.target.value;
+        console.log("updating share input", val);
         setValue(val);
         setError(!validate(value));
     };
@@ -51,6 +60,7 @@ function ShareInput({ value, onChange }) {
             style={{ width: 40 }}
             onBlur={onSave}
             value={currValue}
+            error={error}
             onChange={onValueChange}
             onKeyUp={onKeyUp}
         />
@@ -62,9 +72,12 @@ function WrappedTextField({ value, onChange, initial = null, errorMsg = null, va
     const [error, setError] = useState(false);
 
     useEffect(() => {
-        setValue(value);
-        if (validate !== null) {
-            setError(!validate(value));
+        if (value !== "") {
+            // FIXME: when there is a rerender in between onBlur and local state settings the empty value prop overrides
+            setValue(value);
+            if (validate !== null) {
+                setError(!validate(value));
+            }
         }
     }, [value]);
 
@@ -106,130 +119,262 @@ function WrappedTextField({ value, onChange, initial = null, errorMsg = null, va
 export default function PurchaseItems({ group, transaction }) {
     const classes = useStyles();
     const accounts = useRecoilValue(groupAccounts(group.id));
-    const transactionAccounts = Object.keys(transaction.debitor_shares).map(id => parseInt(id));
-    const [wipItem, setWipItem] = useState({ name: "", price: 0, communistShares: 1 });
+    const purchaseItems = transaction.purchase_items ? transaction.purchase_items.filter(item => !item.deleted).sort((left, right) => left.id > right.id) : [];
+
+    // find all accounts that take part in the transaction, either via debitor shares or purchase items
+    // TODO: should we add creditor items as well?
+    const purchaseItemAccounts = [...new Set(purchaseItems.map(item => Object.keys(item.usages)).flat().map(id => parseInt(id)))];
+    const [additionalPurchaseItemAccounts, setAdditionalPurchaseItemAccounts] = useState([]);
+    const transactionAccounts = [...new Set(Object.keys(transaction.debitor_shares).map(id => parseInt(id))
+        .concat(purchaseItemAccounts).concat(additionalPurchaseItemAccounts))];
+    console.log(transactionAccounts);
+
+    const showAddAccount = transactionAccounts.length < accounts.length;
+
+    const [showAccountSelect, setShowAccountSelect] = useState(false);
+    const [itemIDMapping, setItemIDMapping] = useState({});
+
+    const initialItem = () => {
+        return {
+            id: purchaseItems.length + 10001,
+            name: "",
+            price: 0,
+            communist_shares: 1,
+            usages: {}
+        };
+    };
+    const [pendingItems, setPendingItems] = useState([initialItem()]);
+
+    const resolveItemID = (itemID) => {
+        if (itemIDMapping.hasOwnProperty(itemID)) {
+            return itemIDMapping[itemID];
+        }
+        return itemID;
+    };
+
+    const allItems = purchaseItems.map(item => {
+        return {
+            ...item,
+            localID: resolveItemID(item.id),
+            isPending: false
+        };
+    }).concat(pendingItems.map(item => {
+        return {
+            ...item,
+            localID: resolveItemID(item.id),
+            isPending: true
+        };
+    })).sort((item1, item2) => item1.id > item2.id);
+
+    const emptyItem = () => {
+        return {
+            id: pendingItems.length + purchaseItems.length + 10001,
+            name: "",
+            price: 0,
+            communist_shares: 1,
+            usages: {}
+        };
+    };
 
     const validateFloat = (value) => {
         return !(value === null || value === undefined || value === "" || isNaN(parseFloat(value)) || parseFloat(value) < 0);
     };
 
-    const updateItem = (itemID, name, price, communistShares) => {
-        if (transaction.is_wip) {
-            updatePurchaseItem({
-                itemID: itemID,
-                price: price,
+    useEffect(() => {
+        const filteredPendingItems = pendingItems.filter(item => transaction.purchase_items?.find(pItem => pItem.id === item.id) === undefined);
+        setPendingItems(filteredPendingItems);
+    }, [transaction, setPendingItems]);
+
+    const updateItem = (item, name, price, communistShares) => {
+        if (item.isPending) {
+            const newPendingItems = pendingItems.map(tmpItem => tmpItem.id === item.id ? {
+                ...tmpItem,
+                id: item.id,
                 name: name,
-                communistShares: communistShares
+                price: price,
+                communist_shares: communistShares
+            } : item);
+            setPendingItems(newPendingItems);
+
+            if (name !== "" && name != null) { // only start submitting once we have a name
+                createPurchaseItem({
+                    transactionID: transaction.id,
+                    name: name,
+                    price: price,
+                    communistShares: communistShares
+                }).then(res => {
+                    setItemIDMapping({ ...itemIDMapping, [res.item_id]: item.localID });
+                    let newPendingItems = pendingItems.map(item => item.id === item.id ? {
+                        ...item,
+                        id: res.item_id
+                    } : item);
+                    newPendingItems.push(emptyItem());
+                    setPendingItems(newPendingItems);
+                }).catch(err => {
+                    toast.error(err);
+                });
+            }
+        } else {
+            if (item.name === name && item.price === price && item.communist_shares === communistShares) {
+                return;
+            }
+
+            if (transaction.is_wip) {
+                updatePurchaseItem({
+                    itemID: item.id,
+                    price: price,
+                    name: name,
+                    communistShares: communistShares
+                }).catch(err => {
+                    toast.error(err);
+                });
+            }
+        }
+    };
+
+    const updateItemUsage = (item, accountID, shares) => {
+        if (item.usages.hasOwnProperty(accountID) && item.usages[accountID] === shares) {
+            return;
+        }
+
+        if (shares === 0 && item.usages.hasOwnProperty(accountID)) {
+            deletePurchaseItemShare({
+                itemID: item.id,
+                accountID: accountID
+            }).catch(err => {
+                toast.error(err);
+            });
+        } else if (shares > 0) {
+            addOrChangePurchaseItemShare({
+                itemID: item.id,
+                accountID: accountID,
+                shareAmount: shares
             }).catch(err => {
                 toast.error(err);
             });
         }
     };
 
-    const updateWipItem = ({ name, price, communistShares }) => {
-        setWipItem({ name: name, price: price, communistShares: communistShares });
-        if (name !== "" && name != null && price > 0) {
-
+    const deleteItem = (item) => {
+        if (item.isPending) {
+            const filteredItems = pendingItems.filter(tmpItem => tmpItem.id !== item.id);
+            if (filteredItems.length === 0) {
+                setPendingItems([emptyItem()]);
+            } else {
+                setPendingItems(filteredItems);
+            }
+        } else {
+            deletePurchaseItem({ itemID: item.id })
+                .catch(err => {
+                    toast.error(err);
+                });
         }
     };
 
-    const updateItemUsage = (item, accountID, shares) => {
-        if (shares === 0 && item.usages.hasOwnProperty(accountID)) {
-            deletePurchaseItemShare({
-                itemID: item.id,
-                accountID: accountID
-            })
-                .catch(err => {
-                    toast.error(err);
-                });
-        } else if (shares > 0) {
-            addOrChangePurchaseItemShare({
-                itemID: item.id,
-                accountID: accountID,
-                shareAmount: shares
-            })
-                .catch(err => {
-                    toast.error(err);
-                });
-        }
+    const addPurchaseItemAccount = (account) => {
+        setShowAccountSelect(false);
+        setAdditionalPurchaseItemAccounts([...new Set([...purchaseItemAccounts, parseInt(account.id)])]);
     };
 
     return (
         <TableContainer>
-            <Table className={classes.table} aria-label="purchase items">
+            <Table className={classes.table} aria-label="purchase items" size="small">
                 <TableHead>
                     <TableRow>
                         <TableCell>Name</TableCell>
                         <TableCell>Price</TableCell>
-                        <TableCell>Communist Shares</TableCell>
-                        {transactionAccounts.map(accountID => (
+                        {(transaction.is_wip ? transactionAccounts : purchaseItemAccounts).map(accountID => (
                             <TableCell>{accounts.find(account => account.id === accountID).name}</TableCell>
                         ))}
+                        {transaction.is_wip && (
+                            <>
+                                {showAccountSelect && (
+                                    <TableCell>
+                                        <AccountSelect group={group} exclude={transactionAccounts}
+                                                       onChange={addPurchaseItemAccount} />
+                                    </TableCell>
+                                )}
+                                {showAddAccount && (
+                                    <TableCell>
+                                        <IconButton onClick={() => setShowAccountSelect(true)}>
+                                            <Add />
+                                        </IconButton>
+                                    </TableCell>
+                                )}
+                            </>
+                        )}
+                        <TableCell>Communist Shares</TableCell>
+                        {transaction.is_wip && (
+                            <TableCell></TableCell>
+                        )}
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {transaction.purchase_items?.map(item =>
-                        <TableRow key={item.id}>
-                            <TableCell>
-                                <WrappedTextField
-                                    value={item.name}
-                                    onChange={value => updateItem(item.id, value, item.price, item.communist_shares)}
-                                    validate={value => value !== "" && value != null}
-                                />
-                            </TableCell>
-                            <TableCell>
-                                <WrappedTextField
-                                    value={item.price}
-                                    onChange={value => updateItem(item.id, item.name, parseFloat(value), item.communist_shares)}
-                                    validate={validateFloat}
-                                    errorMsg={"float > 0 required"}
-                                />
-                            </TableCell>
-                            <TableCell>
-                                <ShareInput
-                                    value={item.communist_shares}
-                                    onChange={value => updateItem(item.id, item.name, item.price, value)}
-                                />
-                            </TableCell>
-                            {transactionAccounts.map(accountID => (
-                                <TableCell>
-                                    <ShareInput
-                                        value={item.usages.hasOwnProperty(String(accountID)) ? item.usages[String(accountID)] : 0}
-                                        onChange={value => updateItemUsage(item, accountID, value)}
-                                    />
-                                </TableCell>
-                            ))}
-                        </TableRow>
-                    )}
-                    <TableRow>
-                        <TableCell>
-                            <WrappedTextField
-                                value={wipItem.name}
-                                onChange={value => updateWipItem({ ...wipItem, name: value })}
-                                validate={value => value !== "" && value != null}
-                            />
-                        </TableCell>
-                        <TableCell>
-                            <WrappedTextField
-                                value={wipItem.price}
-                                onChange={value => updateWipItem({ ...wipItem, price: value })}
-                                validate={validateFloat}
-                                errorMsg={"float > 0 required"} />
-                        </TableCell>
-                        <TableCell>
-                            <ShareInput
-                                value={wipItem.communistShares}
-                                onChange={value => updateWipItem({
-                                    ...wipItem,
-                                    communistShares: value
-                                })} />
-                        </TableCell>
-                        {transactionAccounts.map(accountID => (
-                            <TableCell><ShareInput /></TableCell>
-                        ))}
-                    </TableRow>
+                    {transaction.is_wip ? (
+                        allItems.map(item =>
+                            <TableRow key={item.localID}>
+                                <>
+                                    <TableCell>
+                                        <WrappedTextField
+                                            value={item.name}
+                                            onChange={value => updateItem(item, value, item.price, item.communist_shares)}
+                                            validate={value => value !== "" && value != null}
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <WrappedTextField
+                                            value={item.price}
+                                            onChange={value => updateItem(item, item.name, parseFloat(value), item.communist_shares)}
+                                            validate={validateFloat}
+                                            errorMsg={"float > 0 required"}
+                                        />
+                                    </TableCell>
+                                    {transactionAccounts.map(accountID => (
+                                        <TableCell>
+                                            <ShareInput
+                                                value={item.usages.hasOwnProperty(String(accountID)) ? item.usages[String(accountID)] : 0}
+                                                onChange={value => updateItemUsage(item, accountID, value)}
+                                            />
+                                        </TableCell>
+                                    ))}
+                                    {showAccountSelect && (
+                                        <TableCell></TableCell>
+                                    )}
+                                    {showAddAccount && (
+                                        <TableCell></TableCell>
+                                    )}
+                                    <TableCell>
+                                        <ShareInput
+                                            value={item.communist_shares}
+                                            onChange={value => updateItem(item, item.name, item.price, parseFloat(value))}
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <IconButton onClick={() => deleteItem(item)}>
+                                            <Delete />
+                                        </IconButton>
+                                    </TableCell>
+                                </>
+                            </TableRow>
+                        )
+                    ) : (
+                        purchaseItems.map(item =>
+                            <TableRow key={item.id}>
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell align="right">{item.price} {transaction.currency_symbol}</TableCell>
+                                {purchaseItemAccounts.map(accountID => (
+                                    <TableCell
+                                        width="50px"
+                                    >
+                                        {item.usages.hasOwnProperty(String(accountID)) ? item.usages[String(accountID)] : 0}
+                                    </TableCell>
+                                ))}
+                                <TableCell>{item.communist_shares}</TableCell>
+                            </TableRow>
+                        ))
+                    }
                 </TableBody>
             </Table>
         </TableContainer>
     );
-}
+};

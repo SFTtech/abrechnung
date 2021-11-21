@@ -1,13 +1,12 @@
-import {Field, Form, Formik} from "formik";
-import {TextField} from "formik-mui";
+import { Form, Formik } from "formik";
 import React from "react";
-import {toast} from "react-toastify";
-import {updateAccount} from "../../api";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress } from "@mui/material";
+import { toast } from "react-toastify";
+import { updateAccount } from "../../api";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
 
-export default function AccountEditModal({group, show, onClose, account}) {
+export default function AccountEditModal({ group, show, onClose, account }) {
 
-    const handleSubmit = (values, {setSubmitting}) => {
+    const handleSubmit = (values, { setSubmitting }) => {
         updateAccount({
             groupID: group.id,
             accountID: values.accountID,
@@ -21,7 +20,7 @@ export default function AccountEditModal({group, show, onClose, account}) {
             }).catch(err => {
             toast.error(err);
             setSubmitting(false);
-        })
+        });
     };
 
     return (
@@ -35,29 +34,33 @@ export default function AccountEditModal({group, show, onClose, account}) {
                     description: account?.description
                 }} onSubmit={handleSubmit}
                         enableReinitialize={true}>
-                    {({handleSubmit, isSubmitting}) => (
+                    {({ values, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
                         <Form>
-                            <Field
+                            <TextField
                                 margin="normal"
                                 required
                                 fullWidth
                                 variant="standard"
                                 autoFocus
-                                component={TextField}
                                 name="name"
                                 label="Account Name"
+                                value={values.name}
+                                onBlur={handleBlur}
+                                onChange={handleChange}
                             />
-                            <Field
+                            <TextField
                                 margin="normal"
                                 required
                                 fullWidth
                                 variant="standard"
-                                component={TextField}
                                 name="description"
                                 label="Description"
+                                value={values.description}
+                                onBlur={handleBlur}
+                                onChange={handleChange}
                             />
 
-                            {isSubmitting && <LinearProgress/>}
+                            {isSubmitting && <LinearProgress />}
                             <DialogActions>
                                 <Button color="primary" type="submit" onClick={handleSubmit}>
                                     Save
@@ -72,5 +75,5 @@ export default function AccountEditModal({group, show, onClose, account}) {
                 </Formik>
             </DialogContent>
         </Dialog>
-    )
+    );
 }

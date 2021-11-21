@@ -1,12 +1,11 @@
-import React, {useEffect} from "react";
-import {Link as RouterLink, useHistory} from "react-router-dom";
-import {Field, Form, Formik} from "formik";
-import {isAuthenticated, userData} from "../../recoil/auth";
-import {useRecoilValue, useSetRecoilState} from "recoil";
-import {toast} from "react-toastify";
-import {TextField} from "formik-mui";
-import {fetchProfile, login, removeToken} from "../../api";
-import {useQuery} from "../../utils";
+import React, { useEffect } from "react";
+import { Link as RouterLink, useHistory } from "react-router-dom";
+import { Form, Formik } from "formik";
+import { isAuthenticated, userData } from "../../recoil/auth";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { toast } from "react-toastify";
+import { fetchProfile, login, removeToken } from "../../api";
+import { useQuery } from "../../utils";
 import {
     Avatar,
     Button,
@@ -15,6 +14,7 @@ import {
     Grid,
     LinearProgress,
     Link,
+    TextField,
     Typography
 } from "@mui/material";
 import { LockOutlined } from "@mui/icons-material";
@@ -57,7 +57,7 @@ export default function Login() {
         }
     }, [isLoggedIn, history, query]);
 
-    const handleSubmit = (values, {setSubmitting}) => {
+    const handleSubmit = (values, { setSubmitting }) => {
         login(values).then(res => {
             toast.success(`Logged in...`);
             setSubmitting(false);
@@ -80,42 +80,46 @@ export default function Login() {
 
     return (
         <Container component="main" maxWidth="xs">
-            <CssBaseline/>
+            <CssBaseline />
             <div className={classes.paper}>
                 <Avatar className={classes.avatar}>
-                    <LockOutlined/>
+                    <LockOutlined />
                 </Avatar>
                 <Typography component="h1" variant="h5">
                     Sign in
                 </Typography>
-                <Formik initialValues={{password: "", username: ""}} onSubmit={handleSubmit}>
-                    {({handleSubmit, isSubmitting}) => (
+                <Formik initialValues={{ password: "", username: "" }} onSubmit={handleSubmit}>
+                    {({ values, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
                         <Form onSubmit={handleSubmit}>
-                            <input type="hidden" name="remember" value="true"/>
-                            <Field
+                            <input type="hidden" name="remember" value="true" />
+                            <TextField
                                 variant="outlined"
                                 margin="normal"
                                 required
                                 fullWidth
                                 autoFocus
-                                component={TextField}
                                 type="text"
                                 label="Username"
                                 name="username"
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                value={values.username}
                             />
 
-                            <Field
+                            <TextField
                                 variant="outlined"
                                 margin="normal"
                                 required
                                 fullWidth
-                                component={TextField}
                                 type="password"
                                 name="password"
                                 label="Password"
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                value={values.password}
                             />
 
-                            {isSubmitting && <LinearProgress/>}
+                            {isSubmitting && <LinearProgress />}
                             <Button
                                 type="submit"
                                 fullWidth

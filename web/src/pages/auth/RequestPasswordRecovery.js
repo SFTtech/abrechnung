@@ -1,11 +1,10 @@
-import React, {useEffect, useState} from "react";
-import {useHistory} from "react-router-dom";
-import {Field, Form, Formik} from "formik";
-import {isAuthenticated} from "../../recoil/auth";
-import {useRecoilValue} from "recoil";
-import {TextField} from "formik-mui";
-import {requestPasswordRecovery} from "../../api";
-import { Button, Container, CssBaseline, LinearProgress, Typography } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { useHistory } from "react-router-dom";
+import { Form, Formik } from "formik";
+import { isAuthenticated } from "../../recoil/auth";
+import { useRecoilValue } from "recoil";
+import { requestPasswordRecovery } from "../../api";
+import { Button, Container, CssBaseline, LinearProgress, TextField, Typography } from "@mui/material";
 import { Alert } from "@mui/lab";
 import { makeStyles } from "@mui/styles";
 
@@ -37,7 +36,7 @@ export default function RequestPasswordRecovery() {
         }
     }, [isLoggedIn, history]);
 
-    const handleSubmit = (values, {setSubmitting}) => {
+    const handleSubmit = (values, { setSubmitting }) => {
         requestPasswordRecovery(values)
             .then(res => {
                 setStatus("success");
@@ -48,12 +47,12 @@ export default function RequestPasswordRecovery() {
                 setStatus("error");
                 setError(err);
                 setSubmitting(false);
-            })
+            });
     };
 
     return (
         <Container component="main" maxWidth="xs">
-            <CssBaseline/>
+            <CssBaseline />
             <div className={classes.paper}>
                 <Typography component="h1" variant="h5">
                     Recover Password
@@ -68,21 +67,23 @@ export default function RequestPasswordRecovery() {
                     <Alert className={classes.alert} severity="success">A recovery link has been sent to you via
                         email.</Alert>
                 ) : (
-                    <Formik initialValues={{email: ""}} onSubmit={handleSubmit}>
-                        {({handleSubmit, isSubmitting}) => (
+                    <Formik initialValues={{ email: "" }} onSubmit={handleSubmit}>
+                        {({ values, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
                             <Form onSubmit={handleSubmit}>
-                                <Field
+                                <TextField
                                     variant="outlined"
                                     margin="normal"
                                     required
                                     fullWidth
                                     autoFocus
-                                    component={TextField}
                                     type="text"
                                     label="E-Mail"
                                     name="email"
+                                    onBlur={handleBlur}
+                                    onChange={handleChange}
+                                    value={values.email}
                                 />
-                                {isSubmitting && <LinearProgress/>}
+                                {isSubmitting && <LinearProgress />}
                                 <Button
                                     type="submit"
                                     fullWidth

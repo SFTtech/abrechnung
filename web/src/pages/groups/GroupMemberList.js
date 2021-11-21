@@ -2,14 +2,14 @@ import React, { useState } from "react";
 
 import { useRecoilValue } from "recoil";
 import { userData } from "../../recoil/auth";
-import { Field, Form, Formik } from "formik";
-import { Checkbox } from "formik-mui";
+import { Form, Formik } from "formik";
 import { toast } from "react-toastify";
 import { updateGroupMemberPrivileges } from "../../api";
 import { DateTime } from "luxon";
 import { currUserPermissions, groupMembers } from "../../recoil/groups";
 import {
     Button,
+    Checkbox,
     Chip,
     Dialog,
     DialogActions,
@@ -148,22 +148,26 @@ export default function GroupMemberList({ group }) {
                         canWrite: memberToEdit?.can_write
                     }} onSubmit={handleEditMemberSubmit}
                             enableReinitialize={true}>
-                        {({ handleSubmit, isSubmitting }) => (
+                        {({ values, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
                             <Form>
                                 <FormControlLabel control={
-                                    <Field
+                                    <Checkbox
                                         type="checkbox"
                                         margin="normal"
-                                        component={Checkbox}
                                         name="canWrite"
+                                        onBlur={handleBlur}
+                                        onChange={handleChange}
+                                        value={values.canWrite}
                                     />
                                 } label="Can Write" />
                                 <FormControlLabel control={
-                                    <Field
+                                    <Checkbox
                                         type="checkbox"
                                         margin="normal"
-                                        component={Checkbox}
                                         name="isOwner"
+                                        onBlur={handleBlur}
+                                        onChange={handleChange}
+                                        value={values.isOwner}
                                     />
                                 } label="Is Owner" />
 

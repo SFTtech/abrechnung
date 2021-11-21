@@ -90,7 +90,6 @@ export default function PurchaseDebitorShares({ group, transaction, isEditing })
     const accounts = useRecoilValue(groupAccounts(group.id));
 
     const [debitorShareValues, setDebitorShareValues] = useState({});
-    const totalDebitorShares = Object.values(debitorShareValues).reduce((acc, curr) => acc + curr, 0);
 
     const [showAdvanced, setShowAdvanced] = useState(false);
 
@@ -109,10 +108,10 @@ export default function PurchaseDebitorShares({ group, transaction, isEditing })
     };
 
     const debitorValueForAccount = (accountID) => {
-        if (!debitorShareValues.hasOwnProperty(accountID)) {
+        if (!transaction.account_balances.hasOwnProperty(accountID)) {
             return 0.00;
         }
-        return (transaction.value / totalDebitorShares * debitorShareValues[accountID]);
+        return transaction.account_balances[accountID];
     };
 
     const updateDebShare = (accountID, checked) => {
