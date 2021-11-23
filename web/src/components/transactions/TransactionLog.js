@@ -6,7 +6,7 @@ import TransactionCreateModal from "./TransactionCreateModal";
 import {currUserPermissions, groupAccounts} from "../../recoil/groups";
 import {DateTime} from "luxon";
 import {Chip, Divider, Grid, IconButton, List, ListItemAvatar, ListItemText, Tooltip, Typography} from "@mui/material";
-import {Add, HelpOutline, Money, ShoppingCart} from "@mui/icons-material";
+import { Add, CompareArrows, CreditCard, HelpOutline, Money, ShoppingCart } from "@mui/icons-material";
 import {makeStyles} from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
@@ -52,7 +52,7 @@ export default function TransactionLog({group}) {
                                     </Tooltip>
                                 ) : transaction.type === "transfer" ? (
                                     <Tooltip title="Money Transfer">
-                                        <Money color="primary"/>
+                                        <CompareArrows color="primary"/>
                                     </Tooltip>
                                 ) : (
                                     <Tooltip title="Unknown Transaction Type">

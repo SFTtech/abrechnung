@@ -1,9 +1,9 @@
-import React, {Suspense, useMemo} from "react";
-import {BrowserRouter as Router, Route, Switch} from "react-router-dom";
-import {ToastContainer} from "react-toastify";
+import React, { Suspense, useMemo } from "react";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import { ToastContainer } from "react-toastify";
 import DateAdapter from "@mui/lab/AdapterLuxon";
-import {LocalizationProvider} from "@mui/lab";
-import {useRecoilValue} from "recoil";
+import { LocalizationProvider } from "@mui/lab";
+import { useRecoilValue } from "recoil";
 
 import Register from "./pages/auth/Register";
 import Login from "./pages/auth/Login";
@@ -19,10 +19,10 @@ import Layout from "./components/style/Layout";
 import SessionList from "./pages/profile/SessionList";
 import ConfirmPasswordRecovery from "./pages/auth/ConfirmPasswordRecovery";
 import RequestPasswordRecovery from "./pages/auth/RequestPasswordRecovery";
-import {createTheme, CssBaseline, ThemeProvider, useMediaQuery} from "@mui/material";
-import {StyledEngineProvider} from '@mui/material/styles';
+import { createTheme, CssBaseline, ThemeProvider, useMediaQuery } from "@mui/material";
+import { StyledEngineProvider } from "@mui/material/styles";
 import Settings from "./pages/profile/Settings";
-import {themeSettings} from "./recoil/settings";
+import { themeSettings } from "./recoil/settings";
 
 const Profile = React.lazy(() => import("./pages/profile/Profile"));
 const ConfirmEmailChange = React.lazy(() => import("./pages/auth/ConfirmEmailChange"));
@@ -32,86 +32,86 @@ const GroupInvite = React.lazy(() => import("./pages/groups/GroupInvite"));
 const routes = [
     {
         path: "/",
-        component: <GroupList/>,
+        component: <GroupList />,
         auth: true,
         exact: true
     },
     {
         path: "/invite/:inviteToken",
-        component: <GroupInvite/>,
+        component: <GroupInvite />,
         auth: true
     },
     {
         path: "/groups/:id([0-9]+)",
-        component: <Group/>,
+        component: <Group />,
         auth: true,
         layout: false
     },
     {
         path: "/profile",
-        component: <Profile/>,
+        component: <Profile />,
         auth: true,
         exact: true
     },
     {
         path: "/profile/settings",
-        component: <Settings/>,
+        component: <Settings />,
         auth: true,
         exact: true
     },
     {
         path: "/profile/change-email",
-        component: <ChangeEmail/>,
+        component: <ChangeEmail />,
         auth: true,
         exact: true
     },
     {
         path: "/profile/sessions",
-        component: <SessionList/>,
+        component: <SessionList />,
         auth: true,
         exact: true
     },
     {
         path: "/profile/change-password",
-        component: <ChangePassword/>,
+        component: <ChangePassword />,
         auth: true,
         exact: true
     },
     {
         path: "/logout",
-        component: <Logout/>,
+        component: <Logout />,
         auth: true,
         exact: true
     },
     {
         path: "/confirm-registration/:token",
-        component: <ConfirmRegistration/>,
+        component: <ConfirmRegistration />,
         auth: false
     },
     {
         path: "/recover-password",
-        component: <RequestPasswordRecovery/>,
+        component: <RequestPasswordRecovery />,
         auth: false
     },
     {
         path: "/confirm-password-recovery/:token",
-        component: <ConfirmPasswordRecovery/>,
+        component: <ConfirmPasswordRecovery />,
         auth: false
     },
     {
         path: "/confirm-email-change/:token",
-        component: <ConfirmEmailChange/>,
+        component: <ConfirmEmailChange />,
         auth: false
     },
     {
         path: "/register",
-        component: <Register/>,
+        component: <Register />,
         auth: false,
         layout: false
     },
     {
         path: "/login",
-        component: <Login/>,
+        component: <Login />,
         auth: false,
         layout: false
     }
@@ -131,7 +131,7 @@ export default function App() {
             createTheme({
                 palette: {
                     mode: useDarkMode
-                }
+                },
             }),
         [useDarkMode]
     );
@@ -139,7 +139,7 @@ export default function App() {
     return (
         <StyledEngineProvider injectFirst>
             <ThemeProvider theme={theme}>
-                <CssBaseline/>
+                <CssBaseline />
                 <LocalizationProvider dateAdapter={DateAdapter}>
                     <ToastContainer
                         position="top-right"
@@ -161,9 +161,9 @@ export default function App() {
                                 ) : route.component;
 
                                 const layoutRoute = route.layout === undefined || route.layout ? (
-                                    <Layout><Suspense fallback={<Loading/>}>{authRoute}</Suspense></Layout>
+                                    <Layout><Suspense fallback={<Loading />}>{authRoute}</Suspense></Layout>
                                 ) : (
-                                    <Suspense fallback={<Loading/>}>{authRoute}</Suspense>
+                                    <Suspense fallback={<Loading />}>{authRoute}</Suspense>
                                 );
 
                                 return (
@@ -173,7 +173,7 @@ export default function App() {
                                     </Route>
                                 );
                             })}
-                            <Route exact path="/404"><PageNotFound/></Route>
+                            <Route exact path="/404"><PageNotFound /></Route>
                         </Switch>
                     </Router>
                 </LocalizationProvider>

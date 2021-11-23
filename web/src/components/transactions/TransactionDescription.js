@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import DisabledTextField from "../style/DisabledTextField";
 import { updateTransactionDetails } from "../../api";
 import { TextField } from "@mui/material";
 
@@ -59,7 +58,7 @@ export default function TransactionDescription({ group, transaction }) {
                     value={description}
                 />
             ) : (
-                <DisabledTextField
+                <TextField
                     label="Description"
                     variant="standard"
                     fullWidth

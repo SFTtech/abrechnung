@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { List, TextField } from "@mui/material";
 import { toast } from "react-toastify";
-import DisabledTextField from "../style/DisabledTextField";
 import { updateTransactionDetails } from "../../api";
 import { DateTime } from "luxon";
 import DatePicker from "@mui/lab/DatePicker";
@@ -47,7 +46,7 @@ export default function TransactionBilledAt({ group, transaction }) {
                     renderInput={(params) => <TextField variant="standard" fullWidth {...params} helperText={null} />}
                 />
             ) : (
-                <DisabledTextField
+                <TextField
                     label="Billed At"
                     variant="standard"
                     fullWidth
