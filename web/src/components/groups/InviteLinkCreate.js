@@ -47,7 +47,7 @@ export default function InviteLinkCreate({ show, onClose, group }) {
             <DialogContent>
                 <Formik initialValues={{ description: "", validUntil: nowPlusOneHour(), singleUse: false }}
                         onSubmit={handleSubmit}>
-                    {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+                    {({ values, setFieldValue, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
                         <Form>
                             <TextField
                                 margin="normal"
@@ -63,9 +63,13 @@ export default function InviteLinkCreate({ show, onClose, group }) {
                             />
                             <DateTimePicker
                                 margin="normal"
-                                label="Valid until"
+                                required
+                                fullWidth
+                                variant="standard"
+                                name="validUntil"
+                                views={["day"]}
                                 value={values.validUntil}
-                                onChange={handleChange}
+                                onChange={val => setFieldValue("validUntil", val, true)}
                                 onBlur={handleBlur}
                                 renderInput={(props) => <TextField variant="standard" fullWidth {...props} />}
                             />

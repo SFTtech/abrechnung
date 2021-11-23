@@ -82,7 +82,7 @@ export const groupAccounts = selectorFamily({
     key: "groupAccounts",
     get: groupID => async ({get}) => {
         const accounts = await get(groupAccountsRaw(groupID));
-        return accounts.filter(account => !account.deleted);
+        return accounts.filter(account => !account.deleted).sort((a1, a2) => a1.name > a2.name);
     }
 })
 

@@ -15,6 +15,7 @@ import {
     TextField
 } from "@mui/material";
 import { DateTimePicker } from "@mui/lab";
+import DatePicker from "@mui/lab/DatePicker";
 
 export default function TransactionCreateModal({ group, show, onClose }) {
     const handleSubmit = (values, { setSubmitting }) => {
@@ -59,7 +60,7 @@ export default function TransactionCreateModal({ group, show, onClose }) {
                 <Formik validate={validate}
                         initialValues={{ type: "purchase", description: "", value: "0.0", billedAt: DateTime.now() }}
                         onSubmit={handleSubmit}>
-                    {({ values, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+                    {({ values, setFieldValue, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
                         <Form>
                             <Select
                                 margin="normal"
@@ -86,18 +87,17 @@ export default function TransactionCreateModal({ group, show, onClose }) {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                             />
-                            <DateTimePicker
+                            <DatePicker
                                 margin="normal"
                                 required
                                 fullWidth
                                 variant="standard"
                                 name="billedAt"
-                                views={["day"]}
                                 renderInput={(params) => <TextField variant="standard" fullWidth {...params}
                                                                     helperText={null} />}
                                 label="Billed at"
                                 value={values.billedAt}
-                                onChange={handleChange}
+                                onChange={val => setFieldValue("billedAt", val, true)}
                                 onBlur={handleBlur}
                             />
                             <TextField

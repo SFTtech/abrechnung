@@ -105,7 +105,7 @@ export const transactionsSeenByUser = selectorFamily({
 
                 Object.entries(transaction.debitor_shares).forEach(([accountID, value]) => {
                     if (transactionAccountBalances.hasOwnProperty(accountID)) {
-                        transactionAccountBalances[accountID]["common_debitors"] +=  totalDebitorShares > 0 ? remainingTransactionValue / totalDebitorShares * value : 0;
+                        transactionAccountBalances[accountID]["common_debitors"] += totalDebitorShares > 0 ? remainingTransactionValue / totalDebitorShares * value : 0;
                     } else {
                         transactionAccountBalances[accountID] = {
                             positions: 0,
@@ -131,7 +131,11 @@ export const transactionsSeenByUser = selectorFamily({
                     account_balances: transactionAccountBalances
                 };
             })
-            .sort((t1, t2) => DateTime.fromISO(t1.billed_at) < DateTime.fromISO(t2.billed_at));
+            .sort((t1, t2) => {
+                return t1.billed_at === t2.billed_at
+                    ? t1.id < t2.id
+                    : DateTime.fromISO(t1.billed_at) < DateTime.fromISO(t2.billed_at);
+            });
     }
 });
 
