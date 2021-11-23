@@ -132,10 +132,10 @@ create or replace view committed_purchase_item_state as
         left join purchase_item_usages_as_json piu
                   on piu.revision_id = history.revision_id and piu.item_id = history.id;
 
-drop view account_balance;
-drop view current_transaction_state;
-drop view pending_transaction_revisions;
-drop view committed_transaction_state;
+drop view if exists account_balance;
+drop view if exists current_transaction_state;
+drop view if exists pending_transaction_revisions;
+drop view if exists committed_transaction_state;
 
 create or replace view pending_transaction_revisions as
     select
@@ -222,36 +222,6 @@ create or replace view current_transaction_state as
             select id, json_agg(pending) as state from pending_transaction_revisions pending group by id
                   ) pending_json on pending_json.id = transaction.id;
 
-create or replace view account_balance as
-    select
-        a.id                                                               as account_id,
-        a.group_id                                                         as group_id,
-        coalesce(cb.creditor_balance, 0) + coalesce(db.debitor_balance, 0) as balance
-    from
-        account a
-        left join (
-            select
-                cs.account_id                                               as account_id,
-                sum(cs.shares / coalesce(t.n_creditor_shares, 1) * t.value) as creditor_balance
-            from
-                committed_transaction_state t
-                join creditor_share cs on t.revision_id = cs.revision_id and t.id = cs.transaction_id
-            where
-                t.deleted = false
-            group by cs.account_id
-                  ) cb on a.id = cb.account_id
-        left join (
-            select
-                ds.account_id                                               as account_id,
-                -sum(ds.shares / coalesce(t.n_debitor_shares, 1) * t.value) as debitor_balance
-            from
-                committed_transaction_state t
-                join debitor_share ds on t.revision_id = ds.revision_id and t.id = ds.transaction_id
-            where
-                t.deleted = false
-            group by ds.account_id
-                  ) db on a.id = db.account_id;
-
 -- notifications for purchase items
 create or replace function purchase_item_updated() returns trigger as
 $$
@@ -278,7 +248,7 @@ begin
 end;
 $$ language plpgsql;
 
-drop trigger if exists purchase_item_trig on purchase_item;
+drop trigger if exists purchase_item_trig on purchase_item_history;
 create trigger purchase_item_trig
     after insert or update or delete
     on purchase_item_history
@@ -401,6 +371,22 @@ begin
         end if;
         if locals.n_debitor_shares < 1 then
             raise '"purchase" type transactions must have at least one debitor share';
+        end if;
+
+        -- check that all purchase items have at least an item share or communist shares > 0
+        -- i.e. we look for a purchase item at the current revision that has sum(usages) + communist_shares <= 0
+        -- if such a one is found we raise an exception
+        perform from purchase_item pi
+        join purchase_item_history pih on pi.id = pih.id
+        left join purchase_item_usage piu on pih.revision_id = piu.revision_id and pi.id = piu.item_id
+        where pih.revision_id = check_committed_transactions.revision_id
+        and pi.transaction_id = check_committed_transactions.transaction_id
+        and not pih.deleted
+        group by pi.id
+        having sum(coalesce(piu.share_amount, 0) + pih.communist_shares) <= 0;
+
+        if found then
+            raise 'all transaction positions must have at least one account assigned or their common shares set greater than 0';
         end if;
     end if;
 

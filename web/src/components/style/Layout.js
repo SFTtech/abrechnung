@@ -193,6 +193,7 @@ export default function Layout({ group = null, children }) {
                                 onClose={handleDotsMenuClose}
                             >
                                 <MenuItem component={RouterLink} to="/profile">Profile</MenuItem>
+                                <MenuItem component={RouterLink} to="/profile/settings">Settings</MenuItem>
                                 <MenuItem component={RouterLink} to="/profile/sessions">Sessions</MenuItem>
                                 <MenuItem component={RouterLink} to="/profile/change-email">Change E-Mail</MenuItem>
                                 <MenuItem component={RouterLink} to="/profile/change-password">Change

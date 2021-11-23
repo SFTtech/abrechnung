@@ -466,10 +466,10 @@ class TransactionService(Application):
 
         if transaction_type == "purchase":  # also copy all purchase items
             await conn.execute(
-                "insert into purchase_item_history (id, revision_id, name, price, communist_shares) "
-                "select pi.id, $1, pih.name, pih.price, pih.communist_shares "
+                "insert into purchase_item_history (id, revision_id, name, price, communist_shares, deleted) "
+                "select pi.id, $1, pih.name, pih.price, pih.communist_shares, pih.deleted "
                 "from purchase_item_history pih join purchase_item pi on pih.id = pi.id "
-                "where pi.transaction_id = $2 and pih.revision_id = $3",
+                "where pi.transaction_id = $2 and pih.revision_id = $3 and not pih.deleted",
                 revision_id,
                 transaction_id,
                 last_committed_revision,
@@ -478,7 +478,8 @@ class TransactionService(Application):
                 "insert into purchase_item_usage (item_id, revision_id, account_id, share_amount) "
                 "select item_id, $1, account_id, share_amount "
                 "from purchase_item_usage piu join purchase_item pi on piu.item_id = pi.id "
-                "where pi.transaction_id = $2 and piu.revision_id = $3",
+                "join purchase_item_history pih on pi.id = pih.id and pih.revision_id = piu.revision_id "
+                "where pi.transaction_id = $2 and piu.revision_id = $3 and not pih.deleted",
                 revision_id,
                 transaction_id,
                 last_committed_revision,

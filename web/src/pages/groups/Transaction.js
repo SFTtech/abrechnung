@@ -134,7 +134,7 @@ export default function Transaction({group}) {
                     )}
                 </Suspense>
             </Paper>
-            {transaction.type === "purchase" && (transaction.is_wip || transaction.purchase_items != null && transaction.purchase_items.length > 0) && (
+            {transaction.type === "purchase" && (transaction.is_wip || (transaction.purchase_items != null && transaction.purchase_items.find(item => !item.deleted) !== undefined)) && (
                 <Paper elevation={1} className={clsx(classes.paper, classes.spacerTop)}>
                     <Typography>Positions</Typography>
                     <PurchaseItems group={group} transaction={transaction} />

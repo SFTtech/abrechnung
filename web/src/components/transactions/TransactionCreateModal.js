@@ -64,7 +64,6 @@ export default function TransactionCreateModal({ group, show, onClose }) {
                             <Select
                                 margin="normal"
                                 required
-                                autoFocus
                                 value={values.type}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
@@ -82,6 +81,7 @@ export default function TransactionCreateModal({ group, show, onClose }) {
                                 variant="standard"
                                 name="description"
                                 label="Description"
+                                autoFocus
                                 value={values.description}
                                 onChange={handleChange}
                                 onBlur={handleBlur}

@@ -5,9 +5,9 @@ import ListItemLink from "../style/ListItemLink";
 import TransactionCreateModal from "./TransactionCreateModal";
 import {currUserPermissions, groupAccounts} from "../../recoil/groups";
 import {DateTime} from "luxon";
-import { Chip, Divider, Grid, IconButton, List, ListItemText, Typography } from "@mui/material";
-import { Add } from "@mui/icons-material";
-import { makeStyles } from "@mui/styles";
+import {Chip, Divider, Grid, IconButton, List, ListItemAvatar, ListItemText, Tooltip, Typography} from "@mui/material";
+import {Add, HelpOutline, Money, ShoppingCart} from "@mui/icons-material";
+import {makeStyles} from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     propertyPill: {
@@ -41,28 +41,43 @@ export default function TransactionLog({group}) {
                     <div className="list-group-item" key={0}>No Transactions</div>
                 ) : (
                     transactions.map(transaction => (
-                        <ListItemLink key={transaction.id}
-                                      to={`/groups/${group.id}/transactions/${transaction.id}`}>
-                            <ListItemText primary={(
-                                <>
+                        <ListItemLink
+                            key={transaction.id}
+                            to={`/groups/${group.id}/transactions/${transaction.id}`}
+                        >
+                            <ListItemAvatar>
+                                {transaction.type === "purchase" ? (
+                                    <Tooltip title="Purchase">
+                                        <ShoppingCart color="primary"/>
+                                    </Tooltip>
+                                ) : transaction.type === "transfer" ? (
+                                    <Tooltip title="Money Transfer">
+                                        <Money color="primary"/>
+                                    </Tooltip>
+                                ) : (
+                                    <Tooltip title="Unknown Transaction Type">
+                                        <HelpOutline color="primary"/>
+                                    </Tooltip>
+                                )}
+                            </ListItemAvatar>
+                            <ListItemText
+                                primary={(
                                     <Typography variant="body1">
-                                        <Chip style={{marginRight: "5px"}} color="primary" variant="outlined"
-                                              size="small" label={transaction.type}/>
                                         {transaction.is_wip && (
                                             <Chip color="secondary" variant="outlined" label="WIP" size="small"
                                                   className={classes.propertyPill}/>
                                         )}
                                         {transaction.description}
                                     </Typography>
-                                </>
-                            )}
-                                          secondary={(
-                                              <>
-                                                  <span>{transaction.value.toFixed(2)} {transaction.currency_symbol} - </span>
-                                                  <span>by {accountNamesFromShares(Object.keys(transaction.creditor_shares))}, </span>
-                                                  <span>for {accountNamesFromShares(Object.keys(transaction.debitor_shares))}</span>
-                                              </>
-                                          )}/>
+                                )}
+                                secondary={(
+                                    <>
+                                        <span>{transaction.value.toFixed(2)} {transaction.currency_symbol} - </span>
+                                        <span>by {accountNamesFromShares(Object.keys(transaction.creditor_shares))}, </span>
+                                        <span>for {accountNamesFromShares(Object.keys(transaction.debitor_shares))}</span>
+                                    </>
+                                )}
+                            />
                             <ListItemText>
                                 <Typography align="right" variant="body2">
                                     {DateTime.fromISO(transaction.billed_at).toLocaleString(DateTime.DATE_FULL)}
