@@ -84,14 +84,19 @@ export const transactionsSeenByUser = selectorFamily({
                         // bill the respective item usage with each participating account
                         Object.entries(purchaseItem.usages).forEach(([accountID, value]) => {
                             if (transactionAccountBalances.hasOwnProperty(accountID)) {
-                                transactionAccountBalances[accountID] -= purchaseItem.price / totalUsages * value;
+                                transactionAccountBalances[accountID]["positions"] += totalUsages > 0 ? purchaseItem.price / totalUsages * value : 0;
                             } else {
-                                transactionAccountBalances[accountID] = -purchaseItem.price / totalUsages * value;
+                                transactionAccountBalances[accountID] = {
+                                    positions: totalUsages > 0 ? purchaseItem.price / totalUsages * value : 0,
+                                    common_debitors: 0,
+                                    common_creditors: 0
+                                };
                             }
                         });
 
                         // calculate the remaining purchase item price to be billed onto the communist shares
-                        remainingTransactionValue = remainingTransactionValue - purchaseItem.price + purchaseItem.price / totalUsages * purchaseItem.communist_shares;
+                        const commonRemainder = totalUsages > 0 ? purchaseItem.price / totalUsages * purchaseItem.communist_shares : 0;
+                        remainingTransactionValue = remainingTransactionValue - purchaseItem.price + commonRemainder;
                     }
                 }
 
@@ -100,16 +105,24 @@ export const transactionsSeenByUser = selectorFamily({
 
                 Object.entries(transaction.debitor_shares).forEach(([accountID, value]) => {
                     if (transactionAccountBalances.hasOwnProperty(accountID)) {
-                        transactionAccountBalances[accountID] -= remainingTransactionValue / totalDebitorShares * value;
+                        transactionAccountBalances[accountID]["common_debitors"] +=  totalDebitorShares > 0 ? remainingTransactionValue / totalDebitorShares * value : 0;
                     } else {
-                        transactionAccountBalances[accountID] = -remainingTransactionValue / totalDebitorShares * value;
+                        transactionAccountBalances[accountID] = {
+                            positions: 0,
+                            common_creditors: 0,
+                            common_debitors: totalDebitorShares > 0 ? remainingTransactionValue / totalDebitorShares * value : 0
+                        };
                     }
                 });
                 Object.entries(transaction.creditor_shares).forEach(([accountID, value]) => {
                     if (transactionAccountBalances.hasOwnProperty(accountID)) {
-                        transactionAccountBalances[accountID] += transaction.value / totalCreditorShares * value;
+                        transactionAccountBalances[accountID]["common_creditors"] += totalCreditorShares > 0 ? transaction.value / totalCreditorShares * value : 0;
                     } else {
-                        transactionAccountBalances[accountID] = transaction.value / totalCreditorShares * value;
+                        transactionAccountBalances[accountID] = {
+                            positions: 0,
+                            common_debitors: 0,
+                            common_creditors: totalCreditorShares > 0 ? transaction.value / totalCreditorShares * value : 0
+                        };
                     }
                 });
 
@@ -141,7 +154,7 @@ export const accountBalances = selectorFamily({
                 continue; // ignore deleted transactions
             }
             Object.entries(transaction.account_balances).forEach(([accountID, value]) => {
-                accountBalances[accountID] += value;
+                accountBalances[accountID] += value.common_creditors - value.positions - value.common_debitors;
             });
         }
         return accountBalances;

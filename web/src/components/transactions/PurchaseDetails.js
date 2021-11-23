@@ -41,19 +41,6 @@ export default function PurchaseDetails({ group, transaction }) {
             <TransactionValue group={group} transaction={transaction} />
 
             <PurchaseDebitorShares group={group} transaction={transaction} isEditing={transaction.is_wip} />
-
-            <Accordion elevation={0}>
-                <AccordionSummary
-                    expandIcon={<ExpandMoreIcon />}
-                    aria-controls="purchase-items"
-                    id="purchase-items"
-                >
-                    <Typography className={classes.heading}>Purchase Items</Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                    <PurchaseItems group={group} transaction={transaction} />
-                </AccordionDetails>
-            </Accordion>
         </>
     );
 }

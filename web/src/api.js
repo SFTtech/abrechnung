@@ -113,7 +113,7 @@ async function makeGet(url) {
 
 async function makeDelete(url, data = null) {
     await refreshToken();
-    return await api.delete(url, data);
+    return await api.delete(url, {data: data});
 }
 
 export async function login({username, password}) {
@@ -415,9 +415,7 @@ export async function switchDebitorShare({transactionID, accountID, value}) {
 
 export async function deleteDebitorShare({transactionID, accountID}) {
     const resp = await makeDelete(`/transactions/${transactionID}/debitor_shares`, {
-        data: {
-            account_id: accountID
-        }
+        account_id: accountID
     });
     return resp.data;
 }

@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField } from "@mui/material";
+import {
+    IconButton,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    TextField,
+    Typography
+} from "@mui/material";
 import { useRecoilValue } from "recoil";
 import { groupAccounts } from "../../../recoil/groups";
 import {
@@ -133,6 +143,10 @@ export default function PurchaseItems({ group, transaction }) {
 
     const [showAccountSelect, setShowAccountSelect] = useState(false);
     const [itemIDMapping, setItemIDMapping] = useState({});
+
+    const purchaseItemSumForAccount = (accountID) => {
+        return transaction.account_balances.hasOwnProperty(accountID) ? transaction.account_balances[accountID].positions : 0;
+    };
 
     const initialItem = () => {
         return {
@@ -282,20 +296,21 @@ export default function PurchaseItems({ group, transaction }) {
                 <TableHead>
                     <TableRow>
                         <TableCell>Name</TableCell>
-                        <TableCell>Price</TableCell>
+                        <TableCell align="right">Price</TableCell>
                         {(transaction.is_wip ? transactionAccounts : purchaseItemAccounts).map(accountID => (
-                            <TableCell>{accounts.find(account => account.id === accountID).name}</TableCell>
+                            <TableCell
+                                align="right">{accounts.find(account => account.id === accountID).name}</TableCell>
                         ))}
                         {transaction.is_wip && (
                             <>
                                 {showAccountSelect && (
-                                    <TableCell>
+                                    <TableCell align="right">
                                         <AccountSelect group={group} exclude={transactionAccounts}
                                                        onChange={addPurchaseItemAccount} />
                                     </TableCell>
                                 )}
                                 {showAddAccount && (
-                                    <TableCell>
+                                    <TableCell align="right">
                                         <IconButton onClick={() => setShowAccountSelect(true)}>
                                             <Add />
                                         </IconButton>
@@ -303,7 +318,7 @@ export default function PurchaseItems({ group, transaction }) {
                                 )}
                             </>
                         )}
-                        <TableCell>Communist Shares</TableCell>
+                        <TableCell align="right">Shared</TableCell>
                         {transaction.is_wip && (
                             <TableCell></TableCell>
                         )}
@@ -321,16 +336,17 @@ export default function PurchaseItems({ group, transaction }) {
                                             validate={value => value !== "" && value != null}
                                         />
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell align="right">
                                         <WrappedTextField
                                             value={item.price}
+                                            style={{ width: 70 }}
                                             onChange={value => updateItem(item, item.name, parseFloat(value), item.communist_shares)}
                                             validate={validateFloat}
                                             errorMsg={"float > 0 required"}
                                         />
                                     </TableCell>
                                     {transactionAccounts.map(accountID => (
-                                        <TableCell>
+                                        <TableCell align="right">
                                             <ShareInput
                                                 value={item.usages.hasOwnProperty(String(accountID)) ? item.usages[String(accountID)] : 0}
                                                 onChange={value => updateItemUsage(item, accountID, value)}
@@ -343,7 +359,7 @@ export default function PurchaseItems({ group, transaction }) {
                                     {showAddAccount && (
                                         <TableCell></TableCell>
                                     )}
-                                    <TableCell>
+                                    <TableCell align="right">
                                         <ShareInput
                                             value={item.communist_shares}
                                             onChange={value => updateItem(item, item.name, item.price, parseFloat(value))}
@@ -361,18 +377,38 @@ export default function PurchaseItems({ group, transaction }) {
                         purchaseItems.map(item =>
                             <TableRow key={item.id}>
                                 <TableCell>{item.name}</TableCell>
-                                <TableCell align="right">{item.price} {transaction.currency_symbol}</TableCell>
+                                <TableCell align="right"
+                                           style={{ width: 80 }}>{item.price.toFixed(2)} {transaction.currency_symbol}</TableCell>
                                 {purchaseItemAccounts.map(accountID => (
                                     <TableCell
                                         width="50px"
+                                        align="right"
                                     >
                                         {item.usages.hasOwnProperty(String(accountID)) ? item.usages[String(accountID)] : 0}
                                     </TableCell>
                                 ))}
-                                <TableCell>{item.communist_shares}</TableCell>
+                                <TableCell align="right">{item.communist_shares}</TableCell>
                             </TableRow>
                         ))
                     }
+                    <TableRow>
+                        <TableCell><Typography sx={{ fontWeight: "bold" }}>Total:</Typography></TableCell>
+                        <TableCell
+                            align="right">{purchaseItems.reduce((acc, curr) => acc + curr.price, 0).toFixed(2)} {transaction.currency_symbol}</TableCell>
+                        {purchaseItemAccounts.map(accountID => (
+                            <TableCell
+                                align="right"
+                            >
+                                {purchaseItemSumForAccount(accountID).toFixed(2)} {transaction.currency_symbol}
+                            </TableCell>
+                        ))}
+                        <TableCell
+                            align="right"
+                        >
+                            {(purchaseItems.reduce((acc, curr) => acc + curr.price, 0) - Object.values(transaction.account_balances).reduce((acc, curr) => acc + curr.positions, 0)).toFixed(2)} {transaction.currency_symbol}
+                        </TableCell>
+                        <TableCell></TableCell>
+                    </TableRow>
                 </TableBody>
             </Table>
         </TableContainer>

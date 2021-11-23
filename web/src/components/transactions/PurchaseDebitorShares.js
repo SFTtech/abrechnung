@@ -111,7 +111,14 @@ export default function PurchaseDebitorShares({ group, transaction, isEditing })
         if (!transaction.account_balances.hasOwnProperty(accountID)) {
             return 0.00;
         }
-        return transaction.account_balances[accountID];
+        return transaction.account_balances[accountID].common_debitors;
+    };
+
+    const positionValueForAccount = (accountID) => {
+        if (!transaction.account_balances.hasOwnProperty(accountID)) {
+            return 0.00;
+        }
+        return transaction.account_balances[accountID].positions;
     };
 
     const updateDebShare = (accountID, checked) => {
@@ -184,20 +191,19 @@ export default function PurchaseDebitorShares({ group, transaction, isEditing })
                         <Table size="small">
                             <TableHead>
                                 <TableRow>
-                                    <TableCell width="100px">Value</TableCell>
-                                    <TableCell width="100px">Shares</TableCell>
                                     <TableCell>Account</TableCell>
+                                    <TableCell width="100px">Shares</TableCell>
+                                    <TableCell width="100px" align="right">Positions</TableCell>
+                                    <TableCell width="3px" align="center">+</TableCell>
+                                    <TableCell width="100px" align="right">Shared + Rest</TableCell>
+                                    <TableCell width="3px" align="center">=</TableCell>
+                                    <TableCell width="100px" align="right">Total</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {accounts.map(account => (
                                     <TableRow key={account.id}>
-                                        <TableCell
-                                            width="100px"
-                                            align="right"
-                                        >
-                                            {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
-                                        </TableCell>
+                                        <TableCell>{account.name}</TableCell>
                                         <TableCell
                                             width="100px"
                                         >
@@ -214,7 +220,24 @@ export default function PurchaseDebitorShares({ group, transaction, isEditing })
                                                 />
                                             )}
                                         </TableCell>
-                                        <TableCell>{account.name}</TableCell>
+                                        <TableCell
+                                            align="right"
+                                        >
+                                            {positionValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
+                                        </TableCell>
+                                        <TableCell></TableCell>
+                                        <TableCell
+                                            align="right"
+                                        >
+                                            {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
+                                        </TableCell>
+                                        <TableCell></TableCell>
+                                        <TableCell
+                                            width="100px"
+                                            align="right"
+                                        >
+                                            {(debitorValueForAccount(account.id) + positionValueForAccount(account.id)).toFixed(2)} {transaction.currency_symbol}
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -225,22 +248,21 @@ export default function PurchaseDebitorShares({ group, transaction, isEditing })
                         <Table>
                             <TableHead>
                                 <TableRow>
-                                    <TableCell>Value</TableCell>
+                                    <TableCell>Account</TableCell>
                                     {showAdvanced && (
                                         <TableCell>Shares</TableCell>
                                     )}
-                                    <TableCell>Account</TableCell>
+                                    <TableCell width="100px" align="right">Positions</TableCell>
+                                    <TableCell width="3px" align="center">+</TableCell>
+                                    <TableCell width="100px" align="right">Shared Rest</TableCell>
+                                    <TableCell width="3px" align="center">=</TableCell>
+                                    <TableCell width="100px" align="right">Total</TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
                                 {accounts.map(account => transaction.debitor_shares.hasOwnProperty(account.id) ? (
                                     <TableRow key={account.id}>
-                                        <TableCell
-                                            width="100px"
-                                            align="right"
-                                        >
-                                            {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
-                                        </TableCell>
+                                        <TableCell>{account.name}</TableCell>
                                         {showAdvanced && (
                                             <TableCell
                                                 width="50px"
@@ -248,7 +270,24 @@ export default function PurchaseDebitorShares({ group, transaction, isEditing })
                                                 {debitorShareValueForAccount(account.id)}
                                             </TableCell>
                                         )}
-                                        <TableCell>{account.name}</TableCell>
+                                        <TableCell
+                                            align="right"
+                                        >
+                                            {positionValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
+                                        </TableCell>
+                                        <TableCell></TableCell>
+                                        <TableCell
+                                            align="right"
+                                        >
+                                            {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
+                                        </TableCell>
+                                        <TableCell></TableCell>
+                                        <TableCell
+                                            width="100px"
+                                            align="right"
+                                        >
+                                            {(debitorValueForAccount(account.id) + positionValueForAccount(account.id)).toFixed(2)} {transaction.currency_symbol}
+                                        </TableCell>
                                     </TableRow>
                                 ) : null)}
                             </TableBody>

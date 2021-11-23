@@ -19,13 +19,18 @@ import {
     DialogTitle,
     Grid,
     IconButton,
-    Paper
+    Paper, Typography
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
+import PurchaseItems from "../../components/transactions/purchase/PurchaseItems";
+import clsx from "clsx";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
         padding: theme.spacing(2)
+    },
+    spacerTop: {
+        marginTop: theme.spacing(3)
     }
 }));
 
@@ -129,6 +134,12 @@ export default function Transaction({group}) {
                     )}
                 </Suspense>
             </Paper>
+            {transaction.type === "purchase" && (transaction.is_wip || transaction.purchase_items != null && transaction.purchase_items.length > 0) && (
+                <Paper elevation={1} className={clsx(classes.paper, classes.spacerTop)}>
+                    <Typography>Positions</Typography>
+                    <PurchaseItems group={group} transaction={transaction} />
+                </Paper>
+            )}
             <Dialog
                 maxWidth="xs"
                 aria-labelledby="confirmation-dialog-title"
