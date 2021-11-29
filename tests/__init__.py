@@ -1,6 +1,6 @@
+import asyncio
 import logging
 import os
-import threading
 import unittest
 
 import asyncpg
@@ -13,7 +13,7 @@ from asyncpg.pool import Pool
 from abrechnung.application.users import UserService
 from abrechnung.database import revisions
 
-lock = threading.Lock()
+lock = asyncio.Lock()
 
 
 def get_test_db_config() -> dict:
