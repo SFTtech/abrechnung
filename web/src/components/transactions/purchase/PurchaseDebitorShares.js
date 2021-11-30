@@ -1,5 +1,5 @@
 import {useRecoilValue} from "recoil";
-import {groupAccounts} from "../../recoil/groups";
+import {groupAccounts} from "../../../recoil/groups";
 import {
     Checkbox,
     Divider,
@@ -18,8 +18,9 @@ import {
 } from "@mui/material";
 import {toast} from "react-toastify";
 import {useEffect, useState} from "react";
-import {createOrUpdateDebitorShare, deleteDebitorShare} from "../../api";
+import {createOrUpdateDebitorShare, deleteDebitorShare} from "../../../api";
 import {makeStyles} from "@mui/styles";
+import {Link} from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
     shareValue: {
@@ -60,7 +61,7 @@ function ShareInput({value, onChange}) {
     };
 
     const validate = (value) => {
-        return !(value === null || value === undefined || value === "" || isNaN(parseFloat(value)) || parseFloat(value) < 0);
+        return !(value === null || value === undefined || value === "" || isNaN(parseFloat(value)));
     };
 
     const onKeyUp = (key) => {
@@ -78,7 +79,7 @@ function ShareInput({value, onChange}) {
             onBlur={onSave}
             value={currValue}
             onChange={onValueChange}
-            helperText={error ? "float > 0 required" : null}
+            helperText={error ? "float required" : null}
             onKeyUp={onKeyUp}
         />
     );
@@ -271,7 +272,12 @@ export default function PurchaseDebitorShares({group, transaction, isEditing}) {
                             <TableBody>
                                 {accounts.map(account => transaction.debitor_shares.hasOwnProperty(account.id) ? (
                                     <TableRow hover key={account.id}>
-                                        <TableCell>{account.name}</TableCell>
+                                        <TableCell>
+                                            {/*TODO: proper link*/}
+                                            <Link
+                                                to={`/groups/${group.id}/accounts/${account.id}`}
+                                            >{account.name}</Link>
+                                        </TableCell>
                                         {showAdvanced && (
                                             <TableCell
                                                 width="50px"

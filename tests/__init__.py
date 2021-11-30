@@ -1,13 +1,9 @@
 import asyncio
 import logging
 import os
-import unittest
+from unittest import IsolatedAsyncioTestCase as TestCase
 
 import asyncpg
-from aiohttp.test_utils import (
-    setup_test_loop,
-    teardown_test_loop,
-)
 from asyncpg.pool import Pool
 
 from abrechnung.application.users import UserService
@@ -37,6 +33,8 @@ async def get_test_db() -> Pool:
         database=cfg["dbname"],
         host=cfg["host"],
         port=cfg["port"],
+        min_size=5,
+        max_size=5
     )
 
     await revisions.reset_schema(pool)
@@ -45,7 +43,7 @@ async def get_test_db() -> Pool:
     return pool
 
 
-class AsyncTestCase(unittest.TestCase):
+class AsyncTestCase(TestCase):
     def __init__(self, *args, log_level=logging.DEBUG, **kwargs):
         super().__init__(*args, **kwargs)
         logging.basicConfig(level=log_level)
@@ -66,13 +64,16 @@ class AsyncTestCase(unittest.TestCase):
             return user_id, password
 
     def setUp(self) -> None:
-        self.loop = setup_test_loop()
+        try:
+            self.loop = asyncio.get_running_loop()
+        except (AttributeError, RuntimeError):  # AttributeError->py36
+            self.loop = asyncio.get_event_loop_policy().get_event_loop()
 
         self.loop.run_until_complete(self._setup_db())
         self.loop.run_until_complete(self.setUpAsync())
 
     async def _setup_db(self):
-        lock.acquire()
+        await lock.acquire()
 
         self.db_pool = await get_test_db()
         self.db_conn: asyncpg.Connection = await self.db_pool.acquire()
@@ -88,7 +89,6 @@ class AsyncTestCase(unittest.TestCase):
     def tearDown(self) -> None:
         self.loop.run_until_complete(self.tearDownAsync())
         self.loop.run_until_complete(self._teardown_db())
-        teardown_test_loop(self.loop)
 
     async def tearDownAsync(self) -> None:
         pass

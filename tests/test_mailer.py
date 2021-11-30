@@ -2,7 +2,6 @@ import asyncio
 from dataclasses import dataclass
 from typing import Optional
 
-from aiohttp.test_utils import unittest_run_loop
 from aiosmtpd import smtp
 from aiosmtpd.controller import Controller
 
@@ -41,6 +40,7 @@ class TestSMTPHandler:
 
 class MailerTest(AsyncTestCase):
     async def setUpAsync(self) -> None:
+        await super().setUpAsync()
         self.smtp_handler = TestSMTPHandler()
         self.smtp = Controller(self.smtp_handler)
         self.smtp.start()
@@ -66,10 +66,10 @@ class MailerTest(AsyncTestCase):
         self.user_service = UserService(db_pool=self.db_pool, enable_registration=True)
 
     async def tearDownAsync(self) -> None:
+        await super().tearDownAsync()
         self.mailer_task.cancel()
         self.smtp.stop()
 
-    @unittest_run_loop
     async def test_registration_mail_delivery(self):
         user_email = "user@email.com"
         await self.user_service.register_user("user1", user_email, "password")
@@ -82,7 +82,6 @@ class MailerTest(AsyncTestCase):
             "[Test Abrechnung] Confirm user account", mail.content.decode("utf-8")
         )
 
-    @unittest_run_loop
     async def test_email_change_mail_delivery(self):
         user_email = "user@email.com"
         new_email = "new_email@email.com"
@@ -103,7 +102,6 @@ class MailerTest(AsyncTestCase):
         self.assertIn("[Test Abrechnung] Change email", mail1.content.decode("utf-8"))
         self.assertIn("[Test Abrechnung] Change email", mail2.content.decode("utf-8"))
 
-    @unittest_run_loop
     async def test_password_reset_mail_delivery(self):
         user_email = "user@email.com"
         await self._create_test_user(username="user", email=user_email)

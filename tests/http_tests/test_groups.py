@@ -1,7 +1,5 @@
 from datetime import timedelta, datetime, timezone
 
-from aiohttp.test_utils import unittest_run_loop
-
 from abrechnung.http.auth import token_for_user
 from tests.http_tests import HTTPAPITest
 
@@ -36,7 +34,6 @@ class GroupAPITest(HTTPAPITest):
         self.assertTrue(isinstance(ret_data, list))
         return ret_data
 
-    @unittest_run_loop
     async def test_create_group(self):
         resp = await self._post(
             "/api/v1/groups",
@@ -75,7 +72,6 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual("$", group["currency_symbol"])
         self.assertEqual("new terms", group["terms"])
 
-    @unittest_run_loop
     async def test_delete_group(self):
         user2_id, user2_password = await self._create_test_user(
             "user2", "user2@test.com"
@@ -155,7 +151,6 @@ class GroupAPITest(HTTPAPITest):
             gid = await conn.fetchval("select id from grp where grp.id = $1", group_id)
             self.assertIsNone(gid)
 
-    @unittest_run_loop
     async def test_list_groups(self):
         resp = await self._get(f"/api/v1/groups")
         self.assertEqual(200, resp.status)
@@ -182,7 +177,6 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual(2, len(ret_data))
         self.assertEqual({group1_id, group2_id}, set([e["id"] for e in ret_data]))
 
-    @unittest_run_loop
     async def test_create_account(self):
         group_id = await self.group_service.create_group(
             user_id=self.test_user_id,
@@ -203,7 +197,6 @@ class GroupAPITest(HTTPAPITest):
         ret_data = await resp.json()
         self.assertIsNotNone(ret_data["account_id"])
 
-    @unittest_run_loop
     async def test_update_account(self):
         group_id = await self.group_service.create_group(
             user_id=self.test_user_id,
@@ -244,7 +237,6 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual("new_name2", a["name"])
         self.assertEqual("description1", a["description"])
 
-    @unittest_run_loop
     async def test_list_accounts(self):
         group_id = await self.group_service.create_group(
             user_id=self.test_user_id,
@@ -273,7 +265,6 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual(2, len(ret_data))
         self.assertEqual({account1_id, account2_id}, set([e["id"] for e in ret_data]))
 
-    @unittest_run_loop
     async def test_members(self):
         group_id = await self.group_service.create_group(
             user_id=self.test_user_id,
@@ -331,7 +322,6 @@ class GroupAPITest(HTTPAPITest):
             list(filter(lambda x: x["user_id"] == user2_id, members))[0]["is_owner"]
         )
 
-    @unittest_run_loop
     async def test_get_account(self):
         group_id = await self.group_service.create_group(
             user_id=self.test_user_id,
@@ -359,7 +349,6 @@ class GroupAPITest(HTTPAPITest):
         resp = await self._get(f"/api/v1/groups/{group_id}/accounts/13232")
         self.assertEqual(404, resp.status)
 
-    @unittest_run_loop
     async def test_invites(self):
         group_id = await self.group_service.create_group(
             user_id=self.test_user_id,
@@ -458,7 +447,6 @@ class GroupAPITest(HTTPAPITest):
             set([log["type"] for log in logs]),
         )
 
-    @unittest_run_loop
     async def test_group_log(self):
         group_id = await self.group_service.create_group(
             user_id=self.test_user_id,

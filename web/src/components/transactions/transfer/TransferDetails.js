@@ -1,9 +1,9 @@
 import React from "react";
-import TransactionCreditorShare from "./TransactionCreditorShare";
-import TransactionDescription from "./TransactionDescription";
-import TransactionBilledAt from "./TransactionBilledAt";
-import TransactionValue from "./TransactionValue";
-import TransactionDebitorShare from "./TransactionDebitorShare";
+import TransactionCreditorShare from "../TransactionCreditorShare";
+import TransactionDescription from "../TransactionDescription";
+import TransactionBilledAt from "../TransactionBilledAt";
+import TransactionValue from "../TransactionValue";
+import TransactionDebitorShare from "../TransactionDebitorShare";
 import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({

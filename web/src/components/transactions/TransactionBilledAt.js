@@ -1,19 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { List, TextField } from "@mui/material";
-import { toast } from "react-toastify";
-import { updateTransactionDetails } from "../../api";
-import { DateTime } from "luxon";
+import React from "react";
+import {List, TextField} from "@mui/material";
+import {toast} from "react-toastify";
+import {updateTransactionDetails} from "../../api";
 import DatePicker from "@mui/lab/DatePicker";
+import {DisabledTextField} from "../style/DisabledTextField";
+import {DateTime} from "luxon";
 
-export default function TransactionBilledAt({ group, transaction }) {
-    const [billedAt, setBilledAt] = useState(DateTime.now());
-
-    useEffect(() => {
-        // TODO: incorporate pending changes
-        setBilledAt(transaction.billed_at);
-    }, [transaction, setBilledAt]);
-
-    const save = () => {
+export default function TransactionBilledAt({group, transaction}) {
+    const save = (billedAt) => {
         if (transaction.is_wip && billedAt !== transaction.billed_at) {
             updateTransactionDetails({
                 groupID: group.id,
@@ -30,28 +24,23 @@ export default function TransactionBilledAt({ group, transaction }) {
         }
     };
 
-    const onChange = (billed) => {
-        setBilledAt(billed);
-    };
-
     return (
         <List>
             {transaction.is_wip ? (
                 <DatePicker
                     label="Billed At"
                     views={["day"]}
-                    value={billedAt}
+                    value={transaction.billed_at}
                     onBlur={save}
-                    onChange={onChange}
-                    renderInput={(params) => <TextField variant="standard" fullWidth {...params} helperText={null} />}
+                    onChange={save}
+                    renderInput={(params) => <TextField variant="standard" fullWidth {...params} helperText={null}/>}
                 />
             ) : (
-                <TextField
+                <DisabledTextField
                     label="Billed At"
                     variant="standard"
                     fullWidth
-                    value={transaction.billed_at}
-                    disabled={true}
+                    value={DateTime.fromISO(transaction.billed_at).toLocaleString()}
                 />
             )}
 

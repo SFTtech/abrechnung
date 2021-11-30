@@ -1,9 +1,8 @@
+import asyncio
 import logging
 
 from aiohttp import web
 from aiohttp.test_utils import (
-    setup_test_loop,
-    teardown_test_loop,
     TestServer,
     TestClient,
 )
@@ -37,22 +36,27 @@ class AsyncHTTPTestCase(AsyncTestCase):
         raise RuntimeError("Did you forget to define get_application()?")
 
     def setUp(self) -> None:
-        self.loop = setup_test_loop()
+        try:
+            self.loop = asyncio.get_running_loop()
+        except (AttributeError, RuntimeError):  # AttributeError->py36
+            self.loop = asyncio.get_event_loop_policy().get_event_loop()
 
         self.loop.run_until_complete(self._setup_db())
-        self.app = self.loop.run_until_complete(self.get_application())
-        self.server = self.loop.run_until_complete(self.get_server(self.app))
-        self.client = self.loop.run_until_complete(self.get_client(self.server))
-
-        self.loop.run_until_complete(self.client.start_server())
-
         self.loop.run_until_complete(self.setUpAsync())
+
+    async def setUpAsync(self) -> None:
+        self.app = await self.get_application()
+        self.server = await self.get_server(self.app)
+        self.client = await self.get_client(self.server)
+
+        await self.client.start_server()
 
     def tearDown(self) -> None:
         self.loop.run_until_complete(self.tearDownAsync())
-        self.loop.run_until_complete(self.client.close())
         self.loop.run_until_complete(self._teardown_db())
-        teardown_test_loop(self.loop)
+
+    async def tearDownAsync(self) -> None:
+        await self.client.close()
 
     async def get_server(self, app: web.Application) -> TestServer:
         """Return a TestServer instance."""
@@ -69,6 +73,7 @@ class BaseHTTPAPITest(AsyncHTTPTestCase):
         logging.basicConfig(level=logging.DEBUG)
 
     async def tearDownAsync(self) -> None:
+        await super().tearDownAsync()
         await self.http_service._unregister_forwarder(
             self.db_conn, forwarder_id="test_forwarder"
         )
@@ -78,6 +83,7 @@ class BaseHTTPAPITest(AsyncHTTPTestCase):
         self.http_service = HTTPService(
             config=Config({"api": {"secret_key": self.secret_key}})
         )
+
         await self.http_service._register_forwarder(
             self.db_conn, forwarder_id="test_forwarder"
         )

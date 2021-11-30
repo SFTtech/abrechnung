@@ -8,8 +8,8 @@ import {Alert} from "@mui/lab";
 import {commitTransaction, createTransactionChange, deleteTransaction, discardTransactionChange} from "../../api";
 import {currUserPermissions} from "../../recoil/groups";
 import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
-import TransferDetails from "../../components/transactions/TransferDetails";
-import PurchaseDetails from "../../components/transactions/PurchaseDetails";
+import TransferDetails from "../../components/transactions/transfer/TransferDetails";
+import PurchaseDetails from "../../components/transactions/purchase/PurchaseDetails";
 import {
     Button,
     Chip,

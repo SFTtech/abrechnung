@@ -4,7 +4,6 @@ from datetime import datetime, timedelta, date
 
 import aiohttp
 from aiohttp import web
-from aiohttp.test_utils import unittest_run_loop
 
 from abrechnung.http.auth import token_for_user
 from tests.http_tests import BaseHTTPAPITest
@@ -17,7 +16,6 @@ class WebsocketAPITest(BaseHTTPAPITest):
         resp_json = json.loads(resp.data)
         self.assertDictEqual(expected_msg, resp_json)
 
-    @unittest_run_loop
     async def test_websocket_notifications(self):
         user_id, password = await self._create_test_user(
             username="user", email="email@email.com"

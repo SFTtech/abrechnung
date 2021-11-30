@@ -18,6 +18,7 @@ import {
 } from "@mui/material";
 import { Add, Delete, Edit } from "@mui/icons-material";
 import { makeStyles } from "@mui/styles";
+import ListItemLink from "../../components/style/ListItemLink";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -65,7 +66,10 @@ export default function Accounts({group}) {
                     </ListItem>
                 ) : (
                     accounts.map(account => (
-                        <ListItem key={account.id}>
+                        <ListItemLink
+                            key={account.id}
+                            to={`/groups/${group.id}/accounts/${account.id}`}
+                        >
                             <ListItemText primary={account.name}
                                           secondary={account.description}/>
                             {userPermissions.can_write && (
@@ -78,7 +82,7 @@ export default function Accounts({group}) {
                                     </IconButton>
                                 </ListItemSecondaryAction>
                             )}
-                        </ListItem>
+                        </ListItemLink>
                     ))
                 )}
             </List>

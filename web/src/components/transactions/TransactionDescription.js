@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { toast } from "react-toastify";
-import { updateTransactionDetails } from "../../api";
-import { TextField } from "@mui/material";
+import React, {useEffect, useState} from "react";
+import {toast} from "react-toastify";
+import {updateTransactionDetails} from "../../api";
+import {TextField} from "@mui/material";
+import {DisabledTextField} from "../style/DisabledTextField";
 
-export default function TransactionDescription({ group, transaction }) {
+export default function TransactionDescription({group, transaction}) {
     const [description, setDescription] = useState("");
     const [error, setError] = useState(false);
 
@@ -58,13 +59,14 @@ export default function TransactionDescription({ group, transaction }) {
                     value={description}
                 />
             ) : (
-                <TextField
-                    label="Description"
-                    variant="standard"
-                    fullWidth
-                    value={transaction.description}
-                    disabled={true}
-                />
+                <>
+                    <DisabledTextField
+                        label="Description"
+                        variant="standard"
+                        fullWidth
+                        value={transaction.description}
+                    />
+                </>
             )}
 
         </>

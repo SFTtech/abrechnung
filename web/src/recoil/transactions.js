@@ -164,3 +164,42 @@ export const accountBalances = selectorFamily({
         return accountBalances;
     }
 });
+
+export const accountTransactions = selectorFamily({
+    key: "accountTransactions",
+    get: ({ groupID, accountID }) => async ({ get }) => {
+        return get(transactionsSeenByUser(groupID)).filter(
+            transaction => transaction.account_balances.hasOwnProperty(accountID)
+        );
+    }
+});
+
+export const accountBalanceHistory = selectorFamily({
+    key: "accountBalanceHistory",
+    get: ({ groupID, accountID }) => async ({ get }) => {
+        const unsortedTransactions = get(accountTransactions({ groupID: groupID, accountID: accountID }));
+        const transactions = [...unsortedTransactions].sort((t1, t2) => {
+            return DateTime.fromISO(t1.billed_at) > DateTime.fromISO(t2.billed_at);
+        });
+
+        if (transactions.length === 0) {
+            return [];
+        }
+
+        let balanceChanges = [];
+        let currentEntry = { date: DateTime.fromISO(transactions[0].billed_at).toSeconds(), balance: 0 };
+        for (const transaction of transactions) {
+            const transactionDate = DateTime.fromISO(transaction.billed_at).toSeconds();
+            if (transactionDate !== currentEntry.date) {
+                balanceChanges.push({ ...currentEntry });
+                currentEntry.date = transactionDate;
+            }
+
+            const a = transaction.account_balances[accountID];
+            currentEntry.balance += a.common_creditors - a.common_debitors - a.positions;
+        }
+        balanceChanges.push({ ...currentEntry });
+
+        return balanceChanges;
+    }
+});

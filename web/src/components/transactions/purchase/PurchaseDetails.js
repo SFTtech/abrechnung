@@ -1,9 +1,9 @@
 import React from "react";
-import PurchaseDebitorShares from "../../components/transactions/PurchaseDebitorShares";
-import TransactionCreditorShare from "./TransactionCreditorShare";
-import TransactionDescription from "./TransactionDescription";
-import TransactionBilledAt from "./TransactionBilledAt";
-import TransactionValue from "./TransactionValue";
+import PurchaseDebitorShares from "./PurchaseDebitorShares";
+import TransactionCreditorShare from "../TransactionCreditorShare";
+import TransactionDescription from "../TransactionDescription";
+import TransactionBilledAt from "../TransactionBilledAt";
+import TransactionValue from "../TransactionValue";
 
 export default function PurchaseDetails({group, transaction}) {
     return (
