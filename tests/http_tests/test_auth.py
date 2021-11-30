@@ -1,4 +1,3 @@
-from aiohttp.test_utils import unittest_run_loop
 from jose import jwt
 
 from abrechnung.http.auth import token_for_user
@@ -34,7 +33,6 @@ class AuthAPITest(BaseHTTPAPITest):
 
         return None
 
-    @unittest_run_loop
     async def test_register_user(self):
         resp = await self.client.post(
             f"/api/v1/auth/register",
@@ -58,7 +56,6 @@ class AuthAPITest(BaseHTTPAPITest):
         )
         self.assertEqual(400, resp.status)
 
-    @unittest_run_loop
     async def test_login_user(self):
         user_name = "user"
         email = "email@email.com"
@@ -110,7 +107,6 @@ class AuthAPITest(BaseHTTPAPITest):
         self.assertEqual(204, resp.status)
         await self._fetch_profile(token, expected_status=401)
 
-    @unittest_run_loop
     async def test_change_password(self):
         user_id, password = await self._create_test_user("user", "user@email.stuff")
         _, session_id, _ = await self.user_service.login_user(
@@ -138,7 +134,6 @@ class AuthAPITest(BaseHTTPAPITest):
         # check that we can login with the new password
         await self._login("user", "password2")
 
-    @unittest_run_loop
     async def test_change_email(self):
         username = "user1"
         old_email = "user@stusta.de"
@@ -193,7 +188,6 @@ class AuthAPITest(BaseHTTPAPITest):
         # we still have the old email
         self.assertEqual(new_email, profile["email"])
 
-    @unittest_run_loop
     async def test_reset_password(self):
         user_email = "user@stusta.de"
         username = "user1"
@@ -235,7 +229,6 @@ class AuthAPITest(BaseHTTPAPITest):
         # check that we can login with the new password
         await self._login(username, "new_password")
 
-    @unittest_run_loop
     async def test_sessions(self):
         user_email = "user@email.email"
         username = "user1"

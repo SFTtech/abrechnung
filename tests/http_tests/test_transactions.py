@@ -1,7 +1,4 @@
 from datetime import date
-from pprint import pprint
-
-from aiohttp.test_utils import unittest_run_loop
 
 from tests.http_tests import HTTPAPITest
 
@@ -171,7 +168,6 @@ class TransactionAPITest(HTTPAPITest):
         )
         self.assertEqual(expected_status, resp.status)
 
-    @unittest_run_loop
     async def test_create_transaction(self):
         group_id = await self.group_service.create_group(
             user_id=self.test_user_id,
@@ -195,7 +191,6 @@ class TransactionAPITest(HTTPAPITest):
         ret_data = await resp.json()
         self.assertIsNotNone(ret_data["transaction_id"])
 
-    @unittest_run_loop
     async def test_list_transactions(self):
         group_id = await self.group_service.create_group(
             user_id=self.test_user_id,
@@ -233,7 +228,6 @@ class TransactionAPITest(HTTPAPITest):
             set([e["id"] for e in ret_data]),
         )
 
-    @unittest_run_loop
     async def test_get_transaction(self):
         group_id, transaction_id = await self._create_group_with_transaction("transfer")
         t = await self._fetch_transaction(transaction_id)
@@ -245,7 +239,6 @@ class TransactionAPITest(HTTPAPITest):
         resp = await self._get(f"/api/v1/transactions/1332")
         self.assertEqual(404, resp.status)
 
-    @unittest_run_loop
     async def test_update_transaction(self):
         group_id, transaction_id = await self._create_group_with_transaction("transfer")
         await self._update_transaction(
@@ -330,7 +323,6 @@ class TransactionAPITest(HTTPAPITest):
             t["current_state"]["currency_conversion_rate"],
         )
 
-    @unittest_run_loop
     async def test_commit_transaction(self):
         group_id, transaction_id = await self._create_group_with_transaction("purchase")
         account1_id = await self._create_account(group_id, "account1")
@@ -378,7 +370,6 @@ class TransactionAPITest(HTTPAPITest):
         t = await self._fetch_transaction(transaction_id)
         self.assertTrue(t["current_state"]["deleted"])
 
-    @unittest_run_loop
     async def test_discard_newly_created_transaction(self):
         group_id, transaction_id = await self._create_group_with_transaction("purchase")
         account1_id = await self._create_account(group_id, "account1")
@@ -395,7 +386,6 @@ class TransactionAPITest(HTTPAPITest):
         self.assertTrue(t["current_state"]["deleted"])
         self.assertEqual(0, len(t["pending_changes"]))
 
-    @unittest_run_loop
     async def test_creditor_shares(self):
         group_id, transaction_id = await self._create_group_with_transaction("purchase")
         account1_id = await self.account_service.create_account(
@@ -461,7 +451,6 @@ class TransactionAPITest(HTTPAPITest):
             2.0,
         )
 
-    @unittest_run_loop
     async def test_debitor_shares_purchase(self):
         group_id, transaction_id = await self._create_group_with_transaction("purchase")
         account1_id = await self.account_service.create_account(
@@ -526,7 +515,6 @@ class TransactionAPITest(HTTPAPITest):
             transaction_id, account1_id, 1.0, expected_status=400
         )
 
-    @unittest_run_loop
     async def test_debitor_shares_transfer(self):
         group_id, transaction_id = await self._create_group_with_transaction("transfer")
         account_id = await self.account_service.create_account(
@@ -569,7 +557,6 @@ class TransactionAPITest(HTTPAPITest):
 
         await self._switch_debitor_share(transaction_id, account_id, 1.0)
 
-    @unittest_run_loop
     async def test_account_deletion(self):
         group_id, transaction1_id = await self._create_group_with_transaction(
             "transfer"
@@ -609,7 +596,6 @@ class TransactionAPITest(HTTPAPITest):
         resp = await self._delete(f"/api/v1/groups/{group_id}/accounts/{account2_id}")
         self.assertEqual(204, resp.status)
 
-    @unittest_run_loop
     async def test_purchase_items(self):
         group_id, transaction_id = await self._create_group_with_transaction("purchase")
         account1_id = await self.account_service.create_account(

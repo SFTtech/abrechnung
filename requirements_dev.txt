@@ -1,5 +1,5 @@
 black==21.8b0
-coverage[toml]~=5.5
+coverage[toml]~=6.1
 mypy~=0.910
 types-PyYAML~=5.4
 pylint~=2.10
