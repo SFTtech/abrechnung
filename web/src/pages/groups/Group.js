@@ -13,6 +13,7 @@ import GroupDetail from "./GroupDetail";
 import Balances from "../../components/groups/Balances";
 import Accounts from "./Accounts";
 import { AppBar, Box, Grid, Paper, Tab, Tabs } from "@mui/material";
+import AccountDetail from "./AccountDetail";
 
 function TabPanel(props) {
     const {children, value, index, ...other} = props;
@@ -111,6 +112,11 @@ export default function Group() {
                 <Route path={`${match.path}/transactions/:id([0-9]+)`}>
                     <Suspense fallback={<Loading/>}>
                         <Transaction group={group}/>
+                    </Suspense>
+                </Route>
+                <Route path={`${match.path}/accounts/:id([0-9]+)`}>
+                    <Suspense fallback={<Loading/>}>
+                        <AccountDetail group={group}/>
                     </Suspense>
                 </Route>
             </Switch>
