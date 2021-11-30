@@ -34,17 +34,17 @@ export default function AccountDetail({ group }) {
     return (
         <>
             <Grid container spacing={2}>
-                <Grid item xs={6}>
+                {/*<Grid item xs={12}>*/}
+                {/*    <Paper elevation={1} className={classes.paper}>*/}
+                {/*        <Typography component="h3" variant="h5">*/}
+                {/*            Account Detail*/}
+                {/*        </Typography>*/}
+                {/*    </Paper>*/}
+                {/*</Grid>*/}
+                <Grid item xs={12}>
                     <Paper elevation={1} className={classes.paper}>
                         <Typography component="h3" variant="h5">
-                            Account Detail
-                        </Typography>
-                    </Paper>
-                </Grid>
-                <Grid item xs={6}>
-                    <Paper elevation={1} className={classes.paper}>
-                        <Typography component="h3" variant="h5">
-                            Balance
+                            Balance of {account.name}
                         </Typography>
                         <ResponsiveContainer width="100%" height={300}>
                             <LineChart width={730} height={250} data={balanceHistory}
@@ -53,12 +53,18 @@ export default function AccountDetail({ group }) {
                                 <XAxis 
                                     dataKey="date"
                                     type="number"
-                                    tickFormatter = {(unixTime) => DateTime.fromSeconds(unixTime).toISODate()}
+                                    tickFormatter = {(unixTime) => DateTime.fromSeconds(unixTime).toLocaleString()}
                                     domain={["dataMin", "dataMax"]}
                                 />
                                 {/*<YAxis  type="number" unit={group.currency_symbol} domain={[dataMin => Math.min(0, dataMin), dataMax => {console.log(dataMax); return Math.max(0, dataMax)}]}/>*/}
-                                <YAxis  type="number" unit={group.currency_symbol}/>
-                                <Tooltip formatter={label => parseFloat(label).toFixed(2) + ` ${group.currency_symbol}`}/>
+                                <YAxis
+                                    tickFormatter={(value) => value.toFixed(2)}
+                                    type="number" unit={group.currency_symbol}
+                                />
+                                <Tooltip
+                                    formatter={value => parseFloat(value).toFixed(2) + ` ${group.currency_symbol}`}
+                                    labelFormatter = {(unixTime) => DateTime.fromSeconds(unixTime).toLocaleString()}
+                                />
                                 <Legend />
                                 <Line type="stepAfter" dataKey="balance"/>
                             </LineChart>
@@ -68,7 +74,7 @@ export default function AccountDetail({ group }) {
                 <Grid item xs={12}>
                     <Paper elevation={1} className={classes.paper}>
                         <Typography component="h3" variant="h5">
-                            Transactions
+                            Transactions of {account.name}
                         </Typography>
                         <List>
                             {transactions.map(transaction => (

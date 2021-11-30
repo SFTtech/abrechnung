@@ -198,7 +198,7 @@ export default function PurchaseItems({group, transaction}) {
     };
 
     const validateFloat = (value) => {
-        return !(value === null || value === undefined || value === "" || isNaN(parseFloat(value)) || parseFloat(value) < 0);
+        return !(value === null || value === undefined || value === "" || isNaN(parseFloat(value)));
     };
 
     useEffect(() => {
@@ -309,7 +309,9 @@ export default function PurchaseItems({group, transaction}) {
                                 <TableCell
                                     align="right"
                                     style={{minWidth: 80}}
-                                >{accounts.find(account => account.id === accountID).name}</TableCell>
+                                >
+                                    {accounts.find(account => account.id === accountID).name}
+                                </TableCell>
                             ))}
                             {transaction.is_wip && (
                                 <>
@@ -352,7 +354,7 @@ export default function PurchaseItems({group, transaction}) {
                                                 style={{width: 70}}
                                                 onChange={value => updateItem(item, item.name, parseFloat(value), item.communist_shares)}
                                                 validate={validateFloat}
-                                                errorMsg={"float > 0 required"}
+                                                errorMsg={"float required"}
                                             />
                                         </TableCell>
                                         {transactionAccounts.map(accountID => (
