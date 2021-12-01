@@ -9,7 +9,6 @@ import aiohttp_cors as aiohttp_cors
 import asyncpg.pool
 import schema
 from aiohttp import web
-from asyncpg import Connection
 from asyncpg.pool import Pool
 from jose import jwt
 
@@ -67,14 +66,14 @@ class HTTPService(SubCommand):
                 app = self.create_app(db_pool=db_pool)
                 app.router.add_route("GET", "/", self.handle_ws_connection)
 
-                web.run_app(app, host=self.cfg["api"]["host"], port=self.cfg["api"]["port"])
+                await web._run_app(app, host=self.cfg["api"]["host"], port=self.cfg["api"]["port"])
             finally:
                 await self._unregister_forwarder(
                     conn, forwarder_id=self.cfg["api"]["id"]
                 )
 
     async def _register_forwarder(
-        self, connection: asyncpg.Connection, forwarder_id: str
+            self, connection: asyncpg.Connection, forwarder_id: str
     ):
         # register at db
         self.channel_id = await connection.fetchval(
@@ -94,7 +93,7 @@ class HTTPService(SubCommand):
         )
 
     async def _unregister_forwarder(
-        self, connection: asyncpg.Connection, forwarder_id: str
+            self, connection: asyncpg.Connection, forwarder_id: str
     ):
         # deregister at db
         await connection.remove_listener(self.channel_name, self.on_psql_notification)
@@ -103,9 +102,9 @@ class HTTPService(SubCommand):
         await connection.execute("select * from forwarder_stop($1)", forwarder_id)
 
     def create_app(
-        self,
-        db_pool: Pool,
-        middlewares: Optional[list] = None,
+            self,
+            db_pool: Pool,
+            middlewares: Optional[list] = None,
     ) -> web.Application:
         app = web.Application()
         app["secret_key"] = self.cfg["api"]["secret_key"]
@@ -170,7 +169,7 @@ class HTTPService(SubCommand):
         return app
 
     def on_psql_notification(
-        self, connection: asyncpg.Connection, pid: int, channel: str, payload: str
+            self, connection: asyncpg.Connection, pid: int, channel: str, payload: str
     ):
         """
         this is called by psql to deliver a notify.
@@ -257,9 +256,9 @@ class HTTPService(SubCommand):
                         )
                         continue
                 except (
-                    asyncpg.DataError,
-                    json.JSONDecodeError,
-                    schema.SchemaError,
+                        asyncpg.DataError,
+                        json.JSONDecodeError,
+                        schema.SchemaError,
                 ) as exc:
                     response = websocket.make_error_msg(
                         code=web.HTTPBadRequest.status_code, msg=str(exc)
@@ -299,7 +298,7 @@ class HTTPService(SubCommand):
             await asyncio.shield(ws.send_str(msg))
 
     async def ws_message(
-        self, connection: asyncpg.Connection, connection_id: str, msg: dict
+            self, connection: asyncpg.Connection, connection_id: str, msg: dict
     ):
         """
         the websocket client sent a message. handle it.

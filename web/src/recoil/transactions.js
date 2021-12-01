@@ -1,25 +1,68 @@
 // transaction handling
-import { atomFamily, selectorFamily } from "recoil";
+import { atom, atomFamily, selector, selectorFamily } from "recoil";
 import { groupAccounts } from "./groups";
-import { fetchTransactions } from "../api";
+import { fetchTransaction, fetchTransactions } from "../api";
 import { ws } from "../websocket";
 import { userData } from "./auth";
 import { DateTime } from "luxon";
+import { toast } from "react-toastify";
+
+export const atomTest = atomFamily({
+    key: "atomTest",
+    default: selectorFamily({
+        key: "atomTest/default",
+        get: id => ({ get }) => {
+            return "foobar";
+        }
+    }),
+    effects_UNSTABLE: id => [
+        ({ setSelf }) => {
+            setSelf(currVal => {
+                console.log("curr val atom test:", currVal);
+                return "newval";
+            });
+        }
+    ]
+});
+
+export const atomTest2 = atom({
+    key: "atomTest",
+    default: selector({
+        key: "atomTest/default",
+        get: ({ get }) => {
+            return "foobar";
+        }
+    }),
+    effects_UNSTABLE: [
+        ({ setSelf }) => {
+            setSelf(currVal => {
+                console.log("curr val atom test:", currVal);
+                return "newval";
+            });
+        }
+    ]
+});
 
 export const groupTransactions = atomFamily({
     key: "groupTransactions",
-    default: selectorFamily({
-        key: "groupTransactions/default",
-        get: groupID => async ({ get }) => {
-            return await fetchTransactions({ groupID: groupID });
-        }
-    }),
+    default: [],
     effects_UNSTABLE: groupID => [
-        ({ setSelf, trigger }) => {
+        ({ setSelf }) => {
+            // TODO: handle fetch error
+            setSelf(fetchTransactions({ groupID: groupID }).catch(err => toast.error(`error when fetching transactions: ${err}`)));
+
             ws.subscribe("transaction", groupID, ({ subscription_type, transaction_id, element_id }) => {
                 if (subscription_type === "transaction" && element_id === groupID) {
-                    fetchTransactions({ groupID: element_id }).then(result => {
-                        setSelf(result);
+                    fetchTransaction({ transactionID: transaction_id }).then(result => {
+                        setSelf(currVal => {
+                            if (currVal.find(t => t.id === transaction_id) !== undefined) {
+                                return currVal.map(t => t.id === transaction_id ? result : t);
+                            }
+
+                            return [...currVal, result];
+                        });
+                    }).catch(err => {
+                        toast.error(`Reloading transactions had error: ${err}`);
                     });
                 }
             });

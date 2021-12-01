@@ -80,6 +80,7 @@ class AsyncTestCase(TestCase):
 
     async def _teardown_db(self):
         await self.db_conn.close()
+        await self.db_pool.close()
 
         lock.release()
 
