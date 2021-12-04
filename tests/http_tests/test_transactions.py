@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from tests.http_tests import HTTPAPITest
 
@@ -227,6 +227,34 @@ class TransactionAPITest(HTTPAPITest):
             {transaction1_id, transaction2_id},
             set([e["id"] for e in ret_data]),
         )
+
+        transaction3_id = await self.transaction_service.create_transaction(
+            user_id=self.test_user_id,
+            group_id=group_id,
+            type="purchase",
+            description="foobar",
+            currency_symbol="€",
+            billed_at=date.today(),
+            currency_conversion_rate=1,
+            value=100,
+        )
+        account_id = await self._create_account(group_id=group_id, name="account1")
+        await self._post_creditor_share(transaction_id=transaction3_id, account_id=account_id, value=1)
+        await self._post_debitor_share(transaction_id=transaction3_id, account_id=account_id, value=1)
+
+        # check that the list endpoint without parameters returns all objects
+        await self.transaction_service.commit_transaction(user_id=self.test_user_id, transaction_id=transaction3_id)
+        resp = await self._get(f"/api/v1/groups/{group_id}/transactions")
+        self.assertEqual(200, resp.status)
+        ret_data = await resp.json()
+        self.assertEqual(3, len(ret_data))
+
+        # TODO: test this aspect more thoroughly
+        resp = await self._get(f"/api/v1/groups/{group_id}/transactions?min_last_changed={datetime.now().isoformat()}")
+        self.assertEqual(200, resp.status)
+        ret_data = await resp.json()
+        self.assertEqual(2, len(ret_data))
+        self.assertNotIn(transaction3_id, [t["id"] for t in ret_data])
 
     async def test_get_transaction(self):
         group_id, transaction_id = await self._create_group_with_transaction("transfer")

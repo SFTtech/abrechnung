@@ -334,8 +334,12 @@ export async function deleteAccount({groupID, accountID}) {
 }
 
 
-export async function fetchTransactions({groupID}) {
-    const resp = await makeGet(`/groups/${groupID}/transactions`);
+export async function fetchTransactions({groupID, minLastChanged = null}) {
+    let url = `/groups/${groupID}/transactions`;
+    if (minLastChanged) {
+        url += "?min_last_changed=" + encodeURIComponent(minLastChanged.toISO());
+    }
+    const resp = await makeGet(url);
     return resp.data;
 }
 

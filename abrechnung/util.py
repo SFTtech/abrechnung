@@ -1,13 +1,13 @@
-import logging
-
 import asyncio
+import logging
 import os
+import re
 import signal
 import sys
 import termios
-
-
 # the vt100 CONTROL SEQUENCE INTRODUCER
+from datetime import datetime, timedelta, timezone
+
 CSI = "\N{ESCAPE}["
 
 
@@ -23,6 +23,38 @@ def SGR(code=""):
 BOLD = SGR(1)
 RED = SGR(31)
 NORMAL = SGR()
+
+postgres_timestamp_format = re.compile(
+    "(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.(?P<subseconds>\d+))?(?P<tzsign>[-+])(?P<tzhours>\d{2}):(?P<tzminutes>\d{2})"
+)
+
+
+def parse_postgres_datetime(dt: str) -> datetime:
+    if m := postgres_timestamp_format.match(dt):
+        subseconds = m.group("subseconds")
+        micros = 0
+        if len(subseconds) > 3:
+            millis = int(subseconds[:3])
+            micros = int(subseconds[3:].ljust(3, "0"))
+        else:
+            millis = int(subseconds.ljust(3, "0"))
+
+        tzsign = -1 if m.group("tzsign") == "-" else 1
+        tzdelta = timedelta(hours=int(m.group("tzhours")), minutes=int(m.group("tzminutes")))
+        tz = timezone(tzsign * tzdelta)
+
+        return datetime(
+            year=int(m.group("year")),
+            month=int(m.group("month")),
+            day=int(m.group("day")),
+            hour=int(m.group("hour")),
+            minute=int(m.group("minute")),
+            second=int(m.group("second")),
+            microsecond=millis * 1000 + micros,
+            tzinfo=tz
+        )
+
+    raise ValueError("invalid format")
 
 
 def format_error(text):

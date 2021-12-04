@@ -1,69 +1,80 @@
 // transaction handling
-import { atom, atomFamily, selector, selectorFamily } from "recoil";
-import { groupAccounts } from "./groups";
-import { fetchTransaction, fetchTransactions } from "../api";
-import { ws } from "../websocket";
-import { userData } from "./auth";
-import { DateTime } from "luxon";
-import { toast } from "react-toastify";
+import {atomFamily, selectorFamily} from "recoil";
+import {groupAccounts} from "./groups";
+import {fetchTransactions} from "../api";
+import {ws} from "../websocket";
+import {userData} from "./auth";
+import {DateTime} from "luxon";
+import {toast} from "react-toastify";
 
-export const atomTest = atomFamily({
-    key: "atomTest",
-    default: selectorFamily({
-        key: "atomTest/default",
-        get: id => ({ get }) => {
-            return "foobar";
-        }
-    }),
-    effects_UNSTABLE: id => [
-        ({ setSelf }) => {
-            setSelf(currVal => {
-                console.log("curr val atom test:", currVal);
-                return "newval";
-            });
-        }
-    ]
-});
-
-export const atomTest2 = atom({
-    key: "atomTest",
-    default: selector({
-        key: "atomTest/default",
-        get: ({ get }) => {
-            return "foobar";
-        }
-    }),
-    effects_UNSTABLE: [
-        ({ setSelf }) => {
-            setSelf(currVal => {
-                console.log("curr val atom test:", currVal);
-                return "newval";
-            });
-        }
-    ]
-});
 
 export const groupTransactions = atomFamily({
     key: "groupTransactions",
     default: [],
     effects_UNSTABLE: groupID => [
-        ({ setSelf }) => {
-            // TODO: handle fetch error
-            setSelf(fetchTransactions({ groupID: groupID }).catch(err => toast.error(`error when fetching transactions: ${err}`)));
+        ({setSelf, node, getPromise}) => {
+            // try to load cached state from local storage
+            const localStorageKey = `groups.transactions-${groupID}`;
+            const savedTransactions = localStorage.getItem(localStorageKey);
 
-            ws.subscribe("transaction", groupID, ({ subscription_type, transaction_id, element_id }) => {
-                if (subscription_type === "transaction" && element_id === groupID) {
-                    fetchTransaction({ transactionID: transaction_id }).then(result => {
-                        setSelf(currVal => {
-                            if (currVal.find(t => t.id === transaction_id) !== undefined) {
-                                return currVal.map(t => t.id === transaction_id ? result : t);
+            const fullFetchPromise = () => {
+                return fetchTransactions({groupID: groupID})
+                    .then(result => {
+                        localStorage.setItem(localStorageKey, JSON.stringify(result));
+                        return result;
+                    })
+                    .catch(err => {
+                        toast.error(`error when fetching transactions: ${err}`);
+                        return [];
+                    });
+            }
+
+            const partialFetchPromise = (currTransactions) => {
+                let maxChangedTime = currTransactions.reduce((acc, curr) => {
+                    if (curr.current_state != null) {
+                        return Math.max(DateTime.fromISO(curr.current_state.committed_at).toSeconds(), acc);
+                    }
+                    return curr;
+                }, 0);
+                if (maxChangedTime === 0) {
+                    return fullFetchPromise();
+                }
+
+                return fetchTransactions({groupID: groupID, minLastChanged: DateTime.fromSeconds(maxChangedTime)})
+                    .then(result => {
+                        const newTransactions = currTransactions.map(transaction => {
+                            const newTransaction = result.find(i => i.id === transaction.id);
+                            if (newTransaction !== undefined) {
+                                return newTransaction;
                             }
 
-                            return [...currVal, result];
+                            return transaction;
                         });
-                    }).catch(err => {
-                        toast.error(`Reloading transactions had error: ${err}`);
-                    });
+                        console.log("partial fetch return", newTransactions);
+                        localStorage.setItem(localStorageKey, JSON.stringify(newTransactions));
+                        return newTransactions;
+                    })
+                    .catch(err => {
+                        toast.error(`error when fetching transactions: ${err}`);
+                        return currTransactions;
+                    })
+            }
+
+            // TODO: handle fetch error more properly than just showing error, e.g. through a retry or something
+            if (savedTransactions != null) {
+                const parsedTransactions = JSON.parse(savedTransactions);
+                setSelf(partialFetchPromise(parsedTransactions));
+            } else {
+                setSelf(fullFetchPromise());
+            }
+
+            ws.subscribe("transaction", groupID, ({subscription_type, transaction_id, element_id}) => {
+                if (subscription_type === "transaction" && element_id === groupID) {
+                    getPromise(node).then(currTransactions => {
+                        partialFetchPromise(currTransactions)
+                            .then(result => setSelf(result))
+                            .catch(err => toast.error(`error when fetching transactions: ${err}`));
+                    })
                 }
             });
             // TODO: handle registration errors
@@ -77,7 +88,7 @@ export const groupTransactions = atomFamily({
 
 export const transactionsSeenByUser = selectorFamily({
     key: "transacitonsSeenByUser",
-    get: groupID => async ({ get }) => {
+    get: groupID => async ({get}) => {
         const user = get(userData);
         const transactions = get(groupTransactions(groupID));
 
@@ -184,7 +195,7 @@ export const transactionsSeenByUser = selectorFamily({
 
 export const transactionById = selectorFamily({
     key: "transactionById",
-    get: ({ groupID, transactionID }) => async ({ get }) => {
+    get: ({groupID, transactionID}) => async ({get}) => {
         const transactions = get(transactionsSeenByUser(groupID));
         return transactions?.find(transaction => transaction.id === transactionID);
     }
@@ -192,7 +203,7 @@ export const transactionById = selectorFamily({
 
 export const accountBalances = selectorFamily({
     key: "accountBalances",
-    get: (groupID) => async ({ get }) => {
+    get: (groupID) => async ({get}) => {
         const transactions = get(transactionsSeenByUser(groupID));
         const accounts = get(groupAccounts(groupID));
         let accountBalances = Object.fromEntries(accounts.map(account => [account.id, 0]));
@@ -210,7 +221,7 @@ export const accountBalances = selectorFamily({
 
 export const accountTransactions = selectorFamily({
     key: "accountTransactions",
-    get: ({ groupID, accountID }) => async ({ get }) => {
+    get: ({groupID, accountID}) => async ({get}) => {
         return get(transactionsSeenByUser(groupID)).filter(
             transaction => transaction.account_balances.hasOwnProperty(accountID)
         );
@@ -219,8 +230,8 @@ export const accountTransactions = selectorFamily({
 
 export const accountBalanceHistory = selectorFamily({
     key: "accountBalanceHistory",
-    get: ({ groupID, accountID }) => async ({ get }) => {
-        const unsortedTransactions = get(accountTransactions({ groupID: groupID, accountID: accountID }));
+    get: ({groupID, accountID}) => async ({get}) => {
+        const unsortedTransactions = get(accountTransactions({groupID: groupID, accountID: accountID}));
         const transactions = [...unsortedTransactions].sort((t1, t2) => {
             return DateTime.fromISO(t1.billed_at) > DateTime.fromISO(t2.billed_at);
         });
@@ -230,18 +241,18 @@ export const accountBalanceHistory = selectorFamily({
         }
 
         let balanceChanges = [];
-        let currentEntry = { date: DateTime.fromISO(transactions[0].billed_at).toSeconds(), balance: 0 };
+        let currentEntry = {date: DateTime.fromISO(transactions[0].billed_at).toSeconds(), balance: 0};
         for (const transaction of transactions) {
             const transactionDate = DateTime.fromISO(transaction.billed_at).toSeconds();
             if (transactionDate !== currentEntry.date) {
-                balanceChanges.push({ ...currentEntry });
+                balanceChanges.push({...currentEntry});
                 currentEntry.date = transactionDate;
             }
 
             const a = transaction.account_balances[accountID];
             currentEntry.balance += a.common_creditors - a.common_debitors - a.positions;
         }
-        balanceChanges.push({ ...currentEntry });
+        balanceChanges.push({...currentEntry});
 
         return balanceChanges;
     }

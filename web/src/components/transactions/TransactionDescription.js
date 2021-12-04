@@ -59,14 +59,12 @@ export default function TransactionDescription({group, transaction}) {
                     value={description}
                 />
             ) : (
-                <>
-                    <DisabledTextField
-                        label="Description"
-                        variant="standard"
-                        fullWidth
-                        value={transaction.description}
-                    />
-                </>
+                <DisabledTextField
+                    label="Description"
+                    variant="standard"
+                    fullWidth
+                    value={transaction.description}
+                />
             )}
 
         </>
