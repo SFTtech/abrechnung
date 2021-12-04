@@ -1,6 +1,6 @@
 import json
-from typing import Optional, Union
 from datetime import date, datetime
+from typing import Optional, Union
 
 import asyncpg
 
@@ -46,7 +46,8 @@ class TransactionService(Application):
             currency_symbol=db_json["currency_symbol"],
             currency_conversion_rate=db_json["currency_conversion_rate"],
             deleted=db_json["deleted"],
-            committed_at=None if db_json["revision_committed"] is None else parse_postgres_datetime(db_json["revision_committed"]),
+            committed_at=None if db_json["revision_committed"] is None else parse_postgres_datetime(
+                db_json["revision_committed"]),
             billed_at=date.fromisoformat(db_json["billed_at"]),
             creditor_shares={
                 cred["account_id"]: cred["shares"]
@@ -61,11 +62,11 @@ class TransactionService(Application):
 
     @staticmethod
     async def _check_transaction_permissions(
-        conn: asyncpg.Connection,
-        user_id: int,
-        transaction_id: int,
-        can_write: bool = False,
-        transaction_type: Optional[Union[str, list[str]]] = None,
+            conn: asyncpg.Connection,
+            user_id: int,
+            transaction_id: int,
+            can_write: bool = False,
+            transaction_type: Optional[Union[str, list[str]]] = None,
     ) -> int:
         """returns group id of the transaction"""
         result = await conn.fetchrow(
@@ -119,7 +120,8 @@ class TransactionService(Application):
         )
 
     async def list_transactions(
-        self, *, user_id: int, group_id: int, min_last_changed: Optional[datetime] = None
+            self, *, user_id: int, group_id: int, min_last_changed: Optional[datetime] = None,
+            additional_transactions: Optional[list[int]] = None
     ) -> list[Transaction]:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -135,8 +137,9 @@ class TransactionService(Application):
                         "from current_transaction_state "
                         "where group_id = $1 "
                         "   and (users_with_pending_changes is not null and $2 = any(users_with_pending_changes) "
-                        "       or last_changed is not null and last_changed >= $3)",
-                        group_id, user_id, min_last_changed
+                        "       or last_changed is not null and last_changed >= $3"
+                        "       or (($4::int[]) is not null and id = any($4::int[])))",
+                        group_id, user_id, min_last_changed, additional_transactions
                     )
                 else:
                     cur = conn.cursor(
@@ -153,7 +156,7 @@ class TransactionService(Application):
                 return result
 
     async def get_transaction(
-        self, *, user_id: int, transaction_id: int
+            self, *, user_id: int, transaction_id: int
     ) -> Transaction:
         async with self.db_pool.acquire() as conn:
             group_id = await self._check_transaction_permissions(
@@ -174,16 +177,16 @@ class TransactionService(Application):
             return self._transaction_db_row(transaction)
 
     async def create_transaction(
-        self,
-        *,
-        user_id: int,
-        group_id: int,
-        type: str,
-        description: str,
-        billed_at: date,
-        currency_symbol: str,
-        currency_conversion_rate: float,
-        value: float,
+            self,
+            *,
+            user_id: int,
+            group_id: int,
+            type: str,
+            description: str,
+            billed_at: date,
+            currency_symbol: str,
+            currency_conversion_rate: float,
+            value: float,
     ) -> int:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -244,15 +247,15 @@ class TransactionService(Application):
                 )
 
     async def update_transaction(
-        self,
-        *,
-        user_id: int,
-        transaction_id: int,
-        value: float,
-        description: str,
-        billed_at: date,
-        currency_symbol: str,
-        currency_conversion_rate: float,
+            self,
+            *,
+            user_id: int,
+            transaction_id: int,
+            value: float,
+            description: str,
+            billed_at: date,
+            currency_symbol: str,
+            currency_conversion_rate: float,
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -319,7 +322,7 @@ class TransactionService(Application):
                     transaction_id,
                 )
                 if (
-                    last_committed_revision is None
+                        last_committed_revision is None
                 ):  # we have a newly created transaction - disallow discarding changes
                     raise InvalidCommand(
                         f"Cannot discard transaction changes without any committed changes"
@@ -360,7 +363,7 @@ class TransactionService(Application):
                 )
 
                 if (
-                    row is None
+                        row is None
                 ):  # the transaction has no committed changes, we can only delete it if we created it
                     revision_id = await conn.fetchval(
                         "select id from transaction_revision tr "
@@ -415,7 +418,7 @@ class TransactionService(Application):
                     )
 
     async def _get_or_create_pending_change(
-        self, conn: asyncpg.Connection, user_id: int, transaction_id: int
+            self, conn: asyncpg.Connection, user_id: int, transaction_id: int
     ) -> int:
         """return the revision id, assumes we are already in a transaction"""
         revision_id = await conn.fetchval(
@@ -503,12 +506,12 @@ class TransactionService(Application):
         return revision_id
 
     async def _transaction_share_check(
-        self,
-        conn: asyncpg.Connection,
-        user_id: int,
-        transaction_id: int,
-        account_id: int,
-        transaction_type: Optional[Union[str, list[str]]] = None,
+            self,
+            conn: asyncpg.Connection,
+            user_id: int,
+            transaction_id: int,
+            account_id: int,
+            transaction_type: Optional[Union[str, list[str]]] = None,
     ) -> tuple[int, int]:
         """returns tuple of group_id of the transaction and the users revision_id of the pending change"""
         group_id = await self._check_transaction_permissions(
@@ -531,12 +534,12 @@ class TransactionService(Application):
         return group_id, revision_id
 
     async def add_or_change_creditor_share(
-        self,
-        *,
-        user_id: int,
-        transaction_id: int,
-        account_id: int,
-        value: float,
+            self,
+            *,
+            user_id: int,
+            transaction_id: int,
+            account_id: int,
+            value: float,
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -559,12 +562,12 @@ class TransactionService(Application):
                 )
 
     async def switch_creditor_share(
-        self,
-        *,
-        user_id: int,
-        transaction_id: int,
-        account_id: int,
-        value: float,
+            self,
+            *,
+            user_id: int,
+            transaction_id: int,
+            account_id: int,
+            value: float,
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -591,7 +594,7 @@ class TransactionService(Application):
                 )
 
     async def delete_creditor_share(
-        self, *, user_id: int, transaction_id: int, account_id: int
+            self, *, user_id: int, transaction_id: int, account_id: int
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -610,12 +613,12 @@ class TransactionService(Application):
                     raise NotFoundError(f"Creditor share does not exist")
 
     async def add_or_change_debitor_share(
-        self,
-        *,
-        user_id: int,
-        transaction_id: int,
-        account_id: int,
-        value: float,
+            self,
+            *,
+            user_id: int,
+            transaction_id: int,
+            account_id: int,
+            value: float,
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -638,7 +641,7 @@ class TransactionService(Application):
                 )
 
     async def switch_debitor_share(
-        self, *, user_id: int, transaction_id: int, account_id: int, value: float
+            self, *, user_id: int, transaction_id: int, account_id: int, value: float
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -665,7 +668,7 @@ class TransactionService(Application):
                 )
 
     async def delete_debitor_share(
-        self, *, user_id: int, transaction_id: int, account_id: int
+            self, *, user_id: int, transaction_id: int, account_id: int
     ):
 
         async with self.db_pool.acquire() as conn:
@@ -685,13 +688,13 @@ class TransactionService(Application):
                     raise NotFoundError(f"Debitor share does not exist")
 
     async def create_purchase_item(
-        self,
-        *,
-        user_id: int,
-        transaction_id: int,
-        name: str,
-        price: float,
-        communist_shares: float,
+            self,
+            *,
+            user_id: int,
+            transaction_id: int,
+            name: str,
+            price: float,
+            communist_shares: float,
     ) -> int:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -722,7 +725,7 @@ class TransactionService(Application):
 
     @staticmethod
     async def _check_purchase_item_permissions(
-        *, conn: asyncpg.Connection, user_id: int, item_id: int, can_write: bool = True
+            *, conn: asyncpg.Connection, user_id: int, item_id: int, can_write: bool = True
     ) -> tuple[int, int]:
         row = await conn.fetchrow(
             "select gm.group_id as group_id, gm.can_write as can_write, t.id as transaction_id "
@@ -744,13 +747,13 @@ class TransactionService(Application):
         return row["group_id"], row["transaction_id"]
 
     async def update_purchase_item(
-        self,
-        *,
-        user_id: int,
-        item_id: int,
-        name: str,
-        price: float,
-        communist_shares: float,
+            self,
+            *,
+            user_id: int,
+            item_id: int,
+            name: str,
+            price: float,
+            communist_shares: float,
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -771,12 +774,12 @@ class TransactionService(Application):
                 )
 
     async def add_or_change_item_share(
-        self,
-        *,
-        user_id: int,
-        item_id: int,
-        account_id: int,
-        share_amount: float,
+            self,
+            *,
+            user_id: int,
+            item_id: int,
+            account_id: int,
+            share_amount: float,
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -802,11 +805,11 @@ class TransactionService(Application):
                 )
 
     async def delete_item_share(
-        self,
-        *,
-        user_id: int,
-        item_id: int,
-        account_id: int,
+            self,
+            *,
+            user_id: int,
+            item_id: int,
+            account_id: int,
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
