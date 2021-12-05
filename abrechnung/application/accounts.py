@@ -19,9 +19,9 @@ class AccountService(Application):
                     conn=conn, group_id=group_id, user_id=user_id
                 )
                 cur = conn.cursor(
-                    "select id, type, revision_id, name, description, priority "
+                    "select id, type, revision_id, name, description, priority, deleted "
                     "from latest_account "
-                    "where group_id = $1 and user_id = $2 and deleted = false",
+                    "where group_id = $1 and user_id = $2",
                     group_id,
                     user_id,
                 )
@@ -34,7 +34,7 @@ class AccountService(Application):
                             name=account["name"],
                             description=account["description"],
                             priority=account["priority"],
-                            deleted=False,
+                            deleted=account["deleted"],
                         )
                     )
 
@@ -46,9 +46,9 @@ class AccountService(Application):
         async with self.db_pool.acquire() as conn:
             await check_group_permissions(conn=conn, group_id=group_id, user_id=user_id)
             account = await conn.fetchrow(
-                "select id, type, revision_id, name, description, priority "
+                "select id, type, revision_id, name, description, priority, deleted "
                 "from latest_account "
-                "where group_id = $1 and user_id = $2 and id = $3 and deleted = false",
+                "where group_id = $1 and user_id = $2 and id = $3",
                 group_id,
                 user_id,
                 account_id,
@@ -62,7 +62,7 @@ class AccountService(Application):
                 name=account["name"],
                 description=account["description"],
                 priority=account["priority"],
-                deleted=False,
+                deleted=account["deleted"],
             )
 
     async def create_account(

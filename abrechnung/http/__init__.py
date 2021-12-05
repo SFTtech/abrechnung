@@ -9,7 +9,6 @@ import aiohttp_cors as aiohttp_cors
 import asyncpg.pool
 import schema
 from aiohttp import web
-from asyncpg import Connection
 from asyncpg.pool import Pool
 from jose import jwt
 
@@ -67,7 +66,9 @@ class HTTPService(SubCommand):
                 app = self.create_app(db_pool=db_pool)
                 app.router.add_route("GET", "/", self.handle_ws_connection)
 
-                web.run_app(app, host=self.cfg["api"]["host"], port=self.cfg["api"]["port"])
+                await web._run_app(
+                    app, host=self.cfg["api"]["host"], port=self.cfg["api"]["port"]
+                )
             finally:
                 await self._unregister_forwarder(
                     conn, forwarder_id=self.cfg["api"]["id"]

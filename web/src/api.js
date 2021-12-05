@@ -306,6 +306,11 @@ export async function fetchAccounts({groupID}) {
     return resp.data;
 }
 
+export async function fetchAccount({groupID, accountID}) {
+    const resp = await makeGet(`/groups/${groupID}/accounts/${accountID}`);
+    return resp.data;
+}
+
 export async function createAccount({groupID, name, description, accountType = "personal"}) {
     const resp = await makePost(`/groups/${groupID}/accounts`, {
         name: name,
@@ -329,8 +334,20 @@ export async function deleteAccount({groupID, accountID}) {
 }
 
 
-export async function fetchTransactions({groupID}) {
-    const resp = await makeGet(`/groups/${groupID}/transactions`);
+export async function fetchTransactions({groupID, minLastChanged = null, additionalTransactions = null}) {
+    let url = `/groups/${groupID}/transactions`;
+    if (minLastChanged) {
+        url += "?min_last_changed=" + encodeURIComponent(minLastChanged.toISO());
+        if (additionalTransactions) {
+            url += "&transaction_ids=" + additionalTransactions.join(",");
+        }
+    }
+    const resp = await makeGet(url);
+    return resp.data;
+}
+
+export async function fetchTransaction({transactionID}) {
+    const resp = await makeGet(`/transactions/${transactionID}`);
     return resp.data;
 }
 

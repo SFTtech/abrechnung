@@ -34,7 +34,7 @@ async def get_test_db() -> Pool:
         host=cfg["host"],
         port=cfg["port"],
         min_size=5,
-        max_size=5
+        max_size=5,
     )
 
     await revisions.reset_schema(pool)

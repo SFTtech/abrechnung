@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 import schema
 from aiohttp import web
@@ -13,8 +13,30 @@ routes = web.RouteTableDef()
 @routes.get(r"/groups/{group_id:\d+}/transactions")
 async def list_transactions(request):
     group_id: int = int(request.match_info["group_id"])
+    min_last_changed = request.query.get("min_last_changed")
+
+    if min_last_changed:
+        try:
+            min_last_changed = datetime.fromisoformat(min_last_changed)
+        except ValueError:
+            raise web.HTTPBadRequest(
+                reason="Invalid query param 'min_last_changed', must be a valid ISO timestamp."
+            )
+
+    forced_transaction_ids = request.query.get("transaction_ids")
+    if forced_transaction_ids:
+        try:
+            forced_transaction_ids = [int(x) for x in forced_transaction_ids.split(",")]
+        except ValueError:
+            raise web.HTTPBadRequest(
+                reason="Invalid query param 'transaction_ids', must be a comma separated list of integers"
+            )
+
     transactions = await request.app["transaction_service"].list_transactions(
-        user_id=request["user"]["user_id"], group_id=group_id
+        user_id=request["user"]["user_id"],
+        group_id=group_id,
+        min_last_changed=min_last_changed,
+        additional_transactions=forced_transaction_ids,
     )
 
     serializer = TransactionSerializer(transactions)
@@ -53,7 +75,6 @@ async def create_transaction(request: Request, data: dict):
 
 @routes.get(r"/transactions/{transaction_id:\d+}")
 async def get_transaction(request: Request):
-
     transaction = await request.app["transaction_service"].get_transaction(
         user_id=request["user"]["user_id"],
         transaction_id=int(request.match_info["transaction_id"]),

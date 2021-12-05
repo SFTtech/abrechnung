@@ -1,6 +1,6 @@
 import json
+from datetime import date, datetime
 from typing import Optional, Union
-from datetime import date
 
 import asyncpg
 
@@ -16,6 +16,7 @@ from abrechnung.domain.transactions import (
     TransactionDetails,
     PurchaseItem,
 )
+from abrechnung.util import parse_postgres_datetime
 
 
 class TransactionService(Application):
@@ -45,7 +46,9 @@ class TransactionService(Application):
             currency_symbol=db_json["currency_symbol"],
             currency_conversion_rate=db_json["currency_conversion_rate"],
             deleted=db_json["deleted"],
-            committed_at=db_json["revision_committed"],
+            committed_at=None
+            if db_json["revision_committed"] is None
+            else parse_postgres_datetime(db_json["revision_committed"]),
             billed_at=date.fromisoformat(db_json["billed_at"]),
             creditor_shares={
                 cred["account_id"]: cred["shares"]
@@ -118,19 +121,42 @@ class TransactionService(Application):
         )
 
     async def list_transactions(
-        self, *, user_id: int, group_id: int
+        self,
+        *,
+        user_id: int,
+        group_id: int,
+        min_last_changed: Optional[datetime] = None,
+        additional_transactions: Optional[list[int]] = None,
     ) -> list[Transaction]:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 await check_group_permissions(
                     conn=conn, group_id=group_id, user_id=user_id
                 )
-                cur = conn.cursor(
-                    "select id, type, current_state, pending_changes "
-                    "from current_transaction_state "
-                    "where group_id = $1",
-                    group_id,
-                )
+
+                if min_last_changed:
+                    # if a minimum last changed value is specified we must also return all transactions the current
+                    # user has pending changes with to properly sync state across different devices of the user
+                    cur = conn.cursor(
+                        "select id, type, current_state, pending_changes "
+                        "from current_transaction_state "
+                        "where group_id = $1 "
+                        "   and (users_with_pending_changes is not null and $2 = any(users_with_pending_changes) "
+                        "       or last_changed is not null and last_changed >= $3"
+                        "       or (($4::int[]) is not null and id = any($4::int[])))",
+                        group_id,
+                        user_id,
+                        min_last_changed,
+                        additional_transactions,
+                    )
+                else:
+                    cur = conn.cursor(
+                        "select id, type, current_state, pending_changes "
+                        "from current_transaction_state "
+                        "where group_id = $1",
+                        group_id,
+                    )
+
                 result = []
                 async for transaction in cur:
                     result.append(self._transaction_db_row(transaction))

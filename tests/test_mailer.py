@@ -21,7 +21,7 @@ class Mail:
     rcpt_options: Optional[str]
 
 
-class TestSMTPHandler:
+class DummySMTPHandler:
     def __init__(self):
         self.mail_queue = asyncio.Queue()
 
@@ -41,7 +41,7 @@ class TestSMTPHandler:
 class MailerTest(AsyncTestCase):
     async def setUpAsync(self) -> None:
         await super().setUpAsync()
-        self.smtp_handler = TestSMTPHandler()
+        self.smtp_handler = DummySMTPHandler()
         self.smtp = Controller(self.smtp_handler)
         self.smtp.start()
 
