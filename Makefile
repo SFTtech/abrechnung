@@ -1,7 +1,6 @@
 .PHONY: test
 test:
-	coverage run -m unittest discover
-	coverage report
+	pytest tests --doctest-modules --cov=abrechnung
 
 .PHONY: format
 format:

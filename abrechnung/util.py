@@ -5,6 +5,7 @@ import re
 import signal
 import sys
 import termios
+
 # the vt100 CONTROL SEQUENCE INTRODUCER
 from datetime import datetime, timedelta, timezone
 
@@ -25,7 +26,8 @@ RED = SGR(31)
 NORMAL = SGR()
 
 postgres_timestamp_format = re.compile(
-    "(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})(\.(?P<subseconds>\d+))?(?P<tzsign>[-+])(?P<tzhours>\d{2}):(?P<tzminutes>\d{2})"
+    r"(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})T(?P<hour>\d{2}):(?P<minute>\d{2}):(?P<second>\d{2})"
+    r"(\.(?P<subseconds>\d+))?(?P<tzsign>[-+])(?P<tzhours>\d{2}):(?P<tzminutes>\d{2})"
 )
 
 
@@ -40,7 +42,9 @@ def parse_postgres_datetime(dt: str) -> datetime:
             millis = int(subseconds.ljust(3, "0"))
 
         tzsign = -1 if m.group("tzsign") == "-" else 1
-        tzdelta = timedelta(hours=int(m.group("tzhours")), minutes=int(m.group("tzminutes")))
+        tzdelta = timedelta(
+            hours=int(m.group("tzhours")), minutes=int(m.group("tzminutes"))
+        )
         tz = timezone(tzsign * tzdelta)
 
         return datetime(
@@ -51,7 +55,7 @@ def parse_postgres_datetime(dt: str) -> datetime:
             minute=int(m.group("minute")),
             second=int(m.group("second")),
             microsecond=millis * 1000 + micros,
-            tzinfo=tz
+            tzinfo=tz,
         )
 
     raise ValueError("invalid format")

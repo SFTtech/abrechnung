@@ -114,7 +114,9 @@ class TransactionSerializer(Serializer):
             "currency_conversion_rate": change.currency_conversion_rate,
             "deleted": change.deleted,
             "billed_at": change.billed_at.isoformat(),
-            "committed_at": None if change.committed_at is None else change.committed_at.isoformat(),
+            "committed_at": None
+            if change.committed_at is None
+            else change.committed_at.isoformat(),
             "creditor_shares": {
                 str(uid): val for uid, val in change.creditor_shares.items()
             },

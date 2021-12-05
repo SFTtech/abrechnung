@@ -19,7 +19,9 @@ async def list_transactions(request):
         try:
             min_last_changed = datetime.fromisoformat(min_last_changed)
         except ValueError:
-            raise web.HTTPBadRequest(reason="Invalid query param 'min_last_changed', must be a valid ISO timestamp.")
+            raise web.HTTPBadRequest(
+                reason="Invalid query param 'min_last_changed', must be a valid ISO timestamp."
+            )
 
     forced_transaction_ids = request.query.get("transaction_ids")
     if forced_transaction_ids:
@@ -27,11 +29,14 @@ async def list_transactions(request):
             forced_transaction_ids = [int(x) for x in forced_transaction_ids.split(",")]
         except ValueError:
             raise web.HTTPBadRequest(
-                reason="Invalid query param 'transaction_ids', must be a comma separated list of integers")
+                reason="Invalid query param 'transaction_ids', must be a comma separated list of integers"
+            )
 
     transactions = await request.app["transaction_service"].list_transactions(
-        user_id=request["user"]["user_id"], group_id=group_id, min_last_changed=min_last_changed,
-        additional_transactions=forced_transaction_ids
+        user_id=request["user"]["user_id"],
+        group_id=group_id,
+        min_last_changed=min_last_changed,
+        additional_transactions=forced_transaction_ids,
     )
 
     serializer = TransactionSerializer(transactions)
