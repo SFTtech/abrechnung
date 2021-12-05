@@ -338,7 +338,7 @@ export async function fetchTransactions({groupID, minLastChanged = null, additio
     let url = `/groups/${groupID}/transactions`;
     if (minLastChanged) {
         url += "?min_last_changed=" + encodeURIComponent(minLastChanged.toISO());
-        if (additionalTransactions) {
+        if (additionalTransactions && additionalTransactions.length > 0) {
             url += "&transaction_ids=" + additionalTransactions.join(",");
         }
     }
