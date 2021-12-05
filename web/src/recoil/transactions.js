@@ -1,7 +1,7 @@
 // transaction handling
 import {atomFamily, selectorFamily} from "recoil";
 import {groupAccounts} from "./groups";
-import {fetchTransactions} from "../api";
+import {fetchTransactions, getUserIDFromToken} from "../api";
 import {ws} from "../websocket";
 import {userData} from "./auth";
 import {DateTime} from "luxon";
@@ -40,7 +40,19 @@ export const groupTransactions = atomFamily({
                     return fullFetchPromise();
                 }
 
-                return fetchTransactions({groupID: groupID, minLastChanged: DateTime.fromSeconds(maxChangedTime)})
+                const wipTransactions = currTransactions.reduce((acc, curr) => {
+                    const userID = getUserIDFromToken();
+                    if (curr.pending_changes?.hasOwnProperty(userID)) {
+                        return [...acc, curr.id];
+                    }
+                    return acc;
+                }, []);
+
+                return fetchTransactions({
+                    groupID: groupID,
+                    minLastChanged: DateTime.fromSeconds(maxChangedTime),
+                    additionalTransactions: wipTransactions
+                })
                     .then(result => {
                         const newTransactions = currTransactions.map(transaction => {
                             const newTransaction = result.find(i => i.id === transaction.id);
