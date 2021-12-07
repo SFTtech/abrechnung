@@ -4,6 +4,7 @@ import { useRecoilValue } from "recoil";
 import { groupAccounts } from "../../recoil/groups";
 import { Autocomplete } from "@mui/lab";
 import { TextField } from "@mui/material";
+import {DisabledTextField} from "./DisabledTextField";
 
 
 export default function AccountSelect({
@@ -12,6 +13,7 @@ export default function AccountSelect({
                                           onChange,
                                           exclude = null,
                                           disabled = false,
+    noDisabledStyling = false,
                                           className = null,
                                           ...props
                                       }) {
@@ -35,7 +37,11 @@ export default function AccountSelect({
             disableClearable
             className={className}
             onChange={(event, newValue) => onChange(newValue)}
-            renderInput={(params) => <TextField variant="standard" {...params} {...props} />}
+            renderInput={
+                noDisabledStyling
+                ? (params) => <TextField variant="standard" {...params} {...props} />
+                : (params) => <DisabledTextField variant="standard" {...params} {...props} />
+            }
         />
     );
 }

@@ -35,6 +35,7 @@ export default function TransactionDebitorShare({ group, transaction, isEditing,
     return (
         <AccountSelect
             group={group}
+            noDisabledStyling={true}
             value={shareAccountID === null ? null : getAccount(parseInt(shareAccountID))}
             onChange={onDebitorShareChange}
             disabled={!isEditing}

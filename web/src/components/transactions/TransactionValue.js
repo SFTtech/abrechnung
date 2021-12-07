@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {toast} from "react-toastify";
 import {updateTransactionDetails} from "../../api";
-import {TextField} from "@mui/material";
 import {DisabledTextField} from "../style/DisabledTextField";
 
 export default function TransactionValue({group, transaction}) {
@@ -45,28 +44,17 @@ export default function TransactionValue({group, transaction}) {
     };
 
     return (
-        <>
-            {transaction.is_wip ? (
-                <TextField
-                    label="Value"
-                    helperText={error ? "please input a valid decimal number" : null}
-                    variant="standard"
-                    fullWidth
-                    error={error}
-                    onChange={onChange}
-                    onKeyUp={onKeyUp}
-                    onBlur={save}
-                    value={transactionValue}
-                />
-            ) : (
-                <DisabledTextField
-                    label="Value"
-                    variant="standard"
-                    fullWidth
-                    value={`${transaction.value.toFixed(2)} ${transaction.currency_symbol}`}
-                />
-            )}
-
-        </>
+        <DisabledTextField
+            label="Value"
+            helperText={error ? "please input a valid decimal number" : null}
+            variant="standard"
+            fullWidth
+            error={error}
+            onChange={onChange}
+            onKeyUp={onKeyUp}
+            onBlur={save}
+            value={transactionValue}
+            disabled={!transaction.is_wip}
+        />
     );
 }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { IconButton, TextField } from "@mui/material";
 import { Check, Close, Edit } from "@mui/icons-material";
 import { makeStyles } from "@mui/styles";
+import {DisabledTextField} from "./DisabledTextField";
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -59,7 +60,7 @@ export default function EditableField({ value, onChange, validate, helperText, o
 
     return (
         <div className={classes.root}>
-            <TextField
+            <DisabledTextField
                 error={error}
                 value={currentValue}
                 disabled={!editing}

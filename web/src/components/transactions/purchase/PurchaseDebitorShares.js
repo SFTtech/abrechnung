@@ -36,6 +36,17 @@ const useStyles = makeStyles((theme) => ({
     },
     divider: {
         marginLeft: 0
+    },
+    tableLink: {
+        color: "black",
+        textDecoration: "none",
+        display: "block",
+        height: "100%",
+        width: "100%",
+        padding: "16px 0",
+    },
+    tableLinkCell: {
+        padding: "0 16px",
     }
 }));
 
@@ -271,12 +282,18 @@ export default function PurchaseDebitorShares({group, transaction, isEditing}) {
                             </TableHead>
                             <TableBody>
                                 {accounts.map(account => transaction.debitor_shares.hasOwnProperty(account.id) ? (
-                                    <TableRow hover key={account.id}>
-                                        <TableCell>
+                                    <TableRow
+                                        hover
+                                        key={account.id}
+                                    >
+                                        <TableCell className={classes.tableLinkCell}>
                                             {/*TODO: proper link*/}
                                             <Link
+                                                className={classes.tableLink}
                                                 to={`/groups/${group.id}/accounts/${account.id}`}
-                                            >{account.name}</Link>
+                                            >
+                                                {account.name}
+                                            </Link>
                                         </TableCell>
                                         {showAdvanced && (
                                             <TableCell

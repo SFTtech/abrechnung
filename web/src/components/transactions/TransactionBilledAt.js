@@ -1,10 +1,8 @@
 import React from "react";
-import {List, TextField} from "@mui/material";
+import {TextField} from "@mui/material";
 import {toast} from "react-toastify";
 import {updateTransactionDetails} from "../../api";
-import DatePicker from "@mui/lab/DatePicker";
 import {DisabledTextField} from "../style/DisabledTextField";
-import {DateTime} from "luxon";
 
 export default function TransactionBilledAt({group, transaction}) {
     const save = (billedAt) => {
@@ -25,25 +23,16 @@ export default function TransactionBilledAt({group, transaction}) {
     };
 
     return (
-        <List>
-            {transaction.is_wip ? (
-                <DatePicker
-                    label="Billed At"
-                    views={["day"]}
-                    value={transaction.billed_at}
-                    onBlur={save}
-                    onChange={save}
-                    renderInput={(params) => <TextField variant="standard" fullWidth {...params} helperText={null}/>}
-                />
-            ) : (
-                <DisabledTextField
-                    label="Billed At"
-                    variant="standard"
-                    fullWidth
-                    value={DateTime.fromISO(transaction.billed_at).toLocaleString()}
-                />
-            )}
-
-        </List>
+        <DisabledTextField
+            label="Billed At"
+            views={["day"]}
+            variant="standard"
+            fullWidth
+            value={transaction.billed_at}
+            onBlur={save}
+            onChange={save}
+            renderInput={(params) => <TextField variant="standard" fullWidth {...params} helperText={null}/>}
+            disabled={!transaction.is_wip}
+        />
     );
 }

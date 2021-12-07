@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {toast} from "react-toastify";
 import {updateTransactionDetails} from "../../api";
-import {TextField} from "@mui/material";
 import {DisabledTextField} from "../style/DisabledTextField";
 
 export default function TransactionDescription({group, transaction}) {
@@ -45,28 +44,17 @@ export default function TransactionDescription({group, transaction}) {
     };
 
     return (
-        <>
-            {transaction.is_wip ? (
-                <TextField
-                    label="Description"
-                    error={error}
-                    variant="standard"
-                    helperText={error ? "please input a description" : null}
-                    fullWidth
-                    onChange={onChange}
-                    onKeyUp={onKeyUp}
-                    onBlur={save}
-                    value={description}
-                />
-            ) : (
-                <DisabledTextField
-                    label="Description"
-                    variant="standard"
-                    fullWidth
-                    value={transaction.description}
-                />
-            )}
-
-        </>
+        <DisabledTextField
+            label="Description"
+            error={error}
+            variant="standard"
+            helperText={error ? "please input a description" : null}
+            fullWidth
+            onChange={onChange}
+            onKeyUp={onKeyUp}
+            onBlur={save}
+            disabled={!transaction.is_wip}
+            value={description}
+        />
     );
 }
