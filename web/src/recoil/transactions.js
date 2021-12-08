@@ -31,10 +31,10 @@ export const groupTransactions = atomFamily({
 
             const partialFetchPromise = (currTransactions) => {
                 let maxChangedTime = currTransactions.reduce((acc, curr) => {
-                    if (curr.current_state != null) {
+                    if (curr.current_state != null && curr.current_state.committed_at != null) {
                         return Math.max(DateTime.fromISO(curr.current_state.committed_at).toSeconds(), acc);
                     }
-                    return curr;
+                    return acc;
                 }, 0);
                 if (maxChangedTime === 0) {
                     return fullFetchPromise();

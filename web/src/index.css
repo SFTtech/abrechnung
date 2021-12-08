@@ -1,6 +1,8 @@
 body {
     margin: 0;
     font-family: Roboto, Helvetica, Arial, sans-serif;
+    /* TODO: maybe figure out how to remove this overflow hack as something in mui sets overflow to hidden */
+    overflow-y: auto !important;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
