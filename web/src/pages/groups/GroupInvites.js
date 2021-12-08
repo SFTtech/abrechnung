@@ -16,8 +16,8 @@ import {
     Paper,
     Typography
 } from "@mui/material";
-import { Add, Delete } from "@mui/icons-material";
-import { makeStyles } from "@mui/styles";
+import {Add, ContentCopy, Delete} from "@mui/icons-material";
+import {makeStyles} from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -47,6 +47,26 @@ export default function GroupInvites({group}) {
         return member.username
     }
 
+    const selectLink = (event) => {
+        const node = event.target;
+        if (document.body.createTextRange) {
+            const range = document.body.createTextRange();
+            range.moveToElementText(node);
+            range.select();
+        } else if (window.getSelection()) {
+            const selection = window.getSelection();
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+    }
+
+    const copyToClipboard = (content) => {
+        navigator.clipboard.writeText(content);
+        toast.info("Link copied to clipboard!");
+    }
+
     return (
         <Paper elevation={1} className={classes.paper}>
             <Typography component="h3" variant="h5">
@@ -62,7 +82,7 @@ export default function GroupInvites({group}) {
                                 primary={invite.token === null ? (
                                     <span>token hidden, was created by another member</span>
                                 ) : (
-                                    <span>{window.location.origin}/invite/{invite.token}</span>
+                                    <span onClick={selectLink}>{window.location.origin}/invite/{invite.token}</span>
                                 )}
                                 secondary={
                                     <>
@@ -72,11 +92,16 @@ export default function GroupInvites({group}) {
                                         valid
                                         until {DateTime.fromISO(invite.valid_until).toLocaleString(DateTime.DATETIME_FULL)}
                                         {invite.single_use && ", single use"}
+                                        {invite.join_as_editor && ", join as editor"}
                                     </>
                                 }
                             />
                             {userPermissions.can_write && (
                                 <ListItemSecondaryAction>
+                                    <IconButton
+                                        onClick={() => copyToClipboard(`${window.location.origin}/invite/${invite.token}`)}>
+                                        <ContentCopy/>
+                                    </IconButton>
                                     <IconButton onClick={() => deleteToken(invite.id)}>
                                         <Delete/>
                                     </IconButton>

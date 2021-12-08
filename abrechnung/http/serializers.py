@@ -79,6 +79,7 @@ class GroupInviteSerializer(Serializer):
             "valid_until": instance.valid_until,
             "token": instance.token,
             "description": instance.description,
+            "join_as_editor": instance.join_as_editor,
         }
 
 

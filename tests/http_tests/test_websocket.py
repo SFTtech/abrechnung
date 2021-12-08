@@ -177,6 +177,7 @@ class WebsocketAPITest(BaseHTTPAPITest):
             description="foobar invite",
             single_use=False,
             valid_until=datetime.now() + timedelta(hours=4),
+            join_as_editor=True,
         )
 
         await self.expect_ws_message(

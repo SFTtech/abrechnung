@@ -1,9 +1,10 @@
-import { Form, Formik } from "formik";
+import {Form, Formik} from "formik";
 import React from "react";
-import { toast } from "react-toastify";
-import { createGroupInvite } from "../../api";
-import { DateTime } from "luxon";
+import {toast} from "react-toastify";
+import {createGroupInvite} from "../../api";
+import {DateTime} from "luxon";
 import {
+    Box,
     Button,
     Checkbox,
     Dialog,
@@ -14,17 +15,18 @@ import {
     LinearProgress,
     TextField
 } from "@mui/material";
-import { DateTimePicker } from "@mui/lab";
+import {DateTimePicker} from "@mui/lab";
 
-export default function InviteLinkCreate({ show, onClose, group }) {
+export default function InviteLinkCreate({show, onClose, group}) {
 
-    const handleSubmit = (values, { setSubmitting }) => {
+    const handleSubmit = (values, {setSubmitting}) => {
         createGroupInvite({
             groupID: group.id,
             name: values.name,
             description: values.description,
             validUntil: values.validUntil,
-            singleUse: values.singleUse
+            singleUse: values.singleUse,
+            joinAsEditor: values.joinAsEditor
         })
             .then(result => {
                 toast.success("Successfully created invite token");
@@ -37,17 +39,17 @@ export default function InviteLinkCreate({ show, onClose, group }) {
     };
 
     const nowPlusOneHour = () => {
-        return DateTime.now().plus({ hours: 1 });
+        return DateTime.now().plus({hours: 1});
     };
 
     return (
-        <Dialog open={show} onClose={onClose}>
+        <Dialog open={show} onClose={onClose} sx={{minWidth: 500}}>
             <DialogTitle>Create Invite Link</DialogTitle>
 
             <DialogContent>
-                <Formik initialValues={{ description: "", validUntil: nowPlusOneHour(), singleUse: false }}
+                <Formik initialValues={{description: "", validUntil: nowPlusOneHour(), singleUse: false, joinAsEditor: false}}
                         onSubmit={handleSubmit}>
-                    {({ values, setFieldValue, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+                    {({values, setFieldValue, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
                         <Form>
                             <TextField
                                 margin="normal"
@@ -61,31 +63,50 @@ export default function InviteLinkCreate({ show, onClose, group }) {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                             />
-                            <DateTimePicker
-                                margin="normal"
-                                required
-                                fullWidth
-                                variant="standard"
-                                name="validUntil"
-                                views={["day"]}
-                                value={values.validUntil}
-                                onChange={val => setFieldValue("validUntil", val, true)}
-                                onBlur={handleBlur}
-                                renderInput={(props) => <TextField variant="standard" fullWidth {...props} />}
-                            />
-                            <FormControlLabel control={
-                                <Checkbox
+                                <DateTimePicker
                                     margin="normal"
-                                    type="checkbox"
+                                    required
+                                    fullWidth
                                     variant="standard"
-                                    name="singleUse"
-                                    value={values.singleUse}
-                                    onChange={handleChange}
+                                    name="validUntil"
+                                    views={["day"]}
+                                    value={values.validUntil}
+                                    onChange={val => setFieldValue("validUntil", val, true)}
                                     onBlur={handleBlur}
+                                    renderInput={(props) => <TextField variant="standard" fullWidth {...props} />}
                                 />
-                            } label={"Single Use"} />
+                            <FormControlLabel
+                                sx={{mt: 2}}
+                                label={"Single Use"}
+                                control={
+                                    <Checkbox
+                                        margin="normal"
+                                        type="checkbox"
+                                        variant="standard"
+                                        name="singleUse"
+                                        value={values.singleUse}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                    />
+                                }
+                            />
+                            <FormControlLabel
+                                sx={{mt: 2}}
+                                label={"New members join as editors"}
+                                control={
+                                    <Checkbox
+                                        margin="normal"
+                                        type="checkbox"
+                                        variant="standard"
+                                        name="joinAsEditor"
+                                        value={values.joinAsEditor}
+                                        onChange={handleChange}
+                                        onBlur={handleBlur}
+                                    />
+                                }
+                            />
 
-                            {isSubmitting && <LinearProgress />}
+                            {isSubmitting && <LinearProgress/>}
                             <DialogActions>
                                 <Button color="secondary" onClick={onClose}>
                                     Cancel

@@ -165,6 +165,7 @@ async def list_invites(request):
         {
             "description": str,
             "single_use": bool,
+            "join_as_editor": bool,
             "valid_until": schema.Use(datetime.fromisoformat),
         }
     )
@@ -180,6 +181,7 @@ async def create_invite(request: Request, data: dict):
         description=data["description"],
         single_use=data["single_use"],
         valid_until=valid_until,
+        join_as_editor=data["join_as_editor"],
     )
 
     return json_response(status=web.HTTPNoContent.status_code)

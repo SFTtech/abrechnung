@@ -20,6 +20,7 @@ class GroupInvite:
     created_by: int
     token: str
     single_use: bool
+    join_as_editor: bool
     description: str
     valid_until: datetime
 

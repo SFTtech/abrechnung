@@ -67,6 +67,7 @@ class GroupService(Application):
         group_id: int,
         description: str,
         single_use: bool,
+        join_as_editor: bool,
         valid_until: datetime,
     ) -> int:
         async with self.db_pool.acquire() as conn:
@@ -78,13 +79,14 @@ class GroupService(Application):
                     conn=conn, group_id=group_id, user_id=user_id, type="invite-created"
                 )
                 return await conn.fetchval(
-                    "insert into group_invite(group_id, description, created_by, valid_until, single_use)"
-                    " values ($1, $2, $3, $4, $5) returning id",
+                    "insert into group_invite(group_id, description, created_by, valid_until, single_use, join_as_editor)"
+                    " values ($1, $2, $3, $4, $5, $6) returning id",
                     group_id,
                     description,
                     user_id,
                     valid_until,
                     single_use,
+                    join_as_editor,
                 )
 
     async def delete_invite(
@@ -114,7 +116,7 @@ class GroupService(Application):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 invite = await conn.fetchrow(
-                    "select id, group_id, created_by, single_use from group_invite gi "
+                    "select id, group_id, created_by, single_use, join_as_editor from group_invite gi "
                     "where gi.token = $1",
                     invite_token,
                 )
@@ -123,10 +125,11 @@ class GroupService(Application):
 
                 await conn.execute(
                     "insert into group_membership (user_id, group_id, invited_by, can_write, is_owner) "
-                    "values ($1, $2, $3, false, false)",
+                    "values ($1, $2, $3, $4, false)",
                     user_id,
                     invite["group_id"],
                     invite["created_by"],
+                    invite["join_as_editor"],
                 )
                 await create_group_log(
                     conn=conn,
@@ -384,7 +387,7 @@ class GroupService(Application):
                 )
                 cur = conn.cursor(
                     "select id, case when created_by = $1 then token else null end as token, description, created_by, "
-                    "valid_until, single_use "
+                    "valid_until, single_use, join_as_editor "
                     "from group_invite gi "
                     "where gi.group_id = $2",
                     user_id,
@@ -400,6 +403,7 @@ class GroupService(Application):
                             valid_until=invite["valid_until"],
                             single_use=invite["single_use"],
                             description=invite["description"],
+                            join_as_editor=invite["join_as_editor"],
                         )
                     )
                 return result

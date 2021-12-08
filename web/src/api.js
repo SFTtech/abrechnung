@@ -270,11 +270,12 @@ export async function fetchInvites({groupID}) {
 }
 
 
-export async function createGroupInvite({groupID, description, validUntil, singleUse}) {
+export async function createGroupInvite({groupID, description, validUntil, singleUse, joinAsEditor}) {
     const resp = await makePost(`/groups/${groupID}/invites`, {
         description: description,
         valid_until: validUntil,
-        single_use: singleUse
+        single_use: singleUse,
+        join_as_editor: joinAsEditor,
     });
     return resp.data;
 }

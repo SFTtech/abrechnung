@@ -362,6 +362,7 @@ class GroupAPITest(HTTPAPITest):
             json={
                 "description": "description",
                 "single_use": False,
+                "join_as_editor": False,
                 "valid_until": (datetime.now() + timedelta(hours=1)).isoformat(),
             },
         )
@@ -389,6 +390,7 @@ class GroupAPITest(HTTPAPITest):
             json={
                 "description": "description",
                 "single_use": True,
+                "join_as_editor": True,
                 "valid_until": (datetime.now() + timedelta(hours=1)).isoformat(),
             },
         )
