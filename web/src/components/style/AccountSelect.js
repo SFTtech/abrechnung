@@ -1,9 +1,9 @@
 import React from "react";
 
-import { useRecoilValue } from "recoil";
-import { groupAccounts } from "../../recoil/groups";
-import { Autocomplete } from "@mui/lab";
-import { TextField } from "@mui/material";
+import {useRecoilValue} from "recoil";
+import {groupAccounts} from "../../recoil/groups";
+import {Autocomplete} from "@mui/lab";
+import {TextField} from "@mui/material";
 import {DisabledTextField} from "./DisabledTextField";
 
 
@@ -13,14 +13,14 @@ export default function AccountSelect({
                                           onChange,
                                           exclude = null,
                                           disabled = false,
-    noDisabledStyling = false,
+                                          noDisabledStyling = false,
                                           className = null,
                                           ...props
                                       }) {
     const accounts = useRecoilValue(groupAccounts(group.id));
     const filteredAccounts = exclude !== null ? accounts.filter(account => exclude.indexOf(account.id) < 0) : accounts;
 
-    let style = { minWidth: 200 };
+    let style = {minWidth: 200};
     if (disabled) {
         style["-webkit-text-fill-color"] = "rgba(0, 0, 0, 0.8)";
         style.color = "rgba(0, 0, 0, 0.8)";
@@ -39,8 +39,8 @@ export default function AccountSelect({
             onChange={(event, newValue) => onChange(newValue)}
             renderInput={
                 noDisabledStyling
-                ? (params) => <TextField variant="standard" {...params} {...props} />
-                : (params) => <DisabledTextField variant="standard" {...params} {...props} />
+                    ? (params) => <DisabledTextField variant="standard" {...params} {...props} />
+                    : (params) => <TextField variant="standard" {...params} {...props} />
             }
         />
     );

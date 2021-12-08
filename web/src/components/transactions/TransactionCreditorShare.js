@@ -37,6 +37,7 @@ export default function TransactionCreditorShare({ group, transaction, isEditing
             group={group}
             value={shareAccountID === null ? null : getAccount(parseInt(shareAccountID))}
             onChange={onCreditorChange}
+            noDisabledStyling={true}
             disabled={!isEditing}
             {...props}
         />
