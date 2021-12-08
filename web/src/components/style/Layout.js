@@ -1,125 +1,37 @@
-import clsx from "clsx";
-import React, { useEffect, useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
-import { useRecoilValue } from "recoil";
-import { isAuthenticated } from "../../recoil/auth";
+import React, {useState} from "react";
+import {Link as RouterLink} from "react-router-dom";
+import {useRecoilValue} from "recoil";
+import {isAuthenticated} from "../../recoil/auth";
 import ListItemLink from "./ListItemLink";
 import {
     AppBar,
+    Box,
     Button,
     Container,
+    CssBaseline,
     Divider,
+    Drawer,
     IconButton,
     List,
     ListItemText,
     Menu,
     MenuItem,
-    SwipeableDrawer,
     Toolbar,
-    Typography,
-    useMediaQuery,
-    useTheme
+    Typography
 } from "@mui/material";
-import {
-    AccountCircle as AccountCircleIcon,
-    ChevronLeft as ChevronLeftIcon,
-    ChevronRight as ChevronRightIcon,
-    Menu as MenuIcon
-} from "@mui/icons-material";
-import { makeStyles } from "@mui/styles";
+import {AccountCircle as AccountCircleIcon, Menu as MenuIcon} from "@mui/icons-material";
 
 const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
-
 const drawerWidth = 240;
 
-const useStyles = makeStyles((theme) => ({
-    root: {
-        display: "flex"
-    },
-    appBar: {
-        transition: theme.transitions.create(["margin", "width"], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen
-        })
-    },
-    appBarShift: {
-        width: `calc(100% - ${drawerWidth}px)`,
-        marginLeft: drawerWidth,
-        transition: theme.transitions.create(["margin", "width"], {
-            easing: theme.transitions.easing.easeOut,
-            duration: theme.transitions.duration.enteringScreen
-        })
-    },
-    appBarShiftSmallScreen: {
-        width: "100%",
-        marginLeft: 0,
-        transition: theme.transitions.create(["margin", "width"], {
-            easing: theme.transitions.easing.easeOut,
-            duration: theme.transitions.duration.enteringScreen
-        })
-    },
-    menuButton: {
-        marginRight: theme.spacing(2)
-    },
-    hide: {
-        display: "none"
-    },
-    title: {
-        flexGrow: 1
-    },
-    drawer: {
-        width: drawerWidth,
-        flexShrink: 0
-    },
-    drawerPaper: {
-        width: drawerWidth
-    },
-    drawerHeader: {
-        display: "flex",
-        alignItems: "center",
-        padding: theme.spacing(0, 1),
-        // necessary for content to be below app bar
-        ...theme.mixins.toolbar,
-        justifyContent: "flex-end"
-    },
-    content: {
-        flexGrow: 1,
-        padding: theme.spacing(3),
-        transition: theme.transitions.create("margin", {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen
-        }),
-        marginLeft: 0
-    },
-    contentShift: {
-        transition: theme.transitions.create("margin", {
-            easing: theme.transitions.easing.easeOut,
-            duration: theme.transitions.duration.enteringScreen
-        }),
-        marginLeft: drawerWidth
-    },
-    contentShiftSmallScreen: {
-        transition: theme.transitions.create("margin", {
-            easing: theme.transitions.easing.easeOut,
-            duration: theme.transitions.duration.enteringScreen
-        }),
-        marginLeft: 0
-    }
-}));
-
-export default function Layout({ group = null, children }) {
-    const classes = useStyles();
-    const theme = useTheme();
+export default function Layout({group = null, children, ...props}) {
     const authenticated = useRecoilValue(isAuthenticated);
     const [anchorEl, setAnchorEl] = useState(null);
     const dotsMenuOpen = Boolean(anchorEl);
 
-    const isLargeScreen = useMediaQuery(theme.breakpoints.up("sm"));
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [mobileOpen, setMobileOpen] = useState(true);
 
-    useEffect(() => {
-        setSidebarOpen(isLargeScreen);
-    }, [isLargeScreen]);
+    const {window} = props;
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -129,43 +41,75 @@ export default function Layout({ group = null, children }) {
         setAnchorEl(null);
     };
 
-    const handleSidebarOpen = () => {
-        setSidebarOpen(true);
-    };
+    const handleDrawerToggle = () => {
+        setMobileOpen(!mobileOpen);
+    }
 
-    const handleSidebarClose = () => {
-        setSidebarOpen(false);
-    };
+    const drawer = (
+        <div>
+            <Toolbar/>
+            <Divider/>
+            <List>
+                {group != null && (
+                    <>
+                        <ListItemLink to={`/groups/${group.id}/`}>
+                            <ListItemText primary="Transactions"/>
+                        </ListItemLink>
+                        <ListItemLink to={`/groups/${group.id}/accounts`}>
+                            <ListItemText primary="Accounts"/>
+                        </ListItemLink>
+                        <ListItemLink to={`/groups/${group.id}/detail`}>
+                            <ListItemText primary="Group detail"/>
+                        </ListItemLink>
+                        <ListItemLink to={`/groups/${group.id}/members`}>
+                            <ListItemText primary="Group Members"/>
+                        </ListItemLink>
+                        <ListItemLink to={`/groups/${group.id}/invites`}>
+                            <ListItemText primary="Group Invites"/>
+                        </ListItemLink>
+                        <ListItemLink to={`/groups/${group.id}/log`}>
+                            <ListItemText primary="Group Log"/>
+                        </ListItemLink>
+                        <Divider/>
+                    </>
+                )}
+                <ListItemLink to="/">
+                    <ListItemText primary="Groups"/>
+                </ListItemLink>
+                <Divider/>
+                <ListItemLink to="/logout">
+                    <ListItemText primary="Sign out"/>
+                </ListItemLink>
+            </List>
+        </div>
+    )
+
+    const container = window !== undefined ? () => window().document.body : undefined;
 
     return (
-        <div>
+        <Box sx={{display: "flex"}}>
+            <CssBaseline/>
             <AppBar
                 position="fixed"
-                className={clsx(classes.appBar, {
-                    [classes.appBarShift]: authenticated && sidebarOpen && isLargeScreen,
-                    [classes.appBarShiftSmallScreen]: authenticated && sidebarOpen && !isLargeScreen
-                })}
+                sx={{
+                    // width: {sm: `calc(100% - ${drawerWidth}px)`},
+                    // ml: {sm: `${drawerWidth}px`},
+                    zIndex: (theme) => theme.zIndex.drawer + 1
+                }}
             >
                 <Toolbar>
                     <IconButton
                         color="inherit"
                         aria-label="open drawer"
-                        onClick={handleSidebarOpen}
+                        onClick={handleDrawerToggle}
                         edge="start"
-                        className={clsx(classes.menuButton, sidebarOpen && classes.hide)}
+                        sx={{mr: 2, display: {sm: 'none'}}}
                     >
-                        <MenuIcon />
+                        <MenuIcon/>
                     </IconButton>
-                    {group !== null ? (
-                        <Button color="inherit" noWrap className={classes.title} component={RouterLink}
-                                to={`/groups/${group.id}`}>
-                            {group.name}
-                        </Button>
-                    ) : (
-                        <Typography variant="h6" noWrap className={classes.title}>
-                            Abrechnung
-                        </Typography>
-                    )}
+                    <Typography variant="h6" component="div" sx={{flexGrow: 1}}>
+                        Abrechnung
+                    </Typography>
                     {authenticated ? (
                         <div>
                             <IconButton
@@ -175,7 +119,7 @@ export default function Layout({ group = null, children }) {
                                 onClick={handleProfileMenuOpen}
                                 color="inherit"
                             >
-                                <AccountCircleIcon />
+                                <AccountCircleIcon/>
                             </IconButton>
                             <Menu
                                 id="menu-appbar"
@@ -210,67 +154,47 @@ export default function Layout({ group = null, children }) {
             </AppBar>
 
             {authenticated ? (
-                <SwipeableDrawer
-                    className={classes.drawer}
-                    disableBackdropTransition={!iOS}
-                    disableDiscovery={iOS}
-                    open={sidebarOpen}
-                    onClose={handleSidebarClose}
-                    onOpen={handleSidebarOpen}
-                    variant={isLargeScreen ? "persistent" : "temporary"}
-                    classes={{
-                        paper: classes.drawerPaper
-                    }}
+                <Box
+                    component="nav"
+                    sx={{width: {sm: drawerWidth}, flexShrink: {sm: 0}}}
                 >
-                    <div className={classes.drawerHeader}>
-                        <IconButton onClick={handleSidebarClose}>
-                            {theme.direction === "ltr" ? <ChevronLeftIcon /> : <ChevronRightIcon />}
-                        </IconButton>
-                    </div>
-                    <Divider />
-                    {group != null && (
-                        <>
-                            <ListItemLink to={`/groups/${group.id}/`}>
-                                <ListItemText primary="Transactions" />
-                            </ListItemLink>
-                            <ListItemLink to={`/groups/${group.id}/accounts`}>
-                                <ListItemText primary="Accounts" />
-                            </ListItemLink>
-                            <ListItemLink to={`/groups/${group.id}/detail`}>
-                                <ListItemText primary="Group detail" />
-                            </ListItemLink>
-                            <ListItemLink to={`/groups/${group.id}/members`}>
-                                <ListItemText primary="Group Members" />
-                            </ListItemLink>
-                            <ListItemLink to={`/groups/${group.id}/invites`}>
-                                <ListItemText primary="Group Invites" />
-                            </ListItemLink>
-                            <ListItemLink to={`/groups/${group.id}/log`}>
-                                <ListItemText primary="Group Log" />
-                            </ListItemLink>
-                            <Divider />
-                        </>
-                    )}
-                    <List>
-                        <ListItemLink to="/">
-                            <ListItemText primary="Groups" />
-                        </ListItemLink>
-                        <Divider />
-                        <ListItemLink to="/logout">
-                            <ListItemText primary="Sign out" />
-                        </ListItemLink>
-                    </List>
-                </SwipeableDrawer>
+                    <Drawer
+                        container={container}
+                        variant="temporary"
+                        open={mobileOpen}
+                        onClose={handleDrawerToggle}
+                        ModalProps={{
+                            keepMounted: true, // Better open performance on mobile.
+                        }}
+                        sx={{
+                            display: {xs: 'block', sm: 'none'},
+                            '& .MuiDrawer-paper': {boxSizing: 'border-box', width: drawerWidth},
+                        }}
+                    >
+                        {drawer}
+                    </Drawer>
+                    <Drawer
+                        variant="permanent"
+                        sx={{
+                            flexShrink: 0,
+                            display: {xs: 'none', sm: 'block'},
+                            '& .MuiDrawer-paper': {boxSizing: 'border-box', width: drawerWidth},
+                        }}
+                        open
+                    >
+                        {drawer}
+                    </Drawer>
+                </Box>
             ) : null}
-            <main className={clsx(classes.content, {
-                [classes.contentShift]: sidebarOpen && isLargeScreen,
-                [classes.contentShiftSmallScreen]: sidebarOpen && !isLargeScreen
-            })}>
-                <div className={classes.drawerHeader} />
+            <Box
+                component="main"
+                sx={{flexGrow: 1, p: 3, width: {sm: `calc(100% - ${drawerWidth}px)`}}}
+            >
                 <Container maxWidth="lg">
+                    <Toolbar/>
                     {children}
                 </Container>
-            </main>
-        </div>
+            </Box>
+        </Box>
     );
 }

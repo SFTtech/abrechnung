@@ -1,8 +1,12 @@
 import React from "react";
-import { useRecoilState } from "recoil";
-import { themeSettings, transactionSettings } from "../../recoil/settings";
+import {useState} from "react";
+import {useRecoilState} from "recoil";
+import {themeSettings, transactionSettings} from "../../recoil/settings";
 import {
     Alert,
+    Box,
+    Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle,
+    Divider,
     FormControl,
     FormControlLabel,
     FormGroup,
@@ -13,7 +17,8 @@ import {
     Switch,
     Typography
 } from "@mui/material";
-import { makeStyles } from "@mui/styles";
+import {makeStyles} from "@mui/styles";
+import {clearCache} from "../../recoil";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -25,6 +30,22 @@ export default function Settings() {
     const classes = useStyles();
     const [theme, setTheme] = useRecoilState(themeSettings);
     const [tSettings, setTransactionSettings] = useRecoilState(transactionSettings);
+
+    const [confirmClearCacheOpen, setConfirmClearCacheOpen] = useState(false);
+
+    const handleConfirmClearCacheOpen = () => {
+        setConfirmClearCacheOpen(true);
+    }
+
+    const handleConfirmClearCacheClose = () => {
+        setConfirmClearCacheOpen(false);
+    }
+
+    const handleConfirmClearCache = () => {
+        clearCache();
+        setConfirmClearCacheOpen(false);
+        window.location.reload();
+    }
 
     const handleDarkModeChange = (event) => {
         const val = event.target.value;
@@ -47,13 +68,13 @@ export default function Settings() {
             <Typography component="h3" variant="h5">
                 Settings
             </Typography>
-            <Alert style={{ marginTop: 10 }} severity="info">These settings are locally on your device. Clearing your
+            <Alert sx={{mt: 1}} severity="info">These settings are stored locally on your device. Clearing
+                your
                 Browser's local storage will reset them.</Alert>
-            <div style={{ marginTop: 20 }}>
-                <FormControl style={{ width: 200 }}>
+            <Box sx={{mt: 2}}>
+                <FormControl sx={{width: 200}}>
                     <FormGroup>
                         <FormLabel component="legend">Theme</FormLabel>
-                        {/*<InputLabel id="dark-mode-select-label">Dark Mode</InputLabel>*/}
                         <Select
                             id="dark-mode-select"
                             labelId="dark-mode-select-label"
@@ -68,22 +89,53 @@ export default function Settings() {
                         </Select>
                     </FormGroup>
                 </FormControl>
-            </div>
-            <div style={{ marginTop: 20 }}>
+            </Box>
+            <Box sx={{mt: 2}}>
                 <FormControl component="fieldset" variant="standard">
                     <FormLabel component="legend">Transaction Editing</FormLabel>
                     <FormGroup>
                         <FormControlLabel
                             control={
                                 <Switch checked={tSettings.showRemaining}
-                                        onChange={handleTransactionShowRemainingChange} name="showRemaining" />
+                                        onChange={handleTransactionShowRemainingChange} name="showRemaining"/>
                             }
                             label="Show remaining transaction value (rest) when entering transaction positions"
                         />
                     </FormGroup>
-                    {/*<FormHelperText>Be careful</FormHelperText>*/}
                 </FormControl>
-            </div>
+            </Box>
+            <Divider/>
+            <Box sx={{mt: 1}}>
+                <FormControl component="fieldset" variant="standard">
+                    <FormLabel component="legend">Clear Cache</FormLabel>
+                    <FormGroup>
+                        <Button variant="contained" color="secondary" onClick={handleConfirmClearCacheOpen}>Clear</Button>
+                    </FormGroup>
+                    {/*<FormHelperText>ACHTUNG!</FormHelperText>*/}
+                </FormControl>
+            </Box>
+
+            <Dialog
+                open={confirmClearCacheOpen}
+                onClose={handleConfirmClearCacheClose}
+                aria-labelledby="dialog-confirm-clear-cache"
+                aria-describedby="dialog-confirm-clear-cache-description"
+            >
+                <DialogTitle id="dialog-confirm-clear-cache">
+                    {"Clear Cache?"}
+                </DialogTitle>
+                <DialogContent>
+                    <DialogContentText id="dialog-confirm-clear-cache-description">
+                        This action will clear your local cache. All your settings (this page) will not be reset.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleConfirmClearCache} autoFocus>
+                        Yes
+                    </Button>
+                    <Button onClick={handleConfirmClearCacheClose}>Cancel</Button>
+                </DialogActions>
+            </Dialog>
         </Paper>
     );
 }
