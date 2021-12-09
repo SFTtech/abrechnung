@@ -54,17 +54,16 @@ export const groupTransactions = atomFamily({
                     additionalTransactions: wipTransactions
                 })
                     .then(result => {
-                        const newTransactions = currTransactions.map(transaction => {
-                            const newTransaction = result.find(i => i.id === transaction.id);
-                            if (newTransaction !== undefined) {
-                                return newTransaction;
-                            }
-
-                            return transaction;
-                        });
-                        console.log("partial fetch return", newTransactions);
-                        localStorage.setItem(localStorageKey, JSON.stringify(newTransactions));
-                        return newTransactions;
+                        let mappedTransactions = currTransactions.reduce((map, transaction) => {
+                            map[transaction.id] = transaction;
+                            return map;
+                        }, {});
+                        for (const newTransaction of result) {
+                            mappedTransactions[newTransaction.id] = newTransaction;
+                        }
+                        console.log("partial fetch return", Object.values(mappedTransactions));
+                        localStorage.setItem(localStorageKey, JSON.stringify(Object.values(mappedTransactions)));
+                        return Object.values(mappedTransactions);
                     })
                     .catch(err => {
                         toast.error(`error when fetching transactions: ${err}`);
