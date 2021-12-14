@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Optional
 
 from abrechnung.domain.accounts import Account
 from . import (
@@ -19,17 +18,16 @@ class AccountService(Application):
                     conn=conn, group_id=group_id, user_id=user_id
                 )
                 cur = conn.cursor(
-                    "select id, type, revision_id, name, description, priority, deleted "
-                    "from latest_account "
-                    "where group_id = $1 and user_id = $2",
+                    "select account_id, type, revision_id, name, description, priority, deleted "
+                    "from committed_account_state_valid_at() "
+                    "where group_id = $1",
                     group_id,
-                    user_id,
                 )
                 result = []
                 async for account in cur:
                     result.append(
                         Account(
-                            id=account["id"],
+                            id=account["account_id"],
                             type=account["type"],
                             name=account["name"],
                             description=account["description"],
@@ -46,18 +44,17 @@ class AccountService(Application):
         async with self.db_pool.acquire() as conn:
             await check_group_permissions(conn=conn, group_id=group_id, user_id=user_id)
             account = await conn.fetchrow(
-                "select id, type, revision_id, name, description, priority, deleted "
-                "from latest_account "
-                "where group_id = $1 and user_id = $2 and id = $3",
+                "select account_id, type, revision_id, name, description, priority, deleted "
+                "from committed_account_state_valid_at() "
+                "where group_id = $1 and account_id = $2",
                 group_id,
-                user_id,
                 account_id,
             )
             if account is None:
                 raise NotFoundError(f"No account with id {account_id} exists")
 
             return Account(
-                id=account["id"],
+                id=account["account_id"],
                 type=account["type"],
                 name=account["name"],
                 description=account["description"],
@@ -128,11 +125,10 @@ class AccountService(Application):
                     conn=conn, group_id=group_id, user_id=user_id, can_write=True
                 )
                 account = await conn.fetchrow(
-                    "select id, type, revision_id, name, description, priority "
-                    "from latest_account "
-                    "where group_id = $1 and user_id = $2 and id = $3 and deleted = false",
+                    "select account_id, type, revision_id, name, description, priority "
+                    "from committed_account_state_valid_at() "
+                    "where group_id = $1 and account_id = $2 and deleted = false",
                     group_id,
-                    user_id,
                     account_id,
                 )
                 if account is None:
@@ -212,6 +208,7 @@ class AccountService(Application):
                     "where ds.account_id = $1",
                     account_id,
                 )
+                # TODO: don't allow deletion if purchase item usages still depend on it
 
                 if (
                     n_pending_debitor != 0
@@ -224,7 +221,9 @@ class AccountService(Application):
                     )
 
                 row = await conn.fetchrow(
-                    "select name, revision_id, deleted from latest_account where id = $1 and group_id = $2",
+                    "select name, revision_id, deleted "
+                    "from committed_account_state_valid_at() "
+                    "where account_id = $1 and group_id = $2",
                     account_id,
                     group_id,
                 )

@@ -72,7 +72,8 @@ class TransactionService(Application):
         """returns group id of the transaction"""
         result = await conn.fetchrow(
             "select t.type, t.group_id, can_write, is_owner "
-            "from group_membership gm join transaction t on gm.group_id = t.group_id and gm.user_id = $1 where t.id = $2",
+            "from group_membership gm join transaction t on gm.group_id = t.group_id and gm.user_id = $1 "
+            "where t.id = $2",
             user_id,
             transaction_id,
         )
@@ -170,19 +171,48 @@ class TransactionService(Application):
             group_id = await self._check_transaction_permissions(
                 conn=conn, user_id=user_id, transaction_id=transaction_id
             )
-            transaction = await conn.fetchrow(
-                "select id, type, current_state, pending_changes "
-                "from current_transaction_state "
-                "where group_id = $1 and id = $2",
+            committed_transaction = await conn.fetchrow(
+                "select *  "
+                "from committed_transaction_state_valid_at() "
+                "where group_id = $1 and transaction_id = $2",
                 group_id,
                 transaction_id,
             )
-            if transaction is None:
+            if committed_transaction is None:
                 raise NotFoundError(
                     f"Transaction with id {transaction_id} does not exist"
                 )
+            pending_state_db = await conn.fetchrow(
+                "select *  "
+                "from aggregated_pending_transaction_history "
+                "where group_id = $1 and transaction_id = $2 and user_id = $3",
+                group_id,
+                transaction_id,
+                user_id,
+            )
 
-            return self._transaction_db_row(transaction)
+            if pending_state_db:
+                pass
+            else:
+                pending_state = None
+
+            current_state = TransactionDetails(
+                description=committed_transaction["description"],
+                value=committed_transaction["value"],
+                currency_symbol=committed_transaction["currency_symbol"],
+                currency_conversion_rate=committed_transaction["currency_conversion_state"],
+                billed_at=committed_transaction["billed_at"],
+                deleted=committed_transaction["deleted"],
+            )
+
+            transaction = Transaction(
+                id=transaction_id,
+                type=committed_transaction["type"],
+                current_state=current_state,
+                pending_changes={user_id: pending_state} if pending_state else None
+            )
+
+            return transaction
 
     async def create_transaction(
         self,
@@ -254,6 +284,46 @@ class TransactionService(Application):
                     message=f"updated transaction with id {transaction_id}",
                 )
 
+    async def upload_file(
+            self,
+            *,
+            user_id: int,
+            transaction_id: int,
+            filename: str,
+            mime_type: str,
+            content: str  # base64 encoded
+    ):
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                await self._check_transaction_permissions(
+                    conn=conn,
+                    user_id=user_id,
+                    transaction_id=transaction_id,
+                    can_write=True,
+                )
+                revision_id = await self._get_or_create_pending_change(
+                    conn=conn, user_id=user_id, transaction_id=transaction_id
+                )
+
+    async def delete_file(
+            self,
+            *,
+            user_id: int,
+            transaction_id: int,
+            filename: str,
+    ):
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                await self._check_transaction_permissions(
+                    conn=conn,
+                    user_id=user_id,
+                    transaction_id=transaction_id,
+                    can_write=True,
+                )
+                revision_id = await self._get_or_create_pending_change(
+                    conn=conn, user_id=user_id, transaction_id=transaction_id
+                )
+
     async def update_transaction(
         self,
         *,
@@ -273,7 +343,7 @@ class TransactionService(Application):
                     transaction_id=transaction_id,
                     can_write=True,
                 )
-                revision_id = await self._get_or_create_pending_change(
+                revision_id = await self._get_or_create_pending_transaction_change(
                     conn=conn, user_id=user_id, transaction_id=transaction_id
                 )
                 await conn.execute(
@@ -298,7 +368,7 @@ class TransactionService(Application):
                     transaction_id=transaction_id,
                     can_write=True,
                 )
-                await self._get_or_create_pending_change(
+                await self._get_or_create_revision(
                     conn=conn, user_id=user_id, transaction_id=transaction_id
                 )
 
@@ -353,8 +423,8 @@ class TransactionService(Application):
 
                 row = await conn.fetchrow(
                     "select description, revision_id, deleted "
-                    "from committed_transaction_history th "
-                    "where th.id = $1",
+                    "from committed_transaction_state_valid_at() "
+                    "where transaction_id = $1",
                     transaction_id,
                 )
                 if row is not None and row["deleted"]:
@@ -408,7 +478,7 @@ class TransactionService(Application):
                     return
 
                 else:  # we have at least one committed change for this transaction
-                    revision_id = await self._get_or_create_pending_change(
+                    revision_id = await self._get_or_create_pending_transaction_change(
                         conn=conn, user_id=user_id, transaction_id=transaction_id
                     )
 
@@ -425,9 +495,7 @@ class TransactionService(Application):
                         revision_id,
                     )
 
-    async def _get_or_create_pending_change(
-        self, conn: asyncpg.Connection, user_id: int, transaction_id: int
-    ) -> int:
+    async def _get_or_create_revision(self, conn: asyncpg.Connection, user_id: int, transaction_id: int) -> int:
         """return the revision id, assumes we are already in a transaction"""
         revision_id = await conn.fetchval(
             "select id "
@@ -445,13 +513,25 @@ class TransactionService(Application):
             user_id,
             transaction_id,
         )
+        return revision_id
 
-        transaction_type = await conn.fetchval(
-            "select t.type from transaction t where t.id = $1", transaction_id
-        )
+    async def _get_or_create_pending_transaction_change(
+        self, conn: asyncpg.Connection, user_id: int, transaction_id: int
+    ) -> int:
+        revision_id = await self._get_or_create_revision(conn=conn, user_id=user_id, transaction_id=transaction_id)
+
+        t = await conn.fetchval("select id from transaction_history th where revision_id = $1 and id = $2",
+                               revision_id, transaction_id)
+        if t:
+            return revision_id
 
         last_committed_revision = await conn.fetchval(
-            "select revision_id from committed_transaction_history where id = $1",
+            "select tr.id "
+            "from transaction_revision tr "
+            "   join transaction_history th on tr.id = th.revision_id and tr.transaction_id = th.id "
+            "where tr.transaction_id = $1 and tr.committed is not null "
+            "order by tr.committed desc "
+            "limit 1",
             transaction_id,
         )
 
@@ -490,26 +570,55 @@ class TransactionService(Application):
             last_committed_revision,
         )
 
-        if transaction_type == "purchase":  # also copy all purchase items
-            await conn.execute(
-                "insert into purchase_item_history (id, revision_id, name, price, communist_shares, deleted) "
-                "select pi.id, $1, pih.name, pih.price, pih.communist_shares, pih.deleted "
-                "from purchase_item_history pih join purchase_item pi on pih.id = pi.id "
-                "where pi.transaction_id = $2 and pih.revision_id = $3 and not pih.deleted",
-                revision_id,
-                transaction_id,
-                last_committed_revision,
-            )
-            await conn.execute(
-                "insert into purchase_item_usage (item_id, revision_id, account_id, share_amount) "
-                "select item_id, $1, account_id, share_amount "
-                "from purchase_item_usage piu join purchase_item pi on piu.item_id = pi.id "
-                "join purchase_item_history pih on pi.id = pih.id and pih.revision_id = piu.revision_id "
-                "where pi.transaction_id = $2 and piu.revision_id = $3 and not pih.deleted",
-                revision_id,
-                transaction_id,
-                last_committed_revision,
-            )
+        return revision_id
+
+    async def _get_or_create_pending_purchase_item_change(
+            self, conn: asyncpg.Connection, user_id: int, item_id: int
+    ):
+        purchase_item = await conn.fetchrow("select id, transaction_id from purchase_item pi where id = $1", item_id)
+        if not purchase_item:
+            raise RuntimeError(f"Item with id {item_id} does not exist")
+        revision_id = await self._get_or_create_revision(conn=conn, user_id=user_id, transaction_id=purchase_item["transaction_id"])
+
+        history_entry = await conn.fetchval(
+            "select id from purchase_item_history pih where pih.id = $1 and pih.revision_id = $2",
+            item_id, revision_id
+        )
+        if history_entry:
+            return revision_id
+
+        last_committed_revision = await conn.fetchval(
+            "select tr.id "
+            "from transaction_revision tr "
+            "   join purchase_item pi on pi.transaction_id = tr.transaction_id "
+            "   join purchase_item_history pih on pih.revision_id = tr.id and  pi.id = pih.id "
+            "where tr.transaction_id = $1 and tr.committed is not null "
+            "order by tr.committed desc "
+            "limit 1",
+            purchase_item["transaction_id"],
+        )
+
+        await conn.execute(
+            "insert into purchase_item_history (id, revision_id, name, price, communist_shares, deleted) "
+            "select $1, $2, pih.name, pih.price, pih.communist_shares, pih.deleted "
+            "from purchase_item_history pih join purchase_item pi on pih.id = pi.id "
+            "where pi.id = $1 and pi.transaction_id = $3 and pih.revision_id = $4 and not pih.deleted",
+            item_id,
+            revision_id,
+            purchase_item["transaction_id"],
+            last_committed_revision,
+        )
+        await conn.execute(
+            "insert into purchase_item_usage (item_id, revision_id, account_id, share_amount) "
+            "select $1, $2, account_id, share_amount "
+            "from purchase_item_usage piu join purchase_item pi on piu.item_id = pi.id "
+            "join purchase_item_history pih on pi.id = pih.id and pih.revision_id = piu.revision_id "
+            "where pi.id = $1 and pi.transaction_id = $3 and piu.revision_id = $4 and not pih.deleted",
+            item_id,
+            revision_id,
+            purchase_item["transaction_id"],
+            last_committed_revision,
+        )
 
         return revision_id
 
@@ -529,7 +638,7 @@ class TransactionService(Application):
             can_write=True,
             transaction_type=transaction_type,
         )
-        revision_id = await self._get_or_create_pending_change(
+        revision_id = await self._get_or_create_pending_transaction_change(
             conn=conn, user_id=user_id, transaction_id=transaction_id
         )
 
@@ -713,7 +822,7 @@ class TransactionService(Application):
                     can_write=True,
                     transaction_type="purchase",
                 )
-                revision_id = await self._get_or_create_pending_change(
+                revision_id = await self._get_or_create_revision(
                     conn=conn, user_id=user_id, transaction_id=transaction_id
                 )
                 item_id = await conn.fetchval(
@@ -765,11 +874,11 @@ class TransactionService(Application):
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                group_id, transaction_id = await self._check_purchase_item_permissions(
+                await self._check_purchase_item_permissions(
                     conn=conn, user_id=user_id, item_id=item_id
                 )
-                revision_id = await self._get_or_create_pending_change(
-                    conn=conn, user_id=user_id, transaction_id=transaction_id
+                revision_id = await self._get_or_create_pending_purchase_item_change(
+                    conn=conn, user_id=user_id, item_id=item_id
                 )
                 await conn.execute(
                     "update purchase_item_history set name = $3, price = $4, communist_shares = $5 "
@@ -791,11 +900,11 @@ class TransactionService(Application):
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                group_id, transaction_id = await self._check_purchase_item_permissions(
+                await self._check_purchase_item_permissions(
                     conn=conn, user_id=user_id, item_id=item_id
                 )
-                revision_id = await self._get_or_create_pending_change(
-                    conn=conn, user_id=user_id, transaction_id=transaction_id
+                revision_id = await self._get_or_create_pending_purchase_item_change(
+                    conn=conn, user_id=user_id, item_id=item_id
                 )
 
                 await conn.execute(
@@ -821,11 +930,11 @@ class TransactionService(Application):
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                group_id, transaction_id = await self._check_purchase_item_permissions(
+                await self._check_purchase_item_permissions(
                     conn=conn, user_id=user_id, item_id=item_id
                 )
-                revision_id = await self._get_or_create_pending_change(
-                    conn=conn, user_id=user_id, transaction_id=transaction_id
+                revision_id = await self._get_or_create_pending_purchase_item_change(
+                    conn=conn, user_id=user_id, item_id=item_id
                 )
 
                 r = await conn.fetchval(
@@ -841,11 +950,11 @@ class TransactionService(Application):
     async def delete_purchase_item(self, *, user_id: int, item_id: int):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                group_id, transaction_id = await self._check_purchase_item_permissions(
+                await self._check_purchase_item_permissions(
                     conn=conn, user_id=user_id, item_id=item_id
                 )
-                revision_id = await self._get_or_create_pending_change(
-                    conn=conn, user_id=user_id, transaction_id=transaction_id
+                revision_id = await self._get_or_create_pending_purchase_item_change(
+                    conn=conn, user_id=user_id, item_id=item_id
                 )
 
                 await conn.execute(
