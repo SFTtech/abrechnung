@@ -3,7 +3,6 @@ import {atomFamily, selectorFamily} from "recoil";
 import {groupAccounts} from "./groups";
 import {fetchTransactions, getUserIDFromToken} from "../api";
 import {ws} from "../websocket";
-import {userData} from "./auth";
 import {DateTime} from "luxon";
 import {toast} from "react-toastify";
 
@@ -100,42 +99,49 @@ export const groupTransactions = atomFamily({
 export const transactionsSeenByUser = selectorFamily({
     key: "transacitonsSeenByUser",
     get: groupID => async ({get}) => {
-        const user = get(userData);
         const transactions = get(groupTransactions(groupID));
 
         return transactions
             .filter(transaction => {
-                if (transaction.current_state && transaction.current_state.deleted) {
-                    return false;
-                }
-                if (transaction.pending_changes.hasOwnProperty(user.id)) {
-                    return true;
-                } else if (transaction.current_state === null) {
-                    return false;
-                }
-                return true;
+                return !(transaction.committed_details && transaction.committed_details.deleted);
+
             })
             .map(transaction => {
-                if (transaction.pending_changes.hasOwnProperty(user.id)) {
-                    return {
-                        id: transaction.id,
-                        type: transaction.type,
-                        ...transaction.pending_changes[user.id],
-                        is_wip: true,
-                        has_committed_changes: transaction.current_state != null
+                let mapped = {
+                    id: transaction.id,
+                    type: transaction.type,
+                    is_wip: transaction.is_wip,
+                    purchase_items: transaction.committed_positions != null ? transaction.committed_positions : []
+                }
+                if (transaction.pending_details) {
+                    mapped = {
+                        ...mapped,
+                        ...transaction.pending_details,
+                        has_committed_changes: transaction.committed_details != null
                     };
                 } else {
-                    return {
-                        id: transaction.id,
-                        type: transaction.type,
-                        ...transaction.current_state,
-                        is_wip: false,
+                    mapped = {
+                        ...mapped,
+                        ...transaction.committed_details,
                         has_committed_changes: true
                     };
                 }
 
+                if (transaction.pending_positions) {
+                    let mappedPosition = mapped.purchase_items.reduce((map, position) => {
+                        map[position.id] = position;
+                        return map;
+                    }, {});
+                    for (const pendingPosition of transaction.pending_positions) {
+                        mappedPosition[pendingPosition.id] = pendingPosition;
+                    }
+                    mapped.purchase_items = Object.values(mappedPosition).filter(position => !position.deleted);;
+                }
+
+                return mapped;
             })
             .map(transaction => {
+                console.log(transaction);
                 let transactionAccountBalances = {};
                 let remainingTransactionValue = transaction.value;
                 if (transaction.purchase_items != null && transaction.purchase_items.length > 0) {

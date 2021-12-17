@@ -21,7 +21,6 @@ import {
 } from "@mui/material";
 import {AccountCircle as AccountCircleIcon, Menu as MenuIcon} from "@mui/icons-material";
 
-const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
 const drawerWidth = 240;
 
 export default function Layout({group = null, children, ...props}) {

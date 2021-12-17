@@ -14,53 +14,12 @@ from abrechnung.application import (
 from abrechnung.domain.transactions import (
     Transaction,
     TransactionDetails,
-    PurchaseItem,
+    TransactionPosition,
 )
 from abrechnung.util import parse_postgres_datetime
 
 
 class TransactionService(Application):
-    @staticmethod
-    def _transaction_detail_from_db_json(db_json: dict) -> TransactionDetails:
-        purchase_items = None
-
-        if db_json.get("purchase_items") is not None:
-            purchase_items = [
-                PurchaseItem(
-                    id=p["id"],
-                    name=p["name"],
-                    price=p["price"],
-                    communist_shares=p["communist_shares"],
-                    deleted=p["deleted"],
-                    usages={
-                        usage["account_id"]: usage["share_amount"]
-                        for usage in p["usages"]
-                    },
-                )
-                for p in db_json["purchase_items"]
-            ]
-
-        return TransactionDetails(
-            description=db_json["description"],
-            value=db_json["value"],
-            currency_symbol=db_json["currency_symbol"],
-            currency_conversion_rate=db_json["currency_conversion_rate"],
-            deleted=db_json["deleted"],
-            committed_at=None
-            if db_json["revision_committed"] is None
-            else parse_postgres_datetime(db_json["revision_committed"]),
-            billed_at=date.fromisoformat(db_json["billed_at"]),
-            creditor_shares={
-                cred["account_id"]: cred["shares"]
-                for cred in db_json["creditor_shares"]
-            },
-            debitor_shares={
-                deb["account_id"]: deb["shares"] for deb in db_json["debitor_shares"]
-            },
-            changed_by=db_json["last_changed_by"],
-            purchase_items=purchase_items,
-        )
-
     @staticmethod
     async def _check_transaction_permissions(
         conn: asyncpg.Connection,
@@ -96,29 +55,85 @@ class TransactionService(Application):
 
         return result["group_id"]
 
-    def _transaction_db_row(self, transaction: asyncpg.Record) -> Transaction:
-        changes = transaction["pending_changes"]
-        if changes is None:
-            pending_changes = None
-        else:
-            pending_changes = {
-                c["last_changed_by"]: self._transaction_detail_from_db_json(c)
-                for c in json.loads(changes)
-            }
+    @staticmethod
+    def _transaction_detail_from_db_json(db_json: dict) -> TransactionDetails:
+        return TransactionDetails(
+            description=db_json["description"],
+            value=db_json["value"],
+            currency_symbol=db_json["currency_symbol"],
+            currency_conversion_rate=db_json["currency_conversion_rate"],
+            deleted=db_json["deleted"],
+            committed_at=None
+            if db_json.get("revision_committed") is None
+            else parse_postgres_datetime(db_json["revision_committed"]),
+            billed_at=date.fromisoformat(db_json["billed_at"]),
+            creditor_shares={
+                cred["account_id"]: cred["shares"]
+                for cred in db_json["creditor_shares"]
+            },
+            debitor_shares={
+                deb["account_id"]: deb["shares"] for deb in db_json["debitor_shares"]
+            },
+            changed_by=db_json["changed_by"],
+        )
 
-        current_state = (
+    @staticmethod
+    def _transaction_position_from_db_row_json(db_json: dict) -> TransactionPosition:
+        return TransactionPosition(
+            id=db_json["item_id"],
+            name=db_json["name"],
+            price=db_json["price"],
+            communist_shares=db_json["communist_shares"],
+            deleted=db_json["deleted"],
+            usages={
+                usage["account_id"]: usage["share_amount"]
+                for usage in db_json["usages"]
+            },
+        )
+
+    def _transaction_db_row(
+        self, transaction: asyncpg.Record
+    ) -> Transaction:
+        committed_details = (
             self._transaction_detail_from_db_json(
-                json.loads(transaction["current_state"])[0]
+                json.loads(transaction["committed_details"])[0]
             )
-            if transaction["current_state"] is not None
+            if transaction["committed_details"]
+            else None
+        )
+        pending_details = (
+            self._transaction_detail_from_db_json(
+                json.loads(transaction["pending_details"])[0]
+            )
+            if transaction["pending_details"]
+            else None
+        )
+        committed_positions = (
+            [
+                self._transaction_position_from_db_row_json(position)
+                for position in json.loads(transaction["committed_positions"])
+            ]
+            if transaction["committed_positions"]
+            else None
+        )
+
+        pending_positions = (
+            [
+                self._transaction_position_from_db_row_json(position)
+                for position in json.loads(transaction["pending_positions"])
+            ]
+            if transaction["pending_positions"]
             else None
         )
 
         return Transaction(
-            id=transaction["id"],
+            id=transaction["transaction_id"],
             type=transaction["type"],
-            current_state=current_state,
-            pending_changes=pending_changes,
+            is_wip=transaction["is_wip"],
+            committed_details=committed_details,
+            pending_details=pending_details,
+            committed_positions=committed_positions,
+            pending_positions=pending_positions,
         )
 
     async def list_transactions(
@@ -139,12 +154,12 @@ class TransactionService(Application):
                     # if a minimum last changed value is specified we must also return all transactions the current
                     # user has pending changes with to properly sync state across different devices of the user
                     cur = conn.cursor(
-                        "select id, type, current_state, pending_changes "
-                        "from current_transaction_state "
-                        "where group_id = $1 "
-                        "   and (users_with_pending_changes is not null and $2 = any(users_with_pending_changes) "
-                        "       or last_changed is not null and last_changed >= $3"
-                        "       or (($4::int[]) is not null and id = any($4::int[])))",
+                        "select transaction_id, type, last_changed, is_wip, committed_details, pending_details, "
+                        "   committed_positions, pending_positions "
+                        "from full_transaction_state_valid_at($1) "
+                        "where group_id = $2 "
+                        "   and (is_wip or last_changed is not null and last_changed >= $3"
+                        "       or (($4::int[]) is not null and transaction_id = any($4::int[])))",
                         group_id,
                         user_id,
                         min_last_changed,
@@ -152,8 +167,9 @@ class TransactionService(Application):
                     )
                 else:
                     cur = conn.cursor(
-                        "select id, type, current_state, pending_changes "
-                        "from current_transaction_state "
+                        "select transaction_id, type, last_changed, is_wip, committed_details, pending_details, "
+                        "   committed_positions, pending_positions "
+                        "from full_transaction_state_valid_at($1) "
                         "where group_id = $1",
                         group_id,
                     )
@@ -172,47 +188,14 @@ class TransactionService(Application):
                 conn=conn, user_id=user_id, transaction_id=transaction_id
             )
             committed_transaction = await conn.fetchrow(
-                "select *  "
-                "from committed_transaction_state_valid_at() "
+                "select transaction_id, type, last_changed, is_wip, committed_details, pending_details, "
+                "   committed_positions, pending_positions "
+                "from full_transaction_state_valid_at($1) "
                 "where group_id = $1 and transaction_id = $2",
                 group_id,
                 transaction_id,
             )
-            if committed_transaction is None:
-                raise NotFoundError(
-                    f"Transaction with id {transaction_id} does not exist"
-                )
-            pending_state_db = await conn.fetchrow(
-                "select *  "
-                "from aggregated_pending_transaction_history "
-                "where group_id = $1 and transaction_id = $2 and user_id = $3",
-                group_id,
-                transaction_id,
-                user_id,
-            )
-
-            if pending_state_db:
-                pass
-            else:
-                pending_state = None
-
-            current_state = TransactionDetails(
-                description=committed_transaction["description"],
-                value=committed_transaction["value"],
-                currency_symbol=committed_transaction["currency_symbol"],
-                currency_conversion_rate=committed_transaction["currency_conversion_state"],
-                billed_at=committed_transaction["billed_at"],
-                deleted=committed_transaction["deleted"],
-            )
-
-            transaction = Transaction(
-                id=transaction_id,
-                type=committed_transaction["type"],
-                current_state=current_state,
-                pending_changes={user_id: pending_state} if pending_state else None
-            )
-
-            return transaction
+            return self._transaction_db_row(committed_transaction)
 
     async def create_transaction(
         self,
@@ -285,13 +268,13 @@ class TransactionService(Application):
                 )
 
     async def upload_file(
-            self,
-            *,
-            user_id: int,
-            transaction_id: int,
-            filename: str,
-            mime_type: str,
-            content: str  # base64 encoded
+        self,
+        *,
+        user_id: int,
+        transaction_id: int,
+        filename: str,
+        mime_type: str,
+        content: str,  # base64 encoded
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -306,11 +289,11 @@ class TransactionService(Application):
                 )
 
     async def delete_file(
-            self,
-            *,
-            user_id: int,
-            transaction_id: int,
-            filename: str,
+        self,
+        *,
+        user_id: int,
+        transaction_id: int,
+        filename: str,
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -495,7 +478,9 @@ class TransactionService(Application):
                         revision_id,
                     )
 
-    async def _get_or_create_revision(self, conn: asyncpg.Connection, user_id: int, transaction_id: int) -> int:
+    async def _get_or_create_revision(
+        self, conn: asyncpg.Connection, user_id: int, transaction_id: int
+    ) -> int:
         """return the revision id, assumes we are already in a transaction"""
         revision_id = await conn.fetchval(
             "select id "
@@ -518,10 +503,15 @@ class TransactionService(Application):
     async def _get_or_create_pending_transaction_change(
         self, conn: asyncpg.Connection, user_id: int, transaction_id: int
     ) -> int:
-        revision_id = await self._get_or_create_revision(conn=conn, user_id=user_id, transaction_id=transaction_id)
+        revision_id = await self._get_or_create_revision(
+            conn=conn, user_id=user_id, transaction_id=transaction_id
+        )
 
-        t = await conn.fetchval("select id from transaction_history th where revision_id = $1 and id = $2",
-                               revision_id, transaction_id)
+        t = await conn.fetchval(
+            "select id from transaction_history th where revision_id = $1 and id = $2",
+            revision_id,
+            transaction_id,
+        )
         if t:
             return revision_id
 
@@ -573,16 +563,21 @@ class TransactionService(Application):
         return revision_id
 
     async def _get_or_create_pending_purchase_item_change(
-            self, conn: asyncpg.Connection, user_id: int, item_id: int
+        self, conn: asyncpg.Connection, user_id: int, item_id: int
     ):
-        purchase_item = await conn.fetchrow("select id, transaction_id from purchase_item pi where id = $1", item_id)
+        purchase_item = await conn.fetchrow(
+            "select id, transaction_id from purchase_item pi where id = $1", item_id
+        )
         if not purchase_item:
             raise RuntimeError(f"Item with id {item_id} does not exist")
-        revision_id = await self._get_or_create_revision(conn=conn, user_id=user_id, transaction_id=purchase_item["transaction_id"])
+        revision_id = await self._get_or_create_revision(
+            conn=conn, user_id=user_id, transaction_id=purchase_item["transaction_id"]
+        )
 
         history_entry = await conn.fetchval(
             "select id from purchase_item_history pih where pih.id = $1 and pih.revision_id = $2",
-            item_id, revision_id
+            item_id,
+            revision_id,
         )
         if history_entry:
             return revision_id

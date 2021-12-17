@@ -274,7 +274,8 @@ class TransactionAPITest(HTTPAPITest):
     async def test_get_transaction(self):
         group_id, transaction_id = await self._create_group_with_transaction("transfer")
         t = await self._fetch_transaction(transaction_id)
-        self.assertEqual(len(t["pending_changes"]), 1)
+        self.assertIsNotNone(t["pending_details"])
+        self.assertEqual(transaction_id, t["id"])
 
         resp = await self._get(f"/api/v1/transactions/asdf1234")
         self.assertEqual(404, resp.status)
@@ -291,17 +292,17 @@ class TransactionAPITest(HTTPAPITest):
         account2_id = await self._create_account(group_id, "account2")
 
         t = await self._fetch_transaction(transaction_id)
-        self.assertEqual(200.0, t["pending_changes"][str(self.test_user_id)]["value"])
+        self.assertEqual(200.0, t["pending_details"]["value"])
         self.assertEqual(
             "some description",
-            t["pending_changes"][str(self.test_user_id)]["description"],
+            t["pending_details"]["description"],
         )
         self.assertEqual(
-            "$", t["pending_changes"][str(self.test_user_id)]["currency_symbol"]
+            "$", t["pending_details"]["currency_symbol"]
         )
         self.assertEqual(
             2.0,
-            t["pending_changes"][str(self.test_user_id)]["currency_conversion_rate"],
+            t["pending_details"]["currency_conversion_rate"],
         )
 
         await self._post_debitor_share(transaction_id, account1_id, 1.0)
@@ -310,60 +311,60 @@ class TransactionAPITest(HTTPAPITest):
         await self._commit_transaction(transaction_id)
 
         t = await self._fetch_transaction(transaction_id)
-        self.assertEqual(0, len(t["pending_changes"]))
+        self.assertIsNone(t["pending_details"])
 
         await self._update_transaction(
             transaction_id, 100.0, "foobar", date.today(), "€", 1.0
         )
         t = await self._fetch_transaction(transaction_id)
-        self.assertEqual(100.0, t["pending_changes"][str(self.test_user_id)]["value"])
+        self.assertEqual(100.0, t["pending_details"]["value"])
         self.assertEqual(
             "foobar",
-            t["pending_changes"][str(self.test_user_id)]["description"],
+            t["pending_details"]["description"],
         )
         self.assertEqual(
-            "€", t["pending_changes"][str(self.test_user_id)]["currency_symbol"]
+            "€", t["pending_details"]["currency_symbol"]
         )
         self.assertEqual(
             1.0,
-            t["pending_changes"][str(self.test_user_id)]["currency_conversion_rate"],
+            t["pending_details"]["currency_conversion_rate"],
         )
 
         await self._commit_transaction(transaction_id)
         t = await self._fetch_transaction(transaction_id)
-        self.assertEqual(0, len(t["pending_changes"]))
+        self.assertIsNone(t["pending_details"])
 
         await self._create_change(transaction_id)
         t = await self._fetch_transaction(transaction_id)
-        self.assertEqual(1, len(t["pending_changes"]))
+        self.assertTrue(t["is_wip"])
         await self._update_transaction(
             transaction_id, 200.0, "foofoo", date.today(), "$", 2.0
         )
 
         t = await self._fetch_transaction(transaction_id)
-        self.assertEqual(200.0, t["pending_changes"][str(self.test_user_id)]["value"])
+        self.assertEqual(200.0, t["pending_details"]["value"])
         self.assertEqual(
             "foofoo",
-            t["pending_changes"][str(self.test_user_id)]["description"],
+            t["pending_details"]["description"],
         )
         self.assertEqual(
-            "$", t["pending_changes"][str(self.test_user_id)]["currency_symbol"]
+            "$", t["pending_details"]["currency_symbol"]
         )
         self.assertEqual(
             2.0,
-            t["pending_changes"][str(self.test_user_id)]["currency_conversion_rate"],
+            t["pending_details"]["currency_conversion_rate"],
         )
         await self._commit_transaction(transaction_id)
         t = await self._fetch_transaction(transaction_id)
-        self.assertEqual(200.0, t["current_state"]["value"])
+        self.assertEqual(200.0, t["committed_details"]["value"])
         self.assertEqual(
             "foofoo",
-            t["current_state"]["description"],
+            t["committed_details"]["description"],
         )
-        self.assertEqual("$", t["current_state"]["currency_symbol"])
+        self.assertEqual("$", t["committed_details"]["currency_symbol"])
         self.assertEqual(
             2.0,
-            t["current_state"]["currency_conversion_rate"],
+            t["committed_details"]["currency_conversion_rate"],
         )
 
     async def test_commit_transaction(self):
@@ -384,7 +385,8 @@ class TransactionAPITest(HTTPAPITest):
         await self._commit_transaction(transaction_id, expected_status=204)
 
         t = await self._fetch_transaction(transaction_id)
-        self.assertEqual(0, len(t["pending_changes"]))
+        self.assertIsNone(t["pending_details"])
+        self.assertFalse(t["is_wip"])
 
         # test that we cannot commit without having pending changes
         await self._commit_transaction(transaction_id, expected_status=400)
@@ -394,24 +396,26 @@ class TransactionAPITest(HTTPAPITest):
 
         # check that we have another pending change
         t = await self._fetch_transaction(transaction_id)
-        self.assertEqual(1, len(t["pending_changes"]))
-        self.assertIn(str(self.test_user_id), t["pending_changes"])
+        self.assertIsNotNone(t["pending_details"])
+        self.assertTrue(t["is_wip"])
 
         # check that we can commit this
         await self._commit_transaction(transaction_id)
         t = await self._fetch_transaction(transaction_id)
-        self.assertEqual(0, len(t["pending_changes"]))
+        self.assertIsNone(t["pending_details"])
+        self.assertFalse(t["is_wip"])
 
         # try another edit and discard that
         await self._delete_debitor_share(transaction_id, account1_id)
         await self._discard_transaction_change(transaction_id)
         t = await self._fetch_transaction(transaction_id)
-        self.assertEqual(0, len(t["pending_changes"]))
+        self.assertIsNone(t["pending_details"])
+        self.assertFalse(t["is_wip"])
 
         # try delete the transaction
         await self._delete_transaction(transaction_id)
         t = await self._fetch_transaction(transaction_id)
-        self.assertTrue(t["current_state"]["deleted"])
+        self.assertTrue(t["committed_details"]["deleted"])
 
     async def test_discard_newly_created_transaction(self):
         group_id, transaction_id = await self._create_group_with_transaction("purchase")
@@ -426,8 +430,9 @@ class TransactionAPITest(HTTPAPITest):
         await self._delete_transaction(transaction_id)
 
         t = await self._fetch_transaction(transaction_id)
-        self.assertTrue(t["current_state"]["deleted"])
-        self.assertEqual(0, len(t["pending_changes"]))
+        self.assertTrue(t["committed_details"]["deleted"])
+        self.assertIsNone(t["pending_details"])
+        self.assertFalse(t["is_wip"])
 
     async def test_creditor_shares(self):
         group_id, transaction_id = await self._create_group_with_transaction("purchase")
@@ -460,11 +465,11 @@ class TransactionAPITest(HTTPAPITest):
         t = await self._fetch_transaction(transaction_id)
         self.assertIn(
             str(account1_id),
-            t["pending_changes"][str(self.test_user_id)]["creditor_shares"],
+            t["pending_details"]["creditor_shares"],
         )
         self.assertEqual(
             2.0,
-            t["pending_changes"][str(self.test_user_id)]["creditor_shares"][
+            t["pending_details"]["creditor_shares"][
                 str(account1_id)
             ],
         )
@@ -474,7 +479,7 @@ class TransactionAPITest(HTTPAPITest):
         t = await self._fetch_transaction(transaction_id)
         self.assertNotIn(
             str(account1_id),
-            t["pending_changes"][str(self.test_user_id)]["creditor_shares"],
+            t["pending_details"]["creditor_shares"],
         )
 
         # check that we cannot delete non existing shares
@@ -488,7 +493,7 @@ class TransactionAPITest(HTTPAPITest):
 
         t = await self._fetch_transaction(transaction_id)
         self.assertEqual(
-            t["pending_changes"][str(self.test_user_id)]["creditor_shares"][
+            t["pending_details"]["creditor_shares"][
                 str(account2_id)
             ],
             2.0,
@@ -521,20 +526,20 @@ class TransactionAPITest(HTTPAPITest):
         t = await self._fetch_transaction(transaction_id)
         self.assertIn(
             str(account1_id),
-            t["pending_changes"][str(self.test_user_id)]["debitor_shares"],
+            t["pending_details"]["debitor_shares"],
         )
         self.assertIn(
             str(account2_id),
-            t["pending_changes"][str(self.test_user_id)]["debitor_shares"],
+            t["pending_details"]["debitor_shares"],
         )
         self.assertEqual(
-            t["pending_changes"][str(self.test_user_id)]["debitor_shares"][
+            t["pending_details"]["debitor_shares"][
                 str(account1_id)
             ],
             2.0,
         )
         self.assertEqual(
-            t["pending_changes"][str(self.test_user_id)]["debitor_shares"][
+            t["pending_details"]["debitor_shares"][
                 str(account2_id)
             ],
             1.0,
@@ -545,7 +550,7 @@ class TransactionAPITest(HTTPAPITest):
         t = await self._fetch_transaction(transaction_id)
         self.assertNotIn(
             str(account1_id),
-            t["pending_changes"][str(self.test_user_id)]["debitor_shares"],
+            t["pending_details"]["debitor_shares"],
         )
 
         # check that we cannot delete non existing shares
@@ -576,10 +581,10 @@ class TransactionAPITest(HTTPAPITest):
         t = await self._fetch_transaction(transaction_id)
         self.assertIn(
             str(account_id),
-            t["pending_changes"][str(self.test_user_id)]["debitor_shares"],
+            t["pending_details"]["debitor_shares"],
         )
         self.assertEqual(
-            t["pending_changes"][str(self.test_user_id)]["debitor_shares"][
+            t["pending_details"]["debitor_shares"][
                 str(account_id)
             ],
             2.0,
@@ -590,7 +595,7 @@ class TransactionAPITest(HTTPAPITest):
         t = await self._fetch_transaction(transaction_id)
         self.assertNotIn(
             str(account_id),
-            t["pending_changes"][str(self.test_user_id)]["debitor_shares"],
+            t["pending_details"]["debitor_shares"],
         )
 
         # check that we cannot delete non existing shares
@@ -614,6 +619,7 @@ class TransactionAPITest(HTTPAPITest):
 
         # we can delete the account when nothing depends on it
         resp = await self._delete(f"/api/v1/groups/{group_id}/accounts/{account1_id}")
+        print(await resp.json())
         self.assertEqual(204, resp.status)
 
         account2_id = await self.account_service.create_account(
@@ -690,15 +696,15 @@ class TransactionAPITest(HTTPAPITest):
         self.assertEqual(204, resp.status)
 
         t = await self._fetch_transaction(transaction_id)
-        self.assertIsNotNone(t["current_state"]["purchase_items"])
-        self.assertEqual(1, len(t["current_state"]["purchase_items"]))
-        self.assertEqual("carrots", t["current_state"]["purchase_items"][0]["name"])
+        self.assertIsNotNone(t["committed_positions"])
+        self.assertEqual(1, len(t["committed_positions"]))
+        self.assertEqual("carrots", t["committed_positions"][0]["name"])
         self.assertEqual(
-            1, len(t["pending_changes"][str(self.test_user_id)]["purchase_items"])
+            1, len(t["pending_positions"])
         )
         self.assertEqual(
             0,
-            t["pending_changes"][str(self.test_user_id)]["purchase_items"][0][
+            t["pending_positions"][0][
                 "communist_shares"
             ],
         )
@@ -712,10 +718,10 @@ class TransactionAPITest(HTTPAPITest):
         await self._commit_transaction(transaction_id=transaction_id)
 
         t = await self._fetch_transaction(transaction_id)
-        self.assertIsNotNone(t["current_state"]["purchase_items"])
-        self.assertEqual(1, len(t["current_state"]["purchase_items"]))
+        self.assertIsNotNone(t["committed_positions"])
+        self.assertEqual(1, len(t["committed_positions"]))
         self.assertIn(
-            str(account2_id), t["current_state"]["purchase_items"][0]["usages"]
+            str(account2_id), t["committed_positions"][0]["usages"]
         )
 
         resp = await self._delete(
@@ -726,6 +732,6 @@ class TransactionAPITest(HTTPAPITest):
         await self._commit_transaction(transaction_id=transaction_id)
 
         t = await self._fetch_transaction(transaction_id)
-        self.assertIsNotNone(t["current_state"]["purchase_items"])
-        self.assertEqual(1, len(t["current_state"]["purchase_items"]))
-        self.assertTrue(t["current_state"]["purchase_items"][0]["deleted"])
+        self.assertIsNotNone(t["committed_positions"])
+        self.assertEqual(1, len(t["committed_positions"]))
+        self.assertTrue(t["committed_positions"][0]["deleted"])

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { IconButton, TextField } from "@mui/material";
-import { Check, Close, Edit } from "@mui/icons-material";
-import { makeStyles } from "@mui/styles";
+import React, {useEffect, useState} from "react";
+import {IconButton} from "@mui/material";
+import {Check, Close, Edit} from "@mui/icons-material";
+import {makeStyles} from "@mui/styles";
 import {DisabledTextField} from "./DisabledTextField";
 
 const useStyles = makeStyles((theme) => ({
@@ -14,7 +14,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-export default function EditableField({ value, onChange, validate, helperText, onStopEdit, ...props }) {
+export default function EditableField({value, onChange, validate, helperText, onStopEdit, ...props}) {
     const [currentValue, setValue] = useState(null);
     const [editing, setEditing] = useState(false);
     const [error, setError] = useState(false);
@@ -73,15 +73,15 @@ export default function EditableField({ value, onChange, validate, helperText, o
             {editing ? (
                 <>
                     <IconButton color="primary" onClick={onSave}>
-                        <Check />
+                        <Check/>
                     </IconButton>
                     <IconButton color="secondary" onClick={stopEditing}>
-                        <Close />
+                        <Close/>
                     </IconButton>
                 </>
             ) : (
                 <IconButton color="primary" onClick={startEditing}>
-                    <Edit />
+                    <Edit/>
                 </IconButton>
             )}
         </div>

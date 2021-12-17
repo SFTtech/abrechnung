@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, date
 from enum import Enum
 from typing import Optional
@@ -11,7 +11,7 @@ class TransactionType(Enum):
 
 
 @dataclass
-class PurchaseItem:
+class TransactionPosition:
     id: int
 
     name: str
@@ -39,12 +39,20 @@ class TransactionDetails:
     creditor_shares: dict[int, float]
     debitor_shares: dict[int, float]
 
-    purchase_items: Optional[list[PurchaseItem]]
-
 
 @dataclass
 class Transaction:
     id: int
     type: str
-    current_state: Optional[TransactionDetails]
-    pending_changes: Optional[dict[int, TransactionDetails]]
+    is_wip: bool
+    committed_details: Optional[TransactionDetails]
+    # pending maps user ID to pending detail state
+    pending_details: Optional[TransactionDetails]
+
+    committed_positions: Optional[list[TransactionPosition]] = field(
+        default=None
+    )
+    # pending maps user ID to list of pending positions
+    pending_positions: Optional[list[TransactionPosition]] = field(
+        default=None
+    )

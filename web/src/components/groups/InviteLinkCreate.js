@@ -4,7 +4,6 @@ import {toast} from "react-toastify";
 import {createGroupInvite} from "../../api";
 import {DateTime} from "luxon";
 import {
-    Box,
     Button,
     Checkbox,
     Dialog,
@@ -47,7 +46,12 @@ export default function InviteLinkCreate({show, onClose, group}) {
             <DialogTitle>Create Invite Link</DialogTitle>
 
             <DialogContent>
-                <Formik initialValues={{description: "", validUntil: nowPlusOneHour(), singleUse: false, joinAsEditor: false}}
+                <Formik initialValues={{
+                    description: "",
+                    validUntil: nowPlusOneHour(),
+                    singleUse: false,
+                    joinAsEditor: false
+                }}
                         onSubmit={handleSubmit}>
                     {({values, setFieldValue, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
                         <Form>
@@ -63,18 +67,18 @@ export default function InviteLinkCreate({show, onClose, group}) {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                             />
-                                <DateTimePicker
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    variant="standard"
-                                    name="validUntil"
-                                    views={["day"]}
-                                    value={values.validUntil}
-                                    onChange={val => setFieldValue("validUntil", val, true)}
-                                    onBlur={handleBlur}
-                                    renderInput={(props) => <TextField variant="standard" fullWidth {...props} />}
-                                />
+                            <DateTimePicker
+                                margin="normal"
+                                required
+                                fullWidth
+                                variant="standard"
+                                name="validUntil"
+                                views={["day"]}
+                                value={values.validUntil}
+                                onChange={val => setFieldValue("validUntil", val, true)}
+                                onBlur={handleBlur}
+                                renderInput={(props) => <TextField variant="standard" fullWidth {...props} />}
+                            />
                             <FormControlLabel
                                 sx={{mt: 2}}
                                 label={"Single Use"}
