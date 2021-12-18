@@ -49,10 +49,6 @@ class Transaction:
     # pending maps user ID to pending detail state
     pending_details: Optional[TransactionDetails]
 
-    committed_positions: Optional[list[TransactionPosition]] = field(
-        default=None
-    )
+    committed_positions: Optional[list[TransactionPosition]] = field(default=None)
     # pending maps user ID to list of pending positions
-    pending_positions: Optional[list[TransactionPosition]] = field(
-        default=None
-    )
+    pending_positions: Optional[list[TransactionPosition]] = field(default=None)

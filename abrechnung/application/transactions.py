@@ -3,6 +3,7 @@ from datetime import date, datetime
 from typing import Optional, Union
 
 import asyncpg
+import filetype
 
 from abrechnung.application import (
     Application,
@@ -91,9 +92,7 @@ class TransactionService(Application):
             },
         )
 
-    def _transaction_db_row(
-        self, transaction: asyncpg.Record
-    ) -> Transaction:
+    def _transaction_db_row(self, transaction: asyncpg.Record) -> Transaction:
         committed_details = (
             self._transaction_detail_from_db_json(
                 json.loads(transaction["committed_details"])[0]
@@ -273,9 +272,24 @@ class TransactionService(Application):
         user_id: int,
         transaction_id: int,
         filename: str,
-        mime_type: str,
-        content: str,  # base64 encoded
-    ):
+        content: bytes,
+    ) -> int:
+        # check mime type of content
+        mime_type = filetype.guess(content)
+        if mime_type is None:
+            raise InvalidCommand(f"Invalid file content")
+
+        allowed_filetypes = [
+            "image/jpeg",
+            "image/png",
+            "image/bmp"
+        ]
+
+        if mime_type.mime not in allowed_filetypes:
+            raise InvalidCommand(f"File type {mime_type.mime} is not an accepted file type")
+
+        # TODO: max size change, potentially resizing
+
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 await self._check_transaction_permissions(
@@ -284,16 +298,27 @@ class TransactionService(Application):
                     transaction_id=transaction_id,
                     can_write=True,
                 )
-                revision_id = await self._get_or_create_pending_change(
+                revision_id = await self._get_or_create_revision(
                     conn=conn, user_id=user_id, transaction_id=transaction_id
                 )
+
+                blob_id = await conn.fetchval(
+                    "insert into blob (content, file_mime) values ($1, $2) returning id", content, mime_type.kind
+                )
+                file_id = await conn.fetchval(
+                    "insert into file (transaction_id) values ($1) returning id", transaction_id
+                )
+                await conn.execute(
+                    "insert into file_history (file_id, revision_id, filename, blob_id) values ($1, $2, $3, $4)",
+                    file_id, revision_id, filename, blob_id
+                )
+                return file_id
 
     async def delete_file(
         self,
         *,
         user_id: int,
-        transaction_id: int,
-        filename: str,
+        filename: str
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -303,7 +328,7 @@ class TransactionService(Application):
                     transaction_id=transaction_id,
                     can_write=True,
                 )
-                revision_id = await self._get_or_create_pending_change(
+                revision_id = await self._get_or_create_revision(
                     conn=conn, user_id=user_id, transaction_id=transaction_id
                 )
 

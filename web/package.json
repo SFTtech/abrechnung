@@ -20,7 +20,8 @@
     "react-toastify": "^8.1.0",
     "recharts": "^2.1.8",
     "recoil": "^0.5.2",
-    "typeface-roboto": "^1.1.13"
+    "typeface-roboto": "^1.1.13",
+    "yup": "^0.32.11"
   },
   "scripts": {
     "start": "react-scripts start",

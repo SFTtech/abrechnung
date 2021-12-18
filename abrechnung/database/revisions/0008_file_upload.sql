@@ -1,6 +1,11 @@
 -- revision: 156aef63
 -- requires: dbcccb58
 
+-- disallow empty strings in certain fields
+alter table account_history add constraint name_not_empty check ( name <> '' );
+alter table transaction_history add constraint description_not_empty check ( description <> '' );
+alter table grp add constraint name_not_empty check ( name <> '' );
+alter table purchase_item_history add constraint name_not_empty check ( name <> '' );
 
 drop view current_transaction_state;
 drop view committed_transaction_state;
@@ -446,14 +451,22 @@ $$ language sql
     security invoker
     stable;
 
+create table if not exists blob (
+    id        serial primary key,
+    content   bytea not null,
+    file_mime text not null
+);
+
 create table if not exists file (
-    transaction_id integer references transaction (id) on delete cascade,
-    revision_id    bigint references transaction_revision (id) on delete cascade,
-    -- gen_random_uuid() plus suitable file extension
-    filename       text primary key,
-    content        bytea,
-    -- hash of file content
-    sha256         text not null,
-    file_mime      text not null,
+    id             serial primary key,
+    transaction_id integer not null references transaction (id) on delete cascade
+);
+
+create table if not exists file_history (
+    id             integer references file(id) on delete cascade,
+    revision_id    bigint not null references transaction_revision (id) on delete cascade,
+    primary key (id, revision_id),
+    filename       text not null constraint filename_not_empty check (filename <> ''),
+    blob_id        integer references blob(id) on delete cascade,
     deleted        bool default false
 );

@@ -98,14 +98,19 @@ class GroupLogSerializer(Serializer):
 class TransactionSerializer(Serializer):
     @staticmethod
     def _serialize_positions(positions: list[TransactionPosition]):
-        return [{
-            "id": position.id,
-            "price": position.price,
-            "communist_shares": position.communist_shares,
-            "deleted": position.deleted,
-            "name": position.name,
-            "usages": {str(account_id): val for account_id, val in position.usages.items()},
-        } for position in positions]
+        return [
+            {
+                "id": position.id,
+                "price": position.price,
+                "communist_shares": position.communist_shares,
+                "deleted": position.deleted,
+                "name": position.name,
+                "usages": {
+                    str(account_id): val for account_id, val in position.usages.items()
+                },
+            }
+            for position in positions
+        ]
 
     @staticmethod
     def _serialize_change(change: TransactionDetails):
@@ -139,9 +144,13 @@ class TransactionSerializer(Serializer):
             if instance.committed_details
             else None,
             "pending_positions": self._serialize_positions(instance.pending_positions)
-            if instance.pending_positions else [],
-            "committed_positions": self._serialize_positions(instance.committed_positions)
-            if instance.committed_positions else [],
+            if instance.pending_positions
+            else [],
+            "committed_positions": self._serialize_positions(
+                instance.committed_positions
+            )
+            if instance.committed_positions
+            else [],
         }
 
         return data

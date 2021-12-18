@@ -1,18 +1,18 @@
 import React from "react";
 import {Link as RouterLink} from "react-router-dom";
-import { ListItem } from "@mui/material";
+import {ListItemButton, ListItemText} from "@mui/material";
 
-export default function ListItemLink(props) {
-    const {to, children} = props;
-
+export default function ListItemLink({to, children, selected = false, ...props}) {
     const renderLink = React.useMemo(
-        () => React.forwardRef((itemProps, ref) => <RouterLink to={to} ref={ref} {...itemProps} />),
+        () =>
+            React.forwardRef(function Link(itemProps, ref) {
+                return <RouterLink to={to} ref={ref} {...itemProps} role={undefined}/>;
+            }),
         [to],
     );
-
     return (
-        <ListItem button component={renderLink}>
+        <ListItemButton component={renderLink} selected={selected} props={props}>
             {children}
-        </ListItem>
+        </ListItemButton>
     );
 }

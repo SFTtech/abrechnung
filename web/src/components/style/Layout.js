@@ -3,6 +3,7 @@ import {Link as RouterLink} from "react-router-dom";
 import {useRecoilValue} from "recoil";
 import {isAuthenticated} from "../../recoil/auth";
 import ListItemLink from "./ListItemLink";
+import SidebarGroupList from "./SidebarGroupList";
 import {
     AppBar,
     Box,
@@ -12,14 +13,22 @@ import {
     Divider,
     Drawer,
     IconButton,
-    List,
+    List, ListItemIcon,
     ListItemText,
     Menu,
     MenuItem,
     Toolbar,
     Typography
 } from "@mui/material";
-import {AccountCircle as AccountCircleIcon, Menu as MenuIcon} from "@mui/icons-material";
+import {
+    AccountBalance,
+    AccountCircle as AccountCircleIcon, AdminPanelSettings,
+    Mail,
+    Menu as MenuIcon,
+    Message,
+    Paid,
+    People
+} from "@mui/icons-material";
 
 const drawerWidth = 240;
 
@@ -52,26 +61,34 @@ export default function Layout({group = null, children, ...props}) {
                 {group != null && (
                     <>
                         <ListItemLink to={`/groups/${group.id}/`}>
+                            <ListItemIcon><Paid/></ListItemIcon>
                             <ListItemText primary="Transactions"/>
                         </ListItemLink>
                         <ListItemLink to={`/groups/${group.id}/accounts`}>
+                            <ListItemIcon><AccountBalance/></ListItemIcon>
                             <ListItemText primary="Accounts"/>
                         </ListItemLink>
                         <ListItemLink to={`/groups/${group.id}/detail`}>
-                            <ListItemText primary="Group detail"/>
+                            <ListItemIcon><AdminPanelSettings/></ListItemIcon>
+                            <ListItemText primary="Group Settings"/>
                         </ListItemLink>
                         <ListItemLink to={`/groups/${group.id}/members`}>
+                            <ListItemIcon><People/></ListItemIcon>
                             <ListItemText primary="Group Members"/>
                         </ListItemLink>
                         <ListItemLink to={`/groups/${group.id}/invites`}>
+                            <ListItemIcon><Mail/></ListItemIcon>
                             <ListItemText primary="Group Invites"/>
                         </ListItemLink>
                         <ListItemLink to={`/groups/${group.id}/log`}>
+                            <ListItemIcon><Message/></ListItemIcon>
                             <ListItemText primary="Group Log"/>
                         </ListItemLink>
                         <Divider/>
                     </>
                 )}
+                <SidebarGroupList group={group}/>
+
                 <ListItemLink to="/">
                     <ListItemText primary="Groups"/>
                 </ListItemLink>

@@ -7,7 +7,10 @@ import {deleteAccount} from "../../api";
 import {toast} from "react-toastify";
 import {
     Button,
-    Dialog, DialogActions, DialogContent, DialogTitle,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
     Grid,
     IconButton,
     List,
@@ -16,8 +19,8 @@ import {
     ListItemText,
     Paper
 } from "@mui/material";
-import { Add, Delete, Edit } from "@mui/icons-material";
-import { makeStyles } from "@mui/styles";
+import {Add, Delete, Edit} from "@mui/icons-material";
+import {makeStyles} from "@mui/styles";
 import ListItemLink from "../../components/style/ListItemLink";
 
 const useStyles = makeStyles((theme) => ({
@@ -66,12 +69,14 @@ export default function Accounts({group}) {
                     </ListItem>
                 ) : (
                     accounts.map(account => (
-                        <ListItemLink
-                            key={account.id}
-                            to={`/groups/${group.id}/accounts/${account.id}`}
-                        >
-                            <ListItemText primary={account.name}
-                                          secondary={account.description}/>
+                        <ListItem sx={{padding: 0}}>
+                            <ListItemLink
+                                key={account.id}
+                                to={`/groups/${group.id}/accounts/${account.id}`}
+                            >
+                                <ListItemText primary={account.name}
+                                              secondary={account.description}/>
+                            </ListItemLink>
                             {userPermissions.can_write && (
                                 <ListItemSecondaryAction>
                                     <IconButton color="primary" onClick={() => openAccountEdit(account)}>
@@ -82,7 +87,7 @@ export default function Accounts({group}) {
                                     </IconButton>
                                 </ListItemSecondaryAction>
                             )}
-                        </ListItemLink>
+                        </ListItem>
                     ))
                 )}
             </List>

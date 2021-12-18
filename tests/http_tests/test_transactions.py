@@ -297,9 +297,7 @@ class TransactionAPITest(HTTPAPITest):
             "some description",
             t["pending_details"]["description"],
         )
-        self.assertEqual(
-            "$", t["pending_details"]["currency_symbol"]
-        )
+        self.assertEqual("$", t["pending_details"]["currency_symbol"])
         self.assertEqual(
             2.0,
             t["pending_details"]["currency_conversion_rate"],
@@ -322,9 +320,7 @@ class TransactionAPITest(HTTPAPITest):
             "foobar",
             t["pending_details"]["description"],
         )
-        self.assertEqual(
-            "€", t["pending_details"]["currency_symbol"]
-        )
+        self.assertEqual("€", t["pending_details"]["currency_symbol"])
         self.assertEqual(
             1.0,
             t["pending_details"]["currency_conversion_rate"],
@@ -347,9 +343,7 @@ class TransactionAPITest(HTTPAPITest):
             "foofoo",
             t["pending_details"]["description"],
         )
-        self.assertEqual(
-            "$", t["pending_details"]["currency_symbol"]
-        )
+        self.assertEqual("$", t["pending_details"]["currency_symbol"])
         self.assertEqual(
             2.0,
             t["pending_details"]["currency_conversion_rate"],
@@ -469,9 +463,7 @@ class TransactionAPITest(HTTPAPITest):
         )
         self.assertEqual(
             2.0,
-            t["pending_details"]["creditor_shares"][
-                str(account1_id)
-            ],
+            t["pending_details"]["creditor_shares"][str(account1_id)],
         )
 
         # delete one share
@@ -493,9 +485,7 @@ class TransactionAPITest(HTTPAPITest):
 
         t = await self._fetch_transaction(transaction_id)
         self.assertEqual(
-            t["pending_details"]["creditor_shares"][
-                str(account2_id)
-            ],
+            t["pending_details"]["creditor_shares"][str(account2_id)],
             2.0,
         )
 
@@ -533,15 +523,11 @@ class TransactionAPITest(HTTPAPITest):
             t["pending_details"]["debitor_shares"],
         )
         self.assertEqual(
-            t["pending_details"]["debitor_shares"][
-                str(account1_id)
-            ],
+            t["pending_details"]["debitor_shares"][str(account1_id)],
             2.0,
         )
         self.assertEqual(
-            t["pending_details"]["debitor_shares"][
-                str(account2_id)
-            ],
+            t["pending_details"]["debitor_shares"][str(account2_id)],
             1.0,
         )
 
@@ -584,9 +570,7 @@ class TransactionAPITest(HTTPAPITest):
             t["pending_details"]["debitor_shares"],
         )
         self.assertEqual(
-            t["pending_details"]["debitor_shares"][
-                str(account_id)
-            ],
+            t["pending_details"]["debitor_shares"][str(account_id)],
             2.0,
         )
 
@@ -699,14 +683,10 @@ class TransactionAPITest(HTTPAPITest):
         self.assertIsNotNone(t["committed_positions"])
         self.assertEqual(1, len(t["committed_positions"]))
         self.assertEqual("carrots", t["committed_positions"][0]["name"])
-        self.assertEqual(
-            1, len(t["pending_positions"])
-        )
+        self.assertEqual(1, len(t["pending_positions"]))
         self.assertEqual(
             0,
-            t["pending_positions"][0][
-                "communist_shares"
-            ],
+            t["pending_positions"][0]["communist_shares"],
         )
 
         resp = await self._post(
@@ -720,9 +700,7 @@ class TransactionAPITest(HTTPAPITest):
         t = await self._fetch_transaction(transaction_id)
         self.assertIsNotNone(t["committed_positions"])
         self.assertEqual(1, len(t["committed_positions"]))
-        self.assertIn(
-            str(account2_id), t["committed_positions"][0]["usages"]
-        )
+        self.assertIn(str(account2_id), t["committed_positions"][0]["usages"])
 
         resp = await self._delete(
             f"/api/v1/purchase_items/{item_id}",

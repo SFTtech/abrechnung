@@ -178,16 +178,12 @@ class AccountService(Application):
                     conn=conn, group_id=group_id, user_id=user_id, can_write=True
                 )
                 row = await conn.fetchrow(
-                    "select id "
-                    "from account "
-                    "where id = $1 and group_id = $2",
+                    "select id " "from account " "where id = $1 and group_id = $2",
                     account_id,
                     group_id,
                 )
                 if row is None:
-                    raise InvalidCommand(
-                        f"Account does not exist"
-                    )
+                    raise InvalidCommand(f"Account does not exist")
 
                 has_committed_shares = await conn.fetchval(
                     "select 1 "

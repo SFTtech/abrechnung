@@ -14,8 +14,8 @@ import {
     Paper,
     Typography
 } from "@mui/material";
-import { Add, Delete } from "@mui/icons-material";
-import { makeStyles } from "@mui/styles";
+import {Add, Delete} from "@mui/icons-material";
+import {makeStyles} from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -53,15 +53,17 @@ export default function GroupList() {
                 ) : (
                     groups.map(group => {
                         return (
-                            <ListItemLink key={group.id} to={`/groups/${group.id}`}>
-                                <ListItemText primary={group.name} secondary={group.description}/>
+                            <ListItem sx={{padding: 0}}>
+                                <ListItemLink key={group.id} to={`/groups/${group.id}`}>
+                                    <ListItemText primary={group.name} secondary={group.description}/>
+                                </ListItemLink>
                                 <ListItemSecondaryAction>
                                     <IconButton edge="end" aria-label="delete-group"
                                                 onClick={() => openGroupDeletionModal(group.id)}>
                                         <Delete/>
                                     </IconButton>
                                 </ListItemSecondaryAction>
-                            </ListItemLink>
+                            </ListItem>
                         );
                     })
                 )}

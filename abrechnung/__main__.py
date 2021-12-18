@@ -57,8 +57,8 @@ def main():
     log_setup(args["verbose"] - args["quiet"])
 
     # enable asyncio debugging
-    loop = asyncio.get_event_loop()
-    loop.set_debug(args["debug"])
+    # loop = asyncio.get_event_loop()
+    # loop.set_debug(args["debug"])
 
     config_path = args.pop("config_path")
     config = Config.from_file(Path(config_path))
@@ -69,7 +69,7 @@ def main():
         cli.error("no subcommand was given")
     subcommand_class.argparse_validate(args, cli.error)
     subcommand_object = subcommand_class(config=config, **args)
-    loop.run_until_complete(subcommand_object.run())
+    asyncio.run(subcommand_object.run())
 
 
 if __name__ == "__main__":

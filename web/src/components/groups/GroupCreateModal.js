@@ -3,9 +3,14 @@ import { toast } from "react-toastify";
 import { Form, Formik } from "formik";
 import { createGroup } from "../../api";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
+import * as yup from "yup";
+
+const validationSchema = yup.object({
+    name: yup.string("Enter an account name").required("Name is required"),
+    description: yup.string("Enter an account description"),
+})
 
 export default function GroupCreateModal({ show, onClose }) {
-
     const handleSubmit = (values, { setSubmitting }) => {
         createGroup({ name: values.name, description: values.description })
             .then(result => {
@@ -22,8 +27,8 @@ export default function GroupCreateModal({ show, onClose }) {
         <Dialog open={show} onClose={onClose}>
             <DialogTitle>Create Group</DialogTitle>
             <DialogContent>
-                <Formik initialValues={{ name: "", description: "" }} onSubmit={handleSubmit}>
-                    {({ values, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
+                <Formik initialValues={{ name: "", description: "" }} onSubmit={handleSubmit} validationSchema={validationSchema}>
+                    {({ values, touched, errors, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
                         <Form>
                             <TextField
                                 margin="normal"
@@ -37,6 +42,8 @@ export default function GroupCreateModal({ show, onClose }) {
                                 value={values.name}
                                 onBlur={handleBlur}
                                 onChange={handleChange}
+                                error={touched.name && Boolean(errors.name)}
+                                helperText={touched.name && errors.name}
                             />
                             <TextField
                                 margin="normal"
@@ -49,6 +56,8 @@ export default function GroupCreateModal({ show, onClose }) {
                                 value={values.description}
                                 onBlur={handleBlur}
                                 onChange={handleChange}
+                                error={touched.description && Boolean(errors.description)}
+                                helperText={touched.description && errors.description}
                             />
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
