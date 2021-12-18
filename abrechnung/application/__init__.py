@@ -3,6 +3,8 @@ from typing import Optional
 import asyncpg
 from asyncpg.pool import Pool
 
+from abrechnung.config import Config
+
 
 class NotFoundError(Exception):
     pass
@@ -13,8 +15,9 @@ class InvalidCommand(Exception):
 
 
 class Application:
-    def __init__(self, db_pool: Pool):
+    def __init__(self, db_pool: Pool, config: Config):
         self.db_pool = db_pool
+        self.cfg = config
 
 
 async def check_group_permissions(

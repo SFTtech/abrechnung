@@ -279,16 +279,17 @@ class TransactionService(Application):
         if mime_type is None:
             raise InvalidCommand(f"Invalid file content")
 
-        allowed_filetypes = [
-            "image/jpeg",
-            "image/png",
-            "image/bmp"
-        ]
+        allowed_filetypes = ["image/jpeg", "image/png", "image/bmp"]
 
         if mime_type.mime not in allowed_filetypes:
-            raise InvalidCommand(f"File type {mime_type.mime} is not an accepted file type")
+            raise InvalidCommand(
+                f"File type {mime_type.mime} is not an accepted file type"
+            )
 
-        # TODO: max size change, potentially resizing
+        # TODO: image resizing?
+        max_file_size = self.cfg["api"]["max_uploadable_file_size"]
+        if len(content) / 1024 > max_file_size:
+            raise InvalidCommand(f"File is too large, maximum is {max_file_size}KB")
 
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -303,34 +304,83 @@ class TransactionService(Application):
                 )
 
                 blob_id = await conn.fetchval(
-                    "insert into blob (content, file_mime) values ($1, $2) returning id", content, mime_type.kind
+                    "insert into blob (content, file_mime) values ($1, $2) returning id",
+                    content,
+                    mime_type.kind,
                 )
                 file_id = await conn.fetchval(
-                    "insert into file (transaction_id) values ($1) returning id", transaction_id
+                    "insert into file (transaction_id) values ($1) returning id",
+                    transaction_id,
                 )
                 await conn.execute(
                     "insert into file_history (file_id, revision_id, filename, blob_id) values ($1, $2, $3, $4)",
-                    file_id, revision_id, filename, blob_id
+                    file_id,
+                    revision_id,
+                    filename,
+                    blob_id,
                 )
                 return file_id
 
-    async def delete_file(
-        self,
-        *,
-        user_id: int,
-        filename: str
-    ):
+    async def delete_file(self, *, user_id: int, file_id: int):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                await self._check_transaction_permissions(
-                    conn=conn,
-                    user_id=user_id,
-                    transaction_id=transaction_id,
-                    can_write=True,
+                perms = await conn.fetchrow(
+                    "select t.id as transaction_id "
+                    "from group_membership gm "
+                    "   join transaction t on gm.group_id = t.group_id and gm.user_id = $1 "
+                    "   join file f on t.id = f.transaction_id "
+                    "where t.id = $2 and gm.can_write",
+                    user_id,
+                    file_id,
                 )
+                if not perms:
+                    raise InvalidCommand("File not found")
+
+                committed_state = await conn.fetchrow(
+                    "select filename, deleted from committed_file_state_valid_at() where file_id = $1",
+                    file_id,
+                )
+                if committed_state is None or committed_state["deleted"]:
+                    raise InvalidCommand("Cannot delete file as it is already deleted")
+
+                transaction_id = perms["transaction_id"]
                 revision_id = await self._get_or_create_revision(
                     conn=conn, user_id=user_id, transaction_id=transaction_id
                 )
+
+                await conn.execute(
+                    "insert into file_history(id, revision_id, filename, blob_id, deleted) "
+                    "values ($1, $2, $3, null, true)",
+                    file_id,
+                    revision_id,
+                    committed_state["filename"],
+                )
+
+    async def read_file_contents(
+        self, user_id: int, file_id: int, blob_id: int
+    ) -> tuple[str, bytes]:
+        async with self.db_pool.acquire() as conn:
+            perms = await conn.fetchrow(
+                "select f.id "
+                "from group_membership gm "
+                "   join transaction t on gm.group_id = t.group_id and gm.user_id = $1 "
+                "   join file f on t.id = f.transaction_id and f.id = $2"
+                "   join file_history fh on f.id = fh.id "
+                "where fh.blob_id = $3",
+                user_id,
+                file_id,
+                blob_id,
+            )
+            if not perms:
+                raise InvalidCommand("File not found")
+
+            blob = await conn.fetchrow(
+                "select content, mime_type from blob where id = $1", blob_id
+            )
+            if not blob:
+                raise InvalidCommand("File not found")
+
+            return blob["mime_type"], blob["content"]
 
     async def update_transaction(
         self,
