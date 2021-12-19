@@ -159,8 +159,8 @@ class TransactionService(Application):
                         "where group_id = $2 "
                         "   and (is_wip or last_changed is not null and last_changed >= $3"
                         "       or (($4::int[]) is not null and transaction_id = any($4::int[])))",
-                        group_id,
                         user_id,
+                        group_id,
                         min_last_changed,
                         additional_transactions,
                     )
@@ -169,7 +169,8 @@ class TransactionService(Application):
                         "select transaction_id, type, last_changed, is_wip, committed_details, pending_details, "
                         "   committed_positions, pending_positions "
                         "from full_transaction_state_valid_at($1) "
-                        "where group_id = $1",
+                        "where group_id = $2",
+                        user_id,
                         group_id,
                     )
 

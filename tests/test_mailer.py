@@ -63,7 +63,9 @@ class MailerTest(AsyncTestCase):
 
         self.mailer_task = asyncio.create_task(self.mailer.run())
 
-        self.user_service = UserService(db_pool=self.db_pool, config=self.mailer_config, enable_registration=True)
+        self.user_service = UserService(
+            db_pool=self.db_pool, config=self.mailer_config, enable_registration=True
+        )
 
     async def tearDownAsync(self) -> None:
         await super().tearDownAsync()

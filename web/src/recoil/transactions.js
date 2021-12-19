@@ -1,7 +1,7 @@
 // transaction handling
 import {atomFamily, selectorFamily} from "recoil";
 import {groupAccounts} from "./groups";
-import {fetchTransactions, getUserIDFromToken} from "../api";
+import {fetchTransactions} from "../api";
 import {ws} from "../websocket";
 import {DateTime} from "luxon";
 import {toast} from "react-toastify";
@@ -30,8 +30,8 @@ export const groupTransactions = atomFamily({
 
             const partialFetchPromise = (currTransactions) => {
                 let maxChangedTime = currTransactions.reduce((acc, curr) => {
-                    if (curr.current_state != null && curr.current_state.committed_at != null) {
-                        return Math.max(DateTime.fromISO(curr.current_state.committed_at).toSeconds(), acc);
+                    if (curr.committed_details != null && curr.committed_details.committed_at != null) {
+                        return Math.max(DateTime.fromISO(curr.committed_details.committed_at).toSeconds(), acc);
                     }
                     return acc;
                 }, 0);
@@ -40,8 +40,7 @@ export const groupTransactions = atomFamily({
                 }
 
                 const wipTransactions = currTransactions.reduce((acc, curr) => {
-                    const userID = getUserIDFromToken();
-                    if (curr.pending_changes?.hasOwnProperty(userID)) {
+                    if (curr.is_wip) {
                         return [...acc, curr.id];
                     }
                     return acc;
@@ -60,7 +59,6 @@ export const groupTransactions = atomFamily({
                         for (const newTransaction of result) {
                             mappedTransactions[newTransaction.id] = newTransaction;
                         }
-                        console.log("partial fetch return", Object.values(mappedTransactions));
                         localStorage.setItem(localStorageKey, JSON.stringify(Object.values(mappedTransactions)));
                         return Object.values(mappedTransactions);
                     })
@@ -135,13 +133,13 @@ export const transactionsSeenByUser = selectorFamily({
                     for (const pendingPosition of transaction.pending_positions) {
                         mappedPosition[pendingPosition.id] = pendingPosition;
                     }
-                    mapped.purchase_items = Object.values(mappedPosition).filter(position => !position.deleted);;
+                    mapped.purchase_items = Object.values(mappedPosition).filter(position => !position.deleted);
+                    ;
                 }
 
                 return mapped;
             })
             .map(transaction => {
-                console.log(transaction);
                 let transactionAccountBalances = {};
                 let remainingTransactionValue = transaction.value;
                 if (transaction.purchase_items != null && transaction.purchase_items.length > 0) {
