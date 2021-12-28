@@ -1,8 +1,0 @@
-black
-mypy~=0.910
-types-PyYAML~=5.4
-pylint~=2.10
-build~=0.6
-aiosmtpd~=1.4
-pytest
-pytest-cov

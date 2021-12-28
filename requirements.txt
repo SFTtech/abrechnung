@@ -1,9 +1,0 @@
-aiohttp~=3.8
-aiohttp-cors~=0.7
-asyncpg~=0.24
-bcrypt~=3.2
-python-jose~=3.3
-PyYAML~=5.4
-schema~=0.7
-email-validator~=1.1.3
-filetype

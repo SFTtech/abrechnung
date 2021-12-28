@@ -44,12 +44,11 @@ export default function PurchaseDetails({ group, transaction }) {
                 </Grid>
             </Paper>
 
-
             {!showPositions && transaction.is_wip && transaction.purchase_items.find(item => !item.deleted) === undefined ? (
                 <Grid container justifyContent="center" sx={{ marginTop: 2 }}>
                     <Button startIcon={<Add />} onClick={() => setShowPositions(true)}>Add Positions</Button>
                 </Grid>
-            ) : (showPositions && transaction.is_wip || transaction.purchase_items.find(item => !item.deleted) !== undefined) ? (
+            ) : ((showPositions && transaction.is_wip) || transaction.purchase_items.find(item => !item.deleted) !== undefined) ? (
                 <PurchaseItems group={group} transaction={transaction} />
             ) : (<></>)}
         </>

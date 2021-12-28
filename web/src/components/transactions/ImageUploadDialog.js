@@ -93,7 +93,7 @@ export default function ImageUploadDialog({ transaction, show, onClose }) {
                     {fileState.previewImage ? (
                         <img width="100%" src={fileState.previewImage} alt="" />
                     ) : (
-                        <img width="100%" src={placeholderImg} alt="placeholder image" />
+                        <img width="100%" src={placeholderImg} alt="placeholder" />
                     )}
                 </Box>
 
