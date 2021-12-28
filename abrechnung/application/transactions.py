@@ -3,7 +3,6 @@ from datetime import date, datetime
 from typing import Optional, Union
 
 import asyncpg
-import filetype
 
 from abrechnung.application import (
     Application,
@@ -16,6 +15,7 @@ from abrechnung.domain.transactions import (
     Transaction,
     TransactionDetails,
     TransactionPosition,
+    FileAttachment,
 )
 from abrechnung.util import parse_postgres_datetime
 
@@ -92,6 +92,16 @@ class TransactionService(Application):
             },
         )
 
+    @staticmethod
+    def _file_attachment_from_db_row_json(db_json: dict) -> FileAttachment:
+        return FileAttachment(
+            id=db_json["file_id"],
+            filename=db_json["filename"],
+            blob_id=db_json["blob_id"],
+            deleted=db_json["deleted"],
+            mime_type=db_json["mime_type"],
+        )
+
     def _transaction_db_row(self, transaction: asyncpg.Record) -> Transaction:
         committed_details = (
             self._transaction_detail_from_db_json(
@@ -125,6 +135,23 @@ class TransactionService(Application):
             else None
         )
 
+        committed_files = (
+            [
+                self._file_attachment_from_db_row_json(file)
+                for file in json.loads(transaction["committed_files"])
+            ]
+            if transaction["committed_files"]
+            else None
+        )
+        pending_files = (
+            [
+                self._file_attachment_from_db_row_json(file)
+                for file in json.loads(transaction["pending_files"])
+            ]
+            if transaction["pending_files"]
+            else None
+        )
+
         return Transaction(
             id=transaction["transaction_id"],
             type=transaction["type"],
@@ -133,6 +160,8 @@ class TransactionService(Application):
             pending_details=pending_details,
             committed_positions=committed_positions,
             pending_positions=pending_positions,
+            committed_files=committed_files,
+            pending_files=pending_files,
         )
 
     async def list_transactions(
@@ -154,7 +183,7 @@ class TransactionService(Application):
                     # user has pending changes with to properly sync state across different devices of the user
                     cur = conn.cursor(
                         "select transaction_id, type, last_changed, is_wip, committed_details, pending_details, "
-                        "   committed_positions, pending_positions "
+                        "   committed_positions, pending_positions, committed_files, pending_files "
                         "from full_transaction_state_valid_at($1) "
                         "where group_id = $2 "
                         "   and (is_wip or last_changed is not null and last_changed >= $3"
@@ -167,7 +196,7 @@ class TransactionService(Application):
                 else:
                     cur = conn.cursor(
                         "select transaction_id, type, last_changed, is_wip, committed_details, pending_details, "
-                        "   committed_positions, pending_positions "
+                        "   committed_positions, pending_positions, committed_files, pending_files "
                         "from full_transaction_state_valid_at($1) "
                         "where group_id = $2",
                         user_id,
@@ -189,7 +218,7 @@ class TransactionService(Application):
             )
             committed_transaction = await conn.fetchrow(
                 "select transaction_id, type, last_changed, is_wip, committed_details, pending_details, "
-                "   committed_positions, pending_positions "
+                "   committed_positions, pending_positions, committed_files, pending_files "
                 "from full_transaction_state_valid_at($1) "
                 "where group_id = $1 and transaction_id = $2",
                 group_id,
@@ -245,7 +274,8 @@ class TransactionService(Application):
                     conn=conn, user_id=user_id, transaction_id=transaction_id
                 )
                 revision_id = await conn.fetchval(
-                    "select id from transaction_revision where transaction_id = $1 and user_id = $2 and committed is null",
+                    "select id from transaction_revision "
+                    "where transaction_id = $1 and user_id = $2 and committed is null",
                     transaction_id,
                     user_id,
                 )
@@ -273,24 +303,22 @@ class TransactionService(Application):
         user_id: int,
         transaction_id: int,
         filename: str,
+        mime_type: str,
         content: bytes,
     ) -> int:
         # check mime type of content
-        mime_type = filetype.guess(content)
-        if mime_type is None:
-            raise InvalidCommand(f"Invalid file content")
+        allowed_filetypes = ["image/jpeg", "image/png", "image/bmp", "image/webp"]
 
-        allowed_filetypes = ["image/jpeg", "image/png", "image/bmp"]
-
-        if mime_type.mime not in allowed_filetypes:
-            raise InvalidCommand(
-                f"File type {mime_type.mime} is not an accepted file type"
-            )
+        if mime_type not in allowed_filetypes:
+            raise InvalidCommand(f"File type {mime_type} is not an accepted file type")
 
         # TODO: image resizing?
         max_file_size = self.cfg["api"]["max_uploadable_file_size"]
         if len(content) / 1024 > max_file_size:
             raise InvalidCommand(f"File is too large, maximum is {max_file_size}KB")
+
+        if "." in filename:
+            raise InvalidCommand(f"Dots '.' are not allowed in file names")
 
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -305,16 +333,16 @@ class TransactionService(Application):
                 )
 
                 blob_id = await conn.fetchval(
-                    "insert into blob (content, file_mime) values ($1, $2) returning id",
+                    "insert into blob (content, mime_type) values ($1, $2) returning id",
                     content,
-                    mime_type.kind,
+                    mime_type,
                 )
                 file_id = await conn.fetchval(
                     "insert into file (transaction_id) values ($1) returning id",
                     transaction_id,
                 )
                 await conn.execute(
-                    "insert into file_history (file_id, revision_id, filename, blob_id) values ($1, $2, $3, $4)",
+                    "insert into file_history (id, revision_id, filename, blob_id) values ($1, $2, $3, $4)",
                     file_id,
                     revision_id,
                     filename,
@@ -330,7 +358,7 @@ class TransactionService(Application):
                     "from group_membership gm "
                     "   join transaction t on gm.group_id = t.group_id and gm.user_id = $1 "
                     "   join file f on t.id = f.transaction_id "
-                    "where t.id = $2 and gm.can_write",
+                    "where f.id = $2 and gm.can_write",
                     user_id,
                     file_id,
                 )
@@ -341,8 +369,26 @@ class TransactionService(Application):
                     "select filename, deleted from committed_file_state_valid_at() where file_id = $1",
                     file_id,
                 )
-                if committed_state is None or committed_state["deleted"]:
+                if committed_state is not None and committed_state["deleted"]:
                     raise InvalidCommand("Cannot delete file as it is already deleted")
+
+                if committed_state is None:
+                    # file is only attached to a pending change, fully delete it right away, blob will be cleaned up
+                    pending_state = await conn.fetchrow(
+                        "select revision_id from aggregated_pending_file_history "
+                        "where file_id = $1 and changed_by = $2",
+                        file_id,
+                        user_id,
+                    )
+                    if pending_state is None:
+                        raise InvalidCommand("Unknown error occurred")
+
+                    await conn.execute(
+                        "update file_history fh set deleted = true, blob_id = null where id = $1 and revision_id = $2",
+                        file_id,
+                        pending_state["revision_id"],
+                    )
+                    return
 
                 transaction_id = perms["transaction_id"]
                 revision_id = await self._get_or_create_revision(

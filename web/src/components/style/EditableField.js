@@ -15,7 +15,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function EditableField({value, onChange, validate, helperText, onStopEdit, ...props}) {
-    const [currentValue, setValue] = useState(null);
+    const [currentValue, setValue] = useState("");
     const [editing, setEditing] = useState(false);
     const [error, setError] = useState(false);
     const classes = useStyles();
@@ -27,7 +27,7 @@ export default function EditableField({value, onChange, validate, helperText, on
     const onSave = () => {
         if (!error) {
             onChange(currentValue);
-            setValue(null);
+            setValue("");
             setEditing(false);
         }
     };

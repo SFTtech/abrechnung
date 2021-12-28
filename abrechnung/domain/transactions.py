@@ -41,14 +41,24 @@ class TransactionDetails:
 
 
 @dataclass
+class FileAttachment:
+    id: int
+    filename: str
+    blob_id: Optional[int]
+    mime_type: Optional[str]
+    deleted: bool
+
+
+@dataclass
 class Transaction:
     id: int
     type: str
     is_wip: bool
     committed_details: Optional[TransactionDetails]
-    # pending maps user ID to pending detail state
     pending_details: Optional[TransactionDetails]
 
     committed_positions: Optional[list[TransactionPosition]] = field(default=None)
-    # pending maps user ID to list of pending positions
     pending_positions: Optional[list[TransactionPosition]] = field(default=None)
+
+    committed_files: Optional[list[FileAttachment]] = field(default=None)
+    pending_files: Optional[list[FileAttachment]] = field(default=None)

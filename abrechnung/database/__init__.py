@@ -42,8 +42,21 @@ class CLI(subcommand.SubCommand):
     @staticmethod
     def argparse_register(subparser):
         subparser.add_argument(
-            "action", choices=["migrate", "attach", "rebuild"], nargs="?"
+            "action", choices=["migrate", "attach", "rebuild", "clean"], nargs="?"
         )
+
+    async def _clean(self, db_pool: Pool):
+        """Do some garbage collection in the database"""
+        async with db_pool.acquire() as conn:
+            async with conn.transaction():
+                # delete all dangling file contents
+                # TODO: make this more future proof by using some kind of introspection to find all non-referenced
+                # entries in the table and delete them
+                await conn.execute(
+                    "delete from blob where id not in ("
+                    "   select fh.blob_id from file_history fh where fh.blob_id is not null"
+                    ")"
+                )
 
     async def _attach(self):
         with contextlib.ExitStack() as exitstack:
@@ -97,22 +110,19 @@ class CLI(subcommand.SubCommand):
         """
         CLI entry point
         """
+        if self.action == "attach":
+            return await self._attach()
+
+        db_pool = await db_connect(
+            username=self.config["database"]["user"],
+            database=self.config["database"]["dbname"],
+            host=self.config["database"]["host"],
+            password=self.config["database"]["password"],
+        )
         if self.action == "migrate":
-            db_pool = await db_connect(
-                username=self.config["database"]["user"],
-                database=self.config["database"]["dbname"],
-                host=self.config["database"]["host"],
-                password=self.config["database"]["password"],
-            )
             await revisions.apply_revisions(db_pool=db_pool)
         elif self.action == "rebuild":
-            db_pool = await db_connect(
-                username=self.config["database"]["user"],
-                database=self.config["database"]["dbname"],
-                host=self.config["database"]["host"],
-                password=self.config["database"]["password"],
-            )
             await revisions.reset_schema(db_pool=db_pool)
             await revisions.apply_revisions(db_pool=db_pool)
-        elif self.action == "attach":
-            await self._attach()
+        elif self.action == "clean":
+            await self._clean(db_pool=db_pool)

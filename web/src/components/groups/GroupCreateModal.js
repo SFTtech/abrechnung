@@ -61,7 +61,7 @@ export default function GroupCreateModal({ show, onClose }) {
                             />
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button color="secondary" onClick={onClose}>
+                                <Button color="error" onClick={onClose}>
                                     Cancel
                                 </Button>
                                 <Button

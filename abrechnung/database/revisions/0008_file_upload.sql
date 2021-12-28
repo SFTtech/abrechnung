@@ -1,6 +1,36 @@
 -- revision: 156aef63
 -- requires: dbcccb58
 
+create or replace function transaction_revision_updated() returns trigger as
+$$
+<<locals>> declare
+    group_id       grp.id%TYPE;
+    transaction_id integer;
+begin
+    select
+        t.group_id,
+        t.id
+    into locals.group_id, locals.transaction_id
+    from
+        transaction t
+    where t.id = (case when NEW is null then OLD.transaction_id else NEW.transaction_id end);
+
+    -- A deletion should only be able to occur for uncommitted revisions
+    if NEW is null then
+        call notify_user('transaction', OLD.user_id, locals.group_id::bigint,
+                         json_build_object('element_id', locals.group_id, 'transaction_id', locals.transaction_id));
+    elseif NEW.committed is null then
+        call notify_user('transaction', NEW.user_id, locals.group_id::bigint,
+                         json_build_object('element_id', locals.group_id, 'transaction_id', locals.transaction_id));
+    else
+        call notify_group('transaction', locals.group_id, locals.group_id::bigint,
+                          json_build_object('element_id', locals.group_id, 'transaction_id', locals.transaction_id));
+    end if;
+
+    return null;
+end;
+$$ language plpgsql;
+
 -- disallow empty strings in certain fields
 alter table account_history add constraint name_not_empty check ( name <> '' );
 alter table transaction_history add constraint description_not_empty check ( description <> '' );
@@ -44,6 +74,36 @@ create table if not exists file_history (
     blob_id        integer references blob(id) on delete cascade,
     deleted        bool default false
 );
+
+-- notifications for transaction file attachments
+create or replace function file_history_updated() returns trigger as
+$$
+<<locals>> declare
+    group_id       grp.id%TYPE;
+    transaction_id integer;
+begin
+    select
+        transaction.group_id,
+        transaction.id
+    into locals.group_id, locals.transaction_id
+    from
+        transaction
+        join file f on transaction.id = f.transaction_id
+    where
+        f.id = (case when NEW is null then OLD.id else NEW.id end);
+
+    call notify_group('transaction', locals.group_id, locals.group_id::bigint,
+                      json_build_object('element_id', locals.group_id, 'transaction_id', locals.transaction_id));
+    return null;
+end;
+$$ language plpgsql;
+
+drop trigger if exists file_history_trig on file_history;
+create trigger file_history_trig
+    after insert or update or delete
+    on file_history
+    for each row
+execute function file_history_updated();
 
 create or replace view purchase_item_usages_as_json as
     select
@@ -90,6 +150,7 @@ select
     sub.started                                          as revision_started,
     sub.committed                                        as revision_committed,
     first_value(sub.filename) over outer_window          as filename,
+    first_value(sub.mime_type) over outer_window         as mime_type,
     first_value(sub.blob_id) over outer_window           as blob_id,
     first_value(sub.deleted) over outer_window           as deleted
 from (
@@ -102,12 +163,14 @@ from (
         f.id                 as file_id,
         count(f.id) over wnd as id_partition,
         fh.filename,
+        blob.mime_type,
         fh.blob_id,
         fh.deleted
     from
         transaction_revision tr
         join file f on tr.transaction_id = f.transaction_id
         left join file_history fh on fh.id = f.id and tr.id = fh.revision_id
+        left join blob on blob.id = fh.blob_id
     where
         tr.committed is not null window wnd as (partition by f.id order by committed asc)
 ) as sub window outer_window as (partition by sub.file_id, sub.id_partition order by sub.revision_id)
@@ -121,12 +184,14 @@ select
     tr.started                          as revision_started,
     f.id                                as file_id,
     fh.filename,
+    blob.mime_type,
     fh.blob_id,
     fh.deleted
 from
     transaction_revision tr
     join file f on tr.transaction_id = f.transaction_id
     join file_history fh on fh.id = f.id and tr.id = fh.revision_id
+    left join blob on blob.id = fh.blob_id
 where
     tr.committed is null
 );
@@ -142,6 +207,7 @@ returns table (
     revision_started   timestamptz,
     revision_committed timestamptz,
     filename           text,
+    mime_type          text,
     blob_id            int,
     deleted            bool
 )
@@ -155,6 +221,7 @@ select distinct on (file_id)
     revision_started,
     revision_committed,
     filename,
+    mime_type,
     blob_id,
     deleted
 from

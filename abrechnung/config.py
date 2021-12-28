@@ -5,7 +5,7 @@ import yaml
 
 CONFIG_SCHEMA = schema.Schema(
     {
-        "service": {"url": str, "name": str},
+        "service": {"url": str, "name": str, "api_url": str},
         "database": {
             "host": str,
             schema.Optional("port"): int,

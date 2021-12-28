@@ -93,7 +93,7 @@ export default function GroupLog({ group }) {
                 {log.map((logEntry) => (
                     <ListItem key={logEntry.id}>
                         <ListItemText
-                            primary={logEntry.message === "" ? logEntry.type : logEntry.message}
+                            primary={`${logEntry.type} - ${logEntry.message}`}
                             secondary={`by ${getMemberUsername(logEntry.user_id)} 
                             on ${DateTime.fromISO(logEntry.logged_at).toLocaleString(DateTime.DATETIME_FULL)}`} />
                     </ListItem>

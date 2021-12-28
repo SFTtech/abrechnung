@@ -1,5 +1,5 @@
 import axios from "axios";
-import {DateTime} from "luxon";
+import { DateTime } from "luxon";
 
 
 export const siteHost = !process.env.NODE_ENV || process.env.NODE_ENV === "development" ? `${window.location.hostname}:8080` : window.location.host;
@@ -101,14 +101,14 @@ export async function refreshToken() {
     }
 }
 
-async function makePost(url, data) {
+async function makePost(url, data, options=null) {
     await refreshToken();
-    return await api.post(url, data);
+    return await api.post(url, data, options);
 }
 
-async function makeGet(url) {
+async function makeGet(url, options = null) {
     await refreshToken();
-    return await api.get(url);
+    return await api.get(url, options);
 }
 
 async function makeDelete(url, data = null) {
@@ -388,6 +388,30 @@ export async function updateTransactionDetails({
         currency_conversion_rate: currencyConversionRate
     });
     return resp.data;
+}
+
+export async function uploadFile({transactionID, filename, file, onUploadProgress}) {
+    let formData = new FormData();
+
+    formData.append("file", file);
+    formData.append("filename", filename);
+
+    return makePost(`/transactions/${transactionID}/files`, formData, {
+        headers: {
+            "Content-Type": "multipart/form-data",
+        },
+        onUploadProgress,
+    });
+}
+
+export async function fetchFile({fileID, blobID}) {
+    return makeGet(`/files/${fileID}/${blobID}`, {
+        responseType: "blob"
+    });
+}
+
+export async function deleteFile({fileID}) {
+    return makeDelete(`/files/${fileID}`);
 }
 
 export async function createOrUpdateCreditorShare({transactionID, accountID, value}) {

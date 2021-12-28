@@ -1,6 +1,7 @@
 import abc
 from typing import Union, Type
 
+from abrechnung.config import Config
 from abrechnung.domain.accounts import Account
 from abrechnung.domain.groups import (
     Group,
@@ -13,13 +14,15 @@ from abrechnung.domain.transactions import (
     Transaction,
     TransactionDetails,
     TransactionPosition,
+    FileAttachment,
 )
 from abrechnung.domain.users import User
 
 
 class Serializer(abc.ABC):
-    def __init__(self, instance: Union[list[object], Type[object]]):
+    def __init__(self, instance: Union[list[object], Type[object]], config: Config):
         self.instance = instance
+        self.config = config
 
     @abc.abstractmethod
     def _to_repr(self, instance) -> dict:
@@ -132,6 +135,22 @@ class TransactionSerializer(Serializer):
             },
         }
 
+    def _serialize_files(self, attachments: list[FileAttachment]):
+        base_url = self.config["service"]["api_url"]
+        return [
+            {
+                "id": attachment.id,
+                "filename": attachment.filename
+                + ("." + attachment.mime_type.split("/")[1])
+                if attachment.mime_type
+                else "",
+                "blob_id": attachment.blob_id,
+                "url": f"{base_url}/v1/files/{attachment.id}/{attachment.blob_id}",
+                "deleted": attachment.deleted,
+            }
+            for attachment in attachments
+        ]
+
     def _to_repr(self, instance: Transaction) -> dict:
         data = {
             "id": instance.id,
@@ -150,6 +169,12 @@ class TransactionSerializer(Serializer):
                 instance.committed_positions
             )
             if instance.committed_positions
+            else [],
+            "pending_files": self._serialize_files(instance.pending_files)
+            if instance.pending_files
+            else [],
+            "committed_files": self._serialize_files(instance.committed_files)
+            if instance.committed_files
             else [],
         }
 

@@ -1,6 +1,6 @@
-import React, {useState} from "react";
-import {useRecoilValue} from "recoil";
-import {groupList} from "../../recoil/groups";
+import React, { useState } from "react";
+import { useRecoilValue } from "recoil";
+import { groupList } from "../../recoil/groups";
 import ListItemLink from "../../components/style/ListItemLink";
 import GroupCreateModal from "../../components/groups/GroupCreateModal";
 import GroupDeleteModal from "../../components/groups/GroupDeleteModal";
@@ -14,13 +14,13 @@ import {
     Paper,
     Typography
 } from "@mui/material";
-import {Add, Delete} from "@mui/icons-material";
-import {makeStyles} from "@mui/styles";
+import { Add, Delete } from "@mui/icons-material";
+import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
-        padding: theme.spacing(2),
-    },
+        padding: theme.spacing(2)
+    }
 }));
 
 export default function GroupList() {
@@ -53,14 +53,17 @@ export default function GroupList() {
                 ) : (
                     groups.map(group => {
                         return (
-                            <ListItem sx={{padding: 0}}>
-                                <ListItemLink key={group.id} to={`/groups/${group.id}`}>
-                                    <ListItemText primary={group.name} secondary={group.description}/>
+                            <ListItem
+                                sx={{ padding: 0 }}
+                                key={group.id}
+                            >
+                                <ListItemLink to={`/groups/${group.id}`}>
+                                    <ListItemText primary={group.name} secondary={group.description} />
                                 </ListItemLink>
                                 <ListItemSecondaryAction>
                                     <IconButton edge="end" aria-label="delete-group"
                                                 onClick={() => openGroupDeletionModal(group.id)}>
-                                        <Delete/>
+                                        <Delete />
                                     </IconButton>
                                 </ListItemSecondaryAction>
                             </ListItem>
@@ -71,12 +74,12 @@ export default function GroupList() {
             <Grid container justifyContent="center">
                 <IconButton color="primary"
                             onClick={() => setShowGroupCreationModal(true)}>
-                    <Add/>
+                    <Add />
                 </IconButton>
             </Grid>
-            <GroupCreateModal show={showGroupCreationModal} onClose={() => setShowGroupCreationModal(false)}/>
+            <GroupCreateModal show={showGroupCreationModal} onClose={() => setShowGroupCreationModal(false)} />
             <GroupDeleteModal show={showGroupDeletionModal} onClose={closeGroupDeletionModal}
-                              groupToDelete={groupToDelete}/>
+                              groupToDelete={groupToDelete} />
         </Paper>
     );
 }

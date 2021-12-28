@@ -18,7 +18,7 @@ import {
     Typography
 } from "@mui/material";
 import {makeStyles} from "@mui/styles";
-import {clearCache} from "../../recoil";
+import {clearCache} from "../../recoil/cache";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -109,7 +109,7 @@ export default function Settings() {
                 <FormControl component="fieldset" variant="standard">
                     <FormLabel component="legend">Clear Cache</FormLabel>
                     <FormGroup>
-                        <Button variant="contained" color="secondary" onClick={handleConfirmClearCacheOpen}>Clear</Button>
+                        <Button variant="contained" color="error" onClick={handleConfirmClearCacheOpen}>Clear</Button>
                     </FormGroup>
                     {/*<FormHelperText>ACHTUNG!</FormHelperText>*/}
                 </FormControl>

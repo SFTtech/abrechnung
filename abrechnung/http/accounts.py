@@ -17,7 +17,7 @@ async def list_accounts(request):
     except PermissionError:
         raise web.HTTPForbidden(reason="permission denied")
 
-    serializer = AccountSerializer(accounts)
+    serializer = AccountSerializer(accounts, config=request.app["config"])
 
     return json_response(data=serializer.to_repr())
 
@@ -44,7 +44,7 @@ async def get_account(request: web.Request):
         account_id=int(request.match_info["account_id"]),
     )
 
-    serializer = AccountSerializer(account)
+    serializer = AccountSerializer(account, config=request.app["config"])
 
     return json_response(data=serializer.to_repr())
 

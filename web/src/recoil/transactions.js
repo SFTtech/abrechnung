@@ -5,6 +5,7 @@ import {fetchTransactions} from "../api";
 import {ws} from "../websocket";
 import {DateTime} from "luxon";
 import {toast} from "react-toastify";
+import { checkCacheVersion } from "./cache";
 
 
 export const groupTransactions = atomFamily({
@@ -12,6 +13,9 @@ export const groupTransactions = atomFamily({
     default: [],
     effects_UNSTABLE: groupID => [
         ({setSelf, node, getPromise}) => {
+            // validate cache version
+            checkCacheVersion();
+
             // try to load cached state from local storage
             const localStorageKey = `groups.transactions-${groupID}`;
             const savedTransactions = localStorage.getItem(localStorageKey);
@@ -109,7 +113,8 @@ export const transactionsSeenByUser = selectorFamily({
                     id: transaction.id,
                     type: transaction.type,
                     is_wip: transaction.is_wip,
-                    purchase_items: transaction.committed_positions != null ? transaction.committed_positions : []
+                    purchase_items: transaction.committed_positions != null ? transaction.committed_positions : [],
+                    files: transaction.committed_files != null ? transaction.committed_files : []
                 }
                 if (transaction.pending_details) {
                     mapped = {
@@ -134,7 +139,17 @@ export const transactionsSeenByUser = selectorFamily({
                         mappedPosition[pendingPosition.id] = pendingPosition;
                     }
                     mapped.purchase_items = Object.values(mappedPosition).filter(position => !position.deleted);
-                    ;
+                }
+
+                if (transaction.pending_files) {
+                    let mappedFiles = mapped.files.reduce((map, file) => {
+                        map[file.id] = file;
+                        return map;
+                    }, {});
+                    for (const pendingFile of transaction.pending_files) {
+                        mappedFiles[pendingFile.id] = pendingFile;
+                    }
+                    mapped.files = Object.values(mappedFiles).filter(file => !file.deleted);
                 }
 
                 return mapped;

@@ -1,7 +1,7 @@
-import React, {useState} from "react";
-import {Link as RouterLink} from "react-router-dom";
-import {useRecoilValue} from "recoil";
-import {isAuthenticated} from "../../recoil/auth";
+import React, { useState } from "react";
+import { Link as RouterLink } from "react-router-dom";
+import { useRecoilValue } from "recoil";
+import { isAuthenticated } from "../../recoil/auth";
 import ListItemLink from "./ListItemLink";
 import SidebarGroupList from "./SidebarGroupList";
 import {
@@ -13,7 +13,8 @@ import {
     Divider,
     Drawer,
     IconButton,
-    List, ListItemIcon,
+    List,
+    ListItemIcon,
     ListItemText,
     Menu,
     MenuItem,
@@ -22,7 +23,9 @@ import {
 } from "@mui/material";
 import {
     AccountBalance,
-    AccountCircle as AccountCircleIcon, AdminPanelSettings,
+    AccountCircle as AccountCircleIcon,
+    AdminPanelSettings,
+    Logout,
     Mail,
     Menu as MenuIcon,
     Message,
@@ -32,14 +35,14 @@ import {
 
 const drawerWidth = 240;
 
-export default function Layout({group = null, children, ...props}) {
+export default function Layout({ group = null, children, ...props }) {
     const authenticated = useRecoilValue(isAuthenticated);
     const [anchorEl, setAnchorEl] = useState(null);
     const dotsMenuOpen = Boolean(anchorEl);
 
     const [mobileOpen, setMobileOpen] = useState(true);
 
-    const {window} = props;
+    const { window } = props;
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -51,60 +54,50 @@ export default function Layout({group = null, children, ...props}) {
 
     const handleDrawerToggle = () => {
         setMobileOpen(!mobileOpen);
-    }
+    };
 
     const drawer = (
         <div>
-            <Toolbar/>
-            <Divider/>
-            <List>
-                {group != null && (
-                    <>
-                        <ListItemLink to={`/groups/${group.id}/`}>
-                            <ListItemIcon><Paid/></ListItemIcon>
-                            <ListItemText primary="Transactions"/>
-                        </ListItemLink>
-                        <ListItemLink to={`/groups/${group.id}/accounts`}>
-                            <ListItemIcon><AccountBalance/></ListItemIcon>
-                            <ListItemText primary="Accounts"/>
-                        </ListItemLink>
-                        <ListItemLink to={`/groups/${group.id}/detail`}>
-                            <ListItemIcon><AdminPanelSettings/></ListItemIcon>
-                            <ListItemText primary="Group Settings"/>
-                        </ListItemLink>
-                        <ListItemLink to={`/groups/${group.id}/members`}>
-                            <ListItemIcon><People/></ListItemIcon>
-                            <ListItemText primary="Group Members"/>
-                        </ListItemLink>
-                        <ListItemLink to={`/groups/${group.id}/invites`}>
-                            <ListItemIcon><Mail/></ListItemIcon>
-                            <ListItemText primary="Group Invites"/>
-                        </ListItemLink>
-                        <ListItemLink to={`/groups/${group.id}/log`}>
-                            <ListItemIcon><Message/></ListItemIcon>
-                            <ListItemText primary="Group Log"/>
-                        </ListItemLink>
-                        <Divider/>
-                    </>
-                )}
-                <SidebarGroupList group={group}/>
-
-                <ListItemLink to="/">
-                    <ListItemText primary="Groups"/>
-                </ListItemLink>
-                <Divider/>
-                <ListItemLink to="/logout">
-                    <ListItemText primary="Sign out"/>
-                </ListItemLink>
-            </List>
+            <Toolbar />
+            <Divider />
+            {group != null && (
+                <List sx={{ pb: 0 }}>
+                    <ListItemLink to={`/groups/${group.id}/`}>
+                        <ListItemIcon><Paid /></ListItemIcon>
+                        <ListItemText primary="Transactions" />
+                    </ListItemLink>
+                    <ListItemLink to={`/groups/${group.id}/accounts`}>
+                        <ListItemIcon><AccountBalance /></ListItemIcon>
+                        <ListItemText primary="Accounts" />
+                    </ListItemLink>
+                    <ListItemLink to={`/groups/${group.id}/detail`}>
+                        <ListItemIcon><AdminPanelSettings /></ListItemIcon>
+                        <ListItemText primary="Group Settings" />
+                    </ListItemLink>
+                    <ListItemLink to={`/groups/${group.id}/members`}>
+                        <ListItemIcon><People /></ListItemIcon>
+                        <ListItemText primary="Group Members" />
+                    </ListItemLink>
+                    <ListItemLink to={`/groups/${group.id}/invites`}>
+                        <ListItemIcon><Mail /></ListItemIcon>
+                        <ListItemText primary="Group Invites" />
+                    </ListItemLink>
+                    <ListItemLink to={`/groups/${group.id}/log`}>
+                        <ListItemIcon><Message /></ListItemIcon>
+                        <ListItemText primary="Group Log" />
+                    </ListItemLink>
+                    <Divider />
+                </List>
+            )}
+            <SidebarGroupList group={group} />
         </div>
-    )
+    );
 
     const container = window !== undefined ? () => window().document.body : undefined;
 
     return (
-        <Box sx={{display: "flex"}}>
-            <CssBaseline/>
+        <Box sx={{ display: "flex" }}>
+            <CssBaseline />
             <AppBar
                 position="fixed"
                 sx={{
@@ -119,11 +112,11 @@ export default function Layout({group = null, children, ...props}) {
                         aria-label="open drawer"
                         onClick={handleDrawerToggle}
                         edge="start"
-                        sx={{mr: 2, display: {sm: 'none'}}}
+                        sx={{ mr: 2, display: { sm: "none" } }}
                     >
-                        <MenuIcon/>
+                        <MenuIcon />
                     </IconButton>
-                    <Typography variant="h6" component="div" sx={{flexGrow: 1}}>
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         Abrechnung
                     </Typography>
                     {authenticated ? (
@@ -135,7 +128,7 @@ export default function Layout({group = null, children, ...props}) {
                                 onClick={handleProfileMenuOpen}
                                 color="inherit"
                             >
-                                <AccountCircleIcon/>
+                                <AccountCircleIcon />
                             </IconButton>
                             <Menu
                                 id="menu-appbar"
@@ -158,7 +151,11 @@ export default function Layout({group = null, children, ...props}) {
                                 <MenuItem component={RouterLink} to="/profile/change-email">Change E-Mail</MenuItem>
                                 <MenuItem component={RouterLink} to="/profile/change-password">Change
                                     Password</MenuItem>
-                                <MenuItem component={RouterLink} to="/logout">Sign out</MenuItem>
+                                <Divider />
+                                <MenuItem component={RouterLink} to="/logout">
+                                    <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
+                                    <ListItemText>Sign out</ListItemText>
+                                </MenuItem>
                             </Menu>
                         </div>
                     ) : (
@@ -172,7 +169,7 @@ export default function Layout({group = null, children, ...props}) {
             {authenticated ? (
                 <Box
                     component="nav"
-                    sx={{width: {sm: drawerWidth}, flexShrink: {sm: 0}}}
+                    sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
                 >
                     <Drawer
                         container={container}
@@ -180,11 +177,11 @@ export default function Layout({group = null, children, ...props}) {
                         open={mobileOpen}
                         onClose={handleDrawerToggle}
                         ModalProps={{
-                            keepMounted: true, // Better open performance on mobile.
+                            keepMounted: true // Better open performance on mobile.
                         }}
                         sx={{
-                            display: {xs: 'block', sm: 'none'},
-                            '& .MuiDrawer-paper': {boxSizing: 'border-box', width: drawerWidth},
+                            display: { xs: "block", sm: "none" },
+                            "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth }
                         }}
                     >
                         {drawer}
@@ -193,8 +190,8 @@ export default function Layout({group = null, children, ...props}) {
                         variant="permanent"
                         sx={{
                             flexShrink: 0,
-                            display: {xs: 'none', sm: 'block'},
-                            '& .MuiDrawer-paper': {boxSizing: 'border-box', width: drawerWidth},
+                            display: { xs: "none", sm: "block" },
+                            "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth }
                         }}
                         open
                     >
@@ -204,10 +201,10 @@ export default function Layout({group = null, children, ...props}) {
             ) : null}
             <Box
                 component="main"
-                sx={{flexGrow: 1, p: 3, width: {sm: `calc(100% - ${drawerWidth}px)`}}}
+                sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
             >
                 <Container maxWidth="lg">
-                    <Toolbar/>
+                    <Toolbar />
                     {children}
                 </Container>
             </Box>

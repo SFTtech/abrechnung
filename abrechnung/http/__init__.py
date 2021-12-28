@@ -111,6 +111,7 @@ class HTTPService(SubCommand):
         app = web.Application()
         app["secret_key"] = self.cfg["api"]["secret_key"]
         app["db_pool"] = db_pool
+        app["config"] = self.cfg
 
         if middlewares is None:
             auth_middleware = jwt_middleware(
@@ -133,6 +134,7 @@ class HTTPService(SubCommand):
         api_app = web.Application(middlewares=middlewares)
         api_app["secret_key"] = self.cfg["api"]["secret_key"]
         api_app["db_pool"] = db_pool
+        api_app["config"] = self.cfg
 
         api_app["user_service"] = UserService(
             db_pool=db_pool,

@@ -65,7 +65,7 @@ export default function AccountCreateModal({ show, onClose, group }) {
 
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button color="secondary" onClick={onClose}>
+                                <Button color="error" onClick={onClose}>
                                     Cancel
                                 </Button>
                                 <Button
