@@ -1,9 +1,53 @@
 [build-system]
-requires = [
-    'setuptools>=42',
-    'wheel'
+requires = ["flit_core >=3.2,<4"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "abrechnung"
+authors = [
+    {name = "Michael Loipführer", email = "milo@sft.lol"},
+    {name = "Jonas Jelten", email = "jj@sft.lol"},
+    {name = "Michael Enßlin", email = "mic@sft.lol"}
 ]
-build-backend = 'setuptools.build_meta'
+license = {file = "LICENSE"}
+dynamic = ["version", "description"]
+readme = "README.md"
+classifiers = [
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Development Status :: 5 - Production/Stable",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "aiohttp~=3.7",
+    "aiohttp-cors~=0.7",
+    "asyncpg~=0.21",
+    "bcrypt~=3.2",
+    "python-jose~=3.3",
+    "PyYAML~=5.3",
+    "schema~=0.7",
+    "email-validator~=1.1",
+]
+
+[project.optional-dependencies]
+test = [
+    "aiosmtpd~=1.4",
+    "pytest",
+    "pytest-cov",
+]
+dev = [
+    "black",
+    "mypy~=0.910",
+    "types-PyYAML~=5.4",
+    "pylint~=2.10",
+]
+
+[project.urls]
+Source = "https://github.com/SFTtech/abrechung"
+
+[project.scripts]
+abrechnung = "abrechnung.__main__:main"
 
 [tool.pylint.format]
 max-line-length = 120

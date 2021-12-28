@@ -1,5 +1,5 @@
 import { useRecoilValue } from "recoil";
-import { Divider, Grid, IconButton, List, ListItem, ListItemText } from "@mui/material";
+import { Grid, IconButton, List, ListItem, ListItemText } from "@mui/material";
 import { groupList } from "../../recoil/groups";
 import ListItemLink from "./ListItemLink";
 import GroupCreateModal from "../groups/GroupCreateModal";

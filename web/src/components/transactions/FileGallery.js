@@ -117,7 +117,7 @@ export default function FileGallery({ transaction }) {
                 }}
             >
                 {files.length === 0 ? (
-                    <img height="100%" src={placeholderImg} alt="placeholder image" />
+                    <img height="100%" src={placeholderImg} alt="placeholder" />
                 ) : files.map((item, idx) => (
                     <Transition key={item.id} in={active === idx} timeout={duration}>
                         {(state) => (
@@ -130,7 +130,7 @@ export default function FileGallery({ transaction }) {
                                 onClick={() => doShowImage(item)}
                                 src={item.objectUrl}
                                 srcSet={item.objectUrl}
-                                alt={item.filename}
+                                alt={item.filename.split(".")[0]}
                                 loading="lazy"
                             />
                         )}

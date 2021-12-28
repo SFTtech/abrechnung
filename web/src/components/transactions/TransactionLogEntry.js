@@ -1,6 +1,6 @@
 import ListItemLink from "../style/ListItemLink";
 import { Chip, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
-import { CompareArrows, Edit, HelpOutline, ShoppingCart } from "@mui/icons-material";
+import { CompareArrows, HelpOutline, ShoppingCart } from "@mui/icons-material";
 import { DateTime } from "luxon";
 import React from "react";
 import { makeStyles } from "@mui/styles";
