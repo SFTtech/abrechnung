@@ -5,7 +5,7 @@ import yaml
 
 CONFIG_SCHEMA = schema.Schema(
     {
-        "service": {"url": str, "name": str},
+        "service": {"url": str, "name": str, "api_url": str},
         "database": {
             "host": str,
             schema.Optional("port"): int,
@@ -18,6 +18,7 @@ CONFIG_SCHEMA = schema.Schema(
             "host": str,
             "port": int,
             "id": str,
+            schema.Optional("max_uploadable_file_size", default=1024): int,  # in KB
             schema.Optional("enable_cors"): bool,
             schema.Optional("enable_registration"): bool,
             schema.Optional("valid_email_domains"): [str],

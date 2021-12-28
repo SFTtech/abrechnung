@@ -27,7 +27,7 @@ export default function TransactionLog({group}) {
                     <div className="list-group-item" key={0}>No Transactions</div>
                 ) : (
                     transactions.map(transaction => (
-                        <TransactionLogEntry group={group} transaction={transaction}/>
+                        <TransactionLogEntry key={transaction.id} group={group} transaction={transaction}/>
                     ))
                 )}
             </List>

@@ -5,6 +5,10 @@ import {userData} from "./auth";
 import {DateTime} from "luxon";
 import {toast} from "react-toastify";
 
+const sortGroups = (groups) => {
+    return groups.sort((g1, g2) => g1.id > g2.id);
+}
+
 export const groupList = atom({
     key: "groupList",
     default: [],
@@ -13,13 +17,14 @@ export const groupList = atom({
             // TODO: handle fetch error
             setSelf(
                 fetchGroups()
+                    .then(groups => sortGroups(groups))
                     .catch(err => toast.error(`error when fetching groups: ${err}`))
             );
 
             const userID = getUserIDFromToken();
             ws.subscribe("group", userID, ({subscription_type, element_id}) => {
                 if (subscription_type === "group" && element_id === userID) {
-                    fetchGroups().then(result => setSelf(result));
+                    fetchGroups().then(result => setSelf(sortGroups(result)));
                 }
             });
             // TODO: handle registration errors

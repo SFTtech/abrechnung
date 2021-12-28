@@ -193,7 +193,7 @@ async def profile(request):
         user_id=request["user"]["user_id"]
     )
 
-    serializer = UserSerializer(user)
+    serializer = UserSerializer(user, config=request.app["config"])
 
     return json_response(data=serializer.to_repr())
 

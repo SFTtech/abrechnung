@@ -1,5 +1,6 @@
 service:
   url: "https://abrechnung.example.lol"
+  api_url: "https://abrechnung.example.lol/api"
   name: "SFT Kybernetik-Abrechnung 2.5a"
 
 database:

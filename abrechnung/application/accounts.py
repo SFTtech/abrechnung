@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Optional
 
 from abrechnung.domain.accounts import Account
 from . import (
@@ -19,17 +18,16 @@ class AccountService(Application):
                     conn=conn, group_id=group_id, user_id=user_id
                 )
                 cur = conn.cursor(
-                    "select id, type, revision_id, name, description, priority, deleted "
-                    "from latest_account "
-                    "where group_id = $1 and user_id = $2",
+                    "select account_id, type, revision_id, name, description, priority, deleted "
+                    "from committed_account_state_valid_at() "
+                    "where group_id = $1",
                     group_id,
-                    user_id,
                 )
                 result = []
                 async for account in cur:
                     result.append(
                         Account(
-                            id=account["id"],
+                            id=account["account_id"],
                             type=account["type"],
                             name=account["name"],
                             description=account["description"],
@@ -46,18 +44,17 @@ class AccountService(Application):
         async with self.db_pool.acquire() as conn:
             await check_group_permissions(conn=conn, group_id=group_id, user_id=user_id)
             account = await conn.fetchrow(
-                "select id, type, revision_id, name, description, priority, deleted "
-                "from latest_account "
-                "where group_id = $1 and user_id = $2 and id = $3",
+                "select account_id, type, revision_id, name, description, priority, deleted "
+                "from committed_account_state_valid_at() "
+                "where group_id = $1 and account_id = $2",
                 group_id,
-                user_id,
                 account_id,
             )
             if account is None:
                 raise NotFoundError(f"No account with id {account_id} exists")
 
             return Account(
-                id=account["id"],
+                id=account["account_id"],
                 type=account["type"],
                 name=account["name"],
                 description=account["description"],
@@ -128,11 +125,10 @@ class AccountService(Application):
                     conn=conn, group_id=group_id, user_id=user_id, can_write=True
                 )
                 account = await conn.fetchrow(
-                    "select id, type, revision_id, name, description, priority "
-                    "from latest_account "
-                    "where group_id = $1 and user_id = $2 and id = $3 and deleted = false",
+                    "select account_id, type, revision_id, name, description, priority "
+                    "from committed_account_state_valid_at() "
+                    "where group_id = $1 and account_id = $2 and deleted = false",
                     group_id,
-                    user_id,
                     account_id,
                 )
                 if account is None:
@@ -181,50 +177,61 @@ class AccountService(Application):
                 await check_group_permissions(
                     conn=conn, group_id=group_id, user_id=user_id, can_write=True
                 )
+                row = await conn.fetchrow(
+                    "select id " "from account " "where id = $1 and group_id = $2",
+                    account_id,
+                    group_id,
+                )
+                if row is None:
+                    raise InvalidCommand(f"Account does not exist")
 
-                n_committed_creditor = await conn.fetchval(
-                    "select count(cs.account_id) "
-                    "from creditor_share cs "
-                    "join committed_transaction_history t on t.id = cs.transaction_id "
-                    "   and t.revision_id = cs.revision_id "
-                    "where cs.account_id = $1",
+                has_committed_shares = await conn.fetchval(
+                    "select 1 "
+                    "from committed_transaction_state_valid_at() t "
+                    "where group_id = $1 and not deleted and $2 = any(involved_accounts)",
+                    group_id,
                     account_id,
                 )
-                n_committed_debitor = await conn.fetchval(
-                    "select count(ds.account_id) "
-                    "from debitor_share ds "
-                    "join committed_transaction_history t on t.id = ds.transaction_id "
-                    "   and t.revision_id = ds.revision_id "
-                    "where ds.account_id = $1",
+                has_pending_shares = await conn.fetchval(
+                    "select 1 "
+                    "from aggregated_pending_transaction_history t "
+                    "where group_id = $1 and $2 = any(t.involved_accounts)",
+                    group_id,
                     account_id,
                 )
-                n_pending_creditor = await conn.fetchval(
-                    "select count(cs.account_id) "
-                    "from creditor_share cs "
-                    "join pending_transaction_history t on t.id = cs.transaction_id and t.revision_id = cs.revision_id "
-                    "where cs.account_id = $1",
+
+                has_committed_usages = await conn.fetchval(
+                    "select 1 "
+                    "from committed_transaction_position_state_valid_at() p "
+                    "join transaction t on t.id = p.transaction_id "
+                    "where t.group_id = $1 and not p.deleted and $2 = any(p.involved_accounts)",
+                    group_id,
                     account_id,
                 )
-                n_pending_debitor = await conn.fetchval(
-                    "select count(ds.account_id) "
-                    "from debitor_share ds "
-                    "join pending_transaction_history t on t.id = ds.transaction_id and t.revision_id = ds.revision_id "
-                    "where ds.account_id = $1",
+
+                has_pending_usages = await conn.fetchval(
+                    "select 1 "
+                    "from aggregated_pending_transaction_position_history p "
+                    "join transaction t on t.id = p.transaction_id "
+                    "where t.group_id = $1 and $2 = any(p.involved_accounts)",
+                    group_id,
                     account_id,
                 )
 
                 if (
-                    n_pending_debitor != 0
-                    or n_pending_creditor != 0
-                    or n_committed_creditor != 0
-                    or n_committed_debitor != 0
+                    has_committed_shares
+                    or has_pending_shares
+                    or has_committed_usages
+                    or has_pending_usages
                 ):
                     raise InvalidCommand(
                         f"Cannot delete an account that is references by a transaction"
                     )
 
                 row = await conn.fetchrow(
-                    "select name, revision_id, deleted from latest_account where id = $1 and group_id = $2",
+                    "select name, revision_id, deleted "
+                    "from committed_account_state_valid_at() "
+                    "where account_id = $1 and group_id = $2",
                     account_id,
                     group_id,
                 )

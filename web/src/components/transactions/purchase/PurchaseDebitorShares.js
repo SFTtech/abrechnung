@@ -1,5 +1,5 @@
-import {useRecoilValue} from "recoil";
-import {groupAccounts} from "../../../recoil/groups";
+import { useRecoilValue } from "recoil";
+import { groupAccounts } from "../../../recoil/groups";
 import {
     Checkbox,
     Divider,
@@ -16,11 +16,11 @@ import {
     TextField,
     Typography
 } from "@mui/material";
-import {toast} from "react-toastify";
-import {useEffect, useState} from "react";
-import {createOrUpdateDebitorShare, deleteDebitorShare} from "../../../api";
-import {makeStyles} from "@mui/styles";
-import {Link} from "react-router-dom";
+import { toast } from "react-toastify";
+import { useEffect, useState } from "react";
+import { createOrUpdateDebitorShare, deleteDebitorShare } from "../../../api";
+import { makeStyles } from "@mui/styles";
+import { Link } from "react-router-dom";
 
 const useStyles = makeStyles((theme) => ({
     shareValue: {
@@ -43,14 +43,14 @@ const useStyles = makeStyles((theme) => ({
         display: "block",
         height: "100%",
         width: "100%",
-        padding: "16px 0",
+        padding: "16px 0"
     },
     tableLinkCell: {
-        padding: "0 16px",
+        padding: "0 16px"
     }
 }));
 
-function ShareInput({value, onChange}) {
+function ShareInput({ value, onChange }) {
     const [currValue, setValue] = useState(0);
     const [error, setError] = useState(false);
 
@@ -86,7 +86,7 @@ function ShareInput({value, onChange}) {
             error={error}
             margin="dense"
             variant="standard"
-            style={{width: 40, paddingTop: 1, marginRight: 2}}
+            style={{ width: 40, paddingTop: 1, marginRight: 2 }}
             onBlur={onSave}
             value={currValue}
             onChange={onValueChange}
@@ -96,7 +96,7 @@ function ShareInput({value, onChange}) {
     );
 }
 
-export default function PurchaseDebitorShares({group, transaction, isEditing}) {
+export default function PurchaseDebitorShares({ group, transaction, showPositions = false }) {
     const classes = useStyles();
 
     const accounts = useRecoilValue(groupAccounts(group.id));
@@ -191,28 +191,34 @@ export default function PurchaseDebitorShares({group, transaction, isEditing}) {
                         <Typography variant="subtitle1" className={classes.checkboxLabel}>
                             For whom
                         </Typography>
-                        {isEditing && (
+                        {transaction.is_wip && (
                             <FormControlLabel
-                                control={<Checkbox name={`show-advanced`}/>}
+                                control={<Checkbox name={`show-advanced`} />}
                                 checked={showAdvanced}
                                 onChange={event => setShowAdvanced(event.target.checked)}
-                                label="Advanced"/>
+                                label="Advanced" />
                         )}
                     </Grid>
                 </ListItem>
-                <Divider variant="middle" className={classes.divider}/>
-                {isEditing ? (
+                <Divider variant="middle" className={classes.divider} />
+                {transaction.is_wip ? (
                     <TableContainer>
                         <Table size="small">
                             <TableHead>
                                 <TableRow>
                                     <TableCell>Account</TableCell>
                                     <TableCell width="100px">Shares</TableCell>
-                                    <TableCell width="100px" align="right">Positions</TableCell>
-                                    <TableCell width="3px" align="center">+</TableCell>
-                                    <TableCell width="100px" align="right">Shared + Rest</TableCell>
-                                    <TableCell width="3px" align="center">=</TableCell>
-                                    <TableCell width="100px" align="right">Total</TableCell>
+                                    {showPositions || transactionHasPositions ? (
+                                        <>
+                                            <TableCell width="100px" align="right">Positions</TableCell>
+                                            <TableCell width="3px" align="center">+</TableCell>
+                                            <TableCell width="100px" align="right">Shared + Rest</TableCell>
+                                            <TableCell width="3px" align="center">=</TableCell>
+                                            <TableCell width="100px" align="right">Total</TableCell>
+                                        </>
+                                    ) : (
+                                        <TableCell width="100px" align="right">Shared</TableCell>
+                                    )}
                                 </TableRow>
                             </TableHead>
                             <TableBody>
@@ -235,24 +241,35 @@ export default function PurchaseDebitorShares({group, transaction, isEditing}) {
                                                 />
                                             )}
                                         </TableCell>
-                                        <TableCell
-                                            align="right"
-                                        >
-                                            {positionValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
-                                        </TableCell>
-                                        <TableCell></TableCell>
-                                        <TableCell
-                                            align="right"
-                                        >
-                                            {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
-                                        </TableCell>
-                                        <TableCell></TableCell>
-                                        <TableCell
-                                            width="100px"
-                                            align="right"
-                                        >
-                                            {(debitorValueForAccount(account.id) + positionValueForAccount(account.id)).toFixed(2)} {transaction.currency_symbol}
-                                        </TableCell>
+                                        {showPositions || transactionHasPositions ? (
+                                            <>
+                                                <TableCell
+                                                    align="right"
+                                                >
+                                                    {positionValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
+                                                </TableCell>
+                                                <TableCell></TableCell>
+                                                <TableCell
+                                                    align="right"
+                                                >
+                                                    {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
+                                                </TableCell>
+                                                <TableCell></TableCell>
+                                                <TableCell
+                                                    width="100px"
+                                                    align="right"
+                                                >
+                                                    {(debitorValueForAccount(account.id) + positionValueForAccount(account.id)).toFixed(2)} {transaction.currency_symbol}
+                                                </TableCell>
+                                            </>
+                                        ) : (
+                                            <TableCell
+                                                width="100px"
+                                                align="right"
+                                            >
+                                                {(debitorValueForAccount(account.id) + positionValueForAccount(account.id)).toFixed(2)} {transaction.currency_symbol}
+                                            </TableCell>
+                                        )}
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -281,7 +298,7 @@ export default function PurchaseDebitorShares({group, transaction, isEditing}) {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {accounts.map(account => transaction.debitor_shares.hasOwnProperty(account.id) ? (
+                                {accounts.filter(account => transaction.debitor_shares.hasOwnProperty(account.id)).map(account => (
                                     <TableRow
                                         hover
                                         key={account.id}
@@ -332,7 +349,7 @@ export default function PurchaseDebitorShares({group, transaction, isEditing}) {
                                             </TableCell>
                                         )}
                                     </TableRow>
-                                ) : null)}
+                                ))}
                             </TableBody>
                         </Table>
                     </TableContainer>

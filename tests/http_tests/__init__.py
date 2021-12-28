@@ -80,18 +80,21 @@ class BaseHTTPAPITest(AsyncHTTPTestCase):
 
     async def get_application(self) -> web.Application:
         self.secret_key = "asdf1234"
-        self.http_service = HTTPService(
-            config=Config({"api": {"secret_key": self.secret_key}})
-        )
+        self.test_config = Config({"api": {"secret_key": self.secret_key}})
+        self.http_service = HTTPService(config=self.test_config)
 
         await self.http_service._register_forwarder(
             self.db_conn, forwarder_id="test_forwarder"
         )
 
-        self.group_service = GroupService(self.db_pool)
-        self.account_service = AccountService(self.db_pool)
-        self.user_service = UserService(self.db_pool, enable_registration=True)
-        self.transaction_service = TransactionService(self.db_pool)
+        self.group_service = GroupService(self.db_pool, config=self.test_config)
+        self.account_service = AccountService(self.db_pool, config=self.test_config)
+        self.user_service = UserService(
+            self.db_pool, config=self.test_config, enable_registration=True
+        )
+        self.transaction_service = TransactionService(
+            self.db_pool, config=self.test_config
+        )
 
         app = self.http_service.create_app(db_pool=self.db_pool)
 

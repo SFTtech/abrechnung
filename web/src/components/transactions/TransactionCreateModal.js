@@ -92,6 +92,7 @@ export default function TransactionCreateModal({ group, show, onClose }) {
                                 fullWidth
                                 variant="standard"
                                 name="billedAt"
+                                inputFormat="yyyy-MM-dd"
                                 renderInput={(params) => <TextField variant="standard" fullWidth {...params}
                                                                     helperText={null} />}
                                 label="Billed at"
@@ -113,7 +114,7 @@ export default function TransactionCreateModal({ group, show, onClose }) {
                             />
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button color="secondary" onClick={onClose}>
+                                <Button color="error" onClick={onClose}>
                                     Cancel
                                 </Button>
                                 <Button

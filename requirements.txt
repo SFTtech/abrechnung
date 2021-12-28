@@ -6,3 +6,4 @@ python-jose~=3.3
 PyYAML~=5.4
 schema~=0.7
 email-validator~=1.1.3
+filetype

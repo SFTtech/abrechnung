@@ -3,6 +3,7 @@ from datetime import date, datetime
 import schema
 from aiohttp import web
 from aiohttp.abc import Request
+from aiohttp.web_request import FileField
 
 from abrechnung.http.serializers import TransactionSerializer
 from abrechnung.http.utils import json_response, validate
@@ -39,7 +40,7 @@ async def list_transactions(request):
         additional_transactions=forced_transaction_ids,
     )
 
-    serializer = TransactionSerializer(transactions)
+    serializer = TransactionSerializer(transactions, config=request.app["config"])
     return json_response(data=serializer.to_repr())
 
 
@@ -80,7 +81,7 @@ async def get_transaction(request: Request):
         transaction_id=int(request.match_info["transaction_id"]),
     )
 
-    serializer = TransactionSerializer(transaction)
+    serializer = TransactionSerializer(transaction, config=request.app["config"])
 
     return json_response(data=serializer.to_repr())
 
@@ -356,3 +357,56 @@ async def delete_purchase_item(request: Request):
     )
 
     return web.Response(status=web.HTTPNoContent.status_code)
+
+
+@routes.post(r"/transactions/{transaction_id:\d+}/files")
+async def upload_file(request: Request):
+    data = await request.post()
+
+    if "file" not in data or not isinstance(data["file"], FileField):
+        raise web.HTTPBadRequest(reason=f"File data required")
+    if "filename" not in data or not isinstance(data["filename"], str):
+        raise web.HTTPBadRequest(reason=f"File Name required")
+
+    file_field: FileField = data["file"]
+    # filename contains the name of the file in string format.
+    filename = data["filename"]
+    input_file = file_field.file
+    mime_type = file_field.content_type
+    try:
+        content = input_file.read()
+    except Exception as e:
+        raise web.HTTPBadRequest(reason=f"Cannot read uploaded file: {e}")
+
+    file_id = await request.app["transaction_service"].upload_file(
+        user_id=request["user"]["user_id"],
+        transaction_id=int(request.match_info["transaction_id"]),
+        filename=filename,
+        mime_type=mime_type,
+        content=content,
+    )
+
+    return json_response(data={"file_id": file_id})
+
+
+@routes.delete(r"/files/{file_id:\d+}")
+async def delete_file(request: Request):
+    await request.app["transaction_service"].delete_file(
+        user_id=request["user"]["user_id"],
+        file_id=int(request.match_info["file_id"]),
+    )
+
+    return web.Response(status=web.HTTPNoContent.status_code)
+
+
+@routes.get(r"/files/{file_id:\d+}/{blob_id:\d+}")
+async def get_file_contents(request: Request):
+    file_id = int(request.match_info["file_id"])
+    blob_id = int(request.match_info["blob_id"])
+    mime_type, content = await request.app["transaction_service"].read_file_contents(
+        user_id=request["user"]["user_id"],
+        file_id=file_id,
+        blob_id=blob_id,
+    )
+
+    return web.Response(body=content, content_type=mime_type)

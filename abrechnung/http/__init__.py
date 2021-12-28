@@ -111,6 +111,7 @@ class HTTPService(SubCommand):
         app = web.Application()
         app["secret_key"] = self.cfg["api"]["secret_key"]
         app["db_pool"] = db_pool
+        app["config"] = self.cfg
 
         if middlewares is None:
             auth_middleware = jwt_middleware(
@@ -133,15 +134,19 @@ class HTTPService(SubCommand):
         api_app = web.Application(middlewares=middlewares)
         api_app["secret_key"] = self.cfg["api"]["secret_key"]
         api_app["db_pool"] = db_pool
+        api_app["config"] = self.cfg
 
         api_app["user_service"] = UserService(
             db_pool=db_pool,
             enable_registration=self.cfg["api"].get("enable_registration", True),
+            config=self.cfg,
             valid_email_domains=self.cfg["api"].get("valid_email_domains"),
         )
-        api_app["group_service"] = GroupService(db_pool=db_pool)
-        api_app["account_service"] = AccountService(db_pool=db_pool)
-        api_app["transaction_service"] = TransactionService(db_pool=db_pool)
+        api_app["group_service"] = GroupService(db_pool=db_pool, config=self.cfg)
+        api_app["account_service"] = AccountService(db_pool=db_pool, config=self.cfg)
+        api_app["transaction_service"] = TransactionService(
+            db_pool=db_pool, config=self.cfg
+        )
 
         api_app.add_routes(groups.routes)
         api_app.add_routes(transactions.routes)

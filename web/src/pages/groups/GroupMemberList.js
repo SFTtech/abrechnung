@@ -176,7 +176,7 @@ export default function GroupMemberList({ group }) {
                                     <Button color="primary" type="submit" onClick={handleSubmit}>
                                         Save
                                     </Button>
-                                    <Button color="secondary" onClick={closeEditMemberModal}>
+                                    <Button color="error" onClick={closeEditMemberModal}>
                                         Close
                                     </Button>
                                 </DialogActions>

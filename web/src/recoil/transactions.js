@@ -1,11 +1,11 @@
 // transaction handling
 import {atomFamily, selectorFamily} from "recoil";
 import {groupAccounts} from "./groups";
-import {fetchTransactions, getUserIDFromToken} from "../api";
+import {fetchTransactions} from "../api";
 import {ws} from "../websocket";
-import {userData} from "./auth";
 import {DateTime} from "luxon";
 import {toast} from "react-toastify";
+import { checkCacheVersion } from "./cache";
 
 
 export const groupTransactions = atomFamily({
@@ -13,6 +13,9 @@ export const groupTransactions = atomFamily({
     default: [],
     effects_UNSTABLE: groupID => [
         ({setSelf, node, getPromise}) => {
+            // validate cache version
+            checkCacheVersion();
+
             // try to load cached state from local storage
             const localStorageKey = `groups.transactions-${groupID}`;
             const savedTransactions = localStorage.getItem(localStorageKey);
@@ -31,8 +34,8 @@ export const groupTransactions = atomFamily({
 
             const partialFetchPromise = (currTransactions) => {
                 let maxChangedTime = currTransactions.reduce((acc, curr) => {
-                    if (curr.current_state != null && curr.current_state.committed_at != null) {
-                        return Math.max(DateTime.fromISO(curr.current_state.committed_at).toSeconds(), acc);
+                    if (curr.committed_details != null && curr.committed_details.committed_at != null) {
+                        return Math.max(DateTime.fromISO(curr.committed_details.committed_at).toSeconds(), acc);
                     }
                     return acc;
                 }, 0);
@@ -41,8 +44,7 @@ export const groupTransactions = atomFamily({
                 }
 
                 const wipTransactions = currTransactions.reduce((acc, curr) => {
-                    const userID = getUserIDFromToken();
-                    if (curr.pending_changes?.hasOwnProperty(userID)) {
+                    if (curr.is_wip) {
                         return [...acc, curr.id];
                     }
                     return acc;
@@ -61,7 +63,6 @@ export const groupTransactions = atomFamily({
                         for (const newTransaction of result) {
                             mappedTransactions[newTransaction.id] = newTransaction;
                         }
-                        console.log("partial fetch return", Object.values(mappedTransactions));
                         localStorage.setItem(localStorageKey, JSON.stringify(Object.values(mappedTransactions)));
                         return Object.values(mappedTransactions);
                     })
@@ -100,40 +101,58 @@ export const groupTransactions = atomFamily({
 export const transactionsSeenByUser = selectorFamily({
     key: "transacitonsSeenByUser",
     get: groupID => async ({get}) => {
-        const user = get(userData);
         const transactions = get(groupTransactions(groupID));
 
         return transactions
             .filter(transaction => {
-                if (transaction.current_state && transaction.current_state.deleted) {
-                    return false;
-                }
-                if (transaction.pending_changes.hasOwnProperty(user.id)) {
-                    return true;
-                } else if (transaction.current_state === null) {
-                    return false;
-                }
-                return true;
+                return !(transaction.committed_details && transaction.committed_details.deleted);
+
             })
             .map(transaction => {
-                if (transaction.pending_changes.hasOwnProperty(user.id)) {
-                    return {
-                        id: transaction.id,
-                        type: transaction.type,
-                        ...transaction.pending_changes[user.id],
-                        is_wip: true,
-                        has_committed_changes: transaction.current_state != null
+                let mapped = {
+                    id: transaction.id,
+                    type: transaction.type,
+                    is_wip: transaction.is_wip,
+                    purchase_items: transaction.committed_positions != null ? transaction.committed_positions : [],
+                    files: transaction.committed_files != null ? transaction.committed_files : []
+                }
+                if (transaction.pending_details) {
+                    mapped = {
+                        ...mapped,
+                        ...transaction.pending_details,
+                        has_committed_changes: transaction.committed_details != null
                     };
                 } else {
-                    return {
-                        id: transaction.id,
-                        type: transaction.type,
-                        ...transaction.current_state,
-                        is_wip: false,
+                    mapped = {
+                        ...mapped,
+                        ...transaction.committed_details,
                         has_committed_changes: true
                     };
                 }
 
+                if (transaction.pending_positions) {
+                    let mappedPosition = mapped.purchase_items.reduce((map, position) => {
+                        map[position.id] = position;
+                        return map;
+                    }, {});
+                    for (const pendingPosition of transaction.pending_positions) {
+                        mappedPosition[pendingPosition.id] = pendingPosition;
+                    }
+                    mapped.purchase_items = Object.values(mappedPosition).filter(position => !position.deleted);
+                }
+
+                if (transaction.pending_files) {
+                    let mappedFiles = mapped.files.reduce((map, file) => {
+                        map[file.id] = file;
+                        return map;
+                    }, {});
+                    for (const pendingFile of transaction.pending_files) {
+                        mappedFiles[pendingFile.id] = pendingFile;
+                    }
+                    mapped.files = Object.values(mappedFiles).filter(file => !file.deleted);
+                }
+
+                return mapped;
             })
             .map(transaction => {
                 let transactionAccountBalances = {};

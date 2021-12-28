@@ -1,11 +1,18 @@
-import React from "react";
-import {TextField} from "@mui/material";
-import {toast} from "react-toastify";
-import {updateTransactionDetails} from "../../api";
-import {DisabledTextField} from "../style/DisabledTextField";
+import React, { useState } from "react";
+import { toast } from "react-toastify";
+import { updateTransactionDetails } from "../../api";
+import { DisabledTextField } from "../style/DisabledTextField";
+import { DatePicker } from "@mui/lab";
+import { TextField } from "@mui/material";
 
-export default function TransactionBilledAt({group, transaction}) {
+export default function TransactionBilledAt({ group, transaction }) {
+    const [error, setError] = useState(null);
     const save = (billedAt) => {
+        if (billedAt == null || billedAt.invalid) {
+            setError("Invalid date format");
+            return;
+        }
+        setError(null);
         if (transaction.is_wip && billedAt !== transaction.billed_at) {
             updateTransactionDetails({
                 groupID: group.id,
@@ -21,18 +28,28 @@ export default function TransactionBilledAt({group, transaction}) {
             });
         }
     };
+    if (!transaction.is_wip) {
+        return (
+            <DisabledTextField
+                label="Billed At"
+                variant="standard"
+                fullWidth
+                value={transaction.billed_at}
+                disabled={true}
+            />
+        );
+    }
 
     return (
-        <DisabledTextField
+        <DatePicker
             label="Billed At"
-            views={["day"]}
+            inputFormat="yyyy-MM-dd"
             variant="standard"
             fullWidth
             value={transaction.billed_at}
-            onBlur={save}
             onChange={save}
-            renderInput={(params) => <TextField variant="standard" fullWidth {...params} helperText={null}/>}
-            disabled={!transaction.is_wip}
+            renderInput={(params) => <TextField variant="standard"
+                                                fullWidth {...params} helperText={error} error={error !== null} />}
         />
     );
 }

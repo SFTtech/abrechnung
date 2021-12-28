@@ -1,10 +1,9 @@
-import {Form, Formik} from "formik";
+import { Form, Formik } from "formik";
 import React from "react";
-import {toast} from "react-toastify";
-import {createGroupInvite} from "../../api";
-import {DateTime} from "luxon";
+import { toast } from "react-toastify";
+import { createGroupInvite } from "../../api";
+import { DateTime } from "luxon";
 import {
-    Box,
     Button,
     Checkbox,
     Dialog,
@@ -15,11 +14,11 @@ import {
     LinearProgress,
     TextField
 } from "@mui/material";
-import {DateTimePicker} from "@mui/lab";
+import { DateTimePicker } from "@mui/lab";
 
-export default function InviteLinkCreate({show, onClose, group}) {
+export default function InviteLinkCreate({ show, onClose, group }) {
 
-    const handleSubmit = (values, {setSubmitting}) => {
+    const handleSubmit = (values, { setSubmitting }) => {
         createGroupInvite({
             groupID: group.id,
             name: values.name,
@@ -39,17 +38,22 @@ export default function InviteLinkCreate({show, onClose, group}) {
     };
 
     const nowPlusOneHour = () => {
-        return DateTime.now().plus({hours: 1});
+        return DateTime.now().plus({ hours: 1 });
     };
 
     return (
-        <Dialog open={show} onClose={onClose} sx={{minWidth: 500}}>
+        <Dialog open={show} onClose={onClose} sx={{ minWidth: 500 }}>
             <DialogTitle>Create Invite Link</DialogTitle>
 
             <DialogContent>
-                <Formik initialValues={{description: "", validUntil: nowPlusOneHour(), singleUse: false, joinAsEditor: false}}
+                <Formik initialValues={{
+                    description: "",
+                    validUntil: nowPlusOneHour(),
+                    singleUse: false,
+                    joinAsEditor: false
+                }}
                         onSubmit={handleSubmit}>
-                    {({values, setFieldValue, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
+                    {({ values, setFieldValue, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
                         <Form>
                             <TextField
                                 margin="normal"
@@ -63,20 +67,21 @@ export default function InviteLinkCreate({show, onClose, group}) {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                             />
-                                <DateTimePicker
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    variant="standard"
-                                    name="validUntil"
-                                    views={["day"]}
-                                    value={values.validUntil}
-                                    onChange={val => setFieldValue("validUntil", val, true)}
-                                    onBlur={handleBlur}
-                                    renderInput={(props) => <TextField variant="standard" fullWidth {...props} />}
-                                />
+                            <DateTimePicker
+                                margin="normal"
+                                required
+                                fullWidth
+                                variant="standard"
+                                name="validUntil"
+                                inputFormat="yyyy-MM-dd HH:mm"
+                                value={values.validUntil}
+                                onChange={val => setFieldValue("validUntil", val, true)}
+                                onBlur={handleBlur}
+                                renderInput={(props) => <TextField sx={{ marginTop: 2 }} variant="standard"
+                                                                   fullWidth {...props} />}
+                            />
                             <FormControlLabel
-                                sx={{mt: 2}}
+                                sx={{ mt: 2 }}
                                 label={"Single Use"}
                                 control={
                                     <Checkbox
@@ -91,7 +96,7 @@ export default function InviteLinkCreate({show, onClose, group}) {
                                 }
                             />
                             <FormControlLabel
-                                sx={{mt: 2}}
+                                sx={{ mt: 2 }}
                                 label={"New members join as editors"}
                                 control={
                                     <Checkbox
@@ -106,9 +111,9 @@ export default function InviteLinkCreate({show, onClose, group}) {
                                 }
                             />
 
-                            {isSubmitting && <LinearProgress/>}
+                            {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button color="secondary" onClick={onClose}>
+                                <Button color="error" onClick={onClose}>
                                     Cancel
                                 </Button>
                                 <Button

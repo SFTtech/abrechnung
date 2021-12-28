@@ -27,7 +27,7 @@ async def list_groups(request):
     except NotFoundError:
         raise web.HTTPForbidden(reason="permission denied")
 
-    serializer = GroupSerializer(groups)
+    serializer = GroupSerializer(groups, config=request.app["config"])
 
     return json_response(data=serializer.to_repr())
 
@@ -55,7 +55,7 @@ async def get_group(request: Request):
         group_id=int(request.match_info["group_id"]),
     )
 
-    serializer = GroupSerializer(group)
+    serializer = GroupSerializer(group, config=request.app["config"])
 
     return json_response(data=serializer.to_repr())
 
@@ -104,7 +104,7 @@ async def list_members(request: web.Request):
         group_id=int(request.match_info["group_id"]),
     )
 
-    serializer = GroupMemberSerializer(members)
+    serializer = GroupMemberSerializer(members, config=request.app["config"])
 
     return json_response(data=serializer.to_repr())
 
@@ -116,7 +116,7 @@ async def list_log(request: web.Request):
         group_id=int(request.match_info["group_id"]),
     )
 
-    serializer = GroupLogSerializer(logs)
+    serializer = GroupLogSerializer(logs, config=request.app["config"])
 
     return json_response(data=serializer.to_repr())
 
@@ -154,7 +154,7 @@ async def list_invites(request):
         group_id=int(request.match_info["group_id"]),
     )
 
-    serializer = GroupInviteSerializer(invites)
+    serializer = GroupInviteSerializer(invites, config=request.app["config"])
 
     return json_response(data=serializer.to_repr())
 
@@ -205,7 +205,7 @@ async def preview_group(request: Request, data: dict):
         invite_token=data["invite_token"],
     )
 
-    serializer = GroupPreviewSerializer(group_preview)
+    serializer = GroupPreviewSerializer(group_preview, request.app["config"])
 
     return json_response(data=serializer.to_repr())
 

@@ -7,6 +7,7 @@ from email_validator import validate_email, EmailNotValidError
 
 from abrechnung.domain.users import User, Session
 from . import Application, NotFoundError, InvalidCommand
+from ..config import Config
 
 
 class InvalidPassword(Exception):
@@ -22,9 +23,10 @@ class UserService(Application):
         self,
         db_pool: Pool,
         enable_registration: bool,
+        config: Config,
         valid_email_domains: Optional[list[str]] = None,
     ):
-        super().__init__(db_pool=db_pool)
+        super().__init__(db_pool=db_pool, config=config)
 
         self.enable_registration = enable_registration
         self.valid_email_domains = valid_email_domains

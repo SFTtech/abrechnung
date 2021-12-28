@@ -1,6 +1,7 @@
 import abc
 from typing import Union, Type
 
+from abrechnung.config import Config
 from abrechnung.domain.accounts import Account
 from abrechnung.domain.groups import (
     Group,
@@ -12,14 +13,16 @@ from abrechnung.domain.groups import (
 from abrechnung.domain.transactions import (
     Transaction,
     TransactionDetails,
-    PurchaseItem,
+    TransactionPosition,
+    FileAttachment,
 )
 from abrechnung.domain.users import User
 
 
 class Serializer(abc.ABC):
-    def __init__(self, instance: Union[list[object], Type[object]]):
+    def __init__(self, instance: Union[list[object], Type[object]], config: Config):
         self.instance = instance
+        self.config = config
 
     @abc.abstractmethod
     def _to_repr(self, instance) -> dict:
@@ -97,17 +100,23 @@ class GroupLogSerializer(Serializer):
 
 class TransactionSerializer(Serializer):
     @staticmethod
-    def _serialize_purchase_item(item: PurchaseItem):
-        return {
-            "id": item.id,
-            "price": item.price,
-            "communist_shares": item.communist_shares,
-            "deleted": item.deleted,
-            "name": item.name,
-            "usages": {str(account_id): val for account_id, val in item.usages.items()},
-        }
+    def _serialize_positions(positions: list[TransactionPosition]):
+        return [
+            {
+                "id": position.id,
+                "price": position.price,
+                "communist_shares": position.communist_shares,
+                "deleted": position.deleted,
+                "name": position.name,
+                "usages": {
+                    str(account_id): val for account_id, val in position.usages.items()
+                },
+            }
+            for position in positions
+        ]
 
-    def _serialize_change(self, change: TransactionDetails):
+    @staticmethod
+    def _serialize_change(change: TransactionDetails):
         return {
             "description": change.description,
             "value": change.value,
@@ -124,26 +133,49 @@ class TransactionSerializer(Serializer):
             "debitor_shares": {
                 str(uid): val for uid, val in change.debitor_shares.items()
             },
-            "purchase_items": [
-                self._serialize_purchase_item(item) for item in change.purchase_items
-            ]
-            if change.purchase_items
-            else None,
         }
+
+    def _serialize_files(self, attachments: list[FileAttachment]):
+        base_url = self.config["service"]["api_url"]
+        return [
+            {
+                "id": attachment.id,
+                "filename": attachment.filename
+                + ("." + attachment.mime_type.split("/")[1])
+                if attachment.mime_type
+                else "",
+                "blob_id": attachment.blob_id,
+                "url": f"{base_url}/v1/files/{attachment.id}/{attachment.blob_id}",
+                "deleted": attachment.deleted,
+            }
+            for attachment in attachments
+        ]
 
     def _to_repr(self, instance: Transaction) -> dict:
         data = {
             "id": instance.id,
             "type": instance.type,
-            "pending_changes": {
-                str(uid): self._serialize_change(change)
-                for uid, change in instance.pending_changes.items()
-            }
-            if instance.pending_changes
-            else {},
-            "current_state": self._serialize_change(instance.current_state)
-            if instance.current_state
+            "is_wip": instance.is_wip,
+            "pending_details": self._serialize_change(instance.pending_details)
+            if instance.pending_details
             else None,
+            "committed_details": self._serialize_change(instance.committed_details)
+            if instance.committed_details
+            else None,
+            "pending_positions": self._serialize_positions(instance.pending_positions)
+            if instance.pending_positions
+            else [],
+            "committed_positions": self._serialize_positions(
+                instance.committed_positions
+            )
+            if instance.committed_positions
+            else [],
+            "pending_files": self._serialize_files(instance.pending_files)
+            if instance.pending_files
+            else [],
+            "committed_files": self._serialize_files(instance.committed_files)
+            if instance.committed_files
+            else [],
         }
 
         return data

@@ -1,7 +1,8 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import {
     Alert,
     IconButton,
+    Paper,
     Table,
     TableBody,
     TableCell,
@@ -12,8 +13,8 @@ import {
     Tooltip,
     Typography
 } from "@mui/material";
-import {useRecoilValue} from "recoil";
-import {groupAccounts} from "../../../recoil/groups";
+import { useRecoilValue } from "recoil";
+import { groupAccounts } from "../../../recoil/groups";
 import {
     addOrChangePurchaseItemShare,
     createPurchaseItem,
@@ -21,20 +22,24 @@ import {
     deletePurchaseItemShare,
     updatePurchaseItem
 } from "../../../api";
-import {toast} from "react-toastify";
-import {makeStyles} from "@mui/styles";
-import {Add, Delete, HelpOutline} from "@mui/icons-material";
+import { toast } from "react-toastify";
+import { makeStyles } from "@mui/styles";
+import { Add, Delete, HelpOutline } from "@mui/icons-material";
 import AccountSelect from "../../style/AccountSelect";
-import {transactionSettings} from "../../../recoil/settings";
+import { transactionSettings } from "../../../recoil/settings";
 
 
-const useStyles = makeStyles({
+const useStyles = makeStyles((theme) => ({
     table: {
         minWidth: 650
+    },
+    paper: {
+        padding: theme.spacing(2),
+        marginTop: theme.spacing(3)
     }
-});
+}));
 
-function ShareInput({value, onChange}) {
+function ShareInput({ value, onChange }) {
     const [currValue, setValue] = useState(0);
     const [error, setError] = useState(false);
 
@@ -69,7 +74,7 @@ function ShareInput({value, onChange}) {
         <TextField
             margin="dense"
             variant="standard"
-            style={{width: 40}}
+            style={{ width: 40 }}
             onBlur={onSave}
             value={currValue}
             error={error}
@@ -79,7 +84,7 @@ function ShareInput({value, onChange}) {
     );
 }
 
-function WrappedTextField({value, onChange, initial = null, errorMsg = null, validate = null, ...props}) {
+function WrappedTextField({ value, onChange, initial = null, errorMsg = null, validate = null, ...props }) {
     const [currValue, setValue] = useState(initial);
     const [error, setError] = useState(false);
 
@@ -128,7 +133,7 @@ function WrappedTextField({value, onChange, initial = null, errorMsg = null, val
     );
 }
 
-export default function PurchaseItems({group, transaction}) {
+export default function PurchaseItems({ group, transaction }) {
     const classes = useStyles();
     const accounts = useRecoilValue(groupAccounts(group.id));
     const purchaseItems = transaction.purchase_items ? transaction.purchase_items.filter(item => !item.deleted).sort((left, right) => left.id > right.id) : [];
@@ -224,7 +229,7 @@ export default function PurchaseItems({group, transaction}) {
                     price: price,
                     communistShares: communistShares
                 }).then(res => {
-                    setItemIDMapping({...itemIDMapping, [res.item_id]: item.localID});
+                    setItemIDMapping({ ...itemIDMapping, [res.item_id]: item.localID });
                     let newPendingItems = pendingItems.map(tmpItem => tmpItem.id === item.id ? {
                         ...tmpItem,
                         id: res.item_id
@@ -285,7 +290,7 @@ export default function PurchaseItems({group, transaction}) {
                 setPendingItems(filteredItems);
             }
         } else {
-            deletePurchaseItem({itemID: item.id})
+            deletePurchaseItem({ itemID: item.id })
                 .catch(err => {
                     toast.error(err);
                 });
@@ -297,8 +302,10 @@ export default function PurchaseItems({group, transaction}) {
         setAdditionalPurchaseItemAccounts([...new Set([...purchaseItemAccounts, parseInt(account.id)])]);
     };
 
+
     return (
-        <>
+        <Paper elevation={1} className={classes.paper}>
+            <Typography>Positions</Typography>
             <TableContainer>
                 <Table className={classes.table} aria-label="purchase items" size="small">
                     <TableHead>
@@ -308,7 +315,8 @@ export default function PurchaseItems({group, transaction}) {
                             {(transaction.is_wip ? transactionAccounts : purchaseItemAccounts).map(accountID => (
                                 <TableCell
                                     align="right"
-                                    style={{minWidth: 80}}
+                                    sx={{ minWidth: 80 }}
+                                    key={accountID}
                                 >
                                     {accounts.find(account => account.id === accountID).name}
                                 </TableCell>
@@ -318,13 +326,13 @@ export default function PurchaseItems({group, transaction}) {
                                     {showAccountSelect && (
                                         <TableCell align="right">
                                             <AccountSelect group={group} exclude={transactionAccounts}
-                                                           onChange={addPurchaseItemAccount}/>
+                                                           onChange={addPurchaseItemAccount} />
                                         </TableCell>
                                     )}
                                     {showAddAccount && (
                                         <TableCell align="right">
                                             <IconButton onClick={() => setShowAccountSelect(true)}>
-                                                <Add/>
+                                                <Add />
                                             </IconButton>
                                         </TableCell>
                                     )}
@@ -340,49 +348,47 @@ export default function PurchaseItems({group, transaction}) {
                         {transaction.is_wip ? (
                             allItems.map(item =>
                                 <TableRow hover key={item.localID}>
-                                    <>
-                                        <TableCell>
-                                            <WrappedTextField
-                                                value={item.name}
-                                                onChange={value => updateItem(item, value, item.price, item.communist_shares)}
-                                                validate={value => value !== "" && value != null}
-                                            />
-                                        </TableCell>
-                                        <TableCell align="right">
-                                            <WrappedTextField
-                                                value={item.price}
-                                                style={{width: 70}}
-                                                onChange={value => updateItem(item, item.name, parseFloat(value), item.communist_shares)}
-                                                validate={validateFloat}
-                                                errorMsg={"float required"}
-                                            />
-                                        </TableCell>
-                                        {transactionAccounts.map(accountID => (
-                                            <TableCell align="right">
-                                                <ShareInput
-                                                    value={item.usages.hasOwnProperty(String(accountID)) ? item.usages[String(accountID)] : 0}
-                                                    onChange={value => updateItemUsage(item, accountID, value)}
-                                                />
-                                            </TableCell>
-                                        ))}
-                                        {showAccountSelect && (
-                                            <TableCell></TableCell>
-                                        )}
-                                        {showAddAccount && (
-                                            <TableCell></TableCell>
-                                        )}
-                                        <TableCell align="right">
+                                    <TableCell>
+                                        <WrappedTextField
+                                            value={item.name}
+                                            onChange={value => updateItem(item, value, item.price, item.communist_shares)}
+                                            validate={value => value !== "" && value != null}
+                                        />
+                                    </TableCell>
+                                    <TableCell align="right">
+                                        <WrappedTextField
+                                            value={item.price}
+                                            style={{ width: 70 }}
+                                            onChange={value => updateItem(item, item.name, parseFloat(value), item.communist_shares)}
+                                            validate={validateFloat}
+                                            errorMsg={"float required"}
+                                        />
+                                    </TableCell>
+                                    {transactionAccounts.map(accountID => (
+                                        <TableCell align="right" key={accountID}>
                                             <ShareInput
-                                                value={item.communist_shares}
-                                                onChange={value => updateItem(item, item.name, item.price, parseFloat(value))}
+                                                value={item.usages.hasOwnProperty(String(accountID)) ? item.usages[String(accountID)] : 0}
+                                                onChange={value => updateItemUsage(item, accountID, value)}
                                             />
                                         </TableCell>
-                                        <TableCell>
-                                            <IconButton onClick={() => deleteItem(item)}>
-                                                <Delete/>
-                                            </IconButton>
-                                        </TableCell>
-                                    </>
+                                    ))}
+                                    {showAccountSelect && (
+                                        <TableCell></TableCell>
+                                    )}
+                                    {showAddAccount && (
+                                        <TableCell></TableCell>
+                                    )}
+                                    <TableCell align="right">
+                                        <ShareInput
+                                            value={item.communist_shares}
+                                            onChange={value => updateItem(item, item.name, item.price, parseFloat(value))}
+                                        />
+                                    </TableCell>
+                                    <TableCell>
+                                        <IconButton onClick={() => deleteItem(item)}>
+                                            <Delete />
+                                        </IconButton>
+                                    </TableCell>
                                 </TableRow>
                             )
                         ) : (
@@ -390,10 +396,11 @@ export default function PurchaseItems({group, transaction}) {
                                 <TableRow hover key={item.id}>
                                     <TableCell>{item.name}</TableCell>
                                     <TableCell align="right"
-                                               style={{width: 80}}>{item.price.toFixed(2)} {transaction.currency_symbol}</TableCell>
+                                               style={{ width: 80 }}>{item.price.toFixed(2)} {transaction.currency_symbol}</TableCell>
                                     {purchaseItemAccounts.map(accountID => (
                                         <TableCell
                                             align="right"
+                                            key={accountID}
                                         >
                                             {item.usages.hasOwnProperty(String(accountID)) ? item.usages[String(accountID)] : 0}
                                         </TableCell>
@@ -403,7 +410,7 @@ export default function PurchaseItems({group, transaction}) {
                             ))
                         }
                         <TableRow hover>
-                            <TableCell><Typography sx={{fontWeight: "bold"}}>Total:</Typography></TableCell>
+                            <TableCell><Typography sx={{ fontWeight: "bold" }}>Total:</Typography></TableCell>
                             <TableCell
                                 align="right"
                             >
@@ -412,6 +419,7 @@ export default function PurchaseItems({group, transaction}) {
                             {(transaction.is_wip ? transactionAccounts : purchaseItemAccounts).map(accountID => (
                                 <TableCell
                                     align="right"
+                                    key={accountID}
                                 >
                                     {purchaseItemSumForAccount(accountID).toFixed(2)} {transaction.currency_symbol}
                                 </TableCell>
@@ -432,15 +440,17 @@ export default function PurchaseItems({group, transaction}) {
             {showMissingValueAlert && sharedTransactionValue > 0 && (
                 <Alert
                     severity="info"
-                    style={{marginTop: 8}}
+                    sx={{ marginTop: 2 }}
                     action={
                         <Tooltip title="This message can be turned off in your profile settings.">
-                            <HelpOutline/>
+                            <HelpOutline />
                         </Tooltip>
                     }
-                >Remaining transaction value to be
-                    shared: <strong>{sharedTransactionValue} {transaction.currency_symbol}</strong></Alert>
+                >
+                    Remaining transaction value to be
+                    shared: <strong>{sharedTransactionValue} {transaction.currency_symbol}</strong>
+                </Alert>
             )}
-        </>
+        </Paper>
     );
 };

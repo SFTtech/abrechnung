@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, date
 from enum import Enum
 from typing import Optional
@@ -11,7 +11,7 @@ class TransactionType(Enum):
 
 
 @dataclass
-class PurchaseItem:
+class TransactionPosition:
     id: int
 
     name: str
@@ -39,13 +39,26 @@ class TransactionDetails:
     creditor_shares: dict[int, float]
     debitor_shares: dict[int, float]
 
-    purchase_items: Optional[list[PurchaseItem]]
+
+@dataclass
+class FileAttachment:
+    id: int
+    filename: str
+    blob_id: Optional[int]
+    mime_type: Optional[str]
+    deleted: bool
 
 
 @dataclass
 class Transaction:
     id: int
     type: str
-    current_state: Optional[TransactionDetails]
-    pending_changes: Optional[dict[int, TransactionDetails]]
-    # created_by: int
+    is_wip: bool
+    committed_details: Optional[TransactionDetails]
+    pending_details: Optional[TransactionDetails]
+
+    committed_positions: Optional[list[TransactionPosition]] = field(default=None)
+    pending_positions: Optional[list[TransactionPosition]] = field(default=None)
+
+    committed_files: Optional[list[FileAttachment]] = field(default=None)
+    pending_files: Optional[list[FileAttachment]] = field(default=None)

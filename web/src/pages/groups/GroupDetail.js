@@ -6,7 +6,6 @@ import { leaveGroup, updateGroupMetadata } from "../../api";
 import { currUserPermissions } from "../../recoil/groups";
 import { useRecoilValue } from "recoil";
 import { useHistory } from "react-router-dom";
-import { Alert } from "@mui/lab";
 import {
     Button,
     Dialog,
@@ -15,19 +14,11 @@ import {
     DialogContentText,
     DialogTitle,
     Grid,
-    Paper
+    Paper,
+    Alert
 } from "@mui/material";
-import { makeStyles } from "@mui/styles";
-
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2)
-    }
-}));
 
 export default function GroupDetail({ group }) {
-    const classes = useStyles();
-
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const history = useHistory();
 
@@ -50,7 +41,7 @@ export default function GroupDetail({ group }) {
     const confirmLeaveGroup = () => {
         leaveGroup({ groupID: group.id })
             .then(res => {
-                history.push("/")
+                history.push("/");
             })
             .catch(err => {
                 toast.error(err);
@@ -58,7 +49,7 @@ export default function GroupDetail({ group }) {
     };
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <Paper elevation={1} sx={{ padding: 2 }}>
             {userPermissions.is_owner ? (
                 <Alert severity="info">You are an owner of this group</Alert>
             ) : !userPermissions.can_write ? (
@@ -106,7 +97,7 @@ export default function GroupDetail({ group }) {
             {/*    </ListItem>*/}
             {/*</List>*/}
 
-            <Grid container justifyContent="center" style={{marginTop: 20}}>
+            <Grid container justifyContent="center" style={{ marginTop: 20 }}>
                 <Button variant="contained" onClick={() => setShowLeaveModal(true)}>
                     Leave Group
                 </Button>
