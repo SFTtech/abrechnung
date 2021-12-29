@@ -2,5 +2,4 @@
 
 set -e
 
-addgroup --system abrechnung
-adduser --system abrechnung --group abrechnung --no-create-home
+adduser --system --group --home /var/lib/abrechnung abrechnung
