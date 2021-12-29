@@ -1,0 +1,11 @@
+abrechnung (0.3.0) bullseye; urgency=medium
+
+  * Initial debian release
+
+ -- Michael Loipführer <milo@sft.lol>  Wed, 29 Dec 2021 16:22:24 +0000
+
+python3-abrechnung (0.3.0) bullseye; urgency=medium
+
+  * Initial debian release
+
+ -- Michael Loipführer <milo@sft.lol>  Wed, 29 Dec 2021 16:21:28 +0000

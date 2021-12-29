@@ -1,0 +1,6 @@
+#!/bin/sh
+
+set -e
+
+addgroup --system abrechnung
+adduser --system abrechnung --group abrechnung --no-create-home
