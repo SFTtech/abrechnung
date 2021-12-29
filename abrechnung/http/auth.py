@@ -3,7 +3,7 @@ import re
 from datetime import timedelta, datetime, timezone
 
 from aiohttp import web, hdrs
-from jose import jwt
+import jwt
 from schema import Schema
 
 from abrechnung.application import InvalidCommand
@@ -37,11 +37,12 @@ def token_for_user(user_id: int, session_id: int, secret_key: str) -> str:
     return jwt.encode(
         {"exp": access_token_expiry(), "user_id": user_id, "session_id": session_id},
         secret_key,
+        algorithm="HS256",
     )
 
 
 def decode_jwt_token(token: str, secret: str) -> dict:
-    return jwt.decode(token, secret, algorithms="HS256")
+    return jwt.decode(token, secret, algorithms=["HS256"])
 
 
 def jwt_middleware(
@@ -84,7 +85,7 @@ def jwt_middleware(
 
         try:
             decoded = decode_jwt_token(token, secret)
-        except jwt.JWTError as exc:
+        except jwt.PyJWTError as exc:
             logger.info(f"Received invalid authorization token: {exc}")
             msg = "Invalid authorization token, " + str(exc)
             raise web.HTTPUnauthorized(reason=msg)

@@ -1,42 +1,16 @@
 # abrechnung
 
-payment management and bookkeeping
+[![GitHub Actions Status](https://github.com/SFTtech/abrechnung/actions/workflows/ci_testing.yaml/badge.svg)](https://github.com/SFTtech/abrechnung/actions/workflows/ci_testing.yaml)
 
-## Architecture
+The **Abrechnung** aims to be a fully fledged, fully featured solution for payment management and bookkeeping in groups.
 
-* psql DB, exposed as websocket and http REST API
-* web-client
-* various python services (e.g. mail delivery)
+* [documentation](https://abrechnung.readthedocs.io)
 
-## Setup
+## Contributing
 
-### Database Setup
+If there is that feature that you really want to see implemented, you found a bug or would like to help in some other 
+way please head over to the [contributing](https://abrechnung.readthedocs.io/en/latest/contributing.html) page.
 
-* Have a running psql db
-* Create the database:
-    * `sudo -u postgres psql`
-    * `create role someuser with login password 'somepassword';`
-    * `create database somedatabasename owner someuser;`
-    * exit the `psql` prompt
-* Copy `config.example.yaml` and edit it, e.g. enter someuser, somepassword and somedatabasename
-* Populate database:
-    * `python3 -m abrechnung -c your-config.yaml db migrate` to apply all database migrations
-* Launch `python3 -m abrechnung -c your-config.yaml api`
-* Launch `python3 -m abrechnung -c your-config.yaml mailer` to get mail delivery
-
-## Developing
-
-Run the tests via
-
-```
-make test
-```
-
-To wipe and rebuild the database run
-
-```
-python3 -m abrechnung -c your-config.yaml db rebuild
-```
 
 ## Contact
 

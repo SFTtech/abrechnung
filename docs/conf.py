@@ -24,7 +24,9 @@ import abrechnung
 
 project = "abrechnung"
 author = "Michael Loipführer, Jonas Jelten, Michael Enßlin"
-copyright = f"{datetime.datetime.now():%Y}, {author}"
+copyright = (  # pylint: disable=redefined-builtin
+    f"{datetime.datetime.now():%Y}, {author}"
+)
 
 version = abrechnung.__version__.replace(".dirty", "")
 release = version
@@ -68,13 +70,12 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # -- Options for HTML output -------------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-#
 html_theme = "sphinx_rtd_theme"
 html_theme_options = dict(navigation_depth=1, titles_only=True)
 github_repo = "abrechnung"

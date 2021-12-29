@@ -24,7 +24,7 @@ dependencies = [
     "aiohttp-cors~=0.7",
     "asyncpg~=0.21",
     "bcrypt~=3.2",
-    "python-jose~=3.3",
+    "pyjwt~=2.2",
     "PyYAML~=5.3",
     "schema~=0.7",
     "email-validator~=1.1",
@@ -54,9 +54,9 @@ max-line-length = 120
 
 [tool.pylint.messages_control]
 disable = [
-    'C',
-    'R',
-    'logging-fstring-interpolation'
+    "C",
+    "R",
+    "logging-fstring-interpolation"
 ]
 
 [tool.mypy]

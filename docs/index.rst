@@ -22,6 +22,7 @@ Welcome to abrechnung's documentation!
    :maxdepth: 2
    :caption: Development
 
+   development/contributing.rst
    development/setup.rst
    development/architecture.rst
    development/api.rst

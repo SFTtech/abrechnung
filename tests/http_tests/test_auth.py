@@ -1,4 +1,4 @@
-from jose import jwt
+import jwt
 
 from abrechnung.http.auth import token_for_user
 from tests.http_tests import BaseHTTPAPITest

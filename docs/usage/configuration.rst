@@ -4,9 +4,9 @@
 Configuration
 ******************
 
-After any change to the configuration make sure to apply it by restarting the respective service.
-
 .. highlight:: shell
+
+After any change to the configuration make sure to apply it by restarting the respective service.
 
 Database
 ---------------

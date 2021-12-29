@@ -4,6 +4,8 @@
 Installation
 ******************
 
+.. highlight:: shell
+
 Debian Bullseye
 ---------------
 This is the recommended installation method as it also installs the prebuilt abrechnung web app.
@@ -26,14 +28,6 @@ Pip
 ---------------
 
 TODO
-
-This is slightly more cumbersome as you need to manually install the web assets, systemd files and configs.
-After ::
-
-  pip3 install abrechnung
-
-fetch the latest tarball from the `github release page <https://github.com/SFTtech/abrechung/releases>`_, extract the files
-and copy the web assets to ``/usr/share/abrechnung_web``
 
 From Release Tarball
 --------------------

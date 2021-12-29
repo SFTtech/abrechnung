@@ -10,7 +10,7 @@ import asyncpg.pool
 import schema
 from aiohttp import web
 from asyncpg.pool import Pool
-from jose import jwt
+import jwt
 
 from abrechnung.application.accounts import AccountService
 from abrechnung.application.groups import GroupService
@@ -313,7 +313,7 @@ class HTTPService(SubCommand):
         auth_token = msg["token"]
         try:
             jwt_claims = decode_jwt_token(auth_token, self.cfg["api"]["secret_key"])
-        except jwt.JWTError as exc:
+        except jwt.PyJWTError as exc:
             return websocket.make_error_msg(
                 code=web.HTTPUnauthorized.status_code, msg=str(exc)
             )
