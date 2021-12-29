@@ -1,4 +1,4 @@
-name: Publish Python 🐍 distributions 📦 to PyPI and Test PyPI
+name: Publish to PyPI and Test PyPI
 on:
   workflow_run:
     workflows: ["Tests"]
