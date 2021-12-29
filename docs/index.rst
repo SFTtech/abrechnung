@@ -25,6 +25,7 @@ Welcome to abrechnung's documentation!
    development/contributing.rst
    development/setup.rst
    development/architecture.rst
+   development/packaging.rst
    development/api.rst
 
 

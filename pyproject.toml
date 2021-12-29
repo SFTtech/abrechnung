@@ -42,12 +42,28 @@ dev = [
     "types-PyYAML~=5.4",
     "pylint~=2.10",
 ]
+docs = [
+    "sphinx",
+    "sphinx-autobuild",
+    "sphinx-autodoc-typehints",
+]
 
 [project.urls]
 Source = "https://github.com/SFTtech/abrechung"
+Documentation = "https://abrechnung.readthedocs.io"
 
 [project.scripts]
 abrechnung = "abrechnung.__main__:main"
+
+[tool.flit.sdist]
+exclude = [
+    "web/",
+    "tools/",
+    ".github",
+    ".readthedocs.yaml",
+    "config",
+    "systemd",
+]
 
 [tool.pylint.format]
 max-line-length = 120
