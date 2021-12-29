@@ -1,0 +1,8 @@
+[Unit]
+Description=Abrechnung Database Cleanup Timer
+
+[Timer]
+OnCalendar=*-*-* 3:00:00
+
+[Install]
+WantedBy=timers.target
