@@ -1,0 +1,11 @@
+[Unit]
+Description=Abrechnung Mail Delivery Service
+After=postgresql.service
+
+[Service]
+ExecStart=/usr/bin/abrechnung mailer
+User=abrechnung
+Group=abrechnung
+
+[Install]
+WantedBy=multi-user.target

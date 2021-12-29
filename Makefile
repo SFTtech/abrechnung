@@ -27,4 +27,8 @@ bandit:
 
 .PHONY: package
 package:
-	python3 -m build
+	flit build
+
+.PHONY: docs
+docs:
+	$(MAKE) -C docs html

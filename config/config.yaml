@@ -1,0 +1,26 @@
+#service:
+#  url: "https://abrechnung.example.lol"
+#  api_url: "https://abrechnung.example.lol/api"
+#  name: "Abrechnung"
+
+database:
+  host: "localhost"
+  user: "abrechnung"
+  dbname: "abrechnung"
+#  password: "<db password>"
+
+api:
+#  secret_key: "<generate a secret key, e.g. with `pwgen -S 64 1`>"
+  host: "localhost"
+  port: 8080
+  id: default
+  enable_registration: true
+
+# email:
+#   address: "abrechnung@example.lol"
+#   host: "localhost"
+#   port: 587
+#   mode: "smtp-starttls"
+#   auth:
+#     username: "abrechnung"
+#     password: "Mb2.r5oHf-0t"
