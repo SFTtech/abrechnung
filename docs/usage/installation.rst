@@ -15,8 +15,8 @@ the latest debian packages (*abrechnung* and *python3-abrechnung*) for the lates
 
 Install them via ::
 
-  dpkg -i python3-abrechnung*.deb
-  dpkg -i abrechnung*.deb
+  sudo apt install ./python3-abrechnung*.deb
+  sudo apt install ./abrechnung*.deb
 
 
 All dependencies, systemd services, config files in ``/etc/abrechnung``, nginx config in ``/etc/nginx/sites-available/abrechnung``
