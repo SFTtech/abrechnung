@@ -1,4 +1,4 @@
-name: Publish to PyPI and Test PyPI
+name: Build release artifacts
 on:
   workflow_run:
     workflows: ["Tests"]
