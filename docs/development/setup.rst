@@ -32,7 +32,7 @@ Or install the dependencies through your package manager (useful for distributio
 
 .. code-block:: shell
 
-  sudo pacman -S python-flit python-yaml python-aiohttp python-aiohttp-cors python-asyncpg python-sphinx python-schema python-email-validator python-bcrypt python-pyjwt python-aiosmtpd python-pytest python-pytest-cov python-black python-mypy python-pylint
+  sudo pacman -S python-flit python-yaml python-aiohttp python-aiohttp-cors python-asyncpg python-sphinx python-schema python-email-validator python-bcrypt python-pyjwt python-aiosmtpd python-pytest python-pytest-cov python-black python-mypy python-pylint python-apispec python-marshmallow python-webargs
 
 Afterwards install the package without dependencies ::
 
@@ -63,6 +63,18 @@ Have a running **PostgreSQL** database and create
 It is always possible wipe and rebuild the database with ::
 
   abrechnung -c config.yaml db rebuild
+
+Database migrations
+-------------------
+
+In case a new features requires changes to the database schema create a new migration file with
+
+.. code-block:: shell
+
+  ./tools/create_revision.py <revision_name>
+
+In case you did not install the abrechnung in development mode it might be necessary to add the project root folder
+to your ``PYTHONPATH``.
 
 Running tests and linters
 -------------------------

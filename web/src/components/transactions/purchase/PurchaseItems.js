@@ -1,6 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState} from "react";
 import {
     Alert,
+    Checkbox,
+    FormControlLabel,
+    Grid,
     IconButton,
     Paper,
     Table,
@@ -13,8 +16,8 @@ import {
     Tooltip,
     Typography
 } from "@mui/material";
-import { useRecoilValue } from "recoil";
-import { groupAccounts } from "../../../recoil/groups";
+import {useRecoilValue, useSetRecoilState} from "recoil";
+import {groupAccounts} from "../../../recoil/groups";
 import {
     addOrChangePurchaseItemShare,
     createPurchaseItem,
@@ -22,11 +25,12 @@ import {
     deletePurchaseItemShare,
     updatePurchaseItem
 } from "../../../api";
-import { toast } from "react-toastify";
-import { makeStyles } from "@mui/styles";
-import { Add, Delete, HelpOutline } from "@mui/icons-material";
+import {toast} from "react-toastify";
+import {makeStyles} from "@mui/styles";
+import {Add, Delete, HelpOutline} from "@mui/icons-material";
 import AccountSelect from "../../style/AccountSelect";
-import { transactionSettings } from "../../../recoil/settings";
+import {transactionSettings} from "../../../recoil/settings";
+import {groupTransactions, updateTransaction} from "../../../recoil/transactions";
 
 
 const useStyles = makeStyles((theme) => ({
@@ -39,7 +43,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-function ShareInput({ value, onChange }) {
+function ShareInput({value, onChange}) {
     const [currValue, setValue] = useState(0);
     const [error, setError] = useState(false);
 
@@ -74,7 +78,7 @@ function ShareInput({ value, onChange }) {
         <TextField
             margin="dense"
             variant="standard"
-            style={{ width: 40 }}
+            style={{width: 40}}
             onBlur={onSave}
             value={currValue}
             error={error}
@@ -84,7 +88,7 @@ function ShareInput({ value, onChange }) {
     );
 }
 
-function WrappedTextField({ value, onChange, initial = null, errorMsg = null, validate = null, ...props }) {
+function WrappedTextField({value, onChange, initial = null, errorMsg = null, validate = null, ...props}) {
     const [currValue, setValue] = useState(initial);
     const [error, setError] = useState(false);
 
@@ -133,10 +137,12 @@ function WrappedTextField({ value, onChange, initial = null, errorMsg = null, va
     );
 }
 
-export default function PurchaseItems({ group, transaction }) {
+export default function PurchaseItems({group, transaction}) {
     const classes = useStyles();
     const accounts = useRecoilValue(groupAccounts(group.id));
+    const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
     const purchaseItems = transaction.purchase_items ? transaction.purchase_items.filter(item => !item.deleted).sort((left, right) => left.id > right.id) : [];
+    const [showAdvanced, setShowAdvanced] = useState(false);
 
     // find all accounts that take part in the transaction, either via debitor shares or purchase items
     // TODO: should we add creditor items as well?
@@ -213,13 +219,13 @@ export default function PurchaseItems({ group, transaction }) {
 
     const updateItem = (item, name, price, communistShares) => {
         if (item.isPending) {
-            const newPendingItems = pendingItems.map(tmpItem => tmpItem.id === item.id ? {
-                ...tmpItem,
-                id: item.id,
+            const newItem = {
+                ...item,
                 name: name,
                 price: price,
-                communist_shares: communistShares
-            } : item);
+                communist_shares: communistShares,
+            }
+            const newPendingItems = pendingItems.map(tmpItem => tmpItem.id === item.id ? newItem : item);
             setPendingItems(newPendingItems);
 
             if (name !== "" && name != null) { // only start submitting once we have a name
@@ -227,9 +233,11 @@ export default function PurchaseItems({ group, transaction }) {
                     transactionID: transaction.id,
                     name: name,
                     price: price,
-                    communistShares: communistShares
+                    communistShares: communistShares,
+                    usages: newItem.usages,
                 }).then(res => {
-                    setItemIDMapping({ ...itemIDMapping, [res.item_id]: item.localID });
+                    updateTransaction(res.transaction, setTransactions);
+                    setItemIDMapping({...itemIDMapping, [res.item_id]: item.localID});
                     let newPendingItems = pendingItems.map(tmpItem => tmpItem.id === item.id ? {
                         ...tmpItem,
                         id: res.item_id
@@ -251,9 +259,13 @@ export default function PurchaseItems({ group, transaction }) {
                     price: price,
                     name: name,
                     communistShares: communistShares
-                }).catch(err => {
-                    toast.error(err);
-                });
+                })
+                    .then(t => {
+                        updateTransaction(t, setTransactions);
+                    })
+                    .catch(err => {
+                        toast.error(err);
+                    });
             }
         }
     };
@@ -262,22 +274,43 @@ export default function PurchaseItems({ group, transaction }) {
         if (item.usages.hasOwnProperty(accountID) && item.usages[accountID] === shares) {
             return;
         }
+        if (item.isPending) {
+            let newUsages = {
+                ...item.usages,
+            }
+            if (shares === 0) {
+                delete newUsages[accountID];
+            } else {
+                newUsages[accountID] = shares;
+            }
 
-        if (shares === 0 && item.usages.hasOwnProperty(accountID)) {
-            deletePurchaseItemShare({
-                itemID: item.id,
-                accountID: accountID
-            }).catch(err => {
-                toast.error(err);
-            });
-        } else if (shares > 0) {
-            addOrChangePurchaseItemShare({
-                itemID: item.id,
-                accountID: accountID,
-                shareAmount: shares
-            }).catch(err => {
-                toast.error(err);
-            });
+            const newItems = pendingItems.map(i => i.id === item.id ? {...item, usages: newUsages} : i);
+            setPendingItems(newItems);
+        } else {
+            if (shares === 0 && item.usages.hasOwnProperty(accountID)) {
+                deletePurchaseItemShare({
+                    itemID: item.id,
+                    accountID: accountID
+                })
+                    .then(t => {
+                        updateTransaction(t, setTransactions);
+                    })
+                    .catch(err => {
+                        toast.error(err);
+                    });
+            } else if (shares > 0) {
+                addOrChangePurchaseItemShare({
+                    itemID: item.id,
+                    accountID: accountID,
+                    shareAmount: shares
+                })
+                    .then(t => {
+                        updateTransaction(t, setTransactions);
+                    })
+                    .catch(err => {
+                        toast.error(err);
+                    });
+            }
         }
     };
 
@@ -290,7 +323,10 @@ export default function PurchaseItems({ group, transaction }) {
                 setPendingItems(filteredItems);
             }
         } else {
-            deletePurchaseItem({ itemID: item.id })
+            deletePurchaseItem({itemID: item.id})
+                .then(t => {
+                    updateTransaction(t, setTransactions);
+                })
                 .catch(err => {
                     toast.error(err);
                 });
@@ -305,7 +341,16 @@ export default function PurchaseItems({ group, transaction }) {
 
     return (
         <Paper elevation={1} className={classes.paper}>
-            <Typography>Positions</Typography>
+            <Grid container direction="row" justifyContent="space-between">
+                <Typography>Positions</Typography>
+                {transaction.is_wip && (
+                    <FormControlLabel
+                        control={<Checkbox name={`show-advanced`}/>}
+                        checked={showAdvanced}
+                        onChange={event => setShowAdvanced(event.target.checked)}
+                        label="Advanced"/>
+                )}
+            </Grid>
             <TableContainer>
                 <Table className={classes.table} aria-label="purchase items" size="small">
                     <TableHead>
@@ -315,7 +360,7 @@ export default function PurchaseItems({ group, transaction }) {
                             {(transaction.is_wip ? transactionAccounts : purchaseItemAccounts).map(accountID => (
                                 <TableCell
                                     align="right"
-                                    sx={{ minWidth: 80 }}
+                                    sx={{minWidth: 80}}
                                     key={accountID}
                                 >
                                     {accounts.find(account => account.id === accountID).name}
@@ -326,13 +371,13 @@ export default function PurchaseItems({ group, transaction }) {
                                     {showAccountSelect && (
                                         <TableCell align="right">
                                             <AccountSelect group={group} exclude={transactionAccounts}
-                                                           onChange={addPurchaseItemAccount} />
+                                                           onChange={addPurchaseItemAccount}/>
                                         </TableCell>
                                     )}
                                     {showAddAccount && (
                                         <TableCell align="right">
                                             <IconButton onClick={() => setShowAccountSelect(true)}>
-                                                <Add />
+                                                <Add/>
                                             </IconButton>
                                         </TableCell>
                                     )}
@@ -358,7 +403,7 @@ export default function PurchaseItems({ group, transaction }) {
                                     <TableCell align="right">
                                         <WrappedTextField
                                             value={item.price}
-                                            style={{ width: 70 }}
+                                            style={{width: 70}}
                                             onChange={value => updateItem(item, item.name, parseFloat(value), item.communist_shares)}
                                             validate={validateFloat}
                                             errorMsg={"float required"}
@@ -366,10 +411,18 @@ export default function PurchaseItems({ group, transaction }) {
                                     </TableCell>
                                     {transactionAccounts.map(accountID => (
                                         <TableCell align="right" key={accountID}>
-                                            <ShareInput
-                                                value={item.usages.hasOwnProperty(String(accountID)) ? item.usages[String(accountID)] : 0}
-                                                onChange={value => updateItemUsage(item, accountID, value)}
-                                            />
+                                            {showAdvanced ? (
+                                                    <ShareInput
+                                                        value={item.usages.hasOwnProperty(String(accountID)) ? item.usages[String(accountID)] : 0}
+                                                        onChange={value => updateItemUsage(item, accountID, value)}
+                                                    />
+                                                ) :
+                                                <Checkbox
+                                                    name={`${accountID}-checked`}
+                                                    checked={item.usages.hasOwnProperty(String(accountID))}
+                                                    onChange={event => updateItemUsage(item, accountID, event.target.checked ? 1 : 0)}
+                                                />
+                                            }
                                         </TableCell>
                                     ))}
                                     {showAccountSelect && (
@@ -379,14 +432,22 @@ export default function PurchaseItems({ group, transaction }) {
                                         <TableCell></TableCell>
                                     )}
                                     <TableCell align="right">
-                                        <ShareInput
-                                            value={item.communist_shares}
-                                            onChange={value => updateItem(item, item.name, item.price, parseFloat(value))}
-                                        />
+                                        {showAdvanced ? (
+                                            <ShareInput
+                                                value={item.communist_shares}
+                                                onChange={value => updateItem(item, item.name, item.price, parseFloat(value))}
+                                            />
+                                        ) : (
+                                            <Checkbox
+                                                name="communist-checked"
+                                                checked={item.communist_shares !== 0}
+                                                onChange={event => updateItem(item, item.name, item.price, event.target.checked ? 1 : 0)}
+                                            />
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <IconButton onClick={() => deleteItem(item)}>
-                                            <Delete />
+                                            <Delete/>
                                         </IconButton>
                                     </TableCell>
                                 </TableRow>
@@ -396,7 +457,7 @@ export default function PurchaseItems({ group, transaction }) {
                                 <TableRow hover key={item.id}>
                                     <TableCell>{item.name}</TableCell>
                                     <TableCell align="right"
-                                               style={{ width: 80 }}>{item.price.toFixed(2)} {transaction.currency_symbol}</TableCell>
+                                               style={{width: 80}}>{item.price.toFixed(2)} {transaction.currency_symbol}</TableCell>
                                     {purchaseItemAccounts.map(accountID => (
                                         <TableCell
                                             align="right"
@@ -410,7 +471,7 @@ export default function PurchaseItems({ group, transaction }) {
                             ))
                         }
                         <TableRow hover>
-                            <TableCell><Typography sx={{ fontWeight: "bold" }}>Total:</Typography></TableCell>
+                            <TableCell><Typography sx={{fontWeight: "bold"}}>Total:</Typography></TableCell>
                             <TableCell
                                 align="right"
                             >
@@ -440,10 +501,10 @@ export default function PurchaseItems({ group, transaction }) {
             {showMissingValueAlert && sharedTransactionValue > 0 && (
                 <Alert
                     severity="info"
-                    sx={{ marginTop: 2 }}
+                    sx={{marginTop: 2}}
                     action={
                         <Tooltip title="This message can be turned off in your profile settings.">
-                            <HelpOutline />
+                            <HelpOutline/>
                         </Tooltip>
                     }
                 >

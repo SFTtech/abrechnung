@@ -1,0 +1,5 @@
+abrechnung (0.3.0) stable; urgency=medium
+
+  * Initial debian release
+
+ -- Michael Loipführer <milo@sft.lol>  Wed, 29 Dec 2021 16:22:24 +0000

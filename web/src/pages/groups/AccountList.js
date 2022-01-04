@@ -1,10 +1,10 @@
 import AccountCreateModal from "../../components/groups/AccountCreateModal";
 import AccountEditModal from "../../components/groups/AccountEditModal";
-import React, { useState } from "react";
-import { useRecoilValue } from "recoil";
-import { currUserPermissions, groupAccounts } from "../../recoil/groups";
-import { deleteAccount } from "../../api";
-import { toast } from "react-toastify";
+import React, {useState} from "react";
+import {useRecoilValue, useSetRecoilState} from "recoil";
+import {currUserPermissions, groupAccounts, groupAccountsRaw, updateAccount} from "../../recoil/groups";
+import {deleteAccount} from "../../api";
+import {toast} from "react-toastify";
 import {
     Button,
     Dialog,
@@ -19,24 +19,17 @@ import {
     ListItemText,
     Paper
 } from "@mui/material";
-import { Add, Delete, Edit } from "@mui/icons-material";
-import { makeStyles } from "@mui/styles";
+import {Add, Delete, Edit} from "@mui/icons-material";
 import ListItemLink from "../../components/style/ListItemLink";
 
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2)
-    }
-}));
-
-export default function Accounts({ group }) {
+export default function AccountList({group}) {
     const [showAccountCreationModal, setShowAccountCreationModal] = useState(false);
     const [showAccountEditModal, setShowAccountEditModal] = useState(false);
     const [accountToEdit, setAccountToEdit] = useState(null);
+    const setAccounts = useSetRecoilState(groupAccountsRaw(group.id));
     const accounts = useRecoilValue(groupAccounts(group.id));
     const [accountToDelete, setAccountToDelete] = useState(null);
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
-    const classes = useStyles();
 
     const openAccountEdit = (account) => {
         setAccountToEdit(account);
@@ -50,8 +43,9 @@ export default function Accounts({ group }) {
 
     const confirmDeleteAccount = () => {
         if (accountToDelete !== null) {
-            deleteAccount({ groupID: group.id, accountID: accountToDelete })
-                .then(res => {
+            deleteAccount({groupID: group.id, accountID: accountToDelete})
+                .then(account => {
+                    updateAccount(account, setAccounts);
                     setAccountToDelete(null);
                 })
                 .catch(err => {
@@ -61,31 +55,31 @@ export default function Accounts({ group }) {
     };
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <Paper elevation={1} sx={{padding: 2}}>
             <List>
                 {accounts.length === 0 ? (
                     <ListItem key={0}>
-                        <ListItemText primary="No Accounts" />
+                        <ListItemText primary="No Accounts"/>
                     </ListItem>
                 ) : (
                     accounts.map(account => (
                         <ListItem
-                            sx={{ padding: 0 }}
+                            sx={{padding: 0}}
                             key={account.id}
                         >
                             <ListItemLink
                                 to={`/groups/${group.id}/accounts/${account.id}`}
                             >
                                 <ListItemText primary={account.name}
-                                              secondary={account.description} />
+                                              secondary={account.description}/>
                             </ListItemLink>
                             {userPermissions.can_write && (
                                 <ListItemSecondaryAction>
                                     <IconButton color="primary" onClick={() => openAccountEdit(account)}>
-                                        <Edit />
+                                        <Edit/>
                                     </IconButton>
                                     <IconButton color="error" onClick={() => setAccountToDelete(account.id)}>
-                                        <Delete />
+                                        <Delete/>
                                     </IconButton>
                                 </ListItemSecondaryAction>
                             )}
@@ -98,14 +92,14 @@ export default function Accounts({ group }) {
                     <Grid container justifyContent="center">
                         <IconButton color="primary"
                                     onClick={() => setShowAccountCreationModal(true)}>
-                            <Add />
+                            <Add/>
                         </IconButton>
                     </Grid>
                     <AccountCreateModal show={showAccountCreationModal}
                                         onClose={() => setShowAccountCreationModal(false)}
-                                        group={group} />
+                                        group={group}/>
                     <AccountEditModal show={showAccountEditModal} onClose={closeAccountEdit} account={accountToEdit}
-                                      group={group} />
+                                      group={group}/>
                 </>
             )}
             <Dialog

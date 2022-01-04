@@ -1,20 +1,23 @@
-import { Form, Formik } from "formik";
+import {Form, Formik} from "formik";
 import React from "react";
-import { toast } from "react-toastify";
-import { updateAccount } from "../../api";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
+import {toast} from "react-toastify";
+import {updateAccountDetails} from "../../api";
+import {Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField} from "@mui/material";
+import {groupAccountsRaw, updateAccount} from "../../recoil/groups";
+import {useSetRecoilState} from "recoil";
 
-export default function AccountEditModal({ group, show, onClose, account }) {
+export default function AccountEditModal({group, show, onClose, account}) {
+    const setAccounts = useSetRecoilState(groupAccountsRaw(group.id));
 
-    const handleSubmit = (values, { setSubmitting }) => {
-        updateAccount({
+    const handleSubmit = (values, {setSubmitting}) => {
+        updateAccountDetails({
             groupID: group.id,
             accountID: values.accountID,
             name: values.name,
             description: values.description
         })
-            .then(result => {
-                toast.success(`Updated account ${values.name}`);
+            .then(account => {
+                updateAccount(account, setAccounts);
                 setSubmitting(false);
                 onClose();
             }).catch(err => {
@@ -34,7 +37,7 @@ export default function AccountEditModal({ group, show, onClose, account }) {
                     description: account?.description
                 }} onSubmit={handleSubmit}
                         enableReinitialize={true}>
-                    {({ values, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+                    {({values, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
                         <Form>
                             <TextField
                                 margin="normal"
@@ -60,7 +63,7 @@ export default function AccountEditModal({ group, show, onClose, account }) {
                                 onChange={handleChange}
                             />
 
-                            {isSubmitting && <LinearProgress />}
+                            {isSubmitting && <LinearProgress/>}
                             <DialogActions>
                                 <Button color="primary" type="submit" onClick={handleSubmit}>
                                     Save

@@ -7,10 +7,10 @@ from typing import Optional
 import aiohttp
 import aiohttp_cors as aiohttp_cors
 import asyncpg.pool
+import jwt
 import schema
 from aiohttp import web
 from asyncpg.pool import Pool
-import jwt
 
 from abrechnung.application.accounts import AccountService
 from abrechnung.application.groups import GroupService
@@ -20,6 +20,7 @@ from abrechnung.config import Config
 from abrechnung.database import db_connect
 from abrechnung.http import auth, groups, transactions, websocket, accounts
 from abrechnung.http.auth import jwt_middleware, decode_jwt_token
+from abrechnung.http.openapi import setup_aiohttp_apispec, validation_middleware
 from abrechnung.http.utils import error_middleware, encode_json
 from abrechnung.subcommand import SubCommand
 
@@ -58,6 +59,9 @@ class HTTPService(SubCommand):
             # configure automatic decoding of json type postgresql values
             await conn.set_type_codec(
                 "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
+            )
+            await conn.set_type_codec(
+                "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
             )
 
             await self._register_forwarder(conn, forwarder_id=self.cfg["api"]["id"])
@@ -103,6 +107,32 @@ class HTTPService(SubCommand):
         self.logger.info(f"Unregistered forwarder {forwarder_id}")
         await connection.execute("select * from forwarder_stop($1)", forwarder_id)
 
+    def _create_api_app(
+        self, db_pool: Pool, middlewares: Optional[list] = None
+    ) -> web.Application:
+        api_app = web.Application(middlewares=middlewares)  # type: ignore
+        api_app["secret_key"] = self.cfg["api"]["secret_key"]
+        api_app["db_pool"] = db_pool
+        api_app["config"] = self.cfg
+
+        api_app["user_service"] = UserService(
+            db_pool=db_pool,
+            config=self.cfg,
+        )
+        api_app["group_service"] = GroupService(db_pool=db_pool, config=self.cfg)
+        api_app["account_service"] = AccountService(db_pool=db_pool, config=self.cfg)
+        api_app["transaction_service"] = TransactionService(
+            db_pool=db_pool, config=self.cfg
+        )
+
+        api_app.add_routes(groups.routes)
+        api_app.add_routes(transactions.routes)
+        api_app.add_routes(auth.routes)
+        api_app.add_routes(accounts.routes)
+
+        api_app.router.add_route("GET", "/ws", self.handle_ws_connection)
+        return api_app
+
     def create_app(
         self,
         db_pool: Pool,
@@ -125,35 +155,15 @@ class HTTPService(SubCommand):
                     "/api/v1/auth/recover_password",
                     "/api/v1/auth/confirm_password_recovery",
                     "/api/v1/ws",
+                    "/api/v1/docs",
+                    "/api/v1/static",
                 ],
             )
             middlewares = [auth_middleware]
 
-        middlewares += [error_middleware]
+        middlewares += [error_middleware, validation_middleware]
 
-        api_app = web.Application(middlewares=middlewares)
-        api_app["secret_key"] = self.cfg["api"]["secret_key"]
-        api_app["db_pool"] = db_pool
-        api_app["config"] = self.cfg
-
-        api_app["user_service"] = UserService(
-            db_pool=db_pool,
-            enable_registration=self.cfg["api"].get("enable_registration", True),
-            config=self.cfg,
-            valid_email_domains=self.cfg["api"].get("valid_email_domains"),
-        )
-        api_app["group_service"] = GroupService(db_pool=db_pool, config=self.cfg)
-        api_app["account_service"] = AccountService(db_pool=db_pool, config=self.cfg)
-        api_app["transaction_service"] = TransactionService(
-            db_pool=db_pool, config=self.cfg
-        )
-
-        api_app.add_routes(groups.routes)
-        api_app.add_routes(transactions.routes)
-        api_app.add_routes(auth.routes)
-        api_app.add_routes(accounts.routes)
-
-        api_app.router.add_route("GET", "/ws", self.handle_ws_connection)
+        api_app = self._create_api_app(db_pool=db_pool, middlewares=middlewares)
 
         if self.cfg["api"].get("enable_cors", False):
             cors = aiohttp_cors.setup(
@@ -170,6 +180,13 @@ class HTTPService(SubCommand):
             # add all routes to cors exemptions
             for route in list(api_app.router.routes()):
                 cors.add(route)
+
+        setup_aiohttp_apispec(
+            app=api_app,
+            title="Abrechnung OpenAPI Documentation",
+            version="v1",
+            url="/docs/swagger.json",
+        )
 
         app.add_subapp("/api/v1/", api_app)
 

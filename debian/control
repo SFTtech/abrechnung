@@ -1,0 +1,33 @@
+Source: abrechnung
+Section: contrib/python
+Priority: optional
+Maintainer: Michael Loipführer <milo@sft.lol>
+Build-Depends:
+ debhelper (>= 10),
+ dh-virtualenv (>= 1.1),
+ libsystemd-dev,
+ libpq-dev,
+ lsb-release,
+ python3-dev,
+ python3,
+ python3-setuptools,
+ python3-pip,
+ python3-venv,
+ tar,
+ yarn
+Standards-Version: 3.9.8
+X-Python-Version: >= 3.9
+Rules-Requires-Root: binary-targets
+Homepage: https://github.com/SFTtech/abrechnung
+Vcs-Browser: https://github.com/SFTtech/abrechung
+Vcs-Git: https://github.com/SFTtech/abrechnung.git
+
+Package: abrechnung
+Architecture: any
+Depends:
+ postgresql,
+ adduser,
+ ${misc:Depends},
+ ${python3:Depends}
+Suggests: nginx
+Description: Fully fledged, feature complete payment management and bookkeeping.

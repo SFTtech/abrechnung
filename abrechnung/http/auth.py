@@ -2,16 +2,17 @@ import logging
 import re
 from datetime import timedelta, datetime, timezone
 
-from aiohttp import web, hdrs
 import jwt
-from schema import Schema
+from aiohttp import web, hdrs
+from marshmallow import Schema, fields
 
 from abrechnung.application import InvalidCommand
 from abrechnung.application.users import (
     InvalidPassword,
 )
-from abrechnung.http.serializers import UserSerializer
-from abrechnung.http.utils import validate, json_response
+from abrechnung.http.serializers import UserSchema
+from abrechnung.http.utils import json_response
+from abrechnung.http.openapi import docs, json_schema
 
 logger = logging.getLogger(__name__)
 
@@ -115,8 +116,19 @@ def jwt_middleware(
 
 
 @routes.post("/auth/login")
-@validate(Schema({"username": str, "password": str, "session_name": str}))
-async def login(request, data):
+@docs(tags=["auth"], summary="login with username and password", description="")
+@json_schema(
+    Schema.from_dict(
+        {
+            "username": fields.Str(),
+            "password": fields.Str(),
+            "session_name": fields.Str(),
+        },
+        name="LoginSchema",
+    )
+)
+async def login(request):
+    data = request["json"]
     user_id, session_id, session_token = await request.app["user_service"].login_user(
         username=data["username"],
         password=data["password"],
@@ -137,6 +149,7 @@ async def login(request, data):
 
 
 @routes.post("/auth/logout")
+@docs(tags=["auth"], summary="sign out of the current session", description="")
 async def logout(request):
     await request.app["user_service"].logout_user(
         session_id=request["user"]["session_id"], user_id=request["user"]["user_id"]
@@ -145,8 +158,14 @@ async def logout(request):
 
 
 @routes.post("/auth/fetch_access_token")
-@validate(Schema({"token": str}))
-async def fetch_access_token(request, data):
+@docs(
+    tags=["auth"],
+    summary="get a short lived access token ussing a session token",
+    description="",
+)
+@json_schema(Schema.from_dict({"token": fields.Str()}, name="FetchAccessTokenSchema"))
+async def fetch_access_token(request):
+    data = request["json"]
     row = await request.app["user_service"].is_session_token_valid(token=data["token"])
     if row is None:
         raise web.HTTPBadRequest(reason="invalid session token")
@@ -166,8 +185,15 @@ async def fetch_access_token(request, data):
 
 
 @routes.post("/auth/register")
-@validate(Schema({"username": str, "password": str, "email": str}))
-async def register(request, data):
+@docs(tags=["auth"], summary="register a new user", description="")
+@json_schema(
+    Schema.from_dict(
+        {"username": fields.Str(), "password": fields.Str(), "email": fields.Str()},
+        name="RegisterSchema",
+    )
+)
+async def register(request):
+    data = request["json"]
     user_id = await request.app["user_service"].register_user(
         username=data["username"],
         password=data["password"],
@@ -178,8 +204,12 @@ async def register(request, data):
 
 
 @routes.post("/auth/confirm_registration")
-@validate(Schema({"token": str}))
-async def confirm_registration(request, data):
+@docs(tags=["auth"], summary="confirm a pending registration", description="")
+@json_schema(
+    Schema.from_dict({"token": fields.Str()}, name="ConfirmRegistrationSchema")
+)
+async def confirm_registration(request):
+    data = request["json"]
     try:
         await request.app["user_service"].confirm_registration(token=data["token"])
     except (PermissionError, InvalidCommand) as e:
@@ -189,19 +219,27 @@ async def confirm_registration(request, data):
 
 
 @routes.get("/profile")
+@docs(tags=["auth"], summary="fetch user profile information", description="")
 async def profile(request):
     user = await request.app["user_service"].get_user(
         user_id=request["user"]["user_id"]
     )
 
-    serializer = UserSerializer(user, config=request.app["config"])
+    serializer = UserSchema()
 
-    return json_response(data=serializer.to_repr())
+    return json_response(data=serializer.dump(user))
 
 
 @routes.post("/profile/change_password")
-@validate(Schema({"new_password": str, "old_password": str}))
-async def change_password(request, data):
+@docs(tags=["auth"], summary="change password", description="")
+@json_schema(
+    Schema.from_dict(
+        {"new_password": fields.Str(), "old_password": fields.Str()},
+        name="ChangePasswordSchema",
+    )
+)
+async def change_password(request):
+    data = request["json"]
     try:
         await request.app["user_service"].change_password(
             user_id=request["user"]["user_id"],
@@ -215,8 +253,14 @@ async def change_password(request, data):
 
 
 @routes.post("/profile/change_email")
-@validate(Schema({"email": str, "password": str}))
-async def change_email(request, data):
+@docs(tags=["auth"], summary="change email", description="")
+@json_schema(
+    Schema.from_dict(
+        {"email": fields.Email(), "password": fields.Str()}, name="ChangeEmailSchema"
+    )
+)
+async def change_email(request):
+    data = request["json"]
     try:
         await request.app["user_service"].request_email_change(
             user_id=request["user"]["user_id"],
@@ -230,16 +274,20 @@ async def change_email(request, data):
 
 
 @routes.post("/auth/confirm_email_change")
-@validate(Schema({"token": str}))
-async def confirm_email_change(request, data):
+@docs(tags=["auth"], summary="confirm a pending email change", description="")
+@json_schema(Schema.from_dict({"token": fields.Str()}, name="ConfirmEmailChangeSchema"))
+async def confirm_email_change(request):
+    data = request["json"]
     await request.app["user_service"].confirm_email_change(token=data["token"])
 
     return json_response(status=web.HTTPNoContent.status_code)
 
 
 @routes.post("/auth/recover_password")
-@validate(Schema({"email": str}))
-async def recover_password(request, data):
+@docs(tags=["auth"], summary="recover password", description="")
+@json_schema(Schema.from_dict({"email": fields.Email()}, name="RecoverPasswordSchema"))
+async def recover_password(request):
+    data = request["json"]
     try:
         await request.app["user_service"].request_password_recovery(
             email=data["email"],
@@ -251,8 +299,15 @@ async def recover_password(request, data):
 
 
 @routes.post("/auth/confirm_password_recovery")
-@validate(Schema({"token": str, "new_password": str}))
-async def confirm_password_recovery(request, data):
+@docs(tags=["auth"], summary="confirm a pending password recovery", description="")
+@json_schema(
+    Schema.from_dict(
+        {"token": fields.Str(), "new_password": fields.Str()},
+        name="ConfirmPasswordRecoverySchema",
+    )
+)
+async def confirm_password_recovery(request):
+    data = request["json"]
     try:
         await request.app["user_service"].confirm_password_recovery(
             token=data["token"], new_password=data["new_password"]
@@ -264,8 +319,10 @@ async def confirm_password_recovery(request, data):
 
 
 @routes.post("/auth/delete_session")
-@validate(Schema({"session_id": int}))
-async def delete_session(request, data):
+@docs(tags=["auth"], summary="delete a given user session", description="")
+@json_schema(Schema.from_dict({"session_id": fields.Int()}, name="DeleteSessionSchema"))
+async def delete_session(request):
+    data = request["json"]
     await request.app["user_service"].delete_session(
         user_id=request["user"]["user_id"], session_id=data["session_id"]
     )
@@ -274,8 +331,14 @@ async def delete_session(request, data):
 
 
 @routes.post("/auth/rename_session")
-@validate(Schema({"session_id": int, "name": str}))
-async def rename_session(request, data):
+@docs(tags=["auth"], summary="rename a given user session", description="")
+@json_schema(
+    Schema.from_dict(
+        {"session_id": fields.Int(), "name": fields.Str()}, name="RenameSessionSchema"
+    )
+)
+async def rename_session(request):
+    data = request["json"]
     await request.app["user_service"].rename_session(
         user_id=request["user"]["user_id"],
         session_id=data["session_id"],

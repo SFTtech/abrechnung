@@ -13,14 +13,15 @@ class TransactionLogicTest(AsyncTestCase):
     async def setUpAsync(self) -> None:
         await super().setUpAsync()
         self.secret_key = "asdf1234"
-        self.test_config = Config(
-            {"api": {"secret_key": self.secret_key, "max_uploadable_file_size": 512}}
+        self.test_config = Config.from_dict(
+            {
+                "api": {"secret_key": self.secret_key, "max_uploadable_file_size": 512},
+                "service": {"api_url": "http://localhost/api"},
+            }
         )
         self.group_service = GroupService(self.db_pool, config=self.test_config)
         self.account_service = AccountService(self.db_pool, config=self.test_config)
-        self.user_service = UserService(
-            self.db_pool, config=self.test_config, enable_registration=True
-        )
+        self.user_service = UserService(self.db_pool, config=self.test_config)
         self.transaction_service = TransactionService(
             self.db_pool, config=self.test_config
         )

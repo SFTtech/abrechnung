@@ -1,2 +1,5 @@
 sphinx-autobuild
 sphinx-autodoc-typehints
+sphinxcontrib-openapi
+apispec
+webargs

@@ -12,13 +12,18 @@ import datetime
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import json
 import sys
 from pathlib import Path
 
 HERE = Path(__file__).parent
 sys.path[:0] = [str(HERE.parent), str(HERE / "_ext")]
+BUILD_DIR = HERE / "_build"
 
 import abrechnung
+from abrechnung.config import Config
+from abrechnung.http import HTTPService, validation_middleware
+from abrechnung.http.openapi import setup_aiohttp_apispec
 
 # -- Project information -----------------------------------------------------
 
@@ -45,6 +50,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
     "sphinx_autodoc_typehints",
+    "sphinxcontrib.openapi",
     *[p.stem for p in (HERE / "_ext").glob("*.py")],
 ]
 
@@ -92,3 +98,27 @@ html_context = dict(
 # so a file named "default.css" will overwrite the builtin "default.css".
 # html_static_path = ["_static"]
 html_show_sphinx = False
+
+
+# generate swagger OpenAPI
+
+
+def generate_openapi_json():
+    config = Config({"api": {"secret_key": "foobar"}})
+    service = HTTPService(config)
+    app = service._create_api_app(  # pylint: disable=protected-access
+        db_pool=None, middlewares=[validation_middleware]
+    )  # FIXME: hack to not require db connection
+
+    openapi = setup_aiohttp_apispec(
+        app=app,
+        title="Abrechnung OpenAPI Documentation",
+        version="v1",
+        url="/docs/swagger.json",
+        in_place=True,
+    )
+    with open(BUILD_DIR / "openapi.json", "w+", encoding="utf-8") as f:
+        json.dump(openapi.swagger_dict(), f)
+
+
+generate_openapi_json()

@@ -26,8 +26,11 @@ dependencies = [
     "bcrypt~=3.2",
     "pyjwt~=2.2",
     "PyYAML~=5.3",
-    "schema~=0.7",
+    "marshmallow~=3.10",
+    "schema",
     "email-validator~=1.1",
+    "apispec",
+    "webargs"
 ]
 
 [project.optional-dependencies]
@@ -72,6 +75,7 @@ max-line-length = 120
 disable = [
     "C",
     "R",
+    "fixme",
     "logging-fstring-interpolation"
 ]
 

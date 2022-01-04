@@ -1,14 +1,16 @@
 import React from "react";
-import {useRecoilValue} from "recoil";
+import {useRecoilValue, useSetRecoilState} from "recoil";
 import {groupAccounts} from "../../recoil/groups";
 import {toast} from "react-toastify";
 import AccountSelect from "../style/AccountSelect";
 import {switchDebitorShare} from "../../api";
+import {groupTransactions, updateTransaction} from "../../recoil/transactions";
 
 
 export default function TransactionDebitorShare({group, transaction, isEditing, ...props}) {
     const accounts = useRecoilValue(groupAccounts(group.id));
     const shareAccountID = Object.keys(transaction.debitor_shares).length === 0 ? null : Object.keys(transaction.debitor_shares)[0];
+    const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
 
     const getAccount = (accountID) => {
         return accounts.find(account => account.id === accountID);
@@ -25,6 +27,9 @@ export default function TransactionDebitorShare({group, transaction, isEditing, 
                 accountID: account.id,
                 value: 1.0
             })
+                .then(t => {
+                    updateTransaction(t, setTransactions);
+                })
                 .catch(err => {
                     toast.error(err);
                 });

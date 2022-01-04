@@ -45,8 +45,9 @@ class MailerTest(AsyncTestCase):
         self.smtp = Controller(self.smtp_handler)
         self.smtp.start()
 
-        self.mailer_config = Config(
+        self.mailer_config = Config.from_dict(
             {
+                "api": {"enable_registration": True},
                 "email": {
                     "host": self.smtp.hostname,
                     "port": self.smtp.port,
@@ -63,9 +64,7 @@ class MailerTest(AsyncTestCase):
 
         self.mailer_task = asyncio.create_task(self.mailer.run())
 
-        self.user_service = UserService(
-            db_pool=self.db_pool, config=self.mailer_config, enable_registration=True
-        )
+        self.user_service = UserService(db_pool=self.db_pool, config=self.mailer_config)
 
     async def tearDownAsync(self) -> None:
         await super().tearDownAsync()

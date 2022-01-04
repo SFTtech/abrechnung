@@ -13,7 +13,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-export function TransactionLogEntry({ group, transaction }) {
+export function TransactionListEntry({ group, transaction }) {
     const classes = useStyles();
 
     const accounts = useRecoilValue(groupAccounts(group.id));

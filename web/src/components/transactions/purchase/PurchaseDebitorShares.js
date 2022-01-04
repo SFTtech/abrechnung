@@ -1,4 +1,4 @@
-import { useRecoilValue } from "recoil";
+import {useRecoilValue, useSetRecoilState} from "recoil";
 import { groupAccounts } from "../../../recoil/groups";
 import {
     Checkbox,
@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { createOrUpdateDebitorShare, deleteDebitorShare } from "../../../api";
 import { makeStyles } from "@mui/styles";
 import { Link } from "react-router-dom";
+import {groupTransactions, updateTransaction} from "../../../recoil/transactions";
 
 const useStyles = makeStyles((theme) => ({
     shareValue: {
@@ -100,6 +101,7 @@ export default function PurchaseDebitorShares({ group, transaction, showPosition
     const classes = useStyles();
 
     const accounts = useRecoilValue(groupAccounts(group.id));
+    const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
 
     const [debitorShareValues, setDebitorShareValues] = useState({});
     const [showAdvanced, setShowAdvanced] = useState(false);
@@ -144,6 +146,9 @@ export default function PurchaseDebitorShares({ group, transaction, showPosition
                 accountID: accountID,
                 value: debitorShareValues[accountID] || 1
             })
+                .then(t => {
+                    updateTransaction(t, setTransactions);
+                })
                 .catch(err => {
                     toast.error(err);
                 });
@@ -154,6 +159,9 @@ export default function PurchaseDebitorShares({ group, transaction, showPosition
                 transactionID: transaction.id,
                 accountID: accountID
             })
+                .then(t => {
+                    updateTransaction(t, setTransactions);
+                })
                 .catch(err => {
                     toast.error(err);
                 });
@@ -167,6 +175,9 @@ export default function PurchaseDebitorShares({ group, transaction, showPosition
                 transactionID: transaction.id,
                 accountID: accountID
             })
+                .then(t => {
+                    updateTransaction(t, setTransactions);
+                })
                 .catch(err => {
                     toast.error(err);
                 });
@@ -177,6 +188,9 @@ export default function PurchaseDebitorShares({ group, transaction, showPosition
                 accountID: accountID,
                 value: shares
             })
+                .then(t => {
+                    updateTransaction(t, setTransactions);
+                })
                 .catch(err => {
                     toast.error(err);
                 });

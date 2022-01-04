@@ -52,7 +52,7 @@ class TransactionAPITest(HTTPAPITest):
         billed_at: date,
         currency_symbol: str,
         currency_conversion_rate: float,
-        expected_status: int = 204,
+        expected_status: int = 200,
     ) -> dict:
         resp = await self._post(
             f"/api/v1/transactions/{transaction_id}",
@@ -69,25 +69,25 @@ class TransactionAPITest(HTTPAPITest):
         return ret_data
 
     async def _commit_transaction(
-        self, transaction_id: int, expected_status: int = 204
+        self, transaction_id: int, expected_status: int = 200
     ) -> None:
         resp = await self._post(f"/api/v1/transactions/{transaction_id}/commit")
         self.assertEqual(expected_status, resp.status)
 
     async def _create_change(
-        self, transaction_id: int, expected_status: int = 204
+        self, transaction_id: int, expected_status: int = 200
     ) -> None:
         resp = await self._post(f"/api/v1/transactions/{transaction_id}/new_change")
         self.assertEqual(expected_status, resp.status)
 
     async def _delete_transaction(
-        self, transaction_id: int, expected_status: int = 204
+        self, transaction_id: int, expected_status: int = 200
     ) -> None:
         resp = await self._delete(f"/api/v1/transactions/{transaction_id}")
         self.assertEqual(expected_status, resp.status)
 
     async def _discard_transaction_change(
-        self, transaction_id: int, expected_status: int = 204
+        self, transaction_id: int, expected_status: int = 200
     ) -> None:
         resp = await self._post(f"/api/v1/transactions/{transaction_id}/discard")
         self.assertEqual(expected_status, resp.status)
@@ -97,7 +97,7 @@ class TransactionAPITest(HTTPAPITest):
         transaction_id: int,
         account_id: int,
         value: float,
-        expected_status: int = 204,
+        expected_status: int = 200,
     ) -> None:
         resp = await self._post(
             f"/api/v1/transactions/{transaction_id}/creditor_shares",
@@ -110,7 +110,7 @@ class TransactionAPITest(HTTPAPITest):
         transaction_id: int,
         account_id: int,
         value: float,
-        expected_status: int = 204,
+        expected_status: int = 200,
     ) -> None:
         resp = await self._post(
             f"/api/v1/transactions/{transaction_id}/creditor_shares/switch",
@@ -122,7 +122,7 @@ class TransactionAPITest(HTTPAPITest):
         self,
         transaction_id: int,
         account_id: int,
-        expected_status: int = 204,
+        expected_status: int = 200,
     ) -> None:
         resp = await self._delete(
             f"/api/v1/transactions/{transaction_id}/creditor_shares",
@@ -135,7 +135,7 @@ class TransactionAPITest(HTTPAPITest):
         transaction_id: int,
         account_id: int,
         value: float,
-        expected_status: int = 204,
+        expected_status: int = 200,
     ) -> None:
         resp = await self._post(
             f"/api/v1/transactions/{transaction_id}/debitor_shares",
@@ -148,7 +148,7 @@ class TransactionAPITest(HTTPAPITest):
         transaction_id: int,
         account_id: int,
         value: float,
-        expected_status: int = 204,
+        expected_status: int = 200,
     ) -> None:
         resp = await self._post(
             f"/api/v1/transactions/{transaction_id}/debitor_shares/switch",
@@ -160,7 +160,7 @@ class TransactionAPITest(HTTPAPITest):
         self,
         transaction_id: int,
         account_id: int,
-        expected_status: int = 204,
+        expected_status: int = 200,
     ) -> None:
         resp = await self._delete(
             f"/api/v1/transactions/{transaction_id}/debitor_shares",
@@ -189,7 +189,7 @@ class TransactionAPITest(HTTPAPITest):
         )
         self.assertEqual(200, resp.status)
         ret_data = await resp.json()
-        self.assertIsNotNone(ret_data["transaction_id"])
+        self.assertIsNotNone(ret_data["id"])
 
     async def test_list_transactions(self):
         group_id = await self.group_service.create_group(
@@ -376,7 +376,7 @@ class TransactionAPITest(HTTPAPITest):
         await self._post_debitor_share(transaction_id, account2_id, 1.0)
 
         # now we should be able to commit
-        await self._commit_transaction(transaction_id, expected_status=204)
+        await self._commit_transaction(transaction_id, expected_status=200)
 
         t = await self._fetch_transaction(transaction_id)
         self.assertIsNone(t["pending_details"])
@@ -602,9 +602,8 @@ class TransactionAPITest(HTTPAPITest):
         )
 
         # we can delete the account when nothing depends on it
-        resp = await self._delete(f"/api/v1/groups/{group_id}/accounts/{account1_id}")
-        print(await resp.json())
-        self.assertEqual(204, resp.status)
+        resp = await self._delete(f"/api/v1/accounts/{account1_id}")
+        self.assertEqual(200, resp.status)
 
         account2_id = await self.account_service.create_account(
             user_id=self.test_user_id,
@@ -619,15 +618,15 @@ class TransactionAPITest(HTTPAPITest):
         await self._commit_transaction(transaction1_id)
 
         # we should not be able to delete this account as changes depend on it
-        resp = await self._delete(f"/api/v1/groups/{group_id}/accounts/{account2_id}")
+        resp = await self._delete(f"/api/v1/accounts/{account2_id}")
         self.assertEqual(400, resp.status)
 
         await self._switch_creditor_share(transaction1_id, account1_id, 1.0)
         await self._commit_transaction(transaction1_id)
 
         # now we should be able to delete the account as nothing depends on it
-        resp = await self._delete(f"/api/v1/groups/{group_id}/accounts/{account2_id}")
-        self.assertEqual(204, resp.status)
+        resp = await self._delete(f"/api/v1/accounts/{account2_id}")
+        self.assertEqual(200, resp.status)
 
     async def test_purchase_items(self):
         group_id, transaction_id = await self._create_group_with_transaction("purchase")
@@ -664,20 +663,20 @@ class TransactionAPITest(HTTPAPITest):
             f"/api/v1/purchase_items/{item_id}/shares",
             json={"account_id": account2_id, "share_amount": 1.0},
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(200, resp.status)
 
         resp = await self._post(
             f"/api/v1/purchase_items/{item_id}",
             json={"name": "carrots", "price": 12.22, "communist_shares": 0},
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(200, resp.status)
         resp = await self._delete(
             f"/api/v1/purchase_items/{item_id}/shares",
             json={
                 "account_id": account2_id,
             },
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(200, resp.status)
 
         t = await self._fetch_transaction(transaction_id)
         self.assertIsNotNone(t["committed_positions"])
@@ -693,7 +692,7 @@ class TransactionAPITest(HTTPAPITest):
             f"/api/v1/purchase_items/{item_id}/shares",
             json={"account_id": account2_id, "share_amount": 2.0},
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(200, resp.status)
 
         await self._commit_transaction(transaction_id=transaction_id)
 
@@ -705,7 +704,7 @@ class TransactionAPITest(HTTPAPITest):
         resp = await self._delete(
             f"/api/v1/purchase_items/{item_id}",
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(200, resp.status)
 
         await self._commit_transaction(transaction_id=transaction_id)
 

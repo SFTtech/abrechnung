@@ -2,10 +2,13 @@ import React, {useEffect, useState} from "react";
 import {toast} from "react-toastify";
 import {updateTransactionDetails} from "../../api";
 import {DisabledTextField} from "../style/DisabledTextField";
+import {useSetRecoilState} from "recoil";
+import {groupTransactions, updateTransaction} from "../../recoil/transactions";
 
 export default function TransactionValue({group, transaction}) {
     const [transactionValue, setTransactionValue] = useState("");
     const [error, setError] = useState(false);
+    const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
 
     useEffect(() => {
         setTransactionValue(transaction.value.toFixed(2));
@@ -21,9 +24,13 @@ export default function TransactionValue({group, transaction}) {
                 billedAt: transaction.billed_at,
                 value: parseFloat(transactionValue),
                 description: transaction.description
-            }).catch(err => {
-                toast.error(err);
-            });
+            })
+                .then(t => {
+                    updateTransaction(t, setTransactions);
+                })
+                .catch(err => {
+                    toast.error(err);
+                });
         }
     };
 

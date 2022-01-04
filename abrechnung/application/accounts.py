@@ -1,4 +1,7 @@
 from datetime import datetime, timezone
+from typing import Optional, Union
+
+import asyncpg
 
 from abrechnung.domain.accounts import Account
 from . import (
@@ -11,6 +14,46 @@ from . import (
 
 
 class AccountService(Application):
+    @staticmethod
+    async def _increment_account_version(conn: asyncpg.Connection, revision_id: int):
+        await conn.execute(
+            "update account_revision set version = version + 1 where id = $1",
+            revision_id,
+        )
+
+    @staticmethod
+    async def _check_account_permissions(
+        conn: asyncpg.Connection,
+        user_id: int,
+        account_id: int,
+        can_write: bool = False,
+        account_type: Optional[Union[str, list[str]]] = None,
+    ) -> int:
+        """returns group id of the transaction"""
+        result = await conn.fetchrow(
+            "select a.type, a.group_id, can_write, is_owner "
+            "from group_membership gm join account a on gm.group_id = a.group_id and gm.user_id = $1 "
+            "where a.id = $2",
+            user_id,
+            account_id,
+        )
+        if not result:
+            raise NotFoundError(f"account not found")
+
+        if can_write and not (result["can_write"] or result["is_owner"]):
+            raise PermissionError(f"user does not have write permissions")
+
+        if account_type:
+            type_check = (
+                [account_type] if isinstance(account_type, str) else account_type
+            )
+            if result["type"] not in type_check:
+                raise InvalidCommand(
+                    f"Transaction type {result['type']} does not match the expected type {type_check}"
+                )
+
+        return result["group_id"]
+
     async def list_accounts(self, *, user_id: int, group_id: int) -> list[Account]:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -18,7 +61,7 @@ class AccountService(Application):
                     conn=conn, group_id=group_id, user_id=user_id
                 )
                 cur = conn.cursor(
-                    "select account_id, type, revision_id, name, description, priority, deleted "
+                    "select account_id, group_id, type, revision_id, name, description, priority, deleted "
                     "from committed_account_state_valid_at() "
                     "where group_id = $1",
                     group_id,
@@ -28,6 +71,7 @@ class AccountService(Application):
                     result.append(
                         Account(
                             id=account["account_id"],
+                            group_id=account["group_id"],
                             type=account["type"],
                             name=account["name"],
                             description=account["description"],
@@ -38,16 +82,15 @@ class AccountService(Application):
 
                 return result
 
-    async def get_account(
-        self, *, user_id: int, group_id: int, account_id: int
-    ) -> Account:
+    async def get_account(self, *, user_id: int, account_id: int) -> Account:
         async with self.db_pool.acquire() as conn:
-            await check_group_permissions(conn=conn, group_id=group_id, user_id=user_id)
+            await self._check_account_permissions(
+                conn=conn, user_id=user_id, account_id=account_id
+            )
             account = await conn.fetchrow(
-                "select account_id, type, revision_id, name, description, priority, deleted "
+                "select account_id, group_id, type, revision_id, name, description, priority, deleted "
                 "from committed_account_state_valid_at() "
-                "where group_id = $1 and account_id = $2",
-                group_id,
+                "where account_id = $1",
                 account_id,
             )
             if account is None:
@@ -55,6 +98,7 @@ class AccountService(Application):
 
             return Account(
                 id=account["account_id"],
+                group_id=account["group_id"],
                 type=account["type"],
                 name=account["name"],
                 description=account["description"],
@@ -112,7 +156,6 @@ class AccountService(Application):
     async def update_account(
         self,
         user_id: int,
-        group_id: int,
         account_id: int,
         name: str,
         description: str,
@@ -121,14 +164,13 @@ class AccountService(Application):
         # TODO: figure out the more complex logic once we have accounts stuck in uncommitted states
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                await check_group_permissions(
-                    conn=conn, group_id=group_id, user_id=user_id, can_write=True
+                group_id = await self._check_account_permissions(
+                    conn=conn, user_id=user_id, account_id=account_id, can_write=True
                 )
                 account = await conn.fetchrow(
                     "select account_id, type, revision_id, name, description, priority "
                     "from committed_account_state_valid_at() "
-                    "where group_id = $1 and account_id = $2 and deleted = false",
-                    group_id,
+                    "where account_id = $1 and deleted = false",
                     account_id,
                 )
                 if account is None:
@@ -169,18 +211,16 @@ class AccountService(Application):
     async def delete_account(
         self,
         user_id: int,
-        group_id: int,
         account_id: int,
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                await check_group_permissions(
-                    conn=conn, group_id=group_id, user_id=user_id, can_write=True
+                group_id = await self._check_account_permissions(
+                    conn=conn, user_id=user_id, account_id=account_id, can_write=True
                 )
                 row = await conn.fetchrow(
-                    "select id " "from account " "where id = $1 and group_id = $2",
+                    "select id from account where id = $1",
                     account_id,
-                    group_id,
                 )
                 if row is None:
                     raise InvalidCommand(f"Account does not exist")
@@ -188,15 +228,13 @@ class AccountService(Application):
                 has_committed_shares = await conn.fetchval(
                     "select 1 "
                     "from committed_transaction_state_valid_at() t "
-                    "where group_id = $1 and not deleted and $2 = any(involved_accounts)",
-                    group_id,
+                    "where not deleted and $1 = any(involved_accounts)",
                     account_id,
                 )
                 has_pending_shares = await conn.fetchval(
                     "select 1 "
                     "from aggregated_pending_transaction_history t "
-                    "where group_id = $1 and $2 = any(t.involved_accounts)",
-                    group_id,
+                    "where $1 = any(t.involved_accounts)",
                     account_id,
                 )
 
@@ -204,8 +242,7 @@ class AccountService(Application):
                     "select 1 "
                     "from committed_transaction_position_state_valid_at() p "
                     "join transaction t on t.id = p.transaction_id "
-                    "where t.group_id = $1 and not p.deleted and $2 = any(p.involved_accounts)",
-                    group_id,
+                    "where not p.deleted and $1 = any(p.involved_accounts)",
                     account_id,
                 )
 
@@ -213,8 +250,7 @@ class AccountService(Application):
                     "select 1 "
                     "from aggregated_pending_transaction_position_history p "
                     "join transaction t on t.id = p.transaction_id "
-                    "where t.group_id = $1 and $2 = any(p.involved_accounts)",
-                    group_id,
+                    "where $1 = any(p.involved_accounts)",
                     account_id,
                 )
 
@@ -231,9 +267,8 @@ class AccountService(Application):
                 row = await conn.fetchrow(
                     "select name, revision_id, deleted "
                     "from committed_account_state_valid_at() "
-                    "where account_id = $1 and group_id = $2",
+                    "where account_id = $1",
                     account_id,
-                    group_id,
                 )
                 if row is None:
                     raise InvalidCommand(

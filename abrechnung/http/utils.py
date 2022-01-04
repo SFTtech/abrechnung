@@ -8,12 +8,12 @@ import asyncpg
 from aiohttp import web
 from aiohttp.helpers import sentinel
 from aiohttp.typedefs import LooseHeaders
-from schema import Schema, SchemaError
+from marshmallow import ValidationError
 
 from abrechnung.application import NotFoundError, InvalidCommand
 
 
-def validate(request_schema: Schema):
+def validate(request_schema: type):
     def wrapper(func):
         @functools.wraps(func)
         async def wrapped(request, *args):
@@ -25,10 +25,10 @@ def validate(request_schema: Schema):
                 )
 
             try:
-                request_schema.validate(req_body)
-            except SchemaError as e:
+                request_schema().load(req_body)
+            except ValidationError as e:
                 raise web.HTTPBadRequest(
-                    reason=f"Request is invalid; there are validation errors: {e}"
+                    reason=f"Request is invalid; there are validation errors: {e.messages}"
                 )
 
             view_args = request, req_body

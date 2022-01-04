@@ -1,6 +1,6 @@
 import asyncio
 import json
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta, date, timezone
 
 import aiohttp
 from aiohttp import web
@@ -14,7 +14,7 @@ class WebsocketAPITest(BaseHTTPAPITest):
         resp = await ws.receive(timeout=1)
         self.assertEqual(resp.type, aiohttp.WSMsgType.TEXT)
         resp_json = json.loads(resp.data)
-        self.assertDictEqual(expected_msg, resp_json)
+        self.assertEqual(expected_msg, resp_json | expected_msg)
 
     async def test_websocket_notifications(self):
         user_id, password = await self._create_test_user(
@@ -147,6 +147,9 @@ class WebsocketAPITest(BaseHTTPAPITest):
                     "element_id": group_id,
                     "transaction_id": transaction_id,
                     "subscription_type": "transaction",
+                    "deleted": False,
+                    "revision_committed": None,
+                    "revision_version": 0,
                 },
             },
         )

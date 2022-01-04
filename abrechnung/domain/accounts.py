@@ -9,6 +9,7 @@ class AccountType(Enum):
 @dataclass
 class Account:
     id: int
+    group_id: int
     type: str
     name: str
     description: str
