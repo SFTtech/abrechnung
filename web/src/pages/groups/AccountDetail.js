@@ -6,7 +6,7 @@ import {Grid, List, Paper, Typography} from "@mui/material";
 import {CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
 import {accountBalanceHistory, accountTransactions} from "../../recoil/transactions";
 import {DateTime} from "luxon";
-import {TransactionLogEntry} from "../../components/transactions/TransactionLogEntry";
+import {TransactionListEntry} from "../../components/transactions/TransactionListEntry";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -77,7 +77,7 @@ export default function AccountDetail({group}) {
                         </Typography>
                         <List>
                             {transactions.map(transaction => (
-                                <TransactionLogEntry group={group} transaction={transaction}/>
+                                <TransactionListEntry group={group} transaction={transaction}/>
                             ))}
                         </List>
                     </Paper>

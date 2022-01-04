@@ -25,6 +25,7 @@ import {
     AccountBalance,
     AccountCircle as AccountCircleIcon,
     AdminPanelSettings,
+    BarChart,
     Logout,
     Mail,
     Menu as MenuIcon,
@@ -65,6 +66,10 @@ export default function Layout({ group = null, children, ...props }) {
                     <ListItemLink to={`/groups/${group.id}/`}>
                         <ListItemIcon><Paid /></ListItemIcon>
                         <ListItemText primary="Transactions" />
+                    </ListItemLink>
+                    <ListItemLink to={`/groups/${group.id}/balances`}>
+                        <ListItemIcon><BarChart /></ListItemIcon>
+                        <ListItemText primary="Balances" />
                     </ListItemLink>
                     <ListItemLink to={`/groups/${group.id}/accounts`}>
                         <ListItemIcon><AccountBalance /></ListItemIcon>

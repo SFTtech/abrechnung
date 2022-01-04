@@ -3,6 +3,7 @@ import {groupAccounts} from "../../recoil/groups";
 import {accountBalances} from "../../recoil/transactions";
 import {Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
 import React from "react";
+import {Paper} from "@mui/material";
 
 
 export default function Balances({group}) {
@@ -22,37 +23,38 @@ export default function Balances({group}) {
     const chartHeight = Math.min(600, Object.keys(balances).length * 100);
 
     return (
-        <div className="area-chart-wrapper"
-             style={{width: "100%", height: `${chartHeight}px`}}>
-            <ResponsiveContainer>
-                <BarChart
-                    data={chartData}
-                    margin={{top: 20, right: 20, bottom: 20, left: 20}}
-                    layout="vertical"
-                >
+        <Paper sx={{padding: 2}}>
+            <div className="area-chart-wrapper"
+                 style={{width: "100%", height: `${chartHeight}px`}}>
+                <ResponsiveContainer>
+                    <BarChart
+                        data={chartData}
+                        margin={{top: 20, right: 20, bottom: 20, left: 20}}
+                        layout="vertical"
+                    >
 
-                    <XAxis type="number" unit={group.currency_symbol}/>
-                    <YAxis dataKey="name" type="category"/>
-                    <Tooltip formatter={label => parseFloat(label).toFixed(2) + ` ${group.currency_symbol}`}/>
-                    <Bar dataKey="balance">
-                        <>
-                            {
-                                chartData.map((entry, index) => {
-                                    return (
-                                        <Cell key={`cell-${index}`}
-                                              fill={entry["balance"] >= 0 ? colorGreen : colorRed}/>
-                                    )
-                                })
-                            }
-                            <LabelList
-                                dataKey={entry => `${entry["balance"].toFixed(2)}${group.currency_symbol}`}
-                                position="insideLeft"
-                                fill="#000000"
-                            />
-                        </>
-                    </Bar>
-                </BarChart>
-            </ResponsiveContainer>
-        </div>
+                        <XAxis type="number" unit={group.currency_symbol}/>
+                        <YAxis dataKey="name" type="category"/>
+                        <Tooltip formatter={label => parseFloat(label).toFixed(2) + ` ${group.currency_symbol}`}/>
+                        <Bar dataKey="balance">
+                            <>
+                                {
+                                    chartData.map((entry, index) => {
+                                        return (
+                                            <Cell key={`cell-${index}`}
+                                                  fill={entry["balance"] >= 0 ? colorGreen : colorRed}/>
+                                        )
+                                    })}
+                                <LabelList
+                                    dataKey={entry => `${entry["balance"].toFixed(2)}${group.currency_symbol}`}
+                                    position="insideLeft"
+                                    fill="#000000"
+                                />
+                            </>
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+        </Paper>
     );
 }

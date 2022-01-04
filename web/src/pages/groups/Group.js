@@ -3,7 +3,7 @@ import {Route, Switch, useRouteMatch} from "react-router-dom";
 import GroupInvites from "./GroupInvites";
 import GroupMemberList from "./GroupMemberList";
 import GroupLog from "./GroupLog";
-import TransactionLog from "../../components/transactions/TransactionLog";
+import TransactionList from "../../components/transactions/TransactionList";
 import {useRecoilValue} from "recoil";
 import {groupById} from "../../recoil/groups";
 import Layout from "../../components/style/Layout";
@@ -12,7 +12,7 @@ import Transaction from "./Transaction";
 import GroupDetail from "./GroupDetail";
 import Balances from "../../components/groups/Balances";
 import AccountList from "./AccountList";
-import { AppBar, Box, Grid, Paper, Tab, Tabs } from "@mui/material";
+import {Box} from "@mui/material";
 import AccountDetail from "./AccountDetail";
 
 function TabPanel(props) {
@@ -57,7 +57,7 @@ export default function Group() {
         <Layout group={group}>
             <Switch>
                 <Route exact path={`${match.path}/log`}>
-                    <GroupLog group={group} />
+                    <GroupLog group={group}/>
                 </Route>
                 <Route exact path={`${match.path}/accounts`}>
                     <Suspense fallback={<Loading/>}>
@@ -79,35 +79,15 @@ export default function Group() {
                         <GroupInvites group={group}/>
                     </Suspense>
                 </Route>
+                <Route exact path={`${match.path}/balances`}>
+                    <Suspense fallback={<Loading/>}>
+                        <Balances group={group}/>
+                    </Suspense>
+                </Route>
                 <Route exact path={`${match.path}/`}>
-                    <Grid container spacing={3}>
-                        <Grid item xs={12}>
-                            <Paper elevation={1}>
-                                <AppBar position="static" color="default">
-                                    <Tabs
-                                        value={selectedTab}
-                                        indicatorColor="primary"
-                                        textColor="primary"
-                                        centered
-                                        onChange={handleTabChange}
-                                    >
-                                        <Tab label="Transactions" {...a11yProps(0)} />
-                                        <Tab label="Balances" {...a11yProps(1)} />
-                                    </Tabs>
-                                </AppBar>
-                                <TabPanel value={selectedTab} index={0}>
-                                    <Suspense fallback={<Loading/>}>
-                                        <TransactionLog group={group}/>
-                                    </Suspense>
-                                </TabPanel>
-                                <TabPanel value={selectedTab} index={1}>
-                                    <Suspense fallback={<Loading/>}>
-                                        <Balances group={group}/>
-                                    </Suspense>
-                                </TabPanel>
-                            </Paper>
-                        </Grid>
-                    </Grid>
+                    <Suspense fallback={<Loading/>}>
+                        <TransactionList group={group}/>
+                    </Suspense>
                 </Route>
                 <Route path={`${match.path}/transactions/:id([0-9]+)`}>
                     <Suspense fallback={<Loading/>}>
