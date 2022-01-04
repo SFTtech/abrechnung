@@ -1,8 +1,11 @@
 import argparse
 import logging
+from getpass import getpass
 
 from abrechnung import subcommand
+from abrechnung.application.users import UserService
 from abrechnung.config import Config
+from abrechnung.database import db_connect
 
 
 class Admin(subcommand.SubCommand):
@@ -21,22 +24,32 @@ class Admin(subcommand.SubCommand):
         create_user_parser.set_defaults(command="create_user")
         create_user_parser.add_argument("-n", "--name", type=str, required=True)
         create_user_parser.add_argument("-e", "--email", type=str, required=True)
-
-        disable_user_parser = subparsers.add_parser("disable-user")
-        create_user_parser.set_defaults(command="disable_user")
-        disable_user_parser.add_argument("-n", "--name", type=str, required=True)
+        create_user_parser.add_argument("--skip-email-check", action="store_true")
 
     async def handle_create_user_command(self):
         self.logger.info(
             f"Creating user with email: {self.args['email']} and username: {self.args['name']}"
         )
+        password = getpass(prompt="Input initial password for user:")
+        repeat_password = getpass(prompt="Repeat password:")
+        if password != repeat_password:
+            print("Passwords do not match!")
+            return
 
-    async def handle_disable_user_command(self):
-        self.logger.info(f"Disabling user {self.args['name']}")
+        db_pool = await db_connect(
+            username=self.config["database"]["user"],
+            database=self.config["database"]["dbname"],
+            host=self.config["database"]["host"],
+            password=self.config["database"]["password"],
+        )
+        user_service = UserService(db_pool, self.config)
+        user_service.enable_registration = True
+        if self.args["skip_email_check"]:
+            user_service.valid_email_domains = None
+        await user_service.register_user(
+            username=self.args["name"], email=self.args["email"], password=password
+        )
 
     async def run(self):
         if self.command == "create_user":
-            return await self.handle_create_user_command()
-
-        if self.command == "disable_user":
             return await self.handle_create_user_command()

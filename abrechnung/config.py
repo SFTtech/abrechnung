@@ -35,7 +35,7 @@ CONFIG_SCHEMA = Schema.from_dict(
                     "enable_cors": fields.Bool(required=False, missing=True),
                     "enable_registration": fields.Bool(required=False, missing=False),
                     "valid_email_domains": fields.List(
-                        fields.Str(), required=False, missing=[]
+                        fields.Str(), required=False, missing=None
                     ),
                 }
             )

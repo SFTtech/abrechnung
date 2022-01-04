@@ -94,9 +94,7 @@ class BaseHTTPAPITest(AsyncHTTPTestCase):
 
         self.group_service = GroupService(self.db_pool, config=self.test_config)
         self.account_service = AccountService(self.db_pool, config=self.test_config)
-        self.user_service = UserService(
-            self.db_pool, config=self.test_config, enable_registration=True
-        )
+        self.user_service = UserService(self.db_pool, config=self.test_config)
         self.transaction_service = TransactionService(
             self.db_pool, config=self.test_config
         )

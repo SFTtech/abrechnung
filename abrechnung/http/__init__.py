@@ -117,9 +117,7 @@ class HTTPService(SubCommand):
 
         api_app["user_service"] = UserService(
             db_pool=db_pool,
-            enable_registration=self.cfg["api"].get("enable_registration", True),
             config=self.cfg,
-            valid_email_domains=self.cfg["api"].get("valid_email_domains"),
         )
         api_app["group_service"] = GroupService(db_pool=db_pool, config=self.cfg)
         api_app["account_service"] = AccountService(db_pool=db_pool, config=self.cfg)

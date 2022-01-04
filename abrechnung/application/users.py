@@ -22,14 +22,12 @@ class UserService(Application):
     def __init__(
         self,
         db_pool: Pool,
-        enable_registration: bool,
         config: Config,
-        valid_email_domains: Optional[list[str]] = None,
     ):
         super().__init__(db_pool=db_pool, config=config)
 
-        self.enable_registration = enable_registration
-        self.valid_email_domains = valid_email_domains
+        self.enable_registration = self.cfg["api"]["enable_registration"]
+        self.valid_email_domains = self.cfg["api"]["valid_email_domains"]
 
     @staticmethod
     def _hash_password(password: str) -> str:
