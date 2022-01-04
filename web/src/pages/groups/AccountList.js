@@ -21,7 +21,6 @@ import {
 } from "@mui/material";
 import {Add, Delete, Edit} from "@mui/icons-material";
 import ListItemLink from "../../components/style/ListItemLink";
-import {accountBalances} from "../../recoil/transactions";
 
 export default function AccountList({group}) {
     const [showAccountCreationModal, setShowAccountCreationModal] = useState(false);
@@ -29,7 +28,6 @@ export default function AccountList({group}) {
     const [accountToEdit, setAccountToEdit] = useState(null);
     const setAccounts = useSetRecoilState(groupAccountsRaw(group.id));
     const accounts = useRecoilValue(groupAccounts(group.id));
-    const balances = useRecoilValue(accountBalances(group.id));
     const [accountToDelete, setAccountToDelete] = useState(null);
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
 
@@ -74,7 +72,6 @@ export default function AccountList({group}) {
                             >
                                 <ListItemText primary={account.name}
                                               secondary={account.description}/>
-                                <ListItemText primary={`${balances[account.id].toFixed(2)} ${group.currency_symbol}`}/>
                             </ListItemLink>
                             {userPermissions.can_write && (
                                 <ListItemSecondaryAction>
