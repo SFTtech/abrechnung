@@ -29,6 +29,8 @@ dependencies = [
     "marshmallow~=3.10",
     "schema",
     "email-validator~=1.1",
+    "apispec",
+    "webargs"
 ]
 
 [project.optional-dependencies]
