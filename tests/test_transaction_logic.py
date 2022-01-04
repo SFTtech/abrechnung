@@ -13,7 +13,7 @@ class TransactionLogicTest(AsyncTestCase):
     async def setUpAsync(self) -> None:
         await super().setUpAsync()
         self.secret_key = "asdf1234"
-        self.test_config = Config(
+        self.test_config = Config.from_dict(
             {
                 "api": {"secret_key": self.secret_key, "max_uploadable_file_size": 512},
                 "service": {"api_url": "http://localhost/api"},

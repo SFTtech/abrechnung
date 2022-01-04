@@ -45,8 +45,9 @@ class MailerTest(AsyncTestCase):
         self.smtp = Controller(self.smtp_handler)
         self.smtp.start()
 
-        self.mailer_config = Config(
+        self.mailer_config = Config.from_dict(
             {
+                "api": {"enable_registration": True},
                 "email": {
                     "host": self.smtp.hostname,
                     "port": self.smtp.port,
@@ -59,6 +60,7 @@ class MailerTest(AsyncTestCase):
                 },
             }
         )
+        print(self.mailer_config._cfg)
         self.mailer = Mailer(config=self.mailer_config)
 
         self.mailer_task = asyncio.create_task(self.mailer.run())

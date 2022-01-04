@@ -80,9 +80,9 @@ class BaseHTTPAPITest(AsyncHTTPTestCase):
 
     async def get_application(self) -> web.Application:
         self.secret_key = "asdf1234"
-        self.test_config = Config(
+        self.test_config = Config.from_dict(
             {
-                "api": {"secret_key": self.secret_key},
+                "api": {"secret_key": self.secret_key, "enable_registration": True},
                 "service": {"api_url": "http://localhost/api"},
             }
         )

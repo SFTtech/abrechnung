@@ -72,7 +72,12 @@ class Config:
         return self._cfg.__getitem__(key)
 
     @classmethod
-    def from_file(cls, file_path: Path):
+    def from_dict(cls, cfg: dict) -> "Config":
+        cfg = CONFIG_SCHEMA().load(cfg)
+        return cls(cfg)
+
+    @classmethod
+    def from_file(cls, file_path: Path) -> "Config":
         with file_path.open("r") as f:
             cfg = yaml.safe_load(f)
             cfg = CONFIG_SCHEMA().load(cfg)
