@@ -46,14 +46,18 @@ class FileAttachment:
     filename: str
     blob_id: Optional[int]
     mime_type: Optional[str]
+    host_url: str
     deleted: bool
 
 
 @dataclass
 class Transaction:
     id: int
+    group_id: int
     type: str
     is_wip: bool
+    last_changed: datetime
+    version: int
     committed_details: Optional[TransactionDetails]
     pending_details: Optional[TransactionDetails]
 

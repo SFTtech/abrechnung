@@ -1,36 +1,63 @@
 from pathlib import Path
 
-import schema
 import yaml
+from marshmallow import Schema, fields
 
-CONFIG_SCHEMA = schema.Schema(
-    {
-        "service": {"url": str, "name": str, "api_url": str},
-        "database": {
-            "host": str,
-            schema.Optional("port"): int,
-            "user": str,
-            "dbname": str,
-            "password": str,
-        },
-        "api": {
-            "secret_key": str,
-            "host": str,
-            "port": int,
-            "id": str,
-            schema.Optional("max_uploadable_file_size", default=1024): int,  # in KB
-            schema.Optional("enable_cors"): bool,
-            schema.Optional("enable_registration"): bool,
-            schema.Optional("valid_email_domains"): [str],
-        },
-        "email": {
-            "address": str,
-            "host": str,
-            "port": int,
-            schema.Optional("mode"): str,
-            schema.Optional("auth"): {"username": str, "password": str},
-        },
-    }
+CONFIG_SCHEMA = Schema.from_dict(
+    name="ConfigSchema",
+    fields={
+        "service": fields.Nested(
+            Schema.from_dict(
+                {"url": fields.Str(), "name": fields.Str(), "api_url": fields.Str()}
+            )
+        ),
+        "database": fields.Nested(
+            Schema.from_dict(
+                {
+                    "host": fields.Str(),
+                    "port": fields.Int(missing=5432, required=False),
+                    "user": fields.Str(),
+                    "dbname": fields.Str(),
+                    "password": fields.Str(),
+                }
+            )
+        ),
+        "api": fields.Nested(
+            Schema.from_dict(
+                {
+                    "secret_key": fields.Str(),
+                    "host": fields.Str(),
+                    "port": fields.Int(),
+                    "id": fields.Str(),
+                    "max_uploadable_file_size": fields.Int(
+                        missing=1024, required=False
+                    ),  # in KB
+                    "enable_cors": fields.Bool(required=False, missing=True),
+                    "enable_registration": fields.Bool(required=False, missing=False),
+                    "valid_email_domains": fields.List(
+                        fields.Str(), required=False, missing=[]
+                    ),
+                }
+            )
+        ),
+        "email": fields.Nested(
+            Schema.from_dict(
+                {
+                    "address": fields.Str(),
+                    "host": fields.Str(),
+                    "port": fields.Int(),
+                    "mode": fields.Str(required=False),
+                    "auth": fields.Nested(
+                        Schema.from_dict(
+                            {"username": fields.Str(), "password": fields.Str()},
+                            name="MailAuthSchema",
+                        ),
+                        required=False,
+                    ),
+                }
+            )
+        ),
+    },
 )
 
 
@@ -48,5 +75,5 @@ class Config:
     def from_file(cls, file_path: Path):
         with file_path.open("r") as f:
             cfg = yaml.safe_load(f)
-            CONFIG_SCHEMA.validate(cfg)
+            cfg = CONFIG_SCHEMA().load(cfg)
             return cls(cfg)

@@ -13,6 +13,8 @@ import {
     Typography
 } from "@mui/material";
 import placeholderImg from "./PlaceholderImage.svg";
+import {useSetRecoilState} from "recoil";
+import {groupTransactions, updateTransaction} from "../../recoil/transactions";
 
 export default function ImageUploadDialog({ transaction, show, onClose }) {
     const [fileState, setFileState] = useState({
@@ -24,6 +26,7 @@ export default function ImageUploadDialog({ transaction, show, onClose }) {
         isError: false
     });
     const [filename, setFilename] = useState("");
+    const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
 
     const selectFile = (event) => {
         setFileState({
@@ -61,8 +64,7 @@ export default function ImageUploadDialog({ transaction, show, onClose }) {
                 });
             }
         })
-            .then(response => {
-                console.log("response on uploading file", response);
+            .then(t => {
                 setFileState({
                     currentFile: undefined,
                     previewImage: undefined,
@@ -71,6 +73,7 @@ export default function ImageUploadDialog({ transaction, show, onClose }) {
                     message: "",
                     isError: false
                 });
+                updateTransaction(t, setTransactions);
                 onClose();
             })
             .catch(err => {

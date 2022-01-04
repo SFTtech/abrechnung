@@ -1,212 +1,148 @@
-import abc
-from typing import Union, Type
+from typing import Any, Mapping, Optional
 
-from abrechnung.config import Config
-from abrechnung.domain.accounts import Account
-from abrechnung.domain.groups import (
-    Group,
-    GroupMember,
-    GroupInvite,
-    GroupPreview,
-    GroupLog,
-)
-from abrechnung.domain.transactions import (
-    Transaction,
-    TransactionDetails,
-    TransactionPosition,
-    FileAttachment,
-)
-from abrechnung.domain.users import User
+from marshmallow import Schema, fields
 
 
-class Serializer(abc.ABC):
-    def __init__(self, instance: Union[list[object], Type[object]], config: Config):
-        self.instance = instance
-        self.config = config
-
-    @abc.abstractmethod
-    def _to_repr(self, instance) -> dict:
-        pass
-
-    def to_repr(self) -> Union[dict, list]:
-        if isinstance(self.instance, list):
-            return [self._to_repr(i) for i in self.instance]
-        return self._to_repr(self.instance)
+class GroupSchema(Schema):
+    id = fields.Int()
+    name = fields.Str()
+    description = fields.Str()
+    currency_symbol = fields.Str()
+    terms = fields.Str()
+    created_by = fields.Int()
 
 
-class GroupSerializer(Serializer):
-    def _to_repr(self, instance: Group) -> dict:
+class GroupPreviewSchema(Schema):
+    id = fields.Int()
+    name = fields.Str()
+    description = fields.Str()
+    currency_symbol = fields.Str()
+    terms = fields.Str()
+    created_at = fields.DateTime()
+    invite_single_use = fields.Bool()
+    invite_valid_until = fields.DateTime()
+    invite_description = fields.Str()
+
+
+class AccountSchema(Schema):
+    id = fields.Int()
+    group_id = fields.Int()
+    type = fields.Str()
+    name = fields.Str()
+    description = fields.Str()
+    deleted = fields.Bool()
+
+
+class GroupInviteSchema(Schema):
+    id = fields.Int()
+    created_by = fields.Int()
+    single_use = fields.Bool()
+    valid_until = fields.DateTime()
+    token = fields.Str()
+    description = fields.Str()
+    join_as_editor = fields.Bool()
+
+
+class GroupLogSchema(Schema):
+    id = fields.Int()
+    type = fields.Str()
+    message = fields.Str()
+    user_id = fields.Int()
+    logged_at = fields.DateTime()
+    affected_user_id = fields.Int()
+
+
+class SharesField(fields.Field):
+    def _serialize(self, value: Mapping[int, float], attr: str, obj: Any, **kwargs):
         return {
-            "id": instance.id,
-            "name": instance.name,
-            "description": instance.description,
-            "currency_symbol": instance.currency_symbol,
-            "terms": instance.terms,
-            "created_by": instance.created_by,
+            str(account_id): usage_value for account_id, usage_value in value.items()
         }
 
-
-class GroupPreviewSerializer(Serializer):
-    def _to_repr(self, instance: GroupPreview) -> dict:
-        return {
-            "id": instance.id,
-            "name": instance.name,
-            "description": instance.description,
-            "currency_symbol": instance.currency_symbol,
-            "terms": instance.terms,
-            "created_at": instance.created_at,
-            "invite_single_use": instance.invite_single_use,
-            "invite_valid_until": instance.invite_valid_until,
-            "invite_description": instance.invite_description,
-        }
+    def _deserialize(
+        self,
+        value: Any,
+        attr: Optional[str],
+        data: Optional[Mapping[str, Any]],
+        **kwargs,
+    ):
+        raise NotImplementedError()
 
 
-class AccountSerializer(Serializer):
-    def _to_repr(self, instance: Account) -> dict:
-        return {
-            "id": instance.id,
-            "type": instance.type,
-            "name": instance.name,
-            "description": instance.description,
-            "priority": instance.priority,
-            "deleted": instance.deleted,
-        }
+class TransactionPositionSchema(Schema):
+    id = fields.Int()
+    price = fields.Number()
+    communist_shares = fields.Number()
+    deleted = fields.Bool()
+    name = fields.Str()
+    usages = SharesField()
 
 
-class GroupInviteSerializer(Serializer):
-    def _to_repr(self, instance: GroupInvite) -> dict:
-        return {
-            "id": instance.id,
-            "created_by": instance.created_by,
-            "single_use": instance.single_use,
-            "valid_until": instance.valid_until,
-            "token": instance.token,
-            "description": instance.description,
-            "join_as_editor": instance.join_as_editor,
-        }
+class TransactionDetailSchema(Schema):
+    description = fields.Str()
+    value = fields.Number()
+    currency_symbol = fields.Str()
+    currency_conversion_rate = fields.Number()
+    billed_at = fields.Date()
+    committed_at = fields.DateTime(required=False)
+    creditor_shares = SharesField()
+    debitor_shares = SharesField()
+    deleted = fields.Bool()
 
 
-class GroupLogSerializer(Serializer):
-    def _to_repr(self, instance: GroupLog) -> dict:
-        return {
-            "id": instance.id,
-            "type": instance.type,
-            "message": instance.message,
-            "user_id": instance.user_id,
-            "logged_at": instance.logged_at,
-            "affected_user_id": instance.affected,
-        }
+class FileAttachmentSchema(Schema):
+    id = fields.Int()
+    filename = fields.Method("get_filename")
+    blob_id = fields.Int(allow_none=True)
+    deleted = fields.Bool()
+    url = fields.Method("get_url")
+
+    def get_filename(self, obj):
+        return (
+            obj.filename + ("." + obj.mime_type.split("/")[1]) if obj.mime_type else ""
+        )
+
+    def get_url(self, obj):
+        return f"{obj.host_url}/v1/files/{obj.id}/{obj.blob_id}"
 
 
-class TransactionSerializer(Serializer):
-    @staticmethod
-    def _serialize_positions(positions: list[TransactionPosition]):
-        return [
-            {
-                "id": position.id,
-                "price": position.price,
-                "communist_shares": position.communist_shares,
-                "deleted": position.deleted,
-                "name": position.name,
-                "usages": {
-                    str(account_id): val for account_id, val in position.usages.items()
-                },
-            }
-            for position in positions
-        ]
-
-    @staticmethod
-    def _serialize_change(change: TransactionDetails):
-        return {
-            "description": change.description,
-            "value": change.value,
-            "currency_symbol": change.currency_symbol,
-            "currency_conversion_rate": change.currency_conversion_rate,
-            "deleted": change.deleted,
-            "billed_at": change.billed_at.isoformat(),
-            "committed_at": None
-            if change.committed_at is None
-            else change.committed_at.isoformat(),
-            "creditor_shares": {
-                str(uid): val for uid, val in change.creditor_shares.items()
-            },
-            "debitor_shares": {
-                str(uid): val for uid, val in change.debitor_shares.items()
-            },
-        }
-
-    def _serialize_files(self, attachments: list[FileAttachment]):
-        base_url = self.config["service"]["api_url"]
-        return [
-            {
-                "id": attachment.id,
-                "filename": attachment.filename
-                + ("." + attachment.mime_type.split("/")[1])
-                if attachment.mime_type
-                else "",
-                "blob_id": attachment.blob_id,
-                "url": f"{base_url}/v1/files/{attachment.id}/{attachment.blob_id}",
-                "deleted": attachment.deleted,
-            }
-            for attachment in attachments
-        ]
-
-    def _to_repr(self, instance: Transaction) -> dict:
-        data = {
-            "id": instance.id,
-            "type": instance.type,
-            "is_wip": instance.is_wip,
-            "pending_details": self._serialize_change(instance.pending_details)
-            if instance.pending_details
-            else None,
-            "committed_details": self._serialize_change(instance.committed_details)
-            if instance.committed_details
-            else None,
-            "pending_positions": self._serialize_positions(instance.pending_positions)
-            if instance.pending_positions
-            else [],
-            "committed_positions": self._serialize_positions(
-                instance.committed_positions
-            )
-            if instance.committed_positions
-            else [],
-            "pending_files": self._serialize_files(instance.pending_files)
-            if instance.pending_files
-            else [],
-            "committed_files": self._serialize_files(instance.committed_files)
-            if instance.committed_files
-            else [],
-        }
-
-        return data
+class TransactionSchema(Schema):
+    id = fields.Int()
+    type = fields.Str()
+    is_wip = fields.Bool()
+    last_changed = fields.DateTime()
+    group_id = fields.Int()
+    version = fields.Int()
+    pending_details = fields.Nested(TransactionDetailSchema, allow_none=True)
+    committed_details = fields.Nested(TransactionDetailSchema, allow_none=True)
+    pending_positions = fields.List(
+        fields.Nested(TransactionPositionSchema), dump_default=[]
+    )
+    committed_positions = fields.List(
+        fields.Nested(TransactionPositionSchema), dump_default=[]
+    )
+    pending_files = fields.List(fields.Nested(FileAttachmentSchema), dump_default=[])
+    committed_files = fields.List(fields.Nested(FileAttachmentSchema), dump_default=[])
 
 
-class UserSerializer(Serializer):
-    def _to_repr(self, instance: User) -> dict:
-        return {
-            "id": instance.id,
-            "username": instance.username,
-            "email": instance.email,
-            "sessions": [
-                {
-                    "id": session.id,
-                    "name": session.name,
-                    "valid_until": session.valid_until,
-                    "last_seen": session.last_seen,
-                }
-                for session in instance.sessions
-            ],
-        }
+class SessionSchema(Schema):
+    id = fields.Int()
+    name = fields.Str()
+    valid_until = fields.DateTime()
+    last_seen = fields.DateTime()
 
 
-class GroupMemberSerializer(Serializer):
-    def _to_repr(self, instance: GroupMember) -> dict:
-        return {
-            "user_id": instance.user_id,
-            "username": instance.username,
-            "is_owner": instance.is_owner,
-            "can_write": instance.can_write,
-            "description": instance.description,
-            "joined_at": instance.joined_at,
-            "invited_by": instance.invited_by,
-        }
+class UserSchema(Schema):
+    id = fields.Int()
+    username = fields.Str()
+    email = fields.Email()
+    sessions = fields.List(fields.Nested(SessionSchema))
+
+
+class GroupMemberSchema(Schema):
+    user_id = fields.Int()
+    username = fields.Str()
+    is_owner = fields.Bool()
+    can_write = fields.Bool()
+    description = fields.Str()
+    joined_at = fields.DateTime()
+    invited_by = fields.Int()

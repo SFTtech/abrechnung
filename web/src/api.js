@@ -307,8 +307,8 @@ export async function fetchAccounts({groupID}) {
     return resp.data;
 }
 
-export async function fetchAccount({groupID, accountID}) {
-    const resp = await makeGet(`/groups/${groupID}/accounts/${accountID}`);
+export async function fetchAccount({accountID}) {
+    const resp = await makeGet(`/accounts/${accountID}`);
     return resp.data;
 }
 
@@ -321,16 +321,16 @@ export async function createAccount({groupID, name, description, accountType = "
     return resp.data;
 }
 
-export async function updateAccount({groupID, accountID, name, description}) {
-    const resp = await makePost(`/groups/${groupID}/accounts/${accountID}`, {
+export async function updateAccountDetails({accountID, name, description}) {
+    const resp = await makePost(`/accounts/${accountID}`, {
         name: name,
         description: description
     });
     return resp.data;
 }
 
-export async function deleteAccount({groupID, accountID}) {
-    const resp = await makeDelete(`/groups/${groupID}/accounts/${accountID}`);
+export async function deleteAccount({accountID}) {
+    const resp = await makeDelete(`/accounts/${accountID}`);
     return resp.data;
 }
 
@@ -396,12 +396,13 @@ export async function uploadFile({transactionID, filename, file, onUploadProgres
     formData.append("file", file);
     formData.append("filename", filename);
 
-    return makePost(`/transactions/${transactionID}/files`, formData, {
+    const resp = await makePost(`/transactions/${transactionID}/files`, formData, {
         headers: {
             "Content-Type": "multipart/form-data",
         },
         onUploadProgress,
     });
+    return resp.data;
 }
 
 export async function fetchFile({fileID, blobID}) {
@@ -411,7 +412,8 @@ export async function fetchFile({fileID, blobID}) {
 }
 
 export async function deleteFile({fileID}) {
-    return makeDelete(`/files/${fileID}`);
+    const resp = await makeDelete(`/files/${fileID}`);
+    return resp.data;
 }
 
 export async function createOrUpdateCreditorShare({transactionID, accountID, value}) {
@@ -482,11 +484,12 @@ export async function deleteTransaction({transactionID}) {
     return resp.data;
 }
 
-export async function createPurchaseItem({transactionID, name, price, communistShares}) {
+export async function createPurchaseItem({transactionID, name, price, communistShares, usages}) {
     const resp = await makePost(`/transactions/${transactionID}/purchase_items`, {
         name: name,
         price: price,
         communist_shares: communistShares,
+        usages: usages,
     });
     return resp.data;
 }

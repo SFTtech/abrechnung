@@ -11,7 +11,7 @@ import Loading from "../../components/style/Loading";
 import Transaction from "./Transaction";
 import GroupDetail from "./GroupDetail";
 import Balances from "../../components/groups/Balances";
-import Accounts from "./Accounts";
+import AccountList from "./AccountList";
 import { AppBar, Box, Grid, Paper, Tab, Tabs } from "@mui/material";
 import AccountDetail from "./AccountDetail";
 
@@ -61,7 +61,7 @@ export default function Group() {
                 </Route>
                 <Route exact path={`${match.path}/accounts`}>
                     <Suspense fallback={<Loading/>}>
-                        <Accounts group={group}/>
+                        <AccountList group={group}/>
                     </Suspense>
                 </Route>
                 <Route exact path={`${match.path}/members`}>

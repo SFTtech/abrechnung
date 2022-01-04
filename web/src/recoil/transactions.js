@@ -1,11 +1,11 @@
 // transaction handling
 import {atomFamily, selectorFamily} from "recoil";
 import {groupAccounts} from "./groups";
-import {fetchTransactions} from "../api";
+import {fetchTransaction, fetchTransactions} from "../api";
 import {ws} from "../websocket";
 import {DateTime} from "luxon";
 import {toast} from "react-toastify";
-import { checkCacheVersion } from "./cache";
+import {checkCacheVersion} from "./cache";
 
 
 export const groupTransactions = atomFamily({
@@ -72,6 +72,7 @@ export const groupTransactions = atomFamily({
                     })
             }
 
+
             // TODO: handle fetch error more properly than just showing error, e.g. through a retry or something
             if (savedTransactions != null) {
                 const parsedTransactions = JSON.parse(savedTransactions);
@@ -80,12 +81,32 @@ export const groupTransactions = atomFamily({
                 setSelf(fullFetchPromise());
             }
 
-            ws.subscribe("transaction", groupID, ({subscription_type, transaction_id, element_id}) => {
-                if (subscription_type === "transaction" && element_id === groupID) {
+            const fetchAndUpdateTransaction = (currTransactions, transactionID) => {
+                fetchTransaction({transactionID: transactionID})
+                    .then(transaction => {
+                        setSelf(currTransactions.map(t => t.id === transaction.id ? transaction : t));
+                    })
+                    .catch(err => toast.error(`error when fetching transaction: ${err}`));
+            }
+
+            ws.subscribe("transaction", groupID, (subscription_type, {
+                element_id,
+                transaction_id,
+                revision_started,
+                revision_committed,
+                revision_version
+            }) => {
+                if (element_id === groupID) {
                     getPromise(node).then(currTransactions => {
-                        partialFetchPromise(currTransactions)
-                            .then(result => setSelf(result))
-                            .catch(err => toast.error(`error when fetching transactions: ${err}`));
+                        const curr_transaction = currTransactions.find(t => t.id === transaction_id);
+                        if (!curr_transaction) {
+                            return;
+                        }
+
+                        if (curr_transaction.version > revision_version || (revision_committed !== null && curr_transaction.committed === null)) {
+                            console.log(`received notification about changes to transaction ${transaction_id} that are not known locally`);
+                            fetchAndUpdateTransaction(currTransactions, transaction_id);
+                        }
                     })
                 }
             });
@@ -98,6 +119,28 @@ export const groupTransactions = atomFamily({
     ]
 });
 
+export const addTransaction = (transaction, setTransactions) => {
+    const localStorageKey = `groups.transactions-${transaction.group_id}`;
+    setTransactions(currTransactions => {
+        const newTransactions = [
+            ...currTransactions,
+            transaction,
+        ]
+        localStorage.setItem(localStorageKey, JSON.stringify(newTransactions));
+        return newTransactions
+    })
+}
+
+export const updateTransaction = (transaction, setTransactions) => {
+    const localStorageKey = `groups.transactions-${transaction.group_id}`;
+
+    setTransactions(currTransactions => {
+        const newTransactions = currTransactions.map(t => t.id === transaction.id ? transaction : t);
+        localStorage.setItem(localStorageKey, JSON.stringify(newTransactions));
+        return newTransactions
+    })
+}
+
 export const transactionsSeenByUser = selectorFamily({
     key: "transacitonsSeenByUser",
     get: groupID => async ({get}) => {
@@ -106,15 +149,17 @@ export const transactionsSeenByUser = selectorFamily({
         return transactions
             .filter(transaction => {
                 return !(transaction.committed_details && transaction.committed_details.deleted);
-
             })
             .map(transaction => {
                 let mapped = {
                     id: transaction.id,
                     type: transaction.type,
+                    version: transaction.version,
+                    last_changed: transaction.last_changed,
+                    group_id: transaction.group_id,
                     is_wip: transaction.is_wip,
-                    purchase_items: transaction.committed_positions != null ? transaction.committed_positions : [],
-                    files: transaction.committed_files != null ? transaction.committed_files : []
+                    purchase_items: transaction.committed_positions != null ? transaction.committed_positions.filter(position => !position.deleted) : [],
+                    files: transaction.committed_files != null ? transaction.committed_files.filter(file => !file.deleted) : []
                 }
                 if (transaction.pending_details) {
                     mapped = {

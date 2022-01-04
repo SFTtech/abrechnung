@@ -1,5 +1,14 @@
 import {atom, atomFamily, selectorFamily} from "recoil";
-import {fetchAccounts, fetchGroups, fetchInvites, fetchLog, fetchMembers, getUserIDFromToken} from "../api";
+import {
+    fetchAccount,
+    fetchAccounts,
+    fetchGroups,
+    fetchInvites,
+    fetchLog,
+    fetchMembers,
+    fetchTransaction,
+    getUserIDFromToken
+} from "../api";
 import {ws} from "../websocket";
 import {userData} from "./auth";
 import {DateTime} from "luxon";
@@ -60,31 +69,34 @@ export const groupAccountsRaw = atomFamily({
     key: "groupAccountsRaw",
     default: [],
     effects_UNSTABLE: groupID => [
-        ({setSelf}) => {
+        ({setSelf, getPromise, node}) => {
             // TODO: handle fetch error
             setSelf(
                 fetchAccounts({groupID: groupID})
                     .catch(err => toast.error(`error when fetching accounts: ${err}`))
             );
 
-            ws.subscribe("account", groupID, ({subscription_type, account_id, element_id}) => {
-                if (subscription_type === "account" && element_id === groupID) {
-                    // fetchAccount({ groupID: element_id, accountID: account_id }).then(result => {
-                    //     setSelf(currVal => {
-                    //         if (currVal.find(a => a.id === account_id) !== undefined) {
-                    //             return currVal.map(a => a.id === account_id ? result : a);
-                    //         }
-                    //
-                    //         return [...currVal, result];
-                    //     });
-                    // }).catch(err => {
-                    //     toast.error(`Reloading accounts had error: ${err}`);
-                    // });
-                    fetchAccounts({groupID: groupID})
-                        .then(result => setSelf(result))
-                        .catch(err => {
-                            toast.error(`Reloading accounts had error: ${err}`);
-                        });
+            const fetchAndUpdateAccount = (currAccounts, accountID) => {
+                fetchAccount({accountID: accountID})
+                    .then(account => {
+                        setSelf(currAccounts.map(t => t.id === account.id ? account : t));
+                    })
+                    .catch(err => toast.error(`error when fetching account: ${err}`));
+            }
+
+            ws.subscribe("account", groupID, (subscription_type, {account_id, element_id, revision_committed, revision_version}) => {
+                if (element_id === groupID) {
+                    getPromise(node).then(currAccounts => {
+                        const currAccount = currAccounts.find(t => t.id === account_id);
+                        if (!currAccount) {
+                            return;
+                        }
+
+                        if (currAccount.version > revision_version || (revision_committed !== null && currAccount.committed === null)) {
+                            console.log(`received notification about changes to transaction ${account_id} that are not known locally`);
+                            fetchAndUpdateAccount(currAccounts, account_id);
+                        }
+                    })
                 }
             });
             // TODO: handle registration errors
@@ -95,6 +107,21 @@ export const groupAccountsRaw = atomFamily({
         }
     ]
 });
+
+export const addAccount = (account, setAccounts) => {
+    setAccounts(currAccounts => {
+        return [
+            ...currAccounts,
+            account,
+        ];
+    })
+}
+
+export const updateAccount = (account, setAccounts) => {
+    setAccounts(currAccounts => {
+        return currAccounts.map(a => a.id === account.id ? account : a)
+    })
+}
 
 export const groupAccounts = selectorFamily({
     key: "groupAccounts",
@@ -119,7 +146,7 @@ export const groupMembers = atomFamily({
                     .catch(err => toast.error(`error when fetching group members: ${err}`))
             );
 
-            ws.subscribe("group_member", groupID, ({subscription_type, user_id, element_id}) => {
+            ws.subscribe("group_member", groupID, (subscription_type, {user_id, element_id}) => {
                 if (subscription_type === "group_member" && element_id === groupID) {
                     fetchMembers({groupID: element_id}).then(result => setSelf(sortMembers(result)));
                 }
@@ -143,7 +170,7 @@ export const groupInvites = atomFamily({
                     .catch(err => toast.error(`error when fetching group invites: ${err}`))
             );
 
-            ws.subscribe("group_invite", groupID, ({subscription_type, invite_id, element_id}) => {
+            ws.subscribe("group_invite", groupID, (subscription_type, {invite_id, element_id}) => {
                 if (subscription_type === "group_invite" && element_id === groupID) {
                     fetchInvites({groupID: element_id}).then(result => setSelf(result));
                 }
@@ -175,7 +202,7 @@ export const groupLog = atomFamily({
                     .catch(err => toast.error(`error when fetching group log: ${err}`))
             );
 
-            ws.subscribe("group_log", groupID, ({subscription_type, log_id, element_id}) => {
+            ws.subscribe("group_log", groupID, (subscription_type, {log_id, element_id}) => {
                 if (subscription_type === "group_log" && element_id === groupID) {
                     fetchLog({groupID: element_id}).then(result => setSelf(result));
                 }

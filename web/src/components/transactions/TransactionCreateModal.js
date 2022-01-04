@@ -15,8 +15,12 @@ import {
     TextField
 } from "@mui/material";
 import DatePicker from "@mui/lab/DatePicker";
+import {useSetRecoilState} from "recoil";
+import {addTransaction, groupTransactions} from "../../recoil/transactions";
 
 export default function TransactionCreateModal({ group, show, onClose }) {
+    const setTransactions = useSetRecoilState(groupTransactions(group.id));
+
     const handleSubmit = (values, { setSubmitting }) => {
         createTransaction({
             groupID: group.id,
@@ -27,7 +31,8 @@ export default function TransactionCreateModal({ group, show, onClose }) {
             currencySymbol: "€",
             currencyConversionRate: 1.0
         })
-            .then(result => {
+            .then(t => {
+                addTransaction(t, setTransactions);
                 setSubmitting(false);
                 onClose();
             })

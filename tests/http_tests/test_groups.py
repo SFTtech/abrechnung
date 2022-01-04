@@ -14,10 +14,8 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual(group_id, ret_data["id"])
         return ret_data
 
-    async def _fetch_account(
-        self, group_id: int, account_id: int, expected_status: int = 200
-    ) -> dict:
-        resp = await self._get(f"/api/v1/groups/{group_id}/accounts/{account_id}")
+    async def _fetch_account(self, account_id: int, expected_status: int = 200) -> dict:
+        resp = await self._get(f"/api/v1/accounts/{account_id}")
         self.assertEqual(expected_status, resp.status)
         if expected_status >= 400:
             return {}
@@ -195,7 +193,7 @@ class GroupAPITest(HTTPAPITest):
         )
         self.assertEqual(200, resp.status)
         ret_data = await resp.json()
-        self.assertIsNotNone(ret_data["account_id"])
+        self.assertIsNotNone(ret_data["id"])
 
     async def test_update_account(self):
         group_id = await self.group_service.create_group(
@@ -213,27 +211,27 @@ class GroupAPITest(HTTPAPITest):
             description="description",
         )
         resp = await self._post(
-            f"/api/v1/groups/{group_id}/accounts/{account_id}",
+            f"/api/v1/accounts/{account_id}",
             json={
                 "name": "new_name",
                 "description": "description",
             },
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(200, resp.status)
 
-        a = await self._fetch_account(group_id, account_id)
+        a = await self._fetch_account(account_id)
         self.assertEqual("new_name", a["name"])
         self.assertEqual("description", a["description"])
 
         resp = await self._post(
-            f"/api/v1/groups/{group_id}/accounts/{account_id}",
+            f"/api/v1/accounts/{account_id}",
             json={
                 "name": "new_name2",
                 "description": "description1",
             },
         )
-        self.assertEqual(204, resp.status)
-        a = await self._fetch_account(group_id, account_id)
+        self.assertEqual(200, resp.status)
+        a = await self._fetch_account(account_id)
         self.assertEqual("new_name2", a["name"])
         self.assertEqual("description1", a["description"])
 
@@ -337,16 +335,13 @@ class GroupAPITest(HTTPAPITest):
             name="account1",
             description="description",
         )
-        ret_data = await self._fetch_account(group_id, account_id)
+        ret_data = await self._fetch_account(account_id)
         self.assertEqual("account1", ret_data["name"])
 
-        resp = await self._get(f"/api/v1/groups/{group_id}/accounts/asdf1234")
+        resp = await self._get(f"/api/v1/accounts/asdf1234")
         self.assertEqual(404, resp.status)
 
-        resp = await self._get(f"/api/v1/groups/foobar/accounts/{account_id}")
-        self.assertEqual(404, resp.status)
-
-        resp = await self._get(f"/api/v1/groups/{group_id}/accounts/13232")
+        resp = await self._get(f"/api/v1/accounts/13232")
         self.assertEqual(404, resp.status)
 
     async def test_invites(self):

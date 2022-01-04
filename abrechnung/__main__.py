@@ -51,6 +51,10 @@ def main():
 
     add_subcommand("db", database.CLI)
 
+    from . import admin
+
+    add_subcommand("admin", admin.Admin)
+
     args = vars(cli.parse_args())
 
     # set up log level

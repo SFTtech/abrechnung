@@ -1,4 +1,4 @@
-export const CACHE_VERSION = 1;
+export const CACHE_VERSION = 3;
 
 export const checkCacheVersion = () => {
     const currentCacheVersion = localStorage.getItem("cacheVersion");

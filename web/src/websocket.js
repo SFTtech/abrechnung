@@ -50,7 +50,7 @@ export class SFTWebsocket {
             console.log("received notification", msg);
             const subscriptionType = msg.data.subscription_type;
             if (this.notificationHandlers.hasOwnProperty(subscriptionType)) {
-                this.notificationHandlers[subscriptionType].func(msg.data)
+                this.notificationHandlers[subscriptionType].func(subscriptionType, msg.data)
             }
         } else {
             console.log("WS received unhandled message", msg);

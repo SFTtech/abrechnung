@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 
-import { useRecoilValue } from "recoil";
-import { userData } from "../../recoil/auth";
-import { Form, Formik } from "formik";
-import { toast } from "react-toastify";
-import { updateGroupMemberPrivileges } from "../../api";
-import { DateTime } from "luxon";
-import { currUserPermissions, groupMembers } from "../../recoil/groups";
+import {useRecoilValue} from "recoil";
+import {userData} from "../../recoil/auth";
+import {Form, Formik} from "formik";
+import {toast} from "react-toastify";
+import {updateGroupMemberPrivileges} from "../../api";
+import {DateTime} from "luxon";
+import {currUserPermissions, groupMembers} from "../../recoil/groups";
 import {
     Button,
     Checkbox,
@@ -24,19 +24,16 @@ import {
     ListItemText,
     Paper
 } from "@mui/material";
-import { Edit } from "@mui/icons-material";
-import { makeStyles } from "@mui/styles";
+import {Edit} from "@mui/icons-material";
+import {makeStyles} from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2)
-    },
     chip: {
         marginRight: theme.spacing(1)
     }
 }));
 
-export default function GroupMemberList({ group }) {
+export default function GroupMemberList({group}) {
     const classes = useStyles();
     const [showEditMemberDialog, setShowEditMemberDialog] = useState(false);
     const [memberToEdit, setMemberToEdit] = useState(null);
@@ -44,7 +41,7 @@ export default function GroupMemberList({ group }) {
     const members = useRecoilValue(groupMembers(group.id));
     const permissions = useRecoilValue(currUserPermissions(group.id));
 
-    const handleEditMemberSubmit = (values, { setSubmitting }) => {
+    const handleEditMemberSubmit = (values, {setSubmitting}) => {
         updateGroupMemberPrivileges({
             groupID: group.id,
             userID: values.userID,
@@ -83,29 +80,29 @@ export default function GroupMemberList({ group }) {
     };
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <Paper elevation={1} sx={{padding: 2}}>
             <List>
                 {members.length === 0 ? (
-                    <ListItem><ListItemText primary="No Members" /></ListItem>
+                    <ListItem><ListItemText primary="No Members"/></ListItem>
                 ) : (
                     members.map((member, index) => (
                         <ListItem key={index}>
                             <ListItemText
                                 primary={(
                                     <>
-                                        <span style={{ marginRight: 5 }}>{member.username}</span>
+                                        <span style={{marginRight: 5}}>{member.username}</span>
                                         {member.is_owner ? (
                                             <Chip size="small" className={classes.chip} component="span" color="primary"
                                                   label="owner"
-                                                  variant="outlined" />
+                                                  variant="outlined"/>
                                         ) : member.can_write ? (
                                             <Chip size="small" className={classes.chip} component="span" color="primary"
                                                   label="editor"
-                                                  variant="outlined" />
+                                                  variant="outlined"/>
                                         ) : null}
                                         {member.user_id === currentUser.id ? (
                                             <Chip size="small" className={classes.chip} component="span" color="primary"
-                                                  label="it's you" />
+                                                  label="it's you"/>
                                         ) : (
                                             ""
                                         )}
@@ -129,7 +126,7 @@ export default function GroupMemberList({ group }) {
                                     <IconButton
                                         onClick={() => openEditMemberModal(member.user_id)}
                                     >
-                                        <Edit />
+                                        <Edit/>
                                     </IconButton>
                                 </ListItemSecondaryAction>
                             ) : (
@@ -142,13 +139,16 @@ export default function GroupMemberList({ group }) {
             <Dialog open={showEditMemberDialog} onClose={closeEditMemberModal}>
                 <DialogTitle>Edit Group Member</DialogTitle>
                 <DialogContent>
-                    <Formik initialValues={{
-                        userID: memberToEdit?.user_id,
-                        isOwner: memberToEdit?.is_owner,
-                        canWrite: memberToEdit?.can_write
-                    }} onSubmit={handleEditMemberSubmit}
-                            enableReinitialize={true}>
-                        {({ values, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
+                    <Formik
+                        initialValues={{
+                            userID: memberToEdit?.user_id,
+                            isOwner: memberToEdit?.is_owner,
+                            canWrite: memberToEdit?.can_write
+                        }}
+                        onSubmit={handleEditMemberSubmit}
+                        enableReinitialize={true}
+                    >
+                        {({values, handleBlur, handleChange, handleSubmit, isSubmitting}) => (
                             <Form>
                                 <FormControlLabel control={
                                     <Checkbox
@@ -157,9 +157,9 @@ export default function GroupMemberList({ group }) {
                                         name="canWrite"
                                         onBlur={handleBlur}
                                         onChange={handleChange}
-                                        value={values.canWrite}
+                                        checked={values.canWrite}
                                     />
-                                } label="Can Write" />
+                                } label="Can Write"/>
                                 <FormControlLabel control={
                                     <Checkbox
                                         type="checkbox"
@@ -167,11 +167,11 @@ export default function GroupMemberList({ group }) {
                                         name="isOwner"
                                         onBlur={handleBlur}
                                         onChange={handleChange}
-                                        value={values.isOwner}
+                                        checked={values.isOwner}
                                     />
-                                } label="Is Owner" />
+                                } label="Is Owner"/>
 
-                                {isSubmitting && <LinearProgress />}
+                                {isSubmitting && <LinearProgress/>}
                                 <DialogActions>
                                     <Button color="primary" type="submit" onClick={handleSubmit}>
                                         Save

@@ -14,7 +14,10 @@ class TransactionLogicTest(AsyncTestCase):
         await super().setUpAsync()
         self.secret_key = "asdf1234"
         self.test_config = Config(
-            {"api": {"secret_key": self.secret_key, "max_uploadable_file_size": 512}}
+            {
+                "api": {"secret_key": self.secret_key, "max_uploadable_file_size": 512},
+                "service": {"api_url": "http://localhost/api"},
+            }
         )
         self.group_service = GroupService(self.db_pool, config=self.test_config)
         self.account_service = AccountService(self.db_pool, config=self.test_config)
