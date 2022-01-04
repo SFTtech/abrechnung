@@ -1,10 +1,12 @@
 name: Build release artifacts
 on:
-  workflow_run:
-    workflows: ["Tests"]
-    branches: [master]
-    types:
-      - completed
+  # we build on all pushes to master to (hopefully) get early warning
+  # of things breaking (but only build one set of debs)
+  push:
+    branches: [ "master" ]
+
+    # we do the full build on tags.
+    tags: [ "v*" ]
 
 jobs:
   build-and-publish-sdist:
