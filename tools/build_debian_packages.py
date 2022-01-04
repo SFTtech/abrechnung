@@ -45,7 +45,7 @@ class Builder(object):
     ):
         self.redirect_stdout = redirect_stdout
         self._docker_build_args = tuple(docker_build_args or ())
-        self.active_containers = set()
+        self.active_containers: set[str] = set()
         self._lock = threading.Lock()
         self._failed = False
 
@@ -78,7 +78,7 @@ class Builder(object):
         if self.redirect_stdout:
             logfile = os.path.join(debsdir, "%s.buildlog" % (tag,))
             print("building %s: directing output to %s" % (dist, logfile))
-            stdout = open(logfile, "w")
+            stdout = open(logfile, "w", encoding="utf-8")
         else:
             stdout = None
 
@@ -151,6 +151,7 @@ class Builder(object):
                     c,
                 ],
                 stdout=subprocess.DEVNULL,
+                check=True,
             )
             with self._lock:
                 self.active_containers.remove(c)
@@ -158,6 +159,8 @@ class Builder(object):
 
 def run_builds(builder, dists, jobs=1, skip_tests=False):
     def sig(signum, _frame):
+        del signum  # unused
+
         print("Caught SIGINT")
         builder.kill_containers()
 
@@ -207,11 +210,11 @@ if __name__ == "__main__":
     if args.show_dists_json:
         print(json.dumps(DISTS))
     else:
-        builder = Builder(
+        global_builder = Builder(
             redirect_stdout=(args.jobs > 1), docker_build_args=args.docker_build_arg
         )
         run_builds(
-            builder,
+            global_builder,
             dists=args.dist,
             jobs=args.jobs,
             skip_tests=args.no_check,
