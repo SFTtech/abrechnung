@@ -60,7 +60,6 @@ class MailerTest(AsyncTestCase):
                 },
             }
         )
-        print(self.mailer_config._cfg)
         self.mailer = Mailer(config=self.mailer_config)
 
         self.mailer_task = asyncio.create_task(self.mailer.run())
