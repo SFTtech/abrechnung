@@ -1,0 +1,6 @@
+config/abrechnung.yaml /etc/abrechnung
+config/nginx-site /etc/nginx/sites-available/abrechnung
+debian/abrechnung-api.service /lib/systemd/system
+debian/abrechnung-mailer.service /lib/systemd/system
+debian/abrechnung-db-clean.service /lib/systemd/system
+debian/abrechnung-db-clean.timer /lib/systemd/system

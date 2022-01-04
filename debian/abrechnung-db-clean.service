@@ -1,0 +1,11 @@
+[Unit]
+Description=Abrechnung Database Cleanup Service
+After=postgresql.service
+
+[Service]
+ExecStart=/opt/venvs/abrechnung/bin/abrechnung db clean
+User=abrechnung
+Group=abrechnung
+
+[Install]
+WantedBy=multi-user.target

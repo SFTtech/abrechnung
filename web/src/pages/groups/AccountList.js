@@ -61,7 +61,7 @@ export default function AccountList({group}) {
             <List>
                 {accounts.length === 0 ? (
                     <ListItem key={0}>
-                        <ListItemText primary="No AccountList"/>
+                        <ListItemText primary="No Accounts"/>
                     </ListItem>
                 ) : (
                     accounts.map(account => (

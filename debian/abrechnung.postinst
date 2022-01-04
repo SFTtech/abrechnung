@@ -3,3 +3,5 @@
 set -e
 
 adduser --system --group --home /var/lib/abrechnung abrechnung
+
+exit 0

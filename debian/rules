@@ -1,33 +1,19 @@
 #!/usr/bin/make -f
 
-DESTDIR = $(CURDIR)/debian
+#
+# Build Debian package using https://github.com/spotify/dh-virtualenv
+#
+
+PACKAGE_NAME:=`dh_listpackages`
 
 #export DH_VERBOSE = 1
-export PYBUILD_NAME = abrechnung
-export PYBUILD_TEST_PYTEST = 1
-export PYBUILD_SYSTEM=flit
-export PYBUILD_DISABLE_python3=test
-
 export NODE_OPTIONS=--openssl-legacy-provider
 
 %:
-	dh $@ --with python3 --buildsystem=pybuild
+	dh $@ --with python-virtualenv
 
-override_dh_auto_build:
-	dh_auto_build
-	cd $(CURDIR)/web && yarnpkg install && yarnpkg build && cd $(CURDIR)
+# we don't really want to strip the symbols from our object files.
+override_dh_strip:
 
-override_dh_auto_install:
-	dh_auto_install
-	mkdir -p $(DESTDIR)/abrechnung/usr/share/
-	mv $(CURDIR)/web/build $(DESTDIR)/abrechnung/usr/share/abrechnung_web
-
-	mkdir -p $(DESTDIR)/abrechnung/etc/abrechnung
-	mkdir -p $(DESTDIR)/abrechnung/etc/nginx/sites-available
-	mkdir -p $(DESTDIR)/abrechnung/lib/systemd/system
-	install -m644 config/config.yaml $(DESTDIR)/abrechnung/etc/abrechnung/abrechnung.yaml
-	install -m644 config/nginx-site $(DESTDIR)/abrechnung/etc/nginx/sites-available/abrechnung
-	install -m644 systemd/abrechnung-api.service $(DESTDIR)/abrechnung/lib/systemd/system
-	install -m644 systemd/abrechnung-mailer.service $(DESTDIR)/abrechnung/lib/systemd/system
-	install -m644 systemd/abrechnung-db-clean.service $(DESTDIR)/abrechnung/lib/systemd/system
-	install -m644 systemd/abrechnung-db-clean.timer $(DESTDIR)/abrechnung/lib/systemd/system
+override_dh_virtualenv:
+	./debian/build_virtualenv
