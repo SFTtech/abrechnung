@@ -11,7 +11,6 @@ jobs:
   build-and-publish-sdist:
     name: Build and publish Python distributions to PyPI and TestPyPI
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
     - uses: actions/checkout@master
 
@@ -47,7 +46,6 @@ jobs:
   get-distros:
     name: "Calculate list of debian distros"
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -67,7 +65,6 @@ jobs:
   build-debs:
     needs: get-distros
     name: "Build .deb packages"
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
