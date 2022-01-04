@@ -1,0 +1,8 @@
+.debhelper
+abrechnung/
+python3-abrechnung
+*.debhelper
+debhelper-build-stamp
+files
+*.substvars
+tmp
