@@ -117,6 +117,7 @@ def generate_openapi_json():
         url="/docs/swagger.json",
         in_place=True,
     )
+    BUILD_DIR.mkdir(parents=True, exist_ok=True)
     with open(BUILD_DIR / "openapi.json", "w+", encoding="utf-8") as f:
         json.dump(openapi.swagger_dict(), f)
 
