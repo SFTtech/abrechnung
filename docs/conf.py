@@ -104,7 +104,7 @@ html_show_sphinx = False
 
 
 def generate_openapi_json():
-    config = Config({"api": {"secret_key": "foobar"}})
+    config = Config.from_dict({"api": {"secret_key": "foobar"}})
     service = HTTPService(config)
     app = service._create_api_app(  # pylint: disable=protected-access
         db_pool=None, middlewares=[validation_middleware]
