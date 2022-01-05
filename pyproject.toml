@@ -18,7 +18,7 @@ classifiers = [
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Development Status :: 5 - Production/Stable",
 ]
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 dependencies = [
     "aiohttp~=3.8",
     "aiohttp-cors~=0.7",
