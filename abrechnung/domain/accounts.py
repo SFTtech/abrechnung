@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
 
 
@@ -14,5 +15,7 @@ class Account:
     name: str
     description: str
     priority: int
+    version: int
+    last_changed: datetime
     # created_by: int
     deleted: bool

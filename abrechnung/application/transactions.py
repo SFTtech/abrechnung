@@ -194,7 +194,8 @@ class TransactionService(Application):
                     # if a minimum last changed value is specified we must also return all transactions the current
                     # user has pending changes with to properly sync state across different devices of the user
                     cur = conn.cursor(
-                        "select transaction_id, group_id, type, last_changed, version, is_wip, committed_details, pending_details, "
+                        "select transaction_id, group_id, type, last_changed, version, is_wip, "
+                        "   committed_details, pending_details, "
                         "   committed_positions, pending_positions, committed_files, pending_files "
                         "from full_transaction_state_valid_at($1) "
                         "where group_id = $2 "
@@ -207,7 +208,8 @@ class TransactionService(Application):
                     )
                 else:
                     cur = conn.cursor(
-                        "select transaction_id, group_id, type, last_changed, version, is_wip, committed_details, pending_details, "
+                        "select transaction_id, group_id, type, last_changed, version, is_wip, "
+                        "   committed_details, pending_details, "
                         "   committed_positions, pending_positions, committed_files, pending_files "
                         "from full_transaction_state_valid_at($1) "
                         "where group_id = $2",
@@ -229,10 +231,12 @@ class TransactionService(Application):
                 conn=conn, user_id=user_id, transaction_id=transaction_id
             )
             committed_transaction = await conn.fetchrow(
-                "select transaction_id, group_id, type, last_changed, version, is_wip, committed_details, pending_details, "
+                "select transaction_id, group_id, type, last_changed, version, is_wip, "
+                "   committed_details, pending_details, "
                 "   committed_positions, pending_positions, committed_files, pending_files "
                 "from full_transaction_state_valid_at($1) "
-                "where group_id = $1 and transaction_id = $2",
+                "where group_id = $2 and transaction_id = $3",
+                user_id,
                 group_id,
                 transaction_id,
             )
@@ -266,11 +270,6 @@ class TransactionService(Application):
                     user_id,
                     transaction_id,
                 )
-                revision_started = await conn.fetchval(
-                    "select started from transaction_revision where id = $1",
-                    revision_id,
-                )
-                print(f"Started after insert: {revision_started}")
                 await conn.execute(
                     "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, value, description, billed_at) "
                     "values ($1, $2, $3, $4, $5, $6, $7)",

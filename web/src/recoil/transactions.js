@@ -81,10 +81,14 @@ export const groupTransactions = atomFamily({
                 setSelf(fullFetchPromise());
             }
 
-            const fetchAndUpdateTransaction = (currTransactions, transactionID) => {
+            const fetchAndUpdateTransaction = (currTransactions, transactionID, isNew) => {
                 fetchTransaction({transactionID: transactionID})
                     .then(transaction => {
-                        setSelf(currTransactions.map(t => t.id === transaction.id ? transaction : t));
+                        if (isNew) {
+                            setSelf([...currTransactions, transaction])
+                        } else {
+                            setSelf(currTransactions.map(t => t.id === transaction.id ? transaction : t));
+                        }
                     })
                     .catch(err => toast.error(`error when fetching transaction: ${err}`));
             }
@@ -98,14 +102,11 @@ export const groupTransactions = atomFamily({
             }) => {
                 if (element_id === groupID) {
                     getPromise(node).then(currTransactions => {
-                        const curr_transaction = currTransactions.find(t => t.id === transaction_id);
-                        if (!curr_transaction) {
-                            return;
-                        }
-
-                        if (curr_transaction.version > revision_version || (revision_committed !== null && curr_transaction.committed === null)) {
-                            console.log(`received notification about changes to transaction ${transaction_id} that are not known locally`);
-                            fetchAndUpdateTransaction(currTransactions, transaction_id);
+                        const currTransaction = currTransactions.find(t => t.id === transaction_id);
+                        if (currTransaction === undefined
+                            || (revision_committed === null && revision_version > currTransaction.version
+                                || (revision_committed !== null && (currTransaction.last_changed === null || DateTime.fromISO(revision_committed) > DateTime.fromISO(currTransaction.last_changed))))) {
+                            fetchAndUpdateTransaction(currTransactions, transaction_id, currTransaction === undefined);
                         }
                     })
                 }

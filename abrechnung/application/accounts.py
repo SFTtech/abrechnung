@@ -61,7 +61,8 @@ class AccountService(Application):
                     conn=conn, group_id=group_id, user_id=user_id
                 )
                 cur = conn.cursor(
-                    "select account_id, group_id, type, revision_id, name, description, priority, deleted "
+                    "select account_id, group_id, revision_committed, "
+                    "   revision_version, type, revision_id, name, description, priority, deleted "
                     "from committed_account_state_valid_at() "
                     "where group_id = $1",
                     group_id,
@@ -73,6 +74,8 @@ class AccountService(Application):
                             id=account["account_id"],
                             group_id=account["group_id"],
                             type=account["type"],
+                            last_changed=account["revision_committed"],
+                            version=account["revision_version"],
                             name=account["name"],
                             description=account["description"],
                             priority=account["priority"],
@@ -88,7 +91,8 @@ class AccountService(Application):
                 conn=conn, user_id=user_id, account_id=account_id
             )
             account = await conn.fetchrow(
-                "select account_id, group_id, type, revision_id, name, description, priority, deleted "
+                "select account_id, group_id, revision_version, revision_committed, "
+                "   type, revision_id, name, description, priority, deleted "
                 "from committed_account_state_valid_at() "
                 "where account_id = $1",
                 account_id,
@@ -101,6 +105,8 @@ class AccountService(Application):
                 group_id=account["group_id"],
                 type=account["type"],
                 name=account["name"],
+                last_changed=account["revision_committed"],
+                version=account["revision_version"],
                 description=account["description"],
                 priority=account["priority"],
                 deleted=account["deleted"],

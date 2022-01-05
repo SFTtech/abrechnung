@@ -29,6 +29,8 @@ class AccountSchema(Schema):
     group_id = fields.Int()
     type = fields.Str()
     name = fields.Str()
+    last_changed = fields.DateTime()
+    version = fields.Int()
     description = fields.Str()
     deleted = fields.Bool()
 

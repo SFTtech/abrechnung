@@ -70,7 +70,7 @@ export default function EditableField({value, onChange, validate, helperText, on
                 onKeyUp={onKeyUp}
                 {...props}
             />
-            {canEdit && editing ? (
+            {canEdit && (editing ? (
                 <>
                     <IconButton color="primary" onClick={onSave}>
                         <Check/>
@@ -83,7 +83,7 @@ export default function EditableField({value, onChange, validate, helperText, on
                 <IconButton color="primary" onClick={startEditing}>
                     <Edit/>
                 </IconButton>
-            )}
+            ))}
         </div>
     );
 }
