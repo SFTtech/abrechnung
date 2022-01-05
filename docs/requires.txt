@@ -1,4 +1,5 @@
 sphinx-autobuild
+sphinx-rtd-theme
 sphinx-autodoc-typehints
 sphinxcontrib-openapi
 aiohttp
@@ -12,3 +13,4 @@ schema
 email-validator
 apispec
 webargs
+mistune~=0.8
