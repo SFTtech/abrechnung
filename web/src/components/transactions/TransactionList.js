@@ -16,13 +16,15 @@ export default function TransactionList({group}) {
         <>
             <Paper sx={{padding: 2}}>
                 {userPermissions.can_write && (
-                    <Grid container justifyContent="center">
-                        <IconButton color="primary" onClick={() => setShowCreateDialog(true)}>
-                            <Add/>
-                        </IconButton>
-                    </Grid>
+                    <>
+                        <Grid container justifyContent="center">
+                            <IconButton color="primary" onClick={() => setShowCreateDialog(true)}>
+                                <Add/>
+                            </IconButton>
+                        </Grid>
+                        <Divider variant="middle"/>
+                    </>
                 )}
-                <Divider variant="middle"/>
                 <List>
                     {transactions.length === 0 ? (
                         <div className="list-group-item" key={0}>No Transactions</div>
@@ -35,14 +37,16 @@ export default function TransactionList({group}) {
                 <TransactionCreateModal group={group} show={showCreateDialog}
                                         onClose={() => setShowCreateDialog(false)}/>
             </Paper>
-            <Fab
-                color="primary"
-                aria-label="add"
-                sx={{position: "absolute", right: 20, bottom: 20}}
-                onClick={() => setShowCreateDialog(true)}
-            >
-                <Add/>
-            </Fab>
+            {userPermissions.can_write && (
+                <Fab
+                    color="primary"
+                    aria-label="add"
+                    sx={{position: "absolute", right: 20, bottom: 20}}
+                    onClick={() => setShowCreateDialog(true)}
+                >
+                    <Add/>
+                </Fab>
+            )}
         </>
     );
 }

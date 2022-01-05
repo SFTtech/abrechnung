@@ -61,6 +61,7 @@ export default function GroupDetail({ group }) {
                 margin="normal"
                 variant="standard"
                 value={group.name}
+                canEdit={userPermissions.can_write}
                 onChange={name => updateGroup({ name: name })}
             />
 
@@ -69,6 +70,7 @@ export default function GroupDetail({ group }) {
                 margin="normal"
                 variant="standard"
                 value={group.description}
+                canEdit={userPermissions.can_write}
                 onChange={description => updateGroup({ description: description })}
             />
 
@@ -77,6 +79,7 @@ export default function GroupDetail({ group }) {
                 margin="normal"
                 variant="standard"
                 value={group.currency_symbol}
+                canEdit={userPermissions.can_write}
                 onChange={currencySymbol => updateGroup({ currencySymbol: currencySymbol })}
             />
 
@@ -85,6 +88,7 @@ export default function GroupDetail({ group }) {
                 margin="normal"
                 variant="standard"
                 value={group.terms}
+                canEdit={userPermissions.can_write}
                 onChange={terms => updateGroup({ terms: terms })}
             />
 

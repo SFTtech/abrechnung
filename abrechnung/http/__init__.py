@@ -78,6 +78,8 @@ class HTTPService(SubCommand):
                     conn, forwarder_id=self.cfg["api"]["id"]
                 )
 
+        await db_pool.close()
+
     async def _register_forwarder(
         self, connection: asyncpg.Connection, forwarder_id: str
     ):

@@ -4,6 +4,7 @@ import email.utils
 import itertools
 import logging
 import smtplib
+from typing import Optional
 
 import asyncpg
 
@@ -16,7 +17,7 @@ class Mailer(subcommand.SubCommand):
         del args  # unused
 
         self.config = config
-        self.events: asyncio.Queue = asyncio.Queue()
+        self.events: Optional[asyncio.Queue] = None
         self.psql = None
         self.mailer = None
         self.logger = logging.getLogger(__name__)
@@ -36,6 +37,11 @@ class Mailer(subcommand.SubCommand):
     async def run(self):
         # just try to connect to the mailing server once
         _ = self.get_mailer_instance()
+        # only initialize the event queue once we are in a proper async context otherwise weird errors happen
+        self.events = asyncio.Queue()
+
+        if self.events is None:
+            raise RuntimeError("something unexpected happened, self.events is None")
 
         self.psql = await asyncpg.connect(
             user=self.config["database"]["user"],
@@ -96,6 +102,8 @@ class Mailer(subcommand.SubCommand):
         """runs whenever we get a psql notification"""
         assert connection is self.psql
         del pid  # unused
+        if self.events is None:
+            raise RuntimeError("something unexpected happened, self.events is None")
         self.events.put_nowait((channel, payload))
 
     def terminate_callback(self, connection: asyncpg.Connection):
@@ -103,6 +111,8 @@ class Mailer(subcommand.SubCommand):
         assert connection is self.psql
         self.logger.info("psql connection closed")
         # proper way of clearing asyncio queue
+        if self.events is None:
+            raise RuntimeError("something unexpected happened, self.events is None")
         for _ in range(self.events.qsize()):
             self.events.get_nowait()
             self.events.task_done()

@@ -20,13 +20,13 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    "aiohttp~=3.7",
+    "aiohttp~=3.8",
     "aiohttp-cors~=0.7",
-    "asyncpg~=0.21",
+    "asyncpg~=0.24",
     "bcrypt~=3.2",
     "pyjwt~=2.2",
     "PyYAML~=5.3",
-    "marshmallow~=3.10",
+    "marshmallow~=3.14",
     "schema",
     "email-validator~=1.1",
     "apispec",
@@ -41,9 +41,9 @@ test = [
 ]
 dev = [
     "black",
-    "mypy~=0.910",
+    "mypy~=0.930",
     "types-PyYAML~=5.4",
-    "pylint~=2.10",
+    "pylint~=2.12",
 ]
 docs = [
     "sphinx",

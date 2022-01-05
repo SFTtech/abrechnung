@@ -1,5 +1,14 @@
 sphinx-autobuild
 sphinx-autodoc-typehints
 sphinxcontrib-openapi
+aiohttp
+aiohttp-cors
+asyncpg
+bcrypt
+pyjwt
+PyYAML
+marshmallow
+schema
+email-validator
 apispec
 webargs

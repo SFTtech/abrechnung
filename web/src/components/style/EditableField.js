@@ -14,7 +14,7 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-export default function EditableField({value, onChange, validate, helperText, onStopEdit, ...props}) {
+export default function EditableField({value, onChange, validate, helperText, onStopEdit, canEdit = true, ...props}) {
     const [currentValue, setValue] = useState("");
     const [editing, setEditing] = useState(false);
     const [error, setError] = useState(false);
@@ -70,7 +70,7 @@ export default function EditableField({value, onChange, validate, helperText, on
                 onKeyUp={onKeyUp}
                 {...props}
             />
-            {editing ? (
+            {canEdit && editing ? (
                 <>
                     <IconButton color="primary" onClick={onSave}>
                         <Check/>

@@ -12,7 +12,7 @@ Debian Buster, Bullseye, Bookworm and Sid
 -----------------------------------------
 This is the recommended installation method as it also installs the prebuilt abrechnung web app.
 
-Simply go to the `github release page <https://github.com/SFTtech/abrechung/releases>`_ and download
+Simply go to the `github release page <https://github.com/SFTtech/abrechnung/releases>`_ and download
 the latest debian package matching your debian version for the latest release.
 
 Install them via ::

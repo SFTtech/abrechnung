@@ -126,3 +126,5 @@ class CLI(subcommand.SubCommand):
             await revisions.apply_revisions(db_pool=db_pool)
         elif self.action == "clean":
             await self._clean(db_pool=db_pool)
+
+        await db_pool.close()
