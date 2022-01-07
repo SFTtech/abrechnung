@@ -39,7 +39,7 @@ const useStyles = makeStyles((theme) => ({
         marginLeft: 0
     },
     tableLink: {
-        color: "black",
+        color: theme.palette.text.primary,
         textDecoration: "none",
         display: "block",
         height: "100%",
