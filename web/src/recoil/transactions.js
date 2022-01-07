@@ -1,11 +1,10 @@
-// transaction handling
 import {atomFamily, selectorFamily} from "recoil";
-import {groupAccounts} from "./groups";
 import {fetchTransaction, fetchTransactions} from "../api";
 import {ws} from "../websocket";
 import {DateTime} from "luxon";
 import {toast} from "react-toastify";
 import {checkCacheVersion} from "./cache";
+import {accountsSeenByUser} from "./accounts";
 
 
 export const groupTransactions = atomFamily({
@@ -104,7 +103,7 @@ export const groupTransactions = atomFamily({
                     getPromise(node).then(currTransactions => {
                         const currTransaction = currTransactions.find(t => t.id === transaction_id);
                         if (currTransaction === undefined
-                            || (revision_committed === null && revision_version > currTransaction.version
+                            || ((revision_committed === null && revision_version > currTransaction.version)
                                 || (revision_committed !== null && (currTransaction.last_changed === null || DateTime.fromISO(revision_committed) > DateTime.fromISO(currTransaction.last_changed))))) {
                             fetchAndUpdateTransaction(currTransactions, transaction_id, currTransaction === undefined);
                         }
@@ -281,8 +280,9 @@ export const accountBalances = selectorFamily({
     key: "accountBalances",
     get: (groupID) => async ({get}) => {
         const transactions = get(transactionsSeenByUser(groupID));
-        const accounts = get(groupAccounts(groupID));
+        const accounts = get(accountsSeenByUser(groupID));
         let accountBalances = Object.fromEntries(accounts.map(account => [account.id, 0]));
+
         for (const transaction of transactions) {
             if (transaction.deleted) {
                 continue; // ignore deleted transactions
@@ -291,6 +291,53 @@ export const accountBalances = selectorFamily({
                 accountBalances[accountID] += value.common_creditors - value.positions - value.common_debitors;
             });
         }
+
+        // linearize the account dependency graph to properly redistribute clearing accounts
+        let shareMap = accounts.reduce((map, acc) => {
+            map[acc.id] = acc.clearing_shares != null ? acc.clearing_shares : {};
+            return map;
+        }, {});
+        let graph = {}
+        for (const accountID of Object.keys(shareMap)) { // TODO: maybe functionalize
+            for (const nextAccountID of Object.keys(shareMap[accountID])) {
+                if (graph.hasOwnProperty(nextAccountID)) {
+                    graph[nextAccountID].add(accountID);
+                } else {
+                    graph[nextAccountID] = new Set([accountID]);
+                }
+            }
+        }
+        let inDegree = Object.keys(shareMap).reduce((map, accountID) => {
+            map[accountID] = Object.keys(shareMap[accountID]).length;
+            return map;
+        }, {});
+        let zeroDegreeAccounts = Object.keys(inDegree).filter(accountID => inDegree[accountID] === 0);
+        let sorting = []
+
+        while (zeroDegreeAccounts.length > 0) {
+            const node = zeroDegreeAccounts.pop();
+            sorting.push(node);
+            if (graph.hasOwnProperty(node)) {
+                for (const nextAccount of graph[node]) {
+                    inDegree[nextAccount] -= 1;
+                    if (inDegree[nextAccount] === 0) {
+                        zeroDegreeAccounts.push(nextAccount);
+                    }
+                }
+            }
+        }
+
+        for (const clearing of sorting) {
+            if (Object.keys(shareMap[clearing]).length > 0) {
+                const toSplit = accountBalances[clearing];
+                accountBalances[clearing] = 0;
+                const totalShares = Object.values(shareMap[clearing]).reduce((acc, curr) => curr + acc, 0);
+                for (const acc in shareMap[clearing]) {
+                    accountBalances[acc] += toSplit * shareMap[clearing][acc] / totalShares;
+                }
+            }
+        }
+
         return accountBalances;
     }
 });

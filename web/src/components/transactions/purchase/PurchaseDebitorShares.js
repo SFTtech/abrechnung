@@ -1,5 +1,4 @@
 import {useRecoilValue, useSetRecoilState} from "recoil";
-import { groupAccounts } from "../../../recoil/groups";
 import {
     Checkbox,
     Divider,
@@ -16,12 +15,14 @@ import {
     TextField,
     Typography
 } from "@mui/material";
-import { toast } from "react-toastify";
-import { useEffect, useState } from "react";
-import { createOrUpdateDebitorShare, deleteDebitorShare } from "../../../api";
-import { makeStyles } from "@mui/styles";
-import { Link } from "react-router-dom";
+import {toast} from "react-toastify";
+import {useEffect, useState} from "react";
+import {createOrUpdateDebitorShare, deleteDebitorShare} from "../../../api";
+import {makeStyles} from "@mui/styles";
+import {Link} from "react-router-dom";
 import {groupTransactions, updateTransaction} from "../../../recoil/transactions";
+import {accountsSeenByUser} from "../../../recoil/accounts";
+import {ShareInput} from "../../ShareInput";
 
 const useStyles = makeStyles((theme) => ({
     shareValue: {
@@ -51,56 +52,10 @@ const useStyles = makeStyles((theme) => ({
     }
 }));
 
-function ShareInput({ value, onChange }) {
-    const [currValue, setValue] = useState(0);
-    const [error, setError] = useState(false);
-
-    useEffect(() => {
-        setValue(value);
-        setError(!validate(value));
-    }, [value]);
-
-    const onSave = () => {
-        if (!error) {
-            onChange(parseFloat(currValue));
-        }
-    };
-
-    const onValueChange = (event) => {
-        const val = event.target.value;
-        setValue(val);
-        setError(!validate(value));
-    };
-
-    const validate = (value) => {
-        return !(value === null || value === undefined || value === "" || isNaN(parseFloat(value)));
-    };
-
-    const onKeyUp = (key) => {
-        if (key.keyCode === 13) {
-            onSave();
-        }
-    };
-
-    return (
-        <TextField
-            error={error}
-            margin="dense"
-            variant="standard"
-            style={{ width: 40, paddingTop: 1, marginRight: 2 }}
-            onBlur={onSave}
-            value={currValue}
-            onChange={onValueChange}
-            helperText={error ? "float required" : null}
-            onKeyUp={onKeyUp}
-        />
-    );
-}
-
-export default function PurchaseDebitorShares({ group, transaction, showPositions = false }) {
+export default function PurchaseDebitorShares({group, transaction, showPositions = false}) {
     const classes = useStyles();
 
-    const accounts = useRecoilValue(groupAccounts(group.id));
+    const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
 
     const [debitorShareValues, setDebitorShareValues] = useState({});
@@ -207,14 +162,14 @@ export default function PurchaseDebitorShares({ group, transaction, showPosition
                         </Typography>
                         {transaction.is_wip && (
                             <FormControlLabel
-                                control={<Checkbox name={`show-advanced`} />}
+                                control={<Checkbox name={`show-advanced`}/>}
                                 checked={showAdvanced}
                                 onChange={event => setShowAdvanced(event.target.checked)}
-                                label="Advanced" />
+                                label="Advanced"/>
                         )}
                     </Grid>
                 </ListItem>
-                <Divider variant="middle" className={classes.divider} />
+                <Divider variant="middle" className={classes.divider}/>
                 {transaction.is_wip ? (
                     <TableContainer>
                         <Table size="small">

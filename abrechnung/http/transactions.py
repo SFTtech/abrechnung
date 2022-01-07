@@ -380,7 +380,10 @@ class PositionCreateResponse(Schema):
             "price": fields.Number(),
             "communist_shares": fields.Number(),
             "usages": fields.Dict(
-                keys=fields.Int(), values=fields.Number(), required=False, missing=None
+                keys=fields.Int(),
+                values=fields.Number(),
+                required=False,
+                load_default=None,
             ),
         },
         name="CreatePositionSchema",

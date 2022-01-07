@@ -5,15 +5,15 @@ import {toast} from "react-toastify";
 import {createAccount} from "../../api";
 import {Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField} from "@mui/material";
 import {useSetRecoilState} from "recoil";
-import {addAccount, groupAccountsRaw} from "../../recoil/groups";
+import {addAccount, groupAccounts} from "../../recoil/accounts";
 
 const validationSchema = yup.object({
     name: yup.string("Enter an account name").required("Name is required"),
     description: yup.string("Enter an account description"),
 })
 
-export default function AccountCreateModal({show, onClose, group}) {
-    const setAccounts = useSetRecoilState(groupAccountsRaw(group.id));
+export default function CreateAccountModal({show, onClose, group}) {
+    const setAccounts = useSetRecoilState(groupAccounts(group.id));
 
     const handleSubmit = (values, {setSubmitting}) => {
         createAccount({
@@ -34,11 +34,14 @@ export default function AccountCreateModal({show, onClose, group}) {
     };
     return (
         <Dialog open={show} onClose={onClose}>
-            <DialogTitle>Create Account</DialogTitle>
+            <DialogTitle>Create Personal Account</DialogTitle>
 
             <DialogContent>
-                <Formik initialValues={{name: "", description: ""}} onSubmit={handleSubmit}
-                        validationSchema={validationSchema}>
+                <Formik
+                    initialValues={{name: "", description: ""}}
+                    onSubmit={handleSubmit}
+                    validationSchema={validationSchema}
+                >
                     {({values, touched, errors, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
                         <Form>
                             <TextField
@@ -60,7 +63,6 @@ export default function AccountCreateModal({show, onClose, group}) {
                                 required
                                 fullWidth
                                 variant="standard"
-                                name="description"
                                 label="Description"
                                 onBlur={handleBlur}
                                 onChange={handleChange}

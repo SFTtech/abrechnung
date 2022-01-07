@@ -3,18 +3,27 @@ import React from "react";
 import {toast} from "react-toastify";
 import {updateAccountDetails} from "../../api";
 import {Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField} from "@mui/material";
-import {groupAccountsRaw, updateAccount} from "../../recoil/groups";
+import {groupAccounts, updateAccount} from "../../recoil/accounts";
 import {useSetRecoilState} from "recoil";
+import ClearingSharesFormElement from "./ClearingSharesFormElement";
+import * as yup from "yup";
 
-export default function AccountEditModal({group, show, onClose, account}) {
-    const setAccounts = useSetRecoilState(groupAccountsRaw(group.id));
+const validationSchema = yup.object({
+    name: yup.string("Enter an account name").required("Name is required"),
+    description: yup.string("Enter an account description"),
+    clearingShares: yup.object(),
+})
+
+export default function EditClearingAccountModal({group, show, onClose, account}) {
+    const setAccounts = useSetRecoilState(groupAccounts(group.id));
 
     const handleSubmit = (values, {setSubmitting}) => {
         updateAccountDetails({
             groupID: group.id,
             accountID: values.accountID,
             name: values.name,
-            description: values.description
+            description: values.description,
+            clearingShares: values.clearingShares,
         })
             .then(account => {
                 updateAccount(account, setAccounts);
@@ -29,15 +38,20 @@ export default function AccountEditModal({group, show, onClose, account}) {
     return (
 
         <Dialog open={show} onClose={onClose}>
-            <DialogTitle>Edit Account</DialogTitle>
+            <DialogTitle>Edit Clearing Account</DialogTitle>
             <DialogContent>
-                <Formik initialValues={{
-                    accountID: account?.id,
-                    name: account?.name,
-                    description: account?.description
-                }} onSubmit={handleSubmit}
-                        enableReinitialize={true}>
-                    {({values, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
+                <Formik
+                    initialValues={{
+                        accountID: account?.id,
+                        name: account?.name,
+                        description: account?.description,
+                        clearingShares: account?.clearing_shares,
+                    }}
+                    onSubmit={handleSubmit}
+                    enableReinitialize={true}
+                    validationSchema={validationSchema}
+                >
+                    {({values, handleChange, setFieldValue, handleBlur, handleSubmit, isSubmitting}) => (
                         <Form>
                             <TextField
                                 margin="normal"
@@ -53,7 +67,6 @@ export default function AccountEditModal({group, show, onClose, account}) {
                             />
                             <TextField
                                 margin="normal"
-                                required
                                 fullWidth
                                 variant="standard"
                                 name="description"
@@ -63,12 +76,19 @@ export default function AccountEditModal({group, show, onClose, account}) {
                                 onChange={handleChange}
                             />
 
+                            <ClearingSharesFormElement
+                                group={group}
+                                clearingShares={values.clearingShares}
+                                accountID={account?.id}
+                                setClearingShares={(clearingShares) => setFieldValue("clearingShares", clearingShares)}
+                            />
+
                             {isSubmitting && <LinearProgress/>}
                             <DialogActions>
                                 <Button color="primary" type="submit" onClick={handleSubmit}>
                                     Save
                                 </Button>
-                                <Button color="secondary" onClick={onClose}>
+                                <Button color="error" onClick={onClose}>
                                     Close
                                 </Button>
                             </DialogActions>

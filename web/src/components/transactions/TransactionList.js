@@ -3,7 +3,7 @@ import {useRecoilValue} from "recoil";
 import {transactionsSeenByUser} from "../../recoil/transactions";
 import TransactionCreateModal from "./TransactionCreateModal";
 import {currUserPermissions} from "../../recoil/groups";
-import {Divider, Fab, Grid, IconButton, List, Paper} from "@mui/material";
+import {Alert, Divider, Fab, Grid, IconButton, List, Paper} from "@mui/material";
 import {Add} from "@mui/icons-material";
 import {TransactionListEntry} from "./TransactionListEntry";
 
@@ -27,21 +27,24 @@ export default function TransactionList({group}) {
                 )}
                 <List>
                     {transactions.length === 0 ? (
-                        <div className="list-group-item" key={0}>No Transactions</div>
+                        <Alert severity="info">No Transactions</Alert>
                     ) : (
                         transactions.map(transaction => (
                             <TransactionListEntry key={transaction.id} group={group} transaction={transaction}/>
                         ))
                     )}
                 </List>
-                <TransactionCreateModal group={group} show={showCreateDialog}
-                                        onClose={() => setShowCreateDialog(false)}/>
+                <TransactionCreateModal
+                    group={group}
+                    show={showCreateDialog}
+                    onClose={() => setShowCreateDialog(false)}
+                />
             </Paper>
             {userPermissions.can_write && (
                 <Fab
                     color="primary"
                     aria-label="add"
-                    sx={{position: "absolute", right: 20, bottom: 20}}
+                    sx={{position: "fixed", right: 20, bottom: 20}}
                     onClick={() => setShowCreateDialog(true)}
                 >
                     <Add/>

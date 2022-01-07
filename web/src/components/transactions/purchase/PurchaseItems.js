@@ -17,7 +17,7 @@ import {
     Typography
 } from "@mui/material";
 import {useRecoilValue, useSetRecoilState} from "recoil";
-import {groupAccounts} from "../../../recoil/groups";
+import {accountsSeenByUser} from "../../../recoil/accounts";
 import {
     addOrChangePurchaseItemShare,
     createPurchaseItem,
@@ -139,7 +139,7 @@ function WrappedTextField({value, onChange, initial = null, errorMsg = null, val
 
 export default function PurchaseItems({group, transaction}) {
     const classes = useStyles();
-    const accounts = useRecoilValue(groupAccounts(group.id));
+    const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
     const purchaseItems = transaction.purchase_items ? transaction.purchase_items.filter(item => !item.deleted).sort((left, right) => left.id > right.id) : [];
     const [showAdvanced, setShowAdvanced] = useState(false);

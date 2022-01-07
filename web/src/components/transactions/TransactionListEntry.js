@@ -5,7 +5,7 @@ import { DateTime } from "luxon";
 import React from "react";
 import { makeStyles } from "@mui/styles";
 import { useRecoilValue } from "recoil";
-import { groupAccounts } from "../../recoil/groups";
+import { accountsSeenByUser } from "../../recoil/accounts";
 
 const useStyles = makeStyles((theme) => ({
     propertyPill: {
@@ -16,7 +16,7 @@ const useStyles = makeStyles((theme) => ({
 export function TransactionListEntry({ group, transaction }) {
     const classes = useStyles();
 
-    const accounts = useRecoilValue(groupAccounts(group.id));
+    const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const accountNamesFromShares = (shares) => {
         return shares.map(s => accounts.find(a => a.id === parseInt(s))?.name).join(", ");
     };

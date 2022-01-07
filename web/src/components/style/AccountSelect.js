@@ -1,7 +1,7 @@
 import React from "react";
 
 import {useRecoilValue} from "recoil";
-import {groupAccounts} from "../../recoil/groups";
+import {accountsSeenByUser} from "../../recoil/accounts";
 import {TextField, Autocomplete} from "@mui/material";
 import {DisabledTextField} from "./DisabledTextField";
 
@@ -16,7 +16,7 @@ export default function AccountSelect({
                                           className = null,
                                           ...props
                                       }) {
-    const accounts = useRecoilValue(groupAccounts(group.id));
+    const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const filteredAccounts = exclude !== null ? accounts.filter(account => exclude.indexOf(account.id) < 0) : accounts;
 
     return (

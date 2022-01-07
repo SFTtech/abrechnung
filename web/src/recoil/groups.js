@@ -1,7 +1,5 @@
 import {atom, atomFamily, selectorFamily} from "recoil";
 import {
-    fetchAccount,
-    fetchAccounts,
     fetchGroups,
     fetchInvites,
     fetchLog,
@@ -64,76 +62,6 @@ export const currUserPermissions = selectorFamily({
     }
 });
 
-export const groupAccountsRaw = atomFamily({
-    key: "groupAccountsRaw",
-    default: [],
-    effects_UNSTABLE: groupID => [
-        ({setSelf, getPromise, node}) => {
-            // TODO: handle fetch error
-            setSelf(
-                fetchAccounts({groupID: groupID})
-                    .catch(err => toast.error(`error when fetching accounts: ${err}`))
-            );
-
-            const fetchAndUpdateAccount = (currAccounts, accountID, isNew) => {
-                fetchAccount({accountID: accountID})
-                    .then(account => {
-                        if (isNew) { // new account
-                            setSelf([
-                                ...currAccounts,
-                                account
-                            ]);
-                        } else {
-                            setSelf(currAccounts.map(t => t.id === account.id ? account : t));
-                        }
-                    })
-                    .catch(err => toast.error(`error when fetching account: ${err}`));
-            }
-
-            ws.subscribe("account", groupID, (subscription_type, {account_id, element_id, revision_committed, revision_version}) => {
-                if (element_id === groupID) {
-                    getPromise(node).then(currAccounts => {
-                        const currAccount = currAccounts.find(a => a.id === account_id);
-                        if (currAccount === undefined
-                            || (revision_committed === null && revision_version > currAccount.version
-                                || (revision_committed !== null && (currAccount.last_changed === null || DateTime.fromISO(revision_committed) > DateTime.fromISO(currAccount.last_changed))))) {
-                            fetchAndUpdateAccount(currAccounts, account_id, currAccount === undefined);
-                        }
-                    })
-                }
-            });
-            // TODO: handle registration errors
-
-            return () => {
-                ws.unsubscribe("account", groupID);
-            };
-        }
-    ]
-});
-
-export const addAccount = (account, setAccounts) => {
-    setAccounts(currAccounts => {
-        return [
-            ...currAccounts,
-            account,
-        ];
-    })
-}
-
-export const updateAccount = (account, setAccounts) => {
-    setAccounts(currAccounts => {
-        return currAccounts.map(a => a.id === account.id ? account : a)
-    })
-}
-
-export const groupAccounts = selectorFamily({
-    key: "groupAccounts",
-    get: groupID => async ({get}) => {
-        const accounts = get(groupAccountsRaw(groupID));
-        return accounts.filter(account => !account.deleted).sort((a1, a2) => a1.name > a2.name);
-    }
-});
-
 const sortMembers = (members) => {
     return members.sort((m1, m2) => DateTime.fromISO(m1.joined_at) < DateTime.fromISO(m2.joined_at));
 };
@@ -187,14 +115,6 @@ export const groupInvites = atomFamily({
             };
         }
     ]
-});
-
-export const groupAccountByID = selectorFamily({
-    key: "groupAccountByID",
-    get: ({groupID, accountID}) => async ({get}) => {
-        const accounts = get(groupAccounts(groupID));
-        return accounts?.find(account => account.id === accountID);
-    }
 });
 
 export const groupLog = atomFamily({

@@ -230,7 +230,7 @@ class TransactionService(Application):
             group_id = await self._check_transaction_permissions(
                 conn=conn, user_id=user_id, transaction_id=transaction_id
             )
-            committed_transaction = await conn.fetchrow(
+            transaction = await conn.fetchrow(
                 "select transaction_id, group_id, type, last_changed, version, is_wip, "
                 "   committed_details, pending_details, "
                 "   committed_positions, pending_positions, committed_files, pending_files "
@@ -240,7 +240,7 @@ class TransactionService(Application):
                 group_id,
                 transaction_id,
             )
-            return self._transaction_db_row(committed_transaction)
+            return self._transaction_db_row(transaction)
 
     async def create_transaction(
         self,
@@ -770,6 +770,19 @@ class TransactionService(Application):
 
         return revision_id
 
+    async def _check_account_non_deleted(
+        self, conn: asyncpg.Connection, group_id: int, account_id: int
+    ) -> bool:
+        acc = await conn.fetchval(
+            "select account_id from committed_account_state_valid_at() "
+            "where group_id = $1 and account_id = $2 and not deleted",
+            group_id,
+            account_id,
+        )
+        if not acc:
+            raise NotFoundError(f"Account with id {account_id}")
+        return True
+
     async def _transaction_share_check(
         self,
         conn: asyncpg.Connection,
@@ -790,11 +803,7 @@ class TransactionService(Application):
             conn=conn, user_id=user_id, transaction_id=transaction_id
         )
 
-        acc = await conn.fetchval(
-            "select id from account where group_id = $1", group_id
-        )
-        if not acc:
-            raise NotFoundError(f"Account with id {account_id}")
+        await self._check_account_non_deleted(conn, group_id, account_id)
 
         return group_id, revision_id
 
@@ -1104,9 +1113,10 @@ class TransactionService(Application):
         """Returns [transaction_id, revision_id]"""
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                _, transaction_id = await self._check_purchase_item_permissions(
+                group_id, transaction_id = await self._check_purchase_item_permissions(
                     conn=conn, user_id=user_id, item_id=item_id
                 )
+                await self._check_account_non_deleted(conn, group_id, account_id)
                 revision_id = await self._get_or_create_pending_purchase_item_change(
                     conn=conn, user_id=user_id, item_id=item_id
                 )

@@ -1,13 +1,13 @@
 import {useRecoilValue} from "recoil";
-import {groupAccounts} from "../../recoil/groups";
+import {accountsSeenByUser} from "../../recoil/accounts";
 import {accountBalances} from "../../recoil/transactions";
 import {Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
 import React from "react";
-import {Paper} from "@mui/material";
+import {Alert, Paper} from "@mui/material";
 
 
 export default function Balances({group}) {
-    const accounts = useRecoilValue(groupAccounts(group.id));
+    const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const balances = useRecoilValue(accountBalances(group.id));
 
     const colorGreen = "#689f38";
@@ -24,8 +24,13 @@ export default function Balances({group}) {
 
     return (
         <Paper sx={{padding: 2}}>
-            <div className="area-chart-wrapper"
-                 style={{width: "100%", height: `${chartHeight}px`}}>
+            {accounts.length === 0 && (
+                <Alert severity="info">No Accounts</Alert>
+            )}
+            <div
+                className="area-chart-wrapper"
+                style={{width: "100%", height: `${chartHeight}px`}}
+            >
                 <ResponsiveContainer>
                     <BarChart
                         data={chartData}

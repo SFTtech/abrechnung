@@ -14,7 +14,6 @@ export default function GroupInvite() {
     useEffect(() => {
         fetchGroupPreview({token: inviteToken})
             .then(res => {
-                console.log(res)
                 setGroup(res);
                 setError(null);
             })

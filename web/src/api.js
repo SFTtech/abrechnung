@@ -1,5 +1,5 @@
 import axios from "axios";
-import { DateTime } from "luxon";
+import {DateTime} from "luxon";
 
 
 export const siteHost = !process.env.NODE_ENV || process.env.NODE_ENV === "development" ? `${window.location.hostname}:8080` : window.location.host;
@@ -101,7 +101,7 @@ export async function refreshToken() {
     }
 }
 
-async function makePost(url, data, options=null) {
+async function makePost(url, data, options = null) {
     await refreshToken();
     return await api.post(url, data, options);
 }
@@ -312,19 +312,21 @@ export async function fetchAccount({accountID}) {
     return resp.data;
 }
 
-export async function createAccount({groupID, name, description, accountType = "personal"}) {
+export async function createAccount({groupID, name, description, accountType = "personal", clearingShares = null}) {
     const resp = await makePost(`/groups/${groupID}/accounts`, {
         name: name,
         description: description,
-        type: accountType
+        type: accountType,
+        clearing_shares: clearingShares,
     });
     return resp.data;
 }
 
-export async function updateAccountDetails({accountID, name, description}) {
+export async function updateAccountDetails({accountID, name, description, clearingShares = null}) {
     const resp = await makePost(`/accounts/${accountID}`, {
         name: name,
-        description: description
+        description: description,
+        clearing_shares: clearingShares,
     });
     return resp.data;
 }

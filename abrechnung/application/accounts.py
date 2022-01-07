@@ -1,9 +1,11 @@
+import json
 from datetime import datetime, timezone
 from typing import Optional, Union
 
 import asyncpg
 
-from abrechnung.domain.accounts import Account
+from abrechnung.domain.accounts import Account, AccountType, AccountDetails
+from abrechnung.util import parse_postgres_datetime
 from . import (
     Application,
     NotFoundError,
@@ -22,13 +24,36 @@ class AccountService(Application):
         )
 
     @staticmethod
+    async def _get_or_create_revision(
+        conn: asyncpg.Connection, user_id: int, account_id: int
+    ) -> int:
+        """return the revision id, assumes we are already in a transaction"""
+        revision_id = await conn.fetchval(
+            "select id "
+            "from account_revision "
+            "where account_id = $1 and user_id = $2 and committed is null",
+            account_id,
+            user_id,
+        )
+        if revision_id:  # there already is a wip revision
+            return revision_id
+
+        # create a new transaction revision
+        revision_id = await conn.fetchval(
+            "insert into account_revision (user_id, account_id) values ($1, $2) returning id",
+            user_id,
+            account_id,
+        )
+        return revision_id
+
+    @staticmethod
     async def _check_account_permissions(
         conn: asyncpg.Connection,
         user_id: int,
         account_id: int,
         can_write: bool = False,
         account_type: Optional[Union[str, list[str]]] = None,
-    ) -> int:
+    ) -> tuple[int, str]:
         """returns group id of the transaction"""
         result = await conn.fetchrow(
             "select a.type, a.group_id, can_write, is_owner "
@@ -52,7 +77,141 @@ class AccountService(Application):
                     f"Transaction type {result['type']} does not match the expected type {type_check}"
                 )
 
-        return result["group_id"]
+        return result["group_id"], result["type"]
+
+    async def _get_or_create_pending_account_change(
+        self, conn: asyncpg.Connection, user_id: int, account_id: int
+    ) -> int:
+        revision_id = await self._get_or_create_revision(
+            conn=conn, user_id=user_id, account_id=account_id
+        )
+
+        a = await conn.fetchval(
+            "select id from account_history th where revision_id = $1 and id = $2",
+            revision_id,
+            account_id,
+        )
+        if a:
+            return revision_id
+
+        last_committed_revision = await conn.fetchval(
+            "select ar.id "
+            "from account_revision ar "
+            "   join account_history ah on ar.id = ah.revision_id and ar.account_id = ah.id "
+            "where ar.account_id = $1 and ar.committed is not null "
+            "order by ar.committed desc "
+            "limit 1",
+            account_id,
+        )
+
+        if last_committed_revision is None:
+            raise InvalidCommand(
+                f"Cannot edit account {account_id} as it has no committed changes."
+            )
+
+        # copy all existing transaction data into a new history entry
+        await conn.execute(
+            "insert into account_history (id, revision_id, name, description, priority, deleted)"
+            "select id, $1, name, description, priority, deleted "
+            "from account_history where id = $2 and revision_id = $3",
+            revision_id,
+            account_id,
+            last_committed_revision,
+        )
+
+        # copy all last committed creditor shares
+        await conn.execute(
+            "insert into clearing_account_share (account_id, revision_id, share_account_id, shares) "
+            "select account_id, $1, share_account_id, shares "
+            "from clearing_account_share where account_id = $2 and revision_id = $3",
+            revision_id,
+            account_id,
+            last_committed_revision,
+        )
+
+        return revision_id
+
+    @staticmethod
+    async def _check_account_exists(
+        conn: asyncpg.Connection, group_id: int, account_id: int
+    ) -> int:
+        acc = await conn.fetchval(
+            "select account_id from committed_account_state_valid_at() "
+            "where group_id = $1 and account_id = $2 and not deleted",
+            group_id,
+            account_id,
+        )
+        if not acc:
+            raise NotFoundError(f"Account with id {account_id}")
+
+        return True
+
+    async def _account_clearing_shares_check(
+        self,
+        conn: asyncpg.Connection,
+        user_id: int,
+        account_id: int,
+        share_account_id: int,
+        account_type: Optional[Union[str, list[str]]] = None,
+    ) -> tuple[int, int]:
+        """returns tuple of group_id of the account and the users revision_id of the pending change"""
+        group_id, _ = await self._check_account_permissions(
+            conn=conn,
+            user_id=user_id,
+            account_id=account_id,
+            can_write=True,
+            account_type=account_type,
+        )
+
+        await self._check_account_exists(conn, group_id, share_account_id)
+
+        revision_id = await self._get_or_create_pending_account_change(
+            conn=conn, user_id=user_id, account_id=account_id
+        )
+
+        return group_id, revision_id
+
+    @staticmethod
+    def _account_detail_from_db_json(db_json: dict) -> AccountDetails:
+        return AccountDetails(
+            name=db_json["name"],
+            description=db_json["description"],
+            deleted=db_json["deleted"],
+            priority=db_json["priority"],
+            committed_at=None
+            if db_json.get("revision_committed") is None
+            else parse_postgres_datetime(db_json["revision_committed"]),
+            clearing_shares={
+                cred["share_account_id"]: cred["shares"]
+                for cred in db_json["clearing_shares"]
+            },
+            changed_by=db_json["changed_by"],
+        )
+
+    def _account_db_row(self, account: asyncpg.Record) -> Account:
+        committed_details = (
+            self._account_detail_from_db_json(
+                json.loads(account["committed_details"])[0]
+            )
+            if account["committed_details"]
+            else None
+        )
+        pending_details = (
+            self._account_detail_from_db_json(json.loads(account["pending_details"])[0])
+            if account["pending_details"]
+            else None
+        )
+
+        return Account(
+            id=account["account_id"],
+            group_id=account["group_id"],
+            type=account["type"],
+            is_wip=account["is_wip"],
+            last_changed=account["last_changed"],
+            version=account["version"],
+            committed_details=committed_details,
+            pending_details=pending_details,
+        )
 
     async def list_accounts(self, *, user_id: int, group_id: int) -> list[Account]:
         async with self.db_pool.acquire() as conn:
@@ -61,27 +220,17 @@ class AccountService(Application):
                     conn=conn, group_id=group_id, user_id=user_id
                 )
                 cur = conn.cursor(
-                    "select account_id, group_id, revision_committed, "
-                    "   revision_version, type, revision_id, name, description, priority, deleted "
-                    "from committed_account_state_valid_at() "
-                    "where group_id = $1",
+                    "select account_id, group_id, type, last_changed, version, is_wip, "
+                    "   committed_details, pending_details "
+                    "from full_account_state_valid_at($1) "
+                    "where group_id = $2",
+                    user_id,
                     group_id,
                 )
+
                 result = []
                 async for account in cur:
-                    result.append(
-                        Account(
-                            id=account["account_id"],
-                            group_id=account["group_id"],
-                            type=account["type"],
-                            last_changed=account["revision_committed"],
-                            version=account["revision_version"],
-                            name=account["name"],
-                            description=account["description"],
-                            priority=account["priority"],
-                            deleted=account["deleted"],
-                        )
-                    )
+                    result.append(self._account_db_row(account))
 
                 return result
 
@@ -91,26 +240,14 @@ class AccountService(Application):
                 conn=conn, user_id=user_id, account_id=account_id
             )
             account = await conn.fetchrow(
-                "select account_id, group_id, revision_version, revision_committed, "
-                "   type, revision_id, name, description, priority, deleted "
-                "from committed_account_state_valid_at() "
-                "where account_id = $1",
+                "select account_id, group_id, type, last_changed, version, is_wip, "
+                "   committed_details, pending_details "
+                "from full_account_state_valid_at($1) "
+                "where account_id = $2",
+                user_id,
                 account_id,
             )
-            if account is None:
-                raise NotFoundError(f"No account with id {account_id} exists")
-
-            return Account(
-                id=account["account_id"],
-                group_id=account["group_id"],
-                type=account["type"],
-                name=account["name"],
-                last_changed=account["revision_committed"],
-                version=account["revision_version"],
-                description=account["description"],
-                priority=account["priority"],
-                deleted=account["deleted"],
-            )
+            return self._account_db_row(account)
 
     async def create_account(
         self,
@@ -121,9 +258,15 @@ class AccountService(Application):
         name: str,
         description: str,
         priority: int = 0,
+        clearing_shares: Optional[dict[int, float]] = None,
     ) -> int:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
+                if clearing_shares and type != AccountType.clearing.value:
+                    raise InvalidCommand(
+                        f"'{type}' accounts cannot have associated settlement distribution shares"
+                    )
+
                 await check_group_permissions(
                     conn=conn, group_id=group_id, user_id=user_id, can_write=True
                 )
@@ -132,14 +275,9 @@ class AccountService(Application):
                     group_id,
                     type,
                 )
-                now = datetime.now(tz=timezone.utc)
-                revision_id = await conn.fetchval(
-                    "insert into account_revision (user_id, account_id, started, committed) "
-                    "values ($1, $2, $3, $4) returning id",
-                    user_id,
-                    account_id,
-                    now,
-                    now,
+
+                revision_id = await self._get_or_create_revision(
+                    conn, user_id, account_id
                 )
                 await conn.execute(
                     "insert into account_history (id, revision_id, name, description, priority) "
@@ -150,12 +288,33 @@ class AccountService(Application):
                     description,
                     priority,
                 )
+                if clearing_shares and type == AccountType.clearing.value:
+                    # TODO: make this more efficient
+                    for share_account_id, value in clearing_shares.items():
+                        if value == 0:
+                            continue
+                        await self._check_account_exists(
+                            conn, group_id, share_account_id
+                        )
+                        await conn.execute(
+                            "insert into clearing_account_share (account_id, revision_id, share_account_id, shares) "
+                            "values ($1, $2, $3, $4)",
+                            account_id,
+                            revision_id,
+                            share_account_id,
+                            value,
+                        )
+
                 await create_group_log(
                     conn=conn,
                     group_id=group_id,
                     user_id=user_id,
                     type="account-committed",
                     message=f"created account {name}",
+                )
+                await conn.execute(
+                    "update account_revision set committed = now() where id = $1",
+                    revision_id,
                 )
                 return account_id
 
@@ -166,53 +325,63 @@ class AccountService(Application):
         name: str,
         description: str,
         priority: int = 0,
+        clearing_shares: Optional[dict[int, float]] = None,
     ):
-        # TODO: figure out the more complex logic once we have accounts stuck in uncommitted states
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                group_id = await self._check_account_permissions(
+                group_id, account_type = await self._check_account_permissions(
                     conn=conn, user_id=user_id, account_id=account_id, can_write=True
                 )
-                account = await conn.fetchrow(
-                    "select account_id, type, revision_id, name, description, priority "
-                    "from committed_account_state_valid_at() "
-                    "where account_id = $1 and deleted = false",
-                    account_id,
-                )
-                if account is None:
-                    raise NotFoundError(f"No account with id {account_id} exists")
 
-                if (
-                    name != account["name"]
-                    or description != account["description"]
-                    or priority != account["priority"]
-                ):
-                    """if there is something to change initialize a new revision and a new entry in the history table"""
-                    now = datetime.now(tz=timezone.utc)
-                    revision_id = await conn.fetchval(
-                        "insert into account_revision (user_id, account_id, started, committed) "
-                        "values ($1, $2, $3, $4) returning id",
-                        user_id,
-                        account_id,
-                        now,
-                        now,
+                if clearing_shares and account_type != AccountType.clearing.value:
+                    raise InvalidCommand(
+                        f"'{account_type}' accounts cannot have associated settlement distribution shares"
                     )
-                    await conn.execute(
-                        "insert into account_history (id, revision_id, name, description, priority) "
-                        "values ($1, $2, $3, $4, $5)",
-                        account_id,
-                        revision_id,
-                        name,
-                        description,
-                        priority,
-                    )
-                    await create_group_log(
-                        conn=conn,
-                        group_id=group_id,
-                        user_id=user_id,
-                        type="account-committed",
-                        message=f"updated account {name}",
-                    )
+
+                revision_id = await self._get_or_create_revision(
+                    conn=conn, user_id=user_id, account_id=account_id
+                )
+
+                await conn.execute(
+                    "insert into account_history (id, revision_id, name, description, priority) "
+                    "values ($1, $2, $3, $4, $5) ",
+                    account_id,
+                    revision_id,
+                    name,
+                    description,
+                    priority,
+                )
+                if clearing_shares and account_type == AccountType.clearing.value:
+                    # TODO: make this more efficient
+                    for share_account_id, value in clearing_shares.items():
+                        if value == 0:
+                            continue
+                        await self._check_account_exists(
+                            conn, group_id, share_account_id
+                        )
+                        await conn.execute(
+                            "insert into clearing_account_share (account_id, revision_id, share_account_id, shares) "
+                            "values ($1, $2, $3, $4)",
+                            account_id,
+                            revision_id,
+                            share_account_id,
+                            value,
+                        )
+
+                await self._increment_account_version(
+                    conn=conn, revision_id=revision_id
+                )
+                await create_group_log(
+                    conn=conn,
+                    group_id=group_id,
+                    user_id=user_id,
+                    type="account-committed",
+                    message=f"updated account {name}",
+                )
+                await conn.execute(
+                    "update account_revision set committed = now() where id = $1",
+                    revision_id,
+                )
 
     async def delete_account(
         self,
@@ -221,7 +390,7 @@ class AccountService(Application):
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                group_id = await self._check_account_permissions(
+                group_id, _ = await self._check_account_permissions(
                     conn=conn, user_id=user_id, account_id=account_id, can_write=True
                 )
                 row = await conn.fetchrow(
@@ -283,6 +452,8 @@ class AccountService(Application):
 
                 if row["deleted"]:
                     raise InvalidCommand(f"Cannot delete an already deleted account")
+
+                # TODO: check other clearing account references
 
                 now = datetime.now(tz=timezone.utc)
                 revision_id = await conn.fetchval(

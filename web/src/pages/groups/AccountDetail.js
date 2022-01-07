@@ -1,4 +1,4 @@
-import {groupAccountByID} from "../../recoil/groups";
+import {groupAccountByID} from "../../recoil/accounts";
 import {makeStyles} from "@mui/styles";
 import {useRouteMatch} from "react-router-dom";
 import {useRecoilValue} from "recoil";

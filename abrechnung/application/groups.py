@@ -1,7 +1,5 @@
 from datetime import datetime
 
-import asyncpg
-
 from abrechnung.application import (
     Application,
     NotFoundError,
@@ -117,7 +115,7 @@ class GroupService(Application):
             async with conn.transaction():
                 invite = await conn.fetchrow(
                     "select id, group_id, created_by, single_use, join_as_editor from group_invite gi "
-                    "where gi.token = $1",
+                    "where gi.token = $1 and gi.valid_until > now()",
                     invite_token,
                 )
                 if not invite:
