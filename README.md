@@ -18,7 +18,7 @@ If you have questions, suggestions, encounter any problem, please join our Matri
 
 ```
 #sfttech:matrix.org
-irc.freenode.net #sfttech
+irc.libera.chat #sfttech
 ```
 
 Of course, create [issues](https://github.com/SFTtech/abrechnung/issues)
