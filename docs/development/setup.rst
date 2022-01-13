@@ -41,8 +41,8 @@ Afterwards install the package without dependencies ::
 Database Setup
 --------------
 
-Have a running **PostgreSQL** database and create
-#. Create the database (in a psql prompt):
+Have a running **PostgreSQL** database server.
+Create the database (in a psql prompt):
 
 .. code-block:: sql
 
