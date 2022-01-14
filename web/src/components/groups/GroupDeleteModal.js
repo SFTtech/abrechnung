@@ -26,11 +26,11 @@ export default function GroupDeleteModal({ show, onClose, groupToDelete }) {
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
-                <Button color="secondary" onClick={confirmDeleteGroup}>
-                    Yes pls
-                </Button>
                 <Button color="primary" onClick={onClose}>
                     No
+                </Button>
+                <Button color="error" onClick={confirmDeleteGroup}>
+                    Yes pls
                 </Button>
             </DialogActions>
         </Dialog>
