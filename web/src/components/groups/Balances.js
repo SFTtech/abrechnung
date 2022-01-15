@@ -5,10 +5,12 @@ import {Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAx
 import React from "react";
 import {Paper} from "@mui/material";
 import {useTheme} from '@mui/styles';
+import {useHistory} from "react-router-dom";
 
 
 export default function Balances({group}) {
     const theme = useTheme();
+    const history = useHistory();
 
     const accounts = useRecoilValue(groupAccounts(group.id));
     const balances = useRecoilValue(accountBalances(group.id));
@@ -19,7 +21,8 @@ export default function Balances({group}) {
     const chartData = Object.entries(balances).map(([accountID, balance]) => {
         return {
             name: accounts.find(acc => acc.id === parseInt(accountID)).name,
-            balance: balance
+            balance: balance,
+            id: accountID
         }
     });
 
@@ -27,6 +30,11 @@ export default function Balances({group}) {
 
     // TODO determine the rendered width of the account names and take the maximum
     const yaxiswidth = Math.max(...accounts.map(account => account.name.length)) * 7 + 20;
+
+    const handleBarClick= (data, event) => {
+        const id = data.activePayload[0].payload.id;
+        history.push(`/groups/${group.id}/accounts/${id}`);
+    }
 
     return (
         <Paper sx={{padding: 2}}>
@@ -37,6 +45,7 @@ export default function Balances({group}) {
                         data={chartData}
                         margin={{top: 20, right: 20, bottom: 20, left: 20}}
                         layout="vertical"
+                        onClick={handleBarClick}
                     >
 
                         <XAxis
@@ -61,20 +70,18 @@ export default function Balances({group}) {
                             }}
                         />
                         <Bar dataKey="balance">
-                            <>
-                                {
-                                    chartData.map((entry, index) => {
-                                        return (
-                                            <Cell key={`cell-${index}`}
-                                                  fill={entry["balance"] >= 0 ? colorGreen : colorRed}/>
-                                        )
-                                    })}
-                                <LabelList
-                                    dataKey={entry => `${entry["balance"].toFixed(2)} ${group.currency_symbol}`}
-                                    position="insideLeft"
-                                    fill={theme.palette.text.primary}
-                                />
-                            </>
+                            {
+                                chartData.map((entry, index) => {
+                                    return (
+                                        <Cell key={`cell-${index}`}
+                                              fill={entry["balance"] >= 0 ? colorGreen : colorRed}/>
+                                    )
+                                })}
+                            <LabelList
+                                dataKey={entry => `${entry["balance"].toFixed(2)} ${group.currency_symbol}`}
+                                position="insideLeft"
+                                fill={theme.palette.text.primary}
+                            />
                         </Bar>
                     </BarChart>
                 </ResponsiveContainer>

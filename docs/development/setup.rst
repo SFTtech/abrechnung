@@ -98,7 +98,7 @@ is used as a means to wipe and repopulate the database between tests.
 
 .. code-block:: sql
 
-  alter schema public owner "<your user>"
+  alter schema public owner to "<your user>"
 
 Finally run the tests via ::
 
