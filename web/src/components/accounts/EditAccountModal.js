@@ -70,8 +70,8 @@ export default function EditAccountModal({group, show, onClose, account}) {
                                 <Button color="primary" type="submit" onClick={handleSubmit}>
                                     Save
                                 </Button>
-                                <Button color="secondary" onClick={onClose}>
-                                    Close
+                                <Button color="error" onClick={onClose}>
+                                    Cancel
                                 </Button>
                             </DialogActions>
 

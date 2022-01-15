@@ -73,9 +73,6 @@ export default function CreateAccountModal({show, onClose, group}) {
 
                             {isSubmitting && <LinearProgress/>}
                             <DialogActions>
-                                <Button color="error" onClick={onClose}>
-                                    Cancel
-                                </Button>
                                 <Button
                                     type="submit"
                                     color="primary"
@@ -83,6 +80,9 @@ export default function CreateAccountModal({show, onClose, group}) {
                                     onClick={handleSubmit}
                                 >
                                     Save
+                                </Button>
+                                <Button color="error" onClick={onClose}>
+                                    Cancel
                                 </Button>
                             </DialogActions>
                         </Form>)}
