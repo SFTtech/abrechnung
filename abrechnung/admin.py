@@ -37,10 +37,10 @@ class Admin(subcommand.SubCommand):
             return
 
         db_pool = await db_connect(
-            username=self.config["database"]["user"],
+            username=self.config["database"].get("user"),
             database=self.config["database"]["dbname"],
-            host=self.config["database"]["host"],
-            password=self.config["database"]["password"],
+            host=self.config["database"].get("host"),
+            password=self.config["database"].get("password"),
         )
         user_service = UserService(db_pool, self.config)
         user_service.enable_registration = True

@@ -49,10 +49,10 @@ class HTTPService(SubCommand):
         """
 
         db_pool = await db_connect(
-            username=self.cfg["database"]["user"],
-            password=self.cfg["database"]["password"],
+            username=self.cfg["database"].get("user"),
+            password=self.cfg["database"].get("password"),
             database=self.cfg["database"]["dbname"],
-            host=self.cfg["database"]["host"],
+            host=self.cfg["database"].get("host"),
         )
 
         async with db_pool.acquire() as conn:

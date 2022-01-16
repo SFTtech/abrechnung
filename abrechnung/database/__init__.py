@@ -2,6 +2,7 @@ import contextlib
 import os
 import shutil
 import tempfile
+import logging
 
 import asyncpg
 from asyncpg.pool import Pool
@@ -11,13 +12,38 @@ from abrechnung import util
 from abrechnung.config import Config
 from . import revisions
 
+logger = logging.getLogger(__name__)
+
 
 async def db_connect(
-    username: str, password: str, database: str, host: str, port: int = 5432
+        username: str, password: str, database: str, host: str, port: int = 5432
 ) -> Pool:
     """
     get a connection pool to the database
     """
+
+    # since marshmallow can't model a "one arg implies all"-relation, we need to warn here
+    if not host or os.path.isdir(host):
+        if username or password:
+            logger.warning("Username and/or password specified but no remote host therefore using socket "
+                           "authentication. I am ignoring these settings since we don't need them.")
+        if os.getenv("PGHOST") or os.getenv("PGPORT"):
+            # asyncpg can read the PGHOST env variable. We don't want that.
+            logger.warning("We do not support setting the PGHOST or PGPORT environment variable and therefore will "
+                           "ignore it. Consider specifying the hostname in the config file.")
+
+        if os.environ.get("PGHOST"):
+            del os.environ["PGHOST"]
+        if os.environ.get("PGPORT"):
+            del os.environ["PGPORT"]
+
+        if not host:
+            # let asyncpg figure out which socket to use
+            return await asyncpg.create_pool(database=database, max_size=100)
+        else:
+            # manually set folder in which the socket resides
+            return await asyncpg.create_pool(host=host, port=port, database=database, max_size=100)
+
     return await asyncpg.create_pool(
         user=username,
         password=password,
@@ -114,10 +140,10 @@ class CLI(subcommand.SubCommand):
             return await self._attach()
 
         db_pool = await db_connect(
-            username=self.config["database"]["user"],
+            username=self.config["database"].get("user"),
             database=self.config["database"]["dbname"],
-            host=self.config["database"]["host"],
-            password=self.config["database"]["password"],
+            host=self.config["database"].get("host"),
+            password=self.config["database"].get("password"),
         )
         if self.action == "migrate":
             await revisions.apply_revisions(db_pool=db_pool)

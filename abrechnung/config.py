@@ -14,11 +14,11 @@ CONFIG_SCHEMA = Schema.from_dict(
         "database": fields.Nested(
             Schema.from_dict(
                 {
-                    "host": fields.Str(),
+                    "host": fields.Str(required=False, missing=None),
                     "port": fields.Int(missing=5432, required=False),
-                    "user": fields.Str(),
-                    "dbname": fields.Str(),
-                    "password": fields.Str(),
+                    "user": fields.Str(required=False, missing=None),
+                    "dbname": fields.Str(required=True),
+                    "password": fields.Str(required=False, missing=None),
                 }
             )
         ),
