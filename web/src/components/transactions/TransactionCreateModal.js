@@ -12,11 +12,11 @@ import {
     LinearProgress,
     MenuItem,
     Select,
-    TextField
+    TextField,
 } from "@mui/material";
 import DatePicker from "@mui/lab/DatePicker";
-import {useSetRecoilState} from "recoil";
-import {addTransaction, groupTransactions} from "../../recoil/transactions";
+import { useSetRecoilState } from "recoil";
+import { addTransaction, groupTransactions } from "../../recoil/transactions";
 
 export default function TransactionCreateModal({ group, show, onClose }) {
     const setTransactions = useSetRecoilState(groupTransactions(group.id));
@@ -29,14 +29,14 @@ export default function TransactionCreateModal({ group, show, onClose }) {
             value: parseFloat(values.value),
             billedAt: values.billedAt.toISODate(),
             currencySymbol: "€",
-            currencyConversionRate: 1.0
+            currencyConversionRate: 1.0,
         })
-            .then(t => {
+            .then((t) => {
                 addTransaction(t, setTransactions);
                 setSubmitting(false);
                 onClose();
             })
-            .catch(err => {
+            .catch((err) => {
                 toast.error(err);
                 setSubmitting(false);
             });
@@ -61,9 +61,16 @@ export default function TransactionCreateModal({ group, show, onClose }) {
         <Dialog open={show} onClose={onClose}>
             <DialogTitle>Create Transaction</DialogTitle>
             <DialogContent>
-                <Formik validate={validate}
-                        initialValues={{ type: "purchase", description: "", value: "0.0", billedAt: DateTime.now() }}
-                        onSubmit={handleSubmit}>
+                <Formik
+                    validate={validate}
+                    initialValues={{
+                        type: "purchase",
+                        description: "",
+                        value: "0.0",
+                        billedAt: DateTime.now(),
+                    }}
+                    onSubmit={handleSubmit}
+                >
                     {({ values, setFieldValue, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
                         <Form>
                             <Select
@@ -98,11 +105,12 @@ export default function TransactionCreateModal({ group, show, onClose }) {
                                 variant="standard"
                                 name="billedAt"
                                 inputFormat="yyyy-MM-dd"
-                                renderInput={(params) => <TextField variant="standard" fullWidth {...params}
-                                                                    helperText={null} />}
+                                renderInput={(params) => (
+                                    <TextField variant="standard" fullWidth {...params} helperText={null} />
+                                )}
                                 label="Billed at"
                                 value={values.billedAt}
-                                onChange={val => setFieldValue("billedAt", val, true)}
+                                onChange={(val) => setFieldValue("billedAt", val, true)}
                                 onBlur={handleBlur}
                             />
                             <TextField
@@ -119,19 +127,15 @@ export default function TransactionCreateModal({ group, show, onClose }) {
                             />
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button
-                                    type="submit"
-                                    color="primary"
-                                    disabled={isSubmitting}
-                                    onClick={handleSubmit}
-                                >
+                                <Button type="submit" color="primary" disabled={isSubmitting} onClick={handleSubmit}>
                                     Save
                                 </Button>
                                 <Button color="error" onClick={onClose}>
                                     Cancel
                                 </Button>
                             </DialogActions>
-                        </Form>)}
+                        </Form>
+                    )}
                 </Formik>
             </DialogContent>
         </Dialog>

@@ -27,14 +27,26 @@ class TransactionLogicTest(AsyncTestCase):
         )
 
         self.user_id, _ = await self._create_test_user("test", "test@test.test")
+        self.group_id = await self.group_service.create_group(
+            user_id=self.user_id,
+            name="test group",
+            description="",
+            currency_symbol="€",
+            terms="",
+        )
 
-    async def _create_accounts(self, group_id: int, n_accounts: int) -> list[int]:
+    async def _create_accounts(
+        self,
+        group_id: int,
+        n_accounts: int,
+        account_type: str = "personal",
+    ) -> list[int]:
         account_ids = []
         for i in range(n_accounts):
             acc_id = await self.account_service.create_account(
                 user_id=self.user_id,
                 group_id=group_id,
-                type="personal",
+                type=account_type,
                 name=f"account{i}",
                 description="",
             )
@@ -42,18 +54,94 @@ class TransactionLogicTest(AsyncTestCase):
 
         return account_ids
 
-    async def test_file_upload(self):
-        group_id = await self.group_service.create_group(
-            user_id=self.user_id,
-            name="test group",
-            description="",
-            currency_symbol="€",
-            terms="",
+    async def test_basic_clearing_account_workflow(self):
+        basic_account_id1, basic_account_id2 = await self._create_accounts(
+            self.group_id, 2
         )
-        account1_id, account2_id = await self._create_accounts(group_id, 2)
+
+        # check that we can create a simple clearing account
+        account_id = await self.account_service.create_account(
+            user_id=self.user_id,
+            group_id=self.group_id,
+            type="clearing",
+            name="Clearing",
+            description="Foobar",
+            clearing_shares={basic_account_id1: 1.0, basic_account_id2: 2.0},
+        )
+
+        account = await self.account_service.get_account(
+            user_id=self.user_id, account_id=account_id
+        )
+        self.assertEqual(account_id, account.id)
+        self.assertFalse(account.is_wip)
+        self.assertIsNotNone(account.committed_details)
+        self.assertIsNone(account.pending_details)
+        self.assertEqual(
+            2.0, account.committed_details.clearing_shares[basic_account_id2]
+        )
+        self.assertEqual(
+            1.0, account.committed_details.clearing_shares[basic_account_id1]
+        )
+
+        await self.account_service.update_account(
+            user_id=self.user_id,
+            account_id=account_id,
+            name="Clearing",
+            description="Foobar",
+            clearing_shares={basic_account_id1: 1.0},
+        )
+        account = await self.account_service.get_account(
+            user_id=self.user_id, account_id=account_id
+        )
+        self.assertIsNotNone(account.committed_details)
+        self.assertIsNone(account.pending_details)
+        self.assertTrue(
+            basic_account_id2 not in account.committed_details.clearing_shares
+        )
+        self.assertFalse(account.is_wip)
+
+    async def test_no_circular_clearing_accounts(self):
+        account1_id, account2_id = await self._create_accounts(
+            self.group_id, 2, account_type="clearing"
+        )
+
+        # we need to commit one account first other
+        await self.account_service.update_account(
+            user_id=self.user_id,
+            account_id=account2_id,
+            name="account2",
+            description="",
+            clearing_shares={account1_id: 1.0},
+        )
+
+        with self.assertRaises(Exception) as ctx:
+            await self.account_service.update_account(
+                user_id=self.user_id,
+                account_id=account1_id,
+                name="account1",
+                description="",
+                clearing_shares={account2_id: 1.0},
+            )
+        self.assertTrue(
+            "this change would result in a cyclic dependency between clearing accounts"
+            in str(ctx.exception)
+        )
+
+        # check that we cannot have an account reference itself
+        with self.assertRaises(Exception) as ctx:
+            await self.account_service.update_account(
+                user_id=self.user_id,
+                account_id=account1_id,
+                name="account1",
+                description="",
+                clearing_shares={account1_id: 1.0},
+            )
+
+    async def test_file_upload(self):
+        account1_id, account2_id = await self._create_accounts(self.group_id, 2)
         transaction_id = await self.transaction_service.create_transaction(
             user_id=self.user_id,
-            group_id=group_id,
+            group_id=self.group_id,
             type="purchase",
             description="foo",
             billed_at=datetime.now().date(),

@@ -7,7 +7,6 @@ import { Alert } from "@mui/lab";
 import TransferDetails from "../../components/transactions/transfer/TransferDetails";
 import PurchaseDetails from "../../components/transactions/purchase/PurchaseDetails";
 
-
 export default function Transaction({ group }) {
     const match = useRouteMatch();
     const transactionID = parseInt(match.params.id);
@@ -29,4 +28,3 @@ export default function Transaction({ group }) {
         </Suspense>
     );
 }
-

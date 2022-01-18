@@ -12,12 +12,11 @@ import {
     DialogTitle,
     FormControlLabel,
     LinearProgress,
-    TextField
+    TextField,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/lab";
 
 export default function InviteLinkCreate({ show, onClose, group }) {
-
     const handleSubmit = (values, { setSubmitting }) => {
         createGroupInvite({
             groupID: group.id,
@@ -25,16 +24,17 @@ export default function InviteLinkCreate({ show, onClose, group }) {
             description: values.description,
             validUntil: values.validUntil,
             singleUse: values.singleUse,
-            joinAsEditor: values.joinAsEditor
+            joinAsEditor: values.joinAsEditor,
         })
-            .then(result => {
+            .then((result) => {
                 toast.success("Successfully created invite token");
                 setSubmitting(false);
                 onClose();
-            }).catch(err => {
-            toast.error(err);
-            setSubmitting(false);
-        });
+            })
+            .catch((err) => {
+                toast.error(err);
+                setSubmitting(false);
+            });
     };
 
     const nowPlusOneHour = () => {
@@ -46,13 +46,15 @@ export default function InviteLinkCreate({ show, onClose, group }) {
             <DialogTitle>Create Invite Link</DialogTitle>
 
             <DialogContent>
-                <Formik initialValues={{
-                    description: "",
-                    validUntil: nowPlusOneHour(),
-                    singleUse: false,
-                    joinAsEditor: false
-                }}
-                        onSubmit={handleSubmit}>
+                <Formik
+                    initialValues={{
+                        description: "",
+                        validUntil: nowPlusOneHour(),
+                        singleUse: false,
+                        joinAsEditor: false,
+                    }}
+                    onSubmit={handleSubmit}
+                >
                     {({ values, setFieldValue, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
                         <Form>
                             <TextField
@@ -75,10 +77,11 @@ export default function InviteLinkCreate({ show, onClose, group }) {
                                 name="validUntil"
                                 inputFormat="yyyy-MM-dd HH:mm"
                                 value={values.validUntil}
-                                onChange={val => setFieldValue("validUntil", val, true)}
+                                onChange={(val) => setFieldValue("validUntil", val, true)}
                                 onBlur={handleBlur}
-                                renderInput={(props) => <TextField sx={{ marginTop: 2 }} variant="standard"
-                                                                   fullWidth {...props} />}
+                                renderInput={(props) => (
+                                    <TextField sx={{ marginTop: 2 }} variant="standard" fullWidth {...props} />
+                                )}
                             />
                             <FormControlLabel
                                 sx={{ mt: 2 }}
@@ -113,12 +116,7 @@ export default function InviteLinkCreate({ show, onClose, group }) {
 
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button
-                                    type="submit"
-                                    color="primary"
-                                    disabled={isSubmitting}
-                                    onClick={handleSubmit}
-                                >
+                                <Button type="submit" color="primary" disabled={isSubmitting} onClick={handleSubmit}>
                                     Save
                                 </Button>
                                 <Button color="error" onClick={onClose}>

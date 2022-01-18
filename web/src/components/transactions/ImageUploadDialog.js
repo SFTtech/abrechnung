@@ -10,11 +10,11 @@ import {
     DialogTitle,
     LinearProgress,
     TextField,
-    Typography
+    Typography,
 } from "@mui/material";
 import placeholderImg from "./PlaceholderImage.svg";
-import {useSetRecoilState} from "recoil";
-import {groupTransactions, updateTransaction} from "../../recoil/transactions";
+import { useSetRecoilState } from "recoil";
+import { groupTransactions, updateTransaction } from "../../recoil/transactions";
 
 export default function ImageUploadDialog({ transaction, show, onClose }) {
     const [fileState, setFileState] = useState({
@@ -23,7 +23,7 @@ export default function ImageUploadDialog({ transaction, show, onClose }) {
         progress: 0,
 
         message: "",
-        isError: false
+        isError: false,
     });
     const [filename, setFilename] = useState("");
     const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
@@ -34,7 +34,7 @@ export default function ImageUploadDialog({ transaction, show, onClose }) {
             currentFile: event.target.files[0],
             previewImage: URL.createObjectURL(event.target.files[0]),
             progress: 0,
-            message: ""
+            message: "",
         });
         setFilename(event.target.files[0].name.split(".")[0]);
     };
@@ -50,7 +50,7 @@ export default function ImageUploadDialog({ transaction, show, onClose }) {
     const upload = () => {
         setFileState({
             ...fileState,
-            progress: 0
+            progress: 0,
         });
 
         uploadFile({
@@ -60,30 +60,30 @@ export default function ImageUploadDialog({ transaction, show, onClose }) {
             onUploadProgress: (event) => {
                 setFileState({
                     ...fileState,
-                    progress: Math.round((100 * event.loaded) / event.total)
+                    progress: Math.round((100 * event.loaded) / event.total),
                 });
-            }
+            },
         })
-            .then(t => {
+            .then((t) => {
                 setFileState({
                     currentFile: undefined,
                     previewImage: undefined,
                     progress: 0,
 
                     message: "",
-                    isError: false
+                    isError: false,
                 });
                 updateTransaction(t, setTransactions);
                 onClose();
             })
-            .catch(err => {
+            .catch((err) => {
                 console.log("error on uploading file", err);
                 setFileState({
                     ...fileState,
                     progress: 0,
                     message: `Could not upload the image! ${err}`,
                     currentFile: undefined,
-                    isError: true
+                    isError: true,
                 });
             });
     };
@@ -116,19 +116,16 @@ export default function ImageUploadDialog({ transaction, show, onClose }) {
                                 <LinearProgress variant="determinate" value={fileState.progress} />
                             </Box>
                             <Box minWidth={35}>
-                                <Typography variant="body2"
-                                            color="textSecondary">{`${fileState.progress}%`}</Typography>
+                                <Typography
+                                    variant="body2"
+                                    color="textSecondary"
+                                >{`${fileState.progress}%`}</Typography>
                             </Box>
                         </Box>
                     </>
                 )}
 
-                {fileState.isError && fileState.message && (
-                    <Alert variant="danger">
-                        {fileState.message}
-                    </Alert>
-                )}
-
+                {fileState.isError && fileState.message && <Alert variant="danger">{fileState.message}</Alert>}
             </DialogContent>
 
             <DialogActions>
@@ -139,18 +136,12 @@ export default function ImageUploadDialog({ transaction, show, onClose }) {
                         style={{ display: "none" }}
                         type="file"
                         accept="image/*"
-                        onChange={selectFile} />
-                    <Button
-                        component="span">
-                        Choose Image
-                    </Button>
+                        onChange={selectFile}
+                    />
+                    <Button component="span">Choose Image</Button>
                 </label>
 
-                <Button
-                    color="primary"
-                    component="span"
-                    disabled={!fileState.currentFile}
-                    onClick={upload}>
+                <Button color="primary" component="span" disabled={!fileState.currentFile} onClick={upload}>
                     Upload
                 </Button>
             </DialogActions>

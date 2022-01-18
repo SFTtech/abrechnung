@@ -220,8 +220,8 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual(200, resp.status)
 
         a = await self._fetch_account(account_id)
-        self.assertEqual("new_name", a["name"])
-        self.assertEqual("description", a["description"])
+        self.assertEqual("new_name", a["committed_details"]["name"])
+        self.assertEqual("description", a["committed_details"]["description"])
 
         resp = await self._post(
             f"/api/v1/accounts/{account_id}",
@@ -232,8 +232,8 @@ class GroupAPITest(HTTPAPITest):
         )
         self.assertEqual(200, resp.status)
         a = await self._fetch_account(account_id)
-        self.assertEqual("new_name2", a["name"])
-        self.assertEqual("description1", a["description"])
+        self.assertEqual("new_name2", a["committed_details"]["name"])
+        self.assertEqual("description1", a["committed_details"]["description"])
 
     async def test_list_accounts(self):
         group_id = await self.group_service.create_group(
@@ -336,13 +336,50 @@ class GroupAPITest(HTTPAPITest):
             description="description",
         )
         ret_data = await self._fetch_account(account_id)
-        self.assertEqual("account1", ret_data["name"])
+        self.assertEqual("account1", ret_data["committed_details"]["name"])
 
         resp = await self._get(f"/api/v1/accounts/asdf1234")
         self.assertEqual(404, resp.status)
 
         resp = await self._get(f"/api/v1/accounts/13232")
         self.assertEqual(404, resp.status)
+
+    async def test_clearing_accounts(self):
+        group_id = await self.group_service.create_group(
+            user_id=self.test_user_id,
+            name="name",
+            description="description",
+            currency_symbol="€",
+            terms="terms",
+        )
+        resp = await self._post(
+            f"/api/v1/groups/{group_id}/accounts",
+            json={
+                "name": "claering name",
+                "description": "description",
+                "type": "clearing",
+            },
+        )
+        self.assertEqual(200, resp.status)
+        ret_data = await resp.json()
+        self.assertIsNotNone(ret_data["id"])
+        account_id = ret_data["id"]
+
+        base_account_id = await self.account_service.create_account(
+            user_id=self.test_user_id,
+            group_id=group_id,
+            type="personal",
+            name="account1",
+            description="description",
+        )
+        await self._post(
+            f"/api/v1/accounts/{account_id}",
+            json={
+                "name": "account1",
+                "description": "description",
+                "clearing_shares": {base_account_id: 2.0},
+            },
+        )
 
     async def test_invites(self):
         group_id = await self.group_service.create_group(

@@ -4,18 +4,15 @@ import { useSetRecoilState } from "recoil";
 import { logout } from "../../api";
 import Loading from "../../components/style/Loading";
 
-
 export default function Logout() {
     const setUserState = useSetRecoilState(userData);
 
     useEffect(() => {
-        logout().then(res => {
+        logout().then((res) => {
             setUserState(null);
             window.location.assign("/login");
         });
     }, [setUserState]);
 
-    return (
-        <Loading />
-    );
+    return <Loading />;
 }

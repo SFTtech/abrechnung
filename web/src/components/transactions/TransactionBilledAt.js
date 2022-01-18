@@ -1,13 +1,13 @@
-import React, {useState} from "react";
-import {toast} from "react-toastify";
-import {updateTransactionDetails} from "../../api";
-import {DisabledTextField} from "../style/DisabledTextField";
-import {DatePicker} from "@mui/lab";
-import {TextField} from "@mui/material";
-import {useSetRecoilState} from "recoil";
-import {groupTransactions, updateTransaction} from "../../recoil/transactions";
+import React, { useState } from "react";
+import { toast } from "react-toastify";
+import { updateTransactionDetails } from "../../api";
+import { DisabledTextField } from "../style/DisabledTextField";
+import { DatePicker } from "@mui/lab";
+import { TextField } from "@mui/material";
+import { useSetRecoilState } from "recoil";
+import { groupTransactions, updateTransaction } from "../../recoil/transactions";
 
-export default function TransactionBilledAt({group, transaction}) {
+export default function TransactionBilledAt({ group, transaction }) {
     const [error, setError] = useState(null);
     const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
 
@@ -25,12 +25,12 @@ export default function TransactionBilledAt({group, transaction}) {
                 currencySymbol: transaction.currency_symbol,
                 billedAt: billedAt.toISODate(),
                 value: transaction.value,
-                description: transaction.description
+                description: transaction.description,
             })
-                .then(t => {
+                .then((t) => {
                     updateTransaction(t, setTransactions);
                 })
-                .catch(err => {
+                .catch((err) => {
                     // something else
                     toast.error(err);
                 });
@@ -56,8 +56,9 @@ export default function TransactionBilledAt({group, transaction}) {
             fullWidth
             value={transaction.billed_at}
             onChange={save}
-            renderInput={(params) => <TextField variant="standard"
-                                                fullWidth {...params} helperText={error} error={error !== null}/>}
+            renderInput={(params) => (
+                <TextField variant="standard" fullWidth {...params} helperText={error} error={error !== null} />
+            )}
         />
     );
 }

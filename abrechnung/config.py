@@ -15,7 +15,7 @@ CONFIG_SCHEMA = Schema.from_dict(
             Schema.from_dict(
                 {
                     "host": fields.Str(),
-                    "port": fields.Int(missing=5432, required=False),
+                    "port": fields.Int(load_default=5432, required=False),
                     "user": fields.Str(),
                     "dbname": fields.Str(),
                     "password": fields.Str(),
@@ -30,12 +30,14 @@ CONFIG_SCHEMA = Schema.from_dict(
                     "port": fields.Int(),
                     "id": fields.Str(),
                     "max_uploadable_file_size": fields.Int(
-                        missing=1024, required=False
+                        load_default=1024, required=False
                     ),  # in KB
-                    "enable_cors": fields.Bool(required=False, missing=True),
-                    "enable_registration": fields.Bool(required=False, missing=False),
+                    "enable_cors": fields.Bool(required=False, load_default=True),
+                    "enable_registration": fields.Bool(
+                        required=False, load_default=False
+                    ),
                     "valid_email_domains": fields.List(
-                        fields.Str(), required=False, missing=None
+                        fields.Str(), required=False, load_default=None
                     ),
                 }
             )

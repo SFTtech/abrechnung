@@ -11,14 +11,14 @@ const useStyles = makeStyles((theme) => ({
         marginTop: theme.spacing(8),
         display: "flex",
         flexDirection: "column",
-        alignItems: "center"
+        alignItems: "center",
     },
     submit: {
-        margin: theme.spacing(3, 0, 2)
+        margin: theme.spacing(3, 0, 2),
     },
     alert: {
-        marginTop: theme.spacing(4)
-    }
+        marginTop: theme.spacing(4),
+    },
 }));
 
 export default function ConfirmPasswordRecovery() {
@@ -29,12 +29,12 @@ export default function ConfirmPasswordRecovery() {
 
     const handleSubmit = (values, { setSubmitting }) => {
         confirmPasswordRecovery({ newPassword: values.password, token: token })
-            .then(res => {
+            .then((res) => {
                 setStatus("success");
                 setError(null);
                 setSubmitting(false);
             })
-            .catch(err => {
+            .catch((err) => {
                 setStatus("error");
                 setError(err);
                 setSubmitting(false);
@@ -57,19 +57,24 @@ export default function ConfirmPasswordRecovery() {
                     Confirm Password Recovery
                 </Typography>
                 {error && (
-                    <Alert className={classes.alert} severity="error">{error}</Alert>
+                    <Alert className={classes.alert} severity="error">
+                        {error}
+                    </Alert>
                 )}
                 {status === "success" ? (
-                    <Alert className={classes.alert} severity="success">Password recovery successful, please <Link
-                        to="/login"
-                        component={RouterLink}>login</Link> using
-                        your new password.</Alert>
+                    <Alert className={classes.alert} severity="success">
+                        Password recovery successful, please{" "}
+                        <Link to="/login" component={RouterLink}>
+                            login
+                        </Link>{" "}
+                        using your new password.
+                    </Alert>
                 ) : (
                     <Formik
                         validate={validate}
                         initialValues={{
                             password: "",
-                            password2: ""
+                            password2: "",
                         }}
                         onSubmit={handleSubmit}
                     >

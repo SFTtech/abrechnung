@@ -50,19 +50,19 @@ Create the database (in a psql prompt):
   create database somedatabasename owner someuser;
 
 * exit the ``psql`` prompt
-* Copy ``config/config.yaml`` to the project root folder and adjust it, e.g. enter someuser, somepassword and somedatabasename
+* Copy ``config/abrechnung.yaml`` to the project root folder and adjust it, e.g. enter someuser, somepassword and somedatabasename
 * Populate database by applying all migrations:
 
 .. code-block:: shell
 
-  abrechnung -c config.yaml db migrate
+  abrechnung -c abrechnung.yaml db migrate
 
-* Launch ``abrechnung -c config.yaml api``
-* Launch ``abrechnung -c config.yaml mailer`` to get mail delivery (working mail server in config file required!)
+* Launch ``abrechnung -c abrechnung.yaml api``
+* Launch ``abrechnung -c abrechnung.yaml mailer`` to get mail delivery (working mail server in config file required!)
 
 It is always possible wipe and rebuild the database with ::
 
-  abrechnung -c config.yaml db rebuild
+  abrechnung -c abrechnung.yaml db rebuild
 
 Database migrations
 -------------------
