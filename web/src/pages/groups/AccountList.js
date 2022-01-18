@@ -89,7 +89,7 @@ export default function AccountList({ group }) {
         <>
             <Paper elevation={1} sx={{ padding: 2 }}>
                 <Typography variant="h6" sx={{ ml: 2 }}>
-                    User Accounts
+                    Personal Accounts
                 </Typography>
                 <List sx={{ maxHeight: 400, overflow: "auto" }}>
                     {personalAccounts.length === 0 ? (
