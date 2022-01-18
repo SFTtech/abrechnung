@@ -1,17 +1,16 @@
-import {atomFamily, selectorFamily} from "recoil";
-import {fetchTransaction, fetchTransactions} from "../api";
-import {ws} from "../websocket";
-import {DateTime} from "luxon";
-import {toast} from "react-toastify";
-import {checkCacheVersion} from "./cache";
-import {accountsSeenByUser} from "./accounts";
-
+import { atomFamily, selectorFamily } from "recoil";
+import { fetchTransaction, fetchTransactions } from "../api";
+import { ws } from "../websocket";
+import { DateTime } from "luxon";
+import { toast } from "react-toastify";
+import { checkCacheVersion } from "./cache";
+import { accountsSeenByUser } from "./accounts";
 
 export const groupTransactions = atomFamily({
     key: "groupTransactions",
     default: [],
-    effects_UNSTABLE: groupID => [
-        ({setSelf, node, getPromise}) => {
+    effects_UNSTABLE: (groupID) => [
+        ({ setSelf, node, getPromise }) => {
             // validate cache version
             checkCacheVersion();
 
@@ -20,16 +19,16 @@ export const groupTransactions = atomFamily({
             const savedTransactions = localStorage.getItem(localStorageKey);
 
             const fullFetchPromise = () => {
-                return fetchTransactions({groupID: groupID})
-                    .then(result => {
+                return fetchTransactions({ groupID: groupID })
+                    .then((result) => {
                         localStorage.setItem(localStorageKey, JSON.stringify(result));
                         return result;
                     })
-                    .catch(err => {
+                    .catch((err) => {
                         toast.error(`error when fetching transactions: ${err}`);
                         return [];
                     });
-            }
+            };
 
             const partialFetchPromise = (currTransactions) => {
                 let maxChangedTime = currTransactions.reduce((acc, curr) => {
@@ -52,9 +51,9 @@ export const groupTransactions = atomFamily({
                 return fetchTransactions({
                     groupID: groupID,
                     minLastChanged: DateTime.fromSeconds(maxChangedTime),
-                    additionalTransactions: wipTransactions
+                    additionalTransactions: wipTransactions,
                 })
-                    .then(result => {
+                    .then((result) => {
                         let mappedTransactions = currTransactions.reduce((map, transaction) => {
                             map[transaction.id] = transaction;
                             return map;
@@ -65,12 +64,11 @@ export const groupTransactions = atomFamily({
                         localStorage.setItem(localStorageKey, JSON.stringify(Object.values(mappedTransactions)));
                         return Object.values(mappedTransactions);
                     })
-                    .catch(err => {
+                    .catch((err) => {
                         toast.error(`error when fetching transactions: ${err}`);
                         return currTransactions;
-                    })
-            }
-
+                    });
+            };
 
             // TODO: handle fetch error more properly than just showing error, e.g. through a retry or something
             if (savedTransactions != null) {
@@ -81,302 +79,371 @@ export const groupTransactions = atomFamily({
             }
 
             const fetchAndUpdateTransaction = (currTransactions, transactionID, isNew) => {
-                fetchTransaction({transactionID: transactionID})
-                    .then(transaction => {
+                fetchTransaction({ transactionID: transactionID })
+                    .then((transaction) => {
                         if (isNew) {
-                            setSelf([...currTransactions, transaction])
+                            setSelf([...currTransactions, transaction]);
                         } else {
-                            setSelf(currTransactions.map(t => t.id === transaction.id ? transaction : t));
+                            setSelf(currTransactions.map((t) => (t.id === transaction.id ? transaction : t)));
                         }
                     })
-                    .catch(err => toast.error(`error when fetching transaction: ${err}`));
-            }
+                    .catch((err) => toast.error(`error when fetching transaction: ${err}`));
+            };
 
-            ws.subscribe("transaction", groupID, (subscription_type, {
-                element_id,
-                transaction_id,
-                revision_started,
-                revision_committed,
-                revision_version
-            }) => {
-                if (element_id === groupID) {
-                    getPromise(node).then(currTransactions => {
-                        const currTransaction = currTransactions.find(t => t.id === transaction_id);
-                        if (currTransaction === undefined
-                            || ((revision_committed === null && revision_version > currTransaction.version)
-                                || (revision_committed !== null && (currTransaction.last_changed === null || DateTime.fromISO(revision_committed) > DateTime.fromISO(currTransaction.last_changed))))) {
-                            fetchAndUpdateTransaction(currTransactions, transaction_id, currTransaction === undefined);
-                        }
-                    })
+            ws.subscribe(
+                "transaction",
+                groupID,
+                (
+                    subscription_type,
+                    { element_id, transaction_id, revision_started, revision_committed, revision_version }
+                ) => {
+                    if (element_id === groupID) {
+                        getPromise(node).then((currTransactions) => {
+                            const currTransaction = currTransactions.find((t) => t.id === transaction_id);
+                            if (
+                                currTransaction === undefined ||
+                                (revision_committed === null && revision_version > currTransaction.version) ||
+                                (revision_committed !== null &&
+                                    (currTransaction.last_changed === null ||
+                                        DateTime.fromISO(revision_committed) >
+                                            DateTime.fromISO(currTransaction.last_changed)))
+                            ) {
+                                fetchAndUpdateTransaction(
+                                    currTransactions,
+                                    transaction_id,
+                                    currTransaction === undefined
+                                );
+                            }
+                        });
+                    }
                 }
-            });
+            );
             // TODO: handle registration errors
 
             return () => {
                 ws.unsubscribe("transaction", groupID);
             };
-        }
-    ]
+        },
+    ],
 });
 
 export const addTransaction = (transaction, setTransactions) => {
     const localStorageKey = `groups.transactions-${transaction.group_id}`;
-    setTransactions(currTransactions => {
-        const newTransactions = [
-            ...currTransactions,
-            transaction,
-        ]
+    setTransactions((currTransactions) => {
+        const newTransactions = [...currTransactions, transaction];
         localStorage.setItem(localStorageKey, JSON.stringify(newTransactions));
-        return newTransactions
-    })
-}
+        return newTransactions;
+    });
+};
 
 export const updateTransaction = (transaction, setTransactions) => {
     const localStorageKey = `groups.transactions-${transaction.group_id}`;
 
-    setTransactions(currTransactions => {
-        const newTransactions = currTransactions.map(t => t.id === transaction.id ? transaction : t);
+    setTransactions((currTransactions) => {
+        const newTransactions = currTransactions.map((t) => (t.id === transaction.id ? transaction : t));
         localStorage.setItem(localStorageKey, JSON.stringify(newTransactions));
-        return newTransactions
-    })
-}
+        return newTransactions;
+    });
+};
 
 export const transactionsSeenByUser = selectorFamily({
     key: "transacitonsSeenByUser",
-    get: groupID => async ({get}) => {
-        const transactions = get(groupTransactions(groupID));
+    get:
+        (groupID) =>
+        async ({ get }) => {
+            const transactions = get(groupTransactions(groupID));
 
-        return transactions
-            .filter(transaction => {
-                return !(transaction.committed_details && transaction.committed_details.deleted);
-            })
-            .map(transaction => {
-                let mapped = {
-                    id: transaction.id,
-                    type: transaction.type,
-                    version: transaction.version,
-                    last_changed: transaction.last_changed,
-                    group_id: transaction.group_id,
-                    is_wip: transaction.is_wip,
-                    purchase_items: transaction.committed_positions != null ? transaction.committed_positions.filter(position => !position.deleted) : [],
-                    files: transaction.committed_files != null ? transaction.committed_files.filter(file => !file.deleted) : []
-                }
-                if (transaction.pending_details) {
-                    mapped = {
-                        ...mapped,
-                        ...transaction.pending_details,
-                        has_committed_changes: transaction.committed_details != null
+            return transactions
+                .filter((transaction) => {
+                    return !(transaction.committed_details && transaction.committed_details.deleted);
+                })
+                .map((transaction) => {
+                    let mapped = {
+                        id: transaction.id,
+                        type: transaction.type,
+                        version: transaction.version,
+                        last_changed: transaction.last_changed,
+                        group_id: transaction.group_id,
+                        is_wip: transaction.is_wip,
+                        purchase_items:
+                            transaction.committed_positions != null
+                                ? transaction.committed_positions.filter((position) => !position.deleted)
+                                : [],
+                        files:
+                            transaction.committed_files != null
+                                ? transaction.committed_files.filter((file) => !file.deleted)
+                                : [],
                     };
-                } else {
-                    mapped = {
-                        ...mapped,
-                        ...transaction.committed_details,
-                        has_committed_changes: true
-                    };
-                }
-
-                if (transaction.pending_positions) {
-                    let mappedPosition = mapped.purchase_items.reduce((map, position) => {
-                        map[position.id] = position;
-                        return map;
-                    }, {});
-                    for (const pendingPosition of transaction.pending_positions) {
-                        mappedPosition[pendingPosition.id] = pendingPosition;
+                    if (transaction.pending_details) {
+                        mapped = {
+                            ...mapped,
+                            ...transaction.pending_details,
+                            has_committed_changes: transaction.committed_details != null,
+                        };
+                    } else {
+                        mapped = {
+                            ...mapped,
+                            ...transaction.committed_details,
+                            has_committed_changes: true,
+                        };
                     }
-                    mapped.purchase_items = Object.values(mappedPosition).filter(position => !position.deleted);
-                }
 
-                if (transaction.pending_files) {
-                    let mappedFiles = mapped.files.reduce((map, file) => {
-                        map[file.id] = file;
-                        return map;
-                    }, {});
-                    for (const pendingFile of transaction.pending_files) {
-                        mappedFiles[pendingFile.id] = pendingFile;
-                    }
-                    mapped.files = Object.values(mappedFiles).filter(file => !file.deleted);
-                }
-
-                return mapped;
-            })
-            .map(transaction => {
-                let transactionAccountBalances = {};
-                let remainingTransactionValue = transaction.value;
-                if (transaction.purchase_items != null && transaction.purchase_items.length > 0) {
-                    for (const purchaseItem of transaction.purchase_items) {
-                        if (purchaseItem.deleted) {
-                            continue;
+                    if (transaction.pending_positions) {
+                        let mappedPosition = mapped.purchase_items.reduce((map, position) => {
+                            map[position.id] = position;
+                            return map;
+                        }, {});
+                        for (const pendingPosition of transaction.pending_positions) {
+                            mappedPosition[pendingPosition.id] = pendingPosition;
                         }
+                        mapped.purchase_items = Object.values(mappedPosition).filter((position) => !position.deleted);
+                    }
 
-                        let totalUsages = purchaseItem.communist_shares + Object.values(purchaseItem.usages).reduce((acc, curr) => acc + curr, 0);
+                    if (transaction.pending_files) {
+                        let mappedFiles = mapped.files.reduce((map, file) => {
+                            map[file.id] = file;
+                            return map;
+                        }, {});
+                        for (const pendingFile of transaction.pending_files) {
+                            mappedFiles[pendingFile.id] = pendingFile;
+                        }
+                        mapped.files = Object.values(mappedFiles).filter((file) => !file.deleted);
+                    }
 
-                        // bill the respective item usage with each participating account
-                        Object.entries(purchaseItem.usages).forEach(([accountID, value]) => {
-                            if (transactionAccountBalances.hasOwnProperty(accountID)) {
-                                transactionAccountBalances[accountID]["positions"] += totalUsages > 0 ? purchaseItem.price / totalUsages * value : 0;
-                            } else {
-                                transactionAccountBalances[accountID] = {
-                                    positions: totalUsages > 0 ? purchaseItem.price / totalUsages * value : 0,
-                                    common_debitors: 0,
-                                    common_creditors: 0
-                                };
+                    return mapped;
+                })
+                .map((transaction) => {
+                    let transactionAccountBalances = {};
+                    let remainingTransactionValue = transaction.value;
+                    if (transaction.purchase_items != null && transaction.purchase_items.length > 0) {
+                        for (const purchaseItem of transaction.purchase_items) {
+                            if (purchaseItem.deleted) {
+                                continue;
                             }
-                        });
 
-                        // calculate the remaining purchase item price to be billed onto the communist shares
-                        const commonRemainder = totalUsages > 0 ? purchaseItem.price / totalUsages * purchaseItem.communist_shares : 0;
-                        remainingTransactionValue = remainingTransactionValue - purchaseItem.price + commonRemainder;
+                            let totalUsages =
+                                purchaseItem.communist_shares +
+                                Object.values(purchaseItem.usages).reduce((acc, curr) => acc + curr, 0);
+
+                            // bill the respective item usage with each participating account
+                            Object.entries(purchaseItem.usages).forEach(([accountID, value]) => {
+                                if (transactionAccountBalances.hasOwnProperty(accountID)) {
+                                    transactionAccountBalances[accountID]["positions"] +=
+                                        totalUsages > 0 ? (purchaseItem.price / totalUsages) * value : 0;
+                                } else {
+                                    transactionAccountBalances[accountID] = {
+                                        positions: totalUsages > 0 ? (purchaseItem.price / totalUsages) * value : 0,
+                                        common_debitors: 0,
+                                        common_creditors: 0,
+                                    };
+                                }
+                            });
+
+                            // calculate the remaining purchase item price to be billed onto the communist shares
+                            const commonRemainder =
+                                totalUsages > 0
+                                    ? (purchaseItem.price / totalUsages) * purchaseItem.communist_shares
+                                    : 0;
+                            remainingTransactionValue =
+                                remainingTransactionValue - purchaseItem.price + commonRemainder;
+                        }
                     }
-                }
 
-                const totalDebitorShares = Object.values(transaction.debitor_shares).reduce((acc, curr) => acc + curr, 0);
-                const totalCreditorShares = Object.values(transaction.creditor_shares).reduce((acc, curr) => acc + curr, 0);
+                    const totalDebitorShares = Object.values(transaction.debitor_shares).reduce(
+                        (acc, curr) => acc + curr,
+                        0
+                    );
+                    const totalCreditorShares = Object.values(transaction.creditor_shares).reduce(
+                        (acc, curr) => acc + curr,
+                        0
+                    );
 
-                Object.entries(transaction.debitor_shares).forEach(([accountID, value]) => {
-                    if (transactionAccountBalances.hasOwnProperty(accountID)) {
-                        transactionAccountBalances[accountID]["common_debitors"] += totalDebitorShares > 0 ? remainingTransactionValue / totalDebitorShares * value : 0;
-                    } else {
-                        transactionAccountBalances[accountID] = {
-                            positions: 0,
-                            common_creditors: 0,
-                            common_debitors: totalDebitorShares > 0 ? remainingTransactionValue / totalDebitorShares * value : 0
-                        };
-                    }
+                    Object.entries(transaction.debitor_shares).forEach(([accountID, value]) => {
+                        if (transactionAccountBalances.hasOwnProperty(accountID)) {
+                            transactionAccountBalances[accountID]["common_debitors"] +=
+                                totalDebitorShares > 0 ? (remainingTransactionValue / totalDebitorShares) * value : 0;
+                        } else {
+                            transactionAccountBalances[accountID] = {
+                                positions: 0,
+                                common_creditors: 0,
+                                common_debitors:
+                                    totalDebitorShares > 0
+                                        ? (remainingTransactionValue / totalDebitorShares) * value
+                                        : 0,
+                            };
+                        }
+                    });
+                    Object.entries(transaction.creditor_shares).forEach(([accountID, value]) => {
+                        if (transactionAccountBalances.hasOwnProperty(accountID)) {
+                            transactionAccountBalances[accountID]["common_creditors"] +=
+                                totalCreditorShares > 0 ? (transaction.value / totalCreditorShares) * value : 0;
+                        } else {
+                            transactionAccountBalances[accountID] = {
+                                positions: 0,
+                                common_debitors: 0,
+                                common_creditors:
+                                    totalCreditorShares > 0 ? (transaction.value / totalCreditorShares) * value : 0,
+                            };
+                        }
+                    });
+
+                    return {
+                        ...transaction,
+                        account_balances: transactionAccountBalances,
+                    };
+                })
+                .sort((t1, t2) => {
+                    return t1.billed_at === t2.billed_at
+                        ? t1.id < t2.id
+                        : DateTime.fromISO(t1.billed_at) < DateTime.fromISO(t2.billed_at);
                 });
-                Object.entries(transaction.creditor_shares).forEach(([accountID, value]) => {
-                    if (transactionAccountBalances.hasOwnProperty(accountID)) {
-                        transactionAccountBalances[accountID]["common_creditors"] += totalCreditorShares > 0 ? transaction.value / totalCreditorShares * value : 0;
-                    } else {
-                        transactionAccountBalances[accountID] = {
-                            positions: 0,
-                            common_debitors: 0,
-                            common_creditors: totalCreditorShares > 0 ? transaction.value / totalCreditorShares * value : 0
-                        };
-                    }
-                });
-
-                return {
-                    ...transaction,
-                    account_balances: transactionAccountBalances
-                };
-            })
-            .sort((t1, t2) => {
-                return t1.billed_at === t2.billed_at
-                    ? t1.id < t2.id
-                    : DateTime.fromISO(t1.billed_at) < DateTime.fromISO(t2.billed_at);
-            });
-    }
+        },
 });
 
 export const transactionById = selectorFamily({
     key: "transactionById",
-    get: ({groupID, transactionID}) => async ({get}) => {
-        const transactions = get(transactionsSeenByUser(groupID));
-        return transactions?.find(transaction => transaction.id === transactionID);
-    }
+    get:
+        ({ groupID, transactionID }) =>
+        async ({ get }) => {
+            const transactions = get(transactionsSeenByUser(groupID));
+            return transactions?.find((transaction) => transaction.id === transactionID);
+        },
 });
 
 export const accountBalances = selectorFamily({
     key: "accountBalances",
-    get: (groupID) => async ({get}) => {
-        const transactions = get(transactionsSeenByUser(groupID));
-        const accounts = get(accountsSeenByUser(groupID));
-        let accountBalances = Object.fromEntries(accounts.map(account => [account.id, 0]));
+    get:
+        (groupID) =>
+        async ({ get }) => {
+            const transactions = get(transactionsSeenByUser(groupID));
+            const accounts = get(accountsSeenByUser(groupID));
+            let accountBalances = Object.fromEntries(
+                accounts.map((account) => [
+                    account.id,
+                    {
+                        balance: 0,
+                        totalConsumed: 0,
+                        totalPaid: 0,
+                    },
+                ])
+            );
 
-        for (const transaction of transactions) {
-            if (transaction.deleted) {
-                continue; // ignore deleted transactions
-            }
-            Object.entries(transaction.account_balances).forEach(([accountID, value]) => {
-                accountBalances[accountID] += value.common_creditors - value.positions - value.common_debitors;
-            });
-        }
-
-        // linearize the account dependency graph to properly redistribute clearing accounts
-        let shareMap = accounts.reduce((map, acc) => {
-            map[acc.id] = acc.clearing_shares != null ? acc.clearing_shares : {};
-            return map;
-        }, {});
-        let graph = {}
-        for (const accountID of Object.keys(shareMap)) { // TODO: maybe functionalize
-            for (const nextAccountID of Object.keys(shareMap[accountID])) {
-                if (graph.hasOwnProperty(nextAccountID)) {
-                    graph[nextAccountID].add(accountID);
-                } else {
-                    graph[nextAccountID] = new Set([accountID]);
+            for (const transaction of transactions) {
+                if (transaction.deleted) {
+                    continue; // ignore deleted transactions
                 }
+                Object.entries(transaction.account_balances).forEach(([accountID, value]) => {
+                    accountBalances[accountID].totalConsumed += value.positions + value.common_debitors;
+                    accountBalances[accountID].totalPaid += value.common_creditors;
+                    accountBalances[accountID].balance +=
+                        value.common_creditors - value.positions - value.common_debitors;
+                });
             }
-        }
-        let inDegree = Object.keys(shareMap).reduce((map, accountID) => {
-            map[accountID] = Object.keys(shareMap[accountID]).length;
-            return map;
-        }, {});
-        let zeroDegreeAccounts = Object.keys(inDegree).filter(accountID => inDegree[accountID] === 0);
-        let sorting = []
 
-        while (zeroDegreeAccounts.length > 0) {
-            const node = zeroDegreeAccounts.pop();
-            sorting.push(node);
-            if (graph.hasOwnProperty(node)) {
-                for (const nextAccount of graph[node]) {
-                    inDegree[nextAccount] -= 1;
-                    if (inDegree[nextAccount] === 0) {
-                        zeroDegreeAccounts.push(nextAccount);
+            // linearize the account dependency graph to properly redistribute clearing accounts
+            let shareMap = accounts.reduce((map, acc) => {
+                if (acc.clearing_shares != null && Object.keys(acc.clearing_shares).length) {
+                    map[acc.id] = acc.clearing_shares;
+                }
+                return map;
+            }, {});
+            let clearingDependencies = {};
+            let inDegree = accounts.reduce((map, curr) => {
+                map[curr.id] = 0;
+                return map;
+            }, {});
+            for (const accountID of Object.keys(shareMap)) {
+                // TODO: maybe functionalize
+                for (const nextAccountID of Object.keys(shareMap[accountID])) {
+                    if (shareMap.hasOwnProperty(nextAccountID)) {
+                        inDegree[nextAccountID] += 1;
+                    }
+                    if (clearingDependencies.hasOwnProperty(nextAccountID)) {
+                        clearingDependencies[nextAccountID].add(accountID);
+                    } else {
+                        clearingDependencies[nextAccountID] = new Set([accountID]);
                     }
                 }
             }
-        }
+            let zeroDegreeAccounts = Object.keys(shareMap).filter((accountID) => inDegree[accountID] === 0);
+            let sorting = [];
 
-        for (const clearing of sorting) {
-            if (Object.keys(shareMap[clearing]).length > 0) {
-                const toSplit = accountBalances[clearing];
-                accountBalances[clearing] = 0;
-                const totalShares = Object.values(shareMap[clearing]).reduce((acc, curr) => curr + acc, 0);
-                for (const acc in shareMap[clearing]) {
-                    accountBalances[acc] += toSplit * shareMap[clearing][acc] / totalShares;
+            while (zeroDegreeAccounts.length > 0) {
+                const node = zeroDegreeAccounts.pop();
+                if (shareMap.hasOwnProperty(node)) {
+                    sorting.push(node);
+                    for (const nextAccount of Object.keys(shareMap[node])) {
+                        inDegree[nextAccount] -= 1;
+                        if (inDegree[nextAccount] <= 0) {
+                            zeroDegreeAccounts.push(nextAccount);
+                        }
+                    }
                 }
             }
-        }
 
-        return accountBalances;
-    }
+            for (const clearing of sorting) {
+                if (shareMap.hasOwnProperty(clearing) && Object.keys(shareMap[clearing]).length > 0) {
+                    const toSplit = accountBalances[clearing].balance;
+                    accountBalances[clearing].balance = 0;
+                    const totalShares = Object.values(shareMap[clearing]).reduce((acc, curr) => curr + acc, 0);
+                    for (const acc in shareMap[clearing]) {
+                        const accShare = (toSplit * shareMap[clearing][acc]) / totalShares;
+                        accountBalances[acc].balance += accShare;
+                        if (accShare > 0) {
+                            accountBalances[acc].totalPaid += Math.abs(accShare);
+                        } else {
+                            accountBalances[acc].totalConsumed += Math.abs(accShare);
+                        }
+                    }
+                }
+            }
+
+            return accountBalances;
+        },
 });
 
 export const accountTransactions = selectorFamily({
     key: "accountTransactions",
-    get: ({groupID, accountID}) => async ({get}) => {
-        return get(transactionsSeenByUser(groupID)).filter(
-            transaction => transaction.account_balances.hasOwnProperty(accountID)
-        );
-    }
+    get:
+        ({ groupID, accountID }) =>
+        async ({ get }) => {
+            return get(transactionsSeenByUser(groupID)).filter((transaction) =>
+                transaction.account_balances.hasOwnProperty(accountID)
+            );
+        },
 });
 
 export const accountBalanceHistory = selectorFamily({
     key: "accountBalanceHistory",
-    get: ({groupID, accountID}) => async ({get}) => {
-        const unsortedTransactions = get(accountTransactions({groupID: groupID, accountID: accountID}));
-        const transactions = [...unsortedTransactions].sort((t1, t2) => {
-            return DateTime.fromISO(t1.billed_at) > DateTime.fromISO(t2.billed_at);
-        });
+    get:
+        ({ groupID, accountID }) =>
+        async ({ get }) => {
+            const unsortedTransactions = get(accountTransactions({ groupID: groupID, accountID: accountID }));
+            const transactions = [...unsortedTransactions].sort((t1, t2) => {
+                return DateTime.fromISO(t1.billed_at) > DateTime.fromISO(t2.billed_at);
+            });
 
-        if (transactions.length === 0) {
-            return [];
-        }
-
-        let balanceChanges = [];
-        let currentEntry = {date: DateTime.fromISO(transactions[0].billed_at).toSeconds(), balance: 0};
-        for (const transaction of transactions) {
-            const transactionDate = DateTime.fromISO(transaction.billed_at).toSeconds();
-            if (transactionDate !== currentEntry.date) {
-                balanceChanges.push({...currentEntry});
-                currentEntry.date = transactionDate;
+            if (transactions.length === 0) {
+                return [];
             }
 
-            const a = transaction.account_balances[accountID];
-            currentEntry.balance += a.common_creditors - a.common_debitors - a.positions;
-        }
-        balanceChanges.push({...currentEntry});
+            let balanceChanges = [];
+            let currentEntry = {
+                date: DateTime.fromISO(transactions[0].billed_at).toSeconds(),
+                balance: 0,
+            };
+            for (const transaction of transactions) {
+                const transactionDate = DateTime.fromISO(transaction.billed_at).toSeconds();
+                if (transactionDate !== currentEntry.date) {
+                    balanceChanges.push({ ...currentEntry });
+                    currentEntry.date = transactionDate;
+                }
 
-        return balanceChanges;
-    }
+                const a = transaction.account_balances[accountID];
+                currentEntry.balance += a.common_creditors - a.common_debitors - a.positions;
+            }
+            balanceChanges.push({ ...currentEntry });
+
+            return balanceChanges;
+        },
 });

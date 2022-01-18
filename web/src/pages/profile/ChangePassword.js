@@ -7,8 +7,8 @@ import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
-        padding: theme.spacing(2)
-    }
+        padding: theme.spacing(2),
+    },
 }));
 
 export default function ChangePassword() {
@@ -25,7 +25,7 @@ export default function ChangePassword() {
     const handleSubmit = (values, { setSubmitting }) => {
         changePassword({
             oldPassword: values.password,
-            newPassword: values.newPassword
+            newPassword: values.newPassword,
         })
             .then((res) => {
                 setSubmitting(false);
@@ -42,8 +42,15 @@ export default function ChangePassword() {
             <Typography component="h3" variant="h5">
                 Change Password
             </Typography>
-            <Formik validate={validate} initialValues={{ password: "", newPassword: "", newPassword2: "" }}
-                    onSubmit={handleSubmit}>
+            <Formik
+                validate={validate}
+                initialValues={{
+                    password: "",
+                    newPassword: "",
+                    newPassword2: "",
+                }}
+                onSubmit={handleSubmit}
+            >
                 {({ values, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
                     <Form>
                         <TextField
@@ -87,12 +94,7 @@ export default function ChangePassword() {
                         />
 
                         {isSubmitting && <LinearProgress />}
-                        <Button
-                            type="submit"
-                            color="primary"
-                            disabled={isSubmitting}
-                            onClick={handleSubmit}
-                        >
+                        <Button type="submit" color="primary" disabled={isSubmitting} onClick={handleSubmit}>
                             Save
                         </Button>
                     </Form>
@@ -101,4 +103,3 @@ export default function ChangePassword() {
         </Paper>
     );
 }
-

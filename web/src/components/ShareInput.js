@@ -1,7 +1,7 @@
-import {useEffect, useState} from "react";
-import {TextField} from "@mui/material";
+import { useEffect, useState } from "react";
+import { TextField } from "@mui/material";
 
-export function ShareInput({value, onChange}) {
+export function ShareInput({ value, onChange }) {
     const [currValue, setValue] = useState(0);
     const [error, setError] = useState(false);
 
@@ -37,7 +37,7 @@ export function ShareInput({value, onChange}) {
             error={error}
             margin="dense"
             variant="standard"
-            style={{width: 40, paddingTop: 1, marginRight: 2}}
+            style={{ width: 40, paddingTop: 1, marginRight: 2 }}
             onBlur={onSave}
             value={currValue}
             onChange={onValueChange}

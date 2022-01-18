@@ -1,37 +1,37 @@
 import * as yup from "yup";
-import {Form, Formik} from "formik";
-import {toast} from "react-toastify";
-import {createAccount} from "../../api";
-import {Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField} from "@mui/material";
-import {useRecoilValue, useSetRecoilState} from "recoil";
-import {accountsSeenByUser, addAccount, groupAccounts} from "../../recoil/accounts";
+import { Form, Formik } from "formik";
+import { toast } from "react-toastify";
+import { createAccount } from "../../api";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { accountsSeenByUser, addAccount, groupAccounts } from "../../recoil/accounts";
 import ClearingSharesFormElement from "./ClearingSharesFormElement";
 
 const validationSchema = yup.object({
     name: yup.string("Enter an account name").required("Name is required"),
     description: yup.string("Enter an account description"),
     clearingShares: yup.object(),
-})
+});
 
-export default function CreateClearingAccountModal({show, onClose, group}) {
+export default function CreateClearingAccountModal({ show, onClose, group }) {
     const setAccounts = useSetRecoilState(groupAccounts(group.id));
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
 
-    const handleSubmit = (values, {setSubmitting}) => {
+    const handleSubmit = (values, { setSubmitting }) => {
         createAccount({
             groupID: group.id,
             name: values.name,
             accountType: "clearing",
             description: values.description,
-            clearingShares: values.clearingShares
+            clearingShares: values.clearingShares,
         })
-            .then(account => {
+            .then((account) => {
                 toast.success(`Created account ${values.name}`);
                 addAccount(account, setAccounts);
                 setSubmitting(false);
                 onClose();
             })
-            .catch(err => {
+            .catch((err) => {
                 toast.error(err);
                 setSubmitting(false);
             });
@@ -48,22 +48,22 @@ export default function CreateClearingAccountModal({show, onClose, group}) {
                         description: "",
                         clearingShares: accounts.reduce((map, curr) => {
                             map[curr.id] = 0.0;
-                            return map
-                        }, {})
+                            return map;
+                        }, {}),
                     }}
                     onSubmit={handleSubmit}
                     validationSchema={validationSchema}
                 >
                     {({
-                          values,
-                          touched,
-                          errors,
-                          setFieldValue,
-                          handleChange,
-                          handleBlur,
-                          handleSubmit,
-                          isSubmitting
-                      }) => (
+                        values,
+                        touched,
+                        errors,
+                        setFieldValue,
+                        handleChange,
+                        handleBlur,
+                        handleSubmit,
+                        isSubmitting,
+                    }) => (
                         <Form>
                             <TextField
                                 margin="normal"
@@ -98,21 +98,17 @@ export default function CreateClearingAccountModal({show, onClose, group}) {
                                 setClearingShares={(clearingShares) => setFieldValue("clearingShares", clearingShares)}
                             />
 
-                            {isSubmitting && <LinearProgress/>}
+                            {isSubmitting && <LinearProgress />}
                             <DialogActions>
                                 <Button color="error" onClick={onClose}>
                                     Cancel
                                 </Button>
-                                <Button
-                                    type="submit"
-                                    color="primary"
-                                    disabled={isSubmitting}
-                                    onClick={handleSubmit}
-                                >
+                                <Button type="submit" color="primary" disabled={isSubmitting} onClick={handleSubmit}>
                                     Save
                                 </Button>
                             </DialogActions>
-                        </Form>)}
+                        </Form>
+                    )}
                 </Formik>
             </DialogContent>
         </Dialog>

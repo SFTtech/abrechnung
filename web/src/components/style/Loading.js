@@ -6,5 +6,5 @@ export default function Loading() {
         <Grid container direction="row" justifyContent="center" alignItems="center">
             <CircularProgress />
         </Grid>
-    )
+    );
 }

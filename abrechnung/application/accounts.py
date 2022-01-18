@@ -453,7 +453,23 @@ class AccountService(Application):
                 if row["deleted"]:
                     raise InvalidCommand(f"Cannot delete an already deleted account")
 
-                # TODO: check other clearing account references
+                has_committed_clearing_shares = await conn.fetchval(
+                    "select 1 "
+                    "from committed_account_state_valid_at() p "
+                    "where not p.deleted and $1 = any(p.involved_accounts)",
+                    account_id,
+                )
+
+                has_pending_clearing_shares = await conn.fetchval(
+                    "select 1 "
+                    "from aggregated_pending_account_history p "
+                    "where $1 = any(p.involved_accounts)",
+                    account_id,
+                )
+                if has_committed_clearing_shares or has_pending_clearing_shares:
+                    raise InvalidCommand(
+                        f"Cannot delete an account that is references by another clearing account"
+                    )
 
                 now = datetime.now(tz=timezone.utc)
                 revision_id = await conn.fetchval(

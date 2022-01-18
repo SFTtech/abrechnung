@@ -1,10 +1,10 @@
-import {Form, Formik} from "formik";
+import { Form, Formik } from "formik";
 import React from "react";
-import {toast} from "react-toastify";
-import {updateAccountDetails} from "../../api";
-import {Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField} from "@mui/material";
-import {groupAccounts, updateAccount} from "../../recoil/accounts";
-import {useSetRecoilState} from "recoil";
+import { toast } from "react-toastify";
+import { updateAccountDetails } from "../../api";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
+import { groupAccounts, updateAccount } from "../../recoil/accounts";
+import { useSetRecoilState } from "recoil";
 import ClearingSharesFormElement from "./ClearingSharesFormElement";
 import * as yup from "yup";
 
@@ -12,12 +12,12 @@ const validationSchema = yup.object({
     name: yup.string("Enter an account name").required("Name is required"),
     description: yup.string("Enter an account description"),
     clearingShares: yup.object(),
-})
+});
 
-export default function EditClearingAccountModal({group, show, onClose, account}) {
+export default function EditClearingAccountModal({ group, show, onClose, account }) {
     const setAccounts = useSetRecoilState(groupAccounts(group.id));
 
-    const handleSubmit = (values, {setSubmitting}) => {
+    const handleSubmit = (values, { setSubmitting }) => {
         updateAccountDetails({
             groupID: group.id,
             accountID: values.accountID,
@@ -25,18 +25,18 @@ export default function EditClearingAccountModal({group, show, onClose, account}
             description: values.description,
             clearingShares: values.clearingShares,
         })
-            .then(account => {
+            .then((account) => {
                 updateAccount(account, setAccounts);
                 setSubmitting(false);
                 onClose();
-            }).catch(err => {
-            toast.error(err);
-            setSubmitting(false);
-        });
+            })
+            .catch((err) => {
+                toast.error(err);
+                setSubmitting(false);
+            });
     };
 
     return (
-
         <Dialog open={show} onClose={onClose}>
             <DialogTitle>Edit Clearing Account</DialogTitle>
             <DialogContent>
@@ -51,7 +51,7 @@ export default function EditClearingAccountModal({group, show, onClose, account}
                     enableReinitialize={true}
                     validationSchema={validationSchema}
                 >
-                    {({values, handleChange, setFieldValue, handleBlur, handleSubmit, isSubmitting}) => (
+                    {({ values, handleChange, setFieldValue, handleBlur, handleSubmit, isSubmitting }) => (
                         <Form>
                             <TextField
                                 margin="normal"
@@ -83,7 +83,7 @@ export default function EditClearingAccountModal({group, show, onClose, account}
                                 setClearingShares={(clearingShares) => setFieldValue("clearingShares", clearingShares)}
                             />
 
-                            {isSubmitting && <LinearProgress/>}
+                            {isSubmitting && <LinearProgress />}
                             <DialogActions>
                                 <Button color="primary" type="submit" onClick={handleSubmit}>
                                     Save
@@ -92,7 +92,6 @@ export default function EditClearingAccountModal({group, show, onClose, account}
                                     Close
                                 </Button>
                             </DialogActions>
-
                         </Form>
                     )}
                 </Formik>

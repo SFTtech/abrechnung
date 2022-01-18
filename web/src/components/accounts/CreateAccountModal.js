@@ -1,33 +1,33 @@
 import React from "react";
 import * as yup from "yup";
-import {Form, Formik} from "formik";
-import {toast} from "react-toastify";
-import {createAccount} from "../../api";
-import {Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField} from "@mui/material";
-import {useSetRecoilState} from "recoil";
-import {addAccount, groupAccounts} from "../../recoil/accounts";
+import { Form, Formik } from "formik";
+import { toast } from "react-toastify";
+import { createAccount } from "../../api";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
+import { useSetRecoilState } from "recoil";
+import { addAccount, groupAccounts } from "../../recoil/accounts";
 
 const validationSchema = yup.object({
     name: yup.string("Enter an account name").required("Name is required"),
     description: yup.string("Enter an account description"),
-})
+});
 
-export default function CreateAccountModal({show, onClose, group}) {
+export default function CreateAccountModal({ show, onClose, group }) {
     const setAccounts = useSetRecoilState(groupAccounts(group.id));
 
-    const handleSubmit = (values, {setSubmitting}) => {
+    const handleSubmit = (values, { setSubmitting }) => {
         createAccount({
             groupID: group.id,
             name: values.name,
-            description: values.description
+            description: values.description,
         })
-            .then(account => {
+            .then((account) => {
                 toast.success(`Created account ${values.name}`);
                 addAccount(account, setAccounts);
                 setSubmitting(false);
                 onClose();
             })
-            .catch(err => {
+            .catch((err) => {
                 toast.error(err);
                 setSubmitting(false);
             });
@@ -38,11 +38,11 @@ export default function CreateAccountModal({show, onClose, group}) {
 
             <DialogContent>
                 <Formik
-                    initialValues={{name: "", description: ""}}
+                    initialValues={{ name: "", description: "" }}
                     onSubmit={handleSubmit}
                     validationSchema={validationSchema}
                 >
-                    {({values, touched, errors, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
+                    {({ values, touched, errors, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
                         <Form>
                             <TextField
                                 margin="normal"
@@ -71,21 +71,17 @@ export default function CreateAccountModal({show, onClose, group}) {
                                 helperText={touched.description && errors.description}
                             />
 
-                            {isSubmitting && <LinearProgress/>}
+                            {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button
-                                    type="submit"
-                                    color="primary"
-                                    disabled={isSubmitting}
-                                    onClick={handleSubmit}
-                                >
+                                <Button type="submit" color="primary" disabled={isSubmitting} onClick={handleSubmit}>
                                     Save
                                 </Button>
                                 <Button color="error" onClick={onClose}>
                                     Cancel
                                 </Button>
                             </DialogActions>
-                        </Form>)}
+                        </Form>
+                    )}
                 </Formik>
             </DialogContent>
         </Dialog>

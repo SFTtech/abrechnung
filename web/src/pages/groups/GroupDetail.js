@@ -15,7 +15,7 @@ import {
     DialogTitle,
     Grid,
     Paper,
-    Alert
+    Alert,
 } from "@mui/material";
 
 export default function GroupDetail({ group }) {
@@ -31,19 +31,18 @@ export default function GroupDetail({ group }) {
             name: name ? name : group.name,
             description: description ? description : group.description,
             currencySymbol: currencySymbol ? currencySymbol : group.currency_symbol,
-            terms: terms ? terms : group.terms
-        })
-            .catch(err => {
-                toast.error(err);
-            });
+            terms: terms ? terms : group.terms,
+        }).catch((err) => {
+            toast.error(err);
+        });
     };
 
     const confirmLeaveGroup = () => {
         leaveGroup({ groupID: group.id })
-            .then(res => {
+            .then((res) => {
                 history.push("/");
             })
-            .catch(err => {
+            .catch((err) => {
                 toast.error(err);
             });
     };
@@ -62,7 +61,7 @@ export default function GroupDetail({ group }) {
                 variant="standard"
                 value={group.name}
                 canEdit={userPermissions.can_write}
-                onChange={name => updateGroup({ name: name })}
+                onChange={(name) => updateGroup({ name: name })}
             />
 
             <EditableField
@@ -71,7 +70,7 @@ export default function GroupDetail({ group }) {
                 variant="standard"
                 value={group.description}
                 canEdit={userPermissions.can_write}
-                onChange={description => updateGroup({ description: description })}
+                onChange={(description) => updateGroup({ description: description })}
             />
 
             <EditableField
@@ -80,7 +79,7 @@ export default function GroupDetail({ group }) {
                 variant="standard"
                 value={group.currency_symbol}
                 canEdit={userPermissions.can_write}
-                onChange={currencySymbol => updateGroup({ currencySymbol: currencySymbol })}
+                onChange={(currencySymbol) => updateGroup({ currencySymbol: currencySymbol })}
             />
 
             <EditableField
@@ -89,7 +88,7 @@ export default function GroupDetail({ group }) {
                 variant="standard"
                 value={group.terms}
                 canEdit={userPermissions.can_write}
-                onChange={terms => updateGroup({ terms: terms })}
+                onChange={(terms) => updateGroup({ terms: terms })}
             />
 
             {/*<List>*/}
@@ -111,7 +110,10 @@ export default function GroupDetail({ group }) {
                 <DialogTitle>Leave Group</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        <span>Are you sure you want to leave the group {group.name}. If you are the last member to leave this group it will be deleted and its transaction will be lost forever...</span>
+                        <span>
+                            Are you sure you want to leave the group {group.name}. If you are the last member to leave
+                            this group it will be deleted and its transaction will be lost forever...
+                        </span>
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>

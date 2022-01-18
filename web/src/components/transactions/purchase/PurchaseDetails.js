@@ -9,6 +9,7 @@ import FileGallery from "../FileGallery";
 import TransactionActions from "../TransactionActions";
 import PurchaseItems from "./PurchaseItems";
 import { Add } from "@mui/icons-material";
+import PurchaseDebitorSharesReadOnly from "./PurchaseDebitorSharesReadOnly";
 
 export default function PurchaseDetails({ group, transaction }) {
     const [showPositions, setShowPositions] = useState(false);
@@ -39,19 +40,37 @@ export default function PurchaseDetails({ group, transaction }) {
                         </Grid>
                     )}
                     <Grid item xs={12}>
-                        <PurchaseDebitorShares group={group} transaction={transaction} showPositions={showPositions} />
+                        {transaction.is_wip ? (
+                            <PurchaseDebitorShares
+                                group={group}
+                                transaction={transaction}
+                                showPositions={showPositions}
+                            />
+                        ) : (
+                            <PurchaseDebitorSharesReadOnly
+                                group={group}
+                                transaction={transaction}
+                                showPositions={showPositions}
+                            />
+                        )}
                     </Grid>
                 </Grid>
             </Paper>
 
-            {!showPositions && transaction.is_wip && transaction.purchase_items.find(item => !item.deleted) === undefined ? (
+            {!showPositions &&
+            transaction.is_wip &&
+            transaction.purchase_items.find((item) => !item.deleted) === undefined ? (
                 <Grid container justifyContent="center" sx={{ marginTop: 2 }}>
-                    <Button startIcon={<Add />} onClick={() => setShowPositions(true)}>Add Positions</Button>
+                    <Button startIcon={<Add />} onClick={() => setShowPositions(true)}>
+                        Add Positions
+                    </Button>
                 </Grid>
-            ) : ((showPositions && transaction.is_wip) || transaction.purchase_items.find(item => !item.deleted) !== undefined) ? (
+            ) : (showPositions && transaction.is_wip) ||
+              transaction.purchase_items.find((item) => !item.deleted) !== undefined ? (
                 <PurchaseItems group={group} transaction={transaction} />
-            ) : (<></>)}
+            ) : (
+                <></>
+            )}
         </>
     );
 }
-

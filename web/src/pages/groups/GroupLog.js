@@ -14,14 +14,14 @@ import {
     Paper,
     Switch,
     TextField,
-    Typography
+    Typography,
 } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
-        padding: theme.spacing(2)
-    }
+        padding: theme.spacing(2),
+    },
 }));
 
 export default function GroupLog({ group }) {
@@ -34,16 +34,18 @@ export default function GroupLog({ group }) {
     const sendMessage = () => {
         sendGroupMessage({
             groupID: group.id,
-            message: message
-        }).then(result => {
-            setMessage("");
-        }).catch(err => {
-            toast.error(err);
-        });
+            message: message,
+        })
+            .then((result) => {
+                setMessage("");
+            })
+            .catch((err) => {
+                toast.error(err);
+            });
     };
 
     const getMemberUsername = (member_id) => {
-        const member = members.find(member => member.user_id === member_id);
+        const member = members.find((member) => member.user_id === member_id);
         if (member === undefined) {
             return "unknown";
         }
@@ -57,23 +59,24 @@ export default function GroupLog({ group }) {
         }
     };
 
-    const log = showAllLogs
-        ? logEntries
-        : logEntries.filter((entry) => entry.type === "text-message");
+    const log = showAllLogs ? logEntries : logEntries.filter((entry) => entry.type === "text-message");
 
     return (
         <Paper elevation={1} className={classes.paper}>
             <Typography component="h3" variant="h5">
                 Group Log
             </Typography>
-            <FormControlLabel control={
-                <Switch
-                    name="showAllLogs"
-                    checked={showAllLogs}
-                    color="primary"
-                    onChange={e => setShowAllLogs(e.target.checked)}
-                />
-            } label="Show all Logs" />
+            <FormControlLabel
+                control={
+                    <Switch
+                        name="showAllLogs"
+                        checked={showAllLogs}
+                        color="primary"
+                        onChange={(e) => setShowAllLogs(e.target.checked)}
+                    />
+                }
+                label="Show all Logs"
+            />
             <TextField
                 required
                 fullWidth
@@ -95,7 +98,8 @@ export default function GroupLog({ group }) {
                         <ListItemText
                             primary={`${logEntry.type} - ${logEntry.message}`}
                             secondary={`by ${getMemberUsername(logEntry.user_id)} 
-                            on ${DateTime.fromISO(logEntry.logged_at).toLocaleString(DateTime.DATETIME_FULL)}`} />
+                            on ${DateTime.fromISO(logEntry.logged_at).toLocaleString(DateTime.DATETIME_FULL)}`}
+                        />
                     </ListItem>
                 ))}
             </List>

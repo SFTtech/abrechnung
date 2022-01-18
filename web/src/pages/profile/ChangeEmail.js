@@ -1,7 +1,7 @@
 import React from "react";
-import {Form, Formik} from "formik";
-import {changeEmail} from "../../api";
-import {toast} from "react-toastify";
+import { Form, Formik } from "formik";
+import { changeEmail } from "../../api";
+import { toast } from "react-toastify";
 import { Button, LinearProgress, Paper, TextField, Typography } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 
@@ -14,7 +14,7 @@ const useStyles = makeStyles((theme) => ({
 export default function ChangeEmail() {
     const classes = useStyles();
 
-    const handleSubmit = (values, {setSubmitting}) => {
+    const handleSubmit = (values, { setSubmitting }) => {
         changeEmail({
             password: values.password,
             newEmail: values.newEmail,
@@ -34,9 +34,8 @@ export default function ChangeEmail() {
             <Typography component="h3" variant="h5">
                 Change E-Mail
             </Typography>
-            <Formik initialValues={{password: "", newEmail: ""}}
-                    onSubmit={handleSubmit}>
-                {({values, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
+            <Formik initialValues={{ password: "", newEmail: "" }} onSubmit={handleSubmit}>
+                {({ values, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
                     <Form>
                         <TextField
                             required
@@ -65,13 +64,8 @@ export default function ChangeEmail() {
                             label="New E-Mail"
                         />
 
-                        {isSubmitting && <LinearProgress/>}
-                        <Button
-                            type="submit"
-                            color="primary"
-                            disabled={isSubmitting}
-                            onClick={handleSubmit}
-                        >
+                        {isSubmitting && <LinearProgress />}
+                        <Button type="submit" color="primary" disabled={isSubmitting} onClick={handleSubmit}>
                             Save
                         </Button>
                     </Form>
@@ -80,4 +74,3 @@ export default function ChangeEmail() {
         </Paper>
     );
 }
-

@@ -19,7 +19,7 @@ import {
     Menu,
     MenuItem,
     Toolbar,
-    Typography
+    Typography,
 } from "@mui/material";
 import {
     AccountBalance,
@@ -31,7 +31,7 @@ import {
     Menu as MenuIcon,
     Message,
     Paid,
-    People
+    People,
 } from "@mui/icons-material";
 
 const drawerWidth = 240;
@@ -64,31 +64,45 @@ export default function Layout({ group = null, children, ...props }) {
             {group != null && (
                 <List sx={{ pb: 0 }}>
                     <ListItemLink to={`/groups/${group.id}/`}>
-                        <ListItemIcon><Paid /></ListItemIcon>
+                        <ListItemIcon>
+                            <Paid />
+                        </ListItemIcon>
                         <ListItemText primary="Transactions" />
                     </ListItemLink>
                     <ListItemLink to={`/groups/${group.id}/balances`}>
-                        <ListItemIcon><BarChart /></ListItemIcon>
+                        <ListItemIcon>
+                            <BarChart />
+                        </ListItemIcon>
                         <ListItemText primary="Balances" />
                     </ListItemLink>
                     <ListItemLink to={`/groups/${group.id}/accounts`}>
-                        <ListItemIcon><AccountBalance /></ListItemIcon>
+                        <ListItemIcon>
+                            <AccountBalance />
+                        </ListItemIcon>
                         <ListItemText primary="Accounts" />
                     </ListItemLink>
                     <ListItemLink to={`/groups/${group.id}/detail`}>
-                        <ListItemIcon><AdminPanelSettings /></ListItemIcon>
+                        <ListItemIcon>
+                            <AdminPanelSettings />
+                        </ListItemIcon>
                         <ListItemText primary="Group Settings" />
                     </ListItemLink>
                     <ListItemLink to={`/groups/${group.id}/members`}>
-                        <ListItemIcon><People /></ListItemIcon>
+                        <ListItemIcon>
+                            <People />
+                        </ListItemIcon>
                         <ListItemText primary="Group Members" />
                     </ListItemLink>
                     <ListItemLink to={`/groups/${group.id}/invites`}>
-                        <ListItemIcon><Mail /></ListItemIcon>
+                        <ListItemIcon>
+                            <Mail />
+                        </ListItemIcon>
                         <ListItemText primary="Group Invites" />
                     </ListItemLink>
                     <ListItemLink to={`/groups/${group.id}/log`}>
-                        <ListItemIcon><Message /></ListItemIcon>
+                        <ListItemIcon>
+                            <Message />
+                        </ListItemIcon>
                         <ListItemText primary="Group Log" />
                     </ListItemLink>
                     <Divider />
@@ -108,7 +122,7 @@ export default function Layout({ group = null, children, ...props }) {
                 sx={{
                     // width: {sm: `calc(100% - ${drawerWidth}px)`},
                     // ml: {sm: `${drawerWidth}px`},
-                    zIndex: (theme) => theme.zIndex.drawer + 1
+                    zIndex: (theme) => theme.zIndex.drawer + 1,
                 }}
             >
                 <Toolbar>
@@ -140,25 +154,36 @@ export default function Layout({ group = null, children, ...props }) {
                                 open={dotsMenuOpen}
                                 anchorOrigin={{
                                     vertical: "top",
-                                    horizontal: "right"
+                                    horizontal: "right",
                                 }}
                                 keepMounted
                                 anchorEl={anchorEl}
                                 transformOrigin={{
                                     vertical: "top",
-                                    horizontal: "right"
+                                    horizontal: "right",
                                 }}
                                 onClose={handleDotsMenuClose}
                             >
-                                <MenuItem component={RouterLink} to="/profile">Profile</MenuItem>
-                                <MenuItem component={RouterLink} to="/profile/settings">Settings</MenuItem>
-                                <MenuItem component={RouterLink} to="/profile/sessions">Sessions</MenuItem>
-                                <MenuItem component={RouterLink} to="/profile/change-email">Change E-Mail</MenuItem>
-                                <MenuItem component={RouterLink} to="/profile/change-password">Change
-                                    Password</MenuItem>
+                                <MenuItem component={RouterLink} to="/profile">
+                                    Profile
+                                </MenuItem>
+                                <MenuItem component={RouterLink} to="/profile/settings">
+                                    Settings
+                                </MenuItem>
+                                <MenuItem component={RouterLink} to="/profile/sessions">
+                                    Sessions
+                                </MenuItem>
+                                <MenuItem component={RouterLink} to="/profile/change-email">
+                                    Change E-Mail
+                                </MenuItem>
+                                <MenuItem component={RouterLink} to="/profile/change-password">
+                                    Change Password
+                                </MenuItem>
                                 <Divider />
                                 <MenuItem component={RouterLink} to="/logout">
-                                    <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
+                                    <ListItemIcon>
+                                        <Logout fontSize="small" />
+                                    </ListItemIcon>
                                     <ListItemText>Sign out</ListItemText>
                                 </MenuItem>
                             </Menu>
@@ -172,21 +197,21 @@ export default function Layout({ group = null, children, ...props }) {
             </AppBar>
 
             {authenticated ? (
-                <Box
-                    component="nav"
-                    sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
-                >
+                <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
                     <Drawer
                         container={container}
                         variant="temporary"
                         open={mobileOpen}
                         onClose={handleDrawerToggle}
                         ModalProps={{
-                            keepMounted: true // Better open performance on mobile.
+                            keepMounted: true, // Better open performance on mobile.
                         }}
                         sx={{
                             display: { xs: "block", sm: "none" },
-                            "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth }
+                            "& .MuiDrawer-paper": {
+                                boxSizing: "border-box",
+                                width: drawerWidth,
+                            },
                         }}
                     >
                         {drawer}
@@ -196,7 +221,10 @@ export default function Layout({ group = null, children, ...props }) {
                         sx={{
                             flexShrink: 0,
                             display: { xs: "none", sm: "block" },
-                            "& .MuiDrawer-paper": { boxSizing: "border-box", width: drawerWidth }
+                            "& .MuiDrawer-paper": {
+                                boxSizing: "border-box",
+                                width: drawerWidth,
+                            },
                         }}
                         open
                     >
@@ -206,7 +234,11 @@ export default function Layout({ group = null, children, ...props }) {
             ) : null}
             <Box
                 component="main"
-                sx={{ flexGrow: 1, p: 3, width: { sm: `calc(100% - ${drawerWidth}px)` } }}
+                sx={{
+                    flexGrow: 1,
+                    p: 3,
+                    width: { sm: `calc(100% - ${drawerWidth}px)` },
+                }}
             >
                 <Container maxWidth="lg">
                     <Toolbar />

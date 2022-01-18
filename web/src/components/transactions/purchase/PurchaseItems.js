@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import {
     Alert,
     Checkbox,
@@ -14,36 +14,35 @@ import {
     TableRow,
     TextField,
     Tooltip,
-    Typography
+    Typography,
 } from "@mui/material";
-import {useRecoilValue, useSetRecoilState} from "recoil";
-import {accountsSeenByUser} from "../../../recoil/accounts";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { accountsSeenByUser } from "../../../recoil/accounts";
 import {
     addOrChangePurchaseItemShare,
     createPurchaseItem,
     deletePurchaseItem,
     deletePurchaseItemShare,
-    updatePurchaseItem
+    updatePurchaseItem,
 } from "../../../api";
-import {toast} from "react-toastify";
-import {makeStyles} from "@mui/styles";
-import {Add, Delete, HelpOutline} from "@mui/icons-material";
+import { toast } from "react-toastify";
+import { makeStyles } from "@mui/styles";
+import { Add, Delete, HelpOutline } from "@mui/icons-material";
 import AccountSelect from "../../style/AccountSelect";
-import {transactionSettings} from "../../../recoil/settings";
-import {groupTransactions, updateTransaction} from "../../../recoil/transactions";
-
+import { transactionSettings } from "../../../recoil/settings";
+import { groupTransactions, updateTransaction } from "../../../recoil/transactions";
 
 const useStyles = makeStyles((theme) => ({
     table: {
-        minWidth: 650
+        minWidth: 650,
     },
     paper: {
         padding: theme.spacing(2),
-        marginTop: theme.spacing(3)
-    }
+        marginTop: theme.spacing(3),
+    },
 }));
 
-function ShareInput({value, onChange}) {
+function ShareInput({ value, onChange }) {
     const [currValue, setValue] = useState(0);
     const [error, setError] = useState(false);
 
@@ -78,7 +77,7 @@ function ShareInput({value, onChange}) {
         <TextField
             margin="dense"
             variant="standard"
-            style={{width: 40}}
+            style={{ width: 40 }}
             onBlur={onSave}
             value={currValue}
             error={error}
@@ -88,7 +87,7 @@ function ShareInput({value, onChange}) {
     );
 }
 
-function WrappedTextField({value, onChange, initial = null, errorMsg = null, validate = null, ...props}) {
+function WrappedTextField({ value, onChange, initial = null, errorMsg = null, validate = null, ...props }) {
     const [currValue, setValue] = useState(initial);
     const [error, setError] = useState(false);
 
@@ -137,19 +136,34 @@ function WrappedTextField({value, onChange, initial = null, errorMsg = null, val
     );
 }
 
-export default function PurchaseItems({group, transaction}) {
+export default function PurchaseItems({ group, transaction }) {
     const classes = useStyles();
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
-    const purchaseItems = transaction.purchase_items ? transaction.purchase_items.filter(item => !item.deleted).sort((left, right) => left.id > right.id) : [];
+    const purchaseItems = transaction.purchase_items
+        ? transaction.purchase_items.filter((item) => !item.deleted).sort((left, right) => left.id > right.id)
+        : [];
     const [showAdvanced, setShowAdvanced] = useState(false);
 
     // find all accounts that take part in the transaction, either via debitor shares or purchase items
     // TODO: should we add creditor items as well?
-    const purchaseItemAccounts = [...new Set(purchaseItems.map(item => Object.keys(item.usages)).flat().map(id => parseInt(id)))];
+    const purchaseItemAccounts = [
+        ...new Set(
+            purchaseItems
+                .map((item) => Object.keys(item.usages))
+                .flat()
+                .map((id) => parseInt(id))
+        ),
+    ];
     const [additionalPurchaseItemAccounts, setAdditionalPurchaseItemAccounts] = useState([]);
-    const transactionAccounts = [...new Set(Object.keys(transaction.debitor_shares).map(id => parseInt(id))
-        .concat(purchaseItemAccounts).concat(additionalPurchaseItemAccounts))];
+    const transactionAccounts = [
+        ...new Set(
+            Object.keys(transaction.debitor_shares)
+                .map((id) => parseInt(id))
+                .concat(purchaseItemAccounts)
+                .concat(additionalPurchaseItemAccounts)
+        ),
+    ];
 
     const showAddAccount = transactionAccounts.length < accounts.length;
 
@@ -163,7 +177,9 @@ export default function PurchaseItems({group, transaction}) {
     const showMissingValueAlert = transactionEditSettings.showRemaining;
 
     const purchaseItemSumForAccount = (accountID) => {
-        return transaction.account_balances.hasOwnProperty(accountID) ? transaction.account_balances[accountID].positions : 0;
+        return transaction.account_balances.hasOwnProperty(accountID)
+            ? transaction.account_balances[accountID].positions
+            : 0;
     };
 
     const initialItem = () => {
@@ -172,7 +188,7 @@ export default function PurchaseItems({group, transaction}) {
             name: "",
             price: 0,
             communist_shares: 0,
-            usages: {}
+            usages: {},
         };
     };
     const [pendingItems, setPendingItems] = useState([initialItem()]);
@@ -184,19 +200,24 @@ export default function PurchaseItems({group, transaction}) {
         return itemID;
     };
 
-    const allItems = purchaseItems.map(item => {
-        return {
-            ...item,
-            localID: resolveItemID(item.id),
-            isPending: false
-        };
-    }).concat(pendingItems.map(item => {
-        return {
-            ...item,
-            localID: resolveItemID(item.id),
-            isPending: true
-        };
-    })).sort((item1, item2) => item1.id > item2.id);
+    const allItems = purchaseItems
+        .map((item) => {
+            return {
+                ...item,
+                localID: resolveItemID(item.id),
+                isPending: false,
+            };
+        })
+        .concat(
+            pendingItems.map((item) => {
+                return {
+                    ...item,
+                    localID: resolveItemID(item.id),
+                    isPending: true,
+                };
+            })
+        )
+        .sort((item1, item2) => item1.id > item2.id);
 
     const emptyItem = () => {
         return {
@@ -204,7 +225,7 @@ export default function PurchaseItems({group, transaction}) {
             name: "",
             price: 0,
             communist_shares: 0,
-            usages: {}
+            usages: {},
         };
     };
 
@@ -213,7 +234,9 @@ export default function PurchaseItems({group, transaction}) {
     };
 
     useEffect(() => {
-        const filteredPendingItems = pendingItems.filter(item => transaction.purchase_items?.find(pItem => pItem.id === item.id) === undefined);
+        const filteredPendingItems = pendingItems.filter(
+            (item) => transaction.purchase_items?.find((pItem) => pItem.id === item.id) === undefined
+        );
         setPendingItems(filteredPendingItems);
     }, [transaction, setPendingItems]);
 
@@ -224,29 +247,39 @@ export default function PurchaseItems({group, transaction}) {
                 name: name,
                 price: price,
                 communist_shares: communistShares,
-            }
-            const newPendingItems = pendingItems.map(tmpItem => tmpItem.id === item.id ? newItem : item);
+            };
+            const newPendingItems = pendingItems.map((tmpItem) => (tmpItem.id === item.id ? newItem : item));
             setPendingItems(newPendingItems);
 
-            if (name !== "" && name != null) { // only start submitting once we have a name
+            if (name !== "" && name != null) {
+                // only start submitting once we have a name
                 createPurchaseItem({
                     transactionID: transaction.id,
                     name: name,
                     price: price,
                     communistShares: communistShares,
                     usages: newItem.usages,
-                }).then(res => {
-                    updateTransaction(res.transaction, setTransactions);
-                    setItemIDMapping({...itemIDMapping, [res.item_id]: item.localID});
-                    let newPendingItems = pendingItems.map(tmpItem => tmpItem.id === item.id ? {
-                        ...tmpItem,
-                        id: res.item_id
-                    } : tmpItem);
-                    newPendingItems.push(emptyItem());
-                    setPendingItems(newPendingItems);
-                }).catch(err => {
-                    toast.error(err);
-                });
+                })
+                    .then((res) => {
+                        updateTransaction(res.transaction, setTransactions);
+                        setItemIDMapping({
+                            ...itemIDMapping,
+                            [res.item_id]: item.localID,
+                        });
+                        let newPendingItems = pendingItems.map((tmpItem) =>
+                            tmpItem.id === item.id
+                                ? {
+                                      ...tmpItem,
+                                      id: res.item_id,
+                                  }
+                                : tmpItem
+                        );
+                        newPendingItems.push(emptyItem());
+                        setPendingItems(newPendingItems);
+                    })
+                    .catch((err) => {
+                        toast.error(err);
+                    });
             }
         } else {
             if (item.name === name && item.price === price && item.communist_shares === communistShares) {
@@ -258,12 +291,12 @@ export default function PurchaseItems({group, transaction}) {
                     itemID: item.id,
                     price: price,
                     name: name,
-                    communistShares: communistShares
+                    communistShares: communistShares,
                 })
-                    .then(t => {
+                    .then((t) => {
                         updateTransaction(t, setTransactions);
                     })
-                    .catch(err => {
+                    .catch((err) => {
                         toast.error(err);
                     });
             }
@@ -277,37 +310,37 @@ export default function PurchaseItems({group, transaction}) {
         if (item.isPending) {
             let newUsages = {
                 ...item.usages,
-            }
+            };
             if (shares === 0) {
                 delete newUsages[accountID];
             } else {
                 newUsages[accountID] = shares;
             }
 
-            const newItems = pendingItems.map(i => i.id === item.id ? {...item, usages: newUsages} : i);
+            const newItems = pendingItems.map((i) => (i.id === item.id ? { ...item, usages: newUsages } : i));
             setPendingItems(newItems);
         } else {
             if (shares === 0 && item.usages.hasOwnProperty(accountID)) {
                 deletePurchaseItemShare({
                     itemID: item.id,
-                    accountID: accountID
+                    accountID: accountID,
                 })
-                    .then(t => {
+                    .then((t) => {
                         updateTransaction(t, setTransactions);
                     })
-                    .catch(err => {
+                    .catch((err) => {
                         toast.error(err);
                     });
             } else if (shares > 0) {
                 addOrChangePurchaseItemShare({
                     itemID: item.id,
                     accountID: accountID,
-                    shareAmount: shares
+                    shareAmount: shares,
                 })
-                    .then(t => {
+                    .then((t) => {
                         updateTransaction(t, setTransactions);
                     })
-                    .catch(err => {
+                    .catch((err) => {
                         toast.error(err);
                     });
             }
@@ -316,18 +349,18 @@ export default function PurchaseItems({group, transaction}) {
 
     const deleteItem = (item) => {
         if (item.isPending) {
-            const filteredItems = pendingItems.filter(tmpItem => tmpItem.id !== item.id);
+            const filteredItems = pendingItems.filter((tmpItem) => tmpItem.id !== item.id);
             if (filteredItems.length === 0) {
                 setPendingItems([emptyItem()]);
             } else {
                 setPendingItems(filteredItems);
             }
         } else {
-            deletePurchaseItem({itemID: item.id})
-                .then(t => {
+            deletePurchaseItem({ itemID: item.id })
+                .then((t) => {
                     updateTransaction(t, setTransactions);
                 })
-                .catch(err => {
+                .catch((err) => {
                     toast.error(err);
                 });
         }
@@ -338,17 +371,17 @@ export default function PurchaseItems({group, transaction}) {
         setAdditionalPurchaseItemAccounts([...new Set([...purchaseItemAccounts, parseInt(account.id)])]);
     };
 
-
     return (
         <Paper elevation={1} className={classes.paper}>
             <Grid container direction="row" justifyContent="space-between">
                 <Typography>Positions</Typography>
                 {transaction.is_wip && (
                     <FormControlLabel
-                        control={<Checkbox name={`show-advanced`}/>}
+                        control={<Checkbox name={`show-advanced`} />}
                         checked={showAdvanced}
-                        onChange={event => setShowAdvanced(event.target.checked)}
-                        label="Advanced"/>
+                        onChange={(event) => setShowAdvanced(event.target.checked)}
+                        label="Advanced"
+                    />
                 )}
             </Grid>
             <TableContainer>
@@ -357,143 +390,152 @@ export default function PurchaseItems({group, transaction}) {
                         <TableRow>
                             <TableCell>Name</TableCell>
                             <TableCell align="right">Price</TableCell>
-                            {(transaction.is_wip ? transactionAccounts : purchaseItemAccounts).map(accountID => (
-                                <TableCell
-                                    align="right"
-                                    sx={{minWidth: 80}}
-                                    key={accountID}
-                                >
-                                    {accounts.find(account => account.id === accountID).name}
+                            {(transaction.is_wip ? transactionAccounts : purchaseItemAccounts).map((accountID) => (
+                                <TableCell align="right" sx={{ minWidth: 80 }} key={accountID}>
+                                    {accounts.find((account) => account.id === accountID).name}
                                 </TableCell>
                             ))}
                             {transaction.is_wip && (
                                 <>
                                     {showAccountSelect && (
                                         <TableCell align="right">
-                                            <AccountSelect group={group} exclude={transactionAccounts}
-                                                           onChange={addPurchaseItemAccount}/>
+                                            <AccountSelect
+                                                group={group}
+                                                exclude={transactionAccounts}
+                                                onChange={addPurchaseItemAccount}
+                                            />
                                         </TableCell>
                                     )}
                                     {showAddAccount && (
                                         <TableCell align="right">
                                             <IconButton onClick={() => setShowAccountSelect(true)}>
-                                                <Add/>
+                                                <Add />
                                             </IconButton>
                                         </TableCell>
                                     )}
                                 </>
                             )}
                             <TableCell align="right">Shared</TableCell>
-                            {transaction.is_wip && (
-                                <TableCell></TableCell>
-                            )}
+                            {transaction.is_wip && <TableCell></TableCell>}
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {transaction.is_wip ? (
-                            allItems.map(item =>
-                                <TableRow hover key={item.localID}>
-                                    <TableCell>
-                                        <WrappedTextField
-                                            value={item.name}
-                                            onChange={value => updateItem(item, value, item.price, item.communist_shares)}
-                                            validate={value => value !== "" && value != null}
-                                        />
-                                    </TableCell>
-                                    <TableCell align="right">
-                                        <WrappedTextField
-                                            value={item.price}
-                                            style={{width: 70}}
-                                            onChange={value => updateItem(item, item.name, parseFloat(value), item.communist_shares)}
-                                            validate={validateFloat}
-                                            errorMsg={"float required"}
-                                        />
-                                    </TableCell>
-                                    {transactionAccounts.map(accountID => (
-                                        <TableCell align="right" key={accountID}>
-                                            {showAdvanced ? (
-                                                    <ShareInput
-                                                        value={item.usages.hasOwnProperty(String(accountID)) ? item.usages[String(accountID)] : 0}
-                                                        onChange={value => updateItemUsage(item, accountID, value)}
-                                                    />
-                                                ) :
-                                                <Checkbox
-                                                    name={`${accountID}-checked`}
-                                                    checked={item.usages.hasOwnProperty(String(accountID))}
-                                                    onChange={event => updateItemUsage(item, accountID, event.target.checked ? 1 : 0)}
-                                                />
-                                            }
-                                        </TableCell>
-                                    ))}
-                                    {showAccountSelect && (
-                                        <TableCell></TableCell>
-                                    )}
-                                    {showAddAccount && (
-                                        <TableCell></TableCell>
-                                    )}
-                                    <TableCell align="right">
-                                        {showAdvanced ? (
-                                            <ShareInput
-                                                value={item.communist_shares}
-                                                onChange={value => updateItem(item, item.name, item.price, parseFloat(value))}
-                                            />
-                                        ) : (
-                                            <Checkbox
-                                                name="communist-checked"
-                                                checked={item.communist_shares !== 0}
-                                                onChange={event => updateItem(item, item.name, item.price, event.target.checked ? 1 : 0)}
-                                            />
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <IconButton onClick={() => deleteItem(item)}>
-                                            <Delete/>
-                                        </IconButton>
-                                    </TableCell>
-                                </TableRow>
-                            )
-                        ) : (
-                            purchaseItems.map(item =>
-                                <TableRow hover key={item.id}>
-                                    <TableCell>{item.name}</TableCell>
-                                    <TableCell align="right"
-                                               style={{width: 80}}>{item.price.toFixed(2)} {transaction.currency_symbol}</TableCell>
-                                    {purchaseItemAccounts.map(accountID => (
-                                        <TableCell
-                                            align="right"
-                                            key={accountID}
-                                        >
-                                            {item.usages.hasOwnProperty(String(accountID)) ? item.usages[String(accountID)] : 0}
-                                        </TableCell>
-                                    ))}
-                                    <TableCell align="right">{item.communist_shares}</TableCell>
-                                </TableRow>
-                            ))
-                        }
+                        {transaction.is_wip
+                            ? allItems.map((item) => (
+                                  <TableRow hover key={item.localID}>
+                                      <TableCell>
+                                          <WrappedTextField
+                                              value={item.name}
+                                              onChange={(value) =>
+                                                  updateItem(item, value, item.price, item.communist_shares)
+                                              }
+                                              validate={(value) => value !== "" && value != null}
+                                          />
+                                      </TableCell>
+                                      <TableCell align="right">
+                                          <WrappedTextField
+                                              value={item.price}
+                                              style={{ width: 70 }}
+                                              onChange={(value) =>
+                                                  updateItem(item, item.name, parseFloat(value), item.communist_shares)
+                                              }
+                                              validate={validateFloat}
+                                              errorMsg={"float required"}
+                                          />
+                                      </TableCell>
+                                      {transactionAccounts.map((accountID) => (
+                                          <TableCell align="right" key={accountID}>
+                                              {showAdvanced ? (
+                                                  <ShareInput
+                                                      value={
+                                                          item.usages.hasOwnProperty(String(accountID))
+                                                              ? item.usages[String(accountID)]
+                                                              : 0
+                                                      }
+                                                      onChange={(value) => updateItemUsage(item, accountID, value)}
+                                                  />
+                                              ) : (
+                                                  <Checkbox
+                                                      name={`${accountID}-checked`}
+                                                      checked={item.usages.hasOwnProperty(String(accountID))}
+                                                      onChange={(event) =>
+                                                          updateItemUsage(item, accountID, event.target.checked ? 1 : 0)
+                                                      }
+                                                  />
+                                              )}
+                                          </TableCell>
+                                      ))}
+                                      {showAccountSelect && <TableCell></TableCell>}
+                                      {showAddAccount && <TableCell></TableCell>}
+                                      <TableCell align="right">
+                                          {showAdvanced ? (
+                                              <ShareInput
+                                                  value={item.communist_shares}
+                                                  onChange={(value) =>
+                                                      updateItem(item, item.name, item.price, parseFloat(value))
+                                                  }
+                                              />
+                                          ) : (
+                                              <Checkbox
+                                                  name="communist-checked"
+                                                  checked={item.communist_shares !== 0}
+                                                  onChange={(event) =>
+                                                      updateItem(
+                                                          item,
+                                                          item.name,
+                                                          item.price,
+                                                          event.target.checked ? 1 : 0
+                                                      )
+                                                  }
+                                              />
+                                          )}
+                                      </TableCell>
+                                      <TableCell>
+                                          <IconButton onClick={() => deleteItem(item)}>
+                                              <Delete />
+                                          </IconButton>
+                                      </TableCell>
+                                  </TableRow>
+                              ))
+                            : purchaseItems.map((item) => (
+                                  <TableRow hover key={item.id}>
+                                      <TableCell>{item.name}</TableCell>
+                                      <TableCell align="right" style={{ width: 80 }}>
+                                          {item.price.toFixed(2)} {transaction.currency_symbol}
+                                      </TableCell>
+                                      {purchaseItemAccounts.map((accountID) => (
+                                          <TableCell align="right" key={accountID}>
+                                              {item.usages.hasOwnProperty(String(accountID))
+                                                  ? item.usages[String(accountID)]
+                                                  : 0}
+                                          </TableCell>
+                                      ))}
+                                      <TableCell align="right">{item.communist_shares}</TableCell>
+                                  </TableRow>
+                              ))}
                         <TableRow hover>
-                            <TableCell><Typography sx={{fontWeight: "bold"}}>Total:</Typography></TableCell>
-                            <TableCell
-                                align="right"
-                            >
+                            <TableCell>
+                                <Typography sx={{ fontWeight: "bold" }}>Total:</Typography>
+                            </TableCell>
+                            <TableCell align="right">
                                 {totalPurchaseItemValue.toFixed(2)} {transaction.currency_symbol}
                             </TableCell>
-                            {(transaction.is_wip ? transactionAccounts : purchaseItemAccounts).map(accountID => (
-                                <TableCell
-                                    align="right"
-                                    key={accountID}
-                                >
+                            {(transaction.is_wip ? transactionAccounts : purchaseItemAccounts).map((accountID) => (
+                                <TableCell align="right" key={accountID}>
                                     {purchaseItemSumForAccount(accountID).toFixed(2)} {transaction.currency_symbol}
                                 </TableCell>
                             ))}
-                            <TableCell
-                                align="right"
-                                colSpan={showAddAccount ? 2 : 1}
-                            >
-                                {(purchaseItems.reduce((acc, curr) => acc + curr.price, 0) - Object.values(transaction.account_balances).reduce((acc, curr) => acc + curr.positions, 0)).toFixed(2)} {transaction.currency_symbol}
+                            <TableCell align="right" colSpan={showAddAccount ? 2 : 1}>
+                                {(
+                                    purchaseItems.reduce((acc, curr) => acc + curr.price, 0) -
+                                    Object.values(transaction.account_balances).reduce(
+                                        (acc, curr) => acc + curr.positions,
+                                        0
+                                    )
+                                ).toFixed(2)}{" "}
+                                {transaction.currency_symbol}
                             </TableCell>
-                            {transaction.is_wip && (
-                                <TableCell></TableCell>
-                            )}
+                            {transaction.is_wip && <TableCell></TableCell>}
                         </TableRow>
                     </TableBody>
                 </Table>
@@ -501,17 +543,19 @@ export default function PurchaseItems({group, transaction}) {
             {showMissingValueAlert && sharedTransactionValue > 0 && (
                 <Alert
                     severity="info"
-                    sx={{marginTop: 2}}
+                    sx={{ marginTop: 2 }}
                     action={
                         <Tooltip title="This message can be turned off in your profile settings.">
-                            <HelpOutline/>
+                            <HelpOutline />
                         </Tooltip>
                     }
                 >
-                    Remaining transaction value to be
-                    shared: <strong>{sharedTransactionValue} {transaction.currency_symbol}</strong>
+                    Remaining transaction value to be shared:{" "}
+                    <strong>
+                        {sharedTransactionValue} {transaction.currency_symbol}
+                    </strong>
                 </Alert>
             )}
         </Paper>
     );
-};
+}

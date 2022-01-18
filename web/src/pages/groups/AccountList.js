@@ -2,18 +2,18 @@ import CreateAccountModal from "../../components/accounts/CreateAccountModal";
 import EditAccountModal from "../../components/accounts/EditAccountModal";
 import CreateClearingAccountModal from "../../components/accounts/CreateClearingAccountModal";
 import EditClearingAccountModal from "../../components/accounts/EditClearingAccountModal";
-import React, {useState} from "react";
-import {useRecoilValue, useSetRecoilState} from "recoil";
-import {currUserPermissions} from "../../recoil/groups";
+import React, { useState } from "react";
+import { useRecoilValue, useSetRecoilState } from "recoil";
+import { currUserPermissions } from "../../recoil/groups";
 import {
     accountsSeenByUser,
     clearingAccountsSeenByUser,
     groupAccounts,
     personalAccountsSeenByUser,
-    updateAccount
+    updateAccount,
 } from "../../recoil/accounts";
-import {deleteAccount} from "../../api";
-import {toast} from "react-toastify";
+import { deleteAccount } from "../../api";
+import { toast } from "react-toastify";
 import {
     Alert,
     Button,
@@ -27,12 +27,17 @@ import {
     ListItem,
     ListItemSecondaryAction,
     ListItemText,
-    Paper
+    Paper,
+    SpeedDial,
+    SpeedDialAction,
+    SpeedDialIcon,
+    Tooltip,
+    Typography,
 } from "@mui/material";
-import {Add, Delete, Edit} from "@mui/icons-material";
+import { Add, CompareArrows, Delete, Edit, Help, Person } from "@mui/icons-material";
 import ListItemLink from "../../components/style/ListItemLink";
 
-export default function AccountList({group}) {
+export default function AccountList({ group }) {
     const [showPersonalAccountCreationModal, setShowPersonalAccountCreationModal] = useState(false);
     const [showClearingAccountCreationModal, setShowClearingAccountCreationModal] = useState(false);
 
@@ -69,12 +74,12 @@ export default function AccountList({group}) {
 
     const confirmDeleteAccount = () => {
         if (accountToDelete !== null) {
-            deleteAccount({groupID: group.id, accountID: accountToDelete})
-                .then(account => {
+            deleteAccount({ groupID: group.id, accountID: accountToDelete })
+                .then((account) => {
                     updateAccount(account, setAccounts);
                     setAccountToDelete(null);
                 })
-                .catch(err => {
+                .catch((err) => {
                     toast.error(err);
                 });
         }
@@ -82,35 +87,26 @@ export default function AccountList({group}) {
 
     return (
         <>
-            <Paper elevation={1} sx={{padding: 2}}>
-                <List>
-                    <ListItem>
-                        <ListItemText
-                            primary="User Accounts"
-                            primaryTypographyProps={{fontSize: 20, fontWeight: "medium", letterSpacing: 0}}
-                        />
-                    </ListItem>
+            <Paper elevation={1} sx={{ padding: 2 }}>
+                <Typography variant="h6" sx={{ ml: 2 }}>
+                    User Accounts
+                </Typography>
+                <List sx={{ maxHeight: 400, overflow: "auto" }}>
                     {personalAccounts.length === 0 ? (
                         <Alert severity="info">No Accounts</Alert>
                     ) : (
-                        personalAccounts.map(account => (
-                            <ListItem
-                                sx={{padding: 0}}
-                                key={account.id}
-                            >
-                                <ListItemLink
-                                    to={`/groups/${group.id}/accounts/${account.id}`}
-                                >
-                                    <ListItemText primary={account.name}
-                                                  secondary={account.description}/>
+                        personalAccounts.map((account) => (
+                            <ListItem sx={{ padding: 0 }} key={account.id}>
+                                <ListItemLink to={`/groups/${group.id}/accounts/${account.id}`}>
+                                    <ListItemText primary={account.name} secondary={account.description} />
                                 </ListItemLink>
                                 {userPermissions.can_write && (
                                     <ListItemSecondaryAction>
                                         <IconButton color="primary" onClick={() => openAccountEdit(account)}>
-                                            <Edit/>
+                                            <Edit />
                                         </IconButton>
                                         <IconButton color="error" onClick={() => setAccountToDelete(account.id)}>
-                                            <Delete/>
+                                            <Delete />
                                         </IconButton>
                                     </ListItemSecondaryAction>
                                 )}
@@ -121,11 +117,8 @@ export default function AccountList({group}) {
                 {userPermissions.can_write && (
                     <>
                         <Grid container justifyContent="center">
-                            <IconButton
-                                color="primary"
-                                onClick={() => setShowPersonalAccountCreationModal(true)}
-                            >
-                                <Add/>
+                            <IconButton color="primary" onClick={() => setShowPersonalAccountCreationModal(true)}>
+                                <Add />
                             </IconButton>
                         </Grid>
                         <CreateAccountModal
@@ -142,37 +135,26 @@ export default function AccountList({group}) {
                     </>
                 )}
             </Paper>
-            <Paper sx={{padding: 2, marginTop: 3}}>
-                <List>
-                    <ListItem>
-                        <ListItemText
-                            primary="Clearing Accounts"
-                            primaryTypographyProps={{fontSize: 20, fontWeight: "medium", letterSpacing: 0}}
-                        />
-                    </ListItem>
+            <Paper sx={{ padding: 2, marginTop: 3 }}>
+                <Typography variant="h6" sx={{ ml: 2 }}>
+                    Clearing Accounts
+                </Typography>
+                <List sx={{ maxHeight: 450, overflow: "auto" }}>
                     {clearingAccounts.length === 0 ? (
                         <Alert severity="info">No Accounts</Alert>
                     ) : (
-                        clearingAccounts.map(account => (
-                            <ListItem
-                                sx={{padding: 0}}
-                                key={account.id}
-                            >
-                                <ListItemLink
-                                    to={`/groups/${group.id}/accounts/${account.id}`}
-                                >
-                                    <ListItemText
-                                        primary={account.name}
-                                        secondary={account.description}
-                                    />
+                        clearingAccounts.map((account) => (
+                            <ListItem sx={{ padding: 0 }} key={account.id}>
+                                <ListItemLink to={`/groups/${group.id}/accounts/${account.id}`}>
+                                    <ListItemText primary={account.name} secondary={account.description} />
                                 </ListItemLink>
                                 {userPermissions.can_write && (
                                     <ListItemSecondaryAction>
                                         <IconButton color="primary" onClick={() => openClearingAccountEdit(account)}>
-                                            <Edit/>
+                                            <Edit />
                                         </IconButton>
                                         <IconButton color="error" onClick={() => setAccountToDelete(account.id)}>
-                                            <Delete/>
+                                            <Delete />
                                         </IconButton>
                                     </ListItemSecondaryAction>
                                 )}
@@ -183,11 +165,8 @@ export default function AccountList({group}) {
                 {userPermissions.can_write && (
                     <>
                         <Grid container justifyContent="center">
-                            <IconButton
-                                color="primary"
-                                onClick={() => setShowClearingAccountCreationModal(true)}
-                            >
-                                <Add/>
+                            <IconButton color="primary" onClick={() => setShowClearingAccountCreationModal(true)}>
+                                <Add />
                             </IconButton>
                         </Grid>
                         <CreateClearingAccountModal
@@ -204,15 +183,27 @@ export default function AccountList({group}) {
                     </>
                 )}
             </Paper>
-            <Dialog
-                maxWidth="xs"
-                aria-labelledby="confirmation-dialog-title"
-                open={accountToDelete !== null}
+            <SpeedDial
+                ariaLabel="Create Account"
+                sx={{ position: "fixed", bottom: 20, right: 20 }}
+                icon={<SpeedDialIcon />}
             >
+                <SpeedDialAction
+                    icon={<Person />}
+                    tooltipTitle="Create Personal Account"
+                    onClick={() => setShowPersonalAccountCreationModal(true)}
+                />
+                <SpeedDialAction
+                    icon={<CompareArrows />}
+                    tooltipTitle="Create Clearing Account"
+                    onClick={() => setShowClearingAccountCreationModal(true)}
+                />
+            </SpeedDial>
+            <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={accountToDelete !== null}>
                 <DialogTitle id="confirmation-dialog-title">Confirm delete account</DialogTitle>
                 <DialogContent dividers>
-                    Are you sure you want to delete the account
-                    "{allAccounts.find(acc => acc.id === accountToDelete)?.name}"
+                    Are you sure you want to delete the account "
+                    {allAccounts.find((acc) => acc.id === accountToDelete)?.name}"
                 </DialogContent>
                 <DialogActions>
                     <Button autoFocus onClick={() => setAccountToDelete(null)} color="primary">
