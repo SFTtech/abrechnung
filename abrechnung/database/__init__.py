@@ -15,18 +15,28 @@ from . import revisions
 logger = logging.getLogger(__name__)
 
 
-async def db_connect(
-        username: str, password: str, database: str, host: str, port: int = 5432
-) -> Pool:
+async def db_connect(db: dict) -> Pool:
+
+    # username: str, password: str, database: str, host: str, port: int = 5432
     """
     get a connection pool to the database
     """
 
+    pool_args = dict()
+    pool_args["user"] = db["user"]
+    pool_args["password"] = db["password"]
+    pool_args["host"] = db["host"]
+    pool_args["port"] = db["port"]
+    pool_args["database"] = db["dbname"]
+    pool_args["max_size"] = 100
+
     # since marshmallow can't model a "one arg implies all"-relation, we need to warn here
-    if not host or os.path.isdir(host):
-        if username or password:
+    if not db["host"] or os.path.isdir(db["host"]):
+        if db["user"] or db["password"]:
             logger.warning("Username and/or password specified but no remote host therefore using socket "
                            "authentication. I am ignoring these settings since we don't need them.")
+            del pool_args["user"]
+            del pool_args["password"]
         if os.getenv("PGHOST") or os.getenv("PGPORT"):
             # asyncpg can read the PGHOST env variable. We don't want that.
             logger.warning("We do not support setting the PGHOST or PGPORT environment variable and therefore will "
@@ -37,21 +47,7 @@ async def db_connect(
         if os.environ.get("PGPORT"):
             del os.environ["PGPORT"]
 
-        if not host:
-            # let asyncpg figure out which socket to use
-            return await asyncpg.create_pool(database=database, max_size=100)
-        else:
-            # manually set folder in which the socket resides
-            return await asyncpg.create_pool(host=host, port=port, database=database, max_size=100)
-
-    return await asyncpg.create_pool(
-        user=username,
-        password=password,
-        database=database,
-        host=host,
-        port=port,
-        max_size=100,
-    )
+    return await asyncpg.create_pool(**pool_args)
 
 
 class CLI(subcommand.SubCommand):
@@ -139,12 +135,7 @@ class CLI(subcommand.SubCommand):
         if self.action == "attach":
             return await self._attach()
 
-        db_pool = await db_connect(
-            username=self.config["database"].get("user"),
-            database=self.config["database"]["dbname"],
-            host=self.config["database"].get("host"),
-            password=self.config["database"].get("password"),
-        )
+        db_pool = await db_connect(self.config["database"])
         if self.action == "migrate":
             await revisions.apply_revisions(db_pool=db_pool)
         elif self.action == "rebuild":

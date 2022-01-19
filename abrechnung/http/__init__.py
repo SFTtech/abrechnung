@@ -48,12 +48,7 @@ class HTTPService(SubCommand):
         run the websocket server
         """
 
-        db_pool = await db_connect(
-            username=self.cfg["database"].get("user"),
-            password=self.cfg["database"].get("password"),
-            database=self.cfg["database"]["dbname"],
-            host=self.cfg["database"].get("host"),
-        )
+        db_pool = await db_connect(self.cfg["database"])
 
         async with db_pool.acquire() as conn:
             # configure automatic decoding of json type postgresql values
