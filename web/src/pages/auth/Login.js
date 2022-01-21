@@ -15,7 +15,7 @@ import {
     LinearProgress,
     Link,
     TextField,
-    Typography
+    Typography,
 } from "@mui/material";
 import { LockOutlined } from "@mui/icons-material";
 import { makeStyles } from "@mui/styles";
@@ -25,19 +25,19 @@ const useStyles = makeStyles((theme) => ({
         marginTop: theme.spacing(8),
         display: "flex",
         flexDirection: "column",
-        alignItems: "center"
+        alignItems: "center",
     },
     avatar: {
         margin: theme.spacing(1),
-        backgroundColor: theme.palette.secondary.main
+        backgroundColor: theme.palette.secondary.main,
     },
     form: {
         width: "100%", // Fix IE 11 issue.
-        marginTop: theme.spacing(1)
+        marginTop: theme.spacing(1),
     },
     submit: {
-        margin: theme.spacing(3, 0, 2)
-    }
+        margin: theme.spacing(3, 0, 2),
+    },
 }));
 
 export default function Login() {
@@ -58,24 +58,26 @@ export default function Login() {
     }, [isLoggedIn, history, query]);
 
     const handleSubmit = (values, { setSubmitting }) => {
-        login(values).then(res => {
-            toast.success(`Logged in...`);
-            setSubmitting(false);
-            fetchProfile()
-                .then(result => {
-                    setUserData(result);
-                })
-                .catch(err => {
-                    toast.error(err);
-                    removeToken();
-                    setUserData(null);
-                });
-        }).catch(err => {
-            toast.error(err);
-            setSubmitting(false);
-            removeToken();
-            setUserData(null);
-        });
+        login(values)
+            .then((res) => {
+                toast.success(`Logged in...`);
+                setSubmitting(false);
+                fetchProfile()
+                    .then((result) => {
+                        setUserData(result);
+                    })
+                    .catch((err) => {
+                        toast.error(err);
+                        removeToken();
+                        setUserData(null);
+                    });
+            })
+            .catch((err) => {
+                toast.error(err);
+                setSubmitting(false);
+                removeToken();
+                setUserData(null);
+            });
     };
 
     return (

@@ -16,14 +16,16 @@ export default function SidebarGroupList({ group = null }) {
                 <ListItem sx={{ pt: 0, pb: 0 }}>
                     <ListItemText secondary="Groups" />
                 </ListItem>
-                {groups.map(it => (
+                {groups.map((it) => (
                     <ListItemLink key={it.id} to={`/groups/${it.id}`} selected={group && group.id === it.id}>
                         <ListItemText primary={it.name} />
                     </ListItemLink>
                 ))}
                 <ListItem sx={{ padding: 0 }}>
                     <Grid container justifyContent="center">
-                        <IconButton size="small" onClick={() => setShowGroupCreationModal(true)}><Add /></IconButton>
+                        <IconButton size="small" onClick={() => setShowGroupCreationModal(true)}>
+                            <Add />
+                        </IconButton>
                     </Grid>
                 </ListItem>
             </List>

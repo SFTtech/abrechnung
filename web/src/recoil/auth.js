@@ -12,7 +12,7 @@ export const userData = atom({
             } catch (err) {
                 return null;
             }
-        }
+        },
     }),
     effects_UNSTABLE: [
         ({ setSelf, trigger }) => {
@@ -20,7 +20,7 @@ export const userData = atom({
             if (userID !== null) {
                 ws.subscribe("user", userID, ({ subscription_type, element_id }) => {
                     if (subscription_type === "user" && element_id === userID) {
-                        fetchProfile().then(result => {
+                        fetchProfile().then((result) => {
                             setSelf(result);
                         });
                     }
@@ -31,8 +31,8 @@ export const userData = atom({
                     ws.unsubscribe("user", userID);
                 };
             }
-        }
-    ]
+        },
+    ],
 });
 
 export const isAuthenticated = selector({
@@ -40,5 +40,5 @@ export const isAuthenticated = selector({
     get: async ({ get }) => {
         const user = get(userData);
         return user !== null;
-    }
+    },
 });

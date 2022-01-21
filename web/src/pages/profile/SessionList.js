@@ -18,28 +18,34 @@ import {
     ListItemText,
     Paper,
     TextField,
-    Typography
+    Typography,
 } from "@mui/material";
 import { Check, Close, Delete, Edit } from "@mui/icons-material";
 import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
-        padding: theme.spacing(2)
-    }
+        padding: theme.spacing(2),
+    },
 }));
 
 export default function SessionList() {
     const classes = useStyles();
     // TODO: fix editing functions
     const [editedSessions, setEditedSessions] = useState({});
-    const [sessionToDelete, setSessionToDelete] = useState({ show: false, toDelete: null });
+    const [sessionToDelete, setSessionToDelete] = useState({
+        show: false,
+        toDelete: null,
+    });
     const user = useRecoilValue(userData);
     const sessions = user.sessions;
 
     const editSession = (id) => {
         if (!editedSessions.hasOwnProperty(id)) {
-            const newSessions = { ...editedSessions, [id]: sessions.find(session => session.id === id)?.name };
+            const newSessions = {
+                ...editedSessions,
+                [id]: sessions.find((session) => session.id === id)?.name,
+            };
             setEditedSessions(newSessions);
         }
     };
@@ -60,11 +66,10 @@ export default function SessionList() {
         if (editedSessions.hasOwnProperty(id)) {
             renameSession({
                 sessionID: id,
-                name: editedSessions[id]
-            })
-                .catch(err => {
-                    toast.error(err);
-                });
+                name: editedSessions[id],
+            }).catch((err) => {
+                toast.error(err);
+            });
             stopEditSession(id);
         }
     };
@@ -75,10 +80,9 @@ export default function SessionList() {
 
     const confirmDeleteSession = () => {
         if (sessionToDelete.toDelete !== null) {
-            deleteSession({ sessionID: sessionToDelete.toDelete })
-                .catch(err => {
-                    toast.error(err);
-                });
+            deleteSession({ sessionID: sessionToDelete.toDelete }).catch((err) => {
+                toast.error(err);
+            });
             setSessionToDelete({ show: false, toDelete: null });
         }
     };
@@ -127,18 +131,29 @@ export default function SessionList() {
                             <ListItem key={session.id}>
                                 <ListItemText
                                     primary={session.name}
-                                    secondary={(
+                                    secondary={
                                         <>
-                                            <span>Valid until {DateTime.fromISO(session.valid_until).toLocaleString(DateTime.DATETIME_FULL) && "indefinitely"}, </span>
-                                            <span>Last seen on {DateTime.fromISO(session.last_seen).toLocaleString(DateTime.DATETIME_FULL)}</span>
+                                            <span>
+                                                Valid until{" "}
+                                                {DateTime.fromISO(session.valid_until).toLocaleString(
+                                                    DateTime.DATETIME_FULL
+                                                ) && "indefinitely"}
+                                                ,{" "}
+                                            </span>
+                                            <span>
+                                                Last seen on{" "}
+                                                {DateTime.fromISO(session.last_seen).toLocaleString(
+                                                    DateTime.DATETIME_FULL
+                                                )}
+                                            </span>
                                         </>
-                                    )} />
+                                    }
+                                />
                                 <ListItemSecondaryAction>
                                     <IconButton onClick={() => editSession(session.id)}>
                                         <Edit />
                                     </IconButton>
-                                    <IconButton
-                                        onClick={() => openDeleteSessionModal(session.id)}>
+                                    <IconButton onClick={() => openDeleteSessionModal(session.id)}>
                                         <Delete />
                                     </IconButton>
                                 </ListItemSecondaryAction>
@@ -152,9 +167,11 @@ export default function SessionList() {
 
                 <DialogContent>
                     <DialogContentText>
-                        {sessionToDelete.toDelete !== null ? (
-                            `Are you sure you want to delete session ${sessions.find(session => session.id === sessionToDelete.toDelete)?.name}`
-                        ) : null}
+                        {sessionToDelete.toDelete !== null
+                            ? `Are you sure you want to delete session ${
+                                  sessions.find((session) => session.id === sessionToDelete.toDelete)?.name
+                              }`
+                            : null}
                     </DialogContentText>
                 </DialogContent>
 

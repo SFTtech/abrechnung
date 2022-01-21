@@ -612,8 +612,19 @@ class TransactionAPITest(HTTPAPITest):
             name="account2",
             description="description",
         )
+        account3_id = await self.account_service.create_account(
+            user_id=self.test_user_id,
+            group_id=group_id,
+            type="personal",
+            name="account3",
+            description="description",
+        )
 
-        await self._post_debitor_share(transaction1_id, account1_id, 1.0)
+        # the account has been deleted, we should not be able to add more shares to it
+        await self._post_debitor_share(
+            transaction1_id, account1_id, 1.0, expected_status=404
+        )
+        await self._post_debitor_share(transaction1_id, account3_id, 1.0)
         await self._post_creditor_share(transaction1_id, account2_id, 1.0)
         await self._commit_transaction(transaction1_id)
 
@@ -621,7 +632,7 @@ class TransactionAPITest(HTTPAPITest):
         resp = await self._delete(f"/api/v1/accounts/{account2_id}")
         self.assertEqual(400, resp.status)
 
-        await self._switch_creditor_share(transaction1_id, account1_id, 1.0)
+        await self._switch_creditor_share(transaction1_id, account3_id, 1.0)
         await self._commit_transaction(transaction1_id)
 
         # now we should be able to delete the account as nothing depends on it

@@ -24,17 +24,6 @@ class GroupPreviewSchema(Schema):
     invite_description = fields.Str()
 
 
-class AccountSchema(Schema):
-    id = fields.Int()
-    group_id = fields.Int()
-    type = fields.Str()
-    name = fields.Str()
-    last_changed = fields.DateTime()
-    version = fields.Int()
-    description = fields.Str()
-    deleted = fields.Bool()
-
-
 class GroupInviteSchema(Schema):
     id = fields.Int()
     created_by = fields.Int()
@@ -68,6 +57,26 @@ class SharesField(fields.Field):
         **kwargs,
     ):
         raise NotImplementedError()
+
+
+class AccountDetailSchema(Schema):
+    name = fields.Str()
+    description = fields.Str()
+    priority = fields.Int()
+    committed_at = fields.DateTime(required=False)
+    clearing_shares = SharesField()
+    deleted = fields.Bool()
+
+
+class AccountSchema(Schema):
+    id = fields.Int()
+    type = fields.Str()
+    is_wip = fields.Bool()
+    last_changed = fields.DateTime()
+    group_id = fields.Int()
+    version = fields.Int()
+    pending_details = fields.Nested(AccountDetailSchema, allow_none=True)
+    committed_details = fields.Nested(AccountDetailSchema, allow_none=True)
 
 
 class TransactionPositionSchema(Schema):

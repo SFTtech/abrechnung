@@ -1,43 +1,46 @@
-import {Form, Formik} from "formik";
+import { Form, Formik } from "formik";
 import React from "react";
-import {toast} from "react-toastify";
-import {updateAccountDetails} from "../../api";
-import {Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField} from "@mui/material";
-import {groupAccountsRaw, updateAccount} from "../../recoil/groups";
-import {useSetRecoilState} from "recoil";
+import { toast } from "react-toastify";
+import { updateAccountDetails } from "../../api";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
+import { groupAccounts, updateAccount } from "../../recoil/accounts";
+import { useSetRecoilState } from "recoil";
 
-export default function AccountEditModal({group, show, onClose, account}) {
-    const setAccounts = useSetRecoilState(groupAccountsRaw(group.id));
+export default function EditAccountModal({ group, show, onClose, account }) {
+    const setAccounts = useSetRecoilState(groupAccounts(group.id));
 
-    const handleSubmit = (values, {setSubmitting}) => {
+    const handleSubmit = (values, { setSubmitting }) => {
         updateAccountDetails({
             groupID: group.id,
             accountID: values.accountID,
             name: values.name,
-            description: values.description
+            description: values.description,
         })
-            .then(account => {
+            .then((account) => {
                 updateAccount(account, setAccounts);
                 setSubmitting(false);
                 onClose();
-            }).catch(err => {
-            toast.error(err);
-            setSubmitting(false);
-        });
+            })
+            .catch((err) => {
+                toast.error(err);
+                setSubmitting(false);
+            });
     };
 
     return (
-
         <Dialog open={show} onClose={onClose}>
-            <DialogTitle>Edit Account</DialogTitle>
+            <DialogTitle>Edit Personal Account</DialogTitle>
             <DialogContent>
-                <Formik initialValues={{
-                    accountID: account?.id,
-                    name: account?.name,
-                    description: account?.description
-                }} onSubmit={handleSubmit}
-                        enableReinitialize={true}>
-                    {({values, handleChange, handleBlur, handleSubmit, isSubmitting}) => (
+                <Formik
+                    initialValues={{
+                        accountID: account?.id,
+                        name: account?.name,
+                        description: account?.description,
+                    }}
+                    onSubmit={handleSubmit}
+                    enableReinitialize={true}
+                >
+                    {({ values, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
                         <Form>
                             <TextField
                                 margin="normal"
@@ -53,7 +56,6 @@ export default function AccountEditModal({group, show, onClose, account}) {
                             />
                             <TextField
                                 margin="normal"
-                                required
                                 fullWidth
                                 variant="standard"
                                 name="description"
@@ -63,7 +65,7 @@ export default function AccountEditModal({group, show, onClose, account}) {
                                 onChange={handleChange}
                             />
 
-                            {isSubmitting && <LinearProgress/>}
+                            {isSubmitting && <LinearProgress />}
                             <DialogActions>
                                 <Button color="primary" type="submit" onClick={handleSubmit}>
                                     Save
@@ -72,7 +74,6 @@ export default function AccountEditModal({group, show, onClose, account}) {
                                     Cancel
                                 </Button>
                             </DialogActions>
-
                         </Form>
                     )}
                 </Formik>

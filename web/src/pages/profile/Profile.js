@@ -6,8 +6,8 @@ import { makeStyles } from "@mui/styles";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
-        padding: theme.spacing(2)
-    }
+        padding: theme.spacing(2),
+    },
 }));
 
 export default function Profile() {
@@ -33,4 +33,3 @@ export default function Profile() {
         </Paper>
     );
 }
-

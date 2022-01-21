@@ -33,14 +33,18 @@ async def db_connect(db: dict) -> Pool:
     # since marshmallow can't model a "one arg implies all"-relation, we need to warn here
     if not db["host"] or os.path.isdir(db["host"]):
         if db["user"] or db["password"]:
-            logger.warning("Username and/or password specified but no remote host therefore using socket "
-                           "authentication. I am ignoring these settings since we don't need them.")
+            logger.warning(
+                "Username and/or password specified but no remote host therefore using socket "
+                "authentication. I am ignoring these settings since we don't need them."
+            )
             del pool_args["user"]
             del pool_args["password"]
         if os.getenv("PGHOST") or os.getenv("PGPORT"):
             # asyncpg can read the PGHOST env variable. We don't want that.
-            logger.warning("We do not support setting the PGHOST or PGPORT environment variable and therefore will "
-                           "ignore it. Consider specifying the hostname in the config file.")
+            logger.warning(
+                "We do not support setting the PGHOST or PGPORT environment variable and therefore will "
+                "ignore it. Consider specifying the hostname in the config file."
+            )
 
         if os.environ.get("PGHOST"):
             del os.environ["PGHOST"]
