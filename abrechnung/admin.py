@@ -36,12 +36,7 @@ class Admin(subcommand.SubCommand):
             print("Passwords do not match!")
             return
 
-        db_pool = await db_connect(
-            username=self.config["database"]["user"],
-            database=self.config["database"]["dbname"],
-            host=self.config["database"]["host"],
-            password=self.config["database"]["password"],
-        )
+        db_pool = await db_connect(self.config["database"])
         user_service = UserService(db_pool, self.config)
         user_service.enable_registration = True
         if self.args["skip_email_check"]:
