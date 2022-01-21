@@ -45,7 +45,7 @@ export default function Balances({ group }) {
     const chartHeight = Object.keys(balances).length * 30 + 100;
 
     // TODO determine the rendered width of the account names and take the maximum
-    const yaxiswidth = Math.max(...personalAccounts.map((account) => account.name.length)) * 7;
+    const yaxiswidth = Math.max(...personalAccounts.map((account) => account.name.length)) * 7 + 5;
 
     const handleBarClick = (data, event) => {
         const id = data.activePayload[0].payload.id;

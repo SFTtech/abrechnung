@@ -31,10 +31,9 @@ import {
     SpeedDial,
     SpeedDialAction,
     SpeedDialIcon,
-    Tooltip,
     Typography,
 } from "@mui/material";
-import { Add, CompareArrows, Delete, Edit, Help, Person } from "@mui/icons-material";
+import { Add, CompareArrows, Delete, Edit, Person } from "@mui/icons-material";
 import ListItemLink from "../../components/style/ListItemLink";
 
 export default function AccountList({ group }) {

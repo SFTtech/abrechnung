@@ -11,9 +11,9 @@ export default function BalanceTable({ group }) {
     const tableData = personalAccounts.map((acc) => {
         return {
             ...acc,
-            balance: balances[acc.id].balance.toFixed(2),
-            totalPaid: balances[acc.id].totalPaid.toFixed(2),
-            totalConsumed: balances[acc.id].totalConsumed.toFixed(2),
+            balance: balances[acc.id].balance,
+            totalPaid: balances[acc.id].totalPaid,
+            totalConsumed: balances[acc.id].totalConsumed,
         };
     });
 

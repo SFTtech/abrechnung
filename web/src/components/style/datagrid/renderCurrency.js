@@ -23,7 +23,7 @@ const useStyles = makeStyles(
 );
 
 function pnlFormatter(value, currencySymbol) {
-    return `${value} ${currencySymbol}`;
+    return `${value.toFixed(2)} ${currencySymbol}`;
 }
 
 const CurrencyValue = React.memo(function Pnl(props) {

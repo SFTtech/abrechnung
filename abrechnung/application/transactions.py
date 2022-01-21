@@ -736,14 +736,11 @@ class TransactionService(Application):
             return revision_id
 
         last_committed_revision = await conn.fetchval(
-            "select tr.id "
-            "from transaction_revision tr "
-            "   join purchase_item pi on pi.transaction_id = tr.transaction_id "
-            "   join purchase_item_history pih on pih.revision_id = tr.id and  pi.id = pih.id "
-            "where tr.transaction_id = $1 and tr.committed is not null "
-            "order by tr.committed desc "
-            "limit 1",
+            "select revision_id "
+            "from committed_transaction_position_state_valid_at() "
+            "where transaction_id = $1 and item_id = $2",
             purchase_item["transaction_id"],
+            item_id,
         )
 
         await conn.execute(
