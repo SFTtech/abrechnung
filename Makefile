@@ -5,10 +5,15 @@ test:
 .PHONY: format
 format:
 	black .
+	yarn --cwd web run prettier --write .
 
 .PHONY: check-format
 check-format:
 	black --check .
+
+.PHONY: check-format-web
+check-format-web:
+	yarn --cwd web run prettier --check .
 
 .PHONY: lint
 lint: pylint mypy bandit

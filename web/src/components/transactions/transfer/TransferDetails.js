@@ -8,9 +8,7 @@ import TransactionActions from "../TransactionActions";
 import { Divider, Grid, Paper } from "@mui/material";
 import FileGallery from "../FileGallery";
 
-
 export default function TransferDetails({ group, transaction }) {
-
     return (
         <Paper elevation={1} sx={{ padding: 2 }}>
             <TransactionActions group={group} transaction={transaction} />
@@ -45,4 +43,3 @@ export default function TransferDetails({ group, transaction }) {
         </Paper>
     );
 }
-

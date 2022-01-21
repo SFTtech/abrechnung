@@ -13,10 +13,10 @@ export default function ConfirmEmailChange() {
         e.preventDefault();
         setStatus("loading");
         confirmEmailChange({ token: token })
-            .then(value => {
+            .then((value) => {
                 setStatus("success");
             })
-            .catch(error => {
+            .catch((error) => {
                 toast.error(error);
             });
     };
@@ -41,8 +41,7 @@ export default function ConfirmEmailChange() {
                     Click{" "}
                     <Button color="primary" onClick={confirmEmail}>
                         here
-                    </Button>
-                    {" "}
+                    </Button>{" "}
                     to confirm your new email.
                 </p>
             )}

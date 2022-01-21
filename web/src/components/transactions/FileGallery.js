@@ -1,29 +1,28 @@
-import React, {useEffect, useState} from "react";
-import {deleteFile, fetchFile} from "../../api";
-import {toast} from "react-toastify";
-import {Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton} from "@mui/material";
-import {AddCircle, ChevronLeft, ChevronRight, Delete} from "@mui/icons-material";
+import React, { useEffect, useState } from "react";
+import { deleteFile, fetchFile } from "../../api";
+import { toast } from "react-toastify";
+import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
+import { AddCircle, ChevronLeft, ChevronRight, Delete } from "@mui/icons-material";
 import Transition from "react-transition-group/Transition";
 import ImageUploadDialog from "./ImageUploadDialog";
 import placeholderImg from "./PlaceholderImage.svg";
-import {groupTransactions, updateTransaction} from "../../recoil/transactions";
-import {useSetRecoilState} from "recoil";
-
+import { groupTransactions, updateTransaction } from "../../recoil/transactions";
+import { useSetRecoilState } from "recoil";
 
 const duration = 200;
 
 const defaultStyle = {
     transition: `opacity ${duration}ms ease-in-out`,
-    opacity: 0
+    opacity: 0,
 };
 
 const transitionStyles = {
-    entering: {opacity: 0, display: "none"},
-    entered: {opacity: 1, display: "block"},
-    exited: {opacity: 0, display: "none"}
+    entering: { opacity: 0, display: "none" },
+    entered: { opacity: 1, display: "block" },
+    exited: { opacity: 0, display: "none" },
 };
 
-export default function FileGallery({transaction}) {
+export default function FileGallery({ transaction }) {
     const [files, setFiles] = useState([]); // map of file id to object
     const [active, setActive] = useState(0);
     const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
@@ -32,7 +31,7 @@ export default function FileGallery({transaction}) {
     const [showImage, setShowImage] = useState(false);
 
     useEffect(() => {
-        const newFileIDs = new Set(transaction.files.map(file => file.id));
+        const newFileIDs = new Set(transaction.files.map((file) => file.id));
         const filteredFiles = files.reduce((map, file) => {
             map[file.id] = file;
             return map;
@@ -46,27 +45,27 @@ export default function FileGallery({transaction}) {
         setFiles(Object.values(filteredFiles)); // TODO: maybe include placeholders
         setActive(Math.max(0, Math.min(active, transaction.files.length - 1)));
 
-        const newFiles = transaction.files.filter(file => !filteredFiles.hasOwnProperty(file.id));
-        Promise.all(newFiles.map(newFile => {
-            return fetchFile({fileID: newFile.id, blobID: newFile.blob_id})
-                .then(resp => {
+        const newFiles = transaction.files.filter((file) => !filteredFiles.hasOwnProperty(file.id));
+        Promise.all(
+            newFiles.map((newFile) => {
+                return fetchFile({
+                    fileID: newFile.id,
+                    blobID: newFile.blob_id,
+                }).then((resp) => {
                     const objectUrl = URL.createObjectURL(resp.data);
                     return {
                         ...newFile,
-                        objectUrl: objectUrl
+                        objectUrl: objectUrl,
                     };
                 });
-        }))
-            .then(newlyLoadedFiles => {
-                setFiles([
-                    ...Object.values(filteredFiles),
-                    ...newlyLoadedFiles
-                ]);
             })
-            .catch(err => {
+        )
+            .then((newlyLoadedFiles) => {
+                setFiles([...Object.values(filteredFiles), ...newlyLoadedFiles]);
+            })
+            .catch((err) => {
                 toast.error(`Error loading file: ${err}`);
             });
-
     }, [transaction]);
 
     const toNextImage = () => {
@@ -86,13 +85,14 @@ export default function FileGallery({transaction}) {
     };
 
     const deleteSelectedFile = () => {
-        if (active < files.length) { // sanity check, should not be needed
-            deleteFile({fileID: files[active].id})
-                .then(t => {
+        if (active < files.length) {
+            // sanity check, should not be needed
+            deleteFile({ fileID: files[active].id })
+                .then((t) => {
                     updateTransaction(t, setTransactions);
                     setShowImage(false);
                 })
-                .catch(err => {
+                .catch((err) => {
                     toast.error(`Error deleting file: ${err}`);
                 });
         }
@@ -107,58 +107,58 @@ export default function FileGallery({transaction}) {
                 style={{
                     position: "relative",
                     height: "200px",
-                    width: "100%"
+                    width: "100%",
                 }}
             >
                 {files.length === 0 ? (
-                    <img height="100%" src={placeholderImg} alt="placeholder"/>
-                ) : files.map((item, idx) => (
-                    <Transition key={item.id} in={active === idx} timeout={duration}>
-                        {(state) => (
-                            <img
-                                height="100%"
-                                style={{
-                                    ...defaultStyle,
-                                    ...transitionStyles[state]
-                                }}
-                                onClick={() => doShowImage(item)}
-                                src={item.objectUrl}
-                                srcSet={item.objectUrl}
-                                alt={item.filename.split(".")[0]}
-                                loading="lazy"
-                            />
-                        )}
-                    </Transition>
-                ))}
+                    <img height="100%" src={placeholderImg} alt="placeholder" />
+                ) : (
+                    files.map((item, idx) => (
+                        <Transition key={item.id} in={active === idx} timeout={duration}>
+                            {(state) => (
+                                <img
+                                    height="100%"
+                                    style={{
+                                        ...defaultStyle,
+                                        ...transitionStyles[state],
+                                    }}
+                                    onClick={() => doShowImage(item)}
+                                    src={item.objectUrl}
+                                    srcSet={item.objectUrl}
+                                    alt={item.filename.split(".")[0]}
+                                    loading="lazy"
+                                />
+                            )}
+                        </Transition>
+                    ))
+                )}
                 <Chip
-                    sx={{position: "absolute", top: "5px", right: "10px"}}
+                    sx={{ position: "absolute", top: "5px", right: "10px" }}
                     size="small"
                     label={`${Math.min(files.length, active + 1)} / ${files.length}`}
                 />
                 {active > 0 && (
-                    <IconButton
-                        onClick={toPrevImage}
-                        sx={{position: "absolute", top: "40%", left: "10px"}}
-                    >
-                        <ChevronLeft/>
+                    <IconButton onClick={toPrevImage} sx={{ position: "absolute", top: "40%", left: "10px" }}>
+                        <ChevronLeft />
                     </IconButton>
                 )}
                 {active < files.length - 1 && (
-                    <IconButton
-                        onClick={toNextImage}
-                        sx={{position: "absolute", top: "40%", right: "10px"}}
-                    >
-                        <ChevronRight/>
+                    <IconButton onClick={toNextImage} sx={{ position: "absolute", top: "40%", right: "10px" }}>
+                        <ChevronRight />
                     </IconButton>
                 )}
                 {transaction.is_wip && (
                     <>
                         <IconButton
                             color="primary"
-                            sx={{position: "absolute", top: "80%", right: "10px"}}
+                            sx={{
+                                position: "absolute",
+                                top: "80%",
+                                right: "10px",
+                            }}
                             onClick={() => setShowUploadDialog(true)}
                         >
-                            <AddCircle fontSize="large"/>
+                            <AddCircle fontSize="large" />
                         </IconButton>
                         <ImageUploadDialog
                             transaction={transaction}
@@ -168,16 +168,8 @@ export default function FileGallery({transaction}) {
                     </>
                 )}
             </Grid>
-            <Dialog
-                open={showImage}
-                onClose={() => setShowImage(false)}
-                scroll="body"
-            >
-                {active < files.length && (
-                    <DialogTitle>
-                        {files[active].filename.split(".")[0]}
-                    </DialogTitle>
-                )}
+            <Dialog open={showImage} onClose={() => setShowImage(false)} scroll="body">
+                {active < files.length && <DialogTitle>{files[active].filename.split(".")[0]}</DialogTitle>}
 
                 <DialogContent>
                     <Grid
@@ -185,7 +177,7 @@ export default function FileGallery({transaction}) {
                         justifyContent="center"
                         alignItems="center"
                         style={{
-                            position: "relative"
+                            position: "relative",
                         }}
                     >
                         {active < files.length && (
@@ -201,24 +193,32 @@ export default function FileGallery({transaction}) {
                         {active > 0 && (
                             <IconButton
                                 onClick={toPrevImage}
-                                sx={{position: "absolute", top: "40%", left: "0px"}}
+                                sx={{
+                                    position: "absolute",
+                                    top: "40%",
+                                    left: "0px",
+                                }}
                             >
-                                <ChevronLeft/>
+                                <ChevronLeft />
                             </IconButton>
                         )}
                         {active < files.length - 1 && (
                             <IconButton
                                 onClick={toNextImage}
-                                sx={{position: "absolute", top: "40%", right: "0px"}}
+                                sx={{
+                                    position: "absolute",
+                                    top: "40%",
+                                    right: "0px",
+                                }}
                             >
-                                <ChevronRight/>
+                                <ChevronRight />
                             </IconButton>
                         )}
                     </Grid>
                 </DialogContent>
                 {transaction.is_wip && (
                     <DialogActions>
-                        <Button startIcon={<Delete/>} onClick={deleteSelectedFile} variant="outlined" color="error">
+                        <Button startIcon={<Delete />} onClick={deleteSelectedFile} variant="outlined" color="error">
                             Delete
                         </Button>
                     </DialogActions>

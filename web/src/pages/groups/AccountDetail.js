@@ -1,31 +1,31 @@
-import {groupAccountByID} from "../../recoil/groups";
-import {makeStyles} from "@mui/styles";
-import {useRouteMatch} from "react-router-dom";
-import {useRecoilValue} from "recoil";
-import {Grid, List, Paper, Typography} from "@mui/material";
-import {CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis} from "recharts";
-import {accountBalanceHistory, accountTransactions} from "../../recoil/transactions";
-import {DateTime} from "luxon";
-import {TransactionListEntry} from "../../components/transactions/TransactionListEntry";
+import { groupAccountByID } from "../../recoil/accounts";
+import { makeStyles } from "@mui/styles";
+import { useRouteMatch } from "react-router-dom";
+import { useRecoilValue } from "recoil";
+import { Grid, List, Paper, Typography } from "@mui/material";
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { accountBalanceHistory, accountTransactions } from "../../recoil/transactions";
+import { DateTime } from "luxon";
+import { TransactionListEntry } from "../../components/transactions/TransactionListEntry";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
-        padding: theme.spacing(2)
+        padding: theme.spacing(2),
     },
     spacerTop: {
-        marginTop: theme.spacing(3)
-    }
+        marginTop: theme.spacing(3),
+    },
 }));
 
-export default function AccountDetail({group}) {
+export default function AccountDetail({ group }) {
     const classes = useStyles();
 
     const match = useRouteMatch();
     const accountID = parseInt(match.params.id);
 
-    const account = useRecoilValue(groupAccountByID({groupID: group.id, accountID: accountID}));
-    const transactions = useRecoilValue(accountTransactions({groupID: group.id, accountID: accountID}));
-    const balanceHistory = useRecoilValue(accountBalanceHistory({groupID: group.id, accountID: accountID}));
+    const account = useRecoilValue(groupAccountByID({ groupID: group.id, accountID: accountID }));
+    const transactions = useRecoilValue(accountTransactions({ groupID: group.id, accountID: accountID }));
+    const balanceHistory = useRecoilValue(accountBalanceHistory({ groupID: group.id, accountID: accountID }));
     // const userPermissions = useRecoilValue(currUserPermissions(group.id));
 
     // TODO: handle 404
@@ -46,9 +46,18 @@ export default function AccountDetail({group}) {
                             Balance of {account.name}
                         </Typography>
                         <ResponsiveContainer width="100%" height={300}>
-                            <LineChart width={730} height={250} data={balanceHistory}
-                                       margin={{top: 5, right: 30, left: 20, bottom: 5}}>
-                                <CartesianGrid strokeDasharray="3 3"/>
+                            <LineChart
+                                width={730}
+                                height={250}
+                                data={balanceHistory}
+                                margin={{
+                                    top: 5,
+                                    right: 30,
+                                    left: 20,
+                                    bottom: 5,
+                                }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" />
                                 <XAxis
                                     dataKey="date"
                                     type="number"
@@ -58,14 +67,15 @@ export default function AccountDetail({group}) {
                                 {/*<YAxis  type="number" unit={group.currency_symbol} domain={[dataMin => Math.min(0, dataMin), dataMax => {console.log(dataMax); return Math.max(0, dataMax)}]}/>*/}
                                 <YAxis
                                     tickFormatter={(value) => value.toFixed(2)}
-                                    type="number" unit={group.currency_symbol}
+                                    type="number"
+                                    unit={group.currency_symbol}
                                 />
                                 <Tooltip
-                                    formatter={value => parseFloat(value).toFixed(2) + ` ${group.currency_symbol}`}
+                                    formatter={(value) => parseFloat(value).toFixed(2) + ` ${group.currency_symbol}`}
                                     labelFormatter={(unixTime) => DateTime.fromSeconds(unixTime).toLocaleString()}
                                 />
-                                <Legend/>
-                                <Line type="stepAfter" dataKey="balance"/>
+                                <Legend />
+                                <Line type="stepAfter" dataKey="balance" />
                             </LineChart>
                         </ResponsiveContainer>
                     </Paper>
@@ -73,11 +83,11 @@ export default function AccountDetail({group}) {
                 <Grid item xs={12}>
                     <Paper elevation={1} className={classes.paper}>
                         <Typography component="h3" variant="h5">
-                            Transactions of {account.name}
+                            Transactions involving {account.name}
                         </Typography>
                         <List>
-                            {transactions.map(transaction => (
-                                <TransactionListEntry group={group} transaction={transaction}/>
+                            {transactions.map((transaction) => (
+                                <TransactionListEntry group={group} transaction={transaction} />
                             ))}
                         </List>
                     </Paper>
@@ -86,4 +96,3 @@ export default function AccountDetail({group}) {
         </>
     );
 }
-

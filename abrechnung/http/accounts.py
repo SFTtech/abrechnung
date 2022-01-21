@@ -46,7 +46,14 @@ async def list_accounts(request):
 )
 @json_schema(
     Schema.from_dict(
-        {"name": fields.Str(), "description": fields.Str(), "type": fields.Str()},
+        {
+            "name": fields.Str(),
+            "description": fields.Str(),
+            "type": fields.Str(),
+            "clearing_shares": fields.Dict(
+                fields.Int(), fields.Number(), allow_none=True, load_default=None
+            ),
+        },
         name="CreateAccountSchema",
     )
 )
@@ -58,6 +65,7 @@ async def create_account(request: web.Request):
         name=data["name"],
         description=data["description"],
         type=data["type"],
+        clearing_shares=data["clearing_shares"],
     )
 
     return await _account_response(request=request, account_id=account_id)
@@ -84,7 +92,14 @@ async def get_account(request: web.Request):
 )
 @json_schema(
     Schema.from_dict(
-        {"name": fields.Str(), "description": fields.Str()}, name="UpdateAccountSchema"
+        {
+            "name": fields.Str(),
+            "description": fields.Str(),
+            "clearing_shares": fields.Dict(
+                fields.Int(), fields.Number(), allow_none=True, load_default=None
+            ),
+        },
+        name="UpdateAccountSchema",
     )
 )
 async def update_account(request: web.Request):
@@ -95,6 +110,7 @@ async def update_account(request: web.Request):
         account_id=account_id,
         name=data["name"],
         description=data["description"],
+        clearing_shares=data["clearing_shares"],
     )
 
     return await _account_response(request=request, account_id=account_id)
