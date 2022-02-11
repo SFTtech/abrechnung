@@ -1,35 +1,38 @@
 import React from "react";
 import { toast } from "react-toastify";
 import { Form, Formik } from "formik";
-import { createTransaction } from "../../api";
+import { createTransaction } from "../../../api";
 import { DateTime } from "luxon";
-import {
-    Button,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    LinearProgress,
-    MenuItem,
-    Select,
-    TextField,
-} from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
 import DatePicker from "@mui/lab/DatePicker";
 import { useSetRecoilState } from "recoil";
-import { addTransactionInState, groupTransactions } from "../../recoil/transactions";
+import { addTransactionInState, groupTransactions } from "../../../recoil/transactions";
+import AccountSelect from "../../style/AccountSelect";
+import * as yup from "yup";
 
-export default function TransactionCreateModal({ group, show, onClose }) {
+const validationSchema = yup.object({
+    value: yup.number("Enter a valid decimal").required("value is required"),
+    description: yup.string("Enter a description").required("description is required"),
+    creditor: yup.number("Enter a description").required("from is required").positive().integer(),
+    debitor: yup.number("Enter a description").required("to is required").positive().integer(),
+    // billedAt: yup.date("Enter a description").required("from is required"),
+});
+
+export default function TransferCreateModal({ group, show, onClose }) {
     const setTransactions = useSetRecoilState(groupTransactions(group.id));
 
     const handleSubmit = (values, { setSubmitting }) => {
         createTransaction({
             groupID: group.id,
-            type: values.type,
+            type: "transfer",
             description: values.description,
             value: parseFloat(values.value),
             billedAt: values.billedAt.toISODate(),
             currencySymbol: "€",
             currencyConversionRate: 1.0,
+            creditorShares: { [values.creditor]: 1.0 },
+            debitorShares: { [values.debitor]: 1.0 },
+            performCommit: true,
         })
             .then((t) => {
                 addTransactionInState(t, setTransactions);
@@ -42,50 +45,32 @@ export default function TransactionCreateModal({ group, show, onClose }) {
             });
     };
 
-    const validate = (values) => {
-        let errors = {};
-        const floatValue = parseFloat(values.value);
-        if (isNaN(floatValue) || floatValue <= 0) {
-            errors.value = "please input a valid decimal number";
-        }
-        if (values.description === null || values.description === undefined || values.description === "") {
-            errors.description = "please input a description";
-        }
-        if (values.billedAt === null || values.billedAt === undefined || values.billedAt === "") {
-            errors.billedAt = "please input valid billed at time";
-        }
-        return errors;
-    };
-
     return (
         <Dialog open={show} onClose={onClose}>
-            <DialogTitle>Create Transaction</DialogTitle>
+            <DialogTitle>Create Transfer</DialogTitle>
             <DialogContent>
                 <Formik
-                    validate={validate}
                     initialValues={{
-                        type: "purchase",
                         description: "",
                         value: "0.0",
                         billedAt: DateTime.now(),
+                        creditor: undefined,
+                        debitor: undefined,
                     }}
                     onSubmit={handleSubmit}
+                    validationSchema={validationSchema}
                 >
-                    {({ values, setFieldValue, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+                    {({
+                        values,
+                        errors,
+                        touched,
+                        setFieldValue,
+                        handleChange,
+                        handleBlur,
+                        handleSubmit,
+                        isSubmitting,
+                    }) => (
                         <Form>
-                            <Select
-                                margin="normal"
-                                required
-                                value={values.type}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                                variant="standard"
-                                name="type"
-                            >
-                                <MenuItem value="purchase">Purchase</MenuItem>
-                                <MenuItem value="transfer">Transfer</MenuItem>
-                                {/*<MenuItem value="mimo">MIMO</MenuItem>*/}
-                            </Select>
                             <TextField
                                 margin="normal"
                                 required
@@ -97,6 +82,8 @@ export default function TransactionCreateModal({ group, show, onClose }) {
                                 value={values.description}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
+                                error={touched.description && Boolean(errors.description)}
+                                helperText={touched.description && errors.description}
                             />
                             <DatePicker
                                 margin="normal"
@@ -112,6 +99,8 @@ export default function TransactionCreateModal({ group, show, onClose }) {
                                 value={values.billedAt}
                                 onChange={(val) => setFieldValue("billedAt", val, true)}
                                 onBlur={handleBlur}
+                                // error={touched.billedAt && Boolean(errors.billedAt)}
+                                // helperText={touched.billedAt && errors.billedAt}
                             />
                             <TextField
                                 margin="normal"
@@ -124,6 +113,30 @@ export default function TransactionCreateModal({ group, show, onClose }) {
                                 value={values.value}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
+                                error={touched.value && Boolean(errors.value)}
+                                helperText={touched.value && errors.value}
+                            />
+                            <AccountSelect
+                                label="From"
+                                name="creditor"
+                                group={group}
+                                value={values.creditor}
+                                onChange={(val) => setFieldValue("creditor", val.id, true)}
+                                noDisabledStyling={true}
+                                disabled={false}
+                                error={touched.creditor && Boolean(errors.creditor)}
+                                helperText={touched.creditor && errors.creditor}
+                            />
+                            <AccountSelect
+                                label="To"
+                                name="debitor"
+                                group={group}
+                                value={values.debitor}
+                                onChange={(val) => setFieldValue("debitor", val.id, true)}
+                                noDisabledStyling={true}
+                                disabled={false}
+                                error={touched.debitor && Boolean(errors.debitor)}
+                                helperText={touched.debitor && errors.debitor}
                             />
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>

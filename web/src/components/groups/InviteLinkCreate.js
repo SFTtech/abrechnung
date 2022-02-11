@@ -42,7 +42,7 @@ export default function InviteLinkCreate({ show, onClose, group }) {
     };
 
     return (
-        <Dialog open={show} onClose={onClose} sx={{ minWidth: 500 }}>
+        <Dialog open={show} onClose={onClose}>
             <DialogTitle>Create Invite Link</DialogTitle>
 
             <DialogContent>

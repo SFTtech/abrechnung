@@ -236,11 +236,12 @@ export default function Layout({ group = null, children, ...props }) {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    p: 3,
+                    padding: { xs: 0, lg: 3 },
+                    paddingTop: { xs: 0, lg: 3 },
                     width: { sm: `calc(100% - ${drawerWidth}px)` },
                 }}
             >
-                <Container maxWidth="lg">
+                <Container maxWidth="lg" sx={{ padding: { xs: 0, md: 1 } }}>
                     <Toolbar />
                     {children}
                 </Container>

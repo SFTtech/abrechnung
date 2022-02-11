@@ -2,18 +2,10 @@ import React from "react";
 import { Form, Formik } from "formik";
 import { changePassword } from "../../api";
 import { toast } from "react-toastify";
-import { Button, LinearProgress, Paper, TextField, Typography } from "@mui/material";
-import { makeStyles } from "@mui/styles";
-
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-    },
-}));
+import { Button, LinearProgress, TextField, Typography } from "@mui/material";
+import { MobilePaper } from "../../components/style/mobile";
 
 export default function ChangePassword() {
-    const classes = useStyles();
-
     const validate = (values) => {
         let errors = {};
         if (values.newPassword !== values.newPassword2) {
@@ -38,7 +30,7 @@ export default function ChangePassword() {
     };
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <MobilePaper>
             <Typography component="h3" variant="h5">
                 Change Password
             </Typography>
@@ -100,6 +92,6 @@ export default function ChangePassword() {
                     </Form>
                 )}
             </Formik>
-        </Paper>
+        </MobilePaper>
     );
 }

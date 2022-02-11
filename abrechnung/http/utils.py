@@ -8,9 +8,25 @@ import asyncpg
 from aiohttp import web
 from aiohttp.helpers import sentinel
 from aiohttp.typedefs import LooseHeaders
+from aiohttp.web_routedef import RouteTableDef, RouteDef
 from marshmallow import ValidationError
 
 from abrechnung.application import NotFoundError, InvalidCommand
+
+
+class PrefixedRouteTableDef(RouteTableDef):
+    def __init__(self, prefix: str) -> None:
+        super().__init__()
+        if prefix.endswith("/"):
+            prefix = prefix[:-1]
+        self.prefix = prefix
+
+    def route(self, method: str, path: str, **kwargs: Any):
+        def inner(handler):
+            self._items.append(RouteDef(method, self.prefix + path, handler, kwargs))
+            return handler
+
+        return inner
 
 
 def validate(request_schema: type):

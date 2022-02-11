@@ -16,21 +16,13 @@ import {
     ListItem,
     ListItemSecondaryAction,
     ListItemText,
-    Paper,
     TextField,
     Typography,
 } from "@mui/material";
 import { Check, Close, Delete, Edit } from "@mui/icons-material";
-import { makeStyles } from "@mui/styles";
-
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-    },
-}));
+import { MobilePaper } from "../../components/style/mobile";
 
 export default function SessionList() {
-    const classes = useStyles();
     // TODO: fix editing functions
     const [editedSessions, setEditedSessions] = useState({});
     const [sessionToDelete, setSessionToDelete] = useState({
@@ -99,7 +91,7 @@ export default function SessionList() {
     };
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <MobilePaper>
             <Typography component="h3" variant="h5">
                 Login Sessions
             </Typography>
@@ -184,6 +176,6 @@ export default function SessionList() {
                     </Button>
                 </DialogActions>
             </Dialog>
-        </Paper>
+        </MobilePaper>
     );
 }

@@ -14,12 +14,11 @@ import {
     TableRow,
     TextField,
     Typography,
+    useMediaQuery,
 } from "@mui/material";
-import { toast } from "react-toastify";
 import { useEffect, useState } from "react";
-import { createOrUpdateDebitorShare, deleteDebitorShare } from "../../../api";
 import { makeStyles } from "@mui/styles";
-import { groupTransactions, updateTransaction } from "../../../recoil/transactions";
+import { pendingTransactionDetailChanges } from "../../../recoil/transactions";
 import { accountsSeenByUser } from "../../../recoil/accounts";
 import { ShareInput } from "../../ShareInput";
 import { CompareArrows, Person, Search as SearchIcon } from "@mui/icons-material";
@@ -56,7 +55,6 @@ function AccountTableRow({
     transaction,
     account,
     showAdvanced,
-    updateDebShareValue,
     debitorShareValueForAccount,
     showPositions,
     positionValueForAccount,
@@ -81,14 +79,14 @@ function AccountTableRow({
             <TableCell width="100px">
                 {showAdvanced ? (
                     <ShareInput
-                        onChange={(value) => updateDebShareValue(account.id, value)}
+                        onChange={(value) => updateDebShare(account.id, value)}
                         value={debitorShareValueForAccount(account.id)}
                     />
                 ) : (
                     <Checkbox
                         name={`${account.name}-checked`}
                         checked={transaction.debitor_shares.hasOwnProperty(account.id)}
-                        onChange={(event) => updateDebShare(account.id, event.target.checked)}
+                        onChange={(event) => updateDebShare(account.id, event.target.checked ? 1.0 : 0)}
                     />
                 )}
             </TableCell>
@@ -119,21 +117,20 @@ function AccountTableRow({
 
 export default function PurchaseDebitorShares({ group, transaction, showPositions = false }) {
     const classes = useStyles();
+    const isSmallScreen = useMediaQuery((theme) => theme.breakpoints.down("sm"));
 
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
-    const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
 
     const [searchValue, setSearchValue] = useState("");
     const [filteredAccounts, setFilteredAccounts] = useState([]);
 
-    const [debitorShareValues, setDebitorShareValues] = useState({});
     const [showAdvanced, setShowAdvanced] = useState(false);
 
     const transactionHasPositions =
         transaction.purchase_items != null && transaction.purchase_items.find((item) => !item.deleted) !== undefined;
+    const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
 
     useEffect(() => {
-        setDebitorShareValues(transaction.debitor_shares);
         for (const share of Object.values(transaction.debitor_shares)) {
             if (share !== 1) {
                 setShowAdvanced(true);
@@ -155,7 +152,9 @@ export default function PurchaseDebitorShares({ group, transaction, showPosition
     }, [searchValue, accounts]);
 
     const debitorShareValueForAccount = (accountID) => {
-        return debitorShareValues.hasOwnProperty(accountID) ? debitorShareValues[accountID] : 0;
+        return transaction.debitor_shares && transaction.debitor_shares.hasOwnProperty(accountID)
+            ? transaction.debitor_shares[accountID]
+            : 0;
     };
 
     const debitorValueForAccount = (accountID) => {
@@ -172,62 +171,44 @@ export default function PurchaseDebitorShares({ group, transaction, showPosition
         return transaction.account_balances[accountID].positions;
     };
 
-    const updateDebShare = (accountID, checked) => {
-        if (checked) {
-            createOrUpdateDebitorShare({
-                groupID: group.id,
-                transactionID: transaction.id,
-                accountID: accountID,
-                value: debitorShareValues[accountID] || 1,
-            })
-                .then((t) => {
-                    updateTransaction(t, setTransactions);
-                })
-                .catch((err) => {
-                    toast.error(err);
-                });
+    const updateDebShare = (accountID, value) => {
+        if (value === 0) {
+            setLocalTransactionDetails((currState) => {
+                let newDebitorShares;
+                if (currState.debitor_shares === undefined) {
+                    newDebitorShares = {
+                        ...transaction.debitor_shares,
+                    };
+                } else {
+                    newDebitorShares = {
+                        ...currState.debitor_shares,
+                    };
+                }
+                delete newDebitorShares[accountID];
+                return {
+                    ...currState,
+                    debitor_shares: newDebitorShares,
+                };
+            });
         } else {
-            // TODO: delete debitor share
-            deleteDebitorShare({
-                groupID: group.id,
-                transactionID: transaction.id,
-                accountID: accountID,
-            })
-                .then((t) => {
-                    updateTransaction(t, setTransactions);
-                })
-                .catch((err) => {
-                    toast.error(err);
-                });
-        }
-    };
-
-    const updateDebShareValue = (accountID, shares) => {
-        if (shares === 0 && debitorShareValues.hasOwnProperty(accountID)) {
-            deleteDebitorShare({
-                groupID: group.id,
-                transactionID: transaction.id,
-                accountID: accountID,
-            })
-                .then((t) => {
-                    updateTransaction(t, setTransactions);
-                })
-                .catch((err) => {
-                    toast.error(err);
-                });
-        } else if (shares > 0) {
-            createOrUpdateDebitorShare({
-                groupID: group.id,
-                transactionID: transaction.id,
-                accountID: accountID,
-                value: shares,
-            })
-                .then((t) => {
-                    updateTransaction(t, setTransactions);
-                })
-                .catch((err) => {
-                    toast.error(err);
-                });
+            setLocalTransactionDetails((currState) => {
+                let newDebitorShares;
+                if (currState.debitor_shares === undefined) {
+                    newDebitorShares = {
+                        ...transaction.debitor_shares,
+                        [accountID]: value,
+                    };
+                } else {
+                    newDebitorShares = {
+                        ...currState.debitor_shares,
+                        [accountID]: value,
+                    };
+                }
+                return {
+                    ...currState,
+                    debitor_shares: newDebitorShares,
+                };
+            });
         }
     };
 
@@ -249,26 +230,30 @@ export default function PurchaseDebitorShares({ group, transaction, showPosition
                 </Grid>
             </Box>
             <Divider variant="middle" className={classes.divider} />
-            <TableContainer sx={{ maxHeight: 400 }}>
+            <TableContainer sx={{ maxHeight: { md: 400 } }}>
                 <Table size="small" stickyHeader>
                     <TableHead>
                         <TableRow>
                             <TableCell>
-                                <TextField
-                                    placeholder="Search ..."
-                                    margin="none"
-                                    size="small"
-                                    value={searchValue}
-                                    onChange={(e) => setSearchValue(e.target.value)}
-                                    variant="standard"
-                                    InputProps={{
-                                        startAdornment: (
-                                            <InputAdornment position="start">
-                                                <SearchIcon />
-                                            </InputAdornment>
-                                        ),
-                                    }}
-                                />
+                                {isSmallScreen ? (
+                                    "Account"
+                                ) : (
+                                    <TextField
+                                        placeholder="Search ..."
+                                        margin="none"
+                                        size="small"
+                                        value={searchValue}
+                                        onChange={(e) => setSearchValue(e.target.value)}
+                                        variant="standard"
+                                        InputProps={{
+                                            startAdornment: (
+                                                <InputAdornment position="start">
+                                                    <SearchIcon />
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                    />
+                                )}
                             </TableCell>
                             <TableCell width="100px">Shares</TableCell>
                             {showPositions || transactionHasPositions ? (
@@ -308,7 +293,6 @@ export default function PurchaseDebitorShares({ group, transaction, showPosition
                                 showAdvanced={showAdvanced}
                                 showPositions={showPositions}
                                 updateDebShare={updateDebShare}
-                                updateDebShareValue={updateDebShareValue}
                             />
                         ))}
                     </TableBody>

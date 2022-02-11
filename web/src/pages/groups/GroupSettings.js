@@ -14,11 +14,11 @@ import {
     DialogContentText,
     DialogTitle,
     Grid,
-    Paper,
     Alert,
 } from "@mui/material";
+import { MobilePaper } from "../../components/style/mobile";
 
-export default function GroupDetail({ group }) {
+export default function GroupSettings({ group }) {
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const history = useHistory();
 
@@ -48,7 +48,7 @@ export default function GroupDetail({ group }) {
     };
 
     return (
-        <Paper elevation={1} sx={{ padding: 2 }}>
+        <MobilePaper>
             {userPermissions.is_owner ? (
                 <Alert severity="info">You are an owner of this group</Alert>
             ) : !userPermissions.can_write ? (
@@ -125,6 +125,6 @@ export default function GroupDetail({ group }) {
                     </Button>
                 </DialogActions>
             </Dialog>
-        </Paper>
+        </MobilePaper>
     );
 }

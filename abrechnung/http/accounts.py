@@ -3,9 +3,9 @@ from aiohttp import web
 
 from abrechnung.http.openapi import docs, json_schema
 from abrechnung.http.serializers import AccountSchema
-from abrechnung.http.utils import json_response
+from abrechnung.http.utils import json_response, PrefixedRouteTableDef
 
-routes = web.RouteTableDef()
+routes = PrefixedRouteTableDef("/api")
 
 
 async def _account_response(request, account_id: int) -> web.Response:
@@ -17,7 +17,7 @@ async def _account_response(request, account_id: int) -> web.Response:
     return json_response(data=serializer.dump(account))
 
 
-@routes.get(r"/groups/{group_id:\d+}/accounts")
+@routes.get(r"/v1/groups/{group_id:\d+}/accounts")
 @docs(
     tags=["accounts"],
     summary="list all accounts in a group",
@@ -37,7 +37,7 @@ async def list_accounts(request):
     return json_response(data=serializer.dump(accounts, many=True))
 
 
-@routes.post(r"/groups/{group_id:\d+}/accounts")
+@routes.post(r"/v1/groups/{group_id:\d+}/accounts")
 @docs(
     tags=["accounts"],
     summary="create a new group account",
@@ -71,7 +71,7 @@ async def create_account(request: web.Request):
     return await _account_response(request=request, account_id=account_id)
 
 
-@routes.get(r"/accounts/{account_id:\d+}")
+@routes.get(r"/v1/accounts/{account_id:\d+}")
 @docs(
     tags=["accounts"],
     summary="fetch a group account",
@@ -83,7 +83,7 @@ async def get_account(request: web.Request):
     return await _account_response(request=request, account_id=account_id)
 
 
-@routes.post(r"/accounts/{account_id:\d+}")
+@routes.post(r"/v1/accounts/{account_id:\d+}")
 @docs(
     tags=["accounts"],
     summary="update an account",
@@ -116,7 +116,7 @@ async def update_account(request: web.Request):
     return await _account_response(request=request, account_id=account_id)
 
 
-@routes.delete(r"/accounts/{account_id:\d+}")
+@routes.delete(r"/v1/accounts/{account_id:\d+}")
 @docs(
     tags=["accounts"],
     summary="delete an account",

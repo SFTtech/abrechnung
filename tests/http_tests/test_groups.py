@@ -117,18 +117,8 @@ class GroupAPITest(HTTPAPITest):
             currency_symbol="€",
             currency_conversion_rate=1.0,
             value=20.0,
-        )
-        await self.transaction_service.add_or_change_debitor_share(
-            user_id=self.test_user_id,
-            transaction_id=transaction_id,
-            account_id=account1_id,
-            value=1.0,
-        )
-        await self.transaction_service.add_or_change_creditor_share(
-            user_id=self.test_user_id,
-            transaction_id=transaction_id,
-            account_id=account2_id,
-            value=1.0,
+            debitor_shares={account1_id: 1.0},
+            creditor_shares={account2_id: 1.0},
         )
 
         resp = await self._delete(f"/api/v1/groups/{group_id}")

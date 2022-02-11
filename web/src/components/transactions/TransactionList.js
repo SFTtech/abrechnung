@@ -1,30 +1,34 @@
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { transactionsSeenByUser } from "../../recoil/transactions";
-import TransactionCreateModal from "./TransactionCreateModal";
 import { currUserPermissions } from "../../recoil/groups";
-import { Alert, Divider, Fab, Grid, IconButton, List, Paper } from "@mui/material";
-import { Add } from "@mui/icons-material";
+import {
+    Alert,
+    Box,
+    Divider,
+    Grid,
+    IconButton,
+    List,
+    SpeedDial,
+    SpeedDialAction,
+    SpeedDialIcon,
+    Tooltip,
+} from "@mui/material";
+import { CompareArrows, ShoppingCart } from "@mui/icons-material";
 import { TransactionListEntry } from "./TransactionListEntry";
+import { MobilePaper } from "../style/mobile";
+import PurchaseCreateModal from "./purchase/PurchaseCreateModal";
+import TransferCreateModal from "./transfer/TransferCreateModal";
 
 export default function TransactionList({ group }) {
-    const [showCreateDialog, setShowCreateDialog] = useState(false);
+    const [showTransferCreateDialog, setShowTransferCreateDialog] = useState(false);
+    const [showPurchaseCreateDialog, setShowPurchaseCreateDialog] = useState(false);
     const transactions = useRecoilValue(transactionsSeenByUser(group.id));
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
 
     return (
         <>
-            <Paper sx={{ padding: 2 }}>
-                {userPermissions.can_write && (
-                    <>
-                        <Grid container justifyContent="center">
-                            <IconButton color="primary" onClick={() => setShowCreateDialog(true)}>
-                                <Add />
-                            </IconButton>
-                        </Grid>
-                        <Divider variant="middle" />
-                    </>
-                )}
+            <MobilePaper>
                 <List>
                     {transactions.length === 0 ? (
                         <Alert severity="info">No Transactions</Alert>
@@ -34,21 +38,34 @@ export default function TransactionList({ group }) {
                         ))
                     )}
                 </List>
-                <TransactionCreateModal
+                <TransferCreateModal
                     group={group}
-                    show={showCreateDialog}
-                    onClose={() => setShowCreateDialog(false)}
+                    show={showTransferCreateDialog}
+                    onClose={() => setShowTransferCreateDialog(false)}
                 />
-            </Paper>
+                <PurchaseCreateModal
+                    group={group}
+                    show={showPurchaseCreateDialog}
+                    onClose={() => setShowPurchaseCreateDialog(false)}
+                />
+            </MobilePaper>
             {userPermissions.can_write && (
-                <Fab
-                    color="primary"
-                    aria-label="add"
-                    sx={{ position: "fixed", right: 20, bottom: 20 }}
-                    onClick={() => setShowCreateDialog(true)}
+                <SpeedDial
+                    ariaLabel="Create Account"
+                    sx={{ position: "fixed", bottom: 20, right: 20 }}
+                    icon={<SpeedDialIcon />}
                 >
-                    <Add />
-                </Fab>
+                    <SpeedDialAction
+                        icon={<ShoppingCart />}
+                        tooltipTitle="Create Purchase"
+                        onClick={() => setShowPurchaseCreateDialog(true)}
+                    />
+                    <SpeedDialAction
+                        icon={<CompareArrows />}
+                        tooltipTitle="Create Transfer"
+                        onClick={() => setShowTransferCreateDialog(true)}
+                    />
+                </SpeedDial>
             )}
         </>
     );

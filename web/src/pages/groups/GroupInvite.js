@@ -2,8 +2,9 @@ import React, { useEffect, useState } from "react";
 import { useHistory, useParams } from "react-router-dom";
 import Loading from "../../components/style/Loading";
 import { fetchGroupPreview, joinGroup } from "../../api";
-import { List, Button, Grid, ListItem, ListItemText, Paper, Typography } from "@mui/material";
+import { List, Button, Grid, ListItem, ListItemText, Typography } from "@mui/material";
 import { Alert } from "@mui/lab";
+import { MobilePaper } from "../../components/style/mobile";
 
 export default function GroupInvite() {
     const [group, setGroup] = useState(null);
@@ -35,7 +36,7 @@ export default function GroupInvite() {
     };
 
     return (
-        <Paper elevation={1} sx={{ padding: 2 }}>
+        <MobilePaper>
             {error !== null ? (
                 <Alert severity="error">{error}</Alert>
             ) : group === null ? (
@@ -75,6 +76,6 @@ export default function GroupInvite() {
                     </Grid>
                 </>
             )}
-        </Paper>
+        </MobilePaper>
     );
 }

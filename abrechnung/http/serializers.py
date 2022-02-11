@@ -1,6 +1,8 @@
 from typing import Any, Mapping, Optional
 
-from marshmallow import Schema, fields
+from marshmallow import Schema, fields, post_load
+
+from abrechnung.domain.transactions import TransactionPosition
 
 
 class GroupSchema(Schema):
@@ -56,7 +58,14 @@ class SharesField(fields.Field):
         data: Optional[Mapping[str, Any]],
         **kwargs,
     ):
-        raise NotImplementedError()
+        if not isinstance(value, dict):
+            raise fields.ValidationError(message="expected a dictionary")
+        try:
+            return {int(k): float(v) for k, v in value.items()}
+        except:
+            raise fields.ValidationError(
+                message="expected a dictionary mapping int to float"
+            )
 
 
 class AccountDetailSchema(Schema):
@@ -83,9 +92,13 @@ class TransactionPositionSchema(Schema):
     id = fields.Int()
     price = fields.Number()
     communist_shares = fields.Number()
-    deleted = fields.Bool()
+    deleted = fields.Bool(required=False, load_default=False)
     name = fields.Str()
-    usages = SharesField()
+    usages = SharesField(load_default={})
+
+    @post_load
+    def make_position(self, data, **kwargs):
+        return TransactionPosition(**data)
 
 
 class TransactionDetailSchema(Schema):

@@ -11,12 +11,12 @@ from abrechnung.application.users import (
     InvalidPassword,
 )
 from abrechnung.http.serializers import UserSchema
-from abrechnung.http.utils import json_response
+from abrechnung.http.utils import json_response, PrefixedRouteTableDef
 from abrechnung.http.openapi import docs, json_schema
 
 logger = logging.getLogger(__name__)
 
-routes = web.RouteTableDef()
+routes = PrefixedRouteTableDef("/api")
 
 REQUEST_AUTH_KEY = "user"
 ACCESS_TOKEN_VALIDITY = timedelta(hours=1)
@@ -115,7 +115,7 @@ def jwt_middleware(
     return _jwt_middleware
 
 
-@routes.post("/auth/login")
+@routes.post("/v1/auth/login")
 @docs(tags=["auth"], summary="login with username and password", description="")
 @json_schema(
     Schema.from_dict(
@@ -148,7 +148,7 @@ async def login(request):
     )
 
 
-@routes.post("/auth/logout")
+@routes.post("/v1/auth/logout")
 @docs(tags=["auth"], summary="sign out of the current session", description="")
 async def logout(request):
     await request.app["user_service"].logout_user(
@@ -157,7 +157,7 @@ async def logout(request):
     return web.Response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post("/auth/fetch_access_token")
+@routes.post("/v1/auth/fetch_access_token")
 @docs(
     tags=["auth"],
     summary="get a short lived access token ussing a session token",
@@ -184,7 +184,7 @@ async def fetch_access_token(request):
     )
 
 
-@routes.post("/auth/register")
+@routes.post("/v1/auth/register")
 @docs(tags=["auth"], summary="register a new user", description="")
 @json_schema(
     Schema.from_dict(
@@ -203,7 +203,7 @@ async def register(request):
     return json_response(data={"user_id": str(user_id)})
 
 
-@routes.post("/auth/confirm_registration")
+@routes.post("/v1/auth/confirm_registration")
 @docs(tags=["auth"], summary="confirm a pending registration", description="")
 @json_schema(
     Schema.from_dict({"token": fields.Str()}, name="ConfirmRegistrationSchema")
@@ -218,7 +218,7 @@ async def confirm_registration(request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.get("/profile")
+@routes.get("/v1/profile")
 @docs(tags=["auth"], summary="fetch user profile information", description="")
 async def profile(request):
     user = await request.app["user_service"].get_user(
@@ -230,7 +230,7 @@ async def profile(request):
     return json_response(data=serializer.dump(user))
 
 
-@routes.post("/profile/change_password")
+@routes.post("/v1/profile/change_password")
 @docs(tags=["auth"], summary="change password", description="")
 @json_schema(
     Schema.from_dict(
@@ -252,7 +252,7 @@ async def change_password(request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post("/profile/change_email")
+@routes.post("/v1/profile/change_email")
 @docs(tags=["auth"], summary="change email", description="")
 @json_schema(
     Schema.from_dict(
@@ -273,7 +273,7 @@ async def change_email(request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post("/auth/confirm_email_change")
+@routes.post("/v1/auth/confirm_email_change")
 @docs(tags=["auth"], summary="confirm a pending email change", description="")
 @json_schema(Schema.from_dict({"token": fields.Str()}, name="ConfirmEmailChangeSchema"))
 async def confirm_email_change(request):
@@ -283,7 +283,7 @@ async def confirm_email_change(request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post("/auth/recover_password")
+@routes.post("/v1/auth/recover_password")
 @docs(tags=["auth"], summary="recover password", description="")
 @json_schema(Schema.from_dict({"email": fields.Email()}, name="RecoverPasswordSchema"))
 async def recover_password(request):
@@ -298,7 +298,7 @@ async def recover_password(request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post("/auth/confirm_password_recovery")
+@routes.post("/v1/auth/confirm_password_recovery")
 @docs(tags=["auth"], summary="confirm a pending password recovery", description="")
 @json_schema(
     Schema.from_dict(
@@ -318,7 +318,7 @@ async def confirm_password_recovery(request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post("/auth/delete_session")
+@routes.post("/v1/auth/delete_session")
 @docs(tags=["auth"], summary="delete a given user session", description="")
 @json_schema(Schema.from_dict({"session_id": fields.Int()}, name="DeleteSessionSchema"))
 async def delete_session(request):
@@ -330,7 +330,7 @@ async def delete_session(request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post("/auth/rename_session")
+@routes.post("/v1/auth/rename_session")
 @docs(tags=["auth"], summary="rename a given user session", description="")
 @json_schema(
     Schema.from_dict(

@@ -11,21 +11,13 @@ import {
     List,
     ListItem,
     ListItemText,
-    Paper,
     Switch,
     TextField,
     Typography,
 } from "@mui/material";
-import { makeStyles } from "@mui/styles";
-
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-    },
-}));
+import { MobilePaper } from "../../components/style/mobile";
 
 export default function GroupLog({ group }) {
-    const classes = useStyles();
     const [message, setMessage] = useState("");
     const [showAllLogs, setShowAllLogs] = useState(false);
     const logEntries = useRecoilValue(groupLog(group.id));
@@ -62,7 +54,7 @@ export default function GroupLog({ group }) {
     const log = showAllLogs ? logEntries : logEntries.filter((entry) => entry.type === "text-message");
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <MobilePaper>
             <Typography component="h3" variant="h5">
                 Group Log
             </Typography>
@@ -103,6 +95,6 @@ export default function GroupLog({ group }) {
                     </ListItem>
                 ))}
             </List>
-        </Paper>
+        </MobilePaper>
     );
 }

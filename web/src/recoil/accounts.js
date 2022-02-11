@@ -115,7 +115,7 @@ export const accountsSeenByUser = selectorFamily({
                         ? accountTypeSortingLookup[t1.type] > accountTypeSortingLookup[t2.type]
                         : t1.name === t2.name
                         ? t1.id > t2.id
-                        : t1.name > t2.name;
+                        : t1.name.toLowerCase() > t2.name.toLowerCase();
                 });
         },
 });

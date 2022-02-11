@@ -2,18 +2,10 @@ import React from "react";
 import { Form, Formik } from "formik";
 import { changeEmail } from "../../api";
 import { toast } from "react-toastify";
-import { Button, LinearProgress, Paper, TextField, Typography } from "@mui/material";
-import { makeStyles } from "@mui/styles";
-
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-    },
-}));
+import { Button, LinearProgress, TextField, Typography } from "@mui/material";
+import { MobilePaper } from "../../components/style/mobile";
 
 export default function ChangeEmail() {
-    const classes = useStyles();
-
     const handleSubmit = (values, { setSubmitting }) => {
         changeEmail({
             password: values.password,
@@ -30,7 +22,7 @@ export default function ChangeEmail() {
     };
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <MobilePaper>
             <Typography component="h3" variant="h5">
                 Change E-Mail
             </Typography>
@@ -71,6 +63,6 @@ export default function ChangeEmail() {
                     </Form>
                 )}
             </Formik>
-        </Paper>
+        </MobilePaper>
     );
 }

@@ -11,7 +11,7 @@ import FileGallery from "../FileGallery";
 export default function TransferDetails({ group, transaction }) {
     return (
         <Paper elevation={1} sx={{ padding: 2 }}>
-            <TransactionActions group={group} transaction={transaction} />
+            <TransactionActions groupID={group.id} transaction={transaction} />
             <Divider sx={{ marginBottom: 1, marginTop: 1 }} />
             <Grid container>
                 <Grid item xs={transaction.is_wip || transaction.files.length > 0 ? 6 : 12}>

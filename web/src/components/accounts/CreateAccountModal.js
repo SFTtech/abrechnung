@@ -60,6 +60,7 @@ export default function CreateAccountModal({ show, onClose, group }) {
                             />
                             <TextField
                                 margin="normal"
+                                name="description"
                                 required
                                 fullWidth
                                 variant="standard"
