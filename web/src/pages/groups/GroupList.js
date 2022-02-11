@@ -4,27 +4,11 @@ import { groupList } from "../../recoil/groups";
 import ListItemLink from "../../components/style/ListItemLink";
 import GroupCreateModal from "../../components/groups/GroupCreateModal";
 import GroupDeleteModal from "../../components/groups/GroupDeleteModal";
-import {
-    Grid,
-    IconButton,
-    List,
-    ListItem,
-    ListItemSecondaryAction,
-    ListItemText,
-    Paper,
-    Typography,
-} from "@mui/material";
+import { Grid, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
 import { Add, Delete } from "@mui/icons-material";
-import { makeStyles } from "@mui/styles";
-
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-    },
-}));
+import { MobilePaper } from "../../components/style/mobile";
 
 export default function GroupList() {
-    const classes = useStyles();
     const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
     const [showGroupDeletionModal, setShowGroupDeletionModal] = useState(false);
     const [groupToDelete, setGroupToDelete] = useState(null);
@@ -41,7 +25,7 @@ export default function GroupList() {
     };
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <MobilePaper>
             <Typography component="h3" variant="h5">
                 Groups
             </Typography>
@@ -82,6 +66,6 @@ export default function GroupList() {
                 onClose={closeGroupDeletionModal}
                 groupToDelete={groupToDelete}
             />
-        </Paper>
+        </MobilePaper>
     );
 }

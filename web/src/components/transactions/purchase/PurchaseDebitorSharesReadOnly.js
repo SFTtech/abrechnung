@@ -74,19 +74,6 @@ export default function PurchaseDebitorSharesReadOnly({ group, transaction }) {
         return debitorShareValues.hasOwnProperty(accountID) ? debitorShareValues[accountID] : 0;
     };
 
-    const debitorValueForAccount = (accountID) => {
-        if (!transaction.account_balances.hasOwnProperty(accountID)) {
-            return 0.0;
-        }
-        return transaction.account_balances[accountID].common_debitors;
-    };
-
-    const positionValueForAccount = (accountID) => {
-        if (!transaction.account_balances.hasOwnProperty(accountID)) {
-            return 0.0;
-        }
-        return transaction.account_balances[accountID].positions;
-    };
     return (
         <div>
             <List>
@@ -140,7 +127,12 @@ export default function PurchaseDebitorSharesReadOnly({ group, transaction }) {
                         </TableHead>
                         <TableBody>
                             {accounts
-                                .filter((account) => transaction.account_balances.hasOwnProperty(account.id))
+                                .filter(
+                                    (account) =>
+                                        transaction.account_balances.hasOwnProperty(account.id) &&
+                                        (transaction.account_balances[account.id].common_debitors !== 0 ||
+                                            transaction.account_balances[account.id].positions)
+                                )
                                 .map((account) => (
                                     <TableRow hover key={account.id}>
                                         <TableCell className={classes.tableLinkCell}>
@@ -169,26 +161,28 @@ export default function PurchaseDebitorSharesReadOnly({ group, transaction }) {
                                         {transactionHasPositions ? (
                                             <>
                                                 <TableCell align="right">
-                                                    {positionValueForAccount(account.id).toFixed(2)}{" "}
+                                                    {transaction.account_balances[account.id].positions.toFixed(2)}{" "}
                                                     {transaction.currency_symbol}
                                                 </TableCell>
                                                 <TableCell></TableCell>
                                                 <TableCell align="right">
-                                                    {debitorValueForAccount(account.id).toFixed(2)}{" "}
+                                                    {transaction.account_balances[account.id].common_debitors.toFixed(
+                                                        2
+                                                    )}{" "}
                                                     {transaction.currency_symbol}
                                                 </TableCell>
                                                 <TableCell></TableCell>
                                                 <TableCell width="100px" align="right">
                                                     {(
-                                                        debitorValueForAccount(account.id) +
-                                                        positionValueForAccount(account.id)
+                                                        transaction.account_balances[account.id].common_debitors +
+                                                        transaction.account_balances[account.id].positions
                                                     ).toFixed(2)}{" "}
                                                     {transaction.currency_symbol}
                                                 </TableCell>
                                             </>
                                         ) : (
                                             <TableCell width="100px" align="right">
-                                                {debitorValueForAccount(account.id).toFixed(2)}{" "}
+                                                {transaction.account_balances[account.id].common_debitors.toFixed(2)}{" "}
                                                 {transaction.currency_symbol}
                                             </TableCell>
                                         )}

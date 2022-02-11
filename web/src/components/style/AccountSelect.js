@@ -2,9 +2,14 @@ import React from "react";
 
 import { useRecoilValue } from "recoil";
 import { accountsSeenByUser } from "../../recoil/accounts";
-import { Autocomplete, Box, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Popper, TextField, Typography } from "@mui/material";
 import { DisabledTextField } from "./DisabledTextField";
 import { CompareArrows, Person } from "@mui/icons-material";
+import { styled } from "@mui/styles";
+
+const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
+    minWidth: 200,
+}));
 
 export default function AccountSelect({
     group,
@@ -28,6 +33,7 @@ export default function AccountSelect({
             disabled={disabled}
             openOnFocus
             fullWidth
+            PopperComponent={StyledAutocompletePopper}
             disableClearable
             className={className}
             onChange={(event, newValue) => onChange(newValue)}

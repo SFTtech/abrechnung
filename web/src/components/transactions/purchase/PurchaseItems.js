@@ -5,7 +5,6 @@ import {
     FormControlLabel,
     Grid,
     IconButton,
-    Paper,
     Table,
     TableBody,
     TableCell,
@@ -16,29 +15,18 @@ import {
     Tooltip,
     Typography,
 } from "@mui/material";
-import { useRecoilValue, useSetRecoilState } from "recoil";
+import { useRecoilState, useRecoilValue } from "recoil";
 import { accountsSeenByUser } from "../../../recoil/accounts";
-import {
-    addOrChangePurchaseItemShare,
-    createPurchaseItem,
-    deletePurchaseItem,
-    deletePurchaseItemShare,
-    updatePurchaseItem,
-} from "../../../api";
-import { toast } from "react-toastify";
 import { makeStyles } from "@mui/styles";
-import { Add, Delete, HelpOutline } from "@mui/icons-material";
+import { Add, ContentCopy, Delete, HelpOutline } from "@mui/icons-material";
 import AccountSelect from "../../style/AccountSelect";
 import { transactionSettings } from "../../../recoil/settings";
-import { groupTransactions, updateTransaction } from "../../../recoil/transactions";
+import { pendingTransactionPositionChanges } from "../../../recoil/transactions";
+import { MobilePaper } from "../../style/mobile";
 
 const useStyles = makeStyles((theme) => ({
     table: {
         minWidth: 650,
-    },
-    paper: {
-        padding: theme.spacing(2),
-        marginTop: theme.spacing(3),
     },
 }));
 
@@ -136,20 +124,116 @@ function WrappedTextField({ value, onChange, initial = null, errorMsg = null, va
     );
 }
 
+function PositionTableRow({
+    position,
+    updatePosition,
+    transactionAccounts,
+    showAdvanced,
+    copyPosition,
+    updatePositionUsage,
+    showAccountSelect,
+    showAddAccount,
+    deletePosition,
+}) {
+    const validateFloat = (value) => {
+        return !(value === null || value === undefined || value === "" || isNaN(parseFloat(value)));
+    };
+    return (
+        <>
+            <TableCell key={`position-${position.id}-name`}>
+                <WrappedTextField
+                    key={`position-${position.id}-name`}
+                    value={position.name}
+                    id={`position-${position.id}-name`}
+                    onChange={(value) => updatePosition(position, value, position.price, position.communist_shares)}
+                    validate={(value) => value !== "" && value != null}
+                />
+            </TableCell>
+            <TableCell key={`position-${position.id}-communist`} align="right">
+                <WrappedTextField
+                    key={`position-${position.id}-communist`}
+                    id={`position-${position.id}-communist`}
+                    value={position.price}
+                    style={{ width: 70 }}
+                    onChange={(value) =>
+                        updatePosition(position, position.name, parseFloat(value), position.communist_shares)
+                    }
+                    validate={validateFloat}
+                    errorMsg={"float required"}
+                />
+            </TableCell>
+            {transactionAccounts.map((accountID) => (
+                <TableCell align="right" key={accountID}>
+                    {showAdvanced ? (
+                        <ShareInput
+                            value={
+                                position.usages.hasOwnProperty(String(accountID))
+                                    ? position.usages[String(accountID)]
+                                    : 0
+                            }
+                            onChange={(value) => updatePositionUsage(position, accountID, value)}
+                        />
+                    ) : (
+                        <Checkbox
+                            name={`${accountID}-checked`}
+                            checked={position.usages.hasOwnProperty(String(accountID))}
+                            onChange={(event) => updatePositionUsage(position, accountID, event.target.checked ? 1 : 0)}
+                        />
+                    )}
+                </TableCell>
+            ))}
+            {showAccountSelect && <TableCell></TableCell>}
+            {showAddAccount && <TableCell></TableCell>}
+            <TableCell align="right">
+                {showAdvanced ? (
+                    <ShareInput
+                        value={position.communist_shares}
+                        onChange={(value) => updatePosition(position, position.name, position.price, parseFloat(value))}
+                    />
+                ) : (
+                    <Checkbox
+                        name="communist-checked"
+                        checked={position.communist_shares !== 0}
+                        onChange={(event) =>
+                            updatePosition(position, position.name, position.price, event.target.checked ? 1 : 0)
+                        }
+                    />
+                )}
+            </TableCell>
+            <TableCell>
+                <IconButton onClick={() => copyPosition(position)}>
+                    <ContentCopy />
+                </IconButton>
+                <IconButton onClick={() => deletePosition(position)}>
+                    <Delete />
+                </IconButton>
+            </TableCell>
+        </>
+    );
+}
+
 export default function PurchaseItems({ group, transaction }) {
     const classes = useStyles();
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
-    const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
-    const purchaseItems = transaction.purchase_items
-        ? transaction.purchase_items.filter((item) => !item.deleted).sort((left, right) => left.id > right.id)
-        : [];
+    const [localPositionChanges, setLocalPositionChanges] = useRecoilState(
+        pendingTransactionPositionChanges(transaction.id)
+    );
     const [showAdvanced, setShowAdvanced] = useState(false);
+
+    const positions = transaction.purchase_items
+        .map((p) => ({ ...p, is_empty: false }))
+        .concat([
+            {
+                ...localPositionChanges.empty,
+                is_empty: true,
+            },
+        ]);
 
     // find all accounts that take part in the transaction, either via debitor shares or purchase items
     // TODO: should we add creditor items as well?
-    const purchaseItemAccounts = [
+    const positionAccounts = [
         ...new Set(
-            purchaseItems
+            positions
                 .map((item) => Object.keys(item.usages))
                 .flat()
                 .map((id) => parseInt(id))
@@ -160,7 +244,7 @@ export default function PurchaseItems({ group, transaction }) {
         ...new Set(
             Object.keys(transaction.debitor_shares)
                 .map((id) => parseInt(id))
-                .concat(purchaseItemAccounts)
+                .concat(positionAccounts)
                 .concat(additionalPurchaseItemAccounts)
         ),
     ];
@@ -168,10 +252,9 @@ export default function PurchaseItems({ group, transaction }) {
     const showAddAccount = transactionAccounts.length < accounts.length;
 
     const [showAccountSelect, setShowAccountSelect] = useState(false);
-    const [itemIDMapping, setItemIDMapping] = useState({});
 
-    const totalPurchaseItemValue = purchaseItems.reduce((acc, curr) => acc + curr.price, 0);
-    const sharedTransactionValue = transaction.value - totalPurchaseItemValue;
+    const totalPositionValue = positions.reduce((acc, curr) => acc + curr.price, 0);
+    const sharedTransactionValue = transaction.value - totalPositionValue;
 
     const transactionEditSettings = useRecoilValue(transactionSettings);
     const showMissingValueAlert = transactionEditSettings.showRemaining;
@@ -182,197 +265,224 @@ export default function PurchaseItems({ group, transaction }) {
             : 0;
     };
 
-    const initialItem = () => {
-        return {
-            id: purchaseItems.length + 10001,
-            name: "",
-            price: 0,
-            communist_shares: 0,
-            usages: {},
-        };
-    };
-    const [pendingItems, setPendingItems] = useState([initialItem()]);
-
-    const resolveItemID = (itemID) => {
-        if (itemIDMapping.hasOwnProperty(itemID)) {
-            return itemIDMapping[itemID];
+    const updatePosition = (position, name, price, communistShares) => {
+        if (position.is_empty) {
+            return updateEmptyPosition(position, name, price, communistShares);
         }
-        return itemID;
-    };
-
-    const allItems = purchaseItems
-        .map((item) => {
-            return {
-                ...item,
-                localID: resolveItemID(item.id),
-                isPending: false,
-            };
-        })
-        .concat(
-            pendingItems.map((item) => {
-                return {
-                    ...item,
-                    localID: resolveItemID(item.id),
-                    isPending: true,
+        if (position.only_local) {
+            setLocalPositionChanges((currPositions) => {
+                let mappedAdded = { ...currPositions.added };
+                mappedAdded[position.id] = {
+                    ...position,
+                    name: name,
+                    price: price,
+                    communist_shares: communistShares,
                 };
-            })
-        )
-        .sort((item1, item2) => item1.id > item2.id);
-
-    const emptyItem = () => {
-        return {
-            id: pendingItems.length + purchaseItems.length + 10001,
-            name: "",
-            price: 0,
-            communist_shares: 0,
-            usages: {},
-        };
-    };
-
-    const validateFloat = (value) => {
-        return !(value === null || value === undefined || value === "" || isNaN(parseFloat(value)));
-    };
-
-    useEffect(() => {
-        const filteredPendingItems = pendingItems.filter(
-            (item) => transaction.purchase_items?.find((pItem) => pItem.id === item.id) === undefined
-        );
-        setPendingItems(filteredPendingItems);
-    }, [transaction, setPendingItems]);
-
-    const updateItem = (item, name, price, communistShares) => {
-        if (item.isPending) {
-            const newItem = {
-                ...item,
-                name: name,
-                price: price,
-                communist_shares: communistShares,
-            };
-            const newPendingItems = pendingItems.map((tmpItem) => (tmpItem.id === item.id ? newItem : item));
-            setPendingItems(newPendingItems);
-
-            if (name !== "" && name != null) {
-                // only start submitting once we have a name
-                createPurchaseItem({
-                    transactionID: transaction.id,
-                    name: name,
-                    price: price,
-                    communistShares: communistShares,
-                    usages: newItem.usages,
-                })
-                    .then((res) => {
-                        updateTransaction(res.transaction, setTransactions);
-                        setItemIDMapping({
-                            ...itemIDMapping,
-                            [res.item_id]: item.localID,
-                        });
-                        let newPendingItems = pendingItems.map((tmpItem) =>
-                            tmpItem.id === item.id
-                                ? {
-                                      ...tmpItem,
-                                      id: res.item_id,
-                                  }
-                                : tmpItem
-                        );
-                        newPendingItems.push(emptyItem());
-                        setPendingItems(newPendingItems);
-                    })
-                    .catch((err) => {
-                        toast.error(err);
-                    });
-            }
+                return {
+                    modified: currPositions.modified,
+                    added: mappedAdded,
+                    empty: currPositions.empty,
+                };
+            });
         } else {
-            if (item.name === name && item.price === price && item.communist_shares === communistShares) {
-                return;
-            }
-
-            if (transaction.is_wip) {
-                updatePurchaseItem({
-                    itemID: item.id,
-                    price: price,
+            setLocalPositionChanges((currPositions) => {
+                let mappedModified = { ...currPositions.modified };
+                mappedModified[position.id] = {
+                    ...position,
                     name: name,
-                    communistShares: communistShares,
-                })
-                    .then((t) => {
-                        updateTransaction(t, setTransactions);
-                    })
-                    .catch((err) => {
-                        toast.error(err);
-                    });
-            }
+                    price: price,
+                    communist_shares: communistShares,
+                };
+                return {
+                    modified: mappedModified,
+                    empty: currPositions.empty,
+                    added: currPositions.added,
+                };
+            });
         }
     };
 
-    const updateItemUsage = (item, accountID, shares) => {
-        if (item.usages.hasOwnProperty(accountID) && item.usages[accountID] === shares) {
-            return;
+    const updatePositionUsage = (position, accountID, shares) => {
+        if (position.is_empty) {
+            return updateEmptyPositionUsage(position, accountID, shares);
         }
-        if (item.isPending) {
-            let newUsages = {
-                ...item.usages,
-            };
-            if (shares === 0) {
+        if (position.only_local) {
+            setLocalPositionChanges((currPositions) => {
+                let mappedAdded = { ...currPositions.added };
+                let usages = { ...currPositions.added[position.id].usages };
+                if (shares === 0) {
+                    delete usages[accountID];
+                } else {
+                    usages[accountID] = shares;
+                }
+                mappedAdded[position.id] = {
+                    ...currPositions.added[position.id],
+                    usages: usages,
+                };
+                return {
+                    modified: currPositions.modified,
+                    added: mappedAdded,
+                    empty: currPositions.empty,
+                };
+            });
+        } else {
+            setLocalPositionChanges((currPositions) => {
+                let mappedModified = { ...currPositions.modified };
+                let usages;
+                if (mappedModified.hasOwnProperty(position.id)) {
+                    // we already did change something locally
+                    usages = { ...currPositions.modified[position.id].usages };
+                } else {
+                    // we first need to copy
+                    usages = { ...position.usages };
+                }
+
+                if (shares === 0) {
+                    delete usages[accountID];
+                } else {
+                    usages[accountID] = shares;
+                }
+                mappedModified[position.id] = {
+                    ...position,
+                    ...currPositions.modified[position.id],
+                    usages: usages,
+                };
+                return {
+                    modified: mappedModified,
+                    added: currPositions.added,
+                    empty: currPositions.empty,
+                };
+            });
+        }
+    };
+
+    const deletePosition = (position) => {
+        if (position.is_empty) {
+            return resetEmptyPosition(position);
+        }
+
+        if (position.only_local) {
+            setLocalPositionChanges((currPositions) => {
+                let mappedAdded = { ...currPositions.added };
+                delete mappedAdded[position.id];
+                return {
+                    modified: currPositions.modified,
+                    added: mappedAdded,
+                    empty: currPositions.empty,
+                };
+            });
+        } else {
+            setLocalPositionChanges((currPositions) => {
+                let mappedModified = { ...currPositions.modified };
+                mappedModified[position.id] = {
+                    ...position,
+                    deleted: true,
+                };
+                return {
+                    modified: mappedModified,
+                    added: currPositions.added,
+                    empty: currPositions.empty,
+                };
+            });
+        }
+    };
+
+    const nextEmptyPositionID = (localPositions) => {
+        return (
+            Math.min(...Object.values(localPositions.added).map((p) => parseInt(p.id)), -1, localPositions.empty.id) - 1
+        );
+    };
+
+    const resetEmptyPosition = () => {
+        setLocalPositionChanges((currValue) => ({
+            modified: currValue.modified,
+            added: currValue.added,
+            empty: {
+                id: nextEmptyPositionID(currValue),
+                name: "",
+                price: 0,
+                communist_shares: 0,
+                usages: {},
+            },
+        }));
+    };
+
+    const updateEmptyPosition = (position, name, price, communistShares) => {
+        if (name !== "" && name != null) {
+            const copyOfEmpty = { ...position, name: name, price: price, communist_shares: communistShares };
+            setLocalPositionChanges((currPositions) => {
+                let mappedAdded = { ...currPositions.added };
+                mappedAdded[position.id] = copyOfEmpty;
+                return {
+                    modified: currPositions.modified,
+                    added: mappedAdded,
+                    empty: {
+                        id: nextEmptyPositionID(currPositions),
+                        name: "",
+                        price: 0,
+                        communist_shares: 0,
+                        usages: {},
+                    },
+                };
+            });
+        } else {
+            setLocalPositionChanges((currPositions) => {
+                return {
+                    modified: currPositions.modified,
+                    added: currPositions.added,
+                    empty: {
+                        ...position,
+                        name: name,
+                        price: price,
+                        communist_shares: communistShares,
+                    },
+                };
+            });
+        }
+    };
+
+    const updateEmptyPositionUsage = (position, accountID, value) => {
+        setLocalPositionChanges((currPositions) => {
+            let newUsages = { ...position.usages };
+            if (value === 0) {
                 delete newUsages[accountID];
             } else {
-                newUsages[accountID] = shares;
+                newUsages[accountID] = value;
             }
-
-            const newItems = pendingItems.map((i) => (i.id === item.id ? { ...item, usages: newUsages } : i));
-            setPendingItems(newItems);
-        } else {
-            if (shares === 0 && item.usages.hasOwnProperty(accountID)) {
-                deletePurchaseItemShare({
-                    itemID: item.id,
-                    accountID: accountID,
-                })
-                    .then((t) => {
-                        updateTransaction(t, setTransactions);
-                    })
-                    .catch((err) => {
-                        toast.error(err);
-                    });
-            } else if (shares > 0) {
-                addOrChangePurchaseItemShare({
-                    itemID: item.id,
-                    accountID: accountID,
-                    shareAmount: shares,
-                })
-                    .then((t) => {
-                        updateTransaction(t, setTransactions);
-                    })
-                    .catch((err) => {
-                        toast.error(err);
-                    });
-            }
-        }
+            return {
+                modified: currPositions.modified,
+                added: currPositions.added,
+                empty: {
+                    ...position,
+                    usages: newUsages,
+                },
+            };
+        });
     };
 
-    const deleteItem = (item) => {
-        if (item.isPending) {
-            const filteredItems = pendingItems.filter((tmpItem) => tmpItem.id !== item.id);
-            if (filteredItems.length === 0) {
-                setPendingItems([emptyItem()]);
-            } else {
-                setPendingItems(filteredItems);
-            }
-        } else {
-            deletePurchaseItem({ itemID: item.id })
-                .then((t) => {
-                    updateTransaction(t, setTransactions);
-                })
-                .catch((err) => {
-                    toast.error(err);
-                });
-        }
+    const copyPosition = (position) => {
+        setLocalPositionChanges((currPositions) => {
+            const newPosition = {
+                ...position,
+                id: nextEmptyPositionID(currPositions),
+            };
+            let mappedAdded = { ...currPositions.added };
+            mappedAdded[newPosition.id] = newPosition;
+            return {
+                modified: currPositions.modified,
+                added: mappedAdded,
+                empty: currPositions.empty,
+            };
+        });
     };
 
     const addPurchaseItemAccount = (account) => {
         setShowAccountSelect(false);
-        setAdditionalPurchaseItemAccounts([...new Set([...purchaseItemAccounts, parseInt(account.id)])]);
+        setAdditionalPurchaseItemAccounts([...new Set([...positionAccounts, parseInt(account.id)])]);
     };
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <MobilePaper sx={{ marginTop: 2 }}>
             <Grid container direction="row" justifyContent="space-between">
                 <Typography>Positions</Typography>
                 {transaction.is_wip && (
@@ -385,12 +495,12 @@ export default function PurchaseItems({ group, transaction }) {
                 )}
             </Grid>
             <TableContainer>
-                <Table className={classes.table} aria-label="purchase items" size="small">
+                <Table className={classes.table} stickyHeader aria-label="purchase items" size="small">
                     <TableHead>
                         <TableRow>
                             <TableCell>Name</TableCell>
                             <TableCell align="right">Price</TableCell>
-                            {(transaction.is_wip ? transactionAccounts : purchaseItemAccounts).map((accountID) => (
+                            {(transaction.is_wip ? transactionAccounts : positionAccounts).map((accountID) => (
                                 <TableCell align="right" sx={{ minWidth: 80 }} key={accountID}>
                                     {accounts.find((account) => account.id === accountID).name}
                                 </TableCell>
@@ -421,113 +531,55 @@ export default function PurchaseItems({ group, transaction }) {
                     </TableHead>
                     <TableBody>
                         {transaction.is_wip
-                            ? allItems.map((item) => (
-                                  <TableRow hover key={item.localID}>
-                                      <TableCell>
-                                          <WrappedTextField
-                                              value={item.name}
-                                              onChange={(value) =>
-                                                  updateItem(item, value, item.price, item.communist_shares)
-                                              }
-                                              validate={(value) => value !== "" && value != null}
-                                          />
-                                      </TableCell>
-                                      <TableCell align="right">
-                                          <WrappedTextField
-                                              value={item.price}
-                                              style={{ width: 70 }}
-                                              onChange={(value) =>
-                                                  updateItem(item, item.name, parseFloat(value), item.communist_shares)
-                                              }
-                                              validate={validateFloat}
-                                              errorMsg={"float required"}
-                                          />
-                                      </TableCell>
-                                      {transactionAccounts.map((accountID) => (
-                                          <TableCell align="right" key={accountID}>
-                                              {showAdvanced ? (
-                                                  <ShareInput
-                                                      value={
-                                                          item.usages.hasOwnProperty(String(accountID))
-                                                              ? item.usages[String(accountID)]
-                                                              : 0
-                                                      }
-                                                      onChange={(value) => updateItemUsage(item, accountID, value)}
-                                                  />
-                                              ) : (
-                                                  <Checkbox
-                                                      name={`${accountID}-checked`}
-                                                      checked={item.usages.hasOwnProperty(String(accountID))}
-                                                      onChange={(event) =>
-                                                          updateItemUsage(item, accountID, event.target.checked ? 1 : 0)
-                                                      }
-                                                  />
-                                              )}
-                                          </TableCell>
-                                      ))}
-                                      {showAccountSelect && <TableCell></TableCell>}
-                                      {showAddAccount && <TableCell></TableCell>}
-                                      <TableCell align="right">
-                                          {showAdvanced ? (
-                                              <ShareInput
-                                                  value={item.communist_shares}
-                                                  onChange={(value) =>
-                                                      updateItem(item, item.name, item.price, parseFloat(value))
-                                                  }
-                                              />
-                                          ) : (
-                                              <Checkbox
-                                                  name="communist-checked"
-                                                  checked={item.communist_shares !== 0}
-                                                  onChange={(event) =>
-                                                      updateItem(
-                                                          item,
-                                                          item.name,
-                                                          item.price,
-                                                          event.target.checked ? 1 : 0
-                                                      )
-                                                  }
-                                              />
-                                          )}
-                                      </TableCell>
-                                      <TableCell>
-                                          <IconButton onClick={() => deleteItem(item)}>
-                                              <Delete />
-                                          </IconButton>
-                                      </TableCell>
+                            ? positions.map((position) => (
+                                  <TableRow hover key={position.id}>
+                                      <PositionTableRow
+                                          position={position}
+                                          deletePosition={deletePosition}
+                                          transactionAccounts={transactionAccounts}
+                                          copyPosition={copyPosition}
+                                          updatePosition={updatePosition}
+                                          updatePositionUsage={updatePositionUsage}
+                                          showAdvanced={showAdvanced}
+                                          showAccountSelect={showAccountSelect}
+                                          showAddAccount={showAddAccount}
+                                      />
                                   </TableRow>
                               ))
-                            : purchaseItems.map((item) => (
-                                  <TableRow hover key={item.id}>
-                                      <TableCell>{item.name}</TableCell>
-                                      <TableCell align="right" style={{ width: 80 }}>
-                                          {item.price.toFixed(2)} {transaction.currency_symbol}
-                                      </TableCell>
-                                      {purchaseItemAccounts.map((accountID) => (
-                                          <TableCell align="right" key={accountID}>
-                                              {item.usages.hasOwnProperty(String(accountID))
-                                                  ? item.usages[String(accountID)]
-                                                  : 0}
-                                          </TableCell>
-                                      ))}
-                                      <TableCell align="right">{item.communist_shares}</TableCell>
-                                  </TableRow>
-                              ))}
+                            : positions.map(
+                                  (position) =>
+                                      !position.is_empty && (
+                                          <TableRow hover key={position.id}>
+                                              <TableCell>{position.name}</TableCell>
+                                              <TableCell align="right" style={{ width: 80 }}>
+                                                  {position.price.toFixed(2)} {transaction.currency_symbol}
+                                              </TableCell>
+                                              {positionAccounts.map((accountID) => (
+                                                  <TableCell align="right" key={accountID}>
+                                                      {position.usages.hasOwnProperty(String(accountID))
+                                                          ? position.usages[String(accountID)]
+                                                          : 0}
+                                                  </TableCell>
+                                              ))}
+                                              <TableCell align="right">{position.communist_shares}</TableCell>
+                                          </TableRow>
+                                      )
+                              )}
                         <TableRow hover>
                             <TableCell>
                                 <Typography sx={{ fontWeight: "bold" }}>Total:</Typography>
                             </TableCell>
                             <TableCell align="right">
-                                {totalPurchaseItemValue.toFixed(2)} {transaction.currency_symbol}
+                                {totalPositionValue.toFixed(2)} {transaction.currency_symbol}
                             </TableCell>
-                            {(transaction.is_wip ? transactionAccounts : purchaseItemAccounts).map((accountID) => (
+                            {(transaction.is_wip ? transactionAccounts : positionAccounts).map((accountID) => (
                                 <TableCell align="right" key={accountID}>
                                     {purchaseItemSumForAccount(accountID).toFixed(2)} {transaction.currency_symbol}
                                 </TableCell>
                             ))}
                             <TableCell align="right" colSpan={showAddAccount ? 2 : 1}>
                                 {(
-                                    purchaseItems.reduce((acc, curr) => acc + curr.price, 0) -
+                                    positions.reduce((acc, curr) => acc + curr.price, 0) -
                                     Object.values(transaction.account_balances).reduce(
                                         (acc, curr) => acc + curr.positions,
                                         0
@@ -556,6 +608,6 @@ export default function PurchaseItems({ group, transaction }) {
                     </strong>
                 </Alert>
             )}
-        </Paper>
+        </MobilePaper>
     );
 }

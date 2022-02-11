@@ -13,12 +13,12 @@ from abrechnung.http.serializers import (
     GroupPreviewSchema,
     GroupLogSchema,
 )
-from abrechnung.http.utils import json_response
+from abrechnung.http.utils import json_response, PrefixedRouteTableDef
 
-routes = web.RouteTableDef()
+routes = PrefixedRouteTableDef("/api")
 
 
-@routes.get("/groups")
+@routes.get("/v1/groups")
 @docs(tags=["groups"], summary="list the current users groups", description="")
 async def list_groups(request):
     try:
@@ -33,7 +33,7 @@ async def list_groups(request):
     return json_response(data=serializer.dump(groups, many=True))
 
 
-@routes.post("/groups")
+@routes.post("/v1/groups")
 @docs(tags=["groups"], summary="create a group", description="")
 @json_schema(
     Schema.from_dict(
@@ -59,7 +59,7 @@ async def create_group(request: Request):
     return json_response(data={"group_id": group_id})
 
 
-@routes.get(r"/groups/{group_id:\d+}")
+@routes.get(r"/v1/groups/{group_id:\d+}")
 @docs(tags=["groups"], summary="fetch group details", description="")
 async def get_group(request: Request):
     group = await request.app["group_service"].get_group(
@@ -72,7 +72,7 @@ async def get_group(request: Request):
     return json_response(data=serializer.dump(group))
 
 
-@routes.post(r"/groups/{group_id:\d+}")
+@routes.post(r"/v1/groups/{group_id:\d+}")
 @docs(tags=["groups"], summary="update group details", description="")
 @json_schema(
     Schema.from_dict(
@@ -99,7 +99,7 @@ async def update_group(request: Request):
     return web.Response(status=web.HTTPNoContent.status_code)
 
 
-@routes.delete(r"/groups/{group_id:\d+}")
+@routes.delete(r"/v1/groups/{group_id:\d+}")
 @docs(tags=["groups"], summary="delete a group", description="")
 async def delete_group(request: Request):
     await request.app["group_service"].delete_group(
@@ -110,7 +110,7 @@ async def delete_group(request: Request):
     return web.Response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post(r"/groups/{group_id:\d+}/leave")
+@routes.post(r"/v1/groups/{group_id:\d+}/leave")
 @docs(tags=["groups"], summary="leave a group", description="")
 async def leave_group(request: Request):
     await request.app["group_service"].leave_group(
@@ -121,7 +121,7 @@ async def leave_group(request: Request):
     return web.Response(status=web.HTTPNoContent.status_code)
 
 
-@routes.get(r"/groups/{group_id:\d+}/members")
+@routes.get(r"/v1/groups/{group_id:\d+}/members")
 @docs(tags=["groups"], summary="list all members of a group", description="")
 async def list_members(request: web.Request):
     members = await request.app["group_service"].list_members(
@@ -134,7 +134,7 @@ async def list_members(request: web.Request):
     return json_response(data=serializer.dump(members, many=True))
 
 
-@routes.get(r"/groups/{group_id:\d+}/logs")
+@routes.get(r"/v1/groups/{group_id:\d+}/logs")
 @docs(tags=["groups"], summary="fetch the group log", description="")
 async def list_log(request: web.Request):
     logs = await request.app["group_service"].list_log(
@@ -147,7 +147,7 @@ async def list_log(request: web.Request):
     return json_response(data=serializer.dump(logs, many=True))
 
 
-@routes.post(r"/groups/{group_id:\d+}/send_message")
+@routes.post(r"/v1/groups/{group_id:\d+}/send_message")
 @docs(tags=["groups"], summary="post a message to the group log", description="")
 @json_schema(Schema.from_dict({"message": fields.Str()}, name="SendGroupMessageSchema"))
 async def send_group_message(request: web.Request):
@@ -161,7 +161,7 @@ async def send_group_message(request: web.Request):
     return web.Response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post(r"/groups/{group_id:\d+}/members")
+@routes.post(r"/v1/groups/{group_id:\d+}/members")
 @docs(
     tags=["groups"], summary="update the permissions of a group member", description=""
 )
@@ -184,7 +184,7 @@ async def update_member_permissions(request: web.Request):
     return web.Response(status=web.HTTPNoContent.status_code)
 
 
-@routes.get(r"/groups/{group_id:\d+}/invites")
+@routes.get(r"/v1/groups/{group_id:\d+}/invites")
 @docs(tags=["groups"], summary="list all invite links of a group", description="")
 async def list_invites(request):
     invites = await request.app["group_service"].list_invites(
@@ -197,7 +197,7 @@ async def list_invites(request):
     return json_response(data=serializer.dump(invites, many=True))
 
 
-@routes.post(r"/groups/{group_id:\d+}/invites")
+@routes.post(r"/v1/groups/{group_id:\d+}/invites")
 @docs(tags=["groups"], summary="create a new group invite link", description="")
 @json_schema(
     Schema.from_dict(
@@ -228,7 +228,7 @@ async def create_invite(request: Request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.delete(r"/groups/{group_id:\d+}/invites/{invite_id:\d+}")
+@routes.delete(r"/v1/groups/{group_id:\d+}/invites/{invite_id:\d+}")
 @docs(tags=["groups"], summary="delete a group invite link", description="")
 async def delete_invite(request: Request):
     await request.app["group_service"].delete_invite(
@@ -239,7 +239,7 @@ async def delete_invite(request: Request):
     return json_response(status=web.HTTPNoContent.status_code)
 
 
-@routes.post(r"/groups/preview")
+@routes.post(r"/v1/groups/preview")
 @docs(
     tags=["groups"],
     summary="preview a group before joining using an invite token",
@@ -259,7 +259,7 @@ async def preview_group(request: Request):
     return json_response(data=serializer.dump(group_preview))
 
 
-@routes.post(r"/groups/join")
+@routes.post(r"/v1/groups/join")
 @docs(tags=["groups"], summary="join a group using an invite token", description="")
 @json_schema(Schema.from_dict({"invite_token": fields.Str()}, name="JoinGroupSchema"))
 async def join_group(request: Request):

@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import placeholderImg from "./PlaceholderImage.svg";
 import { useSetRecoilState } from "recoil";
-import { groupTransactions, updateTransaction } from "../../recoil/transactions";
+import { groupTransactions, updateTransactionInState } from "../../recoil/transactions";
 
 export default function ImageUploadDialog({ transaction, show, onClose }) {
     const [fileState, setFileState] = useState({
@@ -73,7 +73,7 @@ export default function ImageUploadDialog({ transaction, show, onClose }) {
                     message: "",
                     isError: false,
                 });
-                updateTransaction(t, setTransactions);
+                updateTransactionInState(t, setTransactions);
                 onClose();
             })
             .catch((err) => {

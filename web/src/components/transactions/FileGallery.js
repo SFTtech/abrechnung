@@ -6,7 +6,7 @@ import { AddCircle, ChevronLeft, ChevronRight, Delete } from "@mui/icons-materia
 import Transition from "react-transition-group/Transition";
 import ImageUploadDialog from "./ImageUploadDialog";
 import placeholderImg from "./PlaceholderImage.svg";
-import { groupTransactions, updateTransaction } from "../../recoil/transactions";
+import { groupTransactions, updateTransactionInState } from "../../recoil/transactions";
 import { useSetRecoilState } from "recoil";
 
 const duration = 200;
@@ -89,7 +89,7 @@ export default function FileGallery({ transaction }) {
             // sanity check, should not be needed
             deleteFile({ fileID: files[active].id })
                 .then((t) => {
-                    updateTransaction(t, setTransactions);
+                    updateTransactionInState(t, setTransactions);
                     setShowImage(false);
                 })
                 .catch((err) => {

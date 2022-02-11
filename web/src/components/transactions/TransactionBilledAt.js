@@ -1,15 +1,13 @@
 import React, { useState } from "react";
-import { toast } from "react-toastify";
-import { updateTransactionDetails } from "../../api";
 import { DisabledTextField } from "../style/DisabledTextField";
 import { DatePicker } from "@mui/lab";
 import { TextField } from "@mui/material";
 import { useSetRecoilState } from "recoil";
-import { groupTransactions, updateTransaction } from "../../recoil/transactions";
+import { pendingTransactionDetailChanges } from "../../recoil/transactions";
 
 export default function TransactionBilledAt({ group, transaction }) {
     const [error, setError] = useState(null);
-    const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
+    const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
 
     const save = (billedAt) => {
         if (billedAt == null || billedAt.invalid) {
@@ -18,22 +16,12 @@ export default function TransactionBilledAt({ group, transaction }) {
         }
         setError(null);
         if (transaction.is_wip && billedAt !== transaction.billed_at) {
-            updateTransactionDetails({
-                groupID: group.id,
-                transactionID: transaction.id,
-                currencyConversionRate: transaction.currency_conversion_rate,
-                currencySymbol: transaction.currency_symbol,
-                billedAt: billedAt.toISODate(),
-                value: transaction.value,
-                description: transaction.description,
-            })
-                .then((t) => {
-                    updateTransaction(t, setTransactions);
-                })
-                .catch((err) => {
-                    // something else
-                    toast.error(err);
-                });
+            setLocalTransactionDetails((currState) => {
+                return {
+                    ...currState,
+                    billed_at: billedAt.toISODate(),
+                };
+            });
         }
     };
     if (!transaction.is_wip) {

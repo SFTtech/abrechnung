@@ -388,6 +388,9 @@ export async function createTransaction({
     billedAt,
     currencySymbol = "€",
     currencyConversionRate = 1.0,
+    creditorShares = undefined,
+    debitorShares = undefined,
+    performCommit = false,
 }) {
     const resp = await makePost(`/groups/${groupID}/transactions`, {
         description: description,
@@ -396,25 +399,62 @@ export async function createTransaction({
         billed_at: billedAt,
         currency_symbol: currencySymbol,
         currency_conversion_rate: currencyConversionRate,
+        creditor_shares: creditorShares,
+        debitor_shares: debitorShares,
+        perform_commit: performCommit,
     });
     return resp.data;
 }
 
-export async function updateTransactionDetails({
+export async function updateTransaction({
     transactionID,
     description,
     value,
     billedAt,
     currencySymbol,
     currencyConversionRate,
+    creditorShares = null,
+    debitorShares = null,
+    positions = null,
+    performCommit = true,
 }) {
-    const resp = await makePost(`/transactions/${transactionID}`, {
+    let payload = {
         description: description,
         value: value,
         billed_at: billedAt,
         currency_symbol: currencySymbol,
         currency_conversion_rate: currencyConversionRate,
-    });
+        perform_commit: performCommit,
+    };
+    if (creditorShares) {
+        payload.creditor_shares = creditorShares;
+    }
+    if (debitorShares) {
+        payload.debitor_shares = debitorShares;
+    }
+    if (positions) {
+        payload.positions = positions.map((p) => {
+            return {
+                ...p,
+                only_local: undefined,
+            };
+        });
+    }
+    const resp = await makePost(`/transactions/${transactionID}`, payload);
+    return resp.data;
+}
+
+export async function updateTransactionPositions({ transactionID, positions, performCommit = true }) {
+    let payload = {
+        perform_commit: performCommit,
+        positions: positions.map((p) => {
+            return {
+                ...p,
+                only_local: undefined,
+            };
+        }),
+    };
+    const resp = await makePost(`/transactions/${transactionID}/positions`, payload);
     return resp.data;
 }
 
@@ -444,54 +484,6 @@ export async function deleteFile({ fileID }) {
     return resp.data;
 }
 
-export async function createOrUpdateCreditorShare({ transactionID, accountID, value }) {
-    const resp = await makePost(`/transactions/${transactionID}/creditor_shares`, {
-        account_id: accountID,
-        value: value,
-    });
-    return resp.data;
-}
-
-export async function switchCreditorShare({ transactionID, accountID, value }) {
-    const resp = await makePost(`/transactions/${transactionID}/creditor_shares/switch`, {
-        account_id: accountID,
-        value: value,
-    });
-    return resp.data;
-}
-
-export async function deleteCreditorShare({ transactionID, accountID }) {
-    const resp = await makeDelete(`/transactions/${transactionID}/creditor_shares`, {
-        data: {
-            account_id: accountID,
-        },
-    });
-    return resp.data;
-}
-
-export async function createOrUpdateDebitorShare({ transactionID, accountID, value }) {
-    const resp = await makePost(`/transactions/${transactionID}/debitor_shares`, {
-        account_id: accountID,
-        value: value,
-    });
-    return resp.data;
-}
-
-export async function switchDebitorShare({ transactionID, accountID, value }) {
-    const resp = await makePost(`/transactions/${transactionID}/debitor_shares/switch`, {
-        account_id: accountID,
-        value: value,
-    });
-    return resp.data;
-}
-
-export async function deleteDebitorShare({ transactionID, accountID }) {
-    const resp = await makeDelete(`/transactions/${transactionID}/debitor_shares`, {
-        account_id: accountID,
-    });
-    return resp.data;
-}
-
 export async function commitTransaction({ transactionID }) {
     const resp = await makePost(`/transactions/${transactionID}/commit`);
     return resp.data;
@@ -509,44 +501,5 @@ export async function discardTransactionChange({ transactionID }) {
 
 export async function deleteTransaction({ transactionID }) {
     const resp = await makeDelete(`/transactions/${transactionID}`);
-    return resp.data;
-}
-
-export async function createPurchaseItem({ transactionID, name, price, communistShares, usages }) {
-    const resp = await makePost(`/transactions/${transactionID}/purchase_items`, {
-        name: name,
-        price: price,
-        communist_shares: communistShares,
-        usages: usages,
-    });
-    return resp.data;
-}
-
-export async function updatePurchaseItem({ itemID, name, price, communistShares }) {
-    const resp = await makePost(`/purchase_items/${itemID}`, {
-        name: name,
-        price: price,
-        communist_shares: communistShares,
-    });
-    return resp.data;
-}
-
-export async function deletePurchaseItem({ itemID }) {
-    const resp = await makeDelete(`/purchase_items/${itemID}`);
-    return resp.data;
-}
-
-export async function addOrChangePurchaseItemShare({ itemID, accountID, shareAmount }) {
-    const resp = await makePost(`/purchase_items/${itemID}/shares`, {
-        account_id: accountID,
-        share_amount: shareAmount,
-    });
-    return resp.data;
-}
-
-export async function deletePurchaseItemShare({ itemID, accountID }) {
-    const resp = await makeDelete(`/purchase_items/${itemID}/shares`, {
-        account_id: accountID,
-    });
     return resp.data;
 }

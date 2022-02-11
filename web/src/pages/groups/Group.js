@@ -9,7 +9,7 @@ import { groupById } from "../../recoil/groups";
 import Layout from "../../components/style/Layout";
 import Loading from "../../components/style/Loading";
 import Transaction from "./Transaction";
-import GroupDetail from "./GroupDetail";
+import GroupSettings from "./GroupSettings";
 import Balances from "../../components/accounts/Balances";
 import AccountList from "./AccountList";
 import AccountDetail from "./AccountDetail";
@@ -38,7 +38,7 @@ export default function Group() {
                 </Route>
                 <Route exact path={`${match.path}/detail`}>
                     <Suspense fallback={<Loading />}>
-                        <GroupDetail group={group} />
+                        <GroupSettings group={group} />
                     </Suspense>
                 </Route>
                 <Route exact path={`${match.path}/invites`}>

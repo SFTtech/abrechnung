@@ -1,5 +1,4 @@
-import React from "react";
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRecoilState } from "recoil";
 import { themeSettings, transactionSettings } from "../../recoil/settings";
 import {
@@ -17,22 +16,14 @@ import {
     FormGroup,
     FormLabel,
     MenuItem,
-    Paper,
     Select,
     Switch,
     Typography,
 } from "@mui/material";
-import { makeStyles } from "@mui/styles";
 import { clearCache } from "../../recoil/cache";
-
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-    },
-}));
+import { MobilePaper } from "../../components/style/mobile";
 
 export default function Settings() {
-    const classes = useStyles();
     const [theme, setTheme] = useRecoilState(themeSettings);
     const [tSettings, setTransactionSettings] = useRecoilState(transactionSettings);
 
@@ -69,7 +60,7 @@ export default function Settings() {
     };
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <MobilePaper>
             <Typography component="h3" variant="h5">
                 Settings
             </Typography>
@@ -144,6 +135,6 @@ export default function Settings() {
                     <Button onClick={handleConfirmClearCacheClose}>Cancel</Button>
                 </DialogActions>
             </Dialog>
-        </Paper>
+        </MobilePaper>
     );
 }

@@ -6,10 +6,10 @@ from aiohttp.web_request import FileField
 from marshmallow import Schema, fields
 
 from abrechnung.http.openapi import docs, json_schema
-from abrechnung.http.serializers import TransactionSchema
-from abrechnung.http.utils import json_response
+from abrechnung.http.serializers import TransactionSchema, TransactionPositionSchema
+from abrechnung.http.utils import json_response, PrefixedRouteTableDef
 
-routes = web.RouteTableDef()
+routes = PrefixedRouteTableDef("/api")
 
 
 async def _transaction_response(request, transaction_id: int) -> web.Response:
@@ -21,7 +21,7 @@ async def _transaction_response(request, transaction_id: int) -> web.Response:
     return json_response(data=serializer.dump(transaction))
 
 
-@routes.get(r"/groups/{group_id:\d+}/transactions")
+@routes.get(r"/v1/groups/{group_id:\d+}/transactions")
 @docs(
     tags=["transactions"],
     summary="list all transactions in a group",
@@ -60,7 +60,7 @@ async def list_transactions(request):
     return json_response(data=serializer.dump(transactions, many=True))
 
 
-@routes.post(r"/groups/{group_id:\d+}/transactions")
+@routes.post(r"/v1/groups/{group_id:\d+}/transactions")
 @docs(
     tags=["transactions"],
     summary="create a new transaction",
@@ -76,6 +76,13 @@ async def list_transactions(request):
             "currency_symbol": fields.Str(),
             "billed_at": fields.Date(),
             "currency_conversion_rate": fields.Number(),
+            "creditor_shares": fields.Dict(
+                fields.Int(), fields.Number(), load_default=None, required=False
+            ),
+            "debitor_shares": fields.Dict(
+                fields.Int(), fields.Number(), load_default=None, required=False
+            ),
+            "perform_commit": fields.Bool(load_default=False, required=False),
         },
         name="CreateTransactionSchema",
     )
@@ -93,12 +100,15 @@ async def create_transaction(request: Request):
         currency_conversion_rate=float(data["currency_conversion_rate"]),
         billed_at=data["billed_at"],
         value=float(data["value"]),
+        creditor_shares=data["creditor_shares"],
+        debitor_shares=data["debitor_shares"],
+        perform_commit=data["perform_commit"],
     )
 
     return await _transaction_response(request, transaction_id)
 
 
-@routes.get(r"/transactions/{transaction_id:\d+}")
+@routes.get(r"/v1/transactions/{transaction_id:\d+}")
 @docs(
     tags=["transactions"],
     summary="get transaction details",
@@ -115,7 +125,7 @@ async def get_transaction(request: Request):
     return json_response(data=serializer.dump(transaction))
 
 
-@routes.post(r"/transactions/{transaction_id:\d+}")
+@routes.post(r"/v1/transactions/{transaction_id:\d+}")
 @docs(
     tags=["transactions"],
     summary="update transaction details",
@@ -130,6 +140,18 @@ async def get_transaction(request: Request):
             "currency_symbol": fields.Str(),
             "billed_at": fields.Date(),
             "currency_conversion_rate": fields.Number(),
+            "creditor_shares": fields.Dict(
+                fields.Int(), fields.Number(), load_default=None, required=False
+            ),
+            "debitor_shares": fields.Dict(
+                fields.Int(), fields.Number(), load_default=None, required=False
+            ),
+            "positions": fields.List(
+                fields.Nested(TransactionPositionSchema),
+                required=False,
+                load_default=[],
+            ),
+            "perform_commit": fields.Bool(load_default=False, required=False),
         },
         name="UpdateTransactionSchema",
     )
@@ -146,12 +168,48 @@ async def update_transaction(request: Request):
         currency_symbol=data["currency_symbol"],
         currency_conversion_rate=data["currency_conversion_rate"],
         billed_at=data["billed_at"],
+        creditor_shares=data["creditor_shares"],
+        debitor_shares=data["debitor_shares"],
+        positions=data["positions"],
+        perform_commit=data["perform_commit"],
     )
 
     return await _transaction_response(request, transaction_id)
 
 
-@routes.post(r"/transactions/{transaction_id:\d+}/commit")
+@routes.post(r"/v1/transactions/{transaction_id:\d+}/positions")
+@docs(
+    tags=["transactions"],
+    summary="update transaction positions",
+    responses={200: {"schema": TransactionSchema, "description": ""}},
+    description="",
+)
+@json_schema(
+    Schema.from_dict(
+        {
+            "positions": fields.List(
+                fields.Nested(TransactionPositionSchema),
+            ),
+            "perform_commit": fields.Bool(load_default=False, required=False),
+        },
+        name="UpdateTransactionSchemaV2",
+    )
+)
+async def update_transaction_positions(request: Request):
+    data = request["json"]
+    transaction_id = int(request.match_info["transaction_id"])
+
+    await request.app["transaction_service"].update_transaction_positions(
+        user_id=request["user"]["user_id"],
+        transaction_id=transaction_id,
+        positions=data["positions"],
+        perform_commit=data["perform_commit"],
+    )
+
+    return await _transaction_response(request, transaction_id)
+
+
+@routes.post(r"/v1/transactions/{transaction_id:\d+}/commit")
 @docs(
     tags=["transactions"],
     summary="commit currently pending transaction changes",
@@ -168,7 +226,7 @@ async def commit_transaction(request: Request):
     return await _transaction_response(request, transaction_id)
 
 
-@routes.delete(r"/transactions/{transaction_id:\d+}")
+@routes.delete(r"/v1/transactions/{transaction_id:\d+}")
 @docs(
     tags=["transactions"],
     summary="delete a transaction",
@@ -185,7 +243,7 @@ async def delete_transaction(request: Request):
     return await _transaction_response(request, transaction_id)
 
 
-@routes.post(r"/transactions/{transaction_id:\d+}/new_change")
+@routes.post(r"/v1/transactions/{transaction_id:\d+}/new_change")
 @docs(
     tags=["transactions"],
     summary="create a new pending transaction revision",
@@ -202,7 +260,7 @@ async def create_transaction_change(request: Request):
     return await _transaction_response(request, transaction_id)
 
 
-@routes.post(r"/transactions/{transaction_id:\d+}/discard")
+@routes.post(r"/v1/transactions/{transaction_id:\d+}/discard")
 @docs(
     tags=["transactions"],
     summary="discard currently pending transaction changes",
@@ -219,299 +277,7 @@ async def discard_transaction_change(request: Request):
     return await _transaction_response(request, transaction_id)
 
 
-class ChangeShareResponse(Schema):
-    account_id = fields.Int()
-    value = fields.Number()
-
-
-class DeleteShareResponse(Schema):
-    account_id = fields.Int()
-
-
-@routes.post(r"/transactions/{transaction_id:\d+}/creditor_shares")
-@docs(
-    tags=["transactions"],
-    summary="add or update a creditor share",
-    responses={200: {"schema": TransactionSchema, "description": ""}},
-    description="",
-)
-@json_schema(ChangeShareResponse)
-async def add_or_change_creditor_share(request: Request):
-    data = request["json"]
-    transaction_id = int(request.match_info["transaction_id"])
-    await request.app["transaction_service"].add_or_change_creditor_share(
-        user_id=request["user"]["user_id"],
-        transaction_id=transaction_id,
-        account_id=data["account_id"],
-        value=float(data["value"]),
-    )
-
-    return await _transaction_response(request, transaction_id)
-
-
-@routes.post(r"/transactions/{transaction_id:\d+}/creditor_shares/switch")
-@docs(
-    tags=["transactions"],
-    summary="switch the current creditor share",
-    description="For transfer type transactions only one creditor share is allowed, "
-    "this allows switching the currently selected creditor share with a new one. "
-    "This is essentially a shortcut to deleting the current share and adding a new one.",
-    responses={200: {"schema": TransactionSchema, "description": ""}},
-)
-@json_schema(ChangeShareResponse)
-async def switch_creditor_share(request: Request):
-    data = request["json"]
-    transaction_id = int(request.match_info["transaction_id"])
-    await request.app["transaction_service"].switch_creditor_share(
-        user_id=request["user"]["user_id"],
-        transaction_id=transaction_id,
-        account_id=data["account_id"],
-        value=float(data["value"]),
-    )
-
-    return await _transaction_response(request, transaction_id)
-
-
-@routes.delete(r"/transactions/{transaction_id:\d+}/creditor_shares")
-@docs(
-    tags=["transactions"],
-    summary="delete a creditor share",
-    responses={200: {"schema": TransactionSchema, "description": ""}},
-    description="",
-)
-@json_schema(DeleteShareResponse)
-async def delete_creditor_share(request: Request):
-    data = request["json"]
-    transaction_id = int(request.match_info["transaction_id"])
-    await request.app["transaction_service"].delete_creditor_share(
-        user_id=request["user"]["user_id"],
-        transaction_id=transaction_id,
-        account_id=data["account_id"],
-    )
-
-    return await _transaction_response(request, transaction_id)
-
-
-@routes.post(r"/transactions/{transaction_id:\d+}/debitor_shares")
-@docs(
-    tags=["transactions"],
-    summary="add or change a debitor share",
-    responses={200: {"schema": TransactionSchema, "description": ""}},
-    description="",
-)
-@json_schema(ChangeShareResponse)
-async def add_or_change_debitor_share(request: Request):
-    data = request["json"]
-    transaction_id = int(request.match_info["transaction_id"])
-    await request.app["transaction_service"].add_or_change_debitor_share(
-        user_id=request["user"]["user_id"],
-        transaction_id=transaction_id,
-        account_id=data["account_id"],
-        value=float(data["value"]),
-    )
-
-    return await _transaction_response(request, transaction_id)
-
-
-@routes.post(r"/transactions/{transaction_id:\d+}/debitor_shares/switch")
-@docs(
-    tags=["transactions"],
-    summary="switch the current debitor share",
-    description="For transfer and purchase type transactions only one debitor share is allowed, "
-    "this allows switching the currently selected debitor share with a new one. "
-    "This is essentially a shortcut to deleting the current share and adding a new one.",
-    responses={200: {"schema": TransactionSchema, "description": ""}},
-)
-@json_schema(ChangeShareResponse)
-async def switch_debitor_share(request: Request):
-    data = request["json"]
-    transaction_id = int(request.match_info["transaction_id"])
-    await request.app["transaction_service"].switch_debitor_share(
-        user_id=request["user"]["user_id"],
-        transaction_id=transaction_id,
-        account_id=data["account_id"],
-        value=float(data["value"]),
-    )
-
-    return await _transaction_response(request, transaction_id)
-
-
-@routes.delete(r"/transactions/{transaction_id:\d+}/debitor_shares")
-@docs(
-    tags=["transactions"],
-    summary="delete a debitor share",
-    responses={200: {"schema": TransactionSchema, "description": ""}},
-    description="",
-)
-@json_schema(DeleteShareResponse)
-async def delete_debitor_share(request: Request):
-    data = request["json"]
-    transaction_id = int(request.match_info["transaction_id"])
-    await request.app["transaction_service"].delete_debitor_share(
-        user_id=request["user"]["user_id"],
-        transaction_id=transaction_id,
-        account_id=data["account_id"],
-    )
-
-    return await _transaction_response(request, transaction_id)
-
-
-class PositionCreateResponse(Schema):
-    transaction = fields.Nested(TransactionSchema)
-    item_id = fields.Int()
-
-
-@routes.post(r"/transactions/{transaction_id:\d+}/purchase_items")
-@docs(
-    tags=["transactions"],
-    summary="create a transaction position",
-    description="",
-    responses={
-        200: {
-            "schema": PositionCreateResponse,
-            "description": "",
-        }
-    },
-)
-@json_schema(
-    Schema.from_dict(
-        {
-            "name": fields.Str(),
-            "price": fields.Number(),
-            "communist_shares": fields.Number(),
-            "usages": fields.Dict(
-                keys=fields.Int(),
-                values=fields.Number(),
-                required=False,
-                load_default=None,
-            ),
-        },
-        name="CreatePositionSchema",
-    )
-)
-async def create_purchase_item(request: Request):
-    transaction_id = int(request.match_info["transaction_id"])
-    data = request["json"]
-    item_id = await request.app["transaction_service"].create_purchase_item(
-        user_id=request["user"]["user_id"],
-        transaction_id=transaction_id,
-        name=data["name"],
-        price=data["price"],
-        communist_shares=data["communist_shares"],
-        usages=data["usages"],
-    )
-    transaction = await request.app["transaction_service"].get_transaction(
-        user_id=request["user"]["user_id"], transaction_id=transaction_id
-    )
-
-    serializer = TransactionSchema()
-
-    return json_response(
-        data={"transaction": serializer.dump(transaction), "item_id": item_id}
-    )
-
-
-@routes.post(r"/purchase_items/{item_id:\d+}")
-@docs(
-    tags=["transactions"],
-    summary="update a transaction position",
-    description="",
-    responses={200: {"schema": TransactionSchema, "description": ""}},
-)
-@json_schema(
-    Schema.from_dict(
-        {
-            "name": fields.Str(),
-            "price": fields.Number(),
-            "communist_shares": fields.Number(),
-        },
-        name="UpdatePositionSchema",
-    )
-)
-async def update_purchase_item(request: Request):
-    data = request["json"]
-    transaction_id, revision_id = await request.app[
-        "transaction_service"
-    ].update_purchase_item(
-        user_id=request["user"]["user_id"],
-        item_id=int(request.match_info["item_id"]),
-        name=data["name"],
-        price=data["price"],
-        communist_shares=data["communist_shares"],
-    )
-
-    return await _transaction_response(request, transaction_id)
-
-
-@routes.post(r"/purchase_items/{item_id:\d+}/shares")
-@docs(
-    tags=["transactions"],
-    summary="add or change a transaction position share",
-    description="",
-    responses={200: {"schema": TransactionSchema, "description": ""}},
-)
-@json_schema(
-    Schema.from_dict(
-        {
-            "account_id": fields.Int(),
-            "share_amount": fields.Number(),
-        },
-        name="ChangeShareSchema",
-    )
-)
-async def add_or_change_item_share(request: Request):
-    data = request["json"]
-    transaction_id, revision_id = await request.app[
-        "transaction_service"
-    ].add_or_change_item_share(
-        user_id=request["user"]["user_id"],
-        item_id=int(request.match_info["item_id"]),
-        account_id=data["account_id"],
-        share_amount=data["share_amount"],
-    )
-
-    return await _transaction_response(request, transaction_id)
-
-
-@routes.delete(r"/purchase_items/{item_id:\d+}/shares")
-@docs(
-    tags=["transactions"],
-    summary="delete a position share",
-    description="",
-    responses={200: {"schema": TransactionSchema, "description": ""}},
-)
-@json_schema(DeleteShareResponse)
-async def delete_item_share(request: Request):
-    data = request["json"]
-    transaction_id, revision_id = await request.app[
-        "transaction_service"
-    ].delete_item_share(
-        user_id=request["user"]["user_id"],
-        item_id=int(request.match_info["item_id"]),
-        account_id=data["account_id"],
-    )
-
-    return await _transaction_response(request, transaction_id)
-
-
-@routes.delete(r"/purchase_items/{item_id:\d+}")
-@docs(
-    tags=["transactions"],
-    summary="delete a transaction position",
-    description="",
-    responses={200: {"schema": TransactionSchema, "description": ""}},
-)
-async def delete_purchase_item(request: Request):
-    transaction_id, revision_id = await request.app[
-        "transaction_service"
-    ].delete_purchase_item(
-        user_id=request["user"]["user_id"], item_id=int(request.match_info["item_id"])
-    )
-
-    return await _transaction_response(request, transaction_id)
-
-
-@routes.post(r"/transactions/{transaction_id:\d+}/files")
+@routes.post(r"/v1/transactions/{transaction_id:\d+}/files")
 @docs(
     tags=["transactions"],
     summary="upload a file as a transaction attachment",
@@ -548,7 +314,7 @@ async def upload_file(request: Request):
     return await _transaction_response(request, transaction_id)
 
 
-@routes.delete(r"/files/{file_id:\d+}")
+@routes.delete(r"/v1/files/{file_id:\d+}")
 @docs(
     tags=["transactions"],
     summary="delete a transaction attachment",
@@ -564,7 +330,7 @@ async def delete_file(request: Request):
     return await _transaction_response(request, transaction_id)
 
 
-@routes.get(r"/files/{file_id:\d+}/{blob_id:\d+}")
+@routes.get(r"/v1/files/{file_id:\d+}/{blob_id:\d+}")
 @docs(
     tags=["transactions"],
     summary="fetch the (binary) contents of a transaction attachment",

@@ -148,18 +148,8 @@ class TransactionLogicTest(AsyncTestCase):
             currency_symbol="€",
             currency_conversion_rate=1.0,
             value=33,
-        )
-        await self.transaction_service.add_or_change_debitor_share(
-            user_id=self.user_id,
-            transaction_id=transaction_id,
-            account_id=account1_id,
-            value=1.0,
-        )
-        await self.transaction_service.add_or_change_creditor_share(
-            user_id=self.user_id,
-            transaction_id=transaction_id,
-            account_id=account2_id,
-            value=1.0,
+            debitor_shares={account1_id: 1.0},
+            creditor_shares={account2_id: 1.0},
         )
         with open(
             os.path.join(os.path.dirname(__file__), "assets", "test_image.jpg"), "rb"

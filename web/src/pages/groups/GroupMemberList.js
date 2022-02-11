@@ -22,10 +22,10 @@ import {
     ListItem,
     ListItemSecondaryAction,
     ListItemText,
-    Paper,
 } from "@mui/material";
 import { Edit } from "@mui/icons-material";
 import { makeStyles } from "@mui/styles";
+import { MobilePaper } from "../../components/style/mobile";
 
 const useStyles = makeStyles((theme) => ({
     chip: {
@@ -80,7 +80,7 @@ export default function GroupMemberList({ group }) {
     };
 
     return (
-        <Paper elevation={1} sx={{ padding: 2 }}>
+        <MobilePaper>
             <List>
                 {members.length === 0 ? (
                     <ListItem>
@@ -207,6 +207,6 @@ export default function GroupMemberList({ group }) {
                     </Formik>
                 </DialogContent>
             </Dialog>
-        </Paper>
+        </MobilePaper>
     );
 }

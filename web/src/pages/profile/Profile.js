@@ -1,21 +1,14 @@
 import React from "react";
 import { useRecoilValue } from "recoil";
 import { userData } from "../../recoil/auth";
-import { List, ListItem, ListItemText, Paper, Typography } from "@mui/material";
-import { makeStyles } from "@mui/styles";
-
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-    },
-}));
+import { List, ListItem, ListItemText, Typography } from "@mui/material";
+import { MobilePaper } from "../../components/style/mobile";
 
 export default function Profile() {
-    const classes = useStyles();
     const user = useRecoilValue(userData);
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <MobilePaper>
             <Typography component="h3" variant="h5">
                 Profile
             </Typography>
@@ -30,6 +23,6 @@ export default function Profile() {
                     <ListItemText primary="Registered" secondary={user.registered_at} />
                 </ListItem>
             </List>
-        </Paper>
+        </MobilePaper>
     );
 }

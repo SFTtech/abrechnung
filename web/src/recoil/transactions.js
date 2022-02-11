@@ -1,27 +1,19 @@
-import { atomFamily, selectorFamily } from "recoil";
+import { atomFamily, selectorFamily, useRecoilTransaction_UNSTABLE } from "recoil";
 import { fetchTransaction, fetchTransactions } from "../api";
 import { ws } from "../websocket";
 import { DateTime } from "luxon";
 import { toast } from "react-toastify";
-import { checkCacheVersion } from "./cache";
 import { accountsSeenByUser } from "./accounts";
+import { localStorageEffect } from "./cache";
 
 export const groupTransactions = atomFamily({
     key: "groupTransactions",
     default: [],
     effects_UNSTABLE: (groupID) => [
         ({ setSelf, node, getPromise }) => {
-            // validate cache version
-            checkCacheVersion();
-
-            // try to load cached state from local storage
-            const localStorageKey = `groups.transactions-${groupID}`;
-            const savedTransactions = localStorage.getItem(localStorageKey);
-
             const fullFetchPromise = () => {
                 return fetchTransactions({ groupID: groupID })
                     .then((result) => {
-                        localStorage.setItem(localStorageKey, JSON.stringify(result));
                         return result;
                     })
                     .catch((err) => {
@@ -61,7 +53,6 @@ export const groupTransactions = atomFamily({
                         for (const newTransaction of result) {
                             mappedTransactions[newTransaction.id] = newTransaction;
                         }
-                        localStorage.setItem(localStorageKey, JSON.stringify(Object.values(mappedTransactions)));
                         return Object.values(mappedTransactions);
                     })
                     .catch((err) => {
@@ -71,12 +62,7 @@ export const groupTransactions = atomFamily({
             };
 
             // TODO: handle fetch error more properly than just showing error, e.g. through a retry or something
-            if (savedTransactions != null) {
-                const parsedTransactions = JSON.parse(savedTransactions);
-                setSelf(partialFetchPromise(parsedTransactions));
-            } else {
-                setSelf(fullFetchPromise());
-            }
+            setSelf(fullFetchPromise());
 
             const fetchAndUpdateTransaction = (currTransactions, transactionID, isNew) => {
                 fetchTransaction({ transactionID: transactionID })
@@ -127,27 +113,44 @@ export const groupTransactions = atomFamily({
     ],
 });
 
-export const addTransaction = (transaction, setTransactions) => {
-    const localStorageKey = `groups.transactions-${transaction.group_id}`;
+export const addTransactionInState = (transaction, setTransactions) => {
     setTransactions((currTransactions) => {
-        const newTransactions = [...currTransactions, transaction];
-        localStorage.setItem(localStorageKey, JSON.stringify(newTransactions));
-        return newTransactions;
+        return [...currTransactions, transaction];
     });
 };
 
-export const updateTransaction = (transaction, setTransactions) => {
-    const localStorageKey = `groups.transactions-${transaction.group_id}`;
-
+export const updateTransactionInState = (transaction, setTransactions) => {
     setTransactions((currTransactions) => {
-        const newTransactions = currTransactions.map((t) => (t.id === transaction.id ? transaction : t));
-        localStorage.setItem(localStorageKey, JSON.stringify(newTransactions));
-        return newTransactions;
+        return currTransactions.map((t) => (t.id === transaction.id ? transaction : t));
     });
 };
+
+export const pendingTransactionDetailChanges = atomFamily({
+    // transaction id -> pending changes
+    key: "pendingTransactionDetailChanges",
+    default: {},
+    effects_UNSTABLE: (transactionID) => [localStorageEffect(`localTransactionChanges-${transactionID}`)],
+});
+
+export const pendingTransactionPositionChanges = atomFamily({
+    // transaction id -> pending changes
+    key: "pendingTransactionPositionChanges",
+    default: {
+        modified: {}, // map of positions with server given ids
+        added: {}, // map of positions with local id to content
+        empty: {
+            id: -1,
+            name: "",
+            price: 0,
+            communist_shares: 0,
+            usages: {},
+        },
+    },
+    effects_UNSTABLE: (transactionID) => [localStorageEffect(`localTransactionPositionChanges-${transactionID}`)],
+});
 
 export const transactionsSeenByUser = selectorFamily({
-    key: "transacitonsSeenByUser",
+    key: "transactionsSeenByUser",
     get:
         (groupID) =>
         async ({ get }) => {
@@ -158,6 +161,8 @@ export const transactionsSeenByUser = selectorFamily({
                     return !(transaction.committed_details && transaction.committed_details.deleted);
                 })
                 .map((transaction) => {
+                    const localDetailChanges = get(pendingTransactionDetailChanges(transaction.id));
+                    const localPositionChanges = get(pendingTransactionPositionChanges(transaction.id));
                     let mapped = {
                         id: transaction.id,
                         type: transaction.type,
@@ -165,10 +170,6 @@ export const transactionsSeenByUser = selectorFamily({
                         last_changed: transaction.last_changed,
                         group_id: transaction.group_id,
                         is_wip: transaction.is_wip,
-                        purchase_items:
-                            transaction.committed_positions != null
-                                ? transaction.committed_positions.filter((position) => !position.deleted)
-                                : [],
                         files:
                             transaction.committed_files != null
                                 ? transaction.committed_files.filter((file) => !file.deleted)
@@ -178,26 +179,58 @@ export const transactionsSeenByUser = selectorFamily({
                         mapped = {
                             ...mapped,
                             ...transaction.pending_details,
+                            ...localDetailChanges, // patch with local, non-synced changes
                             has_committed_changes: transaction.committed_details != null,
                         };
                     } else {
                         mapped = {
                             ...mapped,
                             ...transaction.committed_details,
+                            ...localDetailChanges, // patch with local, non-synced changes
                             has_committed_changes: true,
                         };
                     }
 
-                    if (transaction.pending_positions) {
-                        let mappedPosition = mapped.purchase_items.reduce((map, position) => {
+                    let positions =
+                        transaction.committed_positions != null
+                            ? transaction.committed_positions
+                                  .filter((position) => !position.deleted)
+                                  .map((t) => ({
+                                      ...t,
+                                      only_local: false,
+                                  }))
+                            : [];
+
+                    if (transaction.pending_positions || Object.keys(localPositionChanges.modified).length > 0) {
+                        let mappedPosition = positions.reduce((map, position) => {
                             map[position.id] = position;
                             return map;
                         }, {});
-                        for (const pendingPosition of transaction.pending_positions) {
-                            mappedPosition[pendingPosition.id] = pendingPosition;
+
+                        if (transaction.pending_positions) {
+                            for (const pendingPosition of transaction.pending_positions) {
+                                mappedPosition[pendingPosition.id] = {
+                                    ...pendingPosition,
+                                    only_local: false,
+                                };
+                            }
                         }
-                        mapped.purchase_items = Object.values(mappedPosition).filter((position) => !position.deleted);
+                        if (localPositionChanges.modified) {
+                            for (const localPosition of Object.values(localPositionChanges.modified)) {
+                                mappedPosition[localPosition.id] = {
+                                    ...localPosition,
+                                    only_local: false,
+                                };
+                            }
+                        }
+                        positions = Object.values(mappedPosition).filter((position) => !position.deleted);
                     }
+                    mapped.purchase_items = positions.concat(
+                        Object.values(localPositionChanges.added).map((p) => ({
+                            ...p,
+                            only_local: true,
+                        }))
+                    );
 
                     if (transaction.pending_files) {
                         let mappedFiles = mapped.files.reduce((map, file) => {

@@ -16,6 +16,7 @@ from abrechnung.domain.transactions import (
     TransactionDetails,
     TransactionPosition,
     FileAttachment,
+    TransactionType,
 )
 from abrechnung.util import parse_postgres_datetime
 
@@ -253,6 +254,9 @@ class TransactionService(Application):
         currency_symbol: str,
         currency_conversion_rate: float,
         value: float,
+        debitor_shares: Optional[dict[int, float]] = None,
+        creditor_shares: Optional[dict[int, float]] = None,
+        perform_commit: bool = False,
     ) -> int:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -271,7 +275,8 @@ class TransactionService(Application):
                     transaction_id,
                 )
                 await conn.execute(
-                    "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, value, description, billed_at) "
+                    "insert into transaction_history "
+                    "   (id, revision_id, currency_symbol, currency_conversion_rate, value, description, billed_at) "
                     "values ($1, $2, $3, $4, $5, $6, $7)",
                     transaction_id,
                     revision_id,
@@ -281,7 +286,87 @@ class TransactionService(Application):
                     description,
                     billed_at,
                 )
+
+                if debitor_shares:
+                    await self._put_transaction_debitor_shares(
+                        conn=conn,
+                        transaction_id=transaction_id,
+                        group_id=group_id,
+                        revision_id=revision_id,
+                        debitor_shares=debitor_shares,
+                    )
+
+                if creditor_shares:
+                    await self._put_transaction_creditor_shares(
+                        conn=conn,
+                        transaction_id=transaction_id,
+                        group_id=group_id,
+                        revision_id=revision_id,
+                        creditor_shares=creditor_shares,
+                    )
+                if perform_commit:
+                    await conn.execute(
+                        "update transaction_revision set committed = now() where id = $1",
+                        revision_id,
+                    )
+
                 return transaction_id
+
+    @staticmethod
+    async def _put_transaction_debitor_shares(
+        conn: asyncpg.Connection,
+        group_id: int,
+        transaction_id: int,
+        revision_id: int,
+        debitor_shares: dict[int, float],
+    ):
+        n_accounts = await conn.fetchval(
+            "select count(*) from committed_account_state_valid_at() "
+            "where group_id = $1 and account_id = any($2::int[]) and not deleted",
+            group_id,
+            list(debitor_shares.keys()),
+        )
+        if len(debitor_shares.keys()) != n_accounts:
+            raise InvalidCommand(
+                "one of the accounts referenced by a debitor share does not exist in this group"
+            )
+        for account_id, value in debitor_shares.items():
+            await conn.execute(
+                "insert into debitor_share(transaction_id, revision_id, account_id, shares) "
+                "values ($1, $2, $3, $4)",
+                transaction_id,
+                revision_id,
+                account_id,
+                value,
+            )
+
+    @staticmethod
+    async def _put_transaction_creditor_shares(
+        conn: asyncpg.Connection,
+        group_id: int,
+        transaction_id: int,
+        revision_id: int,
+        creditor_shares: dict[int, float],
+    ):
+        n_accounts = await conn.fetchval(
+            "select count(*) from committed_account_state_valid_at() "
+            "where group_id = $1 and account_id = any($2::int[]) and not deleted",
+            group_id,
+            list(creditor_shares.keys()),
+        )
+        if len(creditor_shares.keys()) != n_accounts:
+            raise InvalidCommand(
+                "one of the accounts referenced by a creditor share does not exist in this group"
+            )
+        for account_id, value in creditor_shares.items():
+            await conn.execute(
+                "insert into creditor_share(transaction_id, revision_id, account_id, shares) "
+                "values ($1, $2, $3, $4)",
+                transaction_id,
+                revision_id,
+                account_id,
+                value,
+            )
 
     async def commit_transaction(self, *, user_id: int, transaction_id: int) -> None:
         async with self.db_pool.acquire() as conn:
@@ -457,6 +542,120 @@ class TransactionService(Application):
 
             return blob["mime_type"], blob["content"]
 
+    @staticmethod
+    async def _put_position_usages(
+        conn: asyncpg.Connection,
+        group_id: int,
+        item_id: int,
+        revision_id: int,
+        usages: dict[int, float],
+    ):
+        n_accounts = await conn.fetchval(
+            "select count(*) from committed_account_state_valid_at() "
+            "where group_id = $1 and account_id = any($2::int[]) and not deleted",
+            group_id,
+            list(usages.keys()),
+        )
+        if len(usages.keys()) != n_accounts:
+            raise InvalidCommand(
+                "one of the accounts referenced by a position usage does not exist in this group"
+            )
+        for account_id, value in usages.items():
+            await conn.execute(
+                "insert into purchase_item_usage(item_id, revision_id, account_id, share_amount) "
+                "values ($1, $2, $3, $4)",
+                item_id,
+                revision_id,
+                account_id,
+                value,
+            )
+
+    async def _put_transaction_position(
+        self,
+        conn: asyncpg.Connection,
+        group_id: int,
+        item_id: int,
+        revision_id: int,
+        position: TransactionPosition,
+    ):
+        await conn.execute(
+            "insert into purchase_item_history(id, revision_id, name, price, communist_shares, deleted) "
+            "values ($1, $2, $3, $4, $5, $6) on conflict (id, revision_id) do update "
+            "set name = $3, price = $4, communist_shares = $5, deleted = $6",
+            item_id,
+            revision_id,
+            position.name,
+            position.price,
+            position.communist_shares,
+            position.deleted,
+        )
+        if position.usages:
+            await self._put_position_usages(
+                conn=conn,
+                group_id=group_id,
+                item_id=item_id,
+                revision_id=revision_id,
+                usages=position.usages,
+            )
+
+    async def _create_transaction_position(
+        self,
+        conn: asyncpg.Connection,
+        group_id: int,
+        transaction_id: int,
+        revision_id: int,
+        position: TransactionPosition,
+    ) -> int:
+        item_id = await conn.fetchval(
+            "insert into purchase_item (transaction_id) " "values ($1) " "returning id",
+            transaction_id,
+        )
+        await conn.execute(
+            "insert into purchase_item_history(id, revision_id, name, price, communist_shares) "
+            "values ($1, $2, $3, $4, $5)",
+            item_id,
+            revision_id,
+            position.name,
+            position.price,
+            position.communist_shares,
+        )
+        if position.usages:
+            await self._put_position_usages(
+                conn=conn,
+                group_id=group_id,
+                item_id=item_id,
+                revision_id=revision_id,
+                usages=position.usages,
+            )
+
+        return item_id
+
+    async def _process_position_update(
+        self,
+        *,
+        conn: asyncpg.Connection,
+        transaction_id: int,
+        group_id: int,
+        revision_id: int,
+        position: TransactionPosition,
+    ):
+        if position.id == -1:
+            await self._create_transaction_position(
+                conn=conn,
+                group_id=group_id,
+                transaction_id=transaction_id,
+                revision_id=revision_id,
+                position=position,
+            )
+        else:
+            await self._put_transaction_position(
+                conn=conn,
+                group_id=group_id,
+                item_id=position.id,
+                revision_id=revision_id,
+                position=position,
+            )
+
     async def update_transaction(
         self,
         *,
@@ -467,33 +666,120 @@ class TransactionService(Application):
         billed_at: date,
         currency_symbol: str,
         currency_conversion_rate: float,
+        debitor_shares: Optional[dict[int, float]] = None,
+        creditor_shares: Optional[dict[int, float]] = None,
+        positions: Optional[list[TransactionPosition]] = None,
+        perform_commit: bool = False,
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                await self._check_transaction_permissions(
+                group_id = await self._check_transaction_permissions(
                     conn=conn,
                     user_id=user_id,
                     transaction_id=transaction_id,
                     can_write=True,
+                    transaction_type=TransactionType.purchase.value
+                    if positions is not None
+                    else None,
                 )
-                revision_id = await self._get_or_create_pending_transaction_change(
+                revision_id = await self._get_or_create_revision(
                     conn=conn, user_id=user_id, transaction_id=transaction_id
                 )
                 await conn.execute(
-                    "update transaction_history th "
-                    "set value = $3, description = $4, currency_symbol = $5, currency_conversion_rate = $6, billed_at = $7 "
-                    "where th.id = $1 and th.revision_id = $2",
+                    "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, "
+                    "   value, billed_at, description)"
+                    "values ($1, $2, $3, $4, $5, $6, $7) "
+                    "on conflict (id, revision_id) do update "
+                    "set currency_symbol = $3, currency_conversion_rate = $4, value = $5, "
+                    "   billed_at = $6, description = $7",
                     transaction_id,
                     revision_id,
-                    value,
-                    description,
                     currency_symbol,
                     currency_conversion_rate,
+                    value,
                     billed_at,
+                    description,
                 )
-                await self._increment_transaction_version(
-                    conn=conn, revision_id=revision_id
+
+                await conn.execute(
+                    "delete from debitor_share where transaction_id = $1 and revision_id = $2",
+                    transaction_id,
+                    revision_id,
                 )
+                if debitor_shares:
+                    await self._put_transaction_debitor_shares(
+                        conn=conn,
+                        group_id=group_id,
+                        transaction_id=transaction_id,
+                        revision_id=revision_id,
+                        debitor_shares=debitor_shares,
+                    )
+
+                await conn.execute(
+                    "delete from creditor_share where transaction_id = $1 and revision_id = $2",
+                    transaction_id,
+                    revision_id,
+                )
+                if creditor_shares:
+                    await self._put_transaction_creditor_shares(
+                        conn=conn,
+                        group_id=group_id,
+                        transaction_id=transaction_id,
+                        revision_id=revision_id,
+                        creditor_shares=creditor_shares,
+                    )
+
+                if positions:
+                    for position in positions:
+                        await self._process_position_update(
+                            conn=conn,
+                            transaction_id=transaction_id,
+                            group_id=group_id,
+                            revision_id=revision_id,
+                            position=position,
+                        )
+
+                if perform_commit:
+                    await conn.execute(
+                        "update transaction_revision set committed = now() where id = $1",
+                        revision_id,
+                    )
+
+    async def update_transaction_positions(
+        self,
+        *,
+        user_id: int,
+        transaction_id: int,
+        positions: list[TransactionPosition],
+        perform_commit: bool = False,
+    ):
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                group_id = await self._check_transaction_permissions(
+                    conn=conn,
+                    user_id=user_id,
+                    transaction_id=transaction_id,
+                    can_write=True,
+                    transaction_type=TransactionType.purchase.value,
+                )
+                revision_id = await self._get_or_create_revision(
+                    conn=conn, user_id=user_id, transaction_id=transaction_id
+                )
+
+                for position in positions:
+                    await self._process_position_update(
+                        conn=conn,
+                        transaction_id=transaction_id,
+                        group_id=group_id,
+                        revision_id=revision_id,
+                        position=position,
+                    )
+
+                if perform_commit:
+                    await conn.execute(
+                        "update transaction_revision set committed = now() where id = $1",
+                        revision_id,
+                    )
 
     async def create_transaction_change(self, *, user_id: int, transaction_id: int):
         async with self.db_pool.acquire() as conn:
@@ -714,481 +1000,3 @@ class TransactionService(Application):
         )
 
         return revision_id
-
-    async def _get_or_create_pending_purchase_item_change(
-        self, conn: asyncpg.Connection, user_id: int, item_id: int
-    ):
-        purchase_item = await conn.fetchrow(
-            "select id, transaction_id from purchase_item pi where id = $1", item_id
-        )
-        if not purchase_item:
-            raise RuntimeError(f"Item with id {item_id} does not exist")
-        revision_id = await self._get_or_create_revision(
-            conn=conn, user_id=user_id, transaction_id=purchase_item["transaction_id"]
-        )
-
-        history_entry = await conn.fetchval(
-            "select id from purchase_item_history pih where pih.id = $1 and pih.revision_id = $2",
-            item_id,
-            revision_id,
-        )
-        if history_entry:
-            return revision_id
-
-        last_committed_revision = await conn.fetchval(
-            "select revision_id "
-            "from committed_transaction_position_state_valid_at() "
-            "where transaction_id = $1 and item_id = $2",
-            purchase_item["transaction_id"],
-            item_id,
-        )
-
-        await conn.execute(
-            "insert into purchase_item_history (id, revision_id, name, price, communist_shares, deleted) "
-            "select $1, $2, pih.name, pih.price, pih.communist_shares, pih.deleted "
-            "from purchase_item_history pih join purchase_item pi on pih.id = pi.id "
-            "where pi.id = $1 and pi.transaction_id = $3 and pih.revision_id = $4 and not pih.deleted",
-            item_id,
-            revision_id,
-            purchase_item["transaction_id"],
-            last_committed_revision,
-        )
-        await conn.execute(
-            "insert into purchase_item_usage (item_id, revision_id, account_id, share_amount) "
-            "select $1, $2, account_id, share_amount "
-            "from purchase_item_usage piu join purchase_item pi on piu.item_id = pi.id "
-            "join purchase_item_history pih on pi.id = pih.id and pih.revision_id = piu.revision_id "
-            "where pi.id = $1 and pi.transaction_id = $3 and piu.revision_id = $4 and not pih.deleted",
-            item_id,
-            revision_id,
-            purchase_item["transaction_id"],
-            last_committed_revision,
-        )
-
-        return revision_id
-
-    async def _check_account_non_deleted(
-        self, conn: asyncpg.Connection, group_id: int, account_id: int
-    ) -> bool:
-        acc = await conn.fetchval(
-            "select account_id from committed_account_state_valid_at() "
-            "where group_id = $1 and account_id = $2 and not deleted",
-            group_id,
-            account_id,
-        )
-        if not acc:
-            raise NotFoundError(f"Account with id {account_id}")
-        return True
-
-    async def _transaction_share_check(
-        self,
-        conn: asyncpg.Connection,
-        user_id: int,
-        transaction_id: int,
-        account_id: int,
-        transaction_type: Optional[Union[str, list[str]]] = None,
-    ) -> tuple[int, int]:
-        """returns tuple of group_id of the transaction and the users revision_id of the pending change"""
-        group_id = await self._check_transaction_permissions(
-            conn=conn,
-            user_id=user_id,
-            transaction_id=transaction_id,
-            can_write=True,
-            transaction_type=transaction_type,
-        )
-        revision_id = await self._get_or_create_pending_transaction_change(
-            conn=conn, user_id=user_id, transaction_id=transaction_id
-        )
-
-        await self._check_account_non_deleted(conn, group_id, account_id)
-
-        return group_id, revision_id
-
-    async def add_or_change_creditor_share(
-        self,
-        *,
-        user_id: int,
-        transaction_id: int,
-        account_id: int,
-        value: float,
-    ):
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                group_id, revision_id = await self._transaction_share_check(
-                    conn, user_id, transaction_id, account_id
-                )
-
-                await conn.execute(
-                    "insert into creditor_share (transaction_id, revision_id, account_id, shares) "
-                    "values ($1, $2, $3, $4) "
-                    "on conflict (transaction_id, revision_id, account_id) do "
-                    "update set shares = $4 "
-                    "where creditor_share.transaction_id = $1 "
-                    "   and creditor_share.revision_id = $2 "
-                    "   and creditor_share.account_id = $3",
-                    transaction_id,
-                    revision_id,
-                    account_id,
-                    value,
-                )
-                await self._increment_transaction_version(
-                    conn=conn, revision_id=revision_id
-                )
-
-    async def switch_creditor_share(
-        self,
-        *,
-        user_id: int,
-        transaction_id: int,
-        account_id: int,
-        value: float,
-    ):
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                group_id, revision_id = await self._transaction_share_check(
-                    conn,
-                    user_id,
-                    transaction_id,
-                    account_id,
-                    transaction_type=["purchase", "transfer"],
-                )
-
-                await conn.execute(
-                    "delete from creditor_share where transaction_id = $1 and revision_id = $2",
-                    transaction_id,
-                    revision_id,
-                )
-                await conn.execute(
-                    "insert into creditor_share (transaction_id, revision_id, account_id, shares) "
-                    "values ($1, $2, $3, $4)",
-                    transaction_id,
-                    revision_id,
-                    account_id,
-                    value,
-                )
-                await self._increment_transaction_version(
-                    conn=conn, revision_id=revision_id
-                )
-
-    async def delete_creditor_share(
-        self, *, user_id: int, transaction_id: int, account_id: int
-    ):
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                group_id, revision_id = await self._transaction_share_check(
-                    conn, user_id, transaction_id, account_id
-                )
-
-                r = await conn.fetchval(
-                    "delete from creditor_share where transaction_id = $1 and revision_id = $2 and account_id = $3 "
-                    "returning revision_id",
-                    transaction_id,
-                    revision_id,
-                    account_id,
-                )
-                if not r:
-                    raise NotFoundError(f"Creditor share does not exist")
-
-                await self._increment_transaction_version(
-                    conn=conn, revision_id=revision_id
-                )
-
-    async def add_or_change_debitor_share(
-        self,
-        *,
-        user_id: int,
-        transaction_id: int,
-        account_id: int,
-        value: float,
-    ):
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                group_id, revision_id = await self._transaction_share_check(
-                    conn, user_id, transaction_id, account_id
-                )
-
-                await conn.execute(
-                    "insert into debitor_share (transaction_id, revision_id, account_id, shares) "
-                    "values ($1, $2, $3, $4) "
-                    "on conflict (transaction_id, revision_id, account_id) do "
-                    "update set shares = $4 "
-                    "where debitor_share.transaction_id = $1 "
-                    "   and debitor_share.revision_id = $2 "
-                    "   and debitor_share.account_id = $3",
-                    transaction_id,
-                    revision_id,
-                    account_id,
-                    value,
-                )
-                await self._increment_transaction_version(
-                    conn=conn, revision_id=revision_id
-                )
-
-    async def switch_debitor_share(
-        self, *, user_id: int, transaction_id: int, account_id: int, value: float
-    ):
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                group_id, revision_id = await self._transaction_share_check(
-                    conn,
-                    user_id,
-                    transaction_id,
-                    account_id,
-                    transaction_type=["transfer"],
-                )
-
-                await conn.execute(
-                    "delete from debitor_share where transaction_id = $1 and revision_id = $2",
-                    transaction_id,
-                    revision_id,
-                )
-                await conn.execute(
-                    "insert into debitor_share (transaction_id, revision_id, account_id, shares) "
-                    "values ($1, $2, $3, $4)",
-                    transaction_id,
-                    revision_id,
-                    account_id,
-                    value,
-                )
-                await self._increment_transaction_version(
-                    conn=conn, revision_id=revision_id
-                )
-
-    async def delete_debitor_share(
-        self, *, user_id: int, transaction_id: int, account_id: int
-    ):
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                group_id, revision_id = await self._transaction_share_check(
-                    conn, user_id, transaction_id, account_id
-                )
-
-                r = await conn.fetchval(
-                    "delete from debitor_share where transaction_id = $1 and revision_id = $2 and account_id = $3 "
-                    "returning revision_id",
-                    transaction_id,
-                    revision_id,
-                    account_id,
-                )
-                if not r:
-                    raise NotFoundError(f"Debitor share does not exist")
-
-                await self._increment_transaction_version(
-                    conn=conn, revision_id=revision_id
-                )
-
-    async def create_purchase_item(
-        self,
-        *,
-        user_id: int,
-        transaction_id: int,
-        name: str,
-        price: float,
-        communist_shares: float,
-        usages: Optional[dict[int, float]] = None,
-    ) -> int:
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                group_id = await self._check_transaction_permissions(
-                    conn=conn,
-                    user_id=user_id,
-                    transaction_id=transaction_id,
-                    can_write=True,
-                    transaction_type="purchase",
-                )
-                revision_id = await self._get_or_create_revision(
-                    conn=conn, user_id=user_id, transaction_id=transaction_id
-                )
-                item_id = await conn.fetchval(
-                    "insert into purchase_item (transaction_id) values ($1) returning id",
-                    transaction_id,
-                )
-                await conn.execute(
-                    "insert into purchase_item_history (id, revision_id, name, price, communist_shares) "
-                    "values ($1, $2, $3, $4, $5)",
-                    item_id,
-                    revision_id,
-                    name,
-                    price,
-                    communist_shares,
-                )
-                if usages:
-                    if len(usages.keys()) != len(set(usages.keys())):
-                        raise InvalidCommand(
-                            f"an account cannot appear twice in position usages"
-                        )
-
-                    n_accounts = await conn.fetchval(
-                        "select count(*) from account where group_id = $1 and id = any($2::int[])",
-                        group_id,
-                        list(usages.keys()),
-                    )
-                    if len(usages.keys()) != n_accounts:
-                        raise InvalidCommand(
-                            "one of the given accounts does not exist in this group"
-                        )
-
-                    for account_id, share_amount in usages.items():
-                        await conn.execute(
-                            "insert into purchase_item_usage (item_id, revision_id, account_id, share_amount) "
-                            "values ($1, $2, $3, $4)",
-                            item_id,
-                            revision_id,
-                            account_id,
-                            share_amount,
-                        )
-
-                await self._increment_transaction_version(
-                    conn=conn, revision_id=revision_id
-                )
-                return item_id
-
-    @staticmethod
-    async def _check_purchase_item_permissions(
-        *, conn: asyncpg.Connection, user_id: int, item_id: int, can_write: bool = True
-    ) -> tuple[int, int]:
-        row = await conn.fetchrow(
-            "select gm.group_id as group_id, gm.can_write as can_write, t.id as transaction_id "
-            "from group_membership gm "
-            "join transaction t on gm.group_id = t.group_id "
-            "join purchase_item pi on t.id = pi.transaction_id "
-            "where pi.id = $1 and gm.user_id = $2",
-            item_id,
-            user_id,
-        )
-        if row is None:
-            raise NotFoundError(f"A purchase item with id '{item_id}' does not exist")
-
-        if can_write and not row["can_write"]:
-            raise PermissionError(
-                f"Missing write permissions for item with id '{item_id}'"
-            )
-
-        return row["group_id"], row["transaction_id"]
-
-    async def update_purchase_item(
-        self,
-        *,
-        user_id: int,
-        item_id: int,
-        name: str,
-        price: float,
-        communist_shares: float,
-    ) -> tuple[int, int]:
-        """Returns [transaction_id, revision_id]"""
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                group_id, transaction_id = await self._check_purchase_item_permissions(
-                    conn=conn, user_id=user_id, item_id=item_id
-                )
-                revision_id = await self._get_or_create_pending_purchase_item_change(
-                    conn=conn, user_id=user_id, item_id=item_id
-                )
-                await conn.execute(
-                    "update purchase_item_history set name = $3, price = $4, communist_shares = $5 "
-                    "where id = $1 and revision_id = $2",
-                    item_id,
-                    revision_id,
-                    name,
-                    price,
-                    communist_shares,
-                )
-
-                await self._increment_transaction_version(
-                    conn=conn, revision_id=revision_id
-                )
-                return transaction_id, revision_id
-
-    async def add_or_change_item_share(
-        self,
-        *,
-        user_id: int,
-        item_id: int,
-        account_id: int,
-        share_amount: float,
-    ) -> tuple[int, int]:
-        """Returns [transaction_id, revision_id]"""
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                group_id, transaction_id = await self._check_purchase_item_permissions(
-                    conn=conn, user_id=user_id, item_id=item_id
-                )
-                await self._check_account_non_deleted(conn, group_id, account_id)
-                revision_id = await self._get_or_create_pending_purchase_item_change(
-                    conn=conn, user_id=user_id, item_id=item_id
-                )
-
-                await conn.execute(
-                    "insert into purchase_item_usage (item_id, revision_id, account_id, share_amount) "
-                    "values ($1, $2, $3, $4) "
-                    "on conflict (item_id, revision_id, account_id) do "
-                    "update set share_amount = $4 "
-                    "where purchase_item_usage.item_id = $1 "
-                    "   and purchase_item_usage.revision_id = $2 "
-                    "   and purchase_item_usage.account_id = $3",
-                    item_id,
-                    revision_id,
-                    account_id,
-                    share_amount,
-                )
-                await self._increment_transaction_version(
-                    conn=conn, revision_id=revision_id
-                )
-                return transaction_id, revision_id
-
-    async def delete_item_share(
-        self,
-        *,
-        user_id: int,
-        item_id: int,
-        account_id: int,
-    ) -> tuple[int, int]:
-        """Returns [transaction_id, revision_id]"""
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                _, transaction_id = await self._check_purchase_item_permissions(
-                    conn=conn, user_id=user_id, item_id=item_id
-                )
-                revision_id = await self._get_or_create_pending_purchase_item_change(
-                    conn=conn, user_id=user_id, item_id=item_id
-                )
-
-                r = await conn.fetchval(
-                    "delete from purchase_item_usage where item_id = $1 and revision_id = $2 and account_id = $3 "
-                    "returning revision_id",
-                    item_id,
-                    revision_id,
-                    account_id,
-                )
-                if not r:
-                    raise NotFoundError(f"Purchase item usage does not exist")
-
-                await self._increment_transaction_version(
-                    conn=conn, revision_id=revision_id
-                )
-                return transaction_id, revision_id
-
-    async def delete_purchase_item(
-        self, *, user_id: int, item_id: int
-    ) -> tuple[int, int]:
-        """Returns [transaction_id, revision_id]"""
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                _, transaction_id = await self._check_purchase_item_permissions(
-                    conn=conn, user_id=user_id, item_id=item_id
-                )
-                revision_id = await self._get_or_create_pending_purchase_item_change(
-                    conn=conn, user_id=user_id, item_id=item_id
-                )
-
-                await conn.execute(
-                    "update purchase_item_history pih set deleted = true "
-                    "where pih.id = $1 and pih.revision_id = $2",
-                    item_id,
-                    revision_id,
-                )
-
-                await self._increment_transaction_version(
-                    conn=conn, revision_id=revision_id
-                )
-                return transaction_id, revision_id

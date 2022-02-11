@@ -27,7 +27,6 @@ import {
     ListItem,
     ListItemSecondaryAction,
     ListItemText,
-    Paper,
     SpeedDial,
     SpeedDialAction,
     SpeedDialIcon,
@@ -35,6 +34,7 @@ import {
 } from "@mui/material";
 import { Add, CompareArrows, Delete, Edit, Person } from "@mui/icons-material";
 import ListItemLink from "../../components/style/ListItemLink";
+import { MobilePaper } from "../../components/style/mobile";
 
 export default function AccountList({ group }) {
     const [showPersonalAccountCreationModal, setShowPersonalAccountCreationModal] = useState(false);
@@ -86,7 +86,7 @@ export default function AccountList({ group }) {
 
     return (
         <>
-            <Paper elevation={1} sx={{ padding: 2 }}>
+            <MobilePaper>
                 <Typography variant="h6" sx={{ ml: 2 }}>
                     Personal Accounts
                 </Typography>
@@ -133,8 +133,8 @@ export default function AccountList({ group }) {
                         />
                     </>
                 )}
-            </Paper>
-            <Paper sx={{ padding: 2, marginTop: 3 }}>
+            </MobilePaper>
+            <MobilePaper sx={{ marginTop: 3 }}>
                 <Typography variant="h6" sx={{ ml: 2 }}>
                     Clearing Accounts
                 </Typography>
@@ -181,38 +181,43 @@ export default function AccountList({ group }) {
                         />
                     </>
                 )}
-            </Paper>
-            <SpeedDial
-                ariaLabel="Create Account"
-                sx={{ position: "fixed", bottom: 20, right: 20 }}
-                icon={<SpeedDialIcon />}
-            >
-                <SpeedDialAction
-                    icon={<Person />}
-                    tooltipTitle="Create Personal Account"
-                    onClick={() => setShowPersonalAccountCreationModal(true)}
-                />
-                <SpeedDialAction
-                    icon={<CompareArrows />}
-                    tooltipTitle="Create Clearing Account"
-                    onClick={() => setShowClearingAccountCreationModal(true)}
-                />
-            </SpeedDial>
-            <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={accountToDelete !== null}>
-                <DialogTitle id="confirmation-dialog-title">Confirm delete account</DialogTitle>
-                <DialogContent dividers>
-                    Are you sure you want to delete the account "
-                    {allAccounts.find((acc) => acc.id === accountToDelete)?.name}"
-                </DialogContent>
-                <DialogActions>
-                    <Button autoFocus onClick={() => setAccountToDelete(null)} color="primary">
-                        Cancel
-                    </Button>
-                    <Button onClick={confirmDeleteAccount} color="error">
-                        Ok
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            </MobilePaper>
+            {userPermissions.can_write && (
+                <>
+                    <SpeedDial
+                        ariaLabel="Create Account"
+                        sx={{ position: "fixed", bottom: 20, right: 20 }}
+                        icon={<SpeedDialIcon />}
+                    >
+                        <SpeedDialAction
+                            icon={<Person />}
+                            tooltipTitle="Create Personal Account"
+                            onClick={() => setShowPersonalAccountCreationModal(true)}
+                        />
+                        <SpeedDialAction
+                            icon={<CompareArrows />}
+                            tooltipTitle="Create Clearing Account"
+                            onClick={() => setShowClearingAccountCreationModal(true)}
+                        />
+                    </SpeedDial>
+
+                    <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={accountToDelete !== null}>
+                        <DialogTitle id="confirmation-dialog-title">Confirm delete account</DialogTitle>
+                        <DialogContent dividers>
+                            Are you sure you want to delete the account "
+                            {allAccounts.find((acc) => acc.id === accountToDelete)?.name}"
+                        </DialogContent>
+                        <DialogActions>
+                            <Button autoFocus onClick={() => setAccountToDelete(null)} color="primary">
+                                Cancel
+                            </Button>
+                            <Button onClick={confirmDeleteAccount} color="error">
+                                Ok
+                            </Button>
+                        </DialogActions>
+                    </Dialog>
+                </>
+            )}
         </>
     );
 }

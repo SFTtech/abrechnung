@@ -6,27 +6,11 @@ import { deleteGroupInvite } from "../../api";
 import { currUserPermissions, groupInvites, groupMembers } from "../../recoil/groups";
 import { useRecoilValue } from "recoil";
 import { DateTime } from "luxon";
-import {
-    Grid,
-    IconButton,
-    List,
-    ListItem,
-    ListItemSecondaryAction,
-    ListItemText,
-    Paper,
-    Typography,
-} from "@mui/material";
+import { Grid, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
 import { Add, ContentCopy, Delete } from "@mui/icons-material";
-import { makeStyles } from "@mui/styles";
-
-const useStyles = makeStyles((theme) => ({
-    paper: {
-        padding: theme.spacing(2),
-    },
-}));
+import { MobilePaper } from "../../components/style/mobile";
 
 export default function GroupInvites({ group }) {
-    const classes = useStyles();
     const [showModal, setShowModal] = useState(false);
     const invites = useRecoilValue(groupInvites(group.id));
     const members = useRecoilValue(groupMembers(group.id));
@@ -67,7 +51,7 @@ export default function GroupInvites({ group }) {
     };
 
     return (
-        <Paper elevation={1} className={classes.paper}>
+        <MobilePaper>
             <Typography component="h3" variant="h5">
                 Active Invite Links
             </Typography>
@@ -128,6 +112,6 @@ export default function GroupInvites({ group }) {
                     <InviteLinkCreate show={showModal} onClose={() => setShowModal(false)} group={group} />
                 </>
             )}
-        </Paper>
+        </MobilePaper>
     );
 }
