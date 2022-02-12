@@ -82,7 +82,7 @@ To setup E-Mail delivery adjust the ``email`` config section to fit your use cas
     mode: "smtp-starttls"
     auth:
       username: "abrechnung"
-      password: "Mb2.r5oHf-0t"
+      password: "<verysecret>"
 
 Currently supported ``mode`` options are
 
@@ -96,6 +96,33 @@ without authentication.
 
 .. _abrechnung-config-all-options:
 
+Frontend Configuration
+-------------------------
+
+The frontend also has some configuration options. The javascript application expects a json file ``config.json`` under ``https://<domain>/config.json``.
+If you want to overwrite the default config please configure your webserver to serve your designated ``config.json`` at that url.
+
+This also enables server administrators to show information banners / messages on top via the ``messages`` config key to e.g. announce maintenance.
+
+Possible config options are
+
+.. code-block:: json
+
+   {
+     "messages": [
+       {
+         "type": "<'error'|'info'|'warning'|'success'>",
+         "title": "<string, optional>",
+         "body": "<string>"
+       }
+     ],
+     "imprintURL": "<string, optional>",
+     "sourceCodeURL": "https://github.com/SFTtech/abrechnung"
+   }
+
+
 All Configuration Options
 -------------------------
-TODO
+
+.. literalinclude :: ../_build/config_schema.yaml
+   :language: yaml

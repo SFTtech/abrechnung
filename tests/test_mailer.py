@@ -8,7 +8,7 @@ from aiosmtpd.controller import Controller
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
 from abrechnung.mailer import Mailer
-from tests import AsyncTestCase, get_test_db_config
+from tests import AsyncTestCase, TEST_CONFIG
 
 
 @dataclass
@@ -45,21 +45,17 @@ class MailerTest(AsyncTestCase):
         self.smtp = Controller(self.smtp_handler)
         self.smtp.start()
 
-        self.mailer_config = Config.from_dict(
+        config = TEST_CONFIG.copy()
+        config.update(
             {
-                "api": {"enable_registration": True},
                 "email": {
                     "host": self.smtp.hostname,
                     "port": self.smtp.port,
                     "address": "abrechnung@stusta.de",
-                },
-                "database": get_test_db_config(),
-                "service": {
-                    "url": "https://abrechnung.example.lol",
-                    "name": "Test Abrechnung",
-                },
+                }
             }
         )
+        self.mailer_config = Config.from_dict(config)
         self.mailer = Mailer(config=self.mailer_config)
 
         self.mailer_task = asyncio.create_task(self.mailer.run())

@@ -14,7 +14,7 @@ from abrechnung.application.users import UserService
 from abrechnung.config import Config
 from abrechnung.http import HTTPService
 from abrechnung.http.auth import token_for_user
-from tests import AsyncTestCase
+from tests import AsyncTestCase, TEST_CONFIG
 
 
 class AsyncHTTPTestCase(AsyncTestCase):
@@ -79,13 +79,8 @@ class BaseHTTPAPITest(AsyncHTTPTestCase):
         )
 
     async def get_application(self) -> web.Application:
-        self.secret_key = "asdf1234"
-        self.test_config = Config.from_dict(
-            {
-                "api": {"secret_key": self.secret_key, "enable_registration": True},
-                "service": {"api_url": "http://localhost/api"},
-            }
-        )
+        self.test_config = Config.from_dict(TEST_CONFIG)
+        self.secret_key = self.test_config["api"]["secret_key"]
         self.http_service = HTTPService(config=self.test_config)
 
         await self.http_service._register_forwarder(

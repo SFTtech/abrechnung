@@ -1,15 +1,81 @@
+import re
+from datetime import timedelta
 from pathlib import Path
+from typing import Any, Optional, Mapping
 
 import yaml
 from marshmallow import Schema, fields
+
+config_timedelta_format = re.compile(
+    r"((?P<hours>\d+?)h)?((?P<minutes>\d+?)m)?((?P<seconds>\d+?)s)?"
+)
+
+
+class TimedeltaField(fields.Field):
+    def _serialize(self, value: Mapping[int, float], attr: str, obj: Any, **kwargs):
+        raise NotImplementedError
+
+    def _deserialize(
+        self,
+        value: Any,
+        attr: Optional[str],
+        data: Optional[Mapping[str, Any]],
+        **kwargs,
+    ):
+        if not isinstance(value, str):
+            raise fields.ValidationError("Expexted a string")
+
+        parts = config_timedelta_format.match(value)
+        if not parts:
+            raise fields.ValidationError("Invalid timedelta format")
+        groups = parts.groupdict()
+        time_params = {}
+        for name, param in groups.items():
+            if param:
+                time_params[name] = int(param)
+        return timedelta(**time_params)
+
 
 CONFIG_SCHEMA = Schema.from_dict(
     name="ConfigSchema",
     fields={
         "service": fields.Nested(
             Schema.from_dict(
-                {"url": fields.Str(), "name": fields.Str(), "api_url": fields.Str()}
-            )
+                {
+                    "url": fields.Str(
+                        required=True,
+                        metadata={"description": "Base HTTP frontend URL"},
+                    ),
+                    "name": fields.Str(
+                        required=True,
+                        metadata={
+                            "description": "Abrechnung instance name, will be shown e.g. in the email subjects"
+                        },
+                    ),
+                    "api_url": fields.Str(
+                        required=True, metadata={"description": "Base HTTP API URL"}
+                    ),
+                }
+            ),
+            metadata={
+                "description": "settings related to the general abrechnung service"
+            },
+        ),
+        "demo": fields.Nested(
+            Schema.from_dict(
+                {
+                    "enabled": fields.Bool(required=False, load_default=False),
+                    "wipe_interval": TimedeltaField(
+                        load_default=timedelta(hours=1),
+                        metadata={
+                            "description": "interval after which registered users and their groups will be deleted"
+                        },
+                    ),
+                }
+            ),
+            required=False,
+            load_default={"enabled": False, "wipe_interval": timedelta(hours=1)},
+            metadata={"description": "settings related to the demo mode"},
         ),
         "database": fields.Nested(
             Schema.from_dict(
@@ -25,19 +91,32 @@ CONFIG_SCHEMA = Schema.from_dict(
         "api": fields.Nested(
             Schema.from_dict(
                 {
-                    "secret_key": fields.Str(),
-                    "host": fields.Str(),
-                    "port": fields.Int(),
-                    "id": fields.Str(),
+                    "secret_key": fields.Str(required=True),
+                    "host": fields.Str(required=True),
+                    "port": fields.Int(required=True),
+                    "id": fields.Str(
+                        metadata={
+                            "description": "id of the abrechnung api worker instance in case of multiple running"
+                        },
+                        required=False,
+                        load_default="default",
+                    ),
                     "max_uploadable_file_size": fields.Int(
-                        load_default=1024, required=False
+                        load_default=1024,
+                        required=False,
+                        metadata={"description": "max file size for uploads in KB"},
                     ),  # in KB
                     "enable_cors": fields.Bool(required=False, load_default=True),
                     "enable_registration": fields.Bool(
                         required=False, load_default=False
                     ),
                     "valid_email_domains": fields.List(
-                        fields.Str(), required=False, load_default=None
+                        fields.Str(),
+                        required=False,
+                        load_default=None,
+                        metadata={
+                            "description": "restrict the registration to only allow emails from specific domains"
+                        },
                     ),
                 }
             )
@@ -45,10 +124,16 @@ CONFIG_SCHEMA = Schema.from_dict(
         "email": fields.Nested(
             Schema.from_dict(
                 {
-                    "address": fields.Str(),
-                    "host": fields.Str(),
-                    "port": fields.Int(),
-                    "mode": fields.Str(required=False),
+                    "address": fields.Str(required=True),
+                    "host": fields.Str(required=True),
+                    "port": fields.Int(required=True),
+                    "mode": fields.Str(
+                        required=False,
+                        metadata={
+                            "description": "email mode, one of local, smtp-ssl, smtp-starttls, smtp"
+                        },
+                        load_default="smtp",
+                    ),
                     "auth": fields.Nested(
                         Schema.from_dict(
                             {"username": fields.Str(), "password": fields.Str()},

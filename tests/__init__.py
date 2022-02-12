@@ -22,6 +22,22 @@ def get_test_db_config() -> dict:
     }
 
 
+TEST_CONFIG = {
+    "api": {
+        "secret_key": "asdf",
+        "enable_registration": True,
+        "host": "localhost",
+        "port": 8000,
+    },
+    "database": get_test_db_config(),
+    "service": {
+        "url": "https://abrechnung.example.lol",
+        "api_url": "https://abrechnung.example.lol",
+        "name": "Test Abrechnung",
+    },
+}
+
+
 async def get_test_db() -> Pool:
     """
     get a connection pool to the test database
