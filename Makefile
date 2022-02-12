@@ -16,7 +16,7 @@ check-format-web:
 	yarn --cwd web run prettier --check .
 
 .PHONY: lint
-lint: pylint mypy bandit
+lint: pylint mypy
 
 .PHONY: pylint
 pylint:
@@ -25,10 +25,6 @@ pylint:
 .PHONY: mypy
 mypy:
 	mypy --ignore-missing-imports .
-
-.PHONY: bandit
-bandit:
-	bandit -r .
 
 .PHONY: package
 package:

@@ -194,11 +194,19 @@ async def fetch_access_token(request):
 )
 async def register(request):
     data = request["json"]
-    user_id = await request.app["user_service"].register_user(
-        username=data["username"],
-        password=data["password"],
-        email=data["email"],
-    )
+
+    if request.app["config"]["demo"]["enabled"]:
+        user_id = await request.app["user_service"].demo_register_user(
+            username=data["username"],
+            password=data["password"],
+            email=data["email"],
+        )
+    else:
+        user_id = await request.app["user_service"].register_user(
+            username=data["username"],
+            password=data["password"],
+            email=data["email"],
+        )
 
     return json_response(data={"user_id": str(user_id)})
 

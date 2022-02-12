@@ -13,6 +13,7 @@ import {
     Divider,
     Drawer,
     IconButton,
+    Link,
     List,
     ListItemIcon,
     ListItemText,
@@ -26,6 +27,7 @@ import {
     AccountCircle as AccountCircleIcon,
     AdminPanelSettings,
     BarChart,
+    GitHub,
     Logout,
     Mail,
     Menu as MenuIcon,
@@ -33,13 +35,18 @@ import {
     Paid,
     People,
 } from "@mui/icons-material";
+import { config } from "../../recoil/config";
+import { useTheme } from "@mui/styles";
+import { Banner } from "./Banner";
 
 const drawerWidth = 240;
 
 export default function Layout({ group = null, children, ...props }) {
     const authenticated = useRecoilValue(isAuthenticated);
     const [anchorEl, setAnchorEl] = useState(null);
+    const theme = useTheme();
     const dotsMenuOpen = Boolean(anchorEl);
+    const cfg = useRecoilValue(config);
 
     const [mobileOpen, setMobileOpen] = useState(true);
 
@@ -58,7 +65,7 @@ export default function Layout({ group = null, children, ...props }) {
     };
 
     const drawer = (
-        <div>
+        <div style={{ height: "100%" }}>
             <Toolbar />
             <Divider />
             {group != null && (
@@ -109,6 +116,28 @@ export default function Layout({ group = null, children, ...props }) {
                 </List>
             )}
             <SidebarGroupList group={group} />
+
+            <Box
+                sx={{
+                    display: "flex",
+                    position: "absolute",
+                    width: "100%",
+                    justifyContent: "center",
+                    bottom: 0,
+                    padding: 1,
+                    borderTop: 1,
+                    borderColor: theme.palette.divider,
+                }}
+            >
+                {cfg.imprintURL && (
+                    <Link href={cfg.imprintURL} sx={{ mr: 2 }}>
+                        imprint
+                    </Link>
+                )}
+                <Link href={cfg.sourceCodeURL}>
+                    <GitHub />
+                </Link>
+            </Box>
         </div>
     );
 
@@ -236,13 +265,12 @@ export default function Layout({ group = null, children, ...props }) {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    padding: { xs: 0, lg: 3 },
-                    paddingTop: { xs: 0, lg: 3 },
                     width: { sm: `calc(100% - ${drawerWidth}px)` },
                 }}
             >
-                <Container maxWidth="lg" sx={{ padding: { xs: 0, md: 1 } }}>
-                    <Toolbar />
+                <Toolbar />
+                <Banner />
+                <Container maxWidth="lg" sx={{ padding: { xs: 0, md: 1, lg: 3 } }}>
                     {children}
                 </Container>
             </Box>

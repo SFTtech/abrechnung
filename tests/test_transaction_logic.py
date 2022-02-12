@@ -6,19 +6,14 @@ from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
-from tests import AsyncTestCase
+from tests import AsyncTestCase, TEST_CONFIG
 
 
 class TransactionLogicTest(AsyncTestCase):
     async def setUpAsync(self) -> None:
         await super().setUpAsync()
         self.secret_key = "asdf1234"
-        self.test_config = Config.from_dict(
-            {
-                "api": {"secret_key": self.secret_key, "max_uploadable_file_size": 512},
-                "service": {"api_url": "http://localhost/api"},
-            }
-        )
+        self.test_config = Config.from_dict(TEST_CONFIG)
         self.group_service = GroupService(self.db_pool, config=self.test_config)
         self.account_service = AccountService(self.db_pool, config=self.test_config)
         self.user_service = UserService(self.db_pool, config=self.test_config)

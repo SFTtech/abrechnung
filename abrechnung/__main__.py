@@ -55,6 +55,10 @@ def main():
 
     add_subcommand("admin", admin.Admin)
 
+    from . import demo
+
+    add_subcommand("demo", demo.Demo)
+
     args = vars(cli.parse_args())
 
     # set up log level

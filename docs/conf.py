@@ -16,12 +16,15 @@ import json
 import sys
 from pathlib import Path
 
+import marshmallow.fields
+import yaml
+
 HERE = Path(__file__).parent
 sys.path[:0] = [str(HERE.parent), str(HERE / "_ext")]
 BUILD_DIR = HERE / "_build"
 
 import abrechnung
-from abrechnung.config import Config
+from abrechnung.config import Config, CONFIG_SCHEMA, TimedeltaField
 from abrechnung.http import HTTPService, validation_middleware
 from abrechnung.http.openapi import setup_aiohttp_apispec
 
@@ -100,11 +103,11 @@ html_context = dict(
 html_show_sphinx = False
 
 
-# generate swagger OpenAPI
-
-
 def generate_openapi_json():
-    config = Config.from_dict({"api": {"secret_key": "foobar"}})
+    """
+    generate swagger OpenAPI
+    """
+    config = Config({"api": {"secret_key": "foobar"}})
     service = HTTPService(config)
     app = service._create_api_app(  # pylint: disable=protected-access
         db_pool=None, middlewares=[validation_middleware]
@@ -122,4 +125,54 @@ def generate_openapi_json():
         json.dump(openapi.swagger_dict(), f)
 
 
+config_type_map = {
+    marshmallow.fields.String: "string",
+    marshmallow.fields.Integer: "int",
+    marshmallow.fields.Boolean: "boolean",
+    TimedeltaField: "timedelta, e.g. 1h",
+}
+
+
+def _generate_config_doc_rec(field):
+    if isinstance(field, marshmallow.fields.Nested):
+        out = {}
+        for section_name, next_field in field.schema.fields.items():
+            out[section_name] = _generate_config_doc_rec(next_field)
+        return out
+
+    if isinstance(field, marshmallow.fields.List):
+        verbose_type = f"<list[{config_type_map[field.inner.__class__]}]>"
+    else:
+        verbose_type = f"<{config_type_map[field.__class__]}>"
+
+    out = f"{verbose_type}"
+    extra_info = []
+    if description := field.metadata.get("description"):
+        extra_info.append(description)
+
+    if field.load_default:
+        extra_info.append(f"default={field.load_default}")
+
+    if field.required is not None and not field.required:
+        extra_info.append("optional")
+
+    if not extra_info:
+        return out
+
+    return f"{out} # {'; '.join(extra_info)}"
+
+
+def generate_config_doc_yaml():
+    output = {}
+    for section_name, field in CONFIG_SCHEMA().fields.items():
+        output[section_name] = _generate_config_doc_rec(field)
+
+    output_string = yaml.dump(output).replace("'", "").replace('"', "")
+
+    BUILD_DIR.mkdir(parents=True, exist_ok=True)
+    with open(BUILD_DIR / "config_schema.yaml", "w+", encoding="utf-8") as f:
+        f.write(output_string)
+
+
 generate_openapi_json()
+generate_config_doc_yaml()

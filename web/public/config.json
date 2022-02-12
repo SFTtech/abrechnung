@@ -1,0 +1,11 @@
+{
+  "messages": [
+    {
+      "type": "error",
+      "title": "Foobar",
+      "body": "HALOOOOOOOOOOOOOOOOOOOOO"
+    }
+  ],
+  "imprintURL": "http://localhost:3000/imprint",
+  "sourceCodeURL": "https://github.com/SFTtech/abrechnung"
+}

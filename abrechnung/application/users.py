@@ -27,7 +27,7 @@ class UserService(Application):
         super().__init__(db_pool=db_pool, config=config)
 
         self.enable_registration = self.cfg["api"]["enable_registration"]
-        self.valid_email_domains = self.cfg["api"]["valid_email_domains"]
+        self.valid_email_domains = self.cfg["api"].get("valid_email_domains")
 
     @staticmethod
     def _hash_password(password: str) -> str:
@@ -116,6 +116,22 @@ class UserService(Application):
                 )
                 if sess_id is None:
                     raise InvalidCommand(f"Already logged out")
+
+    async def demo_register_user(self, username: str, email: str, password: str) -> int:
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                hashed_password = self._hash_password(password)
+                user_id = await conn.fetchval(
+                    "insert into usr (username, email, hashed_password, pending) "
+                    "values ($1, $2, $3, false) returning id",
+                    username,
+                    email,
+                    hashed_password,
+                )
+                if user_id is None:
+                    raise InvalidCommand(f"Registering new user failed")
+
+                return user_id
 
     async def register_user(self, username: str, email: str, password: str) -> int:
         """Register a new user, returning the newly created user id and creating a pending registration entry"""
