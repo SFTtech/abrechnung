@@ -8,12 +8,15 @@ import { TransactionListEntry } from "./TransactionListEntry";
 import { MobilePaper } from "../style/mobile";
 import PurchaseCreateModal from "./purchase/PurchaseCreateModal";
 import TransferCreateModal from "./transfer/TransferCreateModal";
+import { useTitle } from "../../utils";
 
 export default function TransactionList({ group }) {
     const [showTransferCreateDialog, setShowTransferCreateDialog] = useState(false);
     const [showPurchaseCreateDialog, setShowPurchaseCreateDialog] = useState(false);
     const transactions = useRecoilValue(transactionsSeenByUser(group.id));
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
+
+    useTitle(`${group.name} - Transactions`);
 
     return (
         <>

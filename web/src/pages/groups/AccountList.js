@@ -36,6 +36,7 @@ import {
 import { Add, CompareArrows, ContentCopy, Delete, Edit, Person } from "@mui/icons-material";
 import ListItemLink from "../../components/style/ListItemLink";
 import { MobilePaper } from "../../components/style/mobile";
+import { useTitle } from "../../utils";
 
 export default function AccountList({ group }) {
     const [showPersonalAccountCreationModal, setShowPersonalAccountCreationModal] = useState(false);
@@ -52,6 +53,8 @@ export default function AccountList({ group }) {
     const allAccounts = useRecoilValue(accountsSeenByUser(group.id));
     const [accountToDelete, setAccountToDelete] = useState(null);
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
+
+    useTitle(`${group.name} - Accounts`);
 
     const openAccountEdit = (account) => {
         setAccountToEdit(account);

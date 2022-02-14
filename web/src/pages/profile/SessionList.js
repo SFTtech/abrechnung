@@ -21,6 +21,7 @@ import {
 } from "@mui/material";
 import { Check, Close, Delete, Edit } from "@mui/icons-material";
 import { MobilePaper } from "../../components/style/mobile";
+import { useTitle } from "../../utils";
 
 export default function SessionList() {
     // TODO: fix editing functions
@@ -31,6 +32,8 @@ export default function SessionList() {
     });
     const user = useRecoilValue(userData);
     const sessions = user.sessions;
+
+    useTitle("Abrechnung - Sessions");
 
     const editSession = (id) => {
         if (!editedSessions.hasOwnProperty(id)) {

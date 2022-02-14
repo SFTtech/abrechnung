@@ -20,9 +20,12 @@ import {
 } from "@mui/material";
 import { clearCache } from "../../recoil/cache";
 import { MobilePaper } from "../../components/style/mobile";
+import { useTitle } from "../../utils";
 
 export default function Settings() {
     const [theme, setTheme] = useRecoilState(themeSettings);
+
+    useTitle("Abrechnung - Settings");
 
     const [confirmClearCacheOpen, setConfirmClearCacheOpen] = useState(false);
 

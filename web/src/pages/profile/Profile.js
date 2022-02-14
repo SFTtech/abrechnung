@@ -3,9 +3,11 @@ import { useRecoilValue } from "recoil";
 import { userData } from "../../recoil/auth";
 import { List, ListItem, ListItemText, Typography } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
+import { useTitle } from "../../utils";
 
 export default function Profile() {
     const user = useRecoilValue(userData);
+    useTitle("Abrechnung - Profile");
 
     return (
         <MobilePaper>

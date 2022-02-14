@@ -16,12 +16,15 @@ import {
     Typography,
 } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
+import { useTitle } from "../../utils";
 
 export default function GroupLog({ group }) {
     const [message, setMessage] = useState("");
     const [showAllLogs, setShowAllLogs] = useState(false);
     const logEntries = useRecoilValue(groupLog(group.id));
     const members = useRecoilValue(groupMembers(group.id));
+
+    useTitle(`${group.name} - Log`);
 
     const sendMessage = () => {
         sendGroupMessage({

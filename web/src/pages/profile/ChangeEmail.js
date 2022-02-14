@@ -4,8 +4,11 @@ import { changeEmail } from "../../api";
 import { toast } from "react-toastify";
 import { Button, LinearProgress, TextField, Typography } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
+import { useTitle } from "../../utils";
 
 export default function ChangeEmail() {
+    useTitle("Abrechnung - Change E-Mail");
+
     const handleSubmit = (values, { setSubmitting }) => {
         changeEmail({
             password: values.password,

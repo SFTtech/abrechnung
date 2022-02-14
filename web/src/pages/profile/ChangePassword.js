@@ -4,8 +4,11 @@ import { changePassword } from "../../api";
 import { toast } from "react-toastify";
 import { Button, LinearProgress, TextField, Typography } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
+import { useTitle } from "../../utils";
 
 export default function ChangePassword() {
+    useTitle("Abrechnung - Change Password");
+
     const validate = (values) => {
         let errors = {};
         if (values.newPassword !== values.newPassword2) {
