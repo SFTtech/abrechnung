@@ -157,9 +157,9 @@ export default function GroupMemberList({ group }) {
                 <DialogContent>
                     <Formik
                         initialValues={{
-                            userID: memberToEdit?.user_id,
-                            isOwner: memberToEdit?.is_owner,
-                            canWrite: memberToEdit?.can_write,
+                            userID: memberToEdit? memberToEdit.user_id : -1,
+                            isOwner: memberToEdit? memberToEdit.is_owner : false,
+                            canWrite: memberToEdit? memberToEdit.can_write : false,
                         }}
                         onSubmit={handleEditMemberSubmit}
                         enableReinitialize={true}

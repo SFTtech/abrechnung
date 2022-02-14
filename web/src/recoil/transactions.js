@@ -1,4 +1,4 @@
-import { atomFamily, selectorFamily, useRecoilTransaction_UNSTABLE } from "recoil";
+import { atomFamily, selectorFamily } from "recoil";
 import { fetchTransaction, fetchTransactions } from "../api";
 import { ws } from "../websocket";
 import { DateTime } from "luxon";
@@ -328,7 +328,7 @@ export const transactionsSeenByUser = selectorFamily({
                 .sort((t1, t2) => {
                     return t1.billed_at === t2.billed_at
                         ? t1.id < t2.id
-                        : DateTime.fromISO(t1.billed_at) < DateTime.fromISO(t2.billed_at);
+                        : DateTime.fromISO(t1.billed_at).toMillis() < DateTime.fromISO(t2.billed_at).toMillis();
                 });
         },
 });
@@ -453,7 +453,7 @@ export const accountBalanceHistory = selectorFamily({
         async ({ get }) => {
             const unsortedTransactions = get(accountTransactions({ groupID: groupID, accountID: accountID }));
             const transactions = [...unsortedTransactions].sort((t1, t2) => {
-                return DateTime.fromISO(t1.billed_at) > DateTime.fromISO(t2.billed_at);
+                return DateTime.fromISO(t1.billed_at).toMillis() > DateTime.fromISO(t2.billed_at).toMillis();
             });
 
             if (transactions.length === 0) {

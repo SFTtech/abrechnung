@@ -20,6 +20,7 @@ import {
     Menu,
     MenuItem,
     Toolbar,
+    Tooltip,
     Typography,
 } from "@mui/material";
 import {
@@ -27,6 +28,7 @@ import {
     AccountCircle as AccountCircleIcon,
     AdminPanelSettings,
     BarChart,
+    BugReport,
     GitHub,
     Logout,
     Mail,
@@ -134,9 +136,18 @@ export default function Layout({ group = null, children, ...props }) {
                         imprint
                     </Link>
                 )}
-                <Link href={cfg.sourceCodeURL}>
-                    <GitHub />
-                </Link>
+                <Tooltip title="Source Code">
+                    <Link sx={{ ml: 1 }} target="_blank" href={cfg.sourceCodeURL}>
+                        <GitHub />
+                    </Link>
+                </Tooltip>
+                {cfg.issueTrackerURL && (
+                    <Tooltip title="Bug reports">
+                        <Link sx={{ ml: 1 }} target="_blank" href={cfg.issueTrackerURL}>
+                            <BugReport />
+                        </Link>
+                    </Tooltip>
+                )}
             </Box>
         </div>
     );

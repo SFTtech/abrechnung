@@ -13,9 +13,21 @@ const validationSchema = yup.object({
     clearingShares: yup.object(),
 });
 
-export default function CreateClearingAccountModal({ show, onClose, group }) {
+export default function CreateClearingAccountModal({ show, onClose, group, initialValues }) {
     const setAccounts = useSetRecoilState(groupAccounts(group.id));
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
+
+    const initial =
+        initialValues != null
+            ? initialValues
+            : {
+                  name: "",
+                  description: "",
+                  clearing_shares: accounts.reduce((map, curr) => {
+                      map[curr.id] = 0.0;
+                      return map;
+                  }, {}),
+              };
 
     const handleSubmit = (values, { setSubmitting }) => {
         createAccount({
@@ -23,7 +35,7 @@ export default function CreateClearingAccountModal({ show, onClose, group }) {
             name: values.name,
             accountType: "clearing",
             description: values.description,
-            clearingShares: values.clearingShares,
+            clearingShares: values.clearing_shares,
         })
             .then((account) => {
                 toast.success(`Created account ${values.name}`);
@@ -43,15 +55,9 @@ export default function CreateClearingAccountModal({ show, onClose, group }) {
 
             <DialogContent>
                 <Formik
-                    initialValues={{
-                        name: "",
-                        description: "",
-                        clearingShares: accounts.reduce((map, curr) => {
-                            map[curr.id] = 0.0;
-                            return map;
-                        }, {}),
-                    }}
+                    initialValues={initial}
                     onSubmit={handleSubmit}
+                    enableReinitialize={true}
                     validationSchema={validationSchema}
                 >
                     {({
@@ -94,8 +100,8 @@ export default function CreateClearingAccountModal({ show, onClose, group }) {
 
                             <ClearingSharesFormElement
                                 group={group}
-                                clearingShares={values.clearingShares}
-                                setClearingShares={(clearingShares) => setFieldValue("clearingShares", clearingShares)}
+                                clearingShares={values.clearing_shares}
+                                setClearingShares={(clearingShares) => setFieldValue("clearing_shares", clearingShares)}
                             />
 
                             {isSubmitting && <LinearProgress />}

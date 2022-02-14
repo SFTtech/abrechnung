@@ -3,8 +3,9 @@ import axios from "axios";
 import * as yup from "yup";
 
 const configSchema = yup.object({
-    imprintURL: yup.string().required(),
+    imprintURL: yup.string().nullable(),
     sourceCodeURL: yup.string().required(),
+    issueTrackerURL: yup.string().nullable(),
     messages: yup
         .array(
             yup.object({

@@ -30,9 +30,10 @@ import {
     SpeedDial,
     SpeedDialAction,
     SpeedDialIcon,
+    Tooltip,
     Typography,
 } from "@mui/material";
-import { Add, CompareArrows, Delete, Edit, Person } from "@mui/icons-material";
+import { Add, CompareArrows, ContentCopy, Delete, Edit, Person } from "@mui/icons-material";
 import ListItemLink from "../../components/style/ListItemLink";
 import { MobilePaper } from "../../components/style/mobile";
 
@@ -42,6 +43,7 @@ export default function AccountList({ group }) {
 
     const [showPersonalAccountEditModal, setShowPersonalAccountEditModal] = useState(false);
     const [showClearingAccountEditModal, setShowClearingAccountEditModal] = useState(false);
+    const [clearingAccountToCopy, setClearingAccountToCopy] = useState(undefined);
     const [accountToEdit, setAccountToEdit] = useState(null);
     const [clearingAccountToEdit, setClearingAccountToEdit] = useState(null);
     const setAccounts = useSetRecoilState(groupAccounts(group.id));
@@ -84,6 +86,16 @@ export default function AccountList({ group }) {
         }
     };
 
+    const openCreateDialog = () => {
+        setClearingAccountToCopy(undefined);
+        setShowClearingAccountCreationModal(true);
+    };
+
+    const copyClearingAccount = (account) => {
+        setClearingAccountToCopy(account);
+        setShowClearingAccountCreationModal(true);
+    };
+
     return (
         <>
             <MobilePaper>
@@ -116,9 +128,11 @@ export default function AccountList({ group }) {
                 {userPermissions.can_write && (
                     <>
                         <Grid container justifyContent="center">
-                            <IconButton color="primary" onClick={() => setShowPersonalAccountCreationModal(true)}>
-                                <Add />
-                            </IconButton>
+                            <Tooltip title="Create Personal Account">
+                                <IconButton color="primary" onClick={() => setShowPersonalAccountCreationModal(true)}>
+                                    <Add />
+                                </IconButton>
+                            </Tooltip>
                         </Grid>
                         <CreateAccountModal
                             show={showPersonalAccountCreationModal}
@@ -152,6 +166,9 @@ export default function AccountList({ group }) {
                                         <IconButton color="primary" onClick={() => openClearingAccountEdit(account)}>
                                             <Edit />
                                         </IconButton>
+                                        <IconButton color="primary" onClick={() => copyClearingAccount(account)}>
+                                            <ContentCopy />
+                                        </IconButton>
                                         <IconButton color="error" onClick={() => setAccountToDelete(account.id)}>
                                             <Delete />
                                         </IconButton>
@@ -164,13 +181,16 @@ export default function AccountList({ group }) {
                 {userPermissions.can_write && (
                     <>
                         <Grid container justifyContent="center">
-                            <IconButton color="primary" onClick={() => setShowClearingAccountCreationModal(true)}>
-                                <Add />
-                            </IconButton>
+                            <Tooltip title="Create Clearing Account">
+                                <IconButton color="primary" onClick={openCreateDialog}>
+                                    <Add />
+                                </IconButton>
+                            </Tooltip>
                         </Grid>
                         <CreateClearingAccountModal
                             show={showClearingAccountCreationModal}
                             onClose={() => setShowClearingAccountCreationModal(false)}
+                            initialValues={clearingAccountToCopy}
                             group={group}
                         />
                         <EditClearingAccountModal
@@ -197,7 +217,7 @@ export default function AccountList({ group }) {
                         <SpeedDialAction
                             icon={<CompareArrows />}
                             tooltipTitle="Create Clearing Account"
-                            onClick={() => setShowClearingAccountCreationModal(true)}
+                            onClick={openCreateDialog}
                         />
                     </SpeedDial>
 

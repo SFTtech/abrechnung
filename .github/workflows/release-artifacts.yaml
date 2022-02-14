@@ -52,7 +52,7 @@ jobs:
       - id: set-distros
         run: |
           # if we're running from a tag, get the full list of distros; otherwise just use debian:sid
-          dists='["debian:sid"]'
+          dists='["debian:bullseye"]'
           if [[ $GITHUB_REF == refs/tags/* ]]; then
               dists=$(tools/build_debian_packages.py --show-dists-json)
           fi
@@ -110,6 +110,17 @@ jobs:
           name: debs
           path: debs/*
 
+#  deploy-demo:
+#    name: "Deploy demo application"
+#    if: ${{ !failure() && !cancelled() }}
+#    needs:
+#      - build-deps
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Download all workflow run artifacts
+#        uses: actions/download-artifact@v2
+#      - name: Trigger demo deployment via webhook
+#        run: 'curl ${{ secrets.DEMO_DEPLOY_WEBHOOK_URL }} --data @abrechung_*bullseye*_amd64.deb'
 
   # if it's a tag, create a release and attach the artifacts to it
   attach-assets:

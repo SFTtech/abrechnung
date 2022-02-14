@@ -2,18 +2,7 @@ import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { transactionsSeenByUser } from "../../recoil/transactions";
 import { currUserPermissions } from "../../recoil/groups";
-import {
-    Alert,
-    Box,
-    Divider,
-    Grid,
-    IconButton,
-    List,
-    SpeedDial,
-    SpeedDialAction,
-    SpeedDialIcon,
-    Tooltip,
-} from "@mui/material";
+import { Alert, List, SpeedDial, SpeedDialAction, SpeedDialIcon } from "@mui/material";
 import { CompareArrows, ShoppingCart } from "@mui/icons-material";
 import { TransactionListEntry } from "./TransactionListEntry";
 import { MobilePaper } from "../style/mobile";

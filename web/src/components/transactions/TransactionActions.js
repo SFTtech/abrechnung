@@ -152,17 +152,17 @@ export default function TransactionActions({ groupID, transaction }) {
     return (
         <>
             <Grid container justifyContent="space-between">
-                <div>
+                <Grid item sx={{ display: "flex", alignItems: "center" }}>
                     <IconButton
-                        sx={{ display: { xs: "none", md: "block" } }}
+                        sx={{ display: { xs: "none", md: "inline-flex" } }}
                         component={RouterLink}
                         to={`/groups/${groupID}/`}
                     >
                         <ChevronLeft />
                     </IconButton>
                     <Chip color="primary" label={transaction.type} />
-                </div>
-                <div>
+                </Grid>
+                <Grid item>
                     {userPermissions.can_write && (
                         <>
                             {transaction.is_wip ? (
@@ -184,7 +184,7 @@ export default function TransactionActions({ groupID, transaction }) {
                             </IconButton>
                         </>
                     )}
-                </div>
+                </Grid>
             </Grid>
             <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={confirmDeleteDialogOpen}>
                 <DialogTitle id="confirmation-dialog-title">Confirm delete transaction</DialogTitle>

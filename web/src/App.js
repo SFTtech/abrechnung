@@ -23,7 +23,6 @@ import { createTheme, CssBaseline, ThemeProvider, useMediaQuery } from "@mui/mat
 import { StyledEngineProvider } from "@mui/material/styles";
 import Settings from "./pages/profile/Settings";
 import { themeSettings } from "./recoil/settings";
-import { config } from "./recoil/config";
 
 const Profile = React.lazy(() => import("./pages/profile/Profile"));
 const ConfirmEmailChange = React.lazy(() => import("./pages/auth/ConfirmEmailChange"));

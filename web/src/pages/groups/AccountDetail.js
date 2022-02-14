@@ -82,7 +82,7 @@ export default function AccountDetail({ group }) {
                     </Typography>
                     <List>
                         {transactions.map((transaction) => (
-                            <TransactionListEntry group={group} transaction={transaction} />
+                            <TransactionListEntry key={transaction.id} group={group} transaction={transaction} />
                         ))}
                     </List>
                 </MobilePaper>
