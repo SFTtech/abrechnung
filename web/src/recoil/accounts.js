@@ -112,10 +112,10 @@ export const accountsSeenByUser = selectorFamily({
                 })
                 .sort((t1, t2) => {
                     return t1.type !== t2.type
-                        ? accountTypeSortingLookup[t1.type] > accountTypeSortingLookup[t2.type]
+                        ? accountTypeSortingLookup[t1.type] - accountTypeSortingLookup[t2.type]
                         : t1.name === t2.name
-                        ? t1.id > t2.id
-                        : t1.name.toLowerCase() > t2.name.toLowerCase();
+                        ? parseInt(t1.id) - parseInt(t2.id)
+                        : t1.name.toLowerCase().localeCompare(t2.name.toLowerCase());
                 });
         },
 });

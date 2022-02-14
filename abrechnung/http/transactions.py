@@ -149,7 +149,8 @@ async def get_transaction(request: Request):
             "positions": fields.List(
                 fields.Nested(TransactionPositionSchema),
                 required=False,
-                load_default=[],
+                nullable=True,
+                load_default=None,
             ),
             "perform_commit": fields.Bool(load_default=False, required=False),
         },
