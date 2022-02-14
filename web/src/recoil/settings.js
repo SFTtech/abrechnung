@@ -9,6 +9,6 @@ export const themeSettings = atom({
 
 export const transactionSettings = atom({
     key: "transactionSettings",
-    default: { showRemainingValue: true }, // one of "dark", "light", "browser"
+    default: {}, // one of "dark", "light", "browser"
     effects_UNSTABLE: [localStorageEffect("settings.transactions")],
 });

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useRecoilState } from "recoil";
-import { themeSettings, transactionSettings } from "../../recoil/settings";
+import { themeSettings } from "../../recoil/settings";
 import {
     Alert,
     Box,
@@ -12,20 +12,20 @@ import {
     DialogTitle,
     Divider,
     FormControl,
-    FormControlLabel,
     FormGroup,
     FormLabel,
     MenuItem,
     Select,
-    Switch,
     Typography,
 } from "@mui/material";
 import { clearCache } from "../../recoil/cache";
 import { MobilePaper } from "../../components/style/mobile";
+import { useTitle } from "../../utils";
 
 export default function Settings() {
     const [theme, setTheme] = useRecoilState(themeSettings);
-    const [tSettings, setTransactionSettings] = useRecoilState(transactionSettings);
+
+    useTitle("Abrechnung - Settings");
 
     const [confirmClearCacheOpen, setConfirmClearCacheOpen] = useState(false);
 
@@ -48,14 +48,6 @@ export default function Settings() {
         setTheme({
             ...theme,
             darkMode: val,
-        });
-    };
-
-    const handleTransactionShowRemainingChange = (event) => {
-        const val = event.target.checked;
-        setTransactionSettings({
-            ...theme,
-            showRemaining: val,
         });
     };
 
@@ -86,24 +78,7 @@ export default function Settings() {
                     </FormGroup>
                 </FormControl>
             </Box>
-            <Box sx={{ mt: 2 }}>
-                <FormControl component="fieldset" variant="standard">
-                    <FormLabel component="legend">Transaction Editing</FormLabel>
-                    <FormGroup>
-                        <FormControlLabel
-                            control={
-                                <Switch
-                                    checked={tSettings.showRemaining}
-                                    onChange={handleTransactionShowRemainingChange}
-                                    name="showRemaining"
-                                />
-                            }
-                            label="Show remaining transaction value (rest) when entering transaction positions"
-                        />
-                    </FormGroup>
-                </FormControl>
-            </Box>
-            <Divider />
+            <Divider sx={{ mt: 1 }} />
             <Box sx={{ mt: 1 }}>
                 <FormControl component="fieldset" variant="standard">
                     <FormLabel component="legend">Clear Cache</FormLabel>

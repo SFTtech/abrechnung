@@ -5,11 +5,14 @@ import { confirmRegistration } from "../../api";
 import { Button, Container, Link, Typography } from "@mui/material";
 import { Alert } from "@mui/lab";
 import { MobilePaper } from "../../components/style/mobile";
+import { useTitle } from "../../utils";
 
 export default function ConfirmRegistration() {
     const [error, setError] = useState(null);
     const [status, setStatus] = useState("idle");
     const { token } = useParams();
+
+    useTitle("Abrechnung - Confirm Registration");
 
     const confirmEmail = (e) => {
         e.preventDefault();

@@ -4,6 +4,8 @@
 
 The **Abrechnung** aims to be a versatile and user-centric payment, transaction and bookkeeping management tool for human groups and events.
 
+You can find a demo instance [here](https://demo.abrechnung.sft.lol).
+
 Basic features:
 
 * Multitenant access

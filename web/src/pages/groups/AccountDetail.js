@@ -7,6 +7,7 @@ import { accountBalanceHistory, accountTransactions } from "../../recoil/transac
 import { DateTime } from "luxon";
 import { TransactionListEntry } from "../../components/transactions/TransactionListEntry";
 import { MobilePaper } from "../../components/style/mobile";
+import { useTitle } from "../../utils";
 
 export default function AccountDetail({ group }) {
     const match = useRouteMatch();
@@ -17,6 +18,8 @@ export default function AccountDetail({ group }) {
     const transactions = useRecoilValue(accountTransactions({ groupID: group.id, accountID: accountID }));
     const balanceHistory = useRecoilValue(accountBalanceHistory({ groupID: group.id, accountID: accountID }));
     // const userPermissions = useRecoilValue(currUserPermissions(group.id));
+
+    useTitle(`${group.name} - Account ${account.name}`);
 
     // TODO: handle 404
 
@@ -82,7 +85,7 @@ export default function AccountDetail({ group }) {
                     </Typography>
                     <List>
                         {transactions.map((transaction) => (
-                            <TransactionListEntry group={group} transaction={transaction} />
+                            <TransactionListEntry key={transaction.id} group={group} transaction={transaction} />
                         ))}
                     </List>
                 </MobilePaper>

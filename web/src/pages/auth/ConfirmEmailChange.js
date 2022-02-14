@@ -4,10 +4,13 @@ import { toast } from "react-toastify";
 import Loading from "../../components/style/Loading";
 import { confirmEmailChange } from "../../api";
 import { Button, Typography } from "@mui/material";
+import { useTitle } from "../../utils";
 
 export default function ConfirmEmailChange() {
     const [status, setStatus] = useState("idle");
     const { token } = useParams();
+
+    useTitle("Abrechnung - Confirm E-Mail Change");
 
     const confirmEmail = (e) => {
         e.preventDefault();

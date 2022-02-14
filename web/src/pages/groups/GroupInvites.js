@@ -9,12 +9,15 @@ import { DateTime } from "luxon";
 import { Grid, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
 import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import { MobilePaper } from "../../components/style/mobile";
+import { useTitle } from "../../utils";
 
 export default function GroupInvites({ group }) {
     const [showModal, setShowModal] = useState(false);
     const invites = useRecoilValue(groupInvites(group.id));
     const members = useRecoilValue(groupMembers(group.id));
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
+
+    useTitle(`${group.name} - Invite Links`);
 
     const deleteToken = (id) => {
         deleteGroupInvite({ groupID: group.id, inviteID: id }).catch((err) => {

@@ -259,6 +259,11 @@ class GroupService(Application):
                         f"group members cannot promote others to owner without being an owner"
                     )
 
+                if membership["is_owner"]:
+                    raise PermissionError(
+                        f"group owners cannot be demoted by other group members"
+                    )
+
                 if is_owner:
                     await create_group_log(
                         conn=conn,

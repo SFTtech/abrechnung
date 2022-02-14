@@ -5,7 +5,7 @@ import { isAuthenticated, userData } from "../../recoil/auth";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { toast } from "react-toastify";
 import { fetchProfile, login, removeToken } from "../../api";
-import { useQuery } from "../../utils";
+import { useQuery, useTitle } from "../../utils";
 import {
     Avatar,
     Button,
@@ -45,6 +45,8 @@ export default function Login() {
     const query = useQuery();
     const history = useHistory();
     const classes = useStyles();
+
+    useTitle("Abrechnung - Login");
 
     useEffect(() => {
         if (isLoggedIn) {

@@ -10,6 +10,7 @@ import { useHistory } from "react-router-dom";
 import BalanceTable from "./BalanceTable";
 import { MobilePaper } from "../style/mobile";
 import ListItemLink from "../style/ListItemLink";
+import { useTitle } from "../../utils";
 
 export default function Balances({ group }) {
     const theme = useTheme();
@@ -26,6 +27,8 @@ export default function Balances({ group }) {
     const colorRed = theme.palette.mode === "light" ? theme.palette.error.light : theme.palette.error.dark;
     const colorGreenInverted = theme.palette.mode === "dark" ? theme.palette.success.light : theme.palette.success.dark;
     const colorRedInverted = theme.palette.mode === "dark" ? theme.palette.error.light : theme.palette.error.dark;
+
+    useTitle(`${group.name} - Balances`);
 
     const chartData = personalAccounts.map((account) => {
         return {

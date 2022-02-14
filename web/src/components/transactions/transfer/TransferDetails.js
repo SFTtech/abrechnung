@@ -5,12 +5,13 @@ import TransactionBilledAt from "../TransactionBilledAt";
 import TransactionValue from "../TransactionValue";
 import TransactionDebitorShare from "../TransactionDebitorShare";
 import TransactionActions from "../TransactionActions";
-import { Divider, Grid, Paper } from "@mui/material";
+import { Divider, Grid } from "@mui/material";
 import FileGallery from "../FileGallery";
+import { MobilePaper } from "../../style/mobile";
 
 export default function TransferDetails({ group, transaction }) {
     return (
-        <Paper elevation={1} sx={{ padding: 2 }}>
+        <MobilePaper>
             <TransactionActions groupID={group.id} transaction={transaction} />
             <Divider sx={{ marginBottom: 1, marginTop: 1 }} />
             <Grid container>
@@ -40,6 +41,6 @@ export default function TransferDetails({ group, transaction }) {
                     </Grid>
                 )}
             </Grid>
-        </Paper>
+        </MobilePaper>
     );
 }

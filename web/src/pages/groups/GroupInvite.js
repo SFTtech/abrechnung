@@ -5,12 +5,15 @@ import { fetchGroupPreview, joinGroup } from "../../api";
 import { List, Button, Grid, ListItem, ListItemText, Typography } from "@mui/material";
 import { Alert } from "@mui/lab";
 import { MobilePaper } from "../../components/style/mobile";
+import { useTitle } from "../../utils";
 
 export default function GroupInvite() {
     const [group, setGroup] = useState(null);
     const [error, setError] = useState(null);
     const history = useHistory();
     const { inviteToken } = useParams();
+
+    useTitle("Abrechnung - Join Group");
 
     useEffect(() => {
         fetchGroupPreview({ token: inviteToken })

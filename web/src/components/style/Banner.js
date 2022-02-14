@@ -3,7 +3,7 @@ import React from "react";
 import { useRecoilValue } from "recoil";
 import { config } from "../../recoil/config";
 
-export function Banner({}) {
+export function Banner() {
     const cfg = useRecoilValue(config);
     if (cfg.error) {
         return (

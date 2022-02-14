@@ -2,29 +2,21 @@ import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { transactionsSeenByUser } from "../../recoil/transactions";
 import { currUserPermissions } from "../../recoil/groups";
-import {
-    Alert,
-    Box,
-    Divider,
-    Grid,
-    IconButton,
-    List,
-    SpeedDial,
-    SpeedDialAction,
-    SpeedDialIcon,
-    Tooltip,
-} from "@mui/material";
+import { Alert, List, SpeedDial, SpeedDialAction, SpeedDialIcon } from "@mui/material";
 import { CompareArrows, ShoppingCart } from "@mui/icons-material";
 import { TransactionListEntry } from "./TransactionListEntry";
 import { MobilePaper } from "../style/mobile";
 import PurchaseCreateModal from "./purchase/PurchaseCreateModal";
 import TransferCreateModal from "./transfer/TransferCreateModal";
+import { useTitle } from "../../utils";
 
 export default function TransactionList({ group }) {
     const [showTransferCreateDialog, setShowTransferCreateDialog] = useState(false);
     const [showPurchaseCreateDialog, setShowPurchaseCreateDialog] = useState(false);
     const transactions = useRecoilValue(transactionsSeenByUser(group.id));
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
+
+    useTitle(`${group.name} - Transactions`);
 
     return (
         <>

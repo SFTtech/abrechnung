@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 import { LockOutlined } from "@mui/icons-material";
 import { makeStyles } from "@mui/styles";
+import { useTitle } from "../../utils";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -45,6 +46,8 @@ export default function Register() {
     const loggedIn = useRecoilValue(isAuthenticated);
     const [loading, setLoading] = useState(true);
     let history = useHistory();
+
+    useTitle("Abrechnung - Register");
 
     useEffect(() => {
         if (loggedIn) {

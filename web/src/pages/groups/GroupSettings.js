@@ -17,12 +17,15 @@ import {
     Alert,
 } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
+import { useTitle } from "../../utils";
 
 export default function GroupSettings({ group }) {
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const history = useHistory();
 
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
+
+    useTitle(`${group.name} - Settings`);
 
     // TODO: actually make the editing part work
     const updateGroup = ({ name = null, description = null, currencySymbol = null, terms = null }) => {

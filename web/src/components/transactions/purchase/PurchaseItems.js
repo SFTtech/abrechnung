@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-    Alert,
     Checkbox,
     FormControlLabel,
     Grid,
@@ -12,15 +11,13 @@ import {
     TableHead,
     TableRow,
     TextField,
-    Tooltip,
     Typography,
 } from "@mui/material";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { accountsSeenByUser } from "../../../recoil/accounts";
 import { makeStyles } from "@mui/styles";
-import { Add, ContentCopy, Delete, HelpOutline } from "@mui/icons-material";
+import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import AccountSelect from "../../style/AccountSelect";
-import { transactionSettings } from "../../../recoil/settings";
 import { pendingTransactionPositionChanges } from "../../../recoil/transactions";
 import { MobilePaper } from "../../style/mobile";
 
@@ -256,9 +253,6 @@ export default function PurchaseItems({ group, transaction }) {
     const totalPositionValue = positions.reduce((acc, curr) => acc + curr.price, 0);
     const sharedTransactionValue = transaction.value - totalPositionValue;
 
-    const transactionEditSettings = useRecoilValue(transactionSettings);
-    const showMissingValueAlert = transactionEditSettings.showRemaining;
-
     const purchaseItemSumForAccount = (accountID) => {
         return transaction.account_balances.hasOwnProperty(accountID)
             ? transaction.account_balances[accountID].positions
@@ -478,7 +472,9 @@ export default function PurchaseItems({ group, transaction }) {
 
     const addPurchaseItemAccount = (account) => {
         setShowAccountSelect(false);
-        setAdditionalPurchaseItemAccounts([...new Set([...positionAccounts, parseInt(account.id)])]);
+        setAdditionalPurchaseItemAccounts((currAdditionalAccounts) => [
+            ...new Set([...currAdditionalAccounts, parseInt(account.id)]),
+        ]);
     };
 
     return (
@@ -589,25 +585,22 @@ export default function PurchaseItems({ group, transaction }) {
                             </TableCell>
                             {transaction.is_wip && <TableCell></TableCell>}
                         </TableRow>
+                        <TableRow hover>
+                            <TableCell>
+                                <Typography sx={{ fontWeight: "bold" }}>Remaining:</Typography>
+                            </TableCell>
+                            <TableCell align="right">
+                                {sharedTransactionValue.toFixed(2)} {transaction.currency_symbol}
+                            </TableCell>
+                            {(transaction.is_wip ? transactionAccounts : positionAccounts).map((accountID) => (
+                                <TableCell align="right" key={accountID}></TableCell>
+                            ))}
+                            <TableCell align="right" colSpan={showAddAccount ? 2 : 1}></TableCell>
+                            {transaction.is_wip && <TableCell></TableCell>}
+                        </TableRow>
                     </TableBody>
                 </Table>
             </TableContainer>
-            {showMissingValueAlert && sharedTransactionValue > 0 && (
-                <Alert
-                    severity="info"
-                    sx={{ marginTop: 2 }}
-                    action={
-                        <Tooltip title="This message can be turned off in your profile settings.">
-                            <HelpOutline />
-                        </Tooltip>
-                    }
-                >
-                    Remaining transaction value to be shared:{" "}
-                    <strong>
-                        {sharedTransactionValue} {transaction.currency_symbol}
-                    </strong>
-                </Alert>
-            )}
         </MobilePaper>
     );
 }

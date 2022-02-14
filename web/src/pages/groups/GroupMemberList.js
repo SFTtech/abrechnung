@@ -26,6 +26,7 @@ import {
 import { Edit } from "@mui/icons-material";
 import { makeStyles } from "@mui/styles";
 import { MobilePaper } from "../../components/style/mobile";
+import { useTitle } from "../../utils";
 
 const useStyles = makeStyles((theme) => ({
     chip: {
@@ -40,6 +41,8 @@ export default function GroupMemberList({ group }) {
     const currentUser = useRecoilValue(userData);
     const members = useRecoilValue(groupMembers(group.id));
     const permissions = useRecoilValue(currUserPermissions(group.id));
+
+    useTitle(`${group.name} - Members`);
 
     const handleEditMemberSubmit = (values, { setSubmitting }) => {
         updateGroupMemberPrivileges({
@@ -157,9 +160,9 @@ export default function GroupMemberList({ group }) {
                 <DialogContent>
                     <Formik
                         initialValues={{
-                            userID: memberToEdit?.user_id,
-                            isOwner: memberToEdit?.is_owner,
-                            canWrite: memberToEdit?.can_write,
+                            userID: memberToEdit ? memberToEdit.user_id : -1,
+                            isOwner: memberToEdit ? memberToEdit.is_owner : false,
+                            canWrite: memberToEdit ? memberToEdit.can_write : false,
                         }}
                         onSubmit={handleEditMemberSubmit}
                         enableReinitialize={true}
