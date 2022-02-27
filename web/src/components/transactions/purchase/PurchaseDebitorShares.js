@@ -21,7 +21,8 @@ import { makeStyles } from "@mui/styles";
 import { pendingTransactionDetailChanges } from "../../../recoil/transactions";
 import { accountsSeenByUser } from "../../../recoil/accounts";
 import { ShareInput } from "../../ShareInput";
-import { CompareArrows, Person, Search as SearchIcon } from "@mui/icons-material";
+import { Search as SearchIcon } from "@mui/icons-material";
+import { ClearingAccountIcon, PersonalAccountIcon } from "../../style/AbrechnungIcons";
 
 const useStyles = makeStyles((theme) => ({
     shareValue: {
@@ -68,7 +69,7 @@ function AccountTableRow({
         <TableRow hover>
             <TableCell>
                 <Grid container direction="row" alignItems="center">
-                    <Grid item>{account.type === "personal" ? <Person /> : <CompareArrows />}</Grid>
+                    <Grid item>{account.type === "personal" ? <PersonalAccountIcon /> : <ClearingAccountIcon />}</Grid>
                     <Grid item sx={{ ml: 1 }}>
                         <Typography variant="body2" component="span">
                             {account.name}

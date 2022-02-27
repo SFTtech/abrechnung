@@ -3,19 +3,11 @@ import { Chip, Divider, ListItemAvatar, ListItemText, Tooltip, Typography } from
 import { CompareArrows, HelpOutline, ShoppingCart } from "@mui/icons-material";
 import { DateTime } from "luxon";
 import React from "react";
-import { makeStyles } from "@mui/styles";
 import { useRecoilValue } from "recoil";
 import { accountsSeenByUser } from "../../recoil/accounts";
-
-const useStyles = makeStyles((theme) => ({
-    propertyPill: {
-        marginRight: "3px",
-    },
-}));
+import { TransferIcon, PurchaseIcon } from "../style/AbrechnungIcons";
 
 export function TransactionListEntry({ group, transaction }) {
-    const classes = useStyles();
-
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const accountNamesFromShares = (shares) => {
         return shares.map((s) => accounts.find((a) => a.id === parseInt(s))?.name).join(", ");
@@ -27,11 +19,11 @@ export function TransactionListEntry({ group, transaction }) {
                 <ListItemAvatar sx={{ minWidth: { xs: "40px", md: "56px" } }}>
                     {transaction.type === "purchase" ? (
                         <Tooltip title="Purchase">
-                            <ShoppingCart color="primary" />
+                            <PurchaseIcon color="primary" />
                         </Tooltip>
                     ) : transaction.type === "transfer" ? (
                         <Tooltip title="Money Transfer">
-                            <CompareArrows color="primary" />
+                            <TransferIcon color="primary" />
                         </Tooltip>
                     ) : (
                         <Tooltip title="Unknown Transaction Type">
@@ -43,13 +35,7 @@ export function TransactionListEntry({ group, transaction }) {
                     primary={
                         <>
                             {transaction.is_wip && (
-                                <Chip
-                                    color="info"
-                                    variant="outlined"
-                                    label="WIP"
-                                    size="small"
-                                    className={classes.propertyPill}
-                                />
+                                <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 3 }} />
                             )}
                             <Typography variant="body1" component="span">
                                 {transaction.description}
@@ -70,6 +56,11 @@ export function TransactionListEntry({ group, transaction }) {
                 <ListItemText>
                     <Typography align="right" variant="body2">
                         {transaction.value.toFixed(2)} {transaction.currency_symbol}
+                        <br />
+                        <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
+                            last changed:{" "}
+                            {DateTime.fromISO(transaction.last_changed).toLocaleString(DateTime.DATETIME_FULL)}
+                        </Typography>
                     </Typography>
                 </ListItemText>
             </ListItemLink>

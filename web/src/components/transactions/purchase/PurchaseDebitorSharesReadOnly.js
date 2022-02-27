@@ -1,9 +1,7 @@
 import { useRecoilValue } from "recoil";
 import {
     Box,
-    Checkbox,
     Divider,
-    FormControlLabel,
     Grid,
     List,
     ListItem,
@@ -19,7 +17,7 @@ import { useEffect, useState } from "react";
 import { makeStyles } from "@mui/styles";
 import { Link } from "react-router-dom";
 import { accountsSeenByUser } from "../../../recoil/accounts";
-import { CompareArrows, Person } from "@mui/icons-material";
+import { ClearingAccountIcon, PersonalAccountIcon } from "../../style/AbrechnungIcons";
 
 const useStyles = makeStyles((theme) => ({
     shareValue: {
@@ -75,123 +73,113 @@ export default function PurchaseDebitorSharesReadOnly({ group, transaction }) {
     };
 
     return (
-        <div>
-            <List>
-                <ListItem className={classes.listItem}>
-                    <Grid container direction="row" justifyContent="space-between">
-                        <Typography variant="subtitle1" className={classes.checkboxLabel}>
-                            <Box sx={{ display: "flex", alignItems: "flex-end" }}>For whom</Box>
-                        </Typography>
-                        {transaction.is_wip && (
-                            <FormControlLabel
-                                control={<Checkbox name={`show-advanced`} />}
-                                checked={showAdvanced}
-                                onChange={(event) => setShowAdvanced(event.target.checked)}
-                                label="Advanced"
-                            />
-                        )}
-                    </Grid>
-                </ListItem>
-                <Divider variant="middle" className={classes.divider} />
+        <List>
+            <ListItem className={classes.listItem}>
+                <Grid container direction="row" justifyContent="space-between">
+                    <Typography variant="subtitle1" className={classes.checkboxLabel}>
+                        <Box sx={{ display: "flex", alignItems: "flex-end" }}>For whom</Box>
+                    </Typography>
+                </Grid>
+            </ListItem>
+            <Divider variant="middle" className={classes.divider} />
 
-                <TableContainer>
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Account</TableCell>
-                                {showAdvanced && <TableCell>Shares</TableCell>}
-                                {transactionHasPositions ? (
-                                    <>
-                                        <TableCell width="100px" align="right">
-                                            Positions
-                                        </TableCell>
-                                        <TableCell width="3px" align="center">
-                                            +
-                                        </TableCell>
-                                        <TableCell width="100px" align="right">
-                                            Shared Rest
-                                        </TableCell>
-                                        <TableCell width="3px" align="center">
-                                            =
-                                        </TableCell>
-                                        <TableCell width="100px" align="right">
-                                            Total
-                                        </TableCell>
-                                    </>
-                                ) : (
+            <TableContainer>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Account</TableCell>
+                            {showAdvanced && <TableCell>Shares</TableCell>}
+                            {transactionHasPositions ? (
+                                <>
                                     <TableCell width="100px" align="right">
-                                        Shared
+                                        Positions
                                     </TableCell>
-                                )}
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {accounts
-                                .filter(
-                                    (account) =>
-                                        transaction.account_balances.hasOwnProperty(account.id) &&
-                                        (transaction.account_balances[account.id].common_debitors !== 0 ||
-                                            transaction.account_balances[account.id].positions)
-                                )
-                                .map((account) => (
-                                    <TableRow hover key={account.id}>
-                                        <TableCell className={classes.tableLinkCell}>
-                                            {/*TODO: proper link*/}
-                                            <Link
-                                                className={classes.tableLink}
-                                                to={`/groups/${group.id}/accounts/${account.id}`}
-                                            >
-                                                <Grid container direction="row" alignItems="center">
-                                                    <Grid item>
-                                                        {account.type === "personal" ? <Person /> : <CompareArrows />}
-                                                    </Grid>
-                                                    <Grid item sx={{ ml: 1 }}>
-                                                        <Typography variant="body2" component="span">
-                                                            {account.name}
-                                                        </Typography>
-                                                    </Grid>
+                                    <TableCell width="3px" align="center">
+                                        +
+                                    </TableCell>
+                                    <TableCell width="100px" align="right">
+                                        Shared Rest
+                                    </TableCell>
+                                    <TableCell width="3px" align="center">
+                                        =
+                                    </TableCell>
+                                    <TableCell width="100px" align="right">
+                                        Total
+                                    </TableCell>
+                                </>
+                            ) : (
+                                <TableCell width="100px" align="right">
+                                    Shared
+                                </TableCell>
+                            )}
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {accounts
+                            .filter(
+                                (account) =>
+                                    transaction.account_balances.hasOwnProperty(account.id) &&
+                                    (transaction.account_balances[account.id].common_debitors !== 0 ||
+                                        transaction.account_balances[account.id].positions)
+                            )
+                            .map((account) => (
+                                <TableRow hover key={account.id}>
+                                    <TableCell className={classes.tableLinkCell}>
+                                        {/*TODO: proper link*/}
+                                        <Link
+                                            className={classes.tableLink}
+                                            to={`/groups/${group.id}/accounts/${account.id}`}
+                                        >
+                                            <Grid container direction="row" alignItems="center">
+                                                <Grid item>
+                                                    {account.type === "personal" ? (
+                                                        <PersonalAccountIcon />
+                                                    ) : (
+                                                        <ClearingAccountIcon />
+                                                    )}
                                                 </Grid>
-                                            </Link>
-                                        </TableCell>
-                                        {showAdvanced && (
-                                            <TableCell width="50px">
-                                                {debitorShareValueForAccount(account.id)}
+                                                <Grid item sx={{ ml: 1 }}>
+                                                    <Typography variant="body2" component="span">
+                                                        {account.name}
+                                                    </Typography>
+                                                </Grid>
+                                            </Grid>
+                                        </Link>
+                                    </TableCell>
+                                    {showAdvanced && (
+                                        <TableCell width="50px">{debitorShareValueForAccount(account.id)}</TableCell>
+                                    )}
+                                    {transactionHasPositions ? (
+                                        <>
+                                            <TableCell align="right">
+                                                {transaction.account_balances[account.id].positions.toFixed(2)}{" "}
+                                                {transaction.currency_symbol}
                                             </TableCell>
-                                        )}
-                                        {transactionHasPositions ? (
-                                            <>
-                                                <TableCell align="right">
-                                                    {transaction.account_balances[account.id].positions.toFixed(2)}{" "}
-                                                    {transaction.currency_symbol}
-                                                </TableCell>
-                                                <TableCell></TableCell>
-                                                <TableCell align="right">
-                                                    {transaction.account_balances[account.id].common_debitors.toFixed(
-                                                        2
-                                                    )}{" "}
-                                                    {transaction.currency_symbol}
-                                                </TableCell>
-                                                <TableCell></TableCell>
-                                                <TableCell width="100px" align="right">
-                                                    {(
-                                                        transaction.account_balances[account.id].common_debitors +
-                                                        transaction.account_balances[account.id].positions
-                                                    ).toFixed(2)}{" "}
-                                                    {transaction.currency_symbol}
-                                                </TableCell>
-                                            </>
-                                        ) : (
-                                            <TableCell width="100px" align="right">
+                                            <TableCell></TableCell>
+                                            <TableCell align="right">
                                                 {transaction.account_balances[account.id].common_debitors.toFixed(2)}{" "}
                                                 {transaction.currency_symbol}
                                             </TableCell>
-                                        )}
-                                    </TableRow>
-                                ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            </List>
-        </div>
+                                            <TableCell></TableCell>
+                                            <TableCell width="100px" align="right">
+                                                {(
+                                                    transaction.account_balances[account.id].common_debitors +
+                                                    transaction.account_balances[account.id].positions
+                                                ).toFixed(2)}{" "}
+                                                {transaction.currency_symbol}
+                                            </TableCell>
+                                        </>
+                                    ) : (
+                                        <TableCell width="100px" align="right">
+                                            {transaction.account_balances[account.id].common_debitors.toFixed(2)}{" "}
+                                            {transaction.currency_symbol}
+                                        </TableCell>
+                                    )}
+                                </TableRow>
+                            ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </List>
     );
 }

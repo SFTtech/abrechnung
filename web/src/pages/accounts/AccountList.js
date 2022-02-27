@@ -33,9 +33,10 @@ import {
     Tooltip,
     Typography,
 } from "@mui/material";
-import { Add, CompareArrows, ContentCopy, Delete, Edit, Person } from "@mui/icons-material";
+import { Add, ContentCopy, Delete, Edit } from "@mui/icons-material";
 import ListItemLink from "../../components/style/ListItemLink";
 import { MobilePaper } from "../../components/style/mobile";
+import { ClearingAccountIcon, PersonalAccountIcon } from "../../components/style/AbrechnungIcons";
 import { useTitle } from "../../utils";
 
 export default function AccountList({ group }) {
@@ -213,12 +214,12 @@ export default function AccountList({ group }) {
                         icon={<SpeedDialIcon />}
                     >
                         <SpeedDialAction
-                            icon={<Person />}
+                            icon={<PersonalAccountIcon />}
                             tooltipTitle="Create Personal Account"
                             onClick={() => setShowPersonalAccountCreationModal(true)}
                         />
                         <SpeedDialAction
-                            icon={<CompareArrows />}
+                            icon={<ClearingAccountIcon />}
                             tooltipTitle="Create Clearing Account"
                             onClick={openCreateDialog}
                         />

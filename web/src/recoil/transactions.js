@@ -6,6 +6,15 @@ import { toast } from "react-toastify";
 import { accountsSeenByUser } from "./accounts";
 import { localStorageEffect } from "./cache";
 
+const transactionCompareFn = (t1, t2) => {
+    if (t1.is_wip && !t2.is_wip) {
+        return -1;
+    } else if (!t1.is_wip && t2.is_wip) {
+        return 1;
+    }
+    return DateTime.fromISO(t2.last_changed).toMillis() - DateTime.fromISO(t1.last_changed).toMillis();
+};
+
 export const groupTransactions = atomFamily({
     key: "groupTransactions",
     default: [],
@@ -19,45 +28,6 @@ export const groupTransactions = atomFamily({
                     .catch((err) => {
                         toast.error(`error when fetching transactions: ${err}`);
                         return [];
-                    });
-            };
-
-            const partialFetchPromise = (currTransactions) => {
-                let maxChangedTime = currTransactions.reduce((acc, curr) => {
-                    if (curr.committed_details != null && curr.committed_details.committed_at != null) {
-                        return Math.max(DateTime.fromISO(curr.committed_details.committed_at).toSeconds(), acc);
-                    }
-                    return acc;
-                }, 0);
-                if (maxChangedTime === 0) {
-                    return fullFetchPromise();
-                }
-
-                const wipTransactions = currTransactions.reduce((acc, curr) => {
-                    if (curr.is_wip) {
-                        return [...acc, curr.id];
-                    }
-                    return acc;
-                }, []);
-
-                return fetchTransactions({
-                    groupID: groupID,
-                    minLastChanged: DateTime.fromSeconds(maxChangedTime),
-                    additionalTransactions: wipTransactions,
-                })
-                    .then((result) => {
-                        let mappedTransactions = currTransactions.reduce((map, transaction) => {
-                            map[transaction.id] = transaction;
-                            return map;
-                        }, {});
-                        for (const newTransaction of result) {
-                            mappedTransactions[newTransaction.id] = newTransaction;
-                        }
-                        return Object.values(mappedTransactions);
-                    })
-                    .catch((err) => {
-                        toast.error(`error when fetching transactions: ${err}`);
-                        return currTransactions;
                     });
             };
 
@@ -320,16 +290,18 @@ export const transactionsSeenByUser = selectorFamily({
                         }
                     });
 
+                    for (const accountID in transactionAccountBalances) {
+                        const b = transactionAccountBalances[accountID];
+                        transactionAccountBalances[accountID].total =
+                            b.common_creditors - b.positions - b.common_debitors;
+                    }
+
                     return {
                         ...transaction,
                         account_balances: transactionAccountBalances,
                     };
                 })
-                .sort((t1, t2) => {
-                    return t1.billed_at === t2.billed_at
-                        ? t2.id - t1.id
-                        : DateTime.fromISO(t2.billed_at).toMillis() - DateTime.fromISO(t1.billed_at).toMillis();
-                });
+                .sort(transactionCompareFn);
         },
 });
 
@@ -355,8 +327,10 @@ export const accountBalances = selectorFamily({
                     account.id,
                     {
                         balance: 0,
+                        beforeClearing: 0,
                         totalConsumed: 0,
                         totalPaid: 0,
+                        clearingResolution: {},
                     },
                 ])
             );
@@ -368,8 +342,8 @@ export const accountBalances = selectorFamily({
                 Object.entries(transaction.account_balances).forEach(([accountID, value]) => {
                     accountBalances[accountID].totalConsumed += value.positions + value.common_debitors;
                     accountBalances[accountID].totalPaid += value.common_creditors;
-                    accountBalances[accountID].balance +=
-                        value.common_creditors - value.positions - value.common_debitors;
+                    accountBalances[accountID].balance += value.total;
+                    accountBalances[accountID].beforeClearing = accountBalances[accountID].balance;
                 });
             }
 
@@ -421,6 +395,11 @@ export const accountBalances = selectorFamily({
                     const totalShares = Object.values(shareMap[clearing]).reduce((acc, curr) => curr + acc, 0);
                     for (const acc in shareMap[clearing]) {
                         const accShare = (toSplit * shareMap[clearing][acc]) / totalShares;
+                        if (accountBalances[clearing].clearingResolution.hasOwnProperty(acc)) {
+                            accountBalances[clearing].clearingResolution[acc] += accShare;
+                        } else {
+                            accountBalances[clearing].clearingResolution[acc] = accShare;
+                        }
                         accountBalances[acc].balance += accShare;
                         if (accShare > 0) {
                             accountBalances[acc].totalPaid += Math.abs(accShare);
@@ -451,32 +430,53 @@ export const accountBalanceHistory = selectorFamily({
     get:
         ({ groupID, accountID }) =>
         async ({ get }) => {
+            const balances = get(accountBalances(groupID));
+            const accounts = get(accountsSeenByUser(groupID));
+            const clearingAccounts = accounts.filter((a) => a.type === "clearing");
             const unsortedTransactions = get(accountTransactions({ groupID: groupID, accountID: accountID }));
-            const transactions = [...unsortedTransactions].sort((t1, t2) => {
-                return DateTime.fromISO(t2.billed_at).toMillis() - DateTime.fromISO(t1.billed_at).toMillis();
-            });
+            const transactions = [...unsortedTransactions].sort(transactionCompareFn);
 
             if (transactions.length === 0) {
                 return [];
             }
 
             let balanceChanges = [];
-            let currentEntry = {
-                date: DateTime.fromISO(transactions[0].billed_at).toSeconds(),
-                balance: 0,
-            };
             for (const transaction of transactions) {
-                const transactionDate = DateTime.fromISO(transaction.billed_at).toSeconds();
-                if (transactionDate !== currentEntry.date) {
-                    balanceChanges.push({ ...currentEntry });
-                    currentEntry.date = transactionDate;
-                }
-
                 const a = transaction.account_balances[accountID];
-                currentEntry.balance += a.common_creditors - a.common_debitors - a.positions;
+                balanceChanges.push({
+                    date: DateTime.fromISO(transaction.billed_at).toSeconds(),
+                    change: a.total,
+                    changeOrigin: {
+                        type: "transaction",
+                        id: transaction.id,
+                    },
+                });
             }
-            balanceChanges.push({ ...currentEntry });
 
-            return balanceChanges;
+            for (const account of clearingAccounts) {
+                if (balances[account.id].clearingResolution.hasOwnProperty(accountID)) {
+                    balanceChanges.push({
+                        date: DateTime.fromISO(account.last_changed).toSeconds(),
+                        change: balances[account.id].clearingResolution[accountID],
+                        changeOrigin: {
+                            type: "clearing",
+                            id: account.id,
+                        },
+                    });
+                }
+            }
+            balanceChanges.sort((a1, a2) => a1.date - a2.date);
+
+            let accumulatedBalanceChanges = [];
+            let currBalance = 0;
+            for (const change of balanceChanges) {
+                currBalance += change.change;
+                accumulatedBalanceChanges.push({
+                    ...change,
+                    balance: currBalance,
+                });
+            }
+
+            return accumulatedBalanceChanges;
         },
 });
