@@ -140,6 +140,17 @@ export const clearingAccountsSeenByUser = selectorFamily({
         },
 });
 
+export const clearingAccountsInvolvingUser = selectorFamily({
+    key: "clearingAccountsInvolvingUser",
+    get:
+        ({ groupID, accountID }) =>
+        async ({ get }) => {
+            return get(clearingAccountsSeenByUser(groupID)).filter((account) =>
+                account.clearing_shares.hasOwnProperty(accountID)
+            );
+        },
+});
+
 export const groupAccountByID = selectorFamily({
     key: "groupAccountByID",
     get:

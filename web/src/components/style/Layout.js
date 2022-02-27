@@ -132,7 +132,7 @@ export default function Layout({ group = null, children, ...props }) {
                 }}
             >
                 {cfg.imprintURL && (
-                    <Link href={cfg.imprintURL} sx={{ mr: 2 }}>
+                    <Link href={cfg.imprintURL} target="_blank" sx={{ mr: 2 }}>
                         imprint
                     </Link>
                 )}

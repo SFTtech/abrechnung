@@ -110,17 +110,18 @@ jobs:
           name: debs
           path: debs/*
 
-#  deploy-demo:
-#    name: "Deploy demo application"
-#    if: ${{ !failure() && !cancelled() }}
-#    needs:
-#      - build-deps
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Download all workflow run artifacts
-#        uses: actions/download-artifact@v2
-#      - name: Trigger demo deployment via webhook
-#        run: 'curl ${{ secrets.DEMO_DEPLOY_WEBHOOK_URL }} --data @abrechung_*bullseye*_amd64.deb'
+  deploy-demo:
+    name: "Deploy demo application"
+    environment: demo
+    if: ${{ !failure() && !cancelled() }}
+    needs:
+      - build-deps
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all workflow run artifacts
+        uses: actions/download-artifact@v2
+      - name: Trigger demo deployment via webhook
+        run: curl ${{ secrets.DEMO_DEPLOY_WEBHOOK_URL }} -F "archive=@$(find -name 'abrechnung_*bullseye*_amd64.deb')"
 
   # if it's a tag, create a release and attach the artifacts to it
   attach-assets:

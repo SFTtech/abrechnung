@@ -11,8 +11,8 @@ import Loading from "../../components/style/Loading";
 import Transaction from "./Transaction";
 import GroupSettings from "./GroupSettings";
 import Balances from "../../components/accounts/Balances";
-import AccountList from "./AccountList";
-import AccountDetail from "./AccountDetail";
+import AccountList from "../accounts/AccountList";
+import AccountDetail from "../accounts/AccountDetail";
 
 export default function Group() {
     const match = useRouteMatch();
