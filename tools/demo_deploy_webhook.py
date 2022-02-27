@@ -1,5 +1,7 @@
 #!/usr/bin/python3
 
+# type: ignore  # mypy does not like aiohttp multipart for some reason
+
 import argparse
 import os
 import subprocess
@@ -31,7 +33,7 @@ async def hook(request: web.Request):
 
     with open("/tmp/abrechnung_latest.deb", "wb+") as f:
         field = await reader.next()
-        if not field.name == "archive":
+        if not field or not field.name == "archive":
             raise web.HTTPBadRequest
         filename = field.filename
         size = 0
