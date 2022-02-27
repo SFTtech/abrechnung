@@ -115,7 +115,7 @@ jobs:
     environment: demo
     if: ${{ !failure() && !cancelled() }}
     needs:
-      - build-deps
+      - build-debs
     runs-on: ubuntu-latest
     steps:
       - name: Download all workflow run artifacts
