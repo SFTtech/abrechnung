@@ -28,7 +28,7 @@ export default function ClearingSharesFormElement({ group, clearingShares, setCl
         if (searchValue != null && searchValue !== "") {
             setFilteredAccounts(
                 accounts.filter((acc) => {
-                    return acc.name.includes(searchValue);
+                    return acc.name.toLowerCase().includes(searchValue.toLowerCase());
                 })
             );
         } else {
