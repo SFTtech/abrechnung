@@ -144,7 +144,7 @@ export default function PurchaseDebitorShares({ group, transaction, showPosition
         if (searchValue != null && searchValue !== "") {
             setFilteredAccounts(
                 accounts.filter((acc) => {
-                    return acc.name.includes(searchValue);
+                    return acc.name.toLowerCase().includes(searchValue.toLowerCase());
                 })
             );
         } else {
