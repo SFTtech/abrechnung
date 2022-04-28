@@ -17,14 +17,14 @@ class WebsocketAPITest(BaseHTTPAPITest):
         self.assertEqual(expected_msg, resp_json | expected_msg)
 
     async def test_websocket_notifications(self):
-        user_id, password = await self._create_test_user(
+        user, password = await self._create_test_user(
             username="user", email="email@email.com"
         )
         _, session_id, _ = await self.user_service.login_user(
             "user", password=password, session_name="session1"
         )
         token = token_for_user(
-            user_id, session_id=session_id, secret_key=self.secret_key
+            user.id, session_id=session_id, secret_key=self.secret_key
         )
 
         ws = await self.client.ws_connect("/api/v1/ws")
@@ -34,7 +34,7 @@ class WebsocketAPITest(BaseHTTPAPITest):
             {
                 "type": "subscribe",
                 "token": token,
-                "data": {"subscription_type": "group", "element_id": user_id},
+                "data": {"subscription_type": "group", "element_id": user.id},
             }
         )
 
@@ -43,14 +43,14 @@ class WebsocketAPITest(BaseHTTPAPITest):
             {
                 "type": "subscribe_success",
                 "data": {
-                    "element_id": user_id,
+                    "element_id": user.id,
                     "subscription_type": "group",
                 },
             },
         )
 
         group_id = await self.group_service.create_group(
-            user_id=user_id,
+            user=user,
             name="group1",
             description="asdf",
             currency_symbol="€",
@@ -63,7 +63,7 @@ class WebsocketAPITest(BaseHTTPAPITest):
             {
                 "type": "notification",
                 "data": {
-                    "element_id": user_id,
+                    "element_id": user.id,
                     "group_id": group_id,
                     "subscription_type": "group",
                 },
@@ -90,7 +90,7 @@ class WebsocketAPITest(BaseHTTPAPITest):
         )
 
         account_id = await self.account_service.create_account(
-            user_id=user_id,
+            user=user,
             group_id=group_id,
             type="personal",
             name="group1",
@@ -129,7 +129,7 @@ class WebsocketAPITest(BaseHTTPAPITest):
         )
 
         transaction_id = await self.transaction_service.create_transaction(
-            user_id=user_id,
+            user=user,
             group_id=group_id,
             type="transfer",
             value=1.2,
@@ -175,7 +175,7 @@ class WebsocketAPITest(BaseHTTPAPITest):
         )
 
         invite_id = await self.group_service.create_invite(
-            user_id=user_id,
+            user=user,
             group_id=group_id,
             description="foobar invite",
             single_use=False,
@@ -237,7 +237,7 @@ class WebsocketAPITest(BaseHTTPAPITest):
             {
                 "type": "unsubscribe",
                 "token": token,
-                "data": {"subscription_type": "group", "element_id": user_id},
+                "data": {"subscription_type": "group", "element_id": user.id},
             }
         )
 
@@ -246,7 +246,7 @@ class WebsocketAPITest(BaseHTTPAPITest):
             {
                 "type": "unsubscribe_success",
                 "data": {
-                    "element_id": user_id,
+                    "element_id": user.id,
                     "subscription_type": "group",
                 },
             },

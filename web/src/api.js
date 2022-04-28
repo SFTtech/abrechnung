@@ -150,11 +150,12 @@ export async function logout() {
     removeToken();
 }
 
-export async function register({ username, email, password }) {
+export async function register({ username, email, password, inviteToken }) {
     const resp = await bareApi.post("/auth/register", {
         username: username,
         email: email,
         password: password,
+        invite_token: inviteToken,
     });
     return resp.data;
 }

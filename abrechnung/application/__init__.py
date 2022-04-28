@@ -4,6 +4,7 @@ import asyncpg
 from asyncpg.pool import Pool
 
 from abrechnung.config import Config
+from abrechnung.domain.users import User
 
 
 class NotFoundError(Exception):
@@ -23,14 +24,14 @@ class Application:
 async def check_group_permissions(
     conn: asyncpg.Connection,
     group_id: int,
-    user_id: int,
+    user: User,
     is_owner: bool = False,
     can_write: bool = False,
 ) -> tuple[bool, bool]:
     membership = await conn.fetchrow(
         "select is_owner, can_write from group_membership where group_id = $1 and user_id = $2",
         group_id,
-        user_id,
+        user.id,
     )
     if membership is None:
         raise NotFoundError(f"group not found")
@@ -47,7 +48,7 @@ async def check_group_permissions(
 async def create_group_log(
     conn: asyncpg.Connection,
     group_id: int,
-    user_id: int,
+    user: User,
     type: str,
     message: Optional[str] = None,
     affected_user_id: Optional[int] = None,
@@ -56,7 +57,7 @@ async def create_group_log(
         "insert into group_log (group_id, user_id, type, message, affected) "
         "values ($1, $2, $3, $4, $5)",
         group_id,
-        user_id,
+        user.id,
         type,
         "" if message is None else message,
         affected_user_id,

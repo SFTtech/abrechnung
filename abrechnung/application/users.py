@@ -26,8 +26,9 @@ class UserService(Application):
     ):
         super().__init__(db_pool=db_pool, config=config)
 
-        self.enable_registration = self.cfg["api"]["enable_registration"]
-        self.valid_email_domains = self.cfg["api"].get("valid_email_domains")
+        self.enable_registration = self.cfg["registration"]["enabled"]
+        self.allow_guest_users = self.cfg["registration"]["allow_guest_users"]
+        self.valid_email_domains = self.cfg["registration"].get("valid_email_domains")
 
     @staticmethod
     def _hash_password(password: str) -> str:
@@ -106,13 +107,13 @@ class UserService(Application):
 
                 return user["id"], session_id, session_token
 
-    async def logout_user(self, *, user_id: int, session_id: int):
+    async def logout_user(self, *, user: User, session_id: int):
         async with self.db_pool.acquire(timeout=1) as conn:
             async with conn.transaction():
                 sess_id = await conn.fetchval(
                     "delete from session where id = $1 and user_id = $2 returning id",
                     session_id,
-                    user_id,
+                    user.id,
                 )
                 if sess_id is None:
                     raise InvalidCommand(f"Already logged out")
@@ -133,37 +134,63 @@ class UserService(Application):
 
                 return user_id
 
-    async def register_user(self, username: str, email: str, password: str) -> int:
-        """Register a new user, returning the newly created user id and creating a pending registration entry"""
-        if not self.enable_registration:
-            raise PermissionError(f"User registrations are disabled on this server")
-
-        if self.valid_email_domains is not None:
-            splitted = email.split("@")
-            if len(splitted) == 0:
-                raise InvalidCommand(f"Invalid email {email}")
-
-            domain = splitted[-1]
-            if domain not in self.valid_email_domains:
-                raise PermissionError(
-                    f"Only users with emails out of the following domains are "
-                    f"allowed: {self.valid_email_domains}"
-                )
-
+    def _validate_email_address(self, email: str) -> str:
         try:
             valid = validate_email(email)
             email = valid.email
         except EmailNotValidError as e:
             raise InvalidCommand(str(e))
 
+        return email
+
+    def _validate_email_domain(self, email: str) -> bool:
+        if self.valid_email_domains is None:
+            return True
+
+        domain = email.split("@")[-1]
+        if domain not in self.valid_email_domains:
+            raise PermissionError(
+                f"Only users with emails out of the following domains are "
+                f"allowed: {self.valid_email_domains}"
+            )
+
+        return True
+
+    async def register_user(
+        self,
+        username: str,
+        email: str,
+        password: str,
+        invite_token: Optional[str] = None,
+    ) -> int:
+        """Register a new user, returning the newly created user id and creating a pending registration entry"""
+        if not self.enable_registration:
+            raise PermissionError(f"User registrations are disabled on this server")
+
+        email = self._validate_email_address(email)
+
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
+                is_guest_user = False
+                if self.enable_registration or invite_token is None:
+                    self._validate_email_domain(email)
+                elif self.allow_guest_users:
+                    invite = await conn.fetchval(
+                        "select id "
+                        "from group_invite where token = $1 and valid_until > now()",
+                        invite_token,
+                    )
+                    if invite is None:
+                        raise InvalidCommand("Invalid invite token")
+                    is_guest_user = True
+
                 hashed_password = self._hash_password(password)
                 user_id = await conn.fetchval(
-                    "insert into usr (username, email, hashed_password) values ($1, $2, $3) returning id",
+                    "insert into usr (username, email, hashed_password, is_guest_user) values ($1, $2, $3, $4) returning id",
                     username,
                     email,
                     hashed_password,
+                    is_guest_user,
                 )
                 if user_id is None:
                     raise InvalidCommand(f"Registering new user failed")
@@ -201,7 +228,8 @@ class UserService(Application):
     async def get_user(self, user_id: int) -> User:
         async with self.db_pool.acquire() as conn:
             user = await conn.fetchrow(
-                "select id, email, registered_at, username, pending, deleted from usr where id = $1",
+                "select id, email, registered_at, username, pending, deleted, is_guest_user "
+                "from usr where id = $1",
                 user_id,
             )
 
@@ -229,35 +257,36 @@ class UserService(Application):
                 username=user["username"],
                 pending=user["pending"],
                 deleted=user["deleted"],
+                is_guest_user=user["is_guest_user"],
                 sessions=sessions,
             )
 
-    async def delete_session(self, user_id: int, session_id: int):
+    async def delete_session(self, user: User, session_id: int):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 sess_id = await conn.fetchval(
                     "delete from session where id = $1 and user_id = $2 returning id",
                     session_id,
-                    user_id,
+                    user.id,
                 )
                 if not sess_id:
                     raise NotFoundError(f"no such session found with id {session_id}")
 
-    async def rename_session(self, user_id: int, session_id: int, name: str):
+    async def rename_session(self, user: User, session_id: int, name: str):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 sess_id = await conn.fetchval(
                     "update session set name = $3 where id = $1 and user_id = $2 returning id",
                     session_id,
-                    user_id,
+                    user.id,
                     name,
                 )
                 if not sess_id:
                     raise NotFoundError(f"no such session found with id {session_id}")
 
-    async def change_password(self, user_id: int, old_password: str, new_password: str):
+    async def change_password(self, user: User, old_password: str, new_password: str):
         async with self.db_pool.acquire() as conn:
-            valid_pw = await self._verify_user_password(user_id, old_password)
+            valid_pw = await self._verify_user_password(user.id, old_password)
             if not valid_pw:
                 raise InvalidPassword
 
@@ -265,10 +294,10 @@ class UserService(Application):
             await conn.execute(
                 "update usr set hashed_password = $1 where id = $2",
                 hashed_password,
-                user_id,
+                user.id,
             )
 
-    async def request_email_change(self, user_id: int, password: str, email: str):
+    async def request_email_change(self, user: User, password: str, email: str):
         try:
             valid = validate_email(email)
             email = valid.email
@@ -276,13 +305,13 @@ class UserService(Application):
             raise InvalidCommand(str(e))
 
         async with self.db_pool.acquire() as conn:
-            valid_pw = await self._verify_user_password(user_id, password)
+            valid_pw = await self._verify_user_password(user.id, password)
             if not valid_pw:
                 raise InvalidPassword
 
             await conn.execute(
                 "insert into pending_email_change (user_id, new_email) values ($1, $2)",
-                user_id,
+                user.id,
                 email,
             )
 

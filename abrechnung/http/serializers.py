@@ -159,6 +159,8 @@ class UserSchema(Schema):
     id = fields.Int()
     username = fields.Str()
     email = fields.Email()
+    is_guest_user = fields.Bool()
+    registered_at = fields.DateTime()
     sessions = fields.List(fields.Nested(SessionSchema))
 
 

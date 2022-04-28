@@ -1,5 +1,3 @@
-import { useRecoilValue } from "recoil";
-import { accountsSeenByUser } from "../../recoil/accounts";
 import ListItemLink from "../style/ListItemLink";
 import { Chip, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import { HelpOutline } from "@mui/icons-material";
@@ -9,8 +7,6 @@ import { balanceColor } from "../../utils";
 import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 
 export default function AccountTransactionListEntry({ group, transaction, accountID }) {
-    const accounts = useRecoilValue(accountsSeenByUser(group.id));
-
     return (
         <ListItemLink to={`/groups/${group.id}/transactions/${transaction.id}`}>
             <ListItemAvatar sx={{ minWidth: { xs: "40px", md: "56px" } }}>

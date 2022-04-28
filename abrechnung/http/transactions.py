@@ -14,7 +14,7 @@ routes = PrefixedRouteTableDef("/api")
 
 async def _transaction_response(request, transaction_id: int) -> web.Response:
     transaction = await request.app["transaction_service"].get_transaction(
-        user_id=request["user"]["user_id"], transaction_id=transaction_id
+        user=request["user"], transaction_id=transaction_id
     )
 
     serializer = TransactionSchema()
@@ -50,7 +50,7 @@ async def list_transactions(request):
             )
 
     transactions = await request.app["transaction_service"].list_transactions(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         group_id=group_id,
         min_last_changed=min_last_changed,
         additional_transactions=forced_transaction_ids,
@@ -92,7 +92,7 @@ async def create_transaction(request: Request):
     group_id: int = int(request.match_info["group_id"])
 
     transaction_id = await request.app["transaction_service"].create_transaction(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         group_id=group_id,
         description=data["description"],
         type=data["type"],
@@ -117,7 +117,7 @@ async def create_transaction(request: Request):
 )
 async def get_transaction(request: Request):
     transaction = await request.app["transaction_service"].get_transaction(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         transaction_id=int(request.match_info["transaction_id"]),
     )
 
@@ -162,7 +162,7 @@ async def update_transaction(request: Request):
     transaction_id = int(request.match_info["transaction_id"])
 
     await request.app["transaction_service"].update_transaction(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         transaction_id=transaction_id,
         value=data["value"],
         description=data["description"],
@@ -201,7 +201,7 @@ async def update_transaction_positions(request: Request):
     transaction_id = int(request.match_info["transaction_id"])
 
     await request.app["transaction_service"].update_transaction_positions(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         transaction_id=transaction_id,
         positions=data["positions"],
         perform_commit=data["perform_commit"],
@@ -220,7 +220,7 @@ async def update_transaction_positions(request: Request):
 async def commit_transaction(request: Request):
     transaction_id = int(request.match_info["transaction_id"])
     await request.app["transaction_service"].commit_transaction(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         transaction_id=transaction_id,
     )
 
@@ -237,7 +237,7 @@ async def commit_transaction(request: Request):
 async def delete_transaction(request: Request):
     transaction_id = int(request.match_info["transaction_id"])
     await request.app["transaction_service"].delete_transaction(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         transaction_id=transaction_id,
     )
 
@@ -254,7 +254,7 @@ async def delete_transaction(request: Request):
 async def create_transaction_change(request: Request):
     transaction_id = int(request.match_info["transaction_id"])
     await request.app["transaction_service"].create_transaction_change(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         transaction_id=int(request.match_info["transaction_id"]),
     )
 
@@ -271,7 +271,7 @@ async def create_transaction_change(request: Request):
 async def discard_transaction_change(request: Request):
     transaction_id = int(request.match_info["transaction_id"])
     await request.app["transaction_service"].discard_transaction_changes(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         transaction_id=transaction_id,
     )
 
@@ -305,7 +305,7 @@ async def upload_file(request: Request):
         raise web.HTTPBadRequest(reason=f"Cannot read uploaded file: {e}")
 
     await request.app["transaction_service"].upload_file(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         transaction_id=transaction_id,
         filename=filename,
         mime_type=mime_type,
@@ -324,7 +324,7 @@ async def upload_file(request: Request):
 )
 async def delete_file(request: Request):
     transaction_id, revision_id = await request.app["transaction_service"].delete_file(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         file_id=int(request.match_info["file_id"]),
     )
 
@@ -341,7 +341,7 @@ async def get_file_contents(request: Request):
     file_id = int(request.match_info["file_id"])
     blob_id = int(request.match_info["blob_id"])
     mime_type, content = await request.app["transaction_service"].read_file_contents(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         file_id=file_id,
         blob_id=blob_id,
     )

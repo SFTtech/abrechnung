@@ -4,15 +4,26 @@ import { groupList } from "../../recoil/groups";
 import ListItemLink from "../../components/style/ListItemLink";
 import GroupCreateModal from "../../components/groups/GroupCreateModal";
 import GroupDeleteModal from "../../components/groups/GroupDeleteModal";
-import { Grid, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
+import {
+    Alert,
+    Grid,
+    IconButton,
+    List,
+    ListItem,
+    ListItemSecondaryAction,
+    ListItemText,
+    Typography,
+} from "@mui/material";
 import { Add, Delete } from "@mui/icons-material";
 import { MobilePaper } from "../../components/style/mobile";
+import { isGuestUser } from "../../recoil/auth";
 
 export default function GroupList() {
     const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
     const [showGroupDeletionModal, setShowGroupDeletionModal] = useState(false);
     const [groupToDelete, setGroupToDelete] = useState(null);
     const groups = useRecoilValue(groupList);
+    const isGuest = useRecoilValue(isGuestUser);
 
     const openGroupDeletionModal = (groupID) => {
         setGroupToDelete(groups.find((group) => group.id === groupID));
@@ -29,6 +40,11 @@ export default function GroupList() {
             <Typography component="h3" variant="h5">
                 Groups
             </Typography>
+            {isGuest && (
+                <Alert severity="info">
+                    You are a guest user on this Abrechnung and therefore not permitted to create new groups.
+                </Alert>
+            )}
             <List>
                 {groups.length === 0 ? (
                     <ListItem key={0}>
@@ -55,12 +71,16 @@ export default function GroupList() {
                     })
                 )}
             </List>
-            <Grid container justifyContent="center">
-                <IconButton color="primary" onClick={() => setShowGroupCreationModal(true)}>
-                    <Add />
-                </IconButton>
-            </Grid>
-            <GroupCreateModal show={showGroupCreationModal} onClose={() => setShowGroupCreationModal(false)} />
+            {!isGuest && (
+                <>
+                    <Grid container justifyContent="center">
+                        <IconButton color="primary" onClick={() => setShowGroupCreationModal(true)}>
+                            <Add />
+                        </IconButton>
+                    </Grid>
+                    <GroupCreateModal show={showGroupCreationModal} onClose={() => setShowGroupCreationModal(false)} />
+                </>
+            )}
             <GroupDeleteModal
                 show={showGroupDeletionModal}
                 onClose={closeGroupDeletionModal}

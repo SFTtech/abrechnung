@@ -1,11 +1,11 @@
 import ListItemLink from "../style/ListItemLink";
 import { Chip, Divider, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
-import { CompareArrows, HelpOutline, ShoppingCart } from "@mui/icons-material";
+import { HelpOutline } from "@mui/icons-material";
 import { DateTime } from "luxon";
 import React from "react";
 import { useRecoilValue } from "recoil";
 import { accountsSeenByUser } from "../../recoil/accounts";
-import { TransferIcon, PurchaseIcon } from "../style/AbrechnungIcons";
+import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 
 export function TransactionListEntry({ group, transaction }) {
     const accounts = useRecoilValue(accountsSeenByUser(group.id));

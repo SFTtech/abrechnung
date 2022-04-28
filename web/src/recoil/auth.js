@@ -35,6 +35,14 @@ export const userData = atom({
     ],
 });
 
+export const isGuestUser = selector({
+    key: "isGuestUser",
+    get: async ({ get }) => {
+        const user = get(userData);
+        return user.is_guest_user;
+    },
+});
+
 export const isAuthenticated = selector({
     key: "isAuthenticated",
     get: async ({ get }) => {

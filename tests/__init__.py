@@ -7,7 +7,9 @@ import asyncpg
 from asyncpg.pool import Pool
 
 from abrechnung.application.users import UserService
+from abrechnung.config import Config
 from abrechnung.database import revisions
+from abrechnung.domain.users import User
 
 lock = asyncio.Lock()
 
@@ -25,10 +27,10 @@ def get_test_db_config() -> dict:
 TEST_CONFIG = {
     "api": {
         "secret_key": "asdf",
-        "enable_registration": True,
         "host": "localhost",
         "port": 8000,
     },
+    "registration": {"enabled": True},
     "database": get_test_db_config(),
     "service": {
         "url": "https://abrechnung.example.lol",
@@ -64,7 +66,7 @@ class AsyncTestCase(TestCase):
         super().__init__(*args, **kwargs)
         logging.basicConfig(level=log_level)
 
-    async def _create_test_user(self, username: str, email: str) -> tuple[int, str]:
+    async def _create_test_user(self, username: str, email: str) -> tuple[User, str]:
         """returns the user id and password"""
         # pylint: disable=protected-access
         async with self.db_pool.acquire() as conn:
@@ -76,8 +78,9 @@ class AsyncTestCase(TestCase):
                 email,
                 hashed_password,
             )
+            user = await self.user_service.get_user(user_id=user_id)
 
-            return user_id, password
+            return user, password
 
     def setUp(self) -> None:
         try:
@@ -101,7 +104,9 @@ class AsyncTestCase(TestCase):
         lock.release()
 
     async def setUpAsync(self) -> None:
-        pass
+        self.secret_key = "asdf1234"
+        self.test_config = Config.from_dict(TEST_CONFIG)
+        self.user_service = UserService(self.db_pool, config=self.test_config)
 
     def tearDown(self) -> None:
         self.loop.run_until_complete(self.tearDownAsync())
