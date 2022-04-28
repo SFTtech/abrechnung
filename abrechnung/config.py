@@ -107,8 +107,23 @@ CONFIG_SCHEMA = Schema.from_dict(
                         metadata={"description": "max file size for uploads in KB"},
                     ),  # in KB
                     "enable_cors": fields.Bool(required=False, load_default=True),
-                    "enable_registration": fields.Bool(
-                        required=False, load_default=False
+                }
+            )
+        ),
+        "registration": fields.Nested(
+            Schema.from_dict(
+                {
+                    "enabled": fields.Bool(
+                        required=False,
+                        load_default=False,
+                        metadata={"description": "allow anyone to register"},
+                    ),
+                    "allow_guest_users": fields.Bool(
+                        required=False,
+                        load_default=False,
+                        metadata={
+                            "description": "allow guest users to register with a valid group invite"
+                        },
                     ),
                     "valid_email_domains": fields.List(
                         fields.Str(),

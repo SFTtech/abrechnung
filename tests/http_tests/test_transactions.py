@@ -6,7 +6,7 @@ from tests.http_tests import HTTPAPITest
 class TransactionAPITest(HTTPAPITest):
     async def _create_group(self) -> int:
         return await self.group_service.create_group(
-            user_id=self.test_user_id,
+            user=self.test_user,
             name="name",
             description="description",
             currency_symbol="€",
@@ -15,7 +15,7 @@ class TransactionAPITest(HTTPAPITest):
 
     async def _create_account(self, group_id: int, name: str) -> int:
         return await self.account_service.create_account(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="personal",
             name=name,
@@ -86,7 +86,7 @@ class TransactionAPITest(HTTPAPITest):
 
     async def test_create_transaction(self):
         group_id = await self.group_service.create_group(
-            user_id=self.test_user_id,
+            user=self.test_user,
             name="name",
             description="description",
             currency_symbol="€",
@@ -109,14 +109,14 @@ class TransactionAPITest(HTTPAPITest):
 
     async def test_list_transactions(self):
         group_id = await self.group_service.create_group(
-            user_id=self.test_user_id,
+            user=self.test_user,
             name="name",
             description="description",
             currency_symbol="€",
             terms="terms",
         )
         transaction1_id = await self.transaction_service.create_transaction(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="purchase",
             description="description123",
@@ -126,7 +126,7 @@ class TransactionAPITest(HTTPAPITest):
             value=122.22,
         )
         transaction2_id = await self.transaction_service.create_transaction(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="purchase",
             description="description123",
@@ -146,7 +146,7 @@ class TransactionAPITest(HTTPAPITest):
 
         account_id = await self._create_account(group_id=group_id, name="account1")
         transaction3_id = await self.transaction_service.create_transaction(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="purchase",
             description="foobar",
@@ -160,7 +160,7 @@ class TransactionAPITest(HTTPAPITest):
 
         # check that the list endpoint without parameters returns all objects
         await self.transaction_service.commit_transaction(
-            user_id=self.test_user_id, transaction_id=transaction3_id
+            user=self.test_user, transaction_id=transaction3_id
         )
         resp = await self._get(f"/api/v1/groups/{group_id}/transactions")
         self.assertEqual(200, resp.status)
@@ -186,7 +186,7 @@ class TransactionAPITest(HTTPAPITest):
     async def test_get_transaction(self):
         group_id = await self._create_group()
         transaction_id = await self.transaction_service.create_transaction(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="purchase",
             description="description123",
@@ -208,7 +208,7 @@ class TransactionAPITest(HTTPAPITest):
     async def test_update_transaction(self):
         group_id = await self._create_group()
         transaction_id = await self.transaction_service.create_transaction(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="purchase",
             description="description123",
@@ -316,7 +316,7 @@ class TransactionAPITest(HTTPAPITest):
         account1_id = await self._create_account(group_id, "account1")
         account2_id = await self._create_account(group_id, "account2")
         transaction_id = await self.transaction_service.create_transaction(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="purchase",
             description="description123",
@@ -411,7 +411,7 @@ class TransactionAPITest(HTTPAPITest):
         group_id = await self._create_group()
         account1_id = await self._create_account(group_id, "account1")
         transaction_id = await self.transaction_service.create_transaction(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="purchase",
             description="description123",
@@ -435,14 +435,14 @@ class TransactionAPITest(HTTPAPITest):
     async def test_account_deletion(self):
         group_id = await self._create_group()
         account1_id = await self.account_service.create_account(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="personal",
             name="account1",
             description="description",
         )
         transaction_id = await self.transaction_service.create_transaction(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="purchase",
             description="description123",
@@ -459,14 +459,14 @@ class TransactionAPITest(HTTPAPITest):
         self.assertEqual(200, resp.status)
 
         account2_id = await self.account_service.create_account(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="personal",
             name="account2",
             description="description",
         )
         account3_id = await self.account_service.create_account(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="personal",
             name="account3",
@@ -520,21 +520,21 @@ class TransactionAPITest(HTTPAPITest):
     async def test_purchase_items(self):
         group_id = await self._create_group()
         account1_id = await self.account_service.create_account(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="personal",
             name="account1",
             description="foobar",
         )
         account2_id = await self.account_service.create_account(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="personal",
             name="account2",
             description="foobar",
         )
         transaction_id = await self.transaction_service.create_transaction(
-            user_id=self.test_user_id,
+            user=self.test_user,
             group_id=group_id,
             type="purchase",
             description="description123",

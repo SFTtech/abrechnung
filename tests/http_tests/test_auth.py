@@ -108,11 +108,11 @@ class AuthAPITest(BaseHTTPAPITest):
         await self._fetch_profile(token, expected_status=401)
 
     async def test_change_password(self):
-        user_id, password = await self._create_test_user("user", "user@email.stuff")
+        user, password = await self._create_test_user("user", "user@email.stuff")
         _, session_id, _ = await self.user_service.login_user(
             "user", password=password, session_name="session1"
         )
-        token = token_for_user(user_id, session_id, self.secret_key)
+        token = token_for_user(user.id, session_id, self.secret_key)
 
         headers = {"Authorization": f"Bearer {token}"}
 
@@ -138,11 +138,11 @@ class AuthAPITest(BaseHTTPAPITest):
         username = "user1"
         old_email = "user@stusta.de"
         new_email = "new_email@stusta.de"
-        user_id, password = await self._create_test_user(username, old_email)
+        user, password = await self._create_test_user(username, old_email)
         _, session_id, _ = await self.user_service.login_user(
             username=username, password=password, session_name="session1"
         )
-        token = token_for_user(user_id, session_id, self.secret_key)
+        token = token_for_user(user.id, session_id, self.secret_key)
 
         headers = {"Authorization": f"Bearer {token}"}
         resp = await self.client.post(
@@ -169,7 +169,7 @@ class AuthAPITest(BaseHTTPAPITest):
         # fetch the registration token from the database
         async with self.db_pool.acquire() as conn:
             token = await conn.fetchval(
-                "select token from pending_email_change where user_id = $1", user_id
+                "select token from pending_email_change where user_id = $1", user.id
             )
         resp = await self.client.post(
             f"/api/v1/auth/confirm_email_change", json={"token": "foobar lol"}
@@ -191,7 +191,7 @@ class AuthAPITest(BaseHTTPAPITest):
     async def test_reset_password(self):
         user_email = "user@stusta.de"
         username = "user1"
-        user_id, password = await self._create_test_user(username, user_email)
+        user, password = await self._create_test_user(username, user_email)
         resp = await self.client.post(
             f"/api/v1/auth/recover_password",
             json={"email": "fooo@stusta.de"},
@@ -209,7 +209,7 @@ class AuthAPITest(BaseHTTPAPITest):
         async with self.db_pool.acquire() as conn:
             token = await conn.fetchval(
                 "select token from pending_password_recovery where user_id = $1",
-                user_id,
+                user.id,
             )
 
         self.assertIsNotNone(token)

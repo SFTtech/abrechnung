@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import { LockOutlined } from "@mui/icons-material";
 import { makeStyles } from "@mui/styles";
-import { useTitle } from "../../utils";
+import { useQuery, useTitle } from "../../utils";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -45,27 +45,48 @@ export default function Register() {
     const classes = useStyles();
     const loggedIn = useRecoilValue(isAuthenticated);
     const [loading, setLoading] = useState(true);
-    let history = useHistory();
+    const query = useQuery();
+    const history = useHistory();
+
+    const queryArgsForward = query.get("next") != null ? "?next=" + query.get("next") : "";
 
     useTitle("Abrechnung - Register");
 
     useEffect(() => {
         if (loggedIn) {
             setLoading(false);
-            history.push("/");
+            if (query.get("next") !== null && query.get("next") !== undefined) {
+                history.push(query.get("next"));
+            } else {
+                history.push("/");
+            }
         } else {
             setLoading(false);
         }
-    }, [loggedIn, history]);
+    }, [loggedIn, history, query]);
 
     const handleSubmit = (values, { setSubmitting }) => {
-        register(values)
+        // extract a potential invite token (which should be a uuid) from the query args
+        let inviteToken = undefined;
+        if (query.get("next") !== null && query.get("next") !== undefined) {
+            const re = /\/invite\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/;
+            const m = query.get("next").match(re);
+            if (m != null) {
+                inviteToken = m[1];
+            }
+        }
+        const payload = {
+            ...values,
+            inviteToken: inviteToken,
+        };
+
+        register(payload)
             .then((res) => {
                 toast.success(`Registered successfully, please confirm your email before logging in...`, {
                     autoClose: 20000,
                 });
                 setSubmitting(false);
-                history.push("/login");
+                history.push(`/login${queryArgsForward}`);
             })
             .catch((err) => {
                 toast.error(err);
@@ -174,7 +195,11 @@ export default function Register() {
                                         </Button>
                                         <Grid container justify="flex-end">
                                             <Grid item>
-                                                <Link to="/login" component={RouterLink} variant="body2">
+                                                <Link
+                                                    to={`/login${queryArgsForward}`}
+                                                    component={RouterLink}
+                                                    variant="body2"
+                                                >
                                                     Already have an account? Sign in
                                                 </Link>
                                             </Grid>

@@ -6,16 +6,28 @@ import { deleteGroupInvite } from "../../api";
 import { currUserPermissions, groupInvites, groupMembers } from "../../recoil/groups";
 import { useRecoilValue } from "recoil";
 import { DateTime } from "luxon";
-import { Grid, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
+import {
+    Alert,
+    Grid,
+    IconButton,
+    List,
+    ListItem,
+    ListItemSecondaryAction,
+    ListItemText,
+    Typography,
+} from "@mui/material";
 import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../utils";
+import { isGuestUser } from "../../recoil/auth";
 
 export default function GroupInvites({ group }) {
     const [showModal, setShowModal] = useState(false);
     const invites = useRecoilValue(groupInvites(group.id));
     const members = useRecoilValue(groupMembers(group.id));
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
+
+    const isGuest = useRecoilValue(isGuestUser);
 
     useTitle(`${group.name} - Invite Links`);
 
@@ -58,6 +70,11 @@ export default function GroupInvites({ group }) {
             <Typography component="h3" variant="h5">
                 Active Invite Links
             </Typography>
+            {isGuest && (
+                <Alert severity="info">
+                    You are a guest user on this Abrechnung and therefore not permitted to create group invites.
+                </Alert>
+            )}
             <List>
                 {invites.length === 0 ? (
                     <ListItem>
@@ -105,7 +122,7 @@ export default function GroupInvites({ group }) {
                     ))
                 )}
             </List>
-            {userPermissions.can_write && (
+            {userPermissions.can_write && !isGuestUser && (
                 <>
                     <Grid container justifyContent="center">
                         <IconButton color="primary" onClick={() => setShowModal(true)}>

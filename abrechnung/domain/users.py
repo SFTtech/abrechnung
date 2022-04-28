@@ -19,3 +19,4 @@ class User:
     deleted: bool
     pending: bool
     sessions: list[Session]
+    is_guest_user: bool

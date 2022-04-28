@@ -5,9 +5,11 @@ import ListItemLink from "./ListItemLink";
 import GroupCreateModal from "../groups/GroupCreateModal";
 import React, { useState } from "react";
 import { Add } from "@mui/icons-material";
+import { isGuestUser } from "../../recoil/auth";
 
 export default function SidebarGroupList({ group = null }) {
     const groups = useRecoilValue(groupList);
+    const isGuest = useRecoilValue(isGuestUser);
     const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
 
     return (
@@ -21,15 +23,19 @@ export default function SidebarGroupList({ group = null }) {
                         <ListItemText primary={it.name} />
                     </ListItemLink>
                 ))}
-                <ListItem sx={{ padding: 0 }}>
-                    <Grid container justifyContent="center">
-                        <IconButton size="small" onClick={() => setShowGroupCreationModal(true)}>
-                            <Add />
-                        </IconButton>
-                    </Grid>
-                </ListItem>
+                {!isGuest && (
+                    <ListItem sx={{ padding: 0 }}>
+                        <Grid container justifyContent="center">
+                            <IconButton size="small" onClick={() => setShowGroupCreationModal(true)}>
+                                <Add />
+                            </IconButton>
+                        </Grid>
+                    </ListItem>
+                )}
             </List>
-            <GroupCreateModal show={showGroupCreationModal} onClose={() => setShowGroupCreationModal(false)} />
+            {!isGuest && (
+                <GroupCreateModal show={showGroupCreationModal} onClose={() => setShowGroupCreationModal(false)} />
+            )}
         </>
     );
 }

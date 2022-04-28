@@ -46,6 +46,8 @@ export default function Login() {
     const history = useHistory();
     const classes = useStyles();
 
+    const queryArgsForward = query.get("next") != null ? "?next=" + query.get("next") : "";
+
     useTitle("Abrechnung - Login");
 
     useEffect(() => {
@@ -136,7 +138,7 @@ export default function Login() {
                             </Button>
                             <Grid container justify="flex-end">
                                 <Grid item>
-                                    <Link to="/register" component={RouterLink} variant="body2">
+                                    <Link to={`/register${queryArgsForward}`} component={RouterLink} variant="body2">
                                         No account? register
                                     </Link>
                                 </Grid>

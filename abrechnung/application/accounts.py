@@ -13,6 +13,7 @@ from . import (
     InvalidCommand,
     create_group_log,
 )
+from ..domain.users import User
 
 
 class AccountService(Application):
@@ -25,7 +26,7 @@ class AccountService(Application):
 
     @staticmethod
     async def _get_or_create_revision(
-        conn: asyncpg.Connection, user_id: int, account_id: int
+        conn: asyncpg.Connection, user: User, account_id: int
     ) -> int:
         """return the revision id, assumes we are already in a transaction"""
         revision_id = await conn.fetchval(
@@ -33,7 +34,7 @@ class AccountService(Application):
             "from account_revision "
             "where account_id = $1 and user_id = $2 and committed is null",
             account_id,
-            user_id,
+            user.id,
         )
         if revision_id:  # there already is a wip revision
             return revision_id
@@ -41,7 +42,7 @@ class AccountService(Application):
         # create a new transaction revision
         revision_id = await conn.fetchval(
             "insert into account_revision (user_id, account_id) values ($1, $2) returning id",
-            user_id,
+            user.id,
             account_id,
         )
         return revision_id
@@ -49,7 +50,7 @@ class AccountService(Application):
     @staticmethod
     async def _check_account_permissions(
         conn: asyncpg.Connection,
-        user_id: int,
+        user: User,
         account_id: int,
         can_write: bool = False,
         account_type: Optional[Union[str, list[str]]] = None,
@@ -59,7 +60,7 @@ class AccountService(Application):
             "select a.type, a.group_id, can_write, is_owner "
             "from group_membership gm join account a on gm.group_id = a.group_id and gm.user_id = $1 "
             "where a.id = $2",
-            user_id,
+            user.id,
             account_id,
         )
         if not result:
@@ -80,10 +81,10 @@ class AccountService(Application):
         return result["group_id"], result["type"]
 
     async def _get_or_create_pending_account_change(
-        self, conn: asyncpg.Connection, user_id: int, account_id: int
+        self, conn: asyncpg.Connection, user: User, account_id: int
     ) -> int:
         revision_id = await self._get_or_create_revision(
-            conn=conn, user_id=user_id, account_id=account_id
+            conn=conn, user=user, account_id=account_id
         )
 
         a = await conn.fetchval(
@@ -149,7 +150,7 @@ class AccountService(Application):
     async def _account_clearing_shares_check(
         self,
         conn: asyncpg.Connection,
-        user_id: int,
+        user: User,
         account_id: int,
         share_account_id: int,
         account_type: Optional[Union[str, list[str]]] = None,
@@ -157,7 +158,7 @@ class AccountService(Application):
         """returns tuple of group_id of the account and the users revision_id of the pending change"""
         group_id, _ = await self._check_account_permissions(
             conn=conn,
-            user_id=user_id,
+            user=user,
             account_id=account_id,
             can_write=True,
             account_type=account_type,
@@ -166,7 +167,7 @@ class AccountService(Application):
         await self._check_account_exists(conn, group_id, share_account_id)
 
         revision_id = await self._get_or_create_pending_account_change(
-            conn=conn, user_id=user_id, account_id=account_id
+            conn=conn, user=user, account_id=account_id
         )
 
         return group_id, revision_id
@@ -213,18 +214,16 @@ class AccountService(Application):
             pending_details=pending_details,
         )
 
-    async def list_accounts(self, *, user_id: int, group_id: int) -> list[Account]:
+    async def list_accounts(self, *, user: User, group_id: int) -> list[Account]:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                await check_group_permissions(
-                    conn=conn, group_id=group_id, user_id=user_id
-                )
+                await check_group_permissions(conn=conn, group_id=group_id, user=user)
                 cur = conn.cursor(
                     "select account_id, group_id, type, last_changed, version, is_wip, "
                     "   committed_details, pending_details "
                     "from full_account_state_valid_at($1) "
                     "where group_id = $2",
-                    user_id,
+                    user.id,
                     group_id,
                 )
 
@@ -234,17 +233,17 @@ class AccountService(Application):
 
                 return result
 
-    async def get_account(self, *, user_id: int, account_id: int) -> Account:
+    async def get_account(self, *, user: User, account_id: int) -> Account:
         async with self.db_pool.acquire() as conn:
             await self._check_account_permissions(
-                conn=conn, user_id=user_id, account_id=account_id
+                conn=conn, user=user, account_id=account_id
             )
             account = await conn.fetchrow(
                 "select account_id, group_id, type, last_changed, version, is_wip, "
                 "   committed_details, pending_details "
                 "from full_account_state_valid_at($1) "
                 "where account_id = $2",
-                user_id,
+                user.id,
                 account_id,
             )
             return self._account_db_row(account)
@@ -252,7 +251,7 @@ class AccountService(Application):
     async def create_account(
         self,
         *,
-        user_id: int,
+        user: User,
         group_id: int,
         type: str,
         name: str,
@@ -268,7 +267,7 @@ class AccountService(Application):
                     )
 
                 await check_group_permissions(
-                    conn=conn, group_id=group_id, user_id=user_id, can_write=True
+                    conn=conn, group_id=group_id, user=user, can_write=True
                 )
                 account_id = await conn.fetchval(
                     "insert into account (group_id, type) values ($1, $2) returning id",
@@ -276,9 +275,7 @@ class AccountService(Application):
                     type,
                 )
 
-                revision_id = await self._get_or_create_revision(
-                    conn, user_id, account_id
-                )
+                revision_id = await self._get_or_create_revision(conn, user, account_id)
                 await conn.execute(
                     "insert into account_history (id, revision_id, name, description, priority) "
                     "values ($1, $2, $3, $4, $5)",
@@ -308,7 +305,7 @@ class AccountService(Application):
                 await create_group_log(
                     conn=conn,
                     group_id=group_id,
-                    user_id=user_id,
+                    user=user,
                     type="account-committed",
                     message=f"created account {name}",
                 )
@@ -320,7 +317,7 @@ class AccountService(Application):
 
     async def update_account(
         self,
-        user_id: int,
+        user: User,
         account_id: int,
         name: str,
         description: str,
@@ -330,7 +327,7 @@ class AccountService(Application):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 group_id, account_type = await self._check_account_permissions(
-                    conn=conn, user_id=user_id, account_id=account_id, can_write=True
+                    conn=conn, user=user, account_id=account_id, can_write=True
                 )
 
                 if clearing_shares and account_type != AccountType.clearing.value:
@@ -339,7 +336,7 @@ class AccountService(Application):
                     )
 
                 revision_id = await self._get_or_create_revision(
-                    conn=conn, user_id=user_id, account_id=account_id
+                    conn=conn, user=user, account_id=account_id
                 )
 
                 await conn.execute(
@@ -374,7 +371,7 @@ class AccountService(Application):
                 await create_group_log(
                     conn=conn,
                     group_id=group_id,
-                    user_id=user_id,
+                    user=user,
                     type="account-committed",
                     message=f"updated account {name}",
                 )
@@ -385,13 +382,13 @@ class AccountService(Application):
 
     async def delete_account(
         self,
-        user_id: int,
+        user: User,
         account_id: int,
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 group_id, _ = await self._check_account_permissions(
-                    conn=conn, user_id=user_id, account_id=account_id, can_write=True
+                    conn=conn, user=user, account_id=account_id, can_write=True
                 )
                 row = await conn.fetchrow(
                     "select id from account where id = $1",
@@ -475,7 +472,7 @@ class AccountService(Application):
                 revision_id = await conn.fetchval(
                     "insert into account_revision (user_id, account_id, started, committed) "
                     "values ($1, $2, $3, $4) returning id",
-                    user_id,
+                    user.id,
                     account_id,
                     now,
                     now,
@@ -492,7 +489,7 @@ class AccountService(Application):
                 await create_group_log(
                     conn=conn,
                     group_id=group_id,
-                    user_id=user_id,
+                    user=user,
                     type="account-deleted",
                     message=f"deleted account account {row['name']}",
                 )

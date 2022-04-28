@@ -10,7 +10,7 @@ routes = PrefixedRouteTableDef("/api")
 
 async def _account_response(request, account_id: int) -> web.Response:
     account = await request.app["account_service"].get_account(
-        user_id=request["user"]["user_id"], account_id=account_id
+        user=request["user"], account_id=account_id
     )
 
     serializer = AccountSchema()
@@ -27,7 +27,7 @@ async def _account_response(request, account_id: int) -> web.Response:
 async def list_accounts(request):
     try:
         accounts = await request.app["account_service"].list_accounts(
-            user_id=request["user"]["user_id"],
+            user=request["user"],
             group_id=int(request.match_info["group_id"]),
         )
     except PermissionError:
@@ -60,7 +60,7 @@ async def list_accounts(request):
 async def create_account(request: web.Request):
     data = request["json"]
     account_id = await request.app["account_service"].create_account(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         group_id=int(request.match_info["group_id"]),
         name=data["name"],
         description=data["description"],
@@ -106,7 +106,7 @@ async def update_account(request: web.Request):
     account_id = int(request.match_info["account_id"])
     data = request["json"]
     await request.app["account_service"].update_account(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         account_id=account_id,
         name=data["name"],
         description=data["description"],
@@ -126,7 +126,7 @@ async def update_account(request: web.Request):
 async def delete_account(request: web.Request):
     account_id = int(request.match_info["account_id"])
     await request.app["account_service"].delete_account(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         account_id=account_id,
     )
 

@@ -10,6 +10,7 @@ from abrechnung.application import InvalidCommand
 from abrechnung.application.users import (
     InvalidPassword,
 )
+from abrechnung.domain.users import User
 from abrechnung.http.serializers import UserSchema
 from abrechnung.http.utils import json_response, PrefixedRouteTableDef
 from abrechnung.http.openapi import docs, json_schema
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 routes = PrefixedRouteTableDef("/api")
 
 REQUEST_AUTH_KEY = "user"
+REQUEST_SESSION_KEY = "session_id"
 ACCESS_TOKEN_VALIDITY = timedelta(hours=1)
 
 
@@ -105,10 +107,23 @@ def jwt_middleware(
                     reason="provided access token for expired or logged out session"
                 )
 
-        request[REQUEST_AUTH_KEY] = {
-            "user_id": decoded["user_id"],
-            "session_id": decoded["session_id"],
-        }
+            user_row = await conn.fetchrow(
+                "select id, email, registered_at, username, pending, deleted, is_guest_user "
+                "from usr where id = $1",
+                decoded["user_id"],
+            )
+
+            request[REQUEST_AUTH_KEY] = User(
+                id=user_row["id"],
+                email=user_row["email"],
+                registered_at=user_row["registered_at"],
+                username=user_row["username"],
+                deleted=user_row["deleted"],
+                pending=user_row["pending"],
+                sessions=[],
+                is_guest_user=user_row["is_guest_user"],
+            )
+            request[REQUEST_SESSION_KEY] = session_id
 
         return await handler(request)
 
@@ -152,7 +167,7 @@ async def login(request):
 @docs(tags=["auth"], summary="sign out of the current session", description="")
 async def logout(request):
     await request.app["user_service"].logout_user(
-        session_id=request["user"]["session_id"], user_id=request["user"]["user_id"]
+        session_id=request["session_id"], user=request["user"]
     )
     return web.Response(status=web.HTTPNoContent.status_code)
 
@@ -188,7 +203,12 @@ async def fetch_access_token(request):
 @docs(tags=["auth"], summary="register a new user", description="")
 @json_schema(
     Schema.from_dict(
-        {"username": fields.Str(), "password": fields.Str(), "email": fields.Str()},
+        {
+            "username": fields.Str(),
+            "password": fields.Str(),
+            "email": fields.Str(),
+            "invite_token": fields.Str(required=False, load_default=None),
+        },
         name="RegisterSchema",
     )
 )
@@ -206,6 +226,7 @@ async def register(request):
             username=data["username"],
             password=data["password"],
             email=data["email"],
+            invite_token=data["invite_token"],
         )
 
     return json_response(data={"user_id": str(user_id)})
@@ -229,9 +250,7 @@ async def confirm_registration(request):
 @routes.get("/v1/profile")
 @docs(tags=["auth"], summary="fetch user profile information", description="")
 async def profile(request):
-    user = await request.app["user_service"].get_user(
-        user_id=request["user"]["user_id"]
-    )
+    user = await request.app["user_service"].get_user(user_id=request["user"].id)
 
     serializer = UserSchema()
 
@@ -250,7 +269,7 @@ async def change_password(request):
     data = request["json"]
     try:
         await request.app["user_service"].change_password(
-            user_id=request["user"]["user_id"],
+            user=request["user"],
             new_password=data["new_password"],
             old_password=data["old_password"],
         )
@@ -271,7 +290,7 @@ async def change_email(request):
     data = request["json"]
     try:
         await request.app["user_service"].request_email_change(
-            user_id=request["user"]["user_id"],
+            user=request["user"],
             email=data["email"],
             password=data["password"],
         )
@@ -332,7 +351,7 @@ async def confirm_password_recovery(request):
 async def delete_session(request):
     data = request["json"]
     await request.app["user_service"].delete_session(
-        user_id=request["user"]["user_id"], session_id=data["session_id"]
+        user=request["user"], session_id=data["session_id"]
     )
 
     return json_response(status=web.HTTPNoContent.status_code)
@@ -348,7 +367,7 @@ async def delete_session(request):
 async def rename_session(request):
     data = request["json"]
     await request.app["user_service"].rename_session(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         session_id=data["session_id"],
         name=data["name"],
     )

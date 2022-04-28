@@ -82,11 +82,9 @@ class MailerTest(AsyncTestCase):
     async def test_email_change_mail_delivery(self):
         user_email = "user@email.com"
         new_email = "new_email@email.com"
-        user_id, password = await self._create_test_user(
-            username="user", email=user_email
-        )
+        user, password = await self._create_test_user(username="user", email=user_email)
         await self.user_service.request_email_change(
-            user_id=user_id, password=password, email=new_email
+            user=user, password=password, email=new_email
         )
 
         await asyncio.sleep(0.5)

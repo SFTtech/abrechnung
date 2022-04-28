@@ -22,9 +22,7 @@ routes = PrefixedRouteTableDef("/api")
 @docs(tags=["groups"], summary="list the current users groups", description="")
 async def list_groups(request):
     try:
-        groups = await request.app["group_service"].list_groups(
-            user_id=request["user"]["user_id"]
-        )
+        groups = await request.app["group_service"].list_groups(user=request["user"])
     except NotFoundError:
         raise web.HTTPForbidden(reason="permission denied")
 
@@ -49,7 +47,7 @@ async def list_groups(request):
 async def create_group(request: Request):
     data = request["json"]
     group_id = await request.app["group_service"].create_group(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         name=data["name"],
         description=data["description"],
         currency_symbol=data["currency_symbol"],
@@ -63,7 +61,7 @@ async def create_group(request: Request):
 @docs(tags=["groups"], summary="fetch group details", description="")
 async def get_group(request: Request):
     group = await request.app["group_service"].get_group(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         group_id=int(request.match_info["group_id"]),
     )
 
@@ -88,7 +86,7 @@ async def get_group(request: Request):
 async def update_group(request: Request):
     data = request["json"]
     await request.app["group_service"].update_group(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         group_id=int(request.match_info["group_id"]),
         name=data["name"],
         description=data["description"],
@@ -103,7 +101,7 @@ async def update_group(request: Request):
 @docs(tags=["groups"], summary="delete a group", description="")
 async def delete_group(request: Request):
     await request.app["group_service"].delete_group(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         group_id=int(request.match_info["group_id"]),
     )
 
@@ -114,7 +112,7 @@ async def delete_group(request: Request):
 @docs(tags=["groups"], summary="leave a group", description="")
 async def leave_group(request: Request):
     await request.app["group_service"].leave_group(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         group_id=int(request.match_info["group_id"]),
     )
 
@@ -125,7 +123,7 @@ async def leave_group(request: Request):
 @docs(tags=["groups"], summary="list all members of a group", description="")
 async def list_members(request: web.Request):
     members = await request.app["group_service"].list_members(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         group_id=int(request.match_info["group_id"]),
     )
 
@@ -138,7 +136,7 @@ async def list_members(request: web.Request):
 @docs(tags=["groups"], summary="fetch the group log", description="")
 async def list_log(request: web.Request):
     logs = await request.app["group_service"].list_log(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         group_id=int(request.match_info["group_id"]),
     )
 
@@ -153,7 +151,7 @@ async def list_log(request: web.Request):
 async def send_group_message(request: web.Request):
     data = request["json"]
     await request.app["group_service"].send_group_message(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         group_id=int(request.match_info["group_id"]),
         message=data["message"],
     )
@@ -174,7 +172,7 @@ async def send_group_message(request: web.Request):
 async def update_member_permissions(request: web.Request):
     data = request["json"]
     await request.app["group_service"].update_member_permissions(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         group_id=int(request.match_info["group_id"]),
         member_id=data["user_id"],
         can_write=data["can_write"],
@@ -188,7 +186,7 @@ async def update_member_permissions(request: web.Request):
 @docs(tags=["groups"], summary="list all invite links of a group", description="")
 async def list_invites(request):
     invites = await request.app["group_service"].list_invites(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         group_id=int(request.match_info["group_id"]),
     )
 
@@ -217,7 +215,7 @@ async def create_invite(request: Request):
         valid_until = valid_until.replace(tzinfo=timezone.utc)
 
     await request.app["group_service"].create_invite(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         group_id=int(request.match_info["group_id"]),
         description=data["description"],
         single_use=data["single_use"],
@@ -232,7 +230,7 @@ async def create_invite(request: Request):
 @docs(tags=["groups"], summary="delete a group invite link", description="")
 async def delete_invite(request: Request):
     await request.app["group_service"].delete_invite(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         group_id=int(request.match_info["group_id"]),
         invite_id=int(request.match_info["invite_id"]),
     )
@@ -265,7 +263,7 @@ async def preview_group(request: Request):
 async def join_group(request: Request):
     data = request["json"]
     await request.app["group_service"].join_group(
-        user_id=request["user"]["user_id"],
+        user=request["user"],
         invite_token=data["invite_token"],
     )
 

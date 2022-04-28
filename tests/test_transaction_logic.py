@@ -4,26 +4,21 @@ from datetime import datetime
 from abrechnung.application.accounts import AccountService
 from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
-from abrechnung.application.users import UserService
-from abrechnung.config import Config
-from tests import AsyncTestCase, TEST_CONFIG
+from tests import AsyncTestCase
 
 
 class TransactionLogicTest(AsyncTestCase):
     async def setUpAsync(self) -> None:
         await super().setUpAsync()
-        self.secret_key = "asdf1234"
-        self.test_config = Config.from_dict(TEST_CONFIG)
         self.group_service = GroupService(self.db_pool, config=self.test_config)
         self.account_service = AccountService(self.db_pool, config=self.test_config)
-        self.user_service = UserService(self.db_pool, config=self.test_config)
         self.transaction_service = TransactionService(
             self.db_pool, config=self.test_config
         )
 
-        self.user_id, _ = await self._create_test_user("test", "test@test.test")
+        self.user, _ = await self._create_test_user("test", "test@test.test")
         self.group_id = await self.group_service.create_group(
-            user_id=self.user_id,
+            user=self.user,
             name="test group",
             description="",
             currency_symbol="€",
@@ -39,7 +34,7 @@ class TransactionLogicTest(AsyncTestCase):
         account_ids = []
         for i in range(n_accounts):
             acc_id = await self.account_service.create_account(
-                user_id=self.user_id,
+                user=self.user,
                 group_id=group_id,
                 type=account_type,
                 name=f"account{i}",
@@ -56,7 +51,7 @@ class TransactionLogicTest(AsyncTestCase):
 
         # check that we can create a simple clearing account
         account_id = await self.account_service.create_account(
-            user_id=self.user_id,
+            user=self.user,
             group_id=self.group_id,
             type="clearing",
             name="Clearing",
@@ -65,7 +60,7 @@ class TransactionLogicTest(AsyncTestCase):
         )
 
         account = await self.account_service.get_account(
-            user_id=self.user_id, account_id=account_id
+            user=self.user, account_id=account_id
         )
         self.assertEqual(account_id, account.id)
         self.assertFalse(account.is_wip)
@@ -79,14 +74,14 @@ class TransactionLogicTest(AsyncTestCase):
         )
 
         await self.account_service.update_account(
-            user_id=self.user_id,
+            user=self.user,
             account_id=account_id,
             name="Clearing",
             description="Foobar",
             clearing_shares={basic_account_id1: 1.0},
         )
         account = await self.account_service.get_account(
-            user_id=self.user_id, account_id=account_id
+            user=self.user, account_id=account_id
         )
         self.assertIsNotNone(account.committed_details)
         self.assertIsNone(account.pending_details)
@@ -102,7 +97,7 @@ class TransactionLogicTest(AsyncTestCase):
 
         # we need to commit one account first other
         await self.account_service.update_account(
-            user_id=self.user_id,
+            user=self.user,
             account_id=account2_id,
             name="account2",
             description="",
@@ -111,7 +106,7 @@ class TransactionLogicTest(AsyncTestCase):
 
         with self.assertRaises(Exception) as ctx:
             await self.account_service.update_account(
-                user_id=self.user_id,
+                user=self.user,
                 account_id=account1_id,
                 name="account1",
                 description="",
@@ -125,7 +120,7 @@ class TransactionLogicTest(AsyncTestCase):
         # check that we cannot have an account reference itself
         with self.assertRaises(Exception) as ctx:
             await self.account_service.update_account(
-                user_id=self.user_id,
+                user=self.user,
                 account_id=account1_id,
                 name="account1",
                 description="",
@@ -135,7 +130,7 @@ class TransactionLogicTest(AsyncTestCase):
     async def test_file_upload(self):
         account1_id, account2_id = await self._create_accounts(self.group_id, 2)
         transaction_id = await self.transaction_service.create_transaction(
-            user_id=self.user_id,
+            user=self.user,
             group_id=self.group_id,
             type="purchase",
             description="foo",
@@ -152,25 +147,25 @@ class TransactionLogicTest(AsyncTestCase):
             content = test_image.read()
             file_size = len(content)
             file_id = await self.transaction_service.upload_file(
-                user_id=self.user_id,
+                user=self.user,
                 transaction_id=transaction_id,
                 filename="test file",
                 mime_type="image/jpeg",
                 content=content,
             )
         transaction = await self.transaction_service.get_transaction(
-            user_id=self.user_id, transaction_id=transaction_id
+            user=self.user, transaction_id=transaction_id
         )
         self.assertIsNotNone(transaction.pending_files)
         self.assertIsNone(transaction.committed_files)
         self.assertEqual(1, len(transaction.pending_files))
         self.assertEqual(file_id, transaction.pending_files[0].id)
         await self.transaction_service.commit_transaction(
-            user_id=self.user_id, transaction_id=transaction_id
+            user=self.user, transaction_id=transaction_id
         )
 
         transaction = await self.transaction_service.get_transaction(
-            user_id=self.user_id, transaction_id=transaction_id
+            user=self.user, transaction_id=transaction_id
         )
         self.assertIsNone(transaction.pending_files)
         self.assertIsNotNone(transaction.committed_files)
@@ -179,7 +174,7 @@ class TransactionLogicTest(AsyncTestCase):
         self.assertIsNotNone(transaction.committed_files[0].blob_id)
 
         (mime_type, _,) = await self.transaction_service.read_file_contents(
-            user_id=self.user_id,
+            user=self.user,
             file_id=file_id,
             blob_id=transaction.committed_files[0].blob_id,
         )
@@ -187,11 +182,9 @@ class TransactionLogicTest(AsyncTestCase):
         self.assertEqual(file_size, len(content))
 
         # now delete it
-        await self.transaction_service.delete_file(
-            user_id=self.user_id, file_id=file_id
-        )
+        await self.transaction_service.delete_file(user=self.user, file_id=file_id)
         transaction = await self.transaction_service.get_transaction(
-            user_id=self.user_id, transaction_id=transaction_id
+            user=self.user, transaction_id=transaction_id
         )
         self.assertIsNotNone(transaction.pending_files)
         self.assertIsNotNone(transaction.committed_files)
@@ -199,10 +192,10 @@ class TransactionLogicTest(AsyncTestCase):
         self.assertEqual(file_id, transaction.pending_files[0].id)
         self.assertTrue(transaction.pending_files[0].deleted)
         await self.transaction_service.commit_transaction(
-            user_id=self.user_id, transaction_id=transaction_id
+            user=self.user, transaction_id=transaction_id
         )
         transaction = await self.transaction_service.get_transaction(
-            user_id=self.user_id, transaction_id=transaction_id
+            user=self.user, transaction_id=transaction_id
         )
         self.assertIsNone(transaction.pending_files)
         self.assertIsNotNone(transaction.committed_files)
