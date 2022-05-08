@@ -89,7 +89,7 @@ export default function ChangePassword() {
                         />
 
                         {isSubmitting && <LinearProgress />}
-                        <Button type="submit" color="primary" disabled={isSubmitting} onClick={(e) => handleSubmit()}>
+                        <Button type="submit" color="primary" disabled={isSubmitting}>
                             Save
                         </Button>
                     </Form>

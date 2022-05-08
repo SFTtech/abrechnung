@@ -23,30 +23,46 @@ import PurchaseCreateModal from "./purchase/PurchaseCreateModal";
 import TransferCreateModal from "./transfer/TransferCreateModal";
 import SearchIcon from "@mui/icons-material/Search";
 import { useTitle } from "../../utils";
+import { userData } from "../../state/auth";
+import { accountsOwnedByUser } from "../../state/accounts";
 
 export default function TransactionList({ group }) {
     const [showTransferCreateDialog, setShowTransferCreateDialog] = useState(false);
     const [showPurchaseCreateDialog, setShowPurchaseCreateDialog] = useState(false);
     const transactions = useRecoilValue(transactionsSeenByUser(group.id));
+    const currentUser = useRecoilValue(userData);
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
+    const userAccounts = useRecoilValue(accountsOwnedByUser({ groupID: group.id, userID: currentUser.id }));
 
     const [filteredTransactions, setFilteredTransactions] = useState([]);
 
     const [searchValue, setSearchValue] = useState("");
 
-    const [filterMode, setFilterMode] = useState("all");
+    const [filterMode, setFilterMode] = useState("all"); // all, mine, others
 
     useEffect(() => {
-        if (searchValue == null || searchValue === "") {
-            setFilteredTransactions(transactions);
-        } else {
-            setFilteredTransactions(
-                transactions.filter((t) => {
-                    return t.description.toLowerCase().includes(searchValue.toLowerCase());
-                })
-            );
+        const userAccountIDs = userAccounts.map((a) => a.id);
+        let filtered = transactions;
+        if (searchValue != null && searchValue !== "") {
+            filtered = transactions.filter((t) => {
+                return t.description.toLowerCase().includes(searchValue.toLowerCase());
+            });
         }
-    }, [searchValue, setFilteredTransactions, transactions]);
+        switch (filterMode) {
+            case "mine":
+                filtered = filtered.filter((t) => {
+                    return userAccountIDs.reduce((acc, curr) => acc || t.account_balances.hasOwnProperty(curr), false);
+                });
+                break;
+            case "others":
+                filtered = filtered.filter((t) => {
+                    return userAccountIDs.reduce((acc, curr) => acc && !t.account_balances.hasOwnProperty(curr), true);
+                });
+                break;
+        }
+
+        setFilteredTransactions(filtered);
+    }, [searchValue, setFilteredTransactions, filterMode, transactions]);
 
     useTitle(`${group.name} - Transactions`);
 
@@ -79,21 +95,16 @@ export default function TransactionList({ group }) {
                         />
                     </Box>
                     <Box sx={{ display: "flex-item" }}>
-                        {/*<ToggleButtonGroup*/}
-                        {/*    value={filterMode}*/}
-                        {/*    exclusive*/}
-                        {/*    onChange={(e, newValuee) => setFilterMode(newValuee)}*/}
-                        {/*>*/}
-                        {/*    <ToggleButton value="all">*/}
-                        {/*        All*/}
-                        {/*    </ToggleButton>*/}
-                        {/*    <ToggleButton value="mine">*/}
-                        {/*        Mine*/}
-                        {/*    </ToggleButton>*/}
-                        {/*    <ToggleButton value="others">*/}
-                        {/*        Others*/}
-                        {/*    </ToggleButton>*/}
-                        {/*</ToggleButtonGroup>*/}
+                        <ToggleButtonGroup
+                            color="primary"
+                            value={filterMode}
+                            exclusive
+                            onChange={(e, newValuee) => setFilterMode(newValuee)}
+                        >
+                            <ToggleButton value="all">All</ToggleButton>
+                            <ToggleButton value="mine">Mine</ToggleButton>
+                            <ToggleButton value="others">Others</ToggleButton>
+                        </ToggleButtonGroup>
                     </Box>
                 </Box>
                 <Divider sx={{ mt: 1 }} />

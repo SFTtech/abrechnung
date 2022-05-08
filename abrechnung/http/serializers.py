@@ -11,6 +11,7 @@ class GroupSchema(Schema):
     description = fields.Str()
     currency_symbol = fields.Str()
     terms = fields.Str()
+    add_user_account_on_join = fields.Bool()
     created_by = fields.Int()
 
 
@@ -72,6 +73,7 @@ class AccountDetailSchema(Schema):
     name = fields.Str()
     description = fields.Str()
     priority = fields.Int()
+    owning_user_id = fields.Int(allow_none=True)
     committed_at = fields.DateTime(required=False)
     clearing_shares = SharesField()
     deleted = fields.Bool()

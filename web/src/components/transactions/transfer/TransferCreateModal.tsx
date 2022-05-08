@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { toast } from "react-toastify";
 import { Form, Formik } from "formik";
 import { createTransaction } from "../../../api";
@@ -13,8 +13,8 @@ import * as yup from "yup";
 const validationSchema = yup.object({
     value: yup.number().required("value is required"),
     description: yup.string().required("description is required"),
-    creditor: yup.number().required("from is required").positive().integer(),
-    debitor: yup.number().required("to is required").positive().integer(),
+    creditor: yup.object().required("from is required"),
+    debitor: yup.object().required("to is required"),
     // billedAt: yup.date("Enter a description").required("from is required"),
 });
 
@@ -30,8 +30,8 @@ export default function TransferCreateModal({ group, show, onClose }) {
             billedAt: values.billedAt.toISODate(),
             currencySymbol: "€",
             currencyConversionRate: 1.0,
-            creditorShares: { [values.creditor]: 1.0 },
-            debitorShares: { [values.debitor]: 1.0 },
+            creditorShares: { [values.creditor.id]: 1.0 },
+            debitorShares: { [values.debitor.id]: 1.0 },
             performCommit: true,
         })
             .then((t) => {
@@ -83,7 +83,7 @@ export default function TransferCreateModal({ group, show, onClose }) {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 error={touched.description && Boolean(errors.description)}
-                                helperText={touched.description && <span>errors.description</span>}
+                                helperText={touched.description && (errors.description as ReactNode)}
                             />
                             <DatePicker
                                 inputFormat="yyyy-MM-dd"
@@ -115,14 +115,14 @@ export default function TransferCreateModal({ group, show, onClose }) {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 error={touched.value && Boolean(errors.value)}
-                                helperText={touched.value && <span>errors.value</span>}
+                                helperText={touched.value && (errors.value as ReactNode)}
                             />
                             <AccountSelect
                                 label="From"
                                 name="creditor"
                                 group={group}
                                 value={values.creditor}
-                                onChange={(val) => setFieldValue("creditor", val.id, true)}
+                                onChange={(val) => setFieldValue("creditor", val, true)}
                                 noDisabledStyling={true}
                                 disabled={false}
                                 error={touched.creditor && Boolean(errors.creditor)}
@@ -133,7 +133,7 @@ export default function TransferCreateModal({ group, show, onClose }) {
                                 name="debitor"
                                 group={group}
                                 value={values.debitor}
-                                onChange={(val) => setFieldValue("debitor", val.id, true)}
+                                onChange={(val) => setFieldValue("debitor", val, true)}
                                 noDisabledStyling={true}
                                 disabled={false}
                                 error={touched.debitor && Boolean(errors.debitor)}
@@ -141,12 +141,7 @@ export default function TransferCreateModal({ group, show, onClose }) {
                             />
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button
-                                    type="submit"
-                                    color="primary"
-                                    disabled={isSubmitting}
-                                    onClick={(e) => handleSubmit()}
-                                >
+                                <Button type="submit" color="primary" disabled={isSubmitting}>
                                     Save
                                 </Button>
                                 <Button color="error" onClick={onClose}>

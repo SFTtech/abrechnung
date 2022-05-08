@@ -73,7 +73,7 @@ export default function Login() {
         <Container component="main" maxWidth="xs">
             <CssBaseline />
             <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                <Avatar sx={{ margin: 1, backgroundColor: "secondary" }}>
+                <Avatar sx={{ margin: 1, backgroundColor: "primary.main" }}>
                     <LockOutlined />
                 </Avatar>
                 <Typography component="h1" variant="h5">
@@ -121,7 +121,6 @@ export default function Login() {
                                 variant="contained"
                                 color="primary"
                                 disabled={isSubmitting}
-                                onClick={(e) => handleSubmit()}
                                 sx={{ mt: 1 }}
                             >
                                 Login

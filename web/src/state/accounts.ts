@@ -3,7 +3,6 @@ import { fetchAccount, fetchAccounts } from "../api";
 import { ws } from "../websocket";
 import { toast } from "react-toastify";
 import { DateTime } from "luxon";
-import { Transaction } from "./transactions";
 
 const accountTypeSortingLookup = {
     personal: 50,
@@ -16,7 +15,8 @@ export interface AccountDetail {
     name: string;
     description: string;
     priority: number;
-    committed_at?: string;
+    owning_user_id: number | null;
+    committed_at: string | null;
     clearing_shares: ClearingShares;
     deleted: boolean;
 }
@@ -30,8 +30,8 @@ export interface Account {
     last_changed: string;
     group_id: number;
     version: number;
-    pending_details?: AccountDetail;
-    committed_details?: AccountDetail;
+    pending_details: AccountDetail | null;
+    committed_details: AccountDetail | null;
 }
 
 export interface AccountConsolidated {
@@ -44,8 +44,9 @@ export interface AccountConsolidated {
     has_committed_changes: boolean;
     name: string;
     description: string;
+    owning_user_id: number | null;
     priority: number;
-    committed_at?: string;
+    committed_at: string | null;
     clearing_shares: ClearingShares;
     deleted: boolean;
 }
@@ -157,6 +158,19 @@ export const accountsSeenByUser = selectorFamily<Array<AccountConsolidated>, num
         },
 });
 
+export const accountIDsToUsername = selectorFamily<{ [k: number]: string }, number>({
+    key: "accountIDsToUsername",
+    get:
+        (groupID) =>
+        async ({ get }) => {
+            const accounts = get(accountsSeenByUser(groupID));
+            return accounts.reduce((map, acc) => {
+                map[acc.id] = acc.name;
+                return map;
+            }, {});
+        },
+});
+
 export const personalAccountsSeenByUser = selectorFamily<Array<AccountConsolidated>, number>({
     key: "personalAccountsSeenByUser",
     get:
@@ -200,5 +214,20 @@ export const groupAccountByID = selectorFamily<AccountConsolidated | undefined, 
         async ({ get }) => {
             const accounts = get(accountsSeenByUser(groupID));
             return accounts?.find((account) => account.id === accountID);
+        },
+});
+
+export type ParamGroupUser = {
+    groupID: number;
+    userID: number;
+};
+
+export const accountsOwnedByUser = selectorFamily<Array<AccountConsolidated>, ParamGroupUser>({
+    key: "groupAccountByID",
+    get:
+        ({ groupID, userID }) =>
+        async ({ get }) => {
+            const accounts = get(accountsSeenByUser(groupID));
+            return accounts.filter((account) => account.owning_user_id === userID);
         },
 });

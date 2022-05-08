@@ -240,22 +240,30 @@ export async function fetchGroup(groupID) {
     return resp.data;
 }
 
-export async function createGroup({ name, description, currencySymbol = "€", terms = "" }) {
+export async function createGroup({
+    name,
+    description,
+    currencySymbol = "€",
+    terms = "",
+    addUserAccountOnJoin = false,
+}) {
     const resp = await makePost("/groups", {
         name: name,
         description: description,
         currency_symbol: currencySymbol,
         terms: terms,
+        add_user_account_on_join: addUserAccountOnJoin,
     });
     return resp.data;
 }
 
-export async function updateGroupMetadata({ groupID, name, description, currencySymbol, terms }) {
+export async function updateGroupMetadata({ groupID, name, description, currencySymbol, terms, addUserAccountOnJoin }) {
     const resp = await makePost(`/groups/${groupID}`, {
         name: name,
         description: description,
         currency_symbol: currencySymbol,
         terms: terms,
+        add_user_account_on_join: addUserAccountOnJoin,
     });
     return resp.data;
 }
@@ -340,20 +348,35 @@ export async function fetchAccount({ accountID }) {
     return resp.data;
 }
 
-export async function createAccount({ groupID, name, description, accountType = "personal", clearingShares = null }) {
+export async function createAccount({
+    groupID,
+    name,
+    description,
+    owningUserID = null,
+    accountType = "personal",
+    clearingShares = null,
+}) {
     const resp = await makePost(`/groups/${groupID}/accounts`, {
         name: name,
         description: description,
+        owning_user_id: owningUserID,
         type: accountType,
         clearing_shares: clearingShares,
     });
     return resp.data;
 }
 
-export async function updateAccountDetails({ accountID, name, description, clearingShares = null }) {
+export async function updateAccountDetails({
+    accountID,
+    name,
+    description,
+    owningUserID = null,
+    clearingShares = null,
+}) {
     const resp = await makePost(`/accounts/${accountID}`, {
         name: name,
         description: description,
+        owning_user_id: owningUserID,
         clearing_shares: clearingShares,
     });
     return resp.data;

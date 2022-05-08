@@ -6,6 +6,7 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgre
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { accountsSeenByUser, addAccount, groupAccounts } from "../../state/accounts";
 import ClearingSharesFormElement from "./ClearingSharesFormElement";
+import { ReactNode } from "react";
 
 const validationSchema = yup.object({
     name: yup.string().required("Name is required"),
@@ -83,7 +84,7 @@ export default function CreateClearingAccountModal({ show, onClose, group, initi
                                 onChange={handleChange}
                                 value={values.name}
                                 error={touched.name && Boolean(errors.name)}
-                                helperText={touched.name && <span>errors.name</span>}
+                                helperText={touched.name && (errors.name as ReactNode)}
                             />
                             <TextField
                                 margin="normal"
@@ -95,7 +96,7 @@ export default function CreateClearingAccountModal({ show, onClose, group, initi
                                 onChange={handleChange}
                                 value={values.description}
                                 error={touched.description && Boolean(errors.description)}
-                                helperText={touched.description && <span>errors.description</span>}
+                                helperText={touched.description && (errors.description as ReactNode)}
                             />
 
                             <ClearingSharesFormElement
@@ -109,12 +110,7 @@ export default function CreateClearingAccountModal({ show, onClose, group, initi
                                 <Button color="error" onClick={onClose}>
                                     Cancel
                                 </Button>
-                                <Button
-                                    type="submit"
-                                    color="primary"
-                                    disabled={isSubmitting}
-                                    onClick={(e) => handleSubmit()}
-                                >
+                                <Button type="submit" color="primary" disabled={isSubmitting}>
                                     Save
                                 </Button>
                             </DialogActions>

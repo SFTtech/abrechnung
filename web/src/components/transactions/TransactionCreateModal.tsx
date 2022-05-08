@@ -127,12 +127,7 @@ export default function TransactionCreateModal({ group, show, onClose }) {
                             />
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button
-                                    type="submit"
-                                    color="primary"
-                                    disabled={isSubmitting}
-                                    onClick={(e) => handleSubmit()}
-                                >
+                                <Button type="submit" color="primary" disabled={isSubmitting}>
                                     Save
                                 </Button>
                                 <Button color="error" onClick={onClose}>

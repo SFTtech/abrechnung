@@ -21,6 +21,13 @@ import {
 } from "@mui/material";
 import { LockOutlined } from "@mui/icons-material";
 import { useQuery, useTitle } from "../../utils";
+import * as yup from "yup";
+
+const validationSchema = yup.object({
+    username: yup.string().required("username is required"),
+    email: yup.string().required("email is required"),
+    password: yup.string().required("password is required"),
+});
 
 export default function Register() {
     const loggedIn = useRecoilValue(isAuthenticated);
@@ -48,6 +55,7 @@ export default function Register() {
     const handleSubmit = (values, { setSubmitting }) => {
         // extract a potential invite token (which should be a uuid) from the query args
         let inviteToken = undefined;
+        console.log(query.get("next"));
         if (query.get("next") !== null && query.get("next") !== undefined) {
             const re = /\/invite\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/;
             const m = query.get("next").match(re);
@@ -75,9 +83,9 @@ export default function Register() {
     };
 
     const validate = (values) => {
-        let errors = { password2: undefined };
+        let errors = {};
         if (values.password !== values.password2) {
-            errors.password2 = "Passwords do not match";
+            errors["password2"] = "Passwords do not match";
         }
         return errors;
     };
@@ -91,7 +99,7 @@ export default function Register() {
                     <Container maxWidth="xs">
                         <CssBaseline />
                         <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-                            <Avatar sx={{ margin: 1, backgroundColor: "secondary" }}>
+                            <Avatar sx={{ margin: 1, backgroundColor: "primary.main" }}>
                                 <LockOutlined />
                             </Avatar>
                             <Typography component="h1" variant="h5">
@@ -99,6 +107,7 @@ export default function Register() {
                             </Typography>
                             <Formik
                                 validate={validate}
+                                validationSchema={validationSchema}
                                 initialValues={{
                                     username: "",
                                     email: "",
@@ -108,7 +117,7 @@ export default function Register() {
                                 onSubmit={handleSubmit}
                             >
                                 {({ values, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
-                                    <Form>
+                                    <Form onSubmit={handleSubmit}>
                                         <TextField
                                             variant="outlined"
                                             margin="normal"
@@ -168,8 +177,7 @@ export default function Register() {
                                             variant="contained"
                                             color="primary"
                                             disabled={isSubmitting}
-                                            onClick={(e) => handleSubmit()}
-                                            sx={{ mt: "3 0 2 0" }}
+                                            sx={{ mt: 1 }}
                                         >
                                             Register
                                         </Button>

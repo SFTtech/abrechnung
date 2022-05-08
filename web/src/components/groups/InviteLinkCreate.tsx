@@ -109,12 +109,7 @@ export default function InviteLinkCreate({ show, onClose, group }) {
 
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button
-                                    type="submit"
-                                    color="primary"
-                                    disabled={isSubmitting}
-                                    onClick={(e) => handleSubmit()}
-                                >
+                                <Button type="submit" color="primary" disabled={isSubmitting}>
                                     Save
                                 </Button>
                                 <Button color="error" onClick={onClose}>

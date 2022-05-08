@@ -14,6 +14,7 @@ class AccountDetails:
     name: str
     description: str
     priority: int
+    owning_user_id: Optional[int]
     deleted: bool
 
     changed_by: int

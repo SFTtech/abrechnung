@@ -55,6 +55,7 @@ class WebsocketAPITest(BaseHTTPAPITest):
             description="asdf",
             currency_symbol="€",
             terms="terms...",
+            add_user_account_on_join=False,
         )
 
         # make sure we receive a notification on the group scope

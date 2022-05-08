@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import asyncpg
+
 from abrechnung.application import (
     Application,
     NotFoundError,
@@ -7,6 +9,7 @@ from abrechnung.application import (
     InvalidCommand,
     create_group_log,
 )
+from abrechnung.domain.accounts import AccountType
 from abrechnung.domain.groups import (
     Group,
     GroupMember,
@@ -25,6 +28,7 @@ class GroupService(Application):
         name: str,
         description: str,
         currency_symbol: str,
+        add_user_account_on_join: bool,
         terms: str,
     ) -> int:
         if user.is_guest_user:
@@ -35,12 +39,13 @@ class GroupService(Application):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 group_id = await conn.fetchval(
-                    "insert into grp (name, description, currency_symbol, terms) "
-                    "values ($1, $2, $3, $4) returning id",
+                    "insert into grp (name, description, currency_symbol, terms, add_user_account_on_join) "
+                    "values ($1, $2, $3, $4, $5) returning id",
                     name,
                     description,
                     currency_symbol,
                     terms,
+                    add_user_account_on_join,
                 )
                 await conn.execute(
                     "insert into group_membership (user_id, group_id, is_owner, can_write, description) "
@@ -51,6 +56,12 @@ class GroupService(Application):
                     True,
                     "group founder",
                 )
+
+                if add_user_account_on_join:
+                    await self._create_user_account(
+                        conn=conn, group_id=group_id, user=user
+                    )
+
                 await create_group_log(
                     conn=conn, group_id=group_id, user=user, type="group-created"
                 )
@@ -121,6 +132,32 @@ class GroupService(Application):
                     conn=conn, group_id=group_id, user=user, type="invite-deleted"
                 )
 
+    async def _create_user_account(
+        self, conn: asyncpg.Connection, group_id: int, user: User
+    ) -> int:
+        account_id = await conn.fetchval(
+            "insert into account (group_id, type) values ($1, $2) returning id",
+            group_id,
+            AccountType.personal.value,
+        )
+        revision_id = await conn.fetchval(
+            "insert into account_revision (user_id, account_id, committed) values ($1, $2, now()) returning id",
+            user.id,
+            account_id,
+        )
+
+        await conn.execute(
+            "insert into account_history (id, revision_id, name, description, owning_user_id, priority) "
+            "values ($1, $2, $3, $4, $5, $6)",
+            account_id,
+            revision_id,
+            user.username,
+            "",
+            user.id,
+            0,
+        )
+        return account_id
+
     async def join_group(self, user: User, invite_token: str):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -132,6 +169,13 @@ class GroupService(Application):
                 if not invite:
                     raise PermissionError(f"Invalid invite token")
 
+                group = await conn.fetchrow(
+                    "select id, add_user_account_on_join from grp " "where grp.id = $1",
+                    invite["group_id"],
+                )
+                if not group:
+                    raise PermissionError(f"Invalid invite token")
+
                 await conn.execute(
                     "insert into group_membership (user_id, group_id, invited_by, can_write, is_owner) "
                     "values ($1, $2, $3, $4, false)",
@@ -140,6 +184,12 @@ class GroupService(Application):
                     invite["created_by"],
                     invite["join_as_editor"],
                 )
+
+                if group["add_user_account_on_join"]:
+                    await self._create_user_account(
+                        conn=conn, group_id=group["id"], user=user
+                    )
+
                 await create_group_log(
                     conn=conn,
                     group_id=invite["group_id"],
@@ -158,7 +208,7 @@ class GroupService(Application):
             async with conn.transaction():
                 cur = conn.cursor(
                     "select grp.id, grp.name, grp.description, grp.terms, grp.currency_symbol, grp.created_at, "
-                    "grp.created_by "
+                    "grp.created_by, grp.add_user_account_on_join "
                     "from grp "
                     "join group_membership gm on grp.id = gm.group_id where gm.user_id = $1",
                     user.id,
@@ -174,6 +224,7 @@ class GroupService(Application):
                             terms=group["terms"],
                             created_at=group["created_at"],
                             created_by=group["created_by"],
+                            add_user_account_on_join=group["add_user_account_on_join"],
                         )
                     )
 
@@ -183,7 +234,7 @@ class GroupService(Application):
         async with self.db_pool.acquire() as conn:
             await check_group_permissions(conn=conn, group_id=group_id, user=user)
             group = await conn.fetchrow(
-                "select id, name, description, terms, currency_symbol, created_at, created_by "
+                "select id, name, description, terms, currency_symbol, created_at, created_by, add_user_account_on_join "
                 "from grp "
                 "where grp.id = $1",
                 group_id,
@@ -199,6 +250,7 @@ class GroupService(Application):
                 terms=group["terms"],
                 created_at=group["created_at"],
                 created_by=group["created_by"],
+                add_user_account_on_join=group["add_user_account_on_join"],
             )
 
     async def update_group(
@@ -209,6 +261,7 @@ class GroupService(Application):
         name: str,
         description: str,
         currency_symbol: str,
+        add_user_account_on_join: bool,
         terms: str,
     ):
         async with self.db_pool.acquire() as conn:
@@ -217,13 +270,14 @@ class GroupService(Application):
                     conn=conn, group_id=group_id, user=user, is_owner=True
                 )
                 await conn.execute(
-                    "update grp set name = $2, description = $3, currency_symbol = $4, terms = $5 "
+                    "update grp set name = $2, description = $3, currency_symbol = $4, terms = $5, add_user_account_on_join = $6 "
                     "where grp.id = $1",
                     group_id,
                     name,
                     description,
                     currency_symbol,
                     terms,
+                    add_user_account_on_join,
                 )
                 await create_group_log(
                     conn=conn, group_id=group_id, user=user, type="group-updated"

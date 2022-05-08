@@ -50,6 +50,9 @@ async def list_accounts(request):
             "name": fields.Str(),
             "description": fields.Str(),
             "type": fields.Str(),
+            "owning_user_id": fields.Int(
+                allow_none=True, load_default=None, required=False
+            ),
             "clearing_shares": fields.Dict(
                 fields.Int(), fields.Number(), allow_none=True, load_default=None
             ),
@@ -65,6 +68,7 @@ async def create_account(request: web.Request):
         name=data["name"],
         description=data["description"],
         type=data["type"],
+        owning_user_id=data["owning_user_id"],
         clearing_shares=data["clearing_shares"],
     )
 
@@ -95,6 +99,9 @@ async def get_account(request: web.Request):
         {
             "name": fields.Str(),
             "description": fields.Str(),
+            "owning_user_id": fields.Int(
+                allow_none=True, load_default=None, required=False
+            ),
             "clearing_shares": fields.Dict(
                 fields.Int(), fields.Number(), allow_none=True, load_default=None
             ),
@@ -110,6 +117,7 @@ async def update_account(request: web.Request):
         account_id=account_id,
         name=data["name"],
         description=data["description"],
+        owning_user_id=data["owning_user_id"],
         clearing_shares=data["clearing_shares"],
     )
 

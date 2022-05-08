@@ -1,47 +1,42 @@
 import React from "react";
 
 import { useRecoilValue } from "recoil";
-import { accountIDsToUsername, accountsSeenByUser } from "../../state/accounts";
 import { Autocomplete, Box, Popper, TextField, Typography } from "@mui/material";
-import { DisabledTextField } from "./DisabledTextField";
-import { CompareArrows, Person } from "@mui/icons-material";
+import { DisabledTextField } from "../style/DisabledTextField";
 import { styled } from "@mui/styles";
+import { groupMemberIDsToUsername, groupMembers } from "../../state/groups";
 
 const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
     minWidth: 200,
 }));
 
-export default function AccountSelect({
+export default function GroupMemberSelect({
     group,
     onChange,
     value = null,
-    exclude = null,
     disabled = false,
     noDisabledStyling = false,
     className = null,
     ...props
 }) {
-    const accounts = useRecoilValue(accountsSeenByUser(group.id));
-    const filteredAccounts =
-        exclude !== null ? accounts.filter((account) => exclude.indexOf(account.id) < 0) : accounts;
+    const members = useRecoilValue(groupMembers(group.id));
+    const memberIDToUsername = useRecoilValue(groupMemberIDsToUsername(group.id));
 
     return (
         <Autocomplete
-            options={filteredAccounts}
-            getOptionLabel={(option) => option.name}
+            options={members.map((m) => m.user_id)}
+            getOptionLabel={(option) => memberIDToUsername[option]}
             value={value}
             disabled={disabled}
             openOnFocus
             fullWidth
             PopperComponent={StyledAutocompletePopper}
-            disableClearable
             className={className}
             onChange={(event, newValue) => onChange(newValue)}
-            renderOption={(props, option) => (
+            renderOption={(props, user_id) => (
                 <Box component="li" {...props}>
-                    {option.type === "personal" ? <Person /> : <CompareArrows />}
                     <Typography variant="body2" component="span" sx={{ ml: 1 }}>
-                        {option.name}
+                        {memberIDToUsername[user_id]}
                     </Typography>
                 </Box>
             )}

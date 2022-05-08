@@ -76,7 +76,6 @@ export default function RequestPasswordRecovery() {
                                     variant="contained"
                                     color="primary"
                                     disabled={isSubmitting}
-                                    onClick={(e) => handleSubmit()}
                                     sx={{ margin: "3 0 2 0" }}
                                 >
                                     Confirm

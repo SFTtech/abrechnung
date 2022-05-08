@@ -186,7 +186,7 @@ export default function GroupMemberList({ group }) {
 
                                 {isSubmitting && <LinearProgress />}
                                 <DialogActions>
-                                    <Button color="primary" onClick={(e) => handleSubmit()}>
+                                    <Button type="submit" color="primary">
                                         Save
                                     </Button>
                                     <Button color="error" onClick={closeEditMemberModal}>

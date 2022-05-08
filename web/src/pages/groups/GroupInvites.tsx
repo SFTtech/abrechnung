@@ -116,7 +116,7 @@ export default function GroupInvites({ group }) {
                     ))
                 )}
             </List>
-            {userPermissions.can_write && !isGuestUser && (
+            {userPermissions.can_write && !isGuest && (
                 <>
                     <Grid container justifyContent="center">
                         <IconButton color="primary" onClick={() => setShowModal(true)}>

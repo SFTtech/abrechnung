@@ -11,6 +11,7 @@ class TransactionAPITest(HTTPAPITest):
             description="description",
             currency_symbol="€",
             terms="terms",
+            add_user_account_on_join=False,
         )
 
     async def _create_account(self, group_id: int, name: str) -> int:
@@ -91,6 +92,7 @@ class TransactionAPITest(HTTPAPITest):
             description="description",
             currency_symbol="€",
             terms="terms",
+            add_user_account_on_join=False,
         )
         resp = await self._post(
             f"/api/v1/groups/{group_id}/transactions",
@@ -114,6 +116,7 @@ class TransactionAPITest(HTTPAPITest):
             description="description",
             currency_symbol="€",
             terms="terms",
+            add_user_account_on_join=False,
         )
         transaction1_id = await self.transaction_service.create_transaction(
             user=self.test_user,

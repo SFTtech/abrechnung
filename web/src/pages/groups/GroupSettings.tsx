@@ -7,14 +7,16 @@ import { currUserPermissions } from "../../state/groups";
 import { useRecoilValue } from "recoil";
 import { useHistory } from "react-router-dom";
 import {
+    Alert,
     Button,
+    Checkbox,
     Dialog,
     DialogActions,
     DialogContent,
     DialogContentText,
     DialogTitle,
+    FormControlLabel,
     Grid,
-    Alert,
 } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../utils";
@@ -28,13 +30,20 @@ export default function GroupSettings({ group }) {
     useTitle(`${group.name} - Settings`);
 
     // TODO: actually make the editing part work
-    const updateGroup = ({ name = null, description = null, currencySymbol = null, terms = null }) => {
+    const updateGroup = ({
+        name = null,
+        description = null,
+        currencySymbol = null,
+        terms = null,
+        addUserAccountOnJoin = null,
+    }) => {
         updateGroupMetadata({
             groupID: group.id,
             name: name ? name : group.name,
             description: description ? description : group.description,
             currencySymbol: currencySymbol ? currencySymbol : group.currency_symbol,
             terms: terms ? terms : group.terms,
+            addUserAccountOnJoin: addUserAccountOnJoin != null ? addUserAccountOnJoin : group.add_user_account_on_join,
         }).catch((err) => {
             toast.error(err);
         });
@@ -92,6 +101,16 @@ export default function GroupSettings({ group }) {
                 value={group.terms}
                 canEdit={userPermissions.can_write}
                 onChange={(terms) => updateGroup({ terms: terms })}
+            />
+
+            <FormControlLabel
+                control={
+                    <Checkbox
+                        onChange={(e) => updateGroup({ addUserAccountOnJoin: e.target.checked })}
+                        checked={group.add_user_account_on_join}
+                    />
+                }
+                label="Automatically add accounts for newly joined group members"
             />
 
             {/*<List>*/}

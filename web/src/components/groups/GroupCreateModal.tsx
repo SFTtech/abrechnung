@@ -1,8 +1,18 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { toast } from "react-toastify";
 import { Form, Formik } from "formik";
 import { createGroup } from "../../api";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
+import {
+    Button,
+    Checkbox,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControlLabel,
+    LinearProgress,
+    TextField,
+} from "@mui/material";
 import * as yup from "yup";
 
 const validationSchema = yup.object({
@@ -12,7 +22,11 @@ const validationSchema = yup.object({
 
 export default function GroupCreateModal({ show, onClose }) {
     const handleSubmit = (values, { setSubmitting }) => {
-        createGroup({ name: values.name, description: values.description })
+        createGroup({
+            name: values.name,
+            description: values.description,
+            addUserAccountOnJoin: values.addUserAccountOnJoin,
+        })
             .then((result) => {
                 setSubmitting(false);
                 onClose();
@@ -28,11 +42,20 @@ export default function GroupCreateModal({ show, onClose }) {
             <DialogTitle>Create Group</DialogTitle>
             <DialogContent>
                 <Formik
-                    initialValues={{ name: "", description: "" }}
+                    initialValues={{ name: "", description: "", addUserAccountOnJoin: false }}
                     onSubmit={handleSubmit}
                     validationSchema={validationSchema}
                 >
-                    {({ values, touched, errors, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
+                    {({
+                        values,
+                        touched,
+                        errors,
+                        handleBlur,
+                        handleChange,
+                        handleSubmit,
+                        isSubmitting,
+                        setFieldValue,
+                    }) => (
                         <Form>
                             <TextField
                                 margin="normal"
@@ -47,11 +70,10 @@ export default function GroupCreateModal({ show, onClose }) {
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                                 error={touched.name && Boolean(errors.name)}
-                                helperText={touched.name && <span>errors.name</span>}
+                                helperText={touched.name && (errors.name as ReactNode)}
                             />
                             <TextField
                                 margin="normal"
-                                required
                                 fullWidth
                                 variant="standard"
                                 type="text"
@@ -61,16 +83,21 @@ export default function GroupCreateModal({ show, onClose }) {
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                                 error={touched.description && Boolean(errors.description)}
-                                helperText={touched.description && <span>errors.description</span>}
+                                helperText={touched.description && (errors.description as ReactNode)}
+                            />
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        name="addUserAccountOnJoin"
+                                        onChange={(e) => setFieldValue("owningUserID", e.target.checked)}
+                                        checked={values.addUserAccountOnJoin}
+                                    />
+                                }
+                                label="Automatically add accounts for newly joined group members"
                             />
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button
-                                    type="submit"
-                                    color="primary"
-                                    disabled={isSubmitting}
-                                    onClick={(e) => handleSubmit()}
-                                >
+                                <Button type="submit" color="primary" disabled={isSubmitting}>
                                     Save
                                 </Button>
                                 <Button color="error" onClick={onClose}>
