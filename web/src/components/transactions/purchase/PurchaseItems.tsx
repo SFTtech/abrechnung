@@ -230,15 +230,17 @@ export default function PurchaseItems({ group, transaction }: PropTypes) {
     const [positions, setPositions] = useState([]);
 
     useEffect(() => {
-        setPositions(transaction.positions
-            .map((p) => ({ ...p, is_empty: false }))
-            .concat([
-                {
-                    ...localPositionChanges.empty,
-                    is_empty: true,
-                },
-            ]));
-    }, [transaction, setPositions, localPositionChanges])
+        setPositions(
+            transaction.positions
+                .map((p) => ({ ...p, is_empty: false }))
+                .concat([
+                    {
+                        ...localPositionChanges.empty,
+                        is_empty: true,
+                    },
+                ])
+        );
+    }, [transaction, setPositions, localPositionChanges]);
 
     // find all accounts that take part in the transaction, either via debitor shares or purchase items
     // TODO: should we add creditor accounts as well?
@@ -542,7 +544,7 @@ export default function PurchaseItems({ group, transaction }: PropTypes) {
                     </TableHead>
                     <TableBody>
                         {transaction.is_wip
-                            ? positions.map(position => (
+                            ? positions.map((position) => (
                                   <TableRow hover key={position.id}>
                                       <PositionTableRow
                                           position={position}
@@ -558,7 +560,7 @@ export default function PurchaseItems({ group, transaction }: PropTypes) {
                                   </TableRow>
                               ))
                             : positions.map(
-                                  position =>
+                                  (position) =>
                                       !position.is_empty && (
                                           <TableRow hover key={position.id}>
                                               <TableCell>{position.name}</TableCell>
