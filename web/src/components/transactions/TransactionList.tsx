@@ -27,6 +27,9 @@ import { userData } from "../../state/auth";
 import { accountsOwnedByUser } from "../../state/accounts";
 
 export default function TransactionList({ group }) {
+    const [speedDialOpen, setSpeedDialOpen] = useState(false);
+    const toggleSpeedDial = () => setSpeedDialOpen((currValue) => !currValue);
+
     const [showTransferCreateDialog, setShowTransferCreateDialog] = useState(false);
     const [showPurchaseCreateDialog, setShowPurchaseCreateDialog] = useState(false);
     const transactions = useRecoilValue(transactionsSeenByUser(group.id));
@@ -133,6 +136,10 @@ export default function TransactionList({ group }) {
                     ariaLabel="Create Account"
                     sx={{ position: "fixed", bottom: 20, right: 20 }}
                     icon={<SpeedDialIcon />}
+                    // onClose={() => setSpeedDialOpen(false)}
+                    // onOpen={() => setSpeedDialOpen(true)}
+                    onClick={toggleSpeedDial}
+                    open={speedDialOpen}
                 >
                     <SpeedDialAction
                         icon={<ShoppingCart />}

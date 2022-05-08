@@ -47,6 +47,9 @@ import { userData } from "../../state/auth";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 
 export default function AccountList({ group }) {
+    const [speedDialOpen, setSpeedDialOpen] = useState(false);
+    const toggleSpeedDial = () => setSpeedDialOpen((currValue) => !currValue);
+
     const [showPersonalAccountCreationModal, setShowPersonalAccountCreationModal] = useState(false);
     const [showClearingAccountCreationModal, setShowClearingAccountCreationModal] = useState(false);
 
@@ -361,6 +364,10 @@ export default function AccountList({ group }) {
                         ariaLabel="Create Account"
                         sx={{ position: "fixed", bottom: 20, right: 20 }}
                         icon={<SpeedDialIcon />}
+                        // onClose={() => setSpeedDialOpen(false)}
+                        // onOpen={() => setSpeedDialOpen(true)}
+                        onClick={toggleSpeedDial}
+                        open={speedDialOpen}
                     >
                         <SpeedDialAction
                             icon={<PersonalAccountIcon />}
