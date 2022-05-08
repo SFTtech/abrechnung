@@ -89,7 +89,7 @@ export default function GroupCreateModal({ show, onClose }) {
                                 control={
                                     <Checkbox
                                         name="addUserAccountOnJoin"
-                                        onChange={(e) => setFieldValue("owningUserID", e.target.checked)}
+                                        onChange={(e) => setFieldValue("addUserAccountOnJoin", e.target.checked)}
                                         checked={values.addUserAccountOnJoin}
                                     />
                                 }
