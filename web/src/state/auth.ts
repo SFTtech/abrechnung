@@ -18,7 +18,7 @@ export interface User {
     sessions: Array<Session>;
 }
 
-export const userData = atom({
+export const userData = atom<User>({
     key: "userData",
     default: selector({
         key: "userData/default",
@@ -51,7 +51,7 @@ export const userData = atom({
     ],
 });
 
-export const isGuestUser = selector({
+export const isGuestUser = selector<boolean>({
     key: "isGuestUser",
     get: async ({ get }) => {
         const user = get(userData);
@@ -59,7 +59,7 @@ export const isGuestUser = selector({
     },
 });
 
-export const isAuthenticated = selector({
+export const isAuthenticated = selector<boolean>({
     key: "isAuthenticated",
     get: async ({ get }) => {
         const user = get(userData);

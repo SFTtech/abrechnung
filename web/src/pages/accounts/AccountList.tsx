@@ -2,9 +2,9 @@ import CreateAccountModal from "../../components/accounts/CreateAccountModal";
 import EditAccountModal from "../../components/accounts/EditAccountModal";
 import CreateClearingAccountModal from "../../components/accounts/CreateClearingAccountModal";
 import EditClearingAccountModal from "../../components/accounts/EditClearingAccountModal";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
-import { currUserPermissions } from "../../state/groups";
+import { currUserPermissions, groupMemberIDsToUsername } from "../../state/groups";
 import {
     accountsSeenByUser,
     clearingAccountsSeenByUser,
@@ -16,13 +16,18 @@ import { deleteAccount } from "../../api";
 import { toast } from "react-toastify";
 import {
     Alert,
+    Box,
     Button,
+    Chip,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
+    Divider,
     Grid,
     IconButton,
+    Input,
+    InputAdornment,
     List,
     ListItem,
     ListItemSecondaryAction,
@@ -30,18 +35,27 @@ import {
     SpeedDial,
     SpeedDialAction,
     SpeedDialIcon,
+    Tab,
     Tooltip,
-    Typography,
 } from "@mui/material";
-import { Add, ContentCopy, Delete, Edit } from "@mui/icons-material";
+import { Add, Clear, ContentCopy, Delete, Edit } from "@mui/icons-material";
 import ListItemLink from "../../components/style/ListItemLink";
 import { MobilePaper } from "../../components/style/mobile";
 import { ClearingAccountIcon, PersonalAccountIcon } from "../../components/style/AbrechnungIcons";
 import { useTitle } from "../../utils";
+import { userData } from "../../state/auth";
+import { TabContext, TabList, TabPanel } from "@mui/lab";
 
 export default function AccountList({ group }) {
+    const [speedDialOpen, setSpeedDialOpen] = useState(false);
+    const toggleSpeedDial = () => setSpeedDialOpen((currValue) => !currValue);
+
     const [showPersonalAccountCreationModal, setShowPersonalAccountCreationModal] = useState(false);
     const [showClearingAccountCreationModal, setShowClearingAccountCreationModal] = useState(false);
+
+    const [activeTab, setActiveTab] = useState("personal");
+    const [searchValuePersonal, setSearchValuePersonal] = useState("");
+    const [searchValueClearing, setSearchValueClearing] = useState("");
 
     const [showPersonalAccountEditModal, setShowPersonalAccountEditModal] = useState(false);
     const [showClearingAccountEditModal, setShowClearingAccountEditModal] = useState(false);
@@ -54,6 +68,40 @@ export default function AccountList({ group }) {
     const allAccounts = useRecoilValue(accountsSeenByUser(group.id));
     const [accountToDelete, setAccountToDelete] = useState(null);
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
+    const currentUser = useRecoilValue(userData);
+    const memberIDToUsername = useRecoilValue(groupMemberIDsToUsername(group.id));
+
+    const [filteredPersonalAccounts, setFilteredPersonalAccounts] = useState([]);
+    const [filteredClearingAccounts, setFilteredClearingAccounts] = useState([]);
+    useEffect(() => {
+        if (searchValuePersonal != null && searchValuePersonal !== "") {
+            setFilteredPersonalAccounts(
+                personalAccounts.filter((t) => {
+                    return (
+                        t.name.toLowerCase().includes(searchValuePersonal.toLowerCase()) ||
+                        t.description.toLowerCase().includes(searchValuePersonal.toLowerCase())
+                    );
+                })
+            );
+        } else {
+            return setFilteredPersonalAccounts(personalAccounts);
+        }
+    }, [personalAccounts, searchValuePersonal, setFilteredPersonalAccounts]);
+
+    useEffect(() => {
+        if (searchValueClearing != null && searchValueClearing !== "") {
+            setFilteredClearingAccounts(
+                clearingAccounts.filter((t) => {
+                    return (
+                        t.name.toLowerCase().includes(searchValueClearing.toLowerCase()) ||
+                        t.description.toLowerCase().includes(searchValueClearing.toLowerCase())
+                    );
+                })
+            );
+        } else {
+            return setFilteredClearingAccounts(clearingAccounts);
+        }
+    }, [clearingAccounts, searchValueClearing, setFilteredClearingAccounts]);
 
     useTitle(`${group.name} - Accounts`);
 
@@ -103,108 +151,212 @@ export default function AccountList({ group }) {
     return (
         <>
             <MobilePaper>
-                <Typography variant="h6" sx={{ ml: 2 }}>
-                    Personal Accounts
-                </Typography>
-                <List sx={{ maxHeight: 400, overflow: "auto" }}>
-                    {personalAccounts.length === 0 ? (
-                        <Alert severity="info">No Accounts</Alert>
-                    ) : (
-                        personalAccounts.map((account) => (
-                            <ListItem sx={{ padding: 0 }} key={account.id}>
-                                <ListItemLink to={`/groups/${group.id}/accounts/${account.id}`}>
-                                    <ListItemText primary={account.name} secondary={account.description} />
-                                </ListItemLink>
-                                {userPermissions.can_write && (
-                                    <ListItemSecondaryAction>
-                                        <IconButton color="primary" onClick={() => openAccountEdit(account)}>
-                                            <Edit />
+                <TabContext value={activeTab}>
+                    <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+                        <TabList onChange={(e, newValue) => setActiveTab(newValue)} centered>
+                            <Tab label="Personal Accounts" value="personal" />
+                            <Tab label="Clearing Accounts" value="clearing" />
+                        </TabList>
+                    </Box>
+                    <TabPanel value="personal">
+                        <List>
+                            {personalAccounts.length === 0 ? (
+                                <Alert severity="info">No Accounts</Alert>
+                            ) : (
+                                <>
+                                    <ListItem>
+                                        <Input
+                                            value={searchValuePersonal}
+                                            onChange={(e) => setSearchValuePersonal(e.target.value)}
+                                            placeholder="Search…"
+                                            inputProps={{
+                                                "aria-label": "search",
+                                            }}
+                                            endAdornment={
+                                                <InputAdornment position="end">
+                                                    <IconButton
+                                                        aria-label="clear search input"
+                                                        onClick={(e) => setSearchValuePersonal("")}
+                                                        edge="end"
+                                                    >
+                                                        <Clear />
+                                                    </IconButton>
+                                                </InputAdornment>
+                                            }
+                                        />
+                                    </ListItem>
+                                    <Divider />
+                                    {filteredPersonalAccounts.map((account) => (
+                                        <ListItem sx={{ padding: 0 }} key={account.id}>
+                                            <ListItemLink to={`/groups/${group.id}/accounts/${account.id}`}>
+                                                <ListItemText
+                                                    primary={
+                                                        <div>
+                                                            <span>{account.name}</span>
+                                                            {account.owning_user_id === currentUser.id ? (
+                                                                <span>
+                                                                    , owned by{" "}
+                                                                    <Chip
+                                                                        size="small"
+                                                                        component="span"
+                                                                        color="primary"
+                                                                        label="you"
+                                                                    />
+                                                                </span>
+                                                            ) : (
+                                                                account.owning_user_id !== null && (
+                                                                    <span>
+                                                                        , owned by{" "}
+                                                                        <Chip
+                                                                            size="small"
+                                                                            component="span"
+                                                                            color="secondary"
+                                                                            label={
+                                                                                memberIDToUsername[
+                                                                                    account.owning_user_id
+                                                                                ]
+                                                                            }
+                                                                        />
+                                                                    </span>
+                                                                )
+                                                            )}
+                                                        </div>
+                                                    }
+                                                    secondary={account.description}
+                                                />
+                                            </ListItemLink>
+                                            {userPermissions.can_write && (
+                                                <ListItemSecondaryAction>
+                                                    <IconButton
+                                                        color="primary"
+                                                        onClick={() => openAccountEdit(account)}
+                                                    >
+                                                        <Edit />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        color="error"
+                                                        onClick={() => setAccountToDelete(account.id)}
+                                                    >
+                                                        <Delete />
+                                                    </IconButton>
+                                                </ListItemSecondaryAction>
+                                            )}
+                                        </ListItem>
+                                    ))}
+                                </>
+                            )}
+                        </List>
+                        {userPermissions.can_write && (
+                            <>
+                                <Grid container justifyContent="center">
+                                    <Tooltip title="Create Personal Account">
+                                        <IconButton
+                                            color="primary"
+                                            onClick={() => setShowPersonalAccountCreationModal(true)}
+                                        >
+                                            <Add />
                                         </IconButton>
-                                        <IconButton color="error" onClick={() => setAccountToDelete(account.id)}>
-                                            <Delete />
+                                    </Tooltip>
+                                </Grid>
+                                <CreateAccountModal
+                                    show={showPersonalAccountCreationModal}
+                                    onClose={() => setShowPersonalAccountCreationModal(false)}
+                                    group={group}
+                                />
+                                <EditAccountModal
+                                    show={showPersonalAccountEditModal}
+                                    onClose={closeAccountEdit}
+                                    account={accountToEdit}
+                                    group={group}
+                                />
+                            </>
+                        )}
+                    </TabPanel>
+                    <TabPanel value="clearing">
+                        <List>
+                            {clearingAccounts.length === 0 ? (
+                                <Alert severity="info">No Accounts</Alert>
+                            ) : (
+                                <>
+                                    <ListItem>
+                                        <Input
+                                            value={searchValueClearing}
+                                            onChange={(e) => setSearchValueClearing(e.target.value)}
+                                            placeholder="Search…"
+                                            inputProps={{
+                                                "aria-label": "search",
+                                            }}
+                                            endAdornment={
+                                                <InputAdornment position="end">
+                                                    <IconButton
+                                                        aria-label="clear search input"
+                                                        onClick={(e) => setSearchValueClearing("")}
+                                                        edge="end"
+                                                    >
+                                                        <Clear />
+                                                    </IconButton>
+                                                </InputAdornment>
+                                            }
+                                        />
+                                    </ListItem>
+                                    <Divider />
+                                    {filteredClearingAccounts.map((account) => (
+                                        <ListItem sx={{ padding: 0 }} key={account.id}>
+                                            <ListItemLink to={`/groups/${group.id}/accounts/${account.id}`}>
+                                                <ListItemText primary={account.name} secondary={account.description} />
+                                            </ListItemLink>
+                                            {userPermissions.can_write && (
+                                                <ListItemSecondaryAction>
+                                                    <IconButton
+                                                        color="primary"
+                                                        onClick={() => openClearingAccountEdit(account)}
+                                                    >
+                                                        <Edit />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        color="primary"
+                                                        onClick={() => copyClearingAccount(account)}
+                                                    >
+                                                        <ContentCopy />
+                                                    </IconButton>
+                                                    <IconButton
+                                                        color="error"
+                                                        onClick={() => setAccountToDelete(account.id)}
+                                                    >
+                                                        <Delete />
+                                                    </IconButton>
+                                                </ListItemSecondaryAction>
+                                            )}
+                                        </ListItem>
+                                    ))}
+                                </>
+                            )}
+                        </List>
+                        {userPermissions.can_write && (
+                            <>
+                                <Grid container justifyContent="center">
+                                    <Tooltip title="Create Clearing Account">
+                                        <IconButton color="primary" onClick={openCreateDialog}>
+                                            <Add />
                                         </IconButton>
-                                    </ListItemSecondaryAction>
-                                )}
-                            </ListItem>
-                        ))
-                    )}
-                </List>
-                {userPermissions.can_write && (
-                    <>
-                        <Grid container justifyContent="center">
-                            <Tooltip title="Create Personal Account">
-                                <IconButton color="primary" onClick={() => setShowPersonalAccountCreationModal(true)}>
-                                    <Add />
-                                </IconButton>
-                            </Tooltip>
-                        </Grid>
-                        <CreateAccountModal
-                            show={showPersonalAccountCreationModal}
-                            onClose={() => setShowPersonalAccountCreationModal(false)}
-                            group={group}
-                        />
-                        <EditAccountModal
-                            show={showPersonalAccountEditModal}
-                            onClose={closeAccountEdit}
-                            account={accountToEdit}
-                            group={group}
-                        />
-                    </>
-                )}
-            </MobilePaper>
-            <MobilePaper sx={{ marginTop: 3 }}>
-                <Typography variant="h6" sx={{ ml: 2 }}>
-                    Clearing Accounts
-                </Typography>
-                <List sx={{ maxHeight: 450, overflow: "auto" }}>
-                    {clearingAccounts.length === 0 ? (
-                        <Alert severity="info">No Accounts</Alert>
-                    ) : (
-                        clearingAccounts.map((account) => (
-                            <ListItem sx={{ padding: 0 }} key={account.id}>
-                                <ListItemLink to={`/groups/${group.id}/accounts/${account.id}`}>
-                                    <ListItemText primary={account.name} secondary={account.description} />
-                                </ListItemLink>
-                                {userPermissions.can_write && (
-                                    <ListItemSecondaryAction>
-                                        <IconButton color="primary" onClick={() => openClearingAccountEdit(account)}>
-                                            <Edit />
-                                        </IconButton>
-                                        <IconButton color="primary" onClick={() => copyClearingAccount(account)}>
-                                            <ContentCopy />
-                                        </IconButton>
-                                        <IconButton color="error" onClick={() => setAccountToDelete(account.id)}>
-                                            <Delete />
-                                        </IconButton>
-                                    </ListItemSecondaryAction>
-                                )}
-                            </ListItem>
-                        ))
-                    )}
-                </List>
-                {userPermissions.can_write && (
-                    <>
-                        <Grid container justifyContent="center">
-                            <Tooltip title="Create Clearing Account">
-                                <IconButton color="primary" onClick={openCreateDialog}>
-                                    <Add />
-                                </IconButton>
-                            </Tooltip>
-                        </Grid>
-                        <CreateClearingAccountModal
-                            show={showClearingAccountCreationModal}
-                            onClose={() => setShowClearingAccountCreationModal(false)}
-                            initialValues={clearingAccountToCopy}
-                            group={group}
-                        />
-                        <EditClearingAccountModal
-                            show={showClearingAccountEditModal}
-                            onClose={closeClearingAccountEdit}
-                            account={clearingAccountToEdit}
-                            group={group}
-                        />
-                    </>
-                )}
+                                    </Tooltip>
+                                </Grid>
+                                <CreateClearingAccountModal
+                                    show={showClearingAccountCreationModal}
+                                    onClose={() => setShowClearingAccountCreationModal(false)}
+                                    initialValues={clearingAccountToCopy}
+                                    group={group}
+                                />
+                                <EditClearingAccountModal
+                                    show={showClearingAccountEditModal}
+                                    onClose={closeClearingAccountEdit}
+                                    account={clearingAccountToEdit}
+                                    group={group}
+                                />
+                            </>
+                        )}
+                    </TabPanel>
+                </TabContext>
             </MobilePaper>
             {userPermissions.can_write && (
                 <>
@@ -212,6 +364,10 @@ export default function AccountList({ group }) {
                         ariaLabel="Create Account"
                         sx={{ position: "fixed", bottom: 20, right: 20 }}
                         icon={<SpeedDialIcon />}
+                        // onClose={() => setSpeedDialOpen(false)}
+                        // onOpen={() => setSpeedDialOpen(true)}
+                        onClick={toggleSpeedDial}
+                        open={speedDialOpen}
                     >
                         <SpeedDialAction
                             icon={<PersonalAccountIcon />}

@@ -23,6 +23,7 @@ class TransactionLogicTest(AsyncTestCase):
             description="",
             currency_symbol="€",
             terms="",
+            add_user_account_on_join=False,
         )
 
     async def _create_accounts(

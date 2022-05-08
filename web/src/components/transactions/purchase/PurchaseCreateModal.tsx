@@ -1,4 +1,4 @@
-import React from "react";
+import React, { ReactNode } from "react";
 import { toast } from "react-toastify";
 import { Form, Formik } from "formik";
 import { createTransaction } from "../../../api";
@@ -13,7 +13,7 @@ import * as yup from "yup";
 const validationSchema = yup.object({
     value: yup.number().required("value is required"),
     description: yup.string().required("description is required"),
-    creditor: yup.number().required("from is required").positive().integer(),
+    creditor: yup.object().required("from is required"),
     // billedAt: yup.date("Enter a description").required("from is required"),
 });
 
@@ -29,7 +29,7 @@ export default function PurchaseCreateModal({ group, show, onClose }) {
             billedAt: values.billedAt.toISODate(),
             currencySymbol: "€",
             currencyConversionRate: 1.0,
-            creditorShares: { [values.creditor]: 1.0 },
+            creditorShares: { [values.creditor.id]: 1.0 },
         })
             .then((t) => {
                 addTransactionInState(t, setTransactions);
@@ -79,7 +79,7 @@ export default function PurchaseCreateModal({ group, show, onClose }) {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 error={touched.description && Boolean(errors.description)}
-                                helperText={touched.description && <span>errors.description</span>}
+                                helperText={touched.description && (errors.description as ReactNode)}
                             />
                             <DatePicker
                                 inputFormat="yyyy-MM-dd"
@@ -96,8 +96,6 @@ export default function PurchaseCreateModal({ group, show, onClose }) {
                                 label="Billed at"
                                 value={values.billedAt}
                                 onChange={(val) => setFieldValue("billedAt", val, true)}
-                                // error={touched.billedAt && Boolean(errors.billedAt)}
-                                // helperText={touched.billedAt && errors.billedAt}
                             />
                             <TextField
                                 margin="normal"
@@ -111,27 +109,22 @@ export default function PurchaseCreateModal({ group, show, onClose }) {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 error={touched.value && Boolean(errors.value)}
-                                helperText={touched.value && <span>errors.value</span>}
+                                helperText={touched.value && (errors.value as ReactNode)}
                             />
                             <AccountSelect
                                 label="Paid by"
                                 name="creditor"
                                 group={group}
                                 value={values.creditor}
-                                onChange={(val) => setFieldValue("creditor", val.id, true)}
+                                onChange={(val) => setFieldValue("creditor", val, true)}
                                 noDisabledStyling={true}
                                 disabled={false}
                                 error={touched.creditor && Boolean(errors.creditor)}
-                                helperText={touched.creditor && <span>errors.creditor</span>}
+                                helperText={touched.creditor && (errors.creditor as ReactNode)}
                             />
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button
-                                    type="submit"
-                                    color="primary"
-                                    disabled={isSubmitting}
-                                    onClick={(e) => handleSubmit()}
-                                >
+                                <Button type="submit" color="primary" disabled={isSubmitting}>
                                     Save
                                 </Button>
                                 <Button color="error" onClick={onClose}>

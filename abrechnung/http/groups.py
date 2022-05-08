@@ -36,9 +36,10 @@ async def list_groups(request):
 @json_schema(
     Schema.from_dict(
         {
-            "name": fields.Str(),
+            "name": fields.Str(required=True),
             "description": fields.Str(),
-            "currency_symbol": fields.Str(),
+            "currency_symbol": fields.Str(required=True),
+            "add_user_account_on_join": fields.Bool(required=False, load_default=False),
             "terms": fields.Str(),
         },
         name="CreateGroupSchema",
@@ -49,9 +50,10 @@ async def create_group(request: Request):
     group_id = await request.app["group_service"].create_group(
         user=request["user"],
         name=data["name"],
-        description=data["description"],
+        description=data.get("description"),
         currency_symbol=data["currency_symbol"],
-        terms=data["terms"],
+        add_user_account_on_join=data["add_user_account_on_join"],
+        terms=data.get("terms"),
     )
 
     return json_response(data={"group_id": group_id})
@@ -75,10 +77,11 @@ async def get_group(request: Request):
 @json_schema(
     Schema.from_dict(
         {
-            "name": fields.Str(),
+            "name": fields.Str(required=True),
             "description": fields.Str(),
-            "currency_symbol": fields.Str(),
+            "currency_symbol": fields.Str(required=True),
             "terms": fields.Str(),
+            "add_user_account_on_join": fields.Bool(required=True),
         },
         name="UpdateGroupSchema",
     )
@@ -89,9 +92,10 @@ async def update_group(request: Request):
         user=request["user"],
         group_id=int(request.match_info["group_id"]),
         name=data["name"],
-        description=data["description"],
+        description=data.get("description"),
         currency_symbol=data["currency_symbol"],
-        terms=data["terms"],
+        add_user_account_on_join=data["add_user_account_on_join"],
+        terms=data.get("terms"),
     )
 
     return web.Response(status=web.HTTPNoContent.status_code)
@@ -165,7 +169,11 @@ async def send_group_message(request: web.Request):
 )
 @json_schema(
     Schema.from_dict(
-        {"user_id": fields.Int(), "can_write": fields.Bool(), "is_owner": fields.Bool()}
+        {
+            "user_id": fields.Int(required=True),
+            "can_write": fields.Bool(required=True),
+            "is_owner": fields.Bool(required=True),
+        }
     ),
     name="UpdateMemberPermissionsSchema",
 )
@@ -200,10 +208,10 @@ async def list_invites(request):
 @json_schema(
     Schema.from_dict(
         {
-            "description": fields.Str(),
-            "single_use": fields.Bool(),
-            "join_as_editor": fields.Bool(),
-            "valid_until": fields.DateTime(),
+            "description": fields.Str(required=True),
+            "single_use": fields.Bool(required=True),
+            "join_as_editor": fields.Bool(required=True),
+            "valid_until": fields.DateTime(required=True),
         },
         name="CreateInviteSchema",
     )
@@ -244,7 +252,9 @@ async def delete_invite(request: Request):
     description="",
 )
 @json_schema(
-    Schema.from_dict({"invite_token": fields.Str()}, name="PreviewGroupSchema")
+    Schema.from_dict(
+        {"invite_token": fields.Str(required=True)}, name="PreviewGroupSchema"
+    )
 )
 async def preview_group(request: Request):
     data = request["json"]
@@ -259,7 +269,11 @@ async def preview_group(request: Request):
 
 @routes.post(r"/v1/groups/join")
 @docs(tags=["groups"], summary="join a group using an invite token", description="")
-@json_schema(Schema.from_dict({"invite_token": fields.Str()}, name="JoinGroupSchema"))
+@json_schema(
+    Schema.from_dict(
+        {"invite_token": fields.Str(required=True)}, name="JoinGroupSchema"
+    )
+)
 async def join_group(request: Request):
     data = request["json"]
     await request.app["group_service"].join_group(

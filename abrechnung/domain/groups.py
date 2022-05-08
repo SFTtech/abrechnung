@@ -32,6 +32,7 @@ class Group:
     description: str
     currency_symbol: str
     terms: str
+    add_user_account_on_join: bool
     created_at: datetime
     created_by: int
 

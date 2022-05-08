@@ -60,6 +60,7 @@ class GroupAPITest(HTTPAPITest):
                 "description": "description2",
                 "currency_symbol": "$",
                 "terms": "new terms",
+                "add_user_account_on_join": False,
             },
         )
         self.assertEqual(204, resp.status)
@@ -82,6 +83,7 @@ class GroupAPITest(HTTPAPITest):
             description="foobar",
             currency_symbol="€",
             terms="foo",
+            add_user_account_on_join=False,
         )
         async with self.db_pool.acquire() as conn:
             await conn.execute(
@@ -149,6 +151,7 @@ class GroupAPITest(HTTPAPITest):
             description="description",
             currency_symbol="€",
             terms="terms",
+            add_user_account_on_join=False,
         )
         group2_id = await self.group_service.create_group(
             user=self.test_user,
@@ -156,6 +159,7 @@ class GroupAPITest(HTTPAPITest):
             description="description",
             currency_symbol="€",
             terms="terms",
+            add_user_account_on_join=False,
         )
         resp = await self._get(f"/api/v1/groups")
         self.assertEqual(200, resp.status)
@@ -170,6 +174,7 @@ class GroupAPITest(HTTPAPITest):
             description="description",
             currency_symbol="€",
             terms="terms",
+            add_user_account_on_join=False,
         )
         resp = await self._post(
             f"/api/v1/groups/{group_id}/accounts",
@@ -190,6 +195,7 @@ class GroupAPITest(HTTPAPITest):
             description="description",
             currency_symbol="€",
             terms="terms",
+            add_user_account_on_join=False,
         )
         account_id = await self.account_service.create_account(
             user=self.test_user,
@@ -230,6 +236,7 @@ class GroupAPITest(HTTPAPITest):
             description="description",
             currency_symbol="€",
             terms="terms",
+            add_user_account_on_join=False,
         )
         account1_id = await self.account_service.create_account(
             user=self.test_user,
@@ -258,6 +265,7 @@ class GroupAPITest(HTTPAPITest):
             description="description",
             currency_symbol="€",
             terms="terms",
+            add_user_account_on_join=False,
         )
         members = await self._fetch_members(group_id)
         self.assertEqual(1, len(members))
@@ -315,6 +323,7 @@ class GroupAPITest(HTTPAPITest):
             description="description",
             currency_symbol="€",
             terms="terms",
+            add_user_account_on_join=False,
         )
         account_id = await self.account_service.create_account(
             user=self.test_user,
@@ -339,6 +348,7 @@ class GroupAPITest(HTTPAPITest):
             description="description",
             currency_symbol="€",
             terms="terms",
+            add_user_account_on_join=False,
         )
         resp = await self._post(
             f"/api/v1/groups/{group_id}/accounts",
@@ -376,6 +386,7 @@ class GroupAPITest(HTTPAPITest):
             description="description",
             currency_symbol="€",
             terms="terms",
+            add_user_account_on_join=False,
         )
         resp = await self._post(
             f"/api/v1/groups/{group_id}/invites",
@@ -476,6 +487,7 @@ class GroupAPITest(HTTPAPITest):
             description="description",
             currency_symbol="€",
             terms="terms",
+            add_user_account_on_join=False,
         )
 
         resp = await self._post(

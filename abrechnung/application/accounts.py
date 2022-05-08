@@ -179,6 +179,7 @@ class AccountService(Application):
             description=db_json["description"],
             deleted=db_json["deleted"],
             priority=db_json["priority"],
+            owning_user_id=db_json["owning_user_id"],
             committed_at=None
             if db_json.get("revision_committed") is None
             else parse_postgres_datetime(db_json["revision_committed"]),
@@ -256,6 +257,7 @@ class AccountService(Application):
         type: str,
         name: str,
         description: str,
+        owning_user_id: Optional[int] = None,
         priority: int = 0,
         clearing_shares: Optional[dict[int, float]] = None,
     ) -> int:
@@ -266,9 +268,15 @@ class AccountService(Application):
                         f"'{type}' accounts cannot have associated settlement distribution shares"
                     )
 
-                await check_group_permissions(
+                can_write, is_owner = await check_group_permissions(
                     conn=conn, group_id=group_id, user=user, can_write=True
                 )
+                if owning_user_id is not None:
+                    if not is_owner and owning_user_id != user.id:
+                        raise PermissionError(
+                            f"only group owners can associate others with accounts"
+                        )
+
                 account_id = await conn.fetchval(
                     "insert into account (group_id, type) values ($1, $2) returning id",
                     group_id,
@@ -277,12 +285,13 @@ class AccountService(Application):
 
                 revision_id = await self._get_or_create_revision(conn, user, account_id)
                 await conn.execute(
-                    "insert into account_history (id, revision_id, name, description, priority) "
-                    "values ($1, $2, $3, $4, $5)",
+                    "insert into account_history (id, revision_id, name, description, owning_user_id, priority) "
+                    "values ($1, $2, $3, $4, $5, $6)",
                     account_id,
                     revision_id,
                     name,
                     description,
+                    owning_user_id,
                     priority,
                 )
                 if clearing_shares and type == AccountType.clearing.value:
@@ -321,6 +330,7 @@ class AccountService(Application):
         account_id: int,
         name: str,
         description: str,
+        owning_user_id: Optional[int] = None,
         priority: int = 0,
         clearing_shares: Optional[dict[int, float]] = None,
     ):
@@ -328,6 +338,9 @@ class AccountService(Application):
             async with conn.transaction():
                 group_id, account_type = await self._check_account_permissions(
                     conn=conn, user=user, account_id=account_id, can_write=True
+                )
+                can_write, is_owner = await check_group_permissions(
+                    conn=conn, group_id=group_id, user=user, can_write=True
                 )
 
                 if clearing_shares and account_type != AccountType.clearing.value:
@@ -339,13 +352,33 @@ class AccountService(Application):
                     conn=conn, user=user, account_id=account_id
                 )
 
+                committed_account = await conn.fetchrow(
+                    "select owning_user_id from committed_account_state_valid_at() where account_id = $1",
+                    account_id,
+                )
+
+                if owning_user_id is not None:
+                    if not is_owner and owning_user_id != user.id:
+                        raise PermissionError(
+                            f"only group owners can associate others with accounts"
+                        )
+                elif (
+                    committed_account["owning_user_id"] is not None
+                    and committed_account["owning_user_id"] != user.id
+                    and not is_owner
+                ):
+                    raise PermissionError(
+                        f"only group owners can remove other users as account owners"
+                    )
+
                 await conn.execute(
-                    "insert into account_history (id, revision_id, name, description, priority) "
-                    "values ($1, $2, $3, $4, $5) ",
+                    "insert into account_history (id, revision_id, name, description, owning_user_id, priority) "
+                    "values ($1, $2, $3, $4, $5, $6) ",
                     account_id,
                     revision_id,
                     name,
                     description,
+                    owning_user_id,
                     priority,
                 )
                 if clearing_shares and account_type == AccountType.clearing.value:

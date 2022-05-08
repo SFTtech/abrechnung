@@ -110,6 +110,19 @@ export const groupMembers = atomFamily<Array<GroupMember>, number>({
     ],
 });
 
+export const groupMemberIDsToUsername = selectorFamily<{ [k: number]: string }, number>({
+    key: "groupMemberIDsToUsername",
+    get:
+        (groupID) =>
+        async ({ get }) => {
+            const members = get(groupMembers(groupID));
+            return members.reduce((map, member) => {
+                map[member.user_id] = member.username;
+                return map;
+            }, {});
+        },
+});
+
 export interface GroupInvite {
     id: number;
     created_by: number;

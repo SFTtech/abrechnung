@@ -84,7 +84,7 @@ export default function EditClearingAccountModal({ group, show, onClose, account
 
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button color="primary" type="submit" onClick={(e) => handleSubmit()}>
+                                <Button color="primary" type="submit">
                                     Save
                                 </Button>
                                 <Button color="error" onClick={onClose}>
