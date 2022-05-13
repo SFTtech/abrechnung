@@ -12,6 +12,16 @@ export default function SidebarGroupList({ group = null }) {
     const isGuest = useRecoilValue(isGuestUser);
     const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
 
+    const openGroupCreateModal = () => {
+        setShowGroupCreationModal(true);
+    };
+
+    const closeGroupCreateModal = (evt, reason) => {
+        if (reason !== "backdropClick") {
+            setShowGroupCreationModal(false);
+        }
+    };
+
     return (
         <>
             <List sx={{ pt: 0 }}>
@@ -26,16 +36,14 @@ export default function SidebarGroupList({ group = null }) {
                 {!isGuest && (
                     <ListItem sx={{ padding: 0 }}>
                         <Grid container justifyContent="center">
-                            <IconButton size="small" onClick={() => setShowGroupCreationModal(true)}>
+                            <IconButton size="small" onClick={openGroupCreateModal}>
                                 <Add />
                             </IconButton>
                         </Grid>
                     </ListItem>
                 )}
             </List>
-            {!isGuest && (
-                <GroupCreateModal show={showGroupCreationModal} onClose={() => setShowGroupCreationModal(false)} />
-            )}
+            {!isGuest && <GroupCreateModal show={showGroupCreationModal} onClose={closeGroupCreateModal} />}
         </>
     );
 }

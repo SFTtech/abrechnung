@@ -110,9 +110,11 @@ export default function AccountList({ group }) {
         setShowPersonalAccountEditModal(true);
     };
 
-    const closeAccountEdit = () => {
-        setShowPersonalAccountEditModal(false);
-        setAccountToEdit(null);
+    const closeAccountEdit = (evt, reason) => {
+        if (reason !== "backdropClick") {
+            setShowPersonalAccountEditModal(false);
+            setAccountToEdit(null);
+        }
     };
 
     const openClearingAccountEdit = (account) => {
@@ -120,9 +122,11 @@ export default function AccountList({ group }) {
         setShowClearingAccountEditModal(true);
     };
 
-    const closeClearingAccountEdit = () => {
-        setShowClearingAccountEditModal(false);
-        setClearingAccountToEdit(null);
+    const closeClearingAccountEdit = (evt, reason) => {
+        if (reason !== "backdropClick") {
+            setShowClearingAccountEditModal(false);
+            setClearingAccountToEdit(null);
+        }
     };
 
     const confirmDeleteAccount = () => {
@@ -260,7 +264,11 @@ export default function AccountList({ group }) {
                                 </Grid>
                                 <CreateAccountModal
                                     show={showPersonalAccountCreationModal}
-                                    onClose={() => setShowPersonalAccountCreationModal(false)}
+                                    onClose={(evt, reason) => {
+                                        if (reason !== "backdropClick") {
+                                            setShowPersonalAccountCreationModal(false);
+                                        }
+                                    }}
                                     group={group}
                                 />
                                 <EditAccountModal
@@ -343,7 +351,11 @@ export default function AccountList({ group }) {
                                 </Grid>
                                 <CreateClearingAccountModal
                                     show={showClearingAccountCreationModal}
-                                    onClose={() => setShowClearingAccountCreationModal(false)}
+                                    onClose={(evt, reason) => {
+                                        if (reason !== "backdropClick") {
+                                            setShowClearingAccountCreationModal(false);
+                                        }
+                                    }}
                                     initialValues={clearingAccountToCopy}
                                     group={group}
                                 />

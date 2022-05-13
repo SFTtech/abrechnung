@@ -123,12 +123,20 @@ export default function TransactionList({ group }) {
                 <TransferCreateModal
                     group={group}
                     show={showTransferCreateDialog}
-                    onClose={() => setShowTransferCreateDialog(false)}
+                    onClose={(evt, reason) => {
+                        if (reason !== "backdropClick") {
+                            setShowTransferCreateDialog(false);
+                        }
+                    }}
                 />
                 <PurchaseCreateModal
                     group={group}
                     show={showPurchaseCreateDialog}
-                    onClose={() => setShowPurchaseCreateDialog(false)}
+                    onClose={(evt, reason) => {
+                        if (reason !== "backdropClick") {
+                            setShowPurchaseCreateDialog(false);
+                        }
+                    }}
                 />
             </MobilePaper>
             {userPermissions.can_write && (

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import EditableField from "../../components/style/EditableField";
 
 import { toast } from "react-toastify";
 import { leaveGroup, updateGroupMetadata } from "../../api";
@@ -15,11 +14,24 @@ import {
     DialogContent,
     DialogContentText,
     DialogTitle,
-    FormControlLabel,
+    FormGroup,
     Grid,
+    LinearProgress,
 } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../utils";
+import { Form, Formik } from "formik";
+import * as yup from "yup";
+import { DisabledFormControlLabel, DisabledTextField } from "../../components/style/DisabledTextField";
+import { Cancel, Edit, Save } from "@mui/icons-material";
+
+const validationSchema = yup.object({
+    name: yup.string().required("group name is required"),
+    description: yup.string(),
+    terms: yup.string(),
+    currencySymbol: yup.string(),
+    addUserAccountOnJoin: yup.boolean(),
+});
 
 export default function GroupSettings({ group }) {
     const [showLeaveModal, setShowLeaveModal] = useState(false);
@@ -27,26 +39,35 @@ export default function GroupSettings({ group }) {
 
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
 
+    const [isEditing, setIsEditing] = useState(false);
+
     useTitle(`${group.name} - Settings`);
 
-    // TODO: actually make the editing part work
-    const updateGroup = ({
-        name = null,
-        description = null,
-        currencySymbol = null,
-        terms = null,
-        addUserAccountOnJoin = null,
-    }) => {
+    const startEdit = () => {
+        setIsEditing(true);
+    };
+
+    const stopEdit = () => {
+        setIsEditing(false);
+    };
+
+    const handleSubmit = (values, { setSubmitting }) => {
         updateGroupMetadata({
             groupID: group.id,
-            name: name ? name : group.name,
-            description: description ? description : group.description,
-            currencySymbol: currencySymbol ? currencySymbol : group.currency_symbol,
-            terms: terms ? terms : group.terms,
-            addUserAccountOnJoin: addUserAccountOnJoin != null ? addUserAccountOnJoin : group.add_user_account_on_join,
-        }).catch((err) => {
-            toast.error(err);
-        });
+            name: values.name,
+            description: values.description,
+            currencySymbol: values.currencySymbol,
+            terms: values.terms,
+            addUserAccountOnJoin: values.addUserAccountOnJoin,
+        })
+            .then((res) => {
+                setSubmitting(false);
+                setIsEditing(false);
+            })
+            .catch((err) => {
+                setSubmitting(false);
+                toast.error(err);
+            });
     };
 
     const confirmLeaveGroup = () => {
@@ -67,51 +88,132 @@ export default function GroupSettings({ group }) {
                 <Alert severity="info">You only have read access to this group</Alert>
             ) : null}
 
-            <EditableField
-                label="Name"
-                margin="normal"
-                variant="standard"
-                value={group.name}
-                canEdit={userPermissions.can_write}
-                onChange={(name) => updateGroup({ name: name })}
-            />
+            <Formik
+                initialValues={{
+                    name: group.name,
+                    description: group.description,
+                    terms: group.terms,
+                    currencySymbol: group.currency_symbol,
+                    addUserAccountOnJoin: group.add_user_account_on_join,
+                }}
+                onSubmit={handleSubmit}
+                validationSchema={validationSchema}
+                enableReinitialize={true}
+            >
+                {({ values, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
+                    <Form onSubmit={handleSubmit}>
+                        <DisabledTextField
+                            variant="standard"
+                            margin="normal"
+                            required
+                            fullWidth
+                            type="text"
+                            label="Name"
+                            name="name"
+                            disabled={!userPermissions.can_write || !isEditing}
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            value={values.name}
+                        />
 
-            <EditableField
-                label="Description"
-                margin="normal"
-                variant="standard"
-                value={group.description}
-                canEdit={userPermissions.can_write}
-                onChange={(description) => updateGroup({ description: description })}
-            />
+                        <DisabledTextField
+                            variant="standard"
+                            margin="normal"
+                            fullWidth
+                            type="text"
+                            name="description"
+                            label="Description"
+                            disabled={!userPermissions.can_write || !isEditing}
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            value={values.description}
+                        />
+                        <DisabledTextField
+                            variant="standard"
+                            margin="normal"
+                            required
+                            fullWidth
+                            type="text"
+                            name="currencySymbol"
+                            label="Currency"
+                            disabled={!userPermissions.can_write || !isEditing}
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            value={values.currencySymbol}
+                        />
+                        <DisabledTextField
+                            variant="standard"
+                            multiline={true}
+                            margin="normal"
+                            fullWidth
+                            type="text"
+                            name="terms"
+                            label="Terms"
+                            disabled={!userPermissions.can_write || !isEditing}
+                            onBlur={handleBlur}
+                            onChange={handleChange}
+                            value={values.terms}
+                        />
+                        <FormGroup>
+                            <DisabledFormControlLabel
+                                control={
+                                    <Checkbox
+                                        name="addUserAccountOnJoin"
+                                        disabled={!userPermissions.can_write || !isEditing}
+                                        onBlur={handleBlur}
+                                        onChange={handleChange}
+                                        checked={values.addUserAccountOnJoin}
+                                    />
+                                }
+                                label="Automatically add accounts for newly joined group members"
+                            />
+                        </FormGroup>
 
-            <EditableField
-                label="Currency Symbol"
-                margin="normal"
-                variant="standard"
-                value={group.currency_symbol}
-                canEdit={userPermissions.can_write}
-                onChange={(currencySymbol) => updateGroup({ currencySymbol: currencySymbol })}
-            />
-
-            <EditableField
-                label="Terms"
-                margin="normal"
-                variant="standard"
-                value={group.terms}
-                canEdit={userPermissions.can_write}
-                onChange={(terms) => updateGroup({ terms: terms })}
-            />
-
-            <FormControlLabel
-                control={
-                    <Checkbox
-                        onChange={(e) => updateGroup({ addUserAccountOnJoin: e.target.checked })}
-                        checked={group.add_user_account_on_join}
-                    />
-                }
-                label="Automatically add accounts for newly joined group members"
-            />
+                        {isSubmitting && <LinearProgress />}
+                        <Grid container justifyContent="space-between" style={{ marginTop: 10 }}>
+                            <div>
+                                {userPermissions.can_write && isEditing && (
+                                    <>
+                                        <Button
+                                            type="submit"
+                                            variant="contained"
+                                            color="primary"
+                                            disabled={isSubmitting}
+                                            startIcon={<Save />}
+                                        >
+                                            Save
+                                        </Button>
+                                        <Button
+                                            variant="contained"
+                                            color="error"
+                                            disabled={isSubmitting}
+                                            onClick={stopEdit}
+                                            startIcon={<Cancel />}
+                                            sx={{ ml: 1 }}
+                                        >
+                                            Cancel
+                                        </Button>
+                                    </>
+                                )}
+                                {userPermissions.can_write && !isEditing && (
+                                    <Button
+                                        variant="contained"
+                                        color="primary"
+                                        disabled={isSubmitting}
+                                        onClick={startEdit}
+                                        startIcon={<Edit />}
+                                    >
+                                        Edit
+                                    </Button>
+                                )}
+                            </div>
+                            <Button variant="contained" onClick={() => setShowLeaveModal(true)}>
+                                Leave Group
+                            </Button>
+                        </Grid>
+                    </Form>
+                )}
+            </Formik>
 
             {/*<List>*/}
             {/*    <ListItem>*/}
@@ -121,12 +223,6 @@ export default function GroupSettings({ group }) {
             {/*        <ListItemText primary="Joined" secondary={group.joined}/>*/}
             {/*    </ListItem>*/}
             {/*</List>*/}
-
-            <Grid container justifyContent="center" style={{ marginTop: 20 }}>
-                <Button variant="contained" onClick={() => setShowLeaveModal(true)}>
-                    Leave Group
-                </Button>
-            </Grid>
 
             <Dialog open={showLeaveModal} onClose={() => setShowLeaveModal(false)}>
                 <DialogTitle>Leave Group</DialogTitle>

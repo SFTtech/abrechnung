@@ -564,7 +564,7 @@ export default function PurchaseItems({ group, transaction }: PropTypes) {
                                       !position.is_empty && (
                                           <TableRow hover key={position.id}>
                                               <TableCell>{position.name}</TableCell>
-                                              <TableCell align="right" style={{ width: 80 }}>
+                                              <TableCell align="right" style={{ minWidth: 80 }}>
                                                   {position.price.toFixed(2)} {transaction.currency_symbol}
                                               </TableCell>
                                               {positionAccounts.map((accountID) => (
