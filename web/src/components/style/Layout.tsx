@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { isAuthenticated } from "../../state/auth";
 import ListItemLink from "./ListItemLink";
@@ -50,6 +50,7 @@ export default function Layout({ group = null, children, ...props }) {
     const theme: Theme = useTheme();
     const dotsMenuOpen = Boolean(anchorEl);
     const cfg = useRecoilValue(config);
+    const location = useLocation();
 
     const [mobileOpen, setMobileOpen] = useState(true);
 
@@ -73,43 +74,66 @@ export default function Layout({ group = null, children, ...props }) {
             <Divider />
             {group != null && (
                 <List sx={{ pb: 0 }}>
-                    <ListItemLink to={`/groups/${group.id}/`}>
+                    <ListItemLink
+                        to={`/groups/${group.id}/`}
+                        selected={
+                            location.pathname === `/groups/${group.id}/` || location.pathname === `/groups/${group.id}`
+                        }
+                    >
                         <ListItemIcon>
                             <Paid />
                         </ListItemIcon>
                         <ListItemText primary="Transactions" />
                     </ListItemLink>
-                    <ListItemLink to={`/groups/${group.id}/balances`}>
+                    <ListItemLink
+                        to={`/groups/${group.id}/balances`}
+                        selected={location.pathname.startsWith(`/groups/${group.id}/balances`)}
+                    >
                         <ListItemIcon>
                             <BarChart />
                         </ListItemIcon>
                         <ListItemText primary="Balances" />
                     </ListItemLink>
-                    <ListItemLink to={`/groups/${group.id}/accounts`}>
+                    <ListItemLink
+                        to={`/groups/${group.id}/accounts`}
+                        selected={location.pathname.startsWith(`/groups/${group.id}/accounts`)}
+                    >
                         <ListItemIcon>
                             <AccountBalance />
                         </ListItemIcon>
                         <ListItemText primary="Accounts" />
                     </ListItemLink>
-                    <ListItemLink to={`/groups/${group.id}/detail`}>
+                    <ListItemLink
+                        to={`/groups/${group.id}/detail`}
+                        selected={location.pathname.startsWith(`/groups/${group.id}/detail`)}
+                    >
                         <ListItemIcon>
                             <AdminPanelSettings />
                         </ListItemIcon>
                         <ListItemText primary="Group Settings" />
                     </ListItemLink>
-                    <ListItemLink to={`/groups/${group.id}/members`}>
+                    <ListItemLink
+                        to={`/groups/${group.id}/members`}
+                        selected={location.pathname.startsWith(`/groups/${group.id}/members`)}
+                    >
                         <ListItemIcon>
                             <People />
                         </ListItemIcon>
                         <ListItemText primary="Group Members" />
                     </ListItemLink>
-                    <ListItemLink to={`/groups/${group.id}/invites`}>
+                    <ListItemLink
+                        to={`/groups/${group.id}/invites`}
+                        selected={location.pathname.startsWith(`/groups/${group.id}/invites`)}
+                    >
                         <ListItemIcon>
                             <Mail />
                         </ListItemIcon>
                         <ListItemText primary="Group Invites" />
                     </ListItemLink>
-                    <ListItemLink to={`/groups/${group.id}/log`}>
+                    <ListItemLink
+                        to={`/groups/${group.id}/log`}
+                        selected={location.pathname.startsWith(`/groups/${group.id}/log`)}
+                    >
                         <ListItemIcon>
                             <Message />
                         </ListItemIcon>

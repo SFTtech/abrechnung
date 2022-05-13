@@ -123,12 +123,20 @@ export default function TransactionList({ group }) {
                 <TransferCreateModal
                     group={group}
                     show={showTransferCreateDialog}
-                    onClose={() => setShowTransferCreateDialog(false)}
+                    onClose={(evt, reason) => {
+                        if (reason !== "backdropClick") {
+                            setShowTransferCreateDialog(false);
+                        }
+                    }}
                 />
                 <PurchaseCreateModal
                     group={group}
                     show={showPurchaseCreateDialog}
-                    onClose={() => setShowPurchaseCreateDialog(false)}
+                    onClose={(evt, reason) => {
+                        if (reason !== "backdropClick") {
+                            setShowPurchaseCreateDialog(false);
+                        }
+                    }}
                 />
             </MobilePaper>
             {userPermissions.can_write && (
@@ -143,12 +151,14 @@ export default function TransactionList({ group }) {
                 >
                     <SpeedDialAction
                         icon={<ShoppingCart />}
-                        tooltipTitle="Create Purchase"
+                        tooltipTitle="Purchase"
+                        tooltipOpen
                         onClick={() => setShowPurchaseCreateDialog(true)}
                     />
                     <SpeedDialAction
                         icon={<CompareArrows />}
-                        tooltipTitle="Create Transfer"
+                        tooltipTitle="Transfer"
+                        tooltipOpen
                         onClick={() => setShowTransferCreateDialog(true)}
                     />
                 </SpeedDial>

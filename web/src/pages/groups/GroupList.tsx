@@ -35,6 +35,16 @@ export default function GroupList() {
         setGroupToDelete(null);
     };
 
+    const openGroupCreateModal = () => {
+        setShowGroupCreationModal(true);
+    };
+
+    const closeGroupCreateModal = (evt, reason) => {
+        if (reason !== "backdropClick") {
+            setShowGroupCreationModal(false);
+        }
+    };
+
     return (
         <MobilePaper>
             <Typography component="h3" variant="h5">
@@ -74,11 +84,11 @@ export default function GroupList() {
             {!isGuest && (
                 <>
                     <Grid container justifyContent="center">
-                        <IconButton color="primary" onClick={() => setShowGroupCreationModal(true)}>
+                        <IconButton color="primary" onClick={openGroupCreateModal}>
                             <Add />
                         </IconButton>
                     </Grid>
-                    <GroupCreateModal show={showGroupCreationModal} onClose={() => setShowGroupCreationModal(false)} />
+                    <GroupCreateModal show={showGroupCreationModal} onClose={closeGroupCreateModal} />
                 </>
             )}
             <GroupDeleteModal
