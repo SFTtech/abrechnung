@@ -18,11 +18,7 @@ import { accountsSeenByUser } from "../../../state/accounts";
 import { makeStyles } from "@mui/styles";
 import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import AccountSelect from "../../style/AccountSelect";
-import {
-    LocalPositionChanges,
-    pendingTransactionPositionChanges,
-    TransactionConsolidated,
-} from "../../../state/transactions";
+import { LocalPositionChanges, pendingTransactionPositionChanges, Transaction } from "../../../state/transactions";
 import { MobilePaper } from "../../style/mobile";
 import { Group } from "../../../state/groups";
 
@@ -216,7 +212,7 @@ function PositionTableRow({
 
 export interface PropTypes {
     group: Group;
-    transaction: TransactionConsolidated;
+    transaction: Transaction;
 }
 
 export default function PurchaseItems({ group, transaction }: PropTypes) {

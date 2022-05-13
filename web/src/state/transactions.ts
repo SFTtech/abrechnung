@@ -6,7 +6,7 @@ import { toast } from "react-toastify";
 import { accountsSeenByUser, ClearingShares } from "./accounts";
 import { localStorageEffect } from "./cache";
 
-const transactionCompareFn = (t1: TransactionConsolidated, t2: TransactionConsolidated) => {
+const transactionCompareFn = (t1: Transaction, t2: Transaction) => {
     if (t1.is_wip && !t2.is_wip) {
         return -1;
     } else if (!t1.is_wip && t2.is_wip) {
@@ -53,7 +53,7 @@ export interface TransactionDetail {
 
 export type TransactionType = "purchase" | "transfer" | "mimo";
 
-export interface Transaction {
+export interface TransactionBackend {
     id: number;
     type: TransactionType;
     is_wip: boolean;
@@ -75,7 +75,7 @@ export interface TransactionAccountBalance {
     common_debitors: number;
 }
 
-export interface TransactionConsolidated {
+export class Transaction {
     id: number;
     type: TransactionType;
     is_wip: boolean;
@@ -95,11 +95,211 @@ export interface TransactionConsolidated {
     positions: Array<TransactionPosition>;
     files: Array<TransactionAttachment>;
     account_balances: { [k: number]: TransactionAccountBalance };
+
+    constructor(
+        id: number,
+        type: TransactionType,
+        is_wip: boolean,
+        last_changed: string,
+        group_id: number,
+        version: number,
+        description: string,
+        value: number,
+        currency_symbol: string,
+        currency_conversion_rate: number,
+        billed_at: string,
+        creditor_shares: CreditorShares,
+        debitor_shares: DebitorShares,
+        deleted: boolean,
+        has_committed_changes: boolean,
+        positions: Array<TransactionPosition>,
+        files: Array<TransactionAttachment>,
+        committed_at?: string
+    ) {
+        this.id = id;
+        this.type = type;
+        this.is_wip = is_wip;
+        this.last_changed = last_changed;
+        this.group_id = group_id;
+        this.version = version;
+        this.description = description;
+        this.value = value;
+        this.currency_symbol = currency_symbol;
+        this.currency_conversion_rate = currency_conversion_rate;
+        this.billed_at = billed_at;
+        this.committed_at = committed_at;
+        this.creditor_shares = creditor_shares;
+        this.debitor_shares = debitor_shares;
+        this.deleted = deleted;
+        this.has_committed_changes = has_committed_changes;
+        this.positions = positions;
+        this.files = files;
+
+        this.account_balances = {};
+        let remainingTransactionValue = this.value !== undefined ? this.value : 0;
+        if (this.positions != null && this.positions.length > 0) {
+            for (const purchaseItem of this.positions) {
+                if (purchaseItem.deleted) {
+                    continue;
+                }
+
+                let totalUsages =
+                    purchaseItem.communist_shares +
+                    Object.values(purchaseItem.usages).reduce((acc, curr) => acc + curr, 0);
+
+                // bill the respective item usage with each participating account
+                Object.entries(purchaseItem.usages).forEach(([accountID, value]) => {
+                    if (this.account_balances.hasOwnProperty(accountID)) {
+                        this.account_balances[parseInt(accountID)]["positions"] +=
+                            totalUsages > 0 ? (purchaseItem.price / totalUsages) * value : 0;
+                    } else {
+                        this.account_balances[parseInt(accountID)] = {
+                            positions: totalUsages > 0 ? (purchaseItem.price / totalUsages) * value : 0,
+                            common_debitors: 0,
+                            common_creditors: 0,
+                            total: 0,
+                        };
+                    }
+                });
+
+                // calculate the remaining purchase item price to be billed onto the communist shares
+                const commonRemainder =
+                    totalUsages > 0 ? (purchaseItem.price / totalUsages) * purchaseItem.communist_shares : 0;
+                remainingTransactionValue = remainingTransactionValue - purchaseItem.price + commonRemainder;
+            }
+        }
+
+        const totalDebitorShares = Object.values(this.debitor_shares).reduce((acc, curr) => acc + curr, 0);
+        const totalCreditorShares = Object.values(this.creditor_shares).reduce((acc, curr) => acc + curr, 0);
+
+        Object.entries(this.debitor_shares).forEach(([accountID, value]) => {
+            if (this.account_balances.hasOwnProperty(accountID)) {
+                this.account_balances[parseInt(accountID)]["common_debitors"] +=
+                    totalDebitorShares > 0 ? (remainingTransactionValue / totalDebitorShares) * value : 0;
+            } else {
+                this.account_balances[parseInt(accountID)] = {
+                    positions: 0,
+                    common_creditors: 0,
+                    common_debitors:
+                        totalDebitorShares > 0 ? (remainingTransactionValue / totalDebitorShares) * value : 0,
+                    total: 0,
+                };
+            }
+        });
+        Object.entries(this.creditor_shares).forEach(([accountID, value]) => {
+            if (this.account_balances.hasOwnProperty(accountID)) {
+                this.account_balances[parseInt(accountID)]["common_creditors"] +=
+                    totalCreditorShares > 0 ? (this.value / totalCreditorShares) * value : 0;
+            } else {
+                this.account_balances[parseInt(accountID)] = {
+                    positions: 0,
+                    common_debitors: 0,
+                    common_creditors: totalCreditorShares > 0 ? (this.value / totalCreditorShares) * value : 0,
+                    total: 0,
+                };
+            }
+        });
+
+        for (const accountID in this.account_balances) {
+            const b = this.account_balances[accountID];
+            this.account_balances[accountID].total = b.common_creditors - b.positions - b.common_debitors;
+        }
+    }
+
+    static fromBackendFormat(
+        transaction: TransactionBackend,
+        localDetailChanges: LocalTransactionDetailChanges,
+        localPositionChanges: LocalPositionChanges
+    ): Transaction {
+        const has_committed_changes = transaction.committed_details != null;
+        const transaction_details =
+            transaction.pending_details !== null ? transaction.pending_details : transaction.committed_details;
+
+        if (transaction_details == null) {
+            throw new Error(
+                "invalid transaction state: pending_details and committed_details should not be null at the same time"
+            );
+        }
+
+        let positions: Array<TransactionPosition> =
+            transaction.committed_positions != null
+                ? transaction.committed_positions
+                      .filter((position) => !position.deleted)
+                      .map((t) => ({
+                          ...t,
+                          only_local: false,
+                      }))
+                : [];
+
+        if (transaction.pending_positions || Object.keys(localPositionChanges.modified).length > 0) {
+            let mappedPosition = positions.reduce((map: { [k: number]: TransactionPosition }, position) => {
+                map[position.id] = position;
+                return map;
+            }, {});
+
+            if (transaction.pending_positions) {
+                for (const pendingPosition of transaction.pending_positions) {
+                    mappedPosition[pendingPosition.id] = {
+                        ...pendingPosition,
+                        only_local: false,
+                    };
+                }
+            }
+            if (localPositionChanges.modified) {
+                for (const localPosition of Object.values(localPositionChanges.modified)) {
+                    mappedPosition[localPosition.id] = {
+                        ...localPosition,
+                        only_local: false,
+                    };
+                }
+            }
+            positions = Object.values(mappedPosition).filter((position) => !position.deleted);
+        }
+        const all_positions = positions.concat(
+            Object.values(localPositionChanges.added).map((p) => ({
+                ...p,
+                only_local: true,
+            }))
+        );
+
+        let files: Array<TransactionAttachment> =
+            transaction.committed_files != null ? transaction.committed_files.filter((file) => !file.deleted) : [];
+        if (transaction.pending_files) {
+            let mappedFiles = files.reduce((map: { [k: number]: TransactionAttachment }, file) => {
+                map[file.id] = file;
+                return map;
+            }, {});
+            for (const pendingFile of transaction.pending_files) {
+                mappedFiles[pendingFile.id] = pendingFile;
+            }
+            files = Object.values(mappedFiles).filter((file) => !file.deleted);
+        }
+
+        return new Transaction(
+            transaction.id,
+            transaction.type,
+            transaction.is_wip,
+            transaction.last_changed,
+            transaction.group_id,
+            transaction.version,
+            localDetailChanges.description ?? transaction_details.description,
+            localDetailChanges.value ?? transaction_details.value,
+            localDetailChanges.currency_symbol ?? transaction_details.currency_symbol,
+            localDetailChanges.currency_conversion_rate ?? transaction_details.currency_conversion_rate,
+            localDetailChanges.billed_at ?? transaction_details.billed_at,
+            localDetailChanges.creditor_shares ?? transaction_details.creditor_shares,
+            localDetailChanges.debitor_shares ?? transaction_details.debitor_shares,
+            localDetailChanges.deleted ?? transaction_details.deleted,
+            has_committed_changes,
+            all_positions,
+            files,
+            transaction_details.committed_at
+        );
+    }
 }
 
-export const groupTransactions = atomFamily<Array<Transaction>, number>({
+export const groupTransactions = atomFamily<Array<TransactionBackend>, number>({
     key: "groupTransactions",
-    default: [],
     effects_UNSTABLE: (groupID) => [
         ({ setSelf, node, getPromise }) => {
             const fullFetchPromise = () => {
@@ -117,7 +317,7 @@ export const groupTransactions = atomFamily<Array<Transaction>, number>({
             setSelf(fullFetchPromise());
 
             const fetchAndUpdateTransaction = (
-                currTransactions: Array<Transaction>,
+                currTransactions: Array<TransactionBackend>,
                 transactionID: number,
                 isNew: boolean
             ) => {
@@ -170,19 +370,19 @@ export const groupTransactions = atomFamily<Array<Transaction>, number>({
 });
 
 export const addTransactionInState = (
-    transaction: Transaction,
-    setTransactions: SetterOrUpdater<Array<Transaction>>
+    transaction: TransactionBackend,
+    setTransactions: SetterOrUpdater<Array<TransactionBackend>>
 ) => {
-    setTransactions((currTransactions: Array<Transaction>) => {
+    setTransactions((currTransactions: Array<TransactionBackend>) => {
         return [...currTransactions, transaction];
     });
 };
 
 export const updateTransactionInState = (
-    transaction: Transaction,
-    setTransactions: SetterOrUpdater<Array<Transaction>>
+    transaction: TransactionBackend,
+    setTransactions: SetterOrUpdater<Array<TransactionBackend>>
 ) => {
-    setTransactions((currTransactions: Array<Transaction>) => {
+    setTransactions((currTransactions: Array<TransactionBackend>) => {
         return currTransactions.map((t) => (t.id === transaction.id ? transaction : t));
     });
 };
@@ -194,6 +394,8 @@ export interface LocalTransactionDetailChanges {
     currency_conversion_rate?: number;
     creditor_shares?: CreditorShares;
     debitor_shares?: DebitorShares;
+    billed_at?: string;
+    deleted?: boolean;
 }
 
 export interface LocalPositionChange {
@@ -237,7 +439,7 @@ export const pendingTransactionPositionChanges = atomFamily<LocalPositionChanges
     effects_UNSTABLE: (transactionID) => [localStorageEffect(`localTransactionPositionChanges-${transactionID}`)],
 });
 
-export const transactionsSeenByUser = selectorFamily<Array<TransactionConsolidated>, number>({
+export const transactionsSeenByUser = selectorFamily<Array<Transaction>, number>({
     key: "transactionsSeenByUser",
     get:
         (groupID) =>
@@ -251,177 +453,7 @@ export const transactionsSeenByUser = selectorFamily<Array<TransactionConsolidat
                 .map((transaction) => {
                     const localDetailChanges = get(pendingTransactionDetailChanges(transaction.id));
                     const localPositionChanges = get(pendingTransactionPositionChanges(transaction.id));
-
-                    const has_committed_changes = transaction.committed_details != null;
-                    const transaction_details =
-                        transaction.pending_details !== null
-                            ? transaction.pending_details
-                            : transaction.committed_details;
-
-                    if (transaction_details == null) {
-                        throw new Error(
-                            "invalid transaction state: pending_details and committed_details should not be null at the same time"
-                        );
-                    }
-
-                    let positions: Array<TransactionPosition> =
-                        transaction.committed_positions != null
-                            ? transaction.committed_positions
-                                  .filter((position) => !position.deleted)
-                                  .map((t) => ({
-                                      ...t,
-                                      only_local: false,
-                                  }))
-                            : [];
-
-                    if (transaction.pending_positions || Object.keys(localPositionChanges.modified).length > 0) {
-                        let mappedPosition = positions.reduce((map: { [k: number]: TransactionPosition }, position) => {
-                            map[position.id] = position;
-                            return map;
-                        }, {});
-
-                        if (transaction.pending_positions) {
-                            for (const pendingPosition of transaction.pending_positions) {
-                                mappedPosition[pendingPosition.id] = {
-                                    ...pendingPosition,
-                                    only_local: false,
-                                };
-                            }
-                        }
-                        if (localPositionChanges.modified) {
-                            for (const localPosition of Object.values(localPositionChanges.modified)) {
-                                mappedPosition[localPosition.id] = {
-                                    ...localPosition,
-                                    only_local: false,
-                                };
-                            }
-                        }
-                        positions = Object.values(mappedPosition).filter((position) => !position.deleted);
-                    }
-                    const all_positions = positions.concat(
-                        Object.values(localPositionChanges.added).map((p) => ({
-                            ...p,
-                            only_local: true,
-                        }))
-                    );
-
-                    let files: Array<TransactionAttachment> =
-                        transaction.committed_files != null
-                            ? transaction.committed_files.filter((file) => !file.deleted)
-                            : [];
-                    if (transaction.pending_files) {
-                        let mappedFiles = files.reduce((map: { [k: number]: TransactionAttachment }, file) => {
-                            map[file.id] = file;
-                            return map;
-                        }, {});
-                        for (const pendingFile of transaction.pending_files) {
-                            mappedFiles[pendingFile.id] = pendingFile;
-                        }
-                        files = Object.values(mappedFiles).filter((file) => !file.deleted);
-                    }
-
-                    return {
-                        id: transaction.id,
-                        type: transaction.type,
-                        version: transaction.version,
-                        last_changed: transaction.last_changed,
-                        group_id: transaction.group_id,
-                        is_wip: transaction.is_wip,
-                        has_committed_changes: has_committed_changes,
-                        ...transaction_details,
-                        ...localDetailChanges,
-                        files: files,
-                        positions: all_positions,
-                    };
-                })
-                .map((transaction) => {
-                    let transactionAccountBalances: { [k: number]: TransactionAccountBalance } = {};
-                    let remainingTransactionValue = transaction.value !== undefined ? transaction.value : 0;
-                    if (transaction.positions != null && transaction.positions.length > 0) {
-                        for (const purchaseItem of transaction.positions) {
-                            if (purchaseItem.deleted) {
-                                continue;
-                            }
-
-                            let totalUsages =
-                                purchaseItem.communist_shares +
-                                Object.values(purchaseItem.usages).reduce((acc, curr) => acc + curr, 0);
-
-                            // bill the respective item usage with each participating account
-                            Object.entries(purchaseItem.usages).forEach(([accountID, value]) => {
-                                if (transactionAccountBalances.hasOwnProperty(accountID)) {
-                                    transactionAccountBalances[parseInt(accountID)]["positions"] +=
-                                        totalUsages > 0 ? (purchaseItem.price / totalUsages) * value : 0;
-                                } else {
-                                    transactionAccountBalances[parseInt(accountID)] = {
-                                        positions: totalUsages > 0 ? (purchaseItem.price / totalUsages) * value : 0,
-                                        common_debitors: 0,
-                                        common_creditors: 0,
-                                        total: 0,
-                                    };
-                                }
-                            });
-
-                            // calculate the remaining purchase item price to be billed onto the communist shares
-                            const commonRemainder =
-                                totalUsages > 0
-                                    ? (purchaseItem.price / totalUsages) * purchaseItem.communist_shares
-                                    : 0;
-                            remainingTransactionValue =
-                                remainingTransactionValue - purchaseItem.price + commonRemainder;
-                        }
-                    }
-
-                    const totalDebitorShares = Object.values(transaction.debitor_shares).reduce(
-                        (acc, curr) => acc + curr,
-                        0
-                    );
-                    const totalCreditorShares = Object.values(transaction.creditor_shares).reduce(
-                        (acc, curr) => acc + curr,
-                        0
-                    );
-
-                    Object.entries(transaction.debitor_shares).forEach(([accountID, value]) => {
-                        if (transactionAccountBalances.hasOwnProperty(accountID)) {
-                            transactionAccountBalances[parseInt(accountID)]["common_debitors"] +=
-                                totalDebitorShares > 0 ? (remainingTransactionValue / totalDebitorShares) * value : 0;
-                        } else {
-                            transactionAccountBalances[parseInt(accountID)] = {
-                                positions: 0,
-                                common_creditors: 0,
-                                common_debitors:
-                                    totalDebitorShares > 0
-                                        ? (remainingTransactionValue / totalDebitorShares) * value
-                                        : 0,
-                                total: 0,
-                            };
-                        }
-                    });
-                    Object.entries(transaction.creditor_shares).forEach(([accountID, value]) => {
-                        if (transactionAccountBalances.hasOwnProperty(accountID)) {
-                            transactionAccountBalances[parseInt(accountID)]["common_creditors"] +=
-                                totalCreditorShares > 0 ? (transaction.value / totalCreditorShares) * value : 0;
-                        } else {
-                            transactionAccountBalances[parseInt(accountID)] = {
-                                positions: 0,
-                                common_debitors: 0,
-                                common_creditors:
-                                    totalCreditorShares > 0 ? (transaction.value / totalCreditorShares) * value : 0,
-                                total: 0,
-                            };
-                        }
-                    });
-
-                    for (const accountID in transactionAccountBalances) {
-                        const b = transactionAccountBalances[accountID];
-                        transactionAccountBalances[accountID].total =
-                            b.common_creditors - b.positions - b.common_debitors;
-                    }
-
-                    return {
-                        ...transaction,
-                        account_balances: transactionAccountBalances,
-                    };
+                    return Transaction.fromBackendFormat(transaction, localDetailChanges, localPositionChanges);
                 })
                 .sort(transactionCompareFn);
         },
@@ -432,7 +464,7 @@ export type ParamGroupTransaction = {
     transactionID: number;
 };
 
-export const transactionById = selectorFamily<TransactionConsolidated | undefined, ParamGroupTransaction>({
+export const transactionById = selectorFamily<Transaction | undefined, ParamGroupTransaction>({
     key: "transactionById",
     get:
         ({ groupID, transactionID }) =>
@@ -563,7 +595,7 @@ export type ParamGroupAccount = {
     accountID: number;
 };
 
-export const accountTransactions = selectorFamily<Array<TransactionConsolidated>, ParamGroupAccount>({
+export const accountTransactions = selectorFamily<Array<Transaction>, ParamGroupAccount>({
     key: "accountTransactions",
     get:
         ({ groupID, accountID }) =>

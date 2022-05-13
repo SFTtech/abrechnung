@@ -53,7 +53,6 @@ export interface AccountConsolidated {
 
 export const groupAccounts = atomFamily<Array<Account>, number>({
     key: "groupAccounts",
-    default: [],
     effects_UNSTABLE: (groupID) => [
         ({ setSelf, getPromise, node }) => {
             // TODO: handle fetch error
