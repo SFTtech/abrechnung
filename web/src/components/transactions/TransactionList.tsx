@@ -151,12 +151,14 @@ export default function TransactionList({ group }) {
                 >
                     <SpeedDialAction
                         icon={<ShoppingCart />}
-                        tooltipTitle="Create Purchase"
+                        tooltipTitle="Purchase"
+                        tooltipOpen
                         onClick={() => setShowPurchaseCreateDialog(true)}
                     />
                     <SpeedDialAction
                         icon={<CompareArrows />}
-                        tooltipTitle="Create Transfer"
+                        tooltipTitle="Transfer"
+                        tooltipOpen
                         onClick={() => setShowTransferCreateDialog(true)}
                     />
                 </SpeedDial>

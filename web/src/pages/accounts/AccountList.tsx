@@ -383,12 +383,14 @@ export default function AccountList({ group }) {
                     >
                         <SpeedDialAction
                             icon={<PersonalAccountIcon />}
-                            tooltipTitle="Create Personal Account"
+                            tooltipTitle="Personal"
+                            tooltipOpen
                             onClick={() => setShowPersonalAccountCreationModal(true)}
                         />
                         <SpeedDialAction
                             icon={<ClearingAccountIcon />}
-                            tooltipTitle="Create Clearing Account"
+                            tooltipTitle="Clearing"
+                            tooltipOpen
                             onClick={openCreateDialog}
                         />
                     </SpeedDial>
