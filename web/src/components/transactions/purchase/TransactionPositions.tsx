@@ -220,7 +220,7 @@ export interface PropTypes {
     transaction: Transaction;
 }
 
-export default function PurchaseItems({ group, transaction }: PropTypes) {
+export default function TransactionPositions({ group, transaction }: PropTypes) {
     const classes = useStyles();
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const [localPositionChanges, setLocalPositionChanges] = useRecoilState(

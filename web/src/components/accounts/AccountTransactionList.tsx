@@ -5,7 +5,6 @@ import { useRecoilValue } from "recoil";
 import { accountTransactions, Transaction } from "../../state/transactions";
 import { AccountConsolidated, clearingAccountsInvolvingUser } from "../../state/accounts";
 import AccountClearingListEntry from "./AccountClearingListEntry";
-import { DateTime } from "luxon";
 
 type ArrayAccountsAndTransactions = Array<Transaction | AccountConsolidated>;
 
@@ -15,9 +14,7 @@ export default function AccountTransactionList({ group, accountID }) {
 
     const combinedList: ArrayAccountsAndTransactions = (transactions as ArrayAccountsAndTransactions)
         .concat(clearingAccounts)
-        .sort(
-            (f1, f2) => DateTime.fromISO(f2.last_changed).toSeconds() - DateTime.fromISO(f1.last_changed).toSeconds()
-        );
+        .sort((f1, f2) => f2.last_changed.toSeconds() - f1.last_changed.toSeconds());
 
     return (
         <List>

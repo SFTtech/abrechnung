@@ -7,7 +7,7 @@ import TransactionValue from "../TransactionValue";
 import { Button, Divider, Grid } from "@mui/material";
 import FileGallery from "../FileGallery";
 import TransactionActions from "../TransactionActions";
-import PurchaseItems from "./PurchaseItems";
+import TransactionPositions from "./TransactionPositions";
 import { Add } from "@mui/icons-material";
 import PurchaseDebitorSharesReadOnly from "./PurchaseDebitorSharesReadOnly";
 import { MobilePaper } from "../../style/mobile";
@@ -64,7 +64,7 @@ export default function PurchaseDetails({ group, transaction }) {
                 </Grid>
             ) : (showPositions && transaction.is_wip) ||
               transaction.positions.find((item) => !item.deleted) !== undefined ? (
-                <PurchaseItems group={group} transaction={transaction} />
+                <TransactionPositions group={group} transaction={transaction} />
             ) : (
                 <></>
             )}

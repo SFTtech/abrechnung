@@ -6,13 +6,30 @@ import { toast } from "react-toastify";
 import { accountsSeenByUser, ClearingShares } from "./accounts";
 import { localStorageEffect } from "./cache";
 
-const transactionCompareFn = (t1: Transaction, t2: Transaction) => {
+export const transactionCompareFn = (t1: Transaction, t2: Transaction) => {
     if (t1.is_wip && !t2.is_wip) {
         return -1;
     } else if (!t1.is_wip && t2.is_wip) {
         return 1;
     }
-    return DateTime.fromISO(t2.last_changed).toMillis() - DateTime.fromISO(t1.last_changed).toMillis();
+    return t2.last_changed.toMillis() - t1.last_changed.toMillis();
+};
+
+export const getTransactionSortFunc = (sortMode: string) => {
+    switch (sortMode) {
+        case "last_changed":
+        // return (t1: Transaction, t2: Transaction) => +t2.is_wip - +t1.is_wip || t2.last_changed.toMillis() - t1.last_changed.toMillis();
+        case "value":
+            return (t1: Transaction, t2: Transaction) => +t2.is_wip - +t1.is_wip || t2.value - t1.value;
+        case "description":
+            return (t1: Transaction, t2: Transaction) =>
+                +t2.is_wip - +t1.is_wip || t1.description.localeCompare(t2.description);
+        case "billed_at":
+            return (t1: Transaction, t2: Transaction) =>
+                +t2.is_wip - +t1.is_wip || t2.billed_at.toMillis() - t1.billed_at.toMillis();
+        default:
+            throw new Error("unknown transaction sort mode");
+    }
 };
 
 export interface TransactionPosition {
@@ -79,15 +96,15 @@ export class Transaction {
     id: number;
     type: TransactionType;
     is_wip: boolean;
-    last_changed: string;
+    last_changed: DateTime;
     group_id: number;
     version: number;
     description: string;
     value: number;
     currency_symbol: string;
     currency_conversion_rate: number;
-    billed_at: string;
-    committed_at?: string;
+    billed_at: DateTime;
+    committed_at: DateTime | null;
     creditor_shares: CreditorShares;
     debitor_shares: DebitorShares;
     deleted: boolean;
@@ -119,15 +136,15 @@ export class Transaction {
         this.id = id;
         this.type = type;
         this.is_wip = is_wip;
-        this.last_changed = last_changed;
+        this.last_changed = DateTime.fromISO(last_changed);
         this.group_id = group_id;
         this.version = version;
         this.description = description;
         this.value = value;
         this.currency_symbol = currency_symbol;
         this.currency_conversion_rate = currency_conversion_rate;
-        this.billed_at = billed_at;
-        this.committed_at = committed_at;
+        this.billed_at = DateTime.fromISO(billed_at);
+        this.committed_at = committed_at != null ? DateTime.fromISO(committed_at) : null;
         this.creditor_shares = creditor_shares;
         this.debitor_shares = debitor_shares;
         this.deleted = deleted;
@@ -204,6 +221,20 @@ export class Transaction {
             const b = this.account_balances[accountID];
             this.account_balances[accountID].total = b.common_creditors - b.positions - b.common_debitors;
         }
+    }
+
+    filter(filter: string): boolean {
+        if (
+            this.description.toLowerCase().includes(filter.toLowerCase()) ||
+            this.billed_at.toLocaleString(DateTime.DATE_FULL).toLowerCase().includes(filter.toLowerCase()) ||
+            this.last_changed.toLocaleString(DateTime.DATETIME_FULL).toLowerCase().includes(filter.toLowerCase()) ||
+            String(this.value).includes(filter.toLowerCase())
+        ) {
+            return true;
+        }
+
+        // TODO: also be able to filter by account names here
+        return false;
     }
 
     static fromBackendFormat(
@@ -632,7 +663,7 @@ export const accountBalanceHistory = selectorFamily<Array<BalanceHistoryEntry>, 
             for (const transaction of transactions) {
                 const a = transaction.account_balances[accountID];
                 balanceChanges.push({
-                    date: DateTime.fromISO(transaction.last_changed).toSeconds(),
+                    date: transaction.last_changed.toSeconds(),
                     change: a.total,
                     changeOrigin: {
                         type: "transaction",
@@ -644,7 +675,7 @@ export const accountBalanceHistory = selectorFamily<Array<BalanceHistoryEntry>, 
             for (const account of clearingAccounts) {
                 if (balances[account.id].clearingResolution.hasOwnProperty(accountID)) {
                     balanceChanges.push({
-                        date: DateTime.fromISO(account.last_changed).toSeconds(),
+                        date: account.last_changed.toSeconds(),
                         change: balances[account.id].clearingResolution[accountID],
                         changeOrigin: {
                             type: "clearing",
