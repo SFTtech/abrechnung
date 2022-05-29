@@ -113,6 +113,12 @@ const routes = [
         component: <Login />,
         auth: false,
     },
+    {
+        path: "/404",
+        component: <PageNotFound />,
+        exact: true,
+        auth: false,
+    },
 ];
 
 export default function App() {
@@ -176,9 +182,6 @@ export default function App() {
                                     </Route>
                                 );
                             })}
-                            <Route exact path="/404">
-                                <PageNotFound />
-                            </Route>
                         </Switch>
                     </Router>
                 </LocalizationProvider>
