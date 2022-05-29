@@ -445,7 +445,7 @@ export async function updateTransaction({
     let payload = {
         description: description,
         value: value,
-        billed_at: billedAt,
+        billed_at: billedAt.toISODate(),
         currency_symbol: currencySymbol,
         currency_conversion_rate: currencyConversionRate,
         perform_commit: performCommit,

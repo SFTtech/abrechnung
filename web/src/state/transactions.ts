@@ -18,7 +18,8 @@ export const transactionCompareFn = (t1: Transaction, t2: Transaction) => {
 export const getTransactionSortFunc = (sortMode: string) => {
     switch (sortMode) {
         case "last_changed":
-        // return (t1: Transaction, t2: Transaction) => +t2.is_wip - +t1.is_wip || t2.last_changed.toMillis() - t1.last_changed.toMillis();
+            return (t1: Transaction, t2: Transaction) =>
+                +t2.is_wip - +t1.is_wip || t2.last_changed.toMillis() - t1.last_changed.toMillis();
         case "value":
             return (t1: Transaction, t2: Transaction) => +t2.is_wip - +t1.is_wip || t2.value - t1.value;
         case "description":
@@ -117,34 +118,34 @@ export class Transaction {
         id: number,
         type: TransactionType,
         is_wip: boolean,
-        last_changed: string,
+        last_changed: DateTime,
         group_id: number,
         version: number,
         description: string,
         value: number,
         currency_symbol: string,
         currency_conversion_rate: number,
-        billed_at: string,
+        billed_at: DateTime,
         creditor_shares: CreditorShares,
         debitor_shares: DebitorShares,
         deleted: boolean,
         has_committed_changes: boolean,
         positions: Array<TransactionPosition>,
         files: Array<TransactionAttachment>,
-        committed_at?: string
+        committed_at: DateTime | null
     ) {
         this.id = id;
         this.type = type;
         this.is_wip = is_wip;
-        this.last_changed = DateTime.fromISO(last_changed);
+        this.last_changed = last_changed;
         this.group_id = group_id;
         this.version = version;
         this.description = description;
         this.value = value;
         this.currency_symbol = currency_symbol;
         this.currency_conversion_rate = currency_conversion_rate;
-        this.billed_at = DateTime.fromISO(billed_at);
-        this.committed_at = committed_at != null ? DateTime.fromISO(committed_at) : null;
+        this.billed_at = billed_at;
+        this.committed_at = committed_at;
         this.creditor_shares = creditor_shares;
         this.debitor_shares = debitor_shares;
         this.deleted = deleted;
@@ -311,21 +312,21 @@ export class Transaction {
             transaction.id,
             transaction.type,
             transaction.is_wip,
-            transaction.last_changed,
+            DateTime.fromISO(transaction.last_changed),
             transaction.group_id,
             transaction.version,
             localDetailChanges.description ?? transaction_details.description,
             localDetailChanges.value ?? transaction_details.value,
             localDetailChanges.currency_symbol ?? transaction_details.currency_symbol,
             localDetailChanges.currency_conversion_rate ?? transaction_details.currency_conversion_rate,
-            localDetailChanges.billed_at ?? transaction_details.billed_at,
+            localDetailChanges.billed_at ?? DateTime.fromISO(transaction_details.billed_at),
             localDetailChanges.creditor_shares ?? transaction_details.creditor_shares,
             localDetailChanges.debitor_shares ?? transaction_details.debitor_shares,
             localDetailChanges.deleted ?? transaction_details.deleted,
             has_committed_changes,
             all_positions,
             files,
-            transaction_details.committed_at
+            DateTime.fromISO(transaction_details.committed_at)
         );
     }
 }
@@ -426,7 +427,7 @@ export interface LocalTransactionDetailChanges {
     currency_conversion_rate?: number;
     creditor_shares?: CreditorShares;
     debitor_shares?: DebitorShares;
-    billed_at?: string;
+    billed_at?: DateTime;
     deleted?: boolean;
 }
 
@@ -488,6 +489,19 @@ export const transactionsSeenByUser = selectorFamily<Array<Transaction>, number>
                     return Transaction.fromBackendFormat(transaction, localDetailChanges, localPositionChanges);
                 })
                 .sort(transactionCompareFn);
+        },
+});
+
+export const transactionByIDMap = selectorFamily<{ [k: number]: Transaction }, number>({
+    key: "transactionByIDMap",
+    get:
+        (groupID) =>
+        async ({ get }) => {
+            const transactions = get(transactionsSeenByUser(groupID));
+            return transactions.reduce((map, curr) => {
+                map[curr.id] = curr;
+                return map;
+            }, {});
         },
 });
 

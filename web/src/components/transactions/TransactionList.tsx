@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
-import { transactionsSeenByUser, getTransactionSortFunc, transactionCompareFn } from "../../state/transactions";
-import { currUserPermissions, groupMemberIDsToUsername } from "../../state/groups";
+import { getTransactionSortFunc, transactionsSeenByUser } from "../../state/transactions";
+import { currUserPermissions } from "../../state/groups";
 import {
     Alert,
     Box,
@@ -18,14 +18,13 @@ import {
     SpeedDialAction,
     SpeedDialIcon,
     Theme,
-    ToggleButton,
-    ToggleButtonGroup,
     Tooltip,
     useMediaQuery,
 } from "@mui/material";
-import { Clear, CompareArrows, ShoppingCart } from "@mui/icons-material";
+import { Add, Clear } from "@mui/icons-material";
 import { TransactionListEntry } from "./TransactionListEntry";
 import { MobilePaper } from "../style/mobile";
+import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 import PurchaseCreateModal from "./purchase/PurchaseCreateModal";
 import TransferCreateModal from "./transfer/TransferCreateModal";
 import SearchIcon from "@mui/icons-material/Search";
@@ -53,31 +52,17 @@ export default function TransactionList({ group }) {
 
     const [searchValue, setSearchValue] = useState("");
 
-    const [filterMode, setFilterMode] = useState("all"); // all, mine, others
     const [sortMode, setSortMode] = useState("last_changed"); // last_changed, description, value, billed_at
 
     useEffect(() => {
-        const userAccountIDs = userAccounts.map((a) => a.id);
         let filtered = transactions;
         if (searchValue != null && searchValue !== "") {
             filtered = transactions.filter((t) => t.filter(searchValue, groupAccountMap));
         }
-        switch (filterMode) {
-            case "mine":
-                filtered = filtered.filter((t) => {
-                    return userAccountIDs.reduce((acc, curr) => acc || t.account_balances.hasOwnProperty(curr), false);
-                });
-                break;
-            case "others":
-                filtered = filtered.filter((t) => {
-                    return userAccountIDs.reduce((acc, curr) => acc && !t.account_balances.hasOwnProperty(curr), true);
-                });
-                break;
-        }
         filtered = [...filtered].sort(getTransactionSortFunc(sortMode));
 
         setFilteredTransactions(filtered);
-    }, [searchValue, setFilteredTransactions, filterMode, sortMode, transactions, userAccounts]);
+    }, [searchValue, setFilteredTransactions, sortMode, transactions, userAccounts]);
 
     useTitle(`${group.name} - Transactions`);
 
@@ -102,7 +87,7 @@ export default function TransactionList({ group }) {
                     }}
                 >
                     <Box sx={{ display: "flex-item" }}>
-                        <Box sx={{ minWidth: "56px" }}>
+                        <Box sx={{ minWidth: "56px", pt: "16px" }}>
                             <SearchIcon sx={{ color: "action.active" }} />
                         </Box>
                         <Input
@@ -112,6 +97,7 @@ export default function TransactionList({ group }) {
                             inputProps={{
                                 "aria-label": "search",
                             }}
+                            sx={{ pt: "16px" }}
                             endAdornment={
                                 <InputAdornment position="end">
                                     <IconButton
@@ -124,23 +110,7 @@ export default function TransactionList({ group }) {
                                 </InputAdornment>
                             }
                         />
-                        {!isSmallScreen && (
-                            <>
-                                <Tooltip title="Create Purchase">
-                                    <IconButton sx={{ ml: 1 }} color="primary" onClick={openPurchaseCreateDialog}>
-                                        <ShoppingCart />
-                                    </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Create Transfer">
-                                    <IconButton color="primary" onClick={openTransferCreateDialog}>
-                                        <CompareArrows />
-                                    </IconButton>
-                                </Tooltip>
-                            </>
-                        )}
-                    </Box>
-                    <Box sx={{ display: "flex-item" }}>
-                        <FormControl variant="standard" sx={{ minWidth: 120, mr: 2 }}>
+                        <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
                             <InputLabel id="select-sort-by-label">Sort by</InputLabel>
                             <Select
                                 labelId="select-sort-by-label"
@@ -152,20 +122,27 @@ export default function TransactionList({ group }) {
                                 <MenuItem value="last_changed">Last changed</MenuItem>
                                 <MenuItem value="description">Description</MenuItem>
                                 <MenuItem value="value">Value</MenuItem>
-                                <MenuItem value="billed_at">Billing date</MenuItem>
+                                <MenuItem value="billed_at">Date</MenuItem>
                             </Select>
                         </FormControl>
-                        <ToggleButtonGroup
-                            color="primary"
-                            value={filterMode}
-                            exclusive
-                            onChange={(e, newValuee) => setFilterMode(newValuee)}
-                        >
-                            <ToggleButton value="all">All</ToggleButton>
-                            <ToggleButton value="mine">Mine</ToggleButton>
-                            <ToggleButton value="others">Others</ToggleButton>
-                        </ToggleButtonGroup>
                     </Box>
+                    {!isSmallScreen && (
+                        <Box sx={{ display: "flex-item" }}>
+                            <div style={{ padding: "8px" }}>
+                                <Add color="primary" />
+                            </div>
+                            <Tooltip title="Create Purchase">
+                                <IconButton color="primary" onClick={openPurchaseCreateDialog}>
+                                    <PurchaseIcon />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Create Transfer">
+                                <IconButton color="primary" onClick={openTransferCreateDialog}>
+                                    <TransferIcon />
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
+                    )}
                 </Box>
                 <Divider sx={{ mt: 1 }} />
                 <List>
@@ -207,13 +184,13 @@ export default function TransactionList({ group }) {
                     open={speedDialOpen}
                 >
                     <SpeedDialAction
-                        icon={<ShoppingCart />}
+                        icon={<PurchaseIcon />}
                         tooltipTitle="Purchase"
                         tooltipOpen
                         onClick={openPurchaseCreateDialog}
                     />
                     <SpeedDialAction
-                        icon={<CompareArrows />}
+                        icon={<TransferIcon />}
                         tooltipTitle="Transfer"
                         tooltipOpen
                         onClick={openTransferCreateDialog}

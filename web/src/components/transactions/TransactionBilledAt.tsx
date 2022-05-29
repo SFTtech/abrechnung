@@ -19,7 +19,7 @@ export default function TransactionBilledAt({ group, transaction }) {
             setLocalTransactionDetails((currState) => {
                 return {
                     ...currState,
-                    billed_at: billedAt.toISODate(),
+                    billed_at: billedAt,
                 };
             });
         }

@@ -158,6 +158,19 @@ export const accountsSeenByUser = selectorFamily<Array<AccountConsolidated>, num
         },
 });
 
+export const accountByIDMap = selectorFamily<{ [k: number]: AccountConsolidated }, number>({
+    key: "accountByIDMap",
+    get:
+        (groupID) =>
+        async ({ get }) => {
+            const accounts = get(accountsSeenByUser(groupID));
+            return accounts.reduce((map, curr) => {
+                map[curr.id] = curr;
+                return map;
+            }, {});
+        },
+});
+
 export const accountIDsToName = selectorFamily<{ [k: number]: string }, number>({
     key: "accountIDsToName",
     get:
