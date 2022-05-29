@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { transactionsSeenByUser, getTransactionSortFunc, transactionCompareFn } from "../../state/transactions";
-import { currUserPermissions } from "../../state/groups";
+import { currUserPermissions, groupMemberIDsToUsername } from "../../state/groups";
 import {
     Alert,
     Box,
@@ -31,7 +31,7 @@ import TransferCreateModal from "./transfer/TransferCreateModal";
 import SearchIcon from "@mui/icons-material/Search";
 import { useTitle } from "../../utils";
 import { userData } from "../../state/auth";
-import { accountsOwnedByUser } from "../../state/accounts";
+import { accountIDsToName, accountsOwnedByUser } from "../../state/accounts";
 import { useTheme } from "@mui/styles";
 
 export default function TransactionList({ group }) {
@@ -44,6 +44,7 @@ export default function TransactionList({ group }) {
     const currentUser = useRecoilValue(userData);
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
     const userAccounts = useRecoilValue(accountsOwnedByUser({ groupID: group.id, userID: currentUser.id }));
+    const groupAccountMap = useRecoilValue(accountIDsToName(group.id));
 
     const theme: Theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
@@ -59,7 +60,7 @@ export default function TransactionList({ group }) {
         const userAccountIDs = userAccounts.map((a) => a.id);
         let filtered = transactions;
         if (searchValue != null && searchValue !== "") {
-            filtered = transactions.filter((t) => t.filter(searchValue));
+            filtered = transactions.filter((t) => t.filter(searchValue, groupAccountMap));
         }
         switch (filterMode) {
             case "mine":

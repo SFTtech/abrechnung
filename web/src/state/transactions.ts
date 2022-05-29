@@ -223,7 +223,7 @@ export class Transaction {
         }
     }
 
-    filter(filter: string): boolean {
+    filter(filter: string, accountIDToName: { [k: number]: string }): boolean {
         if (
             this.description.toLowerCase().includes(filter.toLowerCase()) ||
             this.billed_at.toLocaleString(DateTime.DATE_FULL).toLowerCase().includes(filter.toLowerCase()) ||
@@ -233,8 +233,9 @@ export class Transaction {
             return true;
         }
 
-        // TODO: also be able to filter by account names here
-        return false;
+        return Object.keys(this.account_balances).reduce((acc, curr) => {
+            return acc || accountIDToName[curr].toLowerCase().includes(filter.toLowerCase());
+        }, false);
     }
 
     static fromBackendFormat(

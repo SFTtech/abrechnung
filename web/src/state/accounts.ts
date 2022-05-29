@@ -158,8 +158,8 @@ export const accountsSeenByUser = selectorFamily<Array<AccountConsolidated>, num
         },
 });
 
-export const accountIDsToUsername = selectorFamily<{ [k: number]: string }, number>({
-    key: "accountIDsToUsername",
+export const accountIDsToName = selectorFamily<{ [k: number]: string }, number>({
+    key: "accountIDsToName",
     get:
         (groupID) =>
         async ({ get }) => {
