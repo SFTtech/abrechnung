@@ -149,10 +149,7 @@ class UserService(Application):
 
         domain = email.split("@")[-1]
         if domain not in self.valid_email_domains:
-            raise PermissionError(
-                f"Only users with emails out of the following domains are "
-                f"allowed: {self.valid_email_domains}"
-            )
+            return False
 
         return True
 
@@ -172,9 +169,13 @@ class UserService(Application):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 is_guest_user = False
-                if self.enable_registration or invite_token is None:
-                    self._validate_email_domain(email)
-                elif self.allow_guest_users:
+                has_valid_email = self._validate_email_domain(email)
+
+                if (
+                    invite_token is not None
+                    and self.allow_guest_users
+                    and not has_valid_email
+                ):
                     invite = await conn.fetchval(
                         "select id "
                         "from group_invite where token = $1 and valid_until > now()",
@@ -183,6 +184,13 @@ class UserService(Application):
                     if invite is None:
                         raise InvalidCommand("Invalid invite token")
                     is_guest_user = True
+                    if self.enable_registration and has_valid_email:
+                        self._validate_email_domain(email)
+                elif not has_valid_email:
+                    raise PermissionError(
+                        f"Only users with emails out of the following domains are "
+                        f"allowed: {self.valid_email_domains}"
+                    )
 
                 hashed_password = self._hash_password(password)
                 user_id = await conn.fetchval(

@@ -20,7 +20,6 @@ export interface Group {
 
 export const groupList = atom<Array<Group>>({
     key: "groupList",
-    default: [],
     effects_UNSTABLE: [
         ({ setSelf }) => {
             // TODO: handle fetch error
@@ -85,7 +84,6 @@ const sortMembers = (members) => {
 
 export const groupMembers = atomFamily<Array<GroupMember>, number>({
     key: "groupMembers",
-    default: [],
     effects_UNSTABLE: (groupID) => [
         ({ setSelf }) => {
             setSelf(
@@ -135,7 +133,6 @@ export interface GroupInvite {
 
 export const groupInvites = atomFamily<Array<GroupInvite>, number>({
     key: "groupInvites",
-    default: [],
     effects_UNSTABLE: (groupID) => [
         ({ setSelf }) => {
             setSelf(
@@ -169,7 +166,6 @@ export interface GroupLog {
 
 export const groupLog = atomFamily<Array<GroupLog>, number>({
     key: "groupLog",
-    default: [],
     effects_UNSTABLE: (groupID) => [
         ({ setSelf }) => {
             setSelf(

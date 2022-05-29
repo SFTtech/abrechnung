@@ -16,6 +16,8 @@ import { deleteAccount } from "../../api";
 import { toast } from "react-toastify";
 import {
     Alert,
+    Badge,
+    BadgeProps,
     Box,
     Button,
     Chip,
@@ -36,6 +38,7 @@ import {
     SpeedDialAction,
     SpeedDialIcon,
     Tab,
+    Theme,
     Tooltip,
 } from "@mui/material";
 import { Add, Clear, ContentCopy, Delete, Edit } from "@mui/icons-material";
@@ -45,6 +48,16 @@ import { ClearingAccountIcon, PersonalAccountIcon } from "../../components/style
 import { useTitle } from "../../utils";
 import { userData } from "../../state/auth";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
+import { styled } from "@mui/styles";
+
+const TextBadge = styled(Badge)<BadgeProps>(({ theme }: { theme: Theme }) => ({
+    "& .MuiBadge-badge": {
+        right: -12,
+        border: `2px solid ${theme.palette.background.paper}`,
+        padding: "0 4px",
+        marginRight: "5px",
+    },
+}));
 
 export default function AccountList({ group }) {
     const [speedDialOpen, setSpeedDialOpen] = useState(false);
@@ -158,8 +171,22 @@ export default function AccountList({ group }) {
                 <TabContext value={activeTab}>
                     <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                         <TabList onChange={(e, newValue) => setActiveTab(newValue)} centered>
-                            <Tab label="Personal Accounts" value="personal" />
-                            <Tab label="Clearing Accounts" value="clearing" />
+                            <Tab
+                                value="personal"
+                                label={
+                                    <TextBadge badgeContent={personalAccounts.length} color="primary">
+                                        <span>Personal Accounts</span>
+                                    </TextBadge>
+                                }
+                            />
+                            <Tab
+                                label={
+                                    <TextBadge badgeContent={clearingAccounts.length} color="primary">
+                                        <span>Clearing Accounts</span>
+                                    </TextBadge>
+                                }
+                                value="clearing"
+                            />
                         </TabList>
                     </Box>
                     <TabPanel value="personal">

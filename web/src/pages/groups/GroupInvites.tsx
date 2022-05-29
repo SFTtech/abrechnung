@@ -101,13 +101,14 @@ export default function GroupInvites({ group }) {
                             {userPermissions.can_write && (
                                 <ListItemSecondaryAction>
                                     <IconButton
+                                        color="primary"
                                         onClick={() =>
                                             copyToClipboard(`${window.location.origin}/invite/${invite.token}`)
                                         }
                                     >
                                         <ContentCopy />
                                     </IconButton>
-                                    <IconButton onClick={() => deleteToken(invite.id)}>
+                                    <IconButton color="error" onClick={() => deleteToken(invite.id)}>
                                         <Delete />
                                     </IconButton>
                                 </ListItemSecondaryAction>

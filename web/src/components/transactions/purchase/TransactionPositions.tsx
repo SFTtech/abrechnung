@@ -18,11 +18,7 @@ import { accountsSeenByUser } from "../../../state/accounts";
 import { makeStyles } from "@mui/styles";
 import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import AccountSelect from "../../style/AccountSelect";
-import {
-    LocalPositionChanges,
-    pendingTransactionPositionChanges,
-    TransactionConsolidated,
-} from "../../../state/transactions";
+import { LocalPositionChanges, pendingTransactionPositionChanges, Transaction } from "../../../state/transactions";
 import { MobilePaper } from "../../style/mobile";
 import { Group } from "../../../state/groups";
 
@@ -32,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-function ShareInput({ value, onChange }) {
+function ShareInput({ value, onChange, ...props }) {
     const [currValue, setValue] = useState("0");
     const [error, setError] = useState(false);
 
@@ -73,6 +69,7 @@ function ShareInput({ value, onChange }) {
             error={error}
             onChange={onValueChange}
             onKeyUp={onKeyUp}
+            {...props}
         />
     );
 }
@@ -174,12 +171,14 @@ function PositionTableRow({
                                     : 0
                             }
                             onChange={(value) => updatePositionUsage(position, accountID, value)}
+                            inputProps={{ tabIndex: -1 }}
                         />
                     ) : (
                         <Checkbox
                             name={`${accountID}-checked`}
                             checked={position.usages.hasOwnProperty(String(accountID))}
                             onChange={(event) => updatePositionUsage(position, accountID, event.target.checked ? 1 : 0)}
+                            inputProps={{ tabIndex: -1 }}
                         />
                     )}
                 </TableCell>
@@ -191,6 +190,7 @@ function PositionTableRow({
                     <ShareInput
                         value={position.communist_shares}
                         onChange={(value) => updatePosition(position, position.name, position.price, parseFloat(value))}
+                        inputProps={{ tabIndex: -1 }}
                     />
                 ) : (
                     <Checkbox
@@ -199,14 +199,15 @@ function PositionTableRow({
                         onChange={(event) =>
                             updatePosition(position, position.name, position.price, event.target.checked ? 1 : 0)
                         }
+                        inputProps={{ tabIndex: -1 }}
                     />
                 )}
             </TableCell>
             <TableCell>
-                <IconButton onClick={() => copyPosition(position)}>
+                <IconButton onClick={() => copyPosition(position)} tabIndex={-1}>
                     <ContentCopy />
                 </IconButton>
-                <IconButton onClick={() => deletePosition(position)}>
+                <IconButton onClick={() => deletePosition(position)} tabIndex={-1}>
                     <Delete />
                 </IconButton>
             </TableCell>
@@ -216,10 +217,10 @@ function PositionTableRow({
 
 export interface PropTypes {
     group: Group;
-    transaction: TransactionConsolidated;
+    transaction: Transaction;
 }
 
-export default function PurchaseItems({ group, transaction }: PropTypes) {
+export default function TransactionPositions({ group, transaction }: PropTypes) {
     const classes = useStyles();
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const [localPositionChanges, setLocalPositionChanges] = useRecoilState(
@@ -544,7 +545,7 @@ export default function PurchaseItems({ group, transaction }: PropTypes) {
                     </TableHead>
                     <TableBody>
                         {transaction.is_wip
-                            ? positions.map((position) => (
+                            ? positions.map((position, idx) => (
                                   <TableRow hover key={position.id}>
                                       <PositionTableRow
                                           position={position}

@@ -17,7 +17,7 @@ import {
     groupTransactions,
     pendingTransactionDetailChanges,
     pendingTransactionPositionChanges,
-    Transaction,
+    TransactionBackend,
     updateTransactionInState,
 } from "../../state/transactions";
 
@@ -34,7 +34,7 @@ export default function TransactionActions({ groupID, transaction }) {
 
     const updateTransactionAndClearLocal = useRecoilTransaction_UNSTABLE(
         ({ get, set, reset }) =>
-            (transaction: Transaction) => {
+            (transaction: TransactionBackend) => {
                 set(groupTransactions(transaction.group_id), (currTransactions) => {
                     return currTransactions.map((t) => (t.id === transaction.id ? transaction : t));
                 });

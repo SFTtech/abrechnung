@@ -1,30 +1,37 @@
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
-import { transactionsSeenByUser } from "../../state/transactions";
+import { getTransactionSortFunc, transactionsSeenByUser } from "../../state/transactions";
 import { currUserPermissions } from "../../state/groups";
 import {
     Alert,
     Box,
     Divider,
+    FormControl,
     IconButton,
     Input,
     InputAdornment,
+    InputLabel,
     List,
+    MenuItem,
+    Select,
     SpeedDial,
     SpeedDialAction,
     SpeedDialIcon,
-    ToggleButton,
-    ToggleButtonGroup,
+    Theme,
+    Tooltip,
+    useMediaQuery,
 } from "@mui/material";
-import { Clear, CompareArrows, ShoppingCart } from "@mui/icons-material";
+import { Add, Clear } from "@mui/icons-material";
 import { TransactionListEntry } from "./TransactionListEntry";
 import { MobilePaper } from "../style/mobile";
+import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 import PurchaseCreateModal from "./purchase/PurchaseCreateModal";
 import TransferCreateModal from "./transfer/TransferCreateModal";
 import SearchIcon from "@mui/icons-material/Search";
 import { useTitle } from "../../utils";
 import { userData } from "../../state/auth";
-import { accountsOwnedByUser } from "../../state/accounts";
+import { accountIDsToName, accountsOwnedByUser } from "../../state/accounts";
+import { useTheme } from "@mui/styles";
 
 export default function TransactionList({ group }) {
     const [speedDialOpen, setSpeedDialOpen] = useState(false);
@@ -36,45 +43,51 @@ export default function TransactionList({ group }) {
     const currentUser = useRecoilValue(userData);
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
     const userAccounts = useRecoilValue(accountsOwnedByUser({ groupID: group.id, userID: currentUser.id }));
+    const groupAccountMap = useRecoilValue(accountIDsToName(group.id));
+
+    const theme: Theme = useTheme();
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
     const [filteredTransactions, setFilteredTransactions] = useState([]);
 
     const [searchValue, setSearchValue] = useState("");
 
-    const [filterMode, setFilterMode] = useState("all"); // all, mine, others
+    const [sortMode, setSortMode] = useState("last_changed"); // last_changed, description, value, billed_at
 
     useEffect(() => {
-        const userAccountIDs = userAccounts.map((a) => a.id);
         let filtered = transactions;
         if (searchValue != null && searchValue !== "") {
-            filtered = transactions.filter((t) => {
-                return t.description.toLowerCase().includes(searchValue.toLowerCase());
-            });
+            filtered = transactions.filter((t) => t.filter(searchValue, groupAccountMap));
         }
-        switch (filterMode) {
-            case "mine":
-                filtered = filtered.filter((t) => {
-                    return userAccountIDs.reduce((acc, curr) => acc || t.account_balances.hasOwnProperty(curr), false);
-                });
-                break;
-            case "others":
-                filtered = filtered.filter((t) => {
-                    return userAccountIDs.reduce((acc, curr) => acc && !t.account_balances.hasOwnProperty(curr), true);
-                });
-                break;
-        }
+        filtered = [...filtered].sort(getTransactionSortFunc(sortMode));
 
         setFilteredTransactions(filtered);
-    }, [searchValue, setFilteredTransactions, filterMode, transactions]);
+    }, [searchValue, setFilteredTransactions, sortMode, transactions, userAccounts]);
 
     useTitle(`${group.name} - Transactions`);
+
+    const openPurchaseCreateDialog = () => {
+        setShowPurchaseCreateDialog(true);
+    };
+
+    const openTransferCreateDialog = () => {
+        setShowTransferCreateDialog(true);
+    };
 
     return (
         <>
             <MobilePaper>
-                <Box sx={{ display: "flex", alignItems: "flex-end", pl: "16px", justifyContent: "space-between" }}>
+                <Box
+                    sx={{
+                        display: "flex",
+                        flexDirection: { xs: "column", sm: "column", md: "row", lg: "row" },
+                        alignItems: { md: "flex-end" },
+                        pl: "16px",
+                        justifyContent: "space-between",
+                    }}
+                >
                     <Box sx={{ display: "flex-item" }}>
-                        <Box sx={{ minWidth: "56px" }}>
+                        <Box sx={{ minWidth: "56px", pt: "16px" }}>
                             <SearchIcon sx={{ color: "action.active" }} />
                         </Box>
                         <Input
@@ -84,6 +97,7 @@ export default function TransactionList({ group }) {
                             inputProps={{
                                 "aria-label": "search",
                             }}
+                            sx={{ pt: "16px" }}
                             endAdornment={
                                 <InputAdornment position="end">
                                     <IconButton
@@ -96,19 +110,39 @@ export default function TransactionList({ group }) {
                                 </InputAdornment>
                             }
                         />
+                        <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
+                            <InputLabel id="select-sort-by-label">Sort by</InputLabel>
+                            <Select
+                                labelId="select-sort-by-label"
+                                id="select-sort-by"
+                                label="Sort by"
+                                onChange={(evt) => setSortMode(evt.target.value)}
+                                value={sortMode}
+                            >
+                                <MenuItem value="last_changed">Last changed</MenuItem>
+                                <MenuItem value="description">Description</MenuItem>
+                                <MenuItem value="value">Value</MenuItem>
+                                <MenuItem value="billed_at">Date</MenuItem>
+                            </Select>
+                        </FormControl>
                     </Box>
-                    <Box sx={{ display: "flex-item" }}>
-                        <ToggleButtonGroup
-                            color="primary"
-                            value={filterMode}
-                            exclusive
-                            onChange={(e, newValuee) => setFilterMode(newValuee)}
-                        >
-                            <ToggleButton value="all">All</ToggleButton>
-                            <ToggleButton value="mine">Mine</ToggleButton>
-                            <ToggleButton value="others">Others</ToggleButton>
-                        </ToggleButtonGroup>
-                    </Box>
+                    {!isSmallScreen && (
+                        <Box sx={{ display: "flex-item" }}>
+                            <div style={{ padding: "8px" }}>
+                                <Add color="primary" />
+                            </div>
+                            <Tooltip title="Create Purchase">
+                                <IconButton color="primary" onClick={openPurchaseCreateDialog}>
+                                    <PurchaseIcon />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Create Transfer">
+                                <IconButton color="primary" onClick={openTransferCreateDialog}>
+                                    <TransferIcon />
+                                </IconButton>
+                            </Tooltip>
+                        </Box>
+                    )}
                 </Box>
                 <Divider sx={{ mt: 1 }} />
                 <List>
@@ -150,16 +184,16 @@ export default function TransactionList({ group }) {
                     open={speedDialOpen}
                 >
                     <SpeedDialAction
-                        icon={<ShoppingCart />}
+                        icon={<PurchaseIcon />}
                         tooltipTitle="Purchase"
                         tooltipOpen
-                        onClick={() => setShowPurchaseCreateDialog(true)}
+                        onClick={openPurchaseCreateDialog}
                     />
                     <SpeedDialAction
-                        icon={<CompareArrows />}
+                        icon={<TransferIcon />}
                         tooltipTitle="Transfer"
                         tooltipOpen
-                        onClick={() => setShowTransferCreateDialog(true)}
+                        onClick={openTransferCreateDialog}
                     />
                 </SpeedDial>
             )}

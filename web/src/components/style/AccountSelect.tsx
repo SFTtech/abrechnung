@@ -1,7 +1,7 @@
 import React from "react";
 
 import { useRecoilValue } from "recoil";
-import { accountIDsToUsername, accountsSeenByUser } from "../../state/accounts";
+import { accountsSeenByUser } from "../../state/accounts";
 import { Autocomplete, Box, Popper, TextField, Typography } from "@mui/material";
 import { DisabledTextField } from "./DisabledTextField";
 import { CompareArrows, Person } from "@mui/icons-material";
