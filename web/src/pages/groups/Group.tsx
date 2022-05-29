@@ -1,5 +1,5 @@
 import React, { Suspense } from "react";
-import { Route, Switch, useRouteMatch } from "react-router-dom";
+import { Route, Switch, useRouteMatch, Redirect } from "react-router-dom";
 import GroupInvites from "./GroupInvites";
 import GroupMemberList from "./GroupMemberList";
 import GroupLog from "./GroupLog";
@@ -18,6 +18,10 @@ export default function Group() {
     const match = useRouteMatch();
     const groupID = match.params["id"];
     const group = useRecoilValue(groupById(parseInt(groupID)));
+
+    if (group === undefined) {
+        return <Redirect to="/404" />;
+    }
 
     // TODO: handle 404
     return (

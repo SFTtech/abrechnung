@@ -100,7 +100,6 @@ export default function BalanceHistoryGraph({ group, accountID }) {
                     tickFormatter={(unixTime) => DateTime.fromSeconds(unixTime).toISODate()}
                     domain={["dataMin", "dataMax"]}
                 />
-                {/*<YAxis  type="number" unit={group.currency_symbol} domain={[dataMin => Math.min(0, dataMin), dataMax => {console.log(dataMax); return Math.max(0, dataMax)}]}/>*/}
                 <YAxis
                     tickFormatter={(value) => value.toFixed(2)}
                     type="number"
@@ -108,21 +107,6 @@ export default function BalanceHistoryGraph({ group, accountID }) {
                     stroke={theme.palette.text.primary}
                 />
                 <Tooltip content={renderTooltip} />
-                {/*<Tooltip*/}
-                {/*    formatter={(value) => parseFloat(value).toFixed(2) + ` ${group.currency_symbol}`}*/}
-                {/*    labelFormatter={(unixTime) => DateTime.fromSeconds(unixTime).toISODate()}*/}
-                {/*    labelStyle={{*/}
-                {/*        color: theme.palette.text.primary,*/}
-                {/*    }}*/}
-                {/*    itemStyle={{*/}
-                {/*        color: theme.palette.text.primary,*/}
-                {/*    }}*/}
-                {/*    contentStyle={{*/}
-                {/*        backgroundColor: theme.palette.background.paper,*/}
-                {/*        borderColor: theme.palette.divider,*/}
-                {/*        borderRadius: theme.shape.borderRadius,*/}
-                {/*    }}*/}
-                {/*/>*/}
                 <Legend />
                 <Line type="stepAfter" dataKey="balance" />
             </LineChart>

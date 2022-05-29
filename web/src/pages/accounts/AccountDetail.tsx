@@ -1,6 +1,6 @@
 import React from "react";
 import { groupAccountByID } from "../../state/accounts";
-import { useRouteMatch } from "react-router-dom";
+import { useRouteMatch, Redirect } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { Grid, Typography } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
@@ -14,11 +14,12 @@ export default function AccountDetail({ group }) {
     const accountID = parseInt(match.params.id);
 
     const account = useRecoilValue(groupAccountByID({ groupID: group.id, accountID: accountID }));
-    // const userPermissions = useRecoilValue(currUserPermissions(group.id));
 
-    useTitle(`${group.name} - Account ${account.name}`);
+    useTitle(`${group.name} - Account ${account?.name}`);
 
-    // TODO: handle 404
+    if (account === undefined) {
+        return <Redirect to="/404" />;
+    }
 
     return (
         <Grid container spacing={2}>
