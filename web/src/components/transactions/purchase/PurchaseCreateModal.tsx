@@ -27,7 +27,7 @@ export default function PurchaseCreateModal({ group, show, onClose }) {
             description: values.description,
             value: parseFloat(values.value),
             billedAt: values.billedAt.toISODate(),
-            currencySymbol: "€",
+            currencySymbol: group.currency_symbol,
             currencyConversionRate: 1.0,
             creditorShares: { [values.creditor.id]: 1.0 },
         })
