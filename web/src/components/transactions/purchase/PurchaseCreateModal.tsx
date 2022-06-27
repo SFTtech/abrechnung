@@ -102,7 +102,7 @@ export default function PurchaseCreateModal({ group, show, onClose }) {
                                 required
                                 fullWidth
                                 type="number"
-                                inputProps={{"step": "any"}} 
+                                inputProps={{ step: "any" }}
                                 variant="standard"
                                 name="value"
                                 label="Value"
