@@ -18,7 +18,8 @@ class AccountDetails:
     deleted: bool
 
     changed_by: int
-    committed_at: Optional[datetime]
+    revision_started_at: datetime
+    revision_committed_at: Optional[datetime]
 
     clearing_shares: Optional[dict[int, float]] = field(default=None)
 

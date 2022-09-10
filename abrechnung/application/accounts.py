@@ -26,7 +26,7 @@ class AccountService(Application):
 
     @staticmethod
     async def _get_or_create_revision(
-        conn: asyncpg.Connection, user: User, account_id: int
+            conn: asyncpg.Connection, user: User, account_id: int
     ) -> int:
         """return the revision id, assumes we are already in a transaction"""
         revision_id = await conn.fetchval(
@@ -49,11 +49,11 @@ class AccountService(Application):
 
     @staticmethod
     async def _check_account_permissions(
-        conn: asyncpg.Connection,
-        user: User,
-        account_id: int,
-        can_write: bool = False,
-        account_type: Optional[Union[str, list[str]]] = None,
+            conn: asyncpg.Connection,
+            user: User,
+            account_id: int,
+            can_write: bool = False,
+            account_type: Optional[Union[str, list[str]]] = None,
     ) -> tuple[int, str]:
         """returns group id of the transaction"""
         result = await conn.fetchrow(
@@ -81,7 +81,7 @@ class AccountService(Application):
         return result["group_id"], result["type"]
 
     async def _get_or_create_pending_account_change(
-        self, conn: asyncpg.Connection, user: User, account_id: int
+            self, conn: asyncpg.Connection, user: User, account_id: int
     ) -> int:
         revision_id = await self._get_or_create_revision(
             conn=conn, user=user, account_id=account_id
@@ -134,7 +134,7 @@ class AccountService(Application):
 
     @staticmethod
     async def _check_account_exists(
-        conn: asyncpg.Connection, group_id: int, account_id: int
+            conn: asyncpg.Connection, group_id: int, account_id: int
     ) -> int:
         acc = await conn.fetchval(
             "select account_id from committed_account_state_valid_at() "
@@ -148,12 +148,12 @@ class AccountService(Application):
         return True
 
     async def _account_clearing_shares_check(
-        self,
-        conn: asyncpg.Connection,
-        user: User,
-        account_id: int,
-        share_account_id: int,
-        account_type: Optional[Union[str, list[str]]] = None,
+            self,
+            conn: asyncpg.Connection,
+            user: User,
+            account_id: int,
+            share_account_id: int,
+            account_type: Optional[Union[str, list[str]]] = None,
     ) -> tuple[int, int]:
         """returns tuple of group_id of the account and the users revision_id of the pending change"""
         group_id, _ = await self._check_account_permissions(
@@ -180,7 +180,8 @@ class AccountService(Application):
             deleted=db_json["deleted"],
             priority=db_json["priority"],
             owning_user_id=db_json["owning_user_id"],
-            committed_at=None
+            revision_started_at=parse_postgres_datetime(db_json["revision_started"]),
+            revision_committed_at=None
             if db_json.get("revision_committed") is None
             else parse_postgres_datetime(db_json["revision_committed"]),
             clearing_shares={
@@ -250,16 +251,16 @@ class AccountService(Application):
             return self._account_db_row(account)
 
     async def create_account(
-        self,
-        *,
-        user: User,
-        group_id: int,
-        type: str,
-        name: str,
-        description: str,
-        owning_user_id: Optional[int] = None,
-        priority: int = 0,
-        clearing_shares: Optional[dict[int, float]] = None,
+            self,
+            *,
+            user: User,
+            group_id: int,
+            type: str,
+            name: str,
+            description: str,
+            owning_user_id: Optional[int] = None,
+            priority: int = 0,
+            clearing_shares: Optional[dict[int, float]] = None,
     ) -> int:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -325,14 +326,14 @@ class AccountService(Application):
                 return account_id
 
     async def update_account(
-        self,
-        user: User,
-        account_id: int,
-        name: str,
-        description: str,
-        owning_user_id: Optional[int] = None,
-        priority: int = 0,
-        clearing_shares: Optional[dict[int, float]] = None,
+            self,
+            user: User,
+            account_id: int,
+            name: str,
+            description: str,
+            owning_user_id: Optional[int] = None,
+            priority: int = 0,
+            clearing_shares: Optional[dict[int, float]] = None,
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -363,9 +364,9 @@ class AccountService(Application):
                             f"only group owners can associate others with accounts"
                         )
                 elif (
-                    committed_account["owning_user_id"] is not None
-                    and committed_account["owning_user_id"] != user.id
-                    and not is_owner
+                        committed_account["owning_user_id"] is not None
+                        and committed_account["owning_user_id"] != user.id
+                        and not is_owner
                 ):
                     raise PermissionError(
                         f"only group owners can remove other users as account owners"
@@ -414,9 +415,9 @@ class AccountService(Application):
                 )
 
     async def delete_account(
-        self,
-        user: User,
-        account_id: int,
+            self,
+            user: User,
+            account_id: int,
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -460,10 +461,10 @@ class AccountService(Application):
                 )
 
                 if (
-                    has_committed_shares
-                    or has_pending_shares
-                    or has_committed_usages
-                    or has_pending_usages
+                        has_committed_shares
+                        or has_pending_shares
+                        or has_committed_usages
+                        or has_pending_usages
                 ):
                     raise InvalidCommand(
                         f"Cannot delete an account that is references by a transaction"

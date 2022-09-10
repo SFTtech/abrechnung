@@ -39,13 +39,14 @@ class GroupService(Application):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 group_id = await conn.fetchval(
-                    "insert into grp (name, description, currency_symbol, terms, add_user_account_on_join) "
-                    "values ($1, $2, $3, $4, $5) returning id",
+                    "insert into grp (name, description, currency_symbol, terms, add_user_account_on_join, created_by) "
+                    "values ($1, $2, $3, $4, $5, $6) returning id",
                     name,
                     description,
                     currency_symbol,
                     terms,
                     add_user_account_on_join,
+                    user.id,
                 )
                 await conn.execute(
                     "insert into group_membership (user_id, group_id, is_owner, can_write, description) "

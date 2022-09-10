@@ -61,6 +61,7 @@ abrechnung = "abrechnung.__main__:main"
 [tool.flit.sdist]
 exclude = [
     "web/",
+    "mobile/",
     "tools/",
     ".github",
     ".readthedocs.yaml",

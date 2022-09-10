@@ -82,6 +82,12 @@ async def list_transactions(request):
             "debitor_shares": fields.Dict(
                 fields.Int(), fields.Number(), load_default=None, required=False
             ),
+            "positions": fields.List(
+                fields.Nested(TransactionPositionSchema),
+                required=False,
+                nullable=True,
+                load_default=None,
+            ),
             "perform_commit": fields.Bool(load_default=False, required=False),
         },
         name="CreateTransactionSchema",
@@ -102,6 +108,7 @@ async def create_transaction(request: Request):
         value=float(data["value"]),
         creditor_shares=data["creditor_shares"],
         debitor_shares=data["debitor_shares"],
+        positions=data["positions"],
         perform_commit=data["perform_commit"],
     )
 
