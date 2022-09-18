@@ -98,6 +98,7 @@ export async function syncAccounts(groupID: number): Promise<Account[]> {
             saveAccountToDatabase(account, conn);
         });
     });
+    // TODO: upload pending changes to server
     accountNotifier.notify(groupID, { group_id: groupID });
     return backendAccounts;
 }
@@ -360,18 +361,39 @@ export async function createAccount(group_id: number, type: AccountType): Promis
     });
 }
 
-export async function deleteLocalAccountChanges(group_id: number, account_id: number, olderThan: string): Promise<boolean> {
+export async function deleteAccount(group_id: number, account_id: number) {
+    if (account_id < 0) {
+        return await deleteLocalAccountChanges(group_id, account_id);
+    }
+
+    let account = await getAccount(group_id, account_id);
+    account.deleted = true;
+    return await updateAccount(account);
+}
+
+export async function deleteLocalAccountChanges(group_id: number, account_id: number, olderThan?: string): Promise<boolean> {
     return await db.transaction(async (conn) => {
         // TODO: only notify if we actually deleted something
-        await conn.execute(`
-            delete
-            from
-                pending_account_changes
-            where
-                account_id = ?1
-                and group_id = ?2
-                and event_time >= ?3
-        `, [account_id, group_id, olderThan]);
+        if (olderThan) {
+            await conn.execute(`
+                delete
+                from
+                    pending_account_changes
+                where
+                    account_id = ?1
+                    and group_id = ?2
+                    and event_time >= ?3
+            `, [account_id, group_id, olderThan]);
+        } else {
+            await conn.execute(`
+                delete
+                from
+                    pending_account_changes
+                where
+                    account_id = ?1
+                    and group_id = ?2
+            `, [account_id, group_id]);
+        }
         let deletedLocalAccount = false;
         if (account_id < 0) {
             const n_local_changes = await conn.execute(`select
@@ -383,7 +405,7 @@ export async function deleteLocalAccountChanges(group_id: number, account_id: nu
             deletedLocalAccount = n_local_changes.rows[0].n_local_changes === 0;
         }
 
-        accountNotifier.notify(group_id, { group_id: group_id});
+        accountNotifier.notify(group_id, { group_id: group_id });
 
         return deletedLocalAccount;
     });

@@ -174,8 +174,8 @@ export async function syncTransactions(groupID: number): Promise<[Transaction, T
             saveTransactionToDatabase(transaction, positions, conn);
         });
     });
+    // TODO: upload pending changes to server
     transactionNotifier.notify(groupID, { group_id: groupID });
-    console.log("synced transactions for group", groupID);
     return backendTransactions;
 }
 
@@ -517,7 +517,7 @@ export async function pushLocalTransactionChanges(transaction_id: number): Promi
 
 export async function updateTransaction(transaction: Transaction) {
     const validationErrors = validateTransaction(transaction);
-    if (validationErrors !== null) {
+    if (Object.keys(validationErrors).length > 0) {
         throw new ValidationError(validationErrors);
     }
 
@@ -598,26 +598,54 @@ export async function createTransaction(group_id: number, type: TransactionType)
     });
 }
 
-export async function deleteLocalTransactionChanges(group_id: number, transaction_id: number, olderThan: string): Promise<boolean> {
+export async function deleteTransaction(group_id: number, transaction_id: number) {
+    if (transaction_id < 0) {
+        return await deleteLocalTransactionChanges(group_id, transaction_id);
+    }
+
+    let transaction = await getTransaction(group_id, transaction_id);
+    transaction.deleted = true;
+    return await updateTransaction(transaction);
+}
+
+export async function deleteLocalTransactionChanges(group_id: number, transaction_id: number, olderThan?: string): Promise<boolean> {
     console.log("deleting local transaction changes to transaction", transaction_id, "older than", olderThan);
     // returns true if a local only transaction was deleted fully
     return await db.transaction(async (conn) => {
-        await conn.execute(`
-            delete
-            from
-                pending_transaction_changes
-            where
-                transaction_id = ?1
-                and event_time >= ?2
-        `, [transaction_id, olderThan]);
-        await conn.execute(`
-            delete
-            from
-                pending_transaction_position_changes
-            where
-                transaction_id = ?1
-                and event_time >= ?2
-        `, [transaction_id, olderThan]);
+        if (olderThan) {
+            await conn.execute(`
+                delete
+                from
+                    pending_transaction_changes
+                where
+                    transaction_id = ?1
+                    and event_time >= ?2
+            `, [transaction_id, olderThan]);
+            await conn.execute(`
+                delete
+                from
+                    pending_transaction_position_changes
+                where
+                    transaction_id = ?1
+                    and event_time >= ?2
+            `, [transaction_id, olderThan]);
+        } else {
+
+            await conn.execute(`
+                delete
+                from
+                    pending_transaction_changes
+                where
+                    transaction_id = ?1
+            `, [transaction_id]);
+            await conn.execute(`
+                delete
+                from
+                    pending_transaction_position_changes
+                where
+                    transaction_id = ?1
+            `, [transaction_id]);
+        }
 
         let deletedLocalTransaction = false;
         if (transaction_id < 0) {

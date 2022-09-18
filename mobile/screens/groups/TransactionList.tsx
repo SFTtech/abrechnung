@@ -1,10 +1,10 @@
 import { RefreshControl, ScrollView, StyleSheet } from "react-native";
 import { GroupTabScreenProps } from "../../types";
-import { Appbar, Divider, FAB, List, Menu, Portal, RadioButton, Text, useTheme } from "react-native-paper";
+import { Appbar, FAB, Menu, Portal, RadioButton, Text, TextInput, useTheme } from "react-native-paper";
 import * as React from "react";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useIsFocused } from "@react-navigation/native";
-import { getTransactionIcon, purchaseIcon, transferIcon } from "../../constants/Icons";
+import { purchaseIcon, transferIcon } from "../../constants/Icons";
 import { createTransaction } from "../../core/database/transactions";
 import { useRecoilValue, useRecoilValueLoadable } from "recoil";
 import { activeGroupIDState } from "../../core/groups";
@@ -13,19 +13,23 @@ import { Transaction, TransactionType } from "../../core/types";
 import { createComparator, lambdaComparator, toISODateString, toISOString } from "../../core/utils";
 import { syncLocalGroupState } from "../../core/sync";
 import LoadingIndicator from "../../components/LoadingIndicator";
+import TransactionListItem from "../../components/TransactionListItem";
 
+type SortMode = "last_changed" | "billed_at" | "description";
 
-export default function TransactionList({ route, navigation }: GroupTabScreenProps<"TransactionList">) {
+export default function TransactionList({ navigation }: GroupTabScreenProps<"TransactionList">) {
     const theme = useTheme();
     const groupID = useRecoilValue(activeGroupIDState);
     const transactions = useRecoilValueLoadable(transactionState(groupID));
 
-    const [refreshing, setRefreshing] = useState(false);
-    const [isFapOpen, setFabOpen] = useState(false);
-    const [isMenuOpen, setMenuOpen] = useState(false);
-    const [sortedTransactions, setSortedTransactions] = useState([]);
+    const [refreshing, setRefreshing] = useState<boolean>(false);
+    const [isFapOpen, setFabOpen] = useState<boolean>(false);
+    const [isMenuOpen, setMenuOpen] = useState<boolean>(false);
+    const [showSearchInput, setShowSearchInput] = useState<boolean>(false);
+    const [search, setSearch] = useState<string>("");
+    const [sortedTransactions, setSortedTransactions] = useState<Array<Transaction>>([]);
 
-    const [sortMode, setSortMode] = useState("last_changed"); // billed_at, description
+    const [sortMode, setSortMode] = useState<SortMode>("last_changed");
 
     const onRefresh = () => {
         setRefreshing(true);
@@ -34,31 +38,59 @@ export default function TransactionList({ route, navigation }: GroupTabScreenPro
 
     const isFocused = useIsFocused();
 
+    const closeSearch = () => {
+        setShowSearchInput(false);
+        setSearch("");
+    };
+
     useLayoutEffect(() => {
         if (isFocused) {
             navigation.getParent().setOptions({
                 headerTitle: "Transactions",
+                titleShown: !showSearchInput,
                 headerRight: () => {
+                    if (showSearchInput) {
+                        return (
+                            <>
+                                <TextInput
+                                    mode="outlined"
+                                    dense={true}
+                                    style={{ flexGrow: 1 }}
+                                    onChangeText={val => setSearch(val)}
+                                />
+                                <Appbar.Action icon="close" onPress={closeSearch} />
+                            </>
+                        );
+                    }
                     return (
-                        <Menu
-                            visible={isMenuOpen}
-                            onDismiss={() => setMenuOpen(false)}
-                            anchor={<Appbar.Action
-                                icon="more-vert"
-                                onPress={() => setMenuOpen(true)} />}
-                        >
-                            <Text variant="labelLarge" style={{paddingLeft: 16, fontWeight: "bold"}}>Sort by</Text>
-                            <RadioButton.Group value={sortMode} onValueChange={(value) => setSortMode(value)}>
-                                <RadioButton.Item position="trailing" label="Last changed" value="last_changed" />
-                                <RadioButton.Item position="trailing" label="Billed at" value="billed_at" />
-                                <RadioButton.Item position="trailing" label="Description" value="description" />
-                            </RadioButton.Group>
-                        </Menu>
+                        <>
+                            <Appbar.Action icon="search" onPress={() => setShowSearchInput(true)} />
+                            <Menu
+                                visible={isMenuOpen}
+                                onDismiss={() => setMenuOpen(false)}
+                                anchor={<Appbar.Action
+                                    icon="more-vert"
+                                    onPress={() => setMenuOpen(true)} />}
+                            >
+                                <Text variant="labelLarge" style={{ paddingLeft: 16, fontWeight: "bold" }}>Sort
+                                    by</Text>
+                                <RadioButton.Group value={sortMode}
+                                                   onValueChange={(value) => setSortMode(value)}>
+                                    <RadioButton.Item position="trailing" label="Last changed"
+                                                      value="last_changed" />
+                                    <RadioButton.Item position="trailing" label="Billed at" value="billed_at" />
+                                    <RadioButton.Item position="trailing" label="Description"
+                                                      value="description" />
+                                </RadioButton.Group>
+                            </Menu>
+                        </>
                     );
                 },
             });
+        } else { // !isFocuesd
+            closeSearch();
         }
-    }, [isFocused, isMenuOpen, setMenuOpen, sortMode, theme, route, navigation]);
+    }, [isFocused, showSearchInput, isMenuOpen, setMenuOpen, sortMode, theme, navigation]);
 
     useEffect(() => {
         if (transactions.state === "hasValue") {
@@ -72,12 +104,14 @@ export default function TransactionList({ route, navigation }: GroupTabScreenPro
                     break;
                 case "last_changed":
                 default:
-                    sortComparator = lambdaComparator((t: Transaction) => toISOString(t.last_changed));
+                    sortComparator = lambdaComparator((t: Transaction) => toISOString(t.last_changed), true);
                     break;
             }
-            setSortedTransactions([...transactions.contents].sort(createComparator(sortComparator)));
+            setSortedTransactions([...transactions.contents]
+                .filter(t => search === "" || t.description.toLowerCase().includes(search.toLowerCase()))
+                .sort(createComparator(sortComparator)));
         }
-    }, [transactions, sortMode]);
+    }, [transactions, sortMode, search]);
 
     const createNewTransaction = (type: TransactionType) => {
         createTransaction(groupID, type).then(ret => {
@@ -91,22 +125,6 @@ export default function TransactionList({ route, navigation }: GroupTabScreenPro
             .catch(err => console.log("error creating new transaction"));
     };
 
-    const renderItem = (transaction: Transaction) => (
-        <List.Item
-            key={transaction.id}
-            title={transaction.description}
-            description={toISODateString(transaction.billed_at)}
-            left={props => <List.Icon {...props}
-                                      icon={getTransactionIcon(transaction.type)} />}
-            right={props => <Text>{transaction.value.toFixed(2)}{transaction.currency_symbol}</Text>}
-            onPress={() => navigation.navigate("TransactionDetail", {
-                groupID: transaction.group_id,
-                transactionID: transaction.id,
-                editingStart: null,
-            })}
-        />
-    );
-
     return (
         <ScrollView
             style={styles.container}
@@ -114,8 +132,12 @@ export default function TransactionList({ route, navigation }: GroupTabScreenPro
         >
             {transactions.state === "loading" ? (
                 <LoadingIndicator />
-            ) : sortedTransactions.map(transaction => renderItem(transaction))
-            }
+            ) : sortedTransactions.map(transaction => (
+                <TransactionListItem
+                    key={transaction.id}
+                    transaction={transaction}
+                />
+            ))}
             <Portal>
                 <FAB.Group
                     style={styles.fab}

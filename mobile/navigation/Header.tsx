@@ -4,11 +4,18 @@ import { StackHeaderProps } from "@react-navigation/stack";
 
 export default function Header({ navigation, route, options, back }: StackHeaderProps) {
     const title = options.headerTitle !== undefined ? options.headerTitle : options.title !== undefined ? options.title : route.name;
+    const showTitle = options.titleShown ?? true;
 
     const theme = useTheme();
 
     const openDrawer = () => {
-        navigation.getParent().openDrawer();
+        if (navigation.openDrawer !== undefined) {
+            navigation.openDrawer();
+        } else if (navigation.getParent() !== undefined && navigation.getParent().openDrawer !== undefined) {
+            navigation.getParent().openDrawer();
+        } else {
+            console.error("cannot open drawer, unexpected location in navigation tree");
+        }
     };
 
     const goBack = () => {
@@ -32,9 +39,11 @@ export default function Header({ navigation, route, options, back }: StackHeader
             ) : (
                 <Appbar.Action icon="menu" onPress={openDrawer} />
             )}
-            <Appbar.Content
-                title={title}
-            />
+            {showTitle && (
+                <Appbar.Content
+                    title={title}
+                />
+            )}
             {options.headerRight ? options.headerRight({}) : null}
         </Appbar.Header>
     );

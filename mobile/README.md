@@ -7,8 +7,11 @@
     - serialization of syncing s.t. transactions are synced after accounts, clearing after normal accounts
     - rewriting of ids s.t. references between local changes stay intact
 - proper profile and settings page
-- clearing account share edit
-- transaction and account list filtering
+- transaction and account list filtering and searching
+- deletion of accounts / transactions
+- add new positions at bottom of list
+- only have one new "<empty>" position
+- input validation for transaction creation
 
 Later on
 - group edit functionality

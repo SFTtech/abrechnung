@@ -118,6 +118,11 @@ function RootNavigator() {
         );
     }
 
+    const propsWithHeader = {
+        headerShown: true,
+        header: (props) => <Header {...props} />,
+    }
+
     return (
         <Drawer.Navigator
             initialRouteName="GroupStackNavigator"
@@ -127,9 +132,9 @@ function RootNavigator() {
             {auth.isLoggedIn ? (
                 <>
                     <Drawer.Screen name="GroupStackNavigator" component={GroupStackNavigator} />
-                    <Drawer.Screen name="Home" options={{ headerShown: true }} component={HomeScreen} />
-                    <Drawer.Screen name="Preferences" options={{ headerShown: true }} component={PreferencesScreen} />
-                    <Drawer.Screen name="Profile" options={{ headerShown: true }} component={ProfileScreen} />
+                    <Drawer.Screen name="Home" options={propsWithHeader} component={HomeScreen} />
+                    <Drawer.Screen name="Preferences" options={propsWithHeader} component={PreferencesScreen} />
+                    <Drawer.Screen name="Profile" options={propsWithHeader} component={ProfileScreen} />
                 </>
             ) : (
                 <Drawer.Group>

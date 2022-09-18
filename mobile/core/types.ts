@@ -97,26 +97,25 @@ export interface Transaction {
     has_local_changes: boolean;
 }
 
-export function validateTransaction(t: Transaction): ErrorStruct | null {
+export function validateTransaction(t: Transaction): ErrorStruct {
     let errors = {};
-    let hasErrors = false;
 
     const emptyChecks = ["description", "billed_at", "currency_symbol", "currency_conversion_rate"];
     for (const check of emptyChecks) {
         if (t[check] === "") {
             errors[check] = `${check} cannot be empty`;
-            hasErrors = true;
         }
     }
 
     if (Object.keys(t.creditor_shares).length === 0) {
         errors["creditor_shares"] = "somebody needs to pay for this";
+
     }
     if (Object.keys(t.debitor_shares).length === 0) {
         errors["debitor_shares"] = "select at least one";
     }
 
-    return hasErrors ? errors : null;
+    return errors;
 }
 
 // TODO: implement attachments

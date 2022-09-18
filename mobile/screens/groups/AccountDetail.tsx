@@ -25,7 +25,7 @@ export default function AccountDetail({
     const activeGroup = useRecoilValue(activeGroupState);
     const account = useRecoilValue(accountByIDState({ groupID, accountID }));
     const accountBalances = useRecoilValue(accountBalancesState(groupID));
-    const accountTransactions = useRecoilValue(transactionsInvolvingAccount({ groupID, accountID: account.id }));
+    const accountTransactions = useRecoilValue(transactionsInvolvingAccount({ groupID, accountID: account?.id }));
 
     useLayoutEffect(() => {
         navigation.setOptions({

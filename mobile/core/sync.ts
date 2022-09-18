@@ -7,6 +7,7 @@ export async function syncLocalState() {
 }
 
 export async function syncLocalGroupState(groupID: number) {
+    await syncLocalState();
     await syncAccounts(groupID);
     await syncTransactions(groupID);
 }

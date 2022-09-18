@@ -29,7 +29,7 @@ import { toISOString } from "../../core/utils";
 import { StackScreenProps } from "@react-navigation/stack";
 import LoadingIndicator from "../../components/LoadingIndicator";
 import { useFocusEffect } from "@react-navigation/native";
-import { ValidationError } from "../../core/types";
+import { validateTransaction, ValidationError } from "../../core/types";
 
 export default function TransactionDetail({
                                               route,
@@ -92,6 +92,7 @@ export default function TransactionDetail({
 
     useEffect(() => {
         if (transaction != null) {
+            setInputErrors({});
             setLocalEditingState(prevState => {
                 return {
                     ...prevState,
@@ -222,10 +223,10 @@ export default function TransactionDetail({
                 error={inputErrors.hasOwnProperty("description")}
             />
             {inputErrors.hasOwnProperty("description") && (
-                <HelperText type="error" >{inputErrors["description"]}</HelperText>
+                <HelperText type="error">{inputErrors["description"]}</HelperText>
             )}
             <DateTimeInput
-                label="Billed At" // TODO: proper input validation
+                label="Billed At"
                 value={localEditingState.billed_at}
                 editable={editing}
                 style={inputStyles}
@@ -233,7 +234,7 @@ export default function TransactionDetail({
                 error={inputErrors.hasOwnProperty("billed_at")}
             />
             {inputErrors.hasOwnProperty("billed_at") && (
-                <HelperText type="error" >{inputErrors["billed_at"]}</HelperText>
+                <HelperText type="error">{inputErrors["billed_at"]}</HelperText>
             )}
             <TextInput
                 label="Value" // TODO: proper float input
@@ -246,7 +247,7 @@ export default function TransactionDetail({
                 error={inputErrors.hasOwnProperty("value")}
             />
             {inputErrors.hasOwnProperty("value") && (
-                <HelperText type="error" >{inputErrors["value"]}</HelperText>
+                <HelperText type="error">{inputErrors["value"]}</HelperText>
             )}
 
             <TransactionShareInput
@@ -259,7 +260,7 @@ export default function TransactionDetail({
                 multiSelect={false}
             />
             {inputErrors.hasOwnProperty("creditor_shares") && (
-                <HelperText type="error" >{inputErrors["creditor_shares"]}</HelperText>
+                <HelperText type="error">{inputErrors["creditor_shares"]}</HelperText>
             )}
             <TransactionShareInput
                 title="For"
@@ -271,7 +272,7 @@ export default function TransactionDetail({
                 multiSelect={transaction.type === "purchase"}
             />
             {inputErrors.hasOwnProperty("debitor_shares") && (
-                <HelperText type="error" >{inputErrors["debitor_shares"]}</HelperText>
+                <HelperText type="error">{inputErrors["debitor_shares"]}</HelperText>
             )}
 
             {positions.state === "loading" ? (

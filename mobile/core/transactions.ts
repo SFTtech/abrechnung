@@ -92,6 +92,9 @@ type accountIdentifierParam = {
 export const transactionsInvolvingAccount = selectorFamily<Transaction[], accountIdentifierParam>({
     key: "transactionsInvolvingAccount",
     get: ({ groupID, accountID }) => ({ get }) => {
+        if (groupID == null || accountID == null) {
+            return [];
+        }
         const transactions = get(transactionState(groupID));
         const positions = get(positionState(groupID));
         const involvedTransactionIDsThroughPositions = new Set<number>(positions.filter(p => p.usages.hasOwnProperty(accountID)).map(p => p.transaction_id));
