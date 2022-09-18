@@ -98,9 +98,9 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: "16"
-          cache: "yarn"
-          cache-dependency-path: web/yarn.lock
+          cache: "npm"
+          cache-dependency-path: web/package-lock.json
       - name: Install dependencies
-        run: yarn --cwd web install --dev
+        run: npm --prefix web install --dev
       - name: Check JavaScript formatting
         run: make check-format-web
