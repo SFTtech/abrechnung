@@ -48,7 +48,9 @@ class GroupLogSchema(Schema):
 
 
 class SharesField(fields.Field):
-    def _serialize(self, value: Mapping[int, float], attr: str, obj: Any, **kwargs):
+    def _serialize(
+        self, value: Mapping[int, float], attr: Optional[str], obj: Any, **kwargs
+    ):
         return {
             str(account_id): usage_value for account_id, usage_value in value.items()
         }

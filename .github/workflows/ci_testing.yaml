@@ -101,6 +101,6 @@ jobs:
           cache: "npm"
           cache-dependency-path: web/package-lock.json
       - name: Install dependencies
-        run: npm --prefix web install --dev
+        run: npm --prefix web install --force
       - name: Check JavaScript formatting
         run: make check-format-web
