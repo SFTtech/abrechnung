@@ -12,7 +12,7 @@ config_timedelta_format = re.compile(
 
 
 class TimedeltaField(fields.Field):
-    def _serialize(self, value: Mapping[int, float], attr: str, obj: Any, **kwargs):
+    def _serialize(self, value: Mapping[int, float], attr: Optional[str], obj: Any, **kwargs):
         raise NotImplementedError
 
     def _deserialize(
