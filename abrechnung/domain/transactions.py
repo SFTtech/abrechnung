@@ -33,7 +33,8 @@ class TransactionDetails:
     deleted: bool
 
     changed_by: int
-    committed_at: Optional[datetime]
+    revision_started_at: datetime
+    revision_committed_at: Optional[datetime]
 
     # creditor and debitor shares map account IDs to portions of the communist share pool
     creditor_shares: dict[int, float]

@@ -75,7 +75,8 @@ class TransactionService(Application):
             currency_symbol=db_json["currency_symbol"],
             currency_conversion_rate=db_json["currency_conversion_rate"],
             deleted=db_json["deleted"],
-            committed_at=None
+            revision_started_at=parse_postgres_datetime(db_json["revision_started"]),
+            revision_committed_at=None
             if db_json.get("revision_committed") is None
             else parse_postgres_datetime(db_json["revision_committed"]),
             billed_at=date.fromisoformat(db_json["billed_at"]),
@@ -253,6 +254,7 @@ class TransactionService(Application):
         value: float,
         debitor_shares: Optional[dict[int, float]] = None,
         creditor_shares: Optional[dict[int, float]] = None,
+        positions: Optional[list[TransactionPosition]] = None,
         perform_commit: bool = False,
     ) -> int:
         async with self.db_pool.acquire() as conn:
@@ -299,6 +301,17 @@ class TransactionService(Application):
                         revision_id=revision_id,
                         creditor_shares=creditor_shares,
                     )
+
+                if positions:
+                    for position in positions:
+                        await self._process_position_update(
+                            conn=conn,
+                            transaction_id=transaction_id,
+                            group_id=group_id,
+                            revision_id=revision_id,
+                            position=position,
+                        )
+
                 if perform_commit:
                     await conn.execute(
                         "update transaction_revision set committed = now() where id = $1",
@@ -634,7 +647,7 @@ class TransactionService(Application):
         revision_id: int,
         position: TransactionPosition,
     ):
-        if position.id == -1:
+        if position.id < 0:
             await self._create_transaction_position(
                 conn=conn,
                 group_id=group_id,

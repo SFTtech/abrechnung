@@ -13,6 +13,7 @@ class GroupSchema(Schema):
     terms = fields.Str()
     add_user_account_on_join = fields.Bool()
     created_by = fields.Int()
+    created_at = fields.DateTime()
 
 
 class GroupPreviewSchema(Schema):
@@ -47,7 +48,9 @@ class GroupLogSchema(Schema):
 
 
 class SharesField(fields.Field):
-    def _serialize(self, value: Mapping[int, float], attr: str, obj: Any, **kwargs):
+    def _serialize(
+        self, value: Mapping[int, float], attr: Optional[str], obj: Any, **kwargs
+    ):
         return {
             str(account_id): usage_value for account_id, usage_value in value.items()
         }
@@ -74,7 +77,8 @@ class AccountDetailSchema(Schema):
     description = fields.Str()
     priority = fields.Int()
     owning_user_id = fields.Int(allow_none=True)
-    committed_at = fields.DateTime(required=False)
+    revision_started_at = fields.DateTime()
+    revision_committed_at = fields.DateTime(required=False)
     clearing_shares = SharesField()
     deleted = fields.Bool()
 
@@ -109,7 +113,8 @@ class TransactionDetailSchema(Schema):
     currency_symbol = fields.Str()
     currency_conversion_rate = fields.Number()
     billed_at = fields.Date()
-    committed_at = fields.DateTime(required=False)
+    revision_started_at = fields.DateTime()
+    revision_committed_at = fields.DateTime(required=False)
     creditor_shares = SharesField()
     debitor_shares = SharesField()
     deleted = fields.Bool()

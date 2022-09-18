@@ -180,7 +180,8 @@ class AccountService(Application):
             deleted=db_json["deleted"],
             priority=db_json["priority"],
             owning_user_id=db_json["owning_user_id"],
-            committed_at=None
+            revision_started_at=parse_postgres_datetime(db_json["revision_started"]),
+            revision_committed_at=None
             if db_json.get("revision_committed") is None
             else parse_postgres_datetime(db_json["revision_committed"]),
             clearing_shares={

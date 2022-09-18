@@ -5,7 +5,7 @@ test:
 .PHONY: format
 format:
 	black .
-	yarn --cwd web run prettier --write .
+	cd web && npx prettier --write . && cd ..
 
 .PHONY: check-format
 check-format:
@@ -13,7 +13,7 @@ check-format:
 
 .PHONY: check-format-web
 check-format-web:
-	yarn --cwd web run prettier --check .
+	cd web && npx prettier --check . && cd ..
 
 .PHONY: lint
 lint: pylint mypy
