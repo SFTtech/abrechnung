@@ -1,5 +1,5 @@
 import { makeDelete, makeGet, makePost } from "./index";
-import { Account } from "../types";
+import { Account } from "@abrechnung/types";
 
 function backendAccountToAccount(acc): Account {
     const detailsToFields = (details) => {

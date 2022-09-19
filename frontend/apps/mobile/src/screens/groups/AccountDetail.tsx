@@ -7,7 +7,7 @@ import { useRecoilValue } from "recoil";
 import { AccountBalance, accountBalancesState, accountByIDState } from "../../core/accounts";
 import { toISODateString, toISOString } from "../../core/utils";
 import { StackScreenProps } from "@react-navigation/stack";
-import { Transaction } from "../../core/types";
+import { Transaction } from "@abrechnung/types";
 import { getTransactionIcon } from "../../constants/Icons";
 import TransactionShareInput from "../../components/transaction_shares/TransactionShareInput";
 import { successColor } from "../../theme";

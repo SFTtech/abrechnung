@@ -1,4 +1,4 @@
-import { Transaction } from "../core/types";
+import { Transaction } from "@abrechnung/types";
 import { toISODateString } from "../core/utils";
 import { List, Menu, Text, useTheme } from "react-native-paper";
 import { useState } from "react";

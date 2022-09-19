@@ -19,7 +19,7 @@ import { activeGroupIDState } from "../core/groups";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native";
 import { updatePosition } from "../core/database/transactions";
 import { notify } from "../notifications";
-import { ValidationError } from "../core/types";
+import { ValidationError } from "@abrechnung/types";
 
 export default function PositionDialog({ position, editing, showDialog, onHideDialog, currencySymbol }) {
     const theme = useTheme();

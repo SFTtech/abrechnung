@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "@abrechnung/frontend",
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
@@ -29,7 +29,7 @@
     "buffer": "^6.0.3",
     "core-js": "^3.6.5",
     "deepmerge": "^4.2.2",
-    "expo": "46.0.2",
+    "expo": "46.0.10",
     "expo-asset": "~8.6.1",
     "expo-constants": "~13.2.4",
     "expo-dev-client": "~1.2.1",

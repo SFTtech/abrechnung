@@ -29,7 +29,7 @@ import { toISOString } from "../../core/utils";
 import { StackScreenProps } from "@react-navigation/stack";
 import LoadingIndicator from "../../components/LoadingIndicator";
 import { useFocusEffect } from "@react-navigation/native";
-import { validateTransaction, ValidationError } from "../../core/types";
+import { ValidationError } from "@abrechnung/types";
 
 export default function TransactionDetail({
                                               route,

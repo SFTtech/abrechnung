@@ -1,6 +1,6 @@
 import { db } from "./index";
 import NotificationTracker from "../index";
-import { Group } from "../types";
+import { Group } from "@abrechnung/types";
 import { fetchGroups } from "../api/groups";
 
 

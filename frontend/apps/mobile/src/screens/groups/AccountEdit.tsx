@@ -9,7 +9,7 @@ import { accountByIDState } from "../../core/accounts";
 import { notify } from "../../notifications";
 import { StackScreenProps } from "@react-navigation/stack";
 import { useFocusEffect } from "@react-navigation/native";
-import { ValidationError } from "../../core/types";
+import { ValidationError } from "@abrechnung/types";
 import TransactionShareInput from "../../components/transaction_shares/TransactionShareInput";
 
 export default function AccountEdit({

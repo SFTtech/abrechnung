@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { TouchableHighlight, View } from "react-native";
 import { useRecoilValue } from "recoil";
 import { accountState } from "../../core/accounts";
-import { TransactionShare } from "../../core/types";
+import { TransactionShare } from "@abrechnung/types";
 
 type Props = {
     groupID: number,

@@ -14,7 +14,10 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {},
+    "paths": {
+      "@abrechnung/api": ["libs/api/src/index.ts"],
+      "@abrechnung/types": ["libs/types/src/index.ts"]
+    },
     "strict": false
   },
   "exclude": ["node_modules", "tmp"]

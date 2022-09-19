@@ -1,5 +1,5 @@
 import { atomFamily, selectorFamily } from "recoil";
-import { Account, AccountType, ClearingShares } from "./types";
+import { Account, AccountType, ClearingShares } from "@abrechnung/types";
 import { accountNotifier, getAccount, getAccounts } from "./database/accounts";
 import { positionState, transactionState } from "./transactions";
 

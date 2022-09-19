@@ -1,5 +1,5 @@
 import { atomFamily, selectorFamily } from "recoil";
-import { Transaction, TransactionPosition } from "./types";
+import { Transaction, TransactionPosition } from "@abrechnung/types";
 import {
     getTransaction,
     getTransactions,

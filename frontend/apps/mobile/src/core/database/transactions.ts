@@ -7,7 +7,7 @@ import {
     validatePosition,
     validateTransaction,
     ValidationError,
-} from "../types";
+} from "@abrechnung/types";
 import { fetchTransactions, pushTransactionChanges, pushTransactionPositionChanges } from "../api/transactions";
 import { isOnline } from "../api";
 import { fromISOString, toISODateString, toISOString } from "../utils";

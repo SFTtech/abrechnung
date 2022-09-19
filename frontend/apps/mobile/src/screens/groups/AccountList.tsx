@@ -6,7 +6,7 @@ import { createAccount } from "../../core/database/accounts";
 import { useRecoilValue, useRecoilValueLoadable } from "recoil";
 import { activeGroupIDState, activeGroupState } from "../../core/groups";
 import { AccountBalance, accountBalancesState, accountStateByType } from "../../core/accounts";
-import { Account } from "../../core/types";
+import { Account } from "@abrechnung/types";
 import * as React from "react";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { syncLocalGroupState } from "../../core/sync";

@@ -1,6 +1,6 @@
 import { db } from "./index";
 import NotificationTracker from "../index";
-import { Account, AccountType, validateAccount, ValidationError } from "../types";
+import { Account, AccountType, validateAccount, ValidationError } from "@abrechnung/types";
 import { fetchAccounts, pushAccountChanges } from "../api/accounts";
 import { isOnline } from "../api";
 import { fromISOString, toISOString } from "../utils";

@@ -1,5 +1,5 @@
 import { makeGet } from "./index";
-import { Group } from "../types";
+import { Group } from "@abrechnung/types";
 
 export async function fetchGroups(): Promise<Group[]> {
     return await makeGet("/groups");

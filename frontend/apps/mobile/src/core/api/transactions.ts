@@ -1,5 +1,5 @@
 import { makeDelete, makeGet, makePost } from "./index";
-import { Transaction, TransactionPosition } from "../types";
+import { Transaction, TransactionPosition } from "@abrechnung/types";
 import { fromISOString, toISODateString } from "../utils";
 
 function backendTransactionToTransaction(transaction): [Transaction, TransactionPosition[]] {

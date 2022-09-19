@@ -6,7 +6,7 @@ import { accountState } from "../../core/accounts";
 import { createComparator, lambdaComparator } from "../../core/utils";
 import { getAccountIcon } from "../../constants/Icons";
 import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
-import { TransactionShare } from "../../core/types";
+import { TransactionShare } from "@abrechnung/types";
 
 type Props = {
     groupID: number,

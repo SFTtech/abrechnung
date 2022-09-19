@@ -1,5 +1,5 @@
 {
-  "name": "foo",
+  "name": "@abrechnung/mobile",
   "version": "0.0.1",
   "private": true,
   "dependencies": {
@@ -31,6 +31,6 @@
   },
   "scripts": {
     "eas-build-pre-install": "cd ../../ && cp package-lock.json ./apps/mobile/",
-    "postinstall": "rm -r node_modules && cd ../../ && npm install && npx nx sync-deps foo && npx nx ensure-symlink mobile"
+    "postinstall": "rm -r node_modules && cd ../../ && npm install && npx nx sync-deps mobile && npx nx ensure-symlink mobile"
   }
 }

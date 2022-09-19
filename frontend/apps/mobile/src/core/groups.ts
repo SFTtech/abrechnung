@@ -1,6 +1,6 @@
 import { atom, selector, selectorFamily } from "recoil";
 import { getGroups, groupNotifier } from "./database/groups";
-import { Group } from "./types";
+import { Group } from "@abrechnung/types";
 
 export const activeGroupIDState = atom<number | null>({
     key: "activeGroupIDState",
