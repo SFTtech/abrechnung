@@ -1,7 +1,7 @@
 import * as SQLite from "expo-sqlite";
 import { ResultSet, ResultSetError, WebSQLDatabase } from "expo-sqlite";
 
-class Connection {
+export class Connection {
     private _db: WebSQLDatabase;
     private transacting: boolean;
 

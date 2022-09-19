@@ -1,12 +1,13 @@
 import { db } from "./index";
 import NotificationTracker from "../index";
 import { Group } from "@abrechnung/types";
-import { fetchGroups } from "../api/groups";
+import { api } from "../api";
+import { Connection } from "./async_wrapper";
 
 export const groupNotifier = new NotificationTracker();
 
 function databaseRowToGroup(row): Group {
-    return <Group>{
+    return {
         id: row.id,
         name: row.name,
         description: row.description,
@@ -15,7 +16,7 @@ function databaseRowToGroup(row): Group {
         created_at: row.created_at,
         created_by: row.created_by,
         add_user_account_on_join: row.add_user_account_on_join,
-    };
+    } as Group;
 }
 
 export async function getGroups(): Promise<Group[]> {
@@ -38,9 +39,9 @@ export async function getGroups(): Promise<Group[]> {
 }
 
 export async function syncGroups(): Promise<Group[]> {
-    const backendGroups = await fetchGroups();
-    await db.transaction((conn) => {
-        backendGroups.map((group) => {
+    const backendGroups = await api.fetchGroups();
+    await db.transaction((conn: Connection) => {
+        backendGroups.forEach((group) => {
             conn.execute(
                 `
                 insert into grp (

@@ -1,7 +1,7 @@
-import { initializeAPIURL, initializeAuthCache, makeGet, makePost } from "./index";
+import { api, initializeAPIURL, initializeAuthCache } from "./index";
 import { db } from "../database";
 
-export async function login({ server, username, password }) {
+export async function login({ server, username, password }: { server: string; username: string; password: string }) {
     const payload = {
         username,
         password,
@@ -21,21 +21,23 @@ export async function login({ server, username, password }) {
         }
         const jsonResp = await resp.json();
         console.log(payload, server, jsonResp, username);
-        await db.execute(`update abrechnung_instance set is_active_session = false`);
+        await db.execute(`update abrechnung_instance
+                          set
+                              is_active_session = false`);
         await db.execute(
             `
-                    insert into abrechnung_instance (
-                        url, user_id, username, session_token, access_token, is_active_session
-                    )
-                    values (
-                        ?, ?, ?, ?, ?, true
-                    )
-                    on conflict (url) do update set
-                                                    session_token = excluded.session_token,
-                                                    user_id = excluded.user_id,
-                                                    username = excluded.username,
-                                                    access_token = excluded.access_token,
-                                                    is_active_session = excluded.is_active_session`,
+                insert into abrechnung_instance (
+                    url, user_id, username, session_token, access_token, is_active_session
+                )
+                values (
+                    ?, ?, ?, ?, ?, true
+                )
+                on conflict (url) do update set
+                                                session_token     = excluded.session_token,
+                                                user_id           = excluded.user_id,
+                                                username          = excluded.username,
+                                                access_token      = excluded.access_token,
+                                                is_active_session = excluded.is_active_session`,
             [server, jsonResp.user_id, username, jsonResp.session_token, jsonResp.access_token]
         );
         await initializeAPIURL(server);
@@ -48,22 +50,18 @@ export async function login({ server, username, password }) {
 
 export async function logout() {
     try {
-        await makePost("/auth/logout");
+        await api.logout();
     } catch {
         // do nothing
     }
     await db.execute(
         `update abrechnung_instance
-                      set
-                          is_active_session = false,
-                          session_token     = null,
-                          access_token      = null
-                      where
-                          is_active_session`,
+         set
+             is_active_session = false,
+             session_token     = null,
+             access_token      = null
+         where
+             is_active_session`,
         []
     );
-}
-
-export async function fetchProfile() {
-    return await makeGet("/profile");
 }

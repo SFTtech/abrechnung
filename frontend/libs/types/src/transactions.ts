@@ -33,6 +33,8 @@ export function validateTransaction(t: Transaction): ErrorStruct {
 
     const emptyChecks = ["description", "billed_at", "currency_symbol", "currency_conversion_rate"];
     for (const check of emptyChecks) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         if (t[check] === "") {
             errors[check] = `${check} cannot be empty`;
         }

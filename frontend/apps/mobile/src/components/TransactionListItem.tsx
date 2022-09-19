@@ -1,5 +1,5 @@
 import { Transaction } from "@abrechnung/types";
-import { toISODateString } from "../core/utils";
+import { toISODateString } from "@abrechnung/utils";
 import { List, Menu, Text, useTheme } from "react-native-paper";
 import { useState } from "react";
 import { getTransactionIcon } from "../constants/Icons";

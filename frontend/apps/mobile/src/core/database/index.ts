@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 import migrations from "./migrations";
-import { Database } from "./async_wrapper";
+import { Connection, Database } from "./async_wrapper";
 
 function openDatabase() {
     // if (Platform.OS === "web") {
@@ -16,10 +16,7 @@ function openDatabase() {
     return SQLite.openDatabase("abrechnung.db");
 }
 
-const successCallback = () => console.log("database call was successful");
-const errorCallback = (error) => console.log("database call threw an error:", error);
-
-export async function dropTables(connection) {
+export async function dropTables(connection: Connection) {
     const tables = [
         "pending_transaction_position_changes",
         "transaction_position",
@@ -64,7 +61,7 @@ export async function flushDatabase() {
 const migrationsTable = "_migrations";
 
 export const db = new Database("main", {
-    prepareConnFn: async (connection) => {
+    prepareConnFn: async (connection: Connection) => {
         try {
             await connection.execute("PRAGMA foreign_keys = ON;");
             // await connection.execute("PRAGMA journal_mode = WAL;") // apparently does not work
@@ -72,7 +69,7 @@ export const db = new Database("main", {
             console.log(e);
         }
     },
-    migrateFn: async (connection) => {
+    migrateFn: async (connection: Connection) => {
         // Inside migration function you can use `connection.beginTransaction`, `connection.commitTransaction` and
         // `connection.rollbackTransaction` methods to control transactions, as needed. In this example I simply
         // run all migrations inside single transaction. Your needs might be different

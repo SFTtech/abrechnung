@@ -1,9 +1,10 @@
 import { db } from "./index";
 import NotificationTracker from "../index";
 import { Account, AccountType, validateAccount, ValidationError } from "@abrechnung/types";
-import { fetchAccounts, pushAccountChanges } from "../api/accounts";
+import { api } from "../api";
 import { isOnline } from "../api";
-import { fromISOString, toISOString } from "../utils";
+import { fromISOString, toISOString } from "@abrechnung/utils";
+import { Connection } from "./async_wrapper";
 
 type accountNotifierPayload = {
     group_id: number;
@@ -14,7 +15,7 @@ export const accountNotifier = new NotificationTracker<accountNotifierPayload>()
 
 function databaseRowToAccount(row): Account {
     const parsed_event = row.event_content !== null ? JSON.parse(row.event_content) : {};
-    return <Account>{
+    return {
         id: row.id,
         type: row.type,
         group_id: row.group_id,
@@ -36,11 +37,11 @@ function databaseRowToAccount(row): Account {
                 : fromISOString(row.revision_started_at),
         ...parsed_event,
         has_local_changes: row.event_content !== null,
-    };
+    } as Account;
 }
 
 function accountFromEvent(account_id: number, group_id: number, event_time: string, event: object): Account {
-    return <Account>{
+    return {
         id: account_id,
         group_id: group_id,
         version: 0,
@@ -49,10 +50,10 @@ function accountFromEvent(account_id: number, group_id: number, event_time: stri
         last_changed: fromISOString(event_time),
         ...event,
         has_local_changes: true,
-    };
+    } as Account;
 }
 
-async function saveAccountToDatabase(account: Account, conn?) {
+async function saveAccountToDatabase(account: Account, conn?: Connection) {
     const query = `
         insert into account (
             id, group_id, type, "name", description, priority, deleted, owning_user_id, revision_started_at,
@@ -98,9 +99,9 @@ async function saveAccountToDatabase(account: Account, conn?) {
 }
 
 export async function syncAccounts(groupID: number): Promise<Account[]> {
-    const backendAccounts = await fetchAccounts({ groupID });
-    await db.transaction((conn) => {
-        backendAccounts.forEach((account) => {
+    const backendAccounts = await api.fetchAccounts(groupID);
+    await db.transaction((conn: Connection) => {
+        backendAccounts.forEach((account: Account) => {
             saveAccountToDatabase(account, conn);
         });
     });
@@ -231,7 +232,7 @@ export async function getAccount(group_id: number, account_id: number): Promise<
                              from
                                  pending_account_changes
                              where
-                                 group_id = ?1 account_id = ?2
+                                 group_id = ?1 and account_id = ?2
                          ) sub
                      where
                          sub.rank = 1
@@ -253,7 +254,7 @@ export async function pushLocalAccountChanges(account_id: number): Promise<Accou
         throw Error("Cannot push local changes to server as we are offline");
     }
 
-    return await db.transaction(async (conn) => {
+    return await db.transaction(async (conn: Connection) => {
         console.log("pushing changes to server");
         // fetch the transaction and its pending position changes from the database
         const accountQueryResult = await conn.execute(
@@ -274,7 +275,7 @@ export async function pushLocalAccountChanges(account_id: number): Promise<Accou
         console.log("pushing transaction detail plus position changes to server");
         const t = accountQueryResult.rows[0];
         const account = accountFromEvent(account_id, t.group_id, t.event_time, JSON.parse(t.event_content));
-        const updatedAccount = await pushAccountChanges(account);
+        const updatedAccount = await api.pushAccountChanges(account);
         await conn.execute(
             `
             delete
@@ -311,7 +312,7 @@ export async function updateAccount(account: Account) {
         deleted: account.deleted,
         clearing_shares: account.clearing_shares,
     };
-    return await db.transaction(async (conn) => {
+    return await db.transaction(async (conn: Connection) => {
         const previousChanges = await conn.execute(
             `
             select *
@@ -367,7 +368,7 @@ export async function createAccount(group_id: number, type: AccountType): Promis
         clearing_shares: type === "clearing" ? {} : null,
     };
 
-    return await db.transaction(async (conn) => {
+    return await db.transaction(async (conn: Connection) => {
         const res = await conn.execute(
             `
             select
@@ -401,7 +402,7 @@ export async function deleteAccount(group_id: number, account_id: number) {
         return await deleteLocalAccountChanges(group_id, account_id);
     }
 
-    let account = await getAccount(group_id, account_id);
+    const account = await getAccount(group_id, account_id);
     account.deleted = true;
     return await updateAccount(account);
 }
@@ -411,7 +412,7 @@ export async function deleteLocalAccountChanges(
     account_id: number,
     olderThan?: string
 ): Promise<boolean> {
-    return await db.transaction(async (conn) => {
+    return await db.transaction(async (conn: Connection) => {
         // TODO: only notify if we actually deleted something
         if (olderThan) {
             await conn.execute(

@@ -1,1 +1,2 @@
-export * from "./lib/api";
+export * from "./api";
+export * from "./auth";

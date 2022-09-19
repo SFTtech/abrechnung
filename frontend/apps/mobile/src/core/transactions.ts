@@ -42,7 +42,7 @@ type transactionIdentifierParam = {
     transactionID: number;
 };
 
-export const transactionByIDState = selectorFamily<Transaction, transactionIdentifierParam>({
+export const transactionByIDState = selectorFamily<Transaction | undefined, transactionIdentifierParam>({
     key: "transactionByIDState",
     get:
         ({ groupID, transactionID }) =>

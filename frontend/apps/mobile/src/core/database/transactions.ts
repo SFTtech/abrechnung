@@ -8,9 +8,9 @@ import {
     validateTransaction,
     ValidationError,
 } from "@abrechnung/types";
-import { fetchTransactions, pushTransactionChanges, pushTransactionPositionChanges } from "../api/transactions";
-import { isOnline } from "../api";
-import { fromISOString, toISODateString, toISOString } from "../utils";
+import { isOnline, api } from "../api";
+import { fromISOString, toISODateString, toISOString } from "@abrechnung/utils";
+import { Connection } from "./async_wrapper";
 
 type transactionNotifierPayload = {
     group_id: number;
@@ -24,8 +24,8 @@ type transactionPositionPayload = {
 export const transactionNotifier = new NotificationTracker<transactionNotifierPayload>();
 export const transactionPositionNotifier = new NotificationTracker<transactionPositionPayload>();
 
-function databaseRowToTransaction(row): Transaction {
-    let parsed_event = row.event_content !== null ? JSON.parse(row.event_content) : null;
+function databaseRowToTransaction(row: any): Transaction {
+    const parsed_event = row.event_content !== null ? JSON.parse(row.event_content) : null;
     if (parsed_event !== null) {
         parsed_event.billed_at = fromISOString(parsed_event.billed_at);
     }
@@ -57,7 +57,7 @@ function databaseRowToTransaction(row): Transaction {
 }
 
 function transactionFromEvent(transaction_id: number, group_id: number, event_time: string, event): Transaction {
-    return <Transaction>{
+    return {
         id: transaction_id,
         group_id: group_id,
         version: 0,
@@ -67,7 +67,7 @@ function transactionFromEvent(transaction_id: number, group_id: number, event_ti
         ...event,
         billed_at: fromISOString(event.billed_at),
         has_local_changes: true,
-    };
+    } as Transaction;
 }
 
 async function saveTransactionToDatabase(transaction: Transaction, positions: TransactionPosition[], conn?) {
@@ -147,7 +147,7 @@ async function saveTransactionToDatabase(transaction: Transaction, positions: Tr
             ),
         ]);
     } else {
-        return db.transaction(async (conn) => {
+        return db.transaction(async (conn: Connection) => {
             await Promise.all([
                 conn.execute(transactionInsertQuery, queryParams),
                 ...positions.map((position) =>
@@ -167,9 +167,9 @@ async function saveTransactionToDatabase(transaction: Transaction, positions: Tr
     }
 }
 
-function databaseRowToPosition(row): TransactionPosition {
+function databaseRowToPosition(row: any): TransactionPosition {
     const parsed_event = row.event_content !== null ? JSON.parse(row.event_content) : {};
-    return <TransactionPosition>{
+    return {
         id: row.id,
         transaction_id: row.transaction_id,
         price: row.price,
@@ -180,7 +180,7 @@ function databaseRowToPosition(row): TransactionPosition {
         group_id: row.group_id,
         ...parsed_event,
         has_local_changes: row.event_content !== null,
-    };
+    } as TransactionPosition;
 }
 
 function transactionPositionFromEvent(
@@ -188,7 +188,7 @@ function transactionPositionFromEvent(
     transaction_id: number,
     group_id: number,
     event_time: string,
-    event
+    event: any
 ): TransactionPosition {
     return <TransactionPosition>{
         id: position_id,
@@ -200,8 +200,8 @@ function transactionPositionFromEvent(
 }
 
 export async function syncTransactions(groupID: number): Promise<[Transaction, TransactionPosition[]][]> {
-    const backendTransactions = await fetchTransactions({ groupID });
-    await db.transaction((conn) => {
+    const backendTransactions = await api.fetchTransactions(groupID);
+    await db.transaction((conn: Connection) => {
         backendTransactions.forEach((t) => {
             const [transaction, positions] = t;
             transactionPositionNotifier.notify(transaction.id, {
@@ -507,7 +507,7 @@ export async function pushLocalTransactionChanges(
         throw Error("Cannot push local changes to server as we are offline");
     }
 
-    return await db.transaction(async (conn) => {
+    return await db.transaction(async (conn: Connection) => {
         console.log("pushing changes to server");
         // fetch the transaction and its pending position changes from the database
         const transactionQueryResult = await conn.execute(
@@ -563,7 +563,7 @@ export async function pushLocalTransactionChanges(
                 t.event_time,
                 JSON.parse(t.event_content)
             );
-            [updatedTransaction, updatedPositions] = await pushTransactionChanges(transaction, positions, true);
+            [updatedTransaction, updatedPositions] = await api.pushTransactionChanges(transaction, positions, true);
             await conn.execute(
                 `
                 delete
@@ -576,7 +576,7 @@ export async function pushLocalTransactionChanges(
             );
         } else {
             console.log("pushing only position changes to server");
-            [updatedTransaction, updatedPositions] = await pushTransactionPositionChanges(
+            [updatedTransaction, updatedPositions] = await api.pushTransactionPositionChanges(
                 transaction_id,
                 positions,
                 true
@@ -628,7 +628,7 @@ export async function updateTransaction(transaction: Transaction) {
         debitor_shares: transaction.debitor_shares,
         deleted: transaction.deleted,
     };
-    return await db.transaction(async (conn) => {
+    return await db.transaction(async (conn: Connection) => {
         // get previous pending change
         const previous = await conn.execute(
             `select *
@@ -677,7 +677,7 @@ export async function createTransaction(group_id: number, type: TransactionType)
         deleted: false,
     };
 
-    return await db.transaction(async (conn) => {
+    return await db.transaction(async (conn: Connection) => {
         const res = await conn.execute(
             `
             select
@@ -711,7 +711,7 @@ export async function deleteTransaction(group_id: number, transaction_id: number
         return await deleteLocalTransactionChanges(group_id, transaction_id);
     }
 
-    let transaction = await getTransaction(group_id, transaction_id);
+    const transaction = await getTransaction(group_id, transaction_id);
     transaction.deleted = true;
     return await updateTransaction(transaction);
 }
@@ -723,7 +723,7 @@ export async function deleteLocalTransactionChanges(
 ): Promise<boolean> {
     console.log("deleting local transaction changes to transaction", transaction_id, "older than", olderThan);
     // returns true if a local only transaction was deleted fully
-    return await db.transaction(async (conn) => {
+    return await db.transaction(async (conn: Connection) => {
         if (olderThan) {
             await conn.execute(
                 `
@@ -807,7 +807,7 @@ export async function createPosition(
         deleted: false,
     };
 
-    return await db.transaction(async (conn) => {
+    return await db.transaction(async (conn: Connection) => {
         const res = await conn.execute(
             `
             select
@@ -851,7 +851,7 @@ export async function updatePosition(position: TransactionPosition) {
         usages: position.usages,
         deleted: position.deleted,
     };
-    return await db.transaction(async (conn) => {
+    return await db.transaction(async (conn: Connection) => {
         await conn.execute(
             `insert into pending_transaction_position_changes (
                 position_id, group_id, transaction_id, event_content, event_time
@@ -875,7 +875,7 @@ export async function updatePosition(position: TransactionPosition) {
 
 export async function deletePosition(position: TransactionPosition) {
     // TODO: determine if we keep around local only positions once deleted
-    return await db.transaction(async (conn) => {
+    return await db.transaction(async (conn: Connection) => {
         const event_payload = {
             transaction_id: position.transaction_id,
             name: position.name,

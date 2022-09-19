@@ -5,7 +5,7 @@ import * as React from "react";
 import { useLayoutEffect } from "react";
 import { useRecoilValue } from "recoil";
 import { AccountBalance, accountBalancesState, accountByIDState } from "../../core/accounts";
-import { toISODateString, toISOString } from "../../core/utils";
+import { toISODateString, toISOString } from "@abrechnung/utils";
 import { StackScreenProps } from "@react-navigation/stack";
 import { Transaction } from "@abrechnung/types";
 import { getTransactionIcon } from "../../constants/Icons";

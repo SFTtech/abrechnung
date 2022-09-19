@@ -10,7 +10,7 @@ import { Account } from "@abrechnung/types";
 import * as React from "react";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { syncLocalGroupState } from "../../core/sync";
-import { createComparator, lambdaComparator, toISOString } from "../../core/utils";
+import { createComparator, lambdaComparator, toISOString } from "@abrechnung/utils";
 import LoadingIndicator from "../../components/LoadingIndicator";
 import { successColor } from "../../theme";
 import { MaterialIcons } from "@expo/vector-icons";

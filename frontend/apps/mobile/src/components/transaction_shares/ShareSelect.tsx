@@ -3,7 +3,7 @@ import { ScrollView, View } from "react-native";
 import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { accountState } from "../../core/accounts";
-import { createComparator, lambdaComparator } from "../../core/utils";
+import { createComparator, lambdaComparator } from "@abrechnung/utils";
 import { activeGroupIDState } from "../../core/groups";
 
 export default function ShareSelect({

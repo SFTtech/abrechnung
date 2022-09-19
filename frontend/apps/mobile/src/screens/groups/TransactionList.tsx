@@ -10,7 +10,7 @@ import { useRecoilValue, useRecoilValueLoadable } from "recoil";
 import { activeGroupIDState } from "../../core/groups";
 import { transactionState } from "../../core/transactions";
 import { Transaction, TransactionType } from "@abrechnung/types";
-import { createComparator, lambdaComparator, toISODateString, toISOString } from "../../core/utils";
+import { createComparator, lambdaComparator, toISODateString, toISOString } from "@abrechnung/utils";
 import { syncLocalGroupState } from "../../core/sync";
 import LoadingIndicator from "../../components/LoadingIndicator";
 import TransactionListItem from "../../components/TransactionListItem";

@@ -19,16 +19,16 @@ export const groupState = atom<Group[]>({
     ],
 });
 
-export const activeGroupState = selector<Group | null>({
+export const activeGroupState = selector<Group | undefined>({
     key: "activeGroupState",
     get: ({ get }) => {
         const groups = get(groupState);
         const activeGroupID = get(activeGroupIDState);
-        return groups.find((g) => g.id === activeGroupID) ?? null;
+        return groups.find((g) => g.id === activeGroupID);
     },
 });
 
-export const groupByIDState = selectorFamily<Group, number>({
+export const groupByIDState = selectorFamily<Group | undefined, number>({
     key: "groupByIDState",
     get:
         (groupID) =>

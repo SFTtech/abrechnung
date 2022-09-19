@@ -3,7 +3,7 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { accountState } from "../../core/accounts";
-import { createComparator, lambdaComparator } from "../../core/utils";
+import { createComparator, lambdaComparator } from "@abrechnung/utils";
 import { getAccountIcon } from "../../constants/Icons";
 import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { TransactionShare } from "@abrechnung/types";
@@ -11,7 +11,7 @@ import { TransactionShare } from "@abrechnung/types";
 type Props = {
     groupID: number;
     value: TransactionShare;
-    onChange: (TransactionShare) => void;
+    onChange: (share: TransactionShare) => void;
     showDialog: boolean;
     onHideDialog: () => void;
     title: string;

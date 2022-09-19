@@ -2,7 +2,7 @@ import { HelperText, TextInput } from "react-native-paper";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
-import { toISODateString } from "../core/utils";
+import { toISODateString } from "@abrechnung/utils";
 
 export default function DateTimeInput(props) {
     const { value, onChange, mode, disabled = false, editable = true } = props;

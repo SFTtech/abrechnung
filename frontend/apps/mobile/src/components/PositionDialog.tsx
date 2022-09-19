@@ -14,7 +14,7 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { accountState } from "../core/accounts";
-import { createComparator, lambdaComparator } from "../core/utils";
+import { createComparator, lambdaComparator } from "@abrechnung/utils";
 import { activeGroupIDState } from "../core/groups";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native";
 import { updatePosition } from "../core/database/transactions";

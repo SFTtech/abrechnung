@@ -25,7 +25,7 @@ import { useRecoilValue, useRecoilValueLoadable } from "recoil";
 import { positionStateByTransaction, transactionByIDState } from "../../core/transactions";
 import PositionListItem from "../../components/PositionListItem";
 import { notify } from "../../notifications";
-import { toISOString } from "../../core/utils";
+import { toISOString } from "@abrechnung/utils";
 import { StackScreenProps } from "@react-navigation/stack";
 import LoadingIndicator from "../../components/LoadingIndicator";
 import { useFocusEffect } from "@react-navigation/native";
