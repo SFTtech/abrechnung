@@ -61,7 +61,10 @@ export default function BalanceHistoryGraph({ group, accountID }) {
                     </Typography>
                     <Typography
                         component="span"
-                        sx={{ color: (theme) => balanceColor(payload[0].value, theme), ml: 2 }}
+                        sx={{
+                            color: (theme) => balanceColor(payload[0].value, theme),
+                            ml: 2,
+                        }}
                     >
                         {payload[0].value} {group.currency_symbol}
                     </Typography>

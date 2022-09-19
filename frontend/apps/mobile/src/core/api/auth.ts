@@ -1,7 +1,6 @@
 import { initializeAPIURL, initializeAuthCache, makeGet, makePost } from "./index";
 import { db } from "../database";
 
-
 export async function login({ server, username, password }) {
     const payload = {
         username,
@@ -23,7 +22,8 @@ export async function login({ server, username, password }) {
         const jsonResp = await resp.json();
         console.log(payload, server, jsonResp, username);
         await db.execute(`update abrechnung_instance set is_active_session = false`);
-        await db.execute(`
+        await db.execute(
+            `
                     insert into abrechnung_instance (
                         url, user_id, username, session_token, access_token, is_active_session
                     )
@@ -35,15 +35,15 @@ export async function login({ server, username, password }) {
                                                     user_id = excluded.user_id,
                                                     username = excluded.username,
                                                     access_token = excluded.access_token,
-                                                    is_active_session = excluded.is_active_session`
-            , [server, jsonResp.user_id, username, jsonResp.session_token, jsonResp.access_token]);
+                                                    is_active_session = excluded.is_active_session`,
+            [server, jsonResp.user_id, username, jsonResp.session_token, jsonResp.access_token]
+        );
         await initializeAPIURL(server);
         await initializeAuthCache();
         return jsonResp.user_id;
     } catch (err) {
         throw new Error(`error on login: ${err.toString()}`);
     }
-
 }
 
 export async function logout() {
@@ -52,13 +52,16 @@ export async function logout() {
     } catch {
         // do nothing
     }
-    await db.execute(`update abrechnung_instance
+    await db.execute(
+        `update abrechnung_instance
                       set
                           is_active_session = false,
                           session_token     = null,
                           access_token      = null
                       where
-                          is_active_session`, []);
+                          is_active_session`,
+        []
+    );
 }
 
 export async function fetchProfile() {

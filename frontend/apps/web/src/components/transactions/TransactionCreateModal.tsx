@@ -43,7 +43,11 @@ export default function TransactionCreateModal({ group, show, onClose }) {
     };
 
     const validate = (values) => {
-        let errors = { value: undefined, description: undefined, billedAt: undefined };
+        let errors = {
+            value: undefined,
+            description: undefined,
+            billedAt: undefined,
+        };
         const floatValue = parseFloat(values.value);
         if (isNaN(floatValue) || floatValue <= 0) {
             errors.value = "please input a valid decimal number";

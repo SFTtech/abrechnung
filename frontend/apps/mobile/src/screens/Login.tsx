@@ -13,15 +13,18 @@ export default function LoginScreen({ navigation }: RootDrawerScreenProps<"Login
     const theme = useTheme();
     const setAuthState = useSetRecoilState(authState);
 
-    const [server, setServer] = useState({ value: "http://192.168.178.26:8080", error: "" });
+    const [server, setServer] = useState({
+        value: "http://192.168.178.26:8080",
+        error: "",
+    });
     const [username, setUsername] = useState({ value: "", error: "" });
     const [password, setPassword] = useState({ value: "", error: "" });
 
     const [showPassword, setShowPassword] = useState(false);
 
     const toggleShowPassword = () => {
-        setShowPassword(oldVal => !oldVal);
-    }
+        setShowPassword((oldVal) => !oldVal);
+    };
 
     const onLoginPressed = () => {
         const usernameError = nameValidator(username.value);
@@ -35,15 +38,19 @@ export default function LoginScreen({ navigation }: RootDrawerScreenProps<"Login
             return;
         }
 
-        login({ server: server.value, username: username.value, password: password.value })
-            .then(result => {
+        login({
+            server: server.value,
+            username: username.value,
+            password: password.value,
+        })
+            .then((result) => {
                 console.log("logged in with result", result);
                 setAuthState({
                     isLoading: false,
                     isLoggedIn: true,
                 });
             })
-            .catch(err => {
+            .catch((err) => {
                 console.log("error on login", err);
                 notify({ text: err.toString() });
             });
@@ -52,16 +59,14 @@ export default function LoginScreen({ navigation }: RootDrawerScreenProps<"Login
     return (
         <>
             <Appbar.Header theme={{ colors: { primary: theme.colors.surface } }}>
-                <Appbar.Content
-                    title="Abrechnung"
-                />
+                <Appbar.Content title="Abrechnung" />
             </Appbar.Header>
             <View style={styles.container}>
                 <TextInput
                     label="Server"
                     returnKeyType="next"
                     value={server.value}
-                    onChangeText={text => setServer({ value: text, error: "" })}
+                    onChangeText={(text) => setServer({ value: text, error: "" })}
                     error={!!server.error}
                     // errorText={email.error}
                     autoCapitalize="none"
@@ -69,33 +74,49 @@ export default function LoginScreen({ navigation }: RootDrawerScreenProps<"Login
                     textContentType="URL"
                     keyboardType="url"
                 />
-                <HelperText type="error" visible={!!server.error}>{server.error}</HelperText>
+                <HelperText type="error" visible={!!server.error}>
+                    {server.error}
+                </HelperText>
 
                 <TextInput
                     label="Username"
                     returnKeyType="next"
                     value={username.value}
-                    onChangeText={text => setUsername({ value: text, error: "" })}
+                    onChangeText={(text) => setUsername({ value: text, error: "" })}
                     error={!!username.error}
                     // errorText={email.error}
                     autoCapitalize="none"
                     // autoCompleteType="email"
                     textContentType="username"
                 />
-                <HelperText type="error" visible={!!username.error}>{username.error}</HelperText>
+                <HelperText type="error" visible={!!username.error}>
+                    {username.error}
+                </HelperText>
 
                 <TextInput
                     label="Password"
                     returnKeyType="done"
                     value={password.value}
-                    onChangeText={text => setPassword({ value: text, error: "" })}
+                    onChangeText={(text) => setPassword({ value: text, error: "" })}
                     error={!!password.error}
                     // errorText={password.error}
                     secureTextEntry={!showPassword}
-                    right={<TextInput.Icon
-                        name={({ color, size }) => <MaterialCommunityIcons name={showPassword ? "eye-off" : "eye"} color={color} size={size} onPress={toggleShowPassword}/>} />}
+                    right={
+                        <TextInput.Icon
+                            name={({ color, size }) => (
+                                <MaterialCommunityIcons
+                                    name={showPassword ? "eye-off" : "eye"}
+                                    color={color}
+                                    size={size}
+                                    onPress={toggleShowPassword}
+                                />
+                            )}
+                        />
+                    }
                 />
-                <HelperText type="error" visible={!!password.error}>{password.error}</HelperText>
+                <HelperText type="error" visible={!!password.error}>
+                    {password.error}
+                </HelperText>
 
                 <Button mode="contained" onPress={onLoginPressed}>
                     Login
@@ -103,16 +124,14 @@ export default function LoginScreen({ navigation }: RootDrawerScreenProps<"Login
 
                 <View style={styles.row}>
                     <Text>Don’t have an account? </Text>
-                    <TouchableOpacity
-                        onPress={() => navigation.navigate("Register")}
-                    >
+                    <TouchableOpacity onPress={() => navigation.navigate("Register")}>
                         <Text style={styles.link}>Sign up</Text>
                     </TouchableOpacity>
                 </View>
             </View>
         </>
     );
-};
+}
 
 const styles = StyleSheet.create({
     container: {

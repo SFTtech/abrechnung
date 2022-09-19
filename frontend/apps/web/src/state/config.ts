@@ -42,15 +42,21 @@ export const config = selector<Config>({
         }
 
         try {
-            const resp = await axios.get("/config.json", { headers: { "Content-Type": "application/json" } });
+            const resp = await axios.get("/config.json", {
+                headers: { "Content-Type": "application/json" },
+            });
             try {
                 return (await configSchema.validate(await resp.data)) as Config;
             } catch (e) {
                 console.log(e);
-                return { error: "This frontend is configured incorrectly, please contact your server administrator" };
+                return {
+                    error: "This frontend is configured incorrectly, please contact your server administrator",
+                };
             }
         } catch {
-            return { error: "This frontend is configured incorrectly, please contact your server administrator" };
+            return {
+                error: "This frontend is configured incorrectly, please contact your server administrator",
+            };
         }
     },
 });

@@ -17,17 +17,15 @@ export default function PositionListItem({ currency_symbol, position, editing })
     const closeMenu = () => setShowMenu(false);
 
     const onDeletePosition = () => {
-        deletePosition(position)
-            .catch(err => {
-                notify({ text: `Error while deleting position: ${err.toString()}` });
-            });
+        deletePosition(position).catch((err) => {
+            notify({ text: `Error while deleting position: ${err.toString()}` });
+        });
     };
 
     const onCopyPosition = () => {
-        createPosition(position.transaction_id, position)
-            .catch(err => {
-                notify({ text: `Error while copying position: ${err.toString()}` });
-            });
+        createPosition(position.transaction_id, position).catch((err) => {
+            notify({ text: `Error while copying position: ${err.toString()}` });
+        });
     };
 
     return (
@@ -38,13 +36,23 @@ export default function PositionListItem({ currency_symbol, position, editing })
                 anchor={
                     <List.Item
                         key={position.id}
-                        title={position.name === "" ?
-                            <Text style={{ color: theme.colors.error }}>&lt;empty&gt;</Text> : position.name}
+                        title={
+                            position.name === "" ? (
+                                <Text style={{ color: theme.colors.error }}>&lt;empty&gt;</Text>
+                            ) : (
+                                position.name
+                            )
+                        }
                         onPress={() => setShowPositionDialog(true)}
                         onLongPress={openMenu}
-                        right={props => <Text>{parseFloat(position.price).toFixed(2)} {currency_symbol}</Text>}
+                        right={(props) => (
+                            <Text>
+                                {parseFloat(position.price).toFixed(2)} {currency_symbol}
+                            </Text>
+                        )}
                     />
-                }>
+                }
+            >
                 <Menu.Item title="Delete" leadingIcon="delete" onPress={onDeletePosition} />
                 <Menu.Item title="Copy" leadingIcon="content-copy" onPress={onCopyPosition} />
             </Menu>

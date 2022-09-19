@@ -1,5 +1,9 @@
 export default class NotificationTracker<NotificationPayload> {
-    subscribers: { [identifier: string]: { [callback_id: number]: (payload: NotificationPayload) => void } };  // map group id to list of callback
+    subscribers: {
+        [identifier: string]: {
+            [callback_id: number]: (payload: NotificationPayload) => void;
+        };
+    }; // map group id to list of callback
     next_callback_id = 0;
 
     constructor() {
@@ -20,7 +24,7 @@ export default class NotificationTracker<NotificationPayload> {
 
     notify = (identifier: string | number, payload: NotificationPayload) => {
         if (this.subscribers.hasOwnProperty(identifier)) {
-            Object.values(this.subscribers[identifier]).forEach(callback => callback(payload));
+            Object.values(this.subscribers[identifier]).forEach((callback) => callback(payload));
         }
     };
 }

@@ -16,7 +16,7 @@ export default function DateTimeInput(props) {
 
     const onTextInputChange = (newValue: string) => {
         setTextValue(newValue);
-    }
+    };
 
     const onPickerChange = (event, selectedDate: Date) => {
         propagateChange(selectedDate);
@@ -58,9 +58,7 @@ export default function DateTimeInput(props) {
                 right={<TextInput.Icon onPress={show} name="calendar-today" />}
                 error={error !== null}
             />
-            {!!error && (
-                <HelperText type="error">{error}</HelperText>
-            )}
+            {!!error && <HelperText type="error">{error}</HelperText>}
         </>
     );
 }

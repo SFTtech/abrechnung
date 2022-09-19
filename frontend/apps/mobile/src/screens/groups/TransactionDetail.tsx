@@ -32,9 +32,9 @@ import { useFocusEffect } from "@react-navigation/native";
 import { ValidationError } from "@abrechnung/types";
 
 export default function TransactionDetail({
-                                              route,
-                                              navigation,
-                                          }: StackScreenProps<GroupStackParamList, "TransactionDetail">) {
+    route,
+    navigation,
+}: StackScreenProps<GroupStackParamList, "TransactionDetail">) {
     const theme = useTheme();
     const { groupID, transactionID, editingStart } = route.params;
 
@@ -53,17 +53,15 @@ export default function TransactionDetail({
                 if (editing) {
                     return (
                         <>
-                            <Button onPress={cancelEdit} textColor={theme.colors.error}>Cancel</Button>
+                            <Button onPress={cancelEdit} textColor={theme.colors.error}>
+                                Cancel
+                            </Button>
                             <Button onPress={save}>Save</Button>
                         </>
                     );
                 }
-                return (
-                    <Button onPress={edit}>Edit</Button>
-                );
-            }
-
-            ,
+                return <Button onPress={edit}>Edit</Button>;
+            },
         });
     }, [theme, editing, navigation, localEditingState, setLocalEditingState]); // FIXME: figure out why we need localEditingState as an effect dependency
 
@@ -77,7 +75,7 @@ export default function TransactionDetail({
     useFocusEffect(
         React.useCallback(() => {
             const onBackPress = () => {
-                onGoBack().catch(err => {
+                onGoBack().catch((err) => {
                     notify({ text: `Error while going back: ${err.toString()}` });
                 });
                 return false;
@@ -85,15 +83,14 @@ export default function TransactionDetail({
 
             BackHandler.addEventListener("hardwareBackPress", onBackPress);
 
-            return () =>
-                BackHandler.removeEventListener("hardwareBackPress", onBackPress);
-        }, [editing, transaction]),
+            return () => BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+        }, [editing, transaction])
     );
 
     useEffect(() => {
         if (transaction != null) {
             setInputErrors({});
-            setLocalEditingState(prevState => {
+            setLocalEditingState((prevState) => {
                 return {
                     ...prevState,
                     description: transaction.description,
@@ -119,16 +116,23 @@ export default function TransactionDetail({
                 setInputErrors({});
                 console.log("saved transaction changes to local db");
                 pushLocalTransactionChanges(transaction.id)
-                    .then(res => {
+                    .then((res) => {
                         const [updatedTransaction, updatedPositions] = res;
-                        console.log("synced updated transaction with server: old id", transaction.id, "new id", updatedTransaction.id, "group", groupID);
+                        console.log(
+                            "synced updated transaction with server: old id",
+                            transaction.id,
+                            "new id",
+                            updatedTransaction.id,
+                            "group",
+                            groupID
+                        );
                         navigation.navigate("TransactionDetail", {
                             transactionID: updatedTransaction.id,
                             groupID: groupID,
                             editingStart: null,
                         });
                     })
-                    .catch(err => {
+                    .catch((err) => {
                         console.log("error on pushing stuff to server", err);
                         navigation.navigate("TransactionDetail", {
                             transactionID: transaction.id,
@@ -137,7 +141,7 @@ export default function TransactionDetail({
                         });
                     });
             })
-            .catch(err => {
+            .catch((err) => {
                 if (err instanceof ValidationError) {
                     setInputErrors(err.data);
                 } else {
@@ -156,9 +160,11 @@ export default function TransactionDetail({
     };
 
     const cancelEdit = () => {
-        deleteLocalTransactionChanges(groupID, transaction.id, editingStart).then(deletedTransaction => {
+        deleteLocalTransactionChanges(groupID, transaction.id, editingStart).then((deletedTransaction) => {
             if (deletedTransaction) {
-                navigation.navigate("BottomTabNavigator", { screen: "TransactionList" });
+                navigation.navigate("BottomTabNavigator", {
+                    screen: "TransactionList",
+                });
             } else {
                 setLocalEditingState({
                     description: transaction.description,
@@ -179,15 +185,14 @@ export default function TransactionDetail({
     };
 
     const onCreatePosition = () => {
-        createPosition(groupID, transaction.id)
-            .catch(err => {
-                notify({ text: `Error while creating position: ${err.toString()}` });
-            });
+        createPosition(groupID, transaction.id).catch((err) => {
+            notify({ text: `Error while creating position: ${err.toString()}` });
+        });
     };
 
     const onChangeLocalEditingValueFactory = (fieldName: string) => (value) => {
         setInputErrors({});
-        setLocalEditingState(prevState => {
+        setLocalEditingState((prevState) => {
             return {
                 ...prevState,
                 [fieldName]: value,
@@ -203,16 +208,16 @@ export default function TransactionDetail({
         );
     }
 
-    const inputStyles = editing ? styles.input : {
-        marginBottom: 4,
-        // color: theme.colors.onBackground,
-        backgroundColor: theme.colors.background,
-    };
+    const inputStyles = editing
+        ? styles.input
+        : {
+              marginBottom: 4,
+              // color: theme.colors.onBackground,
+              backgroundColor: theme.colors.background,
+          };
 
     return (
-        <ScrollView
-            style={styles.container}
-        >
+        <ScrollView style={styles.container}>
             <TextInput
                 label="Description"
                 value={localEditingState.description}
@@ -246,9 +251,7 @@ export default function TransactionDetail({
                 right={<TextInput.Affix text={transaction.currency_symbol} />}
                 error={inputErrors.hasOwnProperty("value")}
             />
-            {inputErrors.hasOwnProperty("value") && (
-                <HelperText type="error">{inputErrors["value"]}</HelperText>
-            )}
+            {inputErrors.hasOwnProperty("value") && <HelperText type="error">{inputErrors["value"]}</HelperText>}
 
             <TransactionShareInput
                 title="Paid by"
@@ -277,32 +280,42 @@ export default function TransactionDetail({
 
             {positions.state === "loading" ? (
                 <LoadingIndicator />
-            ) : positions.contents.length > 0 && (
-                <Surface style={{ marginTop: 8 }} elevation={1}>
-                    <List.Item title="Postions" />
-                    <>
-                        <Divider />
-                        {positions.contents.map(position => (
-                            <PositionListItem
-                                key={position.id}
-                                currency_symbol={transaction.currency_symbol}
-                                position={position}
-                                editing={editing}
+            ) : (
+                positions.contents.length > 0 && (
+                    <Surface style={{ marginTop: 8 }} elevation={1}>
+                        <List.Item title="Postions" />
+                        <>
+                            <Divider />
+                            {positions.contents.map((position) => (
+                                <PositionListItem
+                                    key={position.id}
+                                    currency_symbol={transaction.currency_symbol}
+                                    position={position}
+                                    editing={editing}
+                                />
+                            ))}
+                            <Divider />
+                            <List.Item
+                                title="Total"
+                                right={(props) => (
+                                    <Text>
+                                        {positions.contents
+                                            .map((p) => p.price)
+                                            .reduce((acc, curr) => acc + curr, 0)
+                                            .toFixed(2)}{" "}
+                                        {transaction.currency_symbol}
+                                    </Text>
+                                )}
                             />
-                        ))}
-                        <Divider />
-                        <List.Item
-                            title="Total"
-                            right={props =>
-                                <Text>{positions.contents.map(p => p.price).reduce((acc, curr) => acc + curr, 0).toFixed(2)} {transaction.currency_symbol}</Text>}
-                        />
-                    </>
-                </Surface>
+                        </>
+                    </Surface>
+                )
             )}
             {transaction.type === "purchase" && editing && (
-                <Button icon="add" onPress={onCreatePosition}>Add Position</Button>
+                <Button icon="add" onPress={onCreatePosition}>
+                    Add Position
+                </Button>
             )}
-
         </ScrollView>
     );
 }

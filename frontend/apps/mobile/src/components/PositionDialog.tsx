@@ -35,7 +35,7 @@ export default function PositionDialog({ position, editing, showDialog, onHideDi
 
     const toggleShare = (account_id: number) => {
         const currVal = localEditingState.usages.hasOwnProperty(account_id) ? localEditingState.usages[account_id] : 0;
-        setLocalEditingState(prevState => {
+        setLocalEditingState((prevState) => {
             let newShares = { ...prevState.usages };
             if (currVal > 0) {
                 delete newShares[account_id];
@@ -52,8 +52,11 @@ export default function PositionDialog({ position, editing, showDialog, onHideDi
     useEffect(() => {
         if (localEditingState != null) {
             setFilteredAccounts(
-                sortedAccounts
-                    .filter(acc => acc.name.toLowerCase().includes(searchTerm.toLowerCase()) && (editing || (localEditingState.usages[acc.id] ?? 0 > 0))),
+                sortedAccounts.filter(
+                    (acc) =>
+                        acc.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                        (editing || (localEditingState.usages[acc.id] ?? 0 > 0))
+                )
             );
         }
     }, [editing, localEditingState, sortedAccounts, searchTerm]);
@@ -62,10 +65,12 @@ export default function PositionDialog({ position, editing, showDialog, onHideDi
         if (showDialog) {
             // we transition from a closed to an open dialog - fix sorting of shares
             setSortedAccounts(
-                [...accounts].sort(createComparator(
-                    lambdaComparator(acc => localEditingState.usages[acc.id] ?? 0, true),
-                    lambdaComparator(acc => acc.name.toLowerCase())),
-                ),
+                [...accounts].sort(
+                    createComparator(
+                        lambdaComparator((acc) => localEditingState.usages[acc.id] ?? 0, true),
+                        lambdaComparator((acc) => acc.name.toLowerCase())
+                    )
+                )
             );
         }
     }, [accounts, showDialog]);
@@ -87,24 +92,24 @@ export default function PositionDialog({ position, editing, showDialog, onHideDi
     }, [position, setLocalEditingState]);
 
     const finishDialog = () => {
-            console.log(position);
-            updatePosition({
-                ...position,
-                ...localEditingState,
-                communist_shares: parseFloat(localEditingState.communist_shares),
-                price: parseFloat(localEditingState.price),
+        console.log(position);
+        updatePosition({
+            ...position,
+            ...localEditingState,
+            communist_shares: parseFloat(localEditingState.communist_shares),
+            price: parseFloat(localEditingState.price),
+        })
+            .then(() => {
+                setErrors({});
+                onHideDialog();
             })
-                .then(() => {
-                    setErrors({});
-                    onHideDialog();
-                })
-                .catch(err => {
-                    if (err instanceof ValidationError) {
-                        setErrors(err.data);
-                    } else {
-                        notify({ text: `Error while saving position: ${err.toString()}` });
-                    }
-                });
+            .catch((err) => {
+                if (err instanceof ValidationError) {
+                    setErrors(err.data);
+                } else {
+                    notify({ text: `Error while saving position: ${err.toString()}` });
+                }
+            });
     };
 
     const cancelDialog = () => {
@@ -113,7 +118,7 @@ export default function PositionDialog({ position, editing, showDialog, onHideDi
     };
 
     const onChangeLocalEditingValueFactory = (fieldName: string) => (value) => {
-        setLocalEditingState(prevState => {
+        setLocalEditingState((prevState) => {
             return {
                 ...prevState,
                 [fieldName]: value,
@@ -123,7 +128,7 @@ export default function PositionDialog({ position, editing, showDialog, onHideDi
 
     const toggleCommunistShare = () => {
         if (editing) {
-            setLocalEditingState(prevState => {
+            setLocalEditingState((prevState) => {
                 return {
                     ...prevState,
                     communist_shares: prevState.communist_shares > 0 ? 0 : 1,
@@ -132,24 +137,26 @@ export default function PositionDialog({ position, editing, showDialog, onHideDi
         }
     };
 
-    const inputStyles = editing ? styles.input : {
-        marginBottom: 4,
-        // color: theme.colors.onBackground,
-        backgroundColor: theme.colors.background,
-    };
+    const inputStyles = editing
+        ? styles.input
+        : {
+              marginBottom: 4,
+              // color: theme.colors.onBackground,
+              backgroundColor: theme.colors.background,
+          };
 
     return (
         <Dialog visible={showDialog} onDismiss={onHideDialog}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
-            >
+            <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
                 {position == null || localEditingState == null ? (
                     <Dialog.Content>
                         <ActivityIndicator animating={true} />
                     </Dialog.Content>
                 ) : (
                     <>
-                        <Dialog.Title><Text>Position</Text></Dialog.Title>
+                        <Dialog.Title>
+                            <Text>Position</Text>
+                        </Dialog.Title>
                         <Dialog.Content>
                             <TextInput
                                 label="Name"
@@ -159,12 +166,14 @@ export default function PositionDialog({ position, editing, showDialog, onHideDi
                                 style={inputStyles}
                                 error={errors.hasOwnProperty("name")}
                             />
-                            {errors.hasOwnProperty("name") && (
-                                <HelperText type="error">{errors["name"]}</HelperText>
-                            )}
+                            {errors.hasOwnProperty("name") && <HelperText type="error">{errors["name"]}</HelperText>}
                             <TextInput
                                 label="Price" // TODO: proper float input
-                                value={editing ? String(localEditingState.price) : String(localEditingState.price.toFixed(2))}
+                                value={
+                                    editing
+                                        ? String(localEditingState.price)
+                                        : String(localEditingState.price.toFixed(2))
+                                }
                                 editable={editing}
                                 keyboardType="numeric"
                                 onChangeText={onChangeLocalEditingValueFactory("price")}
@@ -172,40 +181,43 @@ export default function PositionDialog({ position, editing, showDialog, onHideDi
                                 right={<TextInput.Affix text={currencySymbol} />}
                                 error={errors.hasOwnProperty("price")}
                             />
-                            {errors.hasOwnProperty("price") && (
-                                <HelperText type="error">{errors["price"]}</HelperText>
-                            )}
+                            {errors.hasOwnProperty("price") && <HelperText type="error">{errors["price"]}</HelperText>}
 
                             <List.Item
                                 title="Communist Shares"
-                                right={props => <Checkbox.Android
-                                    status={localEditingState.communist_shares > 0 ? "checked" : "unchecked"}
-                                    disabled={!editing} />}
+                                right={(props) => (
+                                    <Checkbox.Android
+                                        status={localEditingState.communist_shares > 0 ? "checked" : "unchecked"}
+                                        disabled={!editing}
+                                    />
+                                )}
                                 onPress={toggleCommunistShare}
                             />
 
                             {editing && (
-                                <Searchbar
-                                    placeholder="Search"
-                                    onChangeText={setSearchTerm}
-                                    value={searchTerm}
-                                />
+                                <Searchbar placeholder="Search" onChangeText={setSearchTerm} value={searchTerm} />
                             )}
-
                         </Dialog.Content>
 
                         <Dialog.ScrollArea>
                             <ScrollView>
-                                {filteredAccounts.map(account => (
+                                {filteredAccounts.map((account) => (
                                     <List.Item
                                         key={account.id}
                                         title={account.name}
                                         onPress={() => editing && toggleShare(account.id)}
                                         disabled={!editing}
-                                        right={props => <Checkbox.Android
-                                            status={localEditingState.usages.hasOwnProperty(account.id) && localEditingState.usages[account.id] > 0 ? "checked" : "unchecked"}
-                                            disabled={!editing} />
-                                        }
+                                        right={(props) => (
+                                            <Checkbox.Android
+                                                status={
+                                                    localEditingState.usages.hasOwnProperty(account.id) &&
+                                                    localEditingState.usages[account.id] > 0
+                                                        ? "checked"
+                                                        : "unchecked"
+                                                }
+                                                disabled={!editing}
+                                            />
+                                        )}
                                     />
                                 ))}
                             </ScrollView>
@@ -213,7 +225,9 @@ export default function PositionDialog({ position, editing, showDialog, onHideDi
 
                         <Dialog.Actions>
                             {editing && (
-                                <Button onPress={cancelDialog} textColor={theme.colors.error}>Cancel</Button>
+                                <Button onPress={cancelDialog} textColor={theme.colors.error}>
+                                    Cancel
+                                </Button>
                             )}
                             <Button onPress={finishDialog}>Done</Button>
                         </Dialog.Actions>

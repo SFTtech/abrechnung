@@ -40,7 +40,7 @@ type Comparable = string | number;
 /**
  * Returns a comparator which use an evaluationFunc on each item for comparison
  */
-export function lambdaComparator<T>(evaluationFunc: ((item: T) => Comparable), reversed = false): Comparator<T> {
+export function lambdaComparator<T>(evaluationFunc: (item: T) => Comparable, reversed = false): Comparator<T> {
     return (a: T, b: T) => {
         const valA = evaluationFunc(a);
         const valB = evaluationFunc(b);

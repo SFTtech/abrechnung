@@ -34,7 +34,14 @@ export default function ConfirmPasswordRecovery() {
     return (
         <Container maxWidth="xs">
             <CssBaseline />
-            <Box sx={{ mt: 8, display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <Box
+                sx={{
+                    mt: 8,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                }}
+            >
                 <Typography component="h1" variant="h5">
                     Confirm Password Recovery
                 </Typography>

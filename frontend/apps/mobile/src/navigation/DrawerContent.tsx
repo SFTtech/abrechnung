@@ -18,17 +18,19 @@ export default function DrawerContent(props) {
                 <Drawer.Section title="Groups">
                     {groups === null ? (
                         <ActivityIndicator animating={true} />
-                    ) : groups.map(group => (
-                        <Drawer.Item
-                            key={group.id}
-                            label={group.name}
-                            active={group.id === activeGroupID}
-                            onPress={() => {
-                                setActiveGroupID(group.id);
-                                navigation.navigate("GroupStackNavigator");
-                            }}
-                        />
-                    ))}
+                    ) : (
+                        groups.map((group) => (
+                            <Drawer.Item
+                                key={group.id}
+                                label={group.name}
+                                active={group.id === activeGroupID}
+                                onPress={() => {
+                                    setActiveGroupID(group.id);
+                                    navigation.navigate("GroupStackNavigator");
+                                }}
+                            />
+                        ))
+                    )}
                 </Drawer.Section>
                 <Drawer.Section style={styles.drawerSection}>
                     {/*<Drawer.Item*/}
@@ -45,9 +47,7 @@ export default function DrawerContent(props) {
                     {/*    }}*/}
                     {/*/>*/}
                     <Drawer.Item
-                        icon={({ color, size }) => (
-                            <MaterialCommunityIcons name="tune" color={color} size={size} />
-                        )}
+                        icon={({ color, size }) => <MaterialCommunityIcons name="tune" color={color} size={size} />}
                         label="Preferences"
                         onPress={() => {
                             navigation.navigate("Preferences");

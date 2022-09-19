@@ -3,9 +3,9 @@ import { useEffect, useState } from "react";
 import NotificationTracker from "./core";
 
 type notificationParams = {
-    text: string,
-    timeout?: number | null,
-}
+    text: string;
+    timeout?: number | null;
+};
 
 const DEFAULT_NOTIFICATION_PARAMS: notificationParams = {
     text: "",
@@ -24,10 +24,14 @@ export function notify(params: notificationParams) {
 }
 
 export function NotificationProvider() {
-    const [state, setState] = useState({ text: "", timeout: null, visible: false });
+    const [state, setState] = useState({
+        text: "",
+        timeout: null,
+        visible: false,
+    });
 
     const onDismissSnackBar = () => {
-        setState(prevState => {
+        setState((prevState) => {
             return {
                 ...prevState,
                 visible: false,
@@ -38,7 +42,7 @@ export function NotificationProvider() {
     useEffect(() => {
         return notificationEmitter.subscribe(NOTIFICATION_KEY, (event) => {
             console.log("received notification event", event);
-            setState(prevState => {
+            setState((prevState) => {
                 return {
                     ...prevState,
                     ...event,

@@ -412,7 +412,12 @@ export default function TransactionPositions({ group, transaction }: PropTypes) 
 
     const updateEmptyPosition = (position, name, price, communistShares) => {
         if (name !== "" && name != null) {
-            const copyOfEmpty = { ...position, name: name, price: price, communist_shares: communistShares };
+            const copyOfEmpty = {
+                ...position,
+                name: name,
+                price: price,
+                communist_shares: communistShares,
+            };
             setLocalPositionChanges((currPositions) => {
                 let mappedAdded = { ...currPositions.added };
                 mappedAdded[position.id] = copyOfEmpty;

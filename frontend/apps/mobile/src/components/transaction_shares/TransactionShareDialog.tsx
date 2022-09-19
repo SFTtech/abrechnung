@@ -9,30 +9,30 @@ import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { TransactionShare } from "@abrechnung/types";
 
 type Props = {
-    groupID: number,
-    value: TransactionShare,
-    onChange: (TransactionShare) => void,
-    showDialog: boolean,
-    onHideDialog: () => void,
-    title: string,
-    disabled: boolean,
-    enableAdvanced: boolean,
-    multiSelect: boolean,
-    excludedAccounts: number[]
-}
+    groupID: number;
+    value: TransactionShare;
+    onChange: (TransactionShare) => void;
+    showDialog: boolean;
+    onHideDialog: () => void;
+    title: string;
+    disabled: boolean;
+    enableAdvanced: boolean;
+    multiSelect: boolean;
+    excludedAccounts: number[];
+};
 
 export default function TransactionShareDialog({
-                                                   groupID,
-                                                   value,
-                                                   onChange,
-                                                   showDialog,
-                                                   onHideDialog,
-                                                   title,
-                                                   disabled = false,
-                                                   enableAdvanced = false,
-                                                   multiSelect = true,
-                                                   excludedAccounts = [],
-                                               }: Props) {
+    groupID,
+    value,
+    onChange,
+    showDialog,
+    onHideDialog,
+    title,
+    disabled = false,
+    enableAdvanced = false,
+    multiSelect = true,
+    excludedAccounts = [],
+}: Props) {
     const [shares, setShares] = useState({});
     const [searchTerm, setSearchTerm] = useState("");
     const accounts = useRecoilValue(accountState(groupID));
@@ -42,7 +42,7 @@ export default function TransactionShareDialog({
     const toggleShare = (account_id: number) => {
         const currVal = shares.hasOwnProperty(account_id) ? shares[account_id] : 0;
         if (multiSelect) {
-            setShares(shares => {
+            setShares((shares) => {
                 let newShares = { ...shares };
                 if (currVal > 0) {
                     delete newShares[account_id];
@@ -59,8 +59,12 @@ export default function TransactionShareDialog({
     useEffect(() => {
         setFilteredAccounts(
             sortedAccounts
-                .filter(acc => excludedAccounts.indexOf(acc.id) === -1)
-                .filter(acc => acc.name.toLowerCase().includes(searchTerm.toLowerCase()) && (!disabled || (shares[acc.id] ?? 0 > 0))),
+                .filter((acc) => excludedAccounts.indexOf(acc.id) === -1)
+                .filter(
+                    (acc) =>
+                        acc.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+                        (!disabled || (shares[acc.id] ?? 0 > 0))
+                )
         );
     }, [disabled, shares, sortedAccounts, searchTerm, excludedAccounts]);
 
@@ -72,10 +76,12 @@ export default function TransactionShareDialog({
         if (showDialog) {
             // we transition from a closed to an open dialog - fix sorting of shares
             setSortedAccounts(
-                [...accounts].sort(createComparator(
-                    lambdaComparator(acc => shares[acc.id] ?? 0, true),
-                    lambdaComparator(acc => acc.name.toLowerCase())),
-                ),
+                [...accounts].sort(
+                    createComparator(
+                        lambdaComparator((acc) => shares[acc.id] ?? 0, true),
+                        lambdaComparator((acc) => acc.name.toLowerCase())
+                    )
+                )
             );
         }
     }, [accounts, showDialog]);
@@ -87,32 +93,31 @@ export default function TransactionShareDialog({
 
     return (
         <Dialog visible={showDialog} onDismiss={finishDialog}>
-            <KeyboardAvoidingView
-                behavior={Platform.OS === "ios" ? "padding" : "height"}
-            >
+            <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
                 <Dialog.Title>{title}</Dialog.Title>
 
                 <Dialog.Content>
-                    <Searchbar
-                        placeholder="Search"
-                        onChangeText={setSearchTerm}
-                        value={searchTerm}
-                    />
+                    <Searchbar placeholder="Search" onChangeText={setSearchTerm} value={searchTerm} />
                 </Dialog.Content>
 
                 <Dialog.ScrollArea>
                     <ScrollView>
-                        {filteredAccounts.map(account => (
+                        {filteredAccounts.map((account) => (
                             <List.Item
                                 key={account.id}
                                 title={account.name}
                                 onPress={() => !disabled && toggleShare(account.id)}
-                                left={props => <List.Icon {...props}
-                                                          icon={getAccountIcon(account.type)} />}
-                                right={props => <Checkbox.Android
-                                    status={shares.hasOwnProperty(account.id) && shares[account.id] > 0 ? "checked" : "unchecked"}
-                                    disabled={disabled} />
-                                }
+                                left={(props) => <List.Icon {...props} icon={getAccountIcon(account.type)} />}
+                                right={(props) => (
+                                    <Checkbox.Android
+                                        status={
+                                            shares.hasOwnProperty(account.id) && shares[account.id] > 0
+                                                ? "checked"
+                                                : "unchecked"
+                                        }
+                                        disabled={disabled}
+                                    />
+                                )}
                             />
                         ))}
                     </ScrollView>

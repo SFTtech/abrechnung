@@ -25,7 +25,7 @@ function backendTransactionToTransaction(transaction): [Transaction, Transaction
         map[curr.id] = curr;
         return map;
     }, {});
-    const updatedCommitted = (transaction.committed_positions ?? []).map(position => {
+    const updatedCommitted = (transaction.committed_positions ?? []).map((position) => {
         if (pendingPositionMap.hasOwnProperty(position.id)) {
             const pending = pendingPositionMap[position.id];
             delete pendingPositionMap[position.id];
@@ -36,23 +36,26 @@ function backendTransactionToTransaction(transaction): [Transaction, Transaction
     });
     const mergedPositions = updatedCommitted.concat(...Object.values(pendingPositionMap));
 
-    return [<Transaction>{
-        id: transaction.id,
-        group_id: transaction.group_id,
-        type: transaction.type,
-        version: transaction.version,
-        is_wip: transaction.is_wip,
-        ...(detailsToFields(transaction.committed_details)),
-        ...(detailsToFields(transaction.pending_details)),
-        has_local_changes: false,
-    }, mergedPositions];
+    return [
+        <Transaction>{
+            id: transaction.id,
+            group_id: transaction.group_id,
+            type: transaction.type,
+            version: transaction.version,
+            is_wip: transaction.is_wip,
+            ...detailsToFields(transaction.committed_details),
+            ...detailsToFields(transaction.pending_details),
+            has_local_changes: false,
+        },
+        mergedPositions,
+    ];
 }
 
 export async function fetchTransactions({
-                                            groupID,
-                                            minLastChanged = null,
-                                            additionalTransactions = null,
-                                        }): Promise<[Transaction, TransactionPosition[]][]> {
+    groupID,
+    minLastChanged = null,
+    additionalTransactions = null,
+}): Promise<[Transaction, TransactionPosition[]][]> {
     let url = `/groups/${groupID}/transactions`;
     if (minLastChanged) {
         url += "?min_last_changed=" + encodeURIComponent(minLastChanged.toISO());
@@ -61,7 +64,7 @@ export async function fetchTransactions({
         }
     }
     const transactions = await makeGet(url);
-    return transactions.map(t => backendTransactionToTransaction(t));
+    return transactions.map((t) => backendTransactionToTransaction(t));
 }
 
 export async function fetchTransaction({ transactionID }): Promise<[Transaction, TransactionPosition[]]> {
@@ -70,7 +73,7 @@ export async function fetchTransaction({ transactionID }): Promise<[Transaction,
 }
 
 function toBackendPosition(positions: TransactionPosition[]) {
-    return positions.map(p => {
+    return positions.map((p) => {
         return {
             id: p.id,
             price: p.price,
@@ -82,7 +85,11 @@ function toBackendPosition(positions: TransactionPosition[]) {
     });
 }
 
-export async function pushTransactionChanges(transaction: Transaction, positions: TransactionPosition[], performCommit = true): Promise<[Transaction, TransactionPosition[]]> {
+export async function pushTransactionChanges(
+    transaction: Transaction,
+    positions: TransactionPosition[],
+    performCommit = true
+): Promise<[Transaction, TransactionPosition[]]> {
     if (transaction.id < 0) {
         const updatedTransaction = await makePost(`/groups/${transaction.group_id}/transactions`, {
             description: transaction.description,
@@ -113,7 +120,11 @@ export async function pushTransactionChanges(transaction: Transaction, positions
     }
 }
 
-export async function pushTransactionPositionChanges(transactionID: number, positions: TransactionPosition[], performCommit = true) {
+export async function pushTransactionPositionChanges(
+    transactionID: number,
+    positions: TransactionPosition[],
+    performCommit = true
+) {
     let payload = {
         perform_commit: performCommit,
         positions: toBackendPosition(positions),

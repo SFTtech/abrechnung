@@ -35,9 +35,7 @@ import PreferencesScreen from "../screens/PreferencesScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import AccountEdit from "../screens/groups/AccountEdit";
 
-function getChildRoute(
-    route: Partial<Route<string>>,
-): Partial<Route<string>> {
+function getChildRoute(route: Partial<Route<string>>): Partial<Route<string>> {
     // NOTE: since we use nested navigators we need a utility to traverse the navigation tree and find the currently
     // active subroute
 
@@ -47,10 +45,9 @@ function getChildRoute(
         return route;
     }
 
-    return state.routes[state.index ??
-    (typeof state.type === "string" && state.type !== "stack"
-        ? 0
-        : state.routes.length - 1)];
+    return state.routes[
+        state.index ?? (typeof state.type === "string" && state.type !== "stack" ? 0 : state.routes.length - 1)
+    ];
 }
 
 function getHeaderTitle(route) {
@@ -69,15 +66,11 @@ function getHeaderTitle(route) {
 
 export default function Navigation({ theme }: { theme: Theme }) {
     return (
-        <NavigationContainer
-            linking={LinkingConfiguration}
-            theme={theme}
-        >
+        <NavigationContainer linking={LinkingConfiguration} theme={theme}>
             <RootNavigator />
         </NavigationContainer>
     );
 }
-
 
 const Drawer = createDrawerNavigator<RootDrawerParamList>();
 
@@ -89,7 +82,7 @@ function RootNavigator() {
     useEffect(() => {
         // initial sync on login
         if (auth.isLoggedIn && !auth.isLoading) {
-            syncLocalState().catch(err => {
+            syncLocalState().catch((err) => {
                 notify({ text: `Error on local state sync: ${err}` });
             });
         }
@@ -101,27 +94,25 @@ function RootNavigator() {
         }
     }, [activeGroupID, groups, setActiveGroupID]);
 
-
-    useEffect(() => { // TODO: proper syncing
+    useEffect(() => {
+        // TODO: proper syncing
         if (activeGroupID === null) {
             return;
         }
 
-        syncLocalGroupState(activeGroupID).catch(err => {
+        syncLocalGroupState(activeGroupID).catch((err) => {
             notify({ text: `Error when syncing group state: ${err}` });
         });
     }, [activeGroupID]);
 
     if (auth.isLoading) {
-        return (
-            <SplashScreen />
-        );
+        return <SplashScreen />;
     }
 
     const propsWithHeader = {
         headerShown: true,
         header: (props) => <Header {...props} />,
-    }
+    };
 
     return (
         <Drawer.Navigator
@@ -139,8 +130,7 @@ function RootNavigator() {
             ) : (
                 <Drawer.Group>
                     <Drawer.Screen name="Login" component={LoginScreen} options={{ headerTitle: "Login" }} />
-                    <Drawer.Screen name="Register" component={RegisterScreen}
-                                   options={{ headerTitle: "Register" }} />
+                    <Drawer.Screen name="Register" component={RegisterScreen} options={{ headerTitle: "Register" }} />
                 </Drawer.Group>
             )}
         </Drawer.Navigator>
@@ -154,28 +144,17 @@ function GroupStackNavigator() {
         <GroupStack.Navigator
             initialRouteName="BottomTabNavigator"
             screenOptions={{
-                header: (props) => (
-                    <Header {...props} />
-                ),
+                header: (props) => <Header {...props} />,
             }}
         >
-            <GroupStack.Screen
-                name="BottomTabNavigator"
-                component={BottomTabNavigator}
-            />
+            <GroupStack.Screen name="BottomTabNavigator" component={BottomTabNavigator} />
             <GroupStack.Screen
                 name="TransactionDetail"
                 component={TransactionDetail}
                 options={{ headerTitle: "Transaction Detail" }}
             />
-            <GroupStack.Screen
-                name="AccountDetail"
-                component={AccountDetail}
-            />
-            <GroupStack.Screen
-                name="AccountEdit"
-                component={AccountEdit}
-            />
+            <GroupStack.Screen name="AccountDetail" component={AccountDetail} />
+            <GroupStack.Screen name="AccountEdit" component={AccountEdit} />
         </GroupStack.Navigator>
     );
 }
@@ -189,7 +168,8 @@ function BottomTabNavigator() {
             screenOptions={{
                 // tabBarActiveTintColor: Colors[colorScheme].tint,
                 headerShown: false,
-            }}>
+            }}
+        >
             <BottomTab.Screen
                 name="TransactionList"
                 component={TransactionList}
@@ -205,7 +185,7 @@ function BottomTabNavigator() {
                     tabBarIcon: ({ color }) => <TabBarIcon name={personalAccountIcon} color={color} />,
                 }}
             >
-                {(props) => (<AccountList accountType="personal" {...props} />)}
+                {(props) => <AccountList accountType="personal" {...props} />}
             </BottomTab.Screen>
             <BottomTab.Screen
                 name="ClearingAccountList"
@@ -214,7 +194,7 @@ function BottomTabNavigator() {
                     tabBarIcon: ({ color }) => <TabBarIcon name={clearingAccountIcon} color={color} />,
                 }}
             >
-                {(props) => (<AccountList accountType="clearing" {...props} />)}
+                {(props) => <AccountList accountType="clearing" {...props} />}
             </BottomTab.Screen>
         </BottomTab.Navigator>
     );
@@ -223,9 +203,6 @@ function BottomTabNavigator() {
 /**
  * You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
  */
-function TabBarIcon(props: {
-    name: React.ComponentProps<typeof MaterialIcons>["name"];
-    color: string;
-}) {
+function TabBarIcon(props: { name: React.ComponentProps<typeof MaterialIcons>["name"]; color: string }) {
     return <MaterialIcons size={30} style={{ marginBottom: -3 }} {...props} />;
 }

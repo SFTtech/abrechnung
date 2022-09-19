@@ -3,7 +3,6 @@ import NotificationTracker from "../index";
 import { Group } from "@abrechnung/types";
 import { fetchGroups } from "../api/groups";
 
-
 export const groupNotifier = new NotificationTracker();
 
 function databaseRowToGroup(row): Group {
@@ -31,18 +30,19 @@ export async function getGroups(): Promise<Group[]> {
              g.created_by,
              g.add_user_account_on_join
          from
-             grp g`
-        , [],
+             grp g`,
+        []
     );
 
-    return result.rows.map(row => databaseRowToGroup(row));
+    return result.rows.map((row) => databaseRowToGroup(row));
 }
 
 export async function syncGroups(): Promise<Group[]> {
     const backendGroups = await fetchGroups();
     await db.transaction((conn) => {
-        backendGroups.map(group => {
-            conn.execute(`
+        backendGroups.map((group) => {
+            conn.execute(
+                `
                 insert into grp (
                     id, "name", description, terms, currency_symbol, created_by, created_at, add_user_account_on_join
                 )
@@ -57,7 +57,18 @@ export async function syncGroups(): Promise<Group[]> {
                                                created_by               = excluded.created_by,
                                                created_at               = excluded.created_at,
                                                add_user_account_on_join = excluded.add_user_account_on_join
-            `, [group.id, group.name, group.description, group.terms, group.currency_symbol, group.created_by, group.created_at, group.add_user_account_on_join]);
+            `,
+                [
+                    group.id,
+                    group.name,
+                    group.description,
+                    group.terms,
+                    group.currency_symbol,
+                    group.created_by,
+                    group.created_at,
+                    group.add_user_account_on_join,
+                ]
+            );
         });
     });
     groupNotifier.notify("https://abrechnung.stusta.de");

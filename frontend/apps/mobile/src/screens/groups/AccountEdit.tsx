@@ -12,10 +12,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { ValidationError } from "@abrechnung/types";
 import TransactionShareInput from "../../components/transaction_shares/TransactionShareInput";
 
-export default function AccountEdit({
-                                        route,
-                                        navigation,
-                                    }: StackScreenProps<GroupStackParamList, "AccountEdit">) {
+export default function AccountEdit({ route, navigation }: StackScreenProps<GroupStackParamList, "AccountEdit">) {
     const theme = useTheme();
 
     const { groupID, accountID, editingStart } = route.params;
@@ -31,7 +28,9 @@ export default function AccountEdit({
             headerRight: () => {
                 return (
                     <>
-                        <Button onPress={cancelEdit} textColor={theme.colors.error}>Cancel</Button>
+                        <Button onPress={cancelEdit} textColor={theme.colors.error}>
+                            Cancel
+                        </Button>
                         <Button onPress={save}>Save</Button>
                     </>
                 );
@@ -49,7 +48,7 @@ export default function AccountEdit({
     useFocusEffect(
         React.useCallback(() => {
             const onBackPress = () => {
-                onGoBack().catch(err => {
+                onGoBack().catch((err) => {
                     notify({ text: `Error while going back: ${err.toString()}` });
                 });
                 return false;
@@ -57,15 +56,14 @@ export default function AccountEdit({
 
             BackHandler.addEventListener("hardwareBackPress", onBackPress);
 
-            return () =>
-                BackHandler.removeEventListener("hardwareBackPress", onBackPress);
-        }, [account]),
+            return () => BackHandler.removeEventListener("hardwareBackPress", onBackPress);
+        }, [account])
     );
 
     useEffect(() => {
         if (account != null) {
             setInputErrors({});
-            setLocalEditingState(prevState => {
+            setLocalEditingState((prevState) => {
                 return {
                     ...prevState,
                     name: account.name,
@@ -86,13 +84,13 @@ export default function AccountEdit({
             .then(() => {
                 setInputErrors({});
                 pushLocalAccountChanges(account.id)
-                    .then(updatedAccount => {
+                    .then((updatedAccount) => {
                         navigation.navigate("AccountDetail", {
                             accountID: updatedAccount.id,
                             groupID: groupID,
                         });
                     })
-                    .catch(err => {
+                    .catch((err) => {
                         console.log("error on pushing account to server", err);
                         navigation.navigate("AccountDetail", {
                             accountID: account.id,
@@ -100,7 +98,7 @@ export default function AccountEdit({
                         });
                     });
             })
-            .catch(err => {
+            .catch((err) => {
                 if (err instanceof ValidationError) {
                     setInputErrors(err.data);
                 } else {
@@ -111,7 +109,7 @@ export default function AccountEdit({
     };
 
     const cancelEdit = () => {
-        deleteLocalAccountChanges(groupID, account.id, editingStart).then(deletedAccount => {
+        deleteLocalAccountChanges(groupID, account.id, editingStart).then((deletedAccount) => {
             if (deletedAccount) {
                 navigation.navigate("BottomTabNavigator", { screen: "AccountList" });
             } else {
@@ -121,14 +119,17 @@ export default function AccountEdit({
                     priority: account.priority,
                     owning_user_id: account.owning_user_id,
                 });
-                navigation.navigate("AccountDetail", { accountID: accountID, groupID: groupID });
+                navigation.navigate("AccountDetail", {
+                    accountID: accountID,
+                    groupID: groupID,
+                });
             }
         });
     };
 
     const onChangeLocalEditingValueFactory = (fieldName: string) => (value) => {
         setInputErrors({});
-        setLocalEditingState(prevState => {
+        setLocalEditingState((prevState) => {
             return {
                 ...prevState,
                 [fieldName]: value,
@@ -145,9 +146,7 @@ export default function AccountEdit({
     }
 
     return (
-        <View
-            style={styles.container}
-        >
+        <View style={styles.container}>
             <TextInput
                 label="Name"
                 value={localEditingState.name}
@@ -156,9 +155,7 @@ export default function AccountEdit({
                 onChangeText={onChangeLocalEditingValueFactory("name")}
                 error={inputErrors.hasOwnProperty("name")}
             />
-            {inputErrors.hasOwnProperty("name") && (
-                <HelperText type="error">{inputErrors["name"]}</HelperText>
-            )}
+            {inputErrors.hasOwnProperty("name") && <HelperText type="error">{inputErrors["name"]}</HelperText>}
             <TextInput
                 label="Description"
                 value={localEditingState.description}
@@ -187,7 +184,6 @@ export default function AccountEdit({
                     )}
                 </>
             )}
-
         </View>
     );
 }

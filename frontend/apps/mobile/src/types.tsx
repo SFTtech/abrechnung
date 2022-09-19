@@ -9,8 +9,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 declare global {
     namespace ReactNavigation {
-        interface RootParamList extends RootDrawerParamList {
-        }
+        interface RootParamList extends RootDrawerParamList {}
     }
 }
 
@@ -24,17 +23,25 @@ export type RootDrawerParamList = {
     NotFound: undefined;
 };
 
-export type RootDrawerScreenProps<Screen extends keyof RootDrawerParamList> = NativeStackScreenProps<RootDrawerParamList,
-    Screen>;
+export type RootDrawerScreenProps<Screen extends keyof RootDrawerParamList> = NativeStackScreenProps<
+    RootDrawerParamList,
+    Screen
+>;
 
 export type GroupStackParamList = {
     BottomTabNavigator: NavigatorScreenParams<GroupTabParamList> | undefined;
-    TransactionDetail: { groupID: number, transactionID: number, editingStart: string | null };
-    AccountDetail: { groupID: number, accountID: number };
-    AccountEdit: { groupID: number, accountID: number, editingStart: string };
-}
-export type GroupStackScreenProps<Screen extends keyof GroupStackParamList> = NativeStackScreenProps<GroupStackParamList,
-    Screen>;
+    TransactionDetail: {
+        groupID: number;
+        transactionID: number;
+        editingStart: string | null;
+    };
+    AccountDetail: { groupID: number; accountID: number };
+    AccountEdit: { groupID: number; accountID: number; editingStart: string };
+};
+export type GroupStackScreenProps<Screen extends keyof GroupStackParamList> = NativeStackScreenProps<
+    GroupStackParamList,
+    Screen
+>;
 
 export type GroupTabParamList = {
     TransactionList: undefined;
@@ -42,6 +49,7 @@ export type GroupTabParamList = {
     ClearingAccountList: undefined;
 };
 
-export type GroupTabScreenProps<Screen extends keyof GroupTabParamList> = CompositeScreenProps<BottomTabScreenProps<GroupTabParamList, Screen>,
-    NativeStackScreenProps<GroupStackParamList>>;
-
+export type GroupTabScreenProps<Screen extends keyof GroupTabParamList> = CompositeScreenProps<
+    BottomTabScreenProps<GroupTabParamList, Screen>,
+    NativeStackScreenProps<GroupStackParamList>
+>;

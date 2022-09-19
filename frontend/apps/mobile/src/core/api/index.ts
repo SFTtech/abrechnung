@@ -9,13 +9,15 @@ let SESSION_TOKEN = null;
 let ACCESS_TOKEN = null;
 
 export async function initializeAuthCache() {
-    const resp = await db.execute(`
+    const resp = await db.execute(
+        `
                 select *
                 from
                     abrechnung_instance
                 where
-                    is_active_session`
-        , []);
+                    is_active_session`,
+        []
+    );
     if (resp.rows.length > 0) {
         SESSION_TOKEN = resp.rows[0].session_token;
         ACCESS_TOKEN = resp.rows[0].access_token;
@@ -32,7 +34,7 @@ export function validateJWTToken(token: string): boolean {
     const payload = token.split(".")[1];
     try {
         const { exp: expires } = JSON.parse(Buffer.from(payload, "base64").toString("ascii"));
-        if (typeof expires === "number" && expires > (new Date()).getTime() / 1000) {
+        if (typeof expires === "number" && expires > new Date().getTime() / 1000) {
             return true;
         }
     } catch {
@@ -70,20 +72,24 @@ async function makeAuthHeader() {
 
     // TODO: check result
     return {
-        "Authorization": `Bearer ${ACCESS_TOKEN}`,
+        Authorization: `Bearer ${ACCESS_TOKEN}`,
     };
 }
 
 async function fetchJson(url, options) {
     const authHeaders = await makeAuthHeader();
     try {
-        const resp = await fetch(url,
-            deepmerge({
-                headers: {
-                    "Content-Type": "application/json",
-                    ...authHeaders,
+        const resp = await fetch(
+            url,
+            deepmerge(
+                {
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...authHeaders,
+                    },
                 },
-            }, options),
+                options
+            )
         );
         if (!resp.ok) {
             const body = await resp.text();

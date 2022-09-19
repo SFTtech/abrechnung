@@ -35,7 +35,14 @@ export default function RequestPasswordRecovery() {
     return (
         <Container component="main" maxWidth="xs">
             <CssBaseline />
-            <Box sx={{ mt: 8, display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <Box
+                sx={{
+                    mt: 8,
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                }}
+            >
                 <Typography component="h1" variant="h5">
                     Recover Password
                 </Typography>

@@ -69,10 +69,7 @@ export class Database {
             connection.close();
         };
 
-        this._migrationPromise =
-            typeof this._params.migrateFn === "function"
-                ? performMigration()
-                : Promise.resolve();
+        this._migrationPromise = typeof this._params.migrateFn === "function" ? performMigration() : Promise.resolve();
     }
 
     async execute(sqlQuery, args = []) {

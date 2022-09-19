@@ -98,7 +98,13 @@ export default function Register() {
                 <>
                     <Container maxWidth="xs">
                         <CssBaseline />
-                        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                        <Box
+                            sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                            }}
+                        >
                             <Avatar sx={{ margin: 1, backgroundColor: "primary.main" }}>
                                 <LockOutlined />
                             </Avatar>

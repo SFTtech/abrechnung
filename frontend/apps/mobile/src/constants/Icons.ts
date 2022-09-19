@@ -1,4 +1,4 @@
-import {AccountType, TransactionType} from "@abrechnung/types";
+import { AccountType, TransactionType } from "@abrechnung/types";
 
 export const clearingAccountIcon = "calculate";
 export const personalAccountIcon = "person";

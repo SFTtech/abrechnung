@@ -93,7 +93,9 @@ export default function Balances({ group }) {
                                     <Typography
                                         variant="body2"
                                         component="span"
-                                        sx={{ color: account.balance < 0 ? colorRedInverted : colorGreenInverted }}
+                                        sx={{
+                                            color: account.balance < 0 ? colorRedInverted : colorGreenInverted,
+                                        }}
                                     >
                                         {account.balance.toFixed(2)} {group.currency_symbol}{" "}
                                     </Typography>

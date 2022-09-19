@@ -2,7 +2,6 @@ import * as SQLite from "expo-sqlite";
 import migrations from "./migrations";
 import { Database } from "./async_wrapper";
 
-
 function openDatabase() {
     // if (Platform.OS === "web") {
     //   return {
@@ -20,16 +19,35 @@ function openDatabase() {
 const successCallback = () => console.log("database call was successful");
 const errorCallback = (error) => console.log("database call threw an error:", error);
 
-
 export async function dropTables(connection) {
-    const tables = ["pending_transaction_position_changes", "transaction_position", "pending_transaction_changes", "\"transaction\"", "group_member", "pending_account_changes", "account", "grp", "abrechnung_instance", migrationsTable];
+    const tables = [
+        "pending_transaction_position_changes",
+        "transaction_position",
+        "pending_transaction_changes",
+        '"transaction"',
+        "group_member",
+        "pending_account_changes",
+        "account",
+        "grp",
+        "abrechnung_instance",
+        migrationsTable,
+    ];
     for (const table of tables) {
         await connection.execute(`drop table if exists ${table}`);
     }
 }
 
 export async function flushDatabase() {
-    const tables = ["pending_transaction_position_changes", "transaction_position", "pending_transaction_changes", "\"transaction\"", "group_member", "pending_account_changes", "account", "grp"];
+    const tables = [
+        "pending_transaction_position_changes",
+        "transaction_position",
+        "pending_transaction_changes",
+        '"transaction"',
+        "group_member",
+        "pending_account_changes",
+        "account",
+        "grp",
+    ];
     await db.transaction(async (conn) => {
         for (const table of tables) {
             await conn.execute(`delete
@@ -46,7 +64,7 @@ export async function flushDatabase() {
 const migrationsTable = "_migrations";
 
 export const db = new Database("main", {
-    prepareConnFn: async connection => {
+    prepareConnFn: async (connection) => {
         try {
             await connection.execute("PRAGMA foreign_keys = ON;");
             // await connection.execute("PRAGMA journal_mode = WAL;") // apparently does not work
@@ -54,7 +72,7 @@ export const db = new Database("main", {
             console.log(e);
         }
     },
-    migrateFn: async connection => {
+    migrateFn: async (connection) => {
         // Inside migration function you can use `connection.beginTransaction`, `connection.commitTransaction` and
         // `connection.rollbackTransaction` methods to control transactions, as needed. In this example I simply
         // run all migrations inside single transaction. Your needs might be different
@@ -66,7 +84,7 @@ export const db = new Database("main", {
                 `create table if not exists ${migrationsTable} (
                     version   integer primary key,
                     updatedAt text not null
-                )`,
+                )`
             );
             const versions = (
                 await connection.execute(`select *
@@ -80,13 +98,13 @@ export const db = new Database("main", {
                 for (const statement of migrations[i]) {
                     await connection.execute(statement);
                 }
-                await connection.execute(`insert into ${migrationsTable}
+                await connection.execute(
+                    `insert into ${migrationsTable}
                                           values (
                                               ?, ?
-                                          )`, [
-                    i,
-                    new Date().toISOString(),
-                ]);
+                                          )`,
+                    [i, new Date().toISOString()]
+                );
                 console.log(`Applied migration ${i}`);
             }
             await connection.commitTransaction();

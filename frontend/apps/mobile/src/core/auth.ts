@@ -4,8 +4,8 @@ import { logout as logoutAPI } from "./api/auth";
 import { initializeAPIURL } from "./api";
 
 interface authStateType {
-    isLoading: boolean,
-    isLoggedIn: boolean,
+    isLoading: boolean;
+    isLoggedIn: boolean;
 }
 
 async function initialAuthState(): Promise<authStateType> {
@@ -34,7 +34,6 @@ export const authState = atom<authStateType>({
     key: "authState",
     default: initialAuthState(),
 });
-
 
 export async function logout() {
     return await logoutAPI();

@@ -23,15 +23,15 @@ function backendAccountToAccount(acc): Account {
         type: acc.type,
         version: acc.version,
         is_wip: acc.is_wip,
-        ...(detailsToFields(acc.committed_details)),
-        ...(detailsToFields(acc.pending_details)),
+        ...detailsToFields(acc.committed_details),
+        ...detailsToFields(acc.pending_details),
         has_local_changes: false,
     };
 }
 
 export async function fetchAccounts({ groupID }): Promise<Account[]> {
     const accounts = await makeGet(`/groups/${groupID}/accounts`);
-    return accounts.map(acc => backendAccountToAccount(acc));
+    return accounts.map((acc) => backendAccountToAccount(acc));
 }
 
 export async function fetchAccount({ accountID }): Promise<Account> {

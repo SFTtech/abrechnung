@@ -41,7 +41,9 @@ export default function AccountTransactionListEntry({ group, transaction, accoun
                 <Typography align="right" variant="body2">
                     <Typography
                         component="span"
-                        sx={{ color: (theme) => balanceColor(transaction.account_balances[accountID].total, theme) }}
+                        sx={{
+                            color: (theme) => balanceColor(transaction.account_balances[accountID].total, theme),
+                        }}
                     >
                         {transaction.account_balances[accountID].total.toFixed(2)} {group.currency_symbol}
                     </Typography>

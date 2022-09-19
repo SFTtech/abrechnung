@@ -56,7 +56,7 @@ export default function TransactionList({ navigation }: GroupTabScreenProps<"Tra
                                     mode="outlined"
                                     dense={true}
                                     style={{ flexGrow: 1 }}
-                                    onChangeText={val => setSearch(val)}
+                                    onChangeText={(val) => setSearch(val)}
                                 />
                                 <Appbar.Action icon="close" onPress={closeSearch} />
                             </>
@@ -68,26 +68,23 @@ export default function TransactionList({ navigation }: GroupTabScreenProps<"Tra
                             <Menu
                                 visible={isMenuOpen}
                                 onDismiss={() => setMenuOpen(false)}
-                                anchor={<Appbar.Action
-                                    icon="more-vert"
-                                    onPress={() => setMenuOpen(true)} />}
+                                anchor={<Appbar.Action icon="more-vert" onPress={() => setMenuOpen(true)} />}
                             >
-                                <Text variant="labelLarge" style={{ paddingLeft: 16, fontWeight: "bold" }}>Sort
-                                    by</Text>
-                                <RadioButton.Group value={sortMode}
-                                                   onValueChange={(value) => setSortMode(value)}>
-                                    <RadioButton.Item position="trailing" label="Last changed"
-                                                      value="last_changed" />
+                                <Text variant="labelLarge" style={{ paddingLeft: 16, fontWeight: "bold" }}>
+                                    Sort by
+                                </Text>
+                                <RadioButton.Group value={sortMode} onValueChange={(value) => setSortMode(value)}>
+                                    <RadioButton.Item position="trailing" label="Last changed" value="last_changed" />
                                     <RadioButton.Item position="trailing" label="Billed at" value="billed_at" />
-                                    <RadioButton.Item position="trailing" label="Description"
-                                                      value="description" />
+                                    <RadioButton.Item position="trailing" label="Description" value="description" />
                                 </RadioButton.Group>
                             </Menu>
                         </>
                     );
                 },
             });
-        } else { // !isFocuesd
+        } else {
+            // !isFocuesd
             closeSearch();
         }
     }, [isFocused, showSearchInput, isMenuOpen, setMenuOpen, sortMode, theme, navigation]);
@@ -107,22 +104,25 @@ export default function TransactionList({ navigation }: GroupTabScreenProps<"Tra
                     sortComparator = lambdaComparator((t: Transaction) => toISOString(t.last_changed), true);
                     break;
             }
-            setSortedTransactions([...transactions.contents]
-                .filter(t => search === "" || t.description.toLowerCase().includes(search.toLowerCase()))
-                .sort(createComparator(sortComparator)));
+            setSortedTransactions(
+                [...transactions.contents]
+                    .filter((t) => search === "" || t.description.toLowerCase().includes(search.toLowerCase()))
+                    .sort(createComparator(sortComparator))
+            );
         }
     }, [transactions, sortMode, search]);
 
     const createNewTransaction = (type: TransactionType) => {
-        createTransaction(groupID, type).then(ret => {
-            const [newTransactionID, creationDate] = ret;
-            navigation.navigate("TransactionDetail", {
-                transactionID: newTransactionID,
-                groupID: groupID,
-                editingStart: toISOString(creationDate),
-            });
-        })
-            .catch(err => console.log("error creating new transaction"));
+        createTransaction(groupID, type)
+            .then((ret) => {
+                const [newTransactionID, creationDate] = ret;
+                navigation.navigate("TransactionDetail", {
+                    transactionID: newTransactionID,
+                    groupID: groupID,
+                    editingStart: toISOString(creationDate),
+                });
+            })
+            .catch((err) => console.log("error creating new transaction"));
     };
 
     return (
@@ -132,12 +132,11 @@ export default function TransactionList({ navigation }: GroupTabScreenProps<"Tra
         >
             {transactions.state === "loading" ? (
                 <LoadingIndicator />
-            ) : sortedTransactions.map(transaction => (
-                <TransactionListItem
-                    key={transaction.id}
-                    transaction={transaction}
-                />
-            ))}
+            ) : (
+                sortedTransactions.map((transaction) => (
+                    <TransactionListItem key={transaction.id} transaction={transaction} />
+                ))
+            )}
             <Portal>
                 <FAB.Group
                     style={styles.fab}

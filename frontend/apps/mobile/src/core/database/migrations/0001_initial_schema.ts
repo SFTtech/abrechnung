@@ -102,5 +102,4 @@ export const migration = [
         transaction_id integer not null, -- cannot use foreign key as can point to local only transaction
         event_content  text    not null
     )`,
-
 ];

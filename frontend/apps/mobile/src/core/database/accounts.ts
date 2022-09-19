@@ -5,11 +5,10 @@ import { fetchAccounts, pushAccountChanges } from "../api/accounts";
 import { isOnline } from "../api";
 import { fromISOString, toISOString } from "../utils";
 
-
 type accountNotifierPayload = {
-    group_id: number,
+    group_id: number;
     account_id?: number;
-}
+};
 
 export const accountNotifier = new NotificationTracker<accountNotifierPayload>();
 
@@ -29,7 +28,12 @@ function databaseRowToAccount(row): Account {
         revision_committed_at: fromISOString(row.revision_committed_at),
         version: row.version,
         is_wip: row.is_wip,
-        last_changed: row.event_time !== null ? fromISOString(row.event_time) : row.revision_committed_at !== null ? fromISOString(row.revision_committed_at) : fromISOString(row.revision_started_at),
+        last_changed:
+            row.event_time !== null
+                ? fromISOString(row.event_time)
+                : row.revision_committed_at !== null
+                ? fromISOString(row.revision_committed_at)
+                : fromISOString(row.revision_started_at),
         ...parsed_event,
         has_local_changes: row.event_content !== null,
     };
@@ -71,7 +75,8 @@ async function saveAccountToDatabase(account: Account, conn?) {
                                        clearing_shares       = excluded.clearing_shares,
                                        is_wip                = excluded.is_wip
     `;
-    const queryParams = [account.id,
+    const queryParams = [
+        account.id,
         account.group_id,
         account.type,
         account.name,
@@ -83,7 +88,8 @@ async function saveAccountToDatabase(account: Account, conn?) {
         account.revision_committed_at,
         account.version,
         JSON.stringify(account.clearing_shares),
-        account.is_wip];
+        account.is_wip,
+    ];
     if (conn) {
         return conn.execute(query, queryParams);
     } else {
@@ -94,7 +100,7 @@ async function saveAccountToDatabase(account: Account, conn?) {
 export async function syncAccounts(groupID: number): Promise<Account[]> {
     const backendAccounts = await fetchAccounts({ groupID });
     await db.transaction((conn) => {
-        backendAccounts.forEach(account => {
+        backendAccounts.forEach((account) => {
             saveAccountToDatabase(account, conn);
         });
     });
@@ -142,13 +148,15 @@ export async function getAccounts(group_id: number): Promise<Account[]> {
                              on aggregated_events.account_id = a.id and aggregated_events.group_id = a.group_id
          where
              a.id >= 0
-             and a.group_id = ?`
-        , [group_id, group_id],
+             and a.group_id = ?`,
+        [group_id, group_id]
     );
 
-    const serverAccounts = result.rows.map(row => databaseRowToAccount(row));
+    const serverAccounts = result.rows.map((row) => databaseRowToAccount(row));
 
-    const localAccounts = (await db.execute(`
+    const localAccounts = (
+        await db.execute(
+            `
                 select *
                 from
                     (
@@ -162,14 +170,17 @@ export async function getAccounts(group_id: number): Promise<Account[]> {
                             and group_id = ?
                     ) sub
                 where
-                    sub.rank = 1`
-        , [group_id])).rows.map(row => accountFromEvent(row.account_id, row.group_id, row.event_time, JSON.parse(row.event_content)));
+                    sub.rank = 1`,
+            [group_id]
+        )
+    ).rows.map((row) => accountFromEvent(row.account_id, row.group_id, row.event_time, JSON.parse(row.event_content)));
 
     return localAccounts.concat(...serverAccounts);
 }
 
 export async function getAccount(group_id: number, account_id: number): Promise<Account> {
-    if (account_id < 0) { // we are dealing with a local only account
+    if (account_id < 0) {
+        // we are dealing with a local only account
         const result = await db.execute(
             `select *
              from
@@ -185,7 +196,7 @@ export async function getAccount(group_id: number, account_id: number): Promise<
                  ) sub
              where
                  sub.rank = 1`,
-            [group_id, account_id],
+            [group_id, account_id]
         );
         // TODO: check empty result
         const parsedEvent = JSON.parse(result.rows[0].event_content);
@@ -229,13 +240,12 @@ export async function getAccount(group_id: number, account_id: number): Promise<
              where
                  a.group_id = ?1
                  and a.id = ?2`,
-            [group_id, account_id],
+            [group_id, account_id]
         );
 
         return databaseRowToAccount(result.rows[0]);
     }
 }
-
 
 export async function pushLocalAccountChanges(account_id: number): Promise<Account> {
     if (!(await isOnline())) {
@@ -246,14 +256,17 @@ export async function pushLocalAccountChanges(account_id: number): Promise<Accou
     return await db.transaction(async (conn) => {
         console.log("pushing changes to server");
         // fetch the transaction and its pending position changes from the database
-        const accountQueryResult = await conn.execute(`select *
+        const accountQueryResult = await conn.execute(
+            `select *
                                                        from
                                                            pending_account_changes pac
                                                        where
                                                            account_id = ?1
                                                        order by
                                                            event_time desc
-                                                       limit 1`, [account_id]);
+                                                       limit 1`,
+            [account_id]
+        );
         if (accountQueryResult.rows.length === 0) {
             return;
         }
@@ -262,13 +275,16 @@ export async function pushLocalAccountChanges(account_id: number): Promise<Accou
         const t = accountQueryResult.rows[0];
         const account = accountFromEvent(account_id, t.group_id, t.event_time, JSON.parse(t.event_content));
         const updatedAccount = await pushAccountChanges(account);
-        await conn.execute(`
+        await conn.execute(
+            `
             delete
             from
                 pending_account_changes
             where
                 account_id = ?1
-        `, [account_id]);
+        `,
+            [account_id]
+        );
         await saveAccountToDatabase(updatedAccount, conn);
         console.log("successfully synced local changes with server and saved the result to local database");
 
@@ -296,7 +312,8 @@ export async function updateAccount(account: Account) {
         clearing_shares: account.clearing_shares,
     };
     return await db.transaction(async (conn) => {
-        const previousChanges = await conn.execute(`
+        const previousChanges = await conn.execute(
+            `
             select *
             from
                 (
@@ -310,9 +327,17 @@ export async function updateAccount(account: Account) {
                 ) sub
             where
                 sub.rank = 1
-        `, [account.id]);
+        `,
+            [account.id]
+        );
 
-        const newPayload = previousChanges.rows.length > 0 ? { ...JSON.parse(previousChanges.rows[0].event_content), ...event_payload } : event_payload;
+        const newPayload =
+            previousChanges.rows.length > 0
+                ? {
+                      ...JSON.parse(previousChanges.rows[0].event_content),
+                      ...event_payload,
+                  }
+                : event_payload;
 
         await conn.execute(
             `insert into pending_account_changes (
@@ -320,9 +345,13 @@ export async function updateAccount(account: Account) {
             )
              values (
                  ?, ?, ?, ?
-             )`, [account.id, account.group_id, JSON.stringify(newPayload), toISOString(new Date())],
+             )`,
+            [account.id, account.group_id, JSON.stringify(newPayload), toISOString(new Date())]
         );
-        accountNotifier.notify(account.group_id, { group_id: account.group_id, account_id: account.id });
+        accountNotifier.notify(account.group_id, {
+            group_id: account.group_id,
+            account_id: account.id,
+        });
     });
 }
 
@@ -339,23 +368,29 @@ export async function createAccount(group_id: number, type: AccountType): Promis
     };
 
     return await db.transaction(async (conn) => {
-        const res = await conn.execute(`
+        const res = await conn.execute(
+            `
             select
                 coalesce(min(pac.account_id), -1) as curr_min_id
             from
                 pending_account_changes pac
             where
                 pac.group_id = ?
-        `, [group_id]);
+        `,
+            [group_id]
+        );
         const next_id = Math.min(res.rows[0].curr_min_id) - 1;
         const creationDate = new Date();
-        await conn.execute(`
+        await conn.execute(
+            `
             insert into pending_account_changes (
                 account_id, group_id, event_content, event_time
             )
             values (
                 ?, ?, ?, ?
-            )`, [next_id, group_id, JSON.stringify(event_payload), toISOString(creationDate)]);
+            )`,
+            [next_id, group_id, JSON.stringify(event_payload), toISOString(creationDate)]
+        );
         accountNotifier.notify(group_id, { group_id: group_id });
         return [next_id, creationDate];
     });
@@ -371,11 +406,16 @@ export async function deleteAccount(group_id: number, account_id: number) {
     return await updateAccount(account);
 }
 
-export async function deleteLocalAccountChanges(group_id: number, account_id: number, olderThan?: string): Promise<boolean> {
+export async function deleteLocalAccountChanges(
+    group_id: number,
+    account_id: number,
+    olderThan?: string
+): Promise<boolean> {
     return await db.transaction(async (conn) => {
         // TODO: only notify if we actually deleted something
         if (olderThan) {
-            await conn.execute(`
+            await conn.execute(
+                `
                 delete
                 from
                     pending_account_changes
@@ -383,25 +423,33 @@ export async function deleteLocalAccountChanges(group_id: number, account_id: nu
                     account_id = ?1
                     and group_id = ?2
                     and event_time >= ?3
-            `, [account_id, group_id, olderThan]);
+            `,
+                [account_id, group_id, olderThan]
+            );
         } else {
-            await conn.execute(`
+            await conn.execute(
+                `
                 delete
                 from
                     pending_account_changes
                 where
                     account_id = ?1
                     and group_id = ?2
-            `, [account_id, group_id]);
+            `,
+                [account_id, group_id]
+            );
         }
         let deletedLocalAccount = false;
         if (account_id < 0) {
-            const n_local_changes = await conn.execute(`select
+            const n_local_changes = await conn.execute(
+                `select
                                                             count(*) as n_local_changes
                                                         from
                                                             pending_account_changes
                                                         where
-                                                            account_id = ?1`, [account_id]);
+                                                            account_id = ?1`,
+                [account_id]
+            );
             deletedLocalAccount = n_local_changes.rows[0].n_local_changes === 0;
         }
 

@@ -18,7 +18,7 @@ export default function PreferencesScreen() {
             .then(() => {
                 setAuth({ isLoggedIn: false, isLoading: false });
             })
-            .catch(err => {
+            .catch((err) => {
                 console.log("logout had error", err);
                 setAuth({ isLoggedIn: false, isLoading: false });
             });
@@ -31,16 +31,18 @@ export default function PreferencesScreen() {
     };
 
     const onSyncGroups = () => {
-        syncGroups().catch(err => notify({
-            text: `Error when syncing groups: ${err}`,
-        }));
+        syncGroups().catch((err) =>
+            notify({
+                text: `Error when syncing groups: ${err}`,
+            })
+        );
     };
 
     return (
         <View>
             <View style={styles.toggleSetting}>
                 <Text>Dark Theme</Text>
-                <Switch value={preferences.isThemeDark} onValueChange={preferences.toggleTheme}/>
+                <Switch value={preferences.isThemeDark} onValueChange={preferences.toggleTheme} />
             </View>
             <Divider />
             <Button onPress={onLogout}>Logout</Button>

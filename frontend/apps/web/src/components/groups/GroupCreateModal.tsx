@@ -48,7 +48,11 @@ export default function GroupCreateModal({ show, onClose }) {
             <DialogTitle>Create Group</DialogTitle>
             <DialogContent>
                 <Formik
-                    initialValues={{ name: "", description: "", addUserAccountOnJoin: false }}
+                    initialValues={{
+                        name: "",
+                        description: "",
+                        addUserAccountOnJoin: false,
+                    }}
                     onSubmit={handleSubmit}
                     validationSchema={validationSchema}
                 >

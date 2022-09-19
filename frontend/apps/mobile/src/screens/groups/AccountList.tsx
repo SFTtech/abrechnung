@@ -57,7 +57,7 @@ export default function AccountList({ navigation, accountType }) {
                                     mode="outlined"
                                     dense={true}
                                     style={{ flexGrow: 1 }}
-                                    onChangeText={val => setSearch(val)}
+                                    onChangeText={(val) => setSearch(val)}
                                 />
                                 <Appbar.Action icon="close" onPress={closeSearch} />
                             </>
@@ -69,27 +69,23 @@ export default function AccountList({ navigation, accountType }) {
                             <Menu
                                 visible={isMenuOpen}
                                 onDismiss={() => setMenuOpen(false)}
-                                anchor={<Appbar.Action
-                                    icon="more-vert"
-                                    onPress={() => setMenuOpen(true)} />}
+                                anchor={<Appbar.Action icon="more-vert" onPress={() => setMenuOpen(true)} />}
                             >
-                                <Text variant="labelLarge" style={{ paddingLeft: 16, fontWeight: "bold" }}>Sort
-                                    by</Text>
-                                <RadioButton.Group value={sortMode}
-                                                   onValueChange={(value) => setSortMode(value)}>
-                                    <RadioButton.Item position="trailing" label="Name"
-                                                      value="name" />
-                                    <RadioButton.Item position="trailing" label="Description"
-                                                      value="description" />
-                                    <RadioButton.Item position="trailing" label="Last changed"
-                                                      value="last_changed" />
+                                <Text variant="labelLarge" style={{ paddingLeft: 16, fontWeight: "bold" }}>
+                                    Sort by
+                                </Text>
+                                <RadioButton.Group value={sortMode} onValueChange={(value) => setSortMode(value)}>
+                                    <RadioButton.Item position="trailing" label="Name" value="name" />
+                                    <RadioButton.Item position="trailing" label="Description" value="description" />
+                                    <RadioButton.Item position="trailing" label="Last changed" value="last_changed" />
                                 </RadioButton.Group>
                             </Menu>
                         </>
                     );
                 },
             });
-        } else { // !isFocuesd
+        } else {
+            // !isFocuesd
             closeSearch();
         }
     }, [isFocused, showSearchInput, isMenuOpen, setMenuOpen, sortMode, theme, navigation]);
@@ -109,25 +105,30 @@ export default function AccountList({ navigation, accountType }) {
                     sortComparator = lambdaComparator((a: Account) => toISOString(a.last_changed), true);
                     break;
             }
-            setSortedAccounts([...accounts.contents]
-                .filter(a => search === ""
-                    || a.description.toLowerCase().includes(search.toLowerCase())
-                    || a.name.toLowerCase().includes(search.toLowerCase())
-                )
-                .sort(createComparator(sortComparator)));
+            setSortedAccounts(
+                [...accounts.contents]
+                    .filter(
+                        (a) =>
+                            search === "" ||
+                            a.description.toLowerCase().includes(search.toLowerCase()) ||
+                            a.name.toLowerCase().includes(search.toLowerCase())
+                    )
+                    .sort(createComparator(sortComparator))
+            );
         }
     }, [accounts, sortMode, search]);
 
     const createNewAccount = () => {
-        createAccount(groupID, accountType).then(res => {
-            const [newAccountID, creationDate] = res;
-            navigation.navigate("AccountEdit", {
-                accountID: newAccountID,
-                groupID: groupID,
-                editingStart: toISOString(creationDate),
-            });
-        })
-            .catch(err => console.log("error creating new account"));
+        createAccount(groupID, accountType)
+            .then((res) => {
+                const [newAccountID, creationDate] = res;
+                navigation.navigate("AccountEdit", {
+                    accountID: newAccountID,
+                    groupID: groupID,
+                    editingStart: toISOString(creationDate),
+                });
+            })
+            .catch((err) => console.log("error creating new account"));
     };
 
     const renderItem = (account: Account) => {
@@ -138,25 +139,29 @@ export default function AccountList({ navigation, accountType }) {
                 key={account.id}
                 title={account.name}
                 description={account.description}
-                left={props => <List.Icon {...props} icon={getAccountIcon(account.type)} />}
-                right={props => (
+                left={(props) => <List.Icon {...props} icon={getAccountIcon(account.type)} />}
+                right={(props) => (
                     <>
                         {account.has_local_changes && (
                             <MaterialIcons
-                                style={{ marginRight: 8, marginTop: 4 }} size={20}
+                                style={{ marginRight: 8, marginTop: 4 }}
+                                size={20}
                                 color={theme.colors.primary}
                                 name="sync-disabled"
                             />
                         )}
-                        <Text
-                            style={{ color: textColor }}>{balance.balance.toFixed(2)} {activeGroup.currency_symbol}</Text>
+                        <Text style={{ color: textColor }}>
+                            {balance.balance.toFixed(2)} {activeGroup.currency_symbol}
+                        </Text>
                     </>
                 )}
-                onPress={() => navigation.navigate("AccountDetail", {
-                    accountID: account.id,
-                    groupID: groupID,
-                    editingStart: null,
-                })}
+                onPress={() =>
+                    navigation.navigate("AccountDetail", {
+                        accountID: account.id,
+                        groupID: groupID,
+                        editingStart: null,
+                    })
+                }
             />
         );
     };
@@ -168,14 +173,11 @@ export default function AccountList({ navigation, accountType }) {
         >
             {accounts.state === "loading" || accountBalances.state === "loading" ? (
                 <LoadingIndicator />
-            ) : sortedAccounts.map(item => renderItem(item))}
+            ) : (
+                sortedAccounts.map((item) => renderItem(item))
+            )}
             <Portal>
-                <FAB
-                    style={styles.fab}
-                    visible={isFocused}
-                    icon="add"
-                    onPress={createNewAccount}
-                />
+                <FAB style={styles.fab} visible={isFocused} icon="add" onPress={createNewAccount} />
             </Portal>
         </ScrollView>
     );
