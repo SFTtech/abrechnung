@@ -6,10 +6,24 @@ from aiohttp.web_request import FileField
 from marshmallow import Schema, fields
 
 from abrechnung.http.openapi import docs, json_schema
-from abrechnung.http.serializers import TransactionSchema, TransactionPositionSchema
+from abrechnung.http.serializers import TransactionSchema, TransactionPositionSchema, SharesField
 from abrechnung.http.utils import json_response, PrefixedRouteTableDef
 
 routes = PrefixedRouteTableDef("/api")
+
+
+class TransactionUpdateScheme(Schema):
+    description = fields.Str()
+    value = fields.Number()
+    currency_symbol = fields.Str()
+    currency_conversion_rate = fields.Number()
+    billed_at = fields.Date()
+    revision_started_at = fields.DateTime()
+    revision_committed_at = fields.DateTime(required=False)
+    creditor_shares = SharesField()
+    debitor_shares = SharesField()
+    deleted = fields.Bool()
+    positions = fields.List(fields.Nested(TransactionPositionSchema), dump_default=[])
 
 
 async def _transaction_response(request, transaction_id: int) -> web.Response:
@@ -58,6 +72,23 @@ async def list_transactions(request):
 
     serializer = TransactionSchema()
     return json_response(data=serializer.dump(transactions, many=True))
+
+
+@routes.post(r"/v1/groups/{group_id:\d+}/transactions/sync")
+@docs(
+    tags=["transactions"],
+    summary="sync a batch of transactions",
+    description=""
+)
+@json_schema(TransactionUpdateScheme(many=True))
+async def sync_transactions(request: Request):
+    updated_ids = await request.app["transaction_service"].sync_transactions(
+        user=request["user"],
+        group_id=int(request.match_info["group_id"]),
+        transactions=request["json"]  # TODO: FIXME, convert to proper parameters
+    )
+
+    await json_response(data=updated_ids)
 
 
 @routes.post(r"/v1/groups/{group_id:\d+}/transactions")

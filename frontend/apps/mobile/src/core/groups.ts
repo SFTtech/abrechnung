@@ -1,6 +1,7 @@
-import { atom, selector, selectorFamily } from "recoil";
+import { atom, selector, selectorFamily, useRecoilValue } from "recoil";
 import { getGroups, groupNotifier } from "./database/groups";
 import { Group } from "@abrechnung/types";
+import { useNavigation } from "@react-navigation/native";
 
 export const activeGroupIDState = atom<number | null>({
     key: "activeGroupIDState",
@@ -37,3 +38,23 @@ export const groupByIDState = selectorFamily<Group | undefined, number>({
             return groups.find((g) => g.id === groupID);
         },
 });
+
+export const useActiveGroupID = (): number => {
+    const groupID = useRecoilValue(activeGroupIDState);
+    const navigation = useNavigation();
+    if (groupID === null) {
+        navigation.navigate("Home");
+        throw new Error("active group ID was null unexpectedly");
+    }
+    return groupID;
+};
+
+export const useActiveGroup = (): Group => {
+    const group = useRecoilValue(activeGroupState);
+    const navigation = useNavigation();
+    if (group == null) {
+        navigation.navigate("Home");
+        throw new Error("active group was null unexpectedly");
+    }
+    return group;
+};

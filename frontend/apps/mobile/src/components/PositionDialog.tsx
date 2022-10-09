@@ -10,33 +10,60 @@ import {
     TextInput,
     useTheme,
 } from "react-native-paper";
-import * as React from "react";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRecoilValue } from "recoil";
 import { accountState } from "../core/accounts";
 import { createComparator, lambdaComparator } from "@abrechnung/utils";
-import { activeGroupIDState } from "../core/groups";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native";
 import { updatePosition } from "../core/database/transactions";
 import { notify } from "../notifications";
-import { ValidationError } from "@abrechnung/types";
+import { Account, TransactionPosition, ValidationError } from "@abrechnung/types";
 
-export default function PositionDialog({ position, editing, showDialog, onHideDialog, currencySymbol }) {
+interface Props {
+    groupID: number;
+    position: TransactionPosition;
+    editing: boolean;
+    showDialog: boolean;
+    currencySymbol: string;
+    onHideDialog: () => void;
+}
+
+interface localEditingState {
+    name: string;
+    price: number;
+    usages: { [k: number]: number };
+    communist_shares: number;
+}
+
+const initialEditingState: localEditingState = {
+    name: "",
+    price: 0,
+    usages: {},
+    communist_shares: 0,
+};
+
+export const PositionDialog: React.FC<Props> = ({
+    groupID,
+    position,
+    editing,
+    showDialog,
+    onHideDialog,
+    currencySymbol,
+}) => {
     const theme = useTheme();
-    const groupID = useRecoilValue(activeGroupIDState);
 
-    const [localEditingState, setLocalEditingState] = useState(null);
+    const [localEditingState, setLocalEditingState] = useState<localEditingState>(initialEditingState);
 
     const [searchTerm, setSearchTerm] = useState("");
     const accounts = useRecoilValue(accountState(groupID));
-    const [sortedAccounts, setSortedAccounts] = useState([]);
-    const [filteredAccounts, setFilteredAccounts] = useState([]);
+    const [sortedAccounts, setSortedAccounts] = useState<Account[]>([]);
+    const [filteredAccounts, setFilteredAccounts] = useState<Account[]>([]);
     const [errors, setErrors] = useState({});
 
     const toggleShare = (account_id: number) => {
         const currVal = localEditingState.usages.hasOwnProperty(account_id) ? localEditingState.usages[account_id] : 0;
         setLocalEditingState((prevState) => {
-            let newShares = { ...prevState.usages };
+            const newShares = { ...prevState.usages };
             if (currVal > 0) {
                 delete newShares[account_id];
             } else {
@@ -73,9 +100,9 @@ export default function PositionDialog({ position, editing, showDialog, onHideDi
                 )
             );
         }
-    }, [accounts, showDialog]);
+    }, [accounts, showDialog, localEditingState]);
 
-    const resetLocalState = () => {
+    const resetLocalState = useCallback(() => {
         if (position != null) {
             setLocalEditingState({
                 name: position.name,
@@ -85,13 +112,18 @@ export default function PositionDialog({ position, editing, showDialog, onHideDi
             });
         }
         setErrors({});
-    };
+    }, [position, setLocalEditingState, setErrors]);
 
     useEffect(() => {
         resetLocalState();
-    }, [position, setLocalEditingState]);
+    }, [resetLocalState]);
 
     const finishDialog = () => {
+        if (!editing) {
+            onHideDialog();
+            return;
+        }
+
         console.log(position);
         updatePosition({
             ...position,
@@ -236,10 +268,12 @@ export default function PositionDialog({ position, editing, showDialog, onHideDi
             </KeyboardAvoidingView>
         </Dialog>
     );
-}
+};
 
 const styles = StyleSheet.create({
     input: {
         marginBottom: 4,
     },
 });
+
+export default PositionDialog;

@@ -1,18 +1,19 @@
-import { StyleSheet, TouchableOpacity } from "react-native";
+import React from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Text } from "react-native-paper";
 
-import { Text, View } from "../components/Themed";
-import { RootDrawerScreenProps } from "../types";
+import { RootDrawerScreenProps } from "../navigation/types";
 
-export default function NotFoundScreen({ navigation }: RootDrawerScreenProps<"NotFound">) {
+export const NotFoundScreen: React.FC<RootDrawerScreenProps<"NotFound">> = ({ navigation }) => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>This screen doesn't exist.</Text>
-            <TouchableOpacity onPress={() => navigation.replace("Root")} style={styles.link}>
+            <TouchableOpacity onPress={() => navigation.navigate("Home")} style={styles.link}>
                 <Text style={styles.linkText}>Go to home screen!</Text>
             </TouchableOpacity>
         </View>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
@@ -34,3 +35,5 @@ const styles = StyleSheet.create({
         color: "#2e78b7",
     },
 });
+
+export default NotFoundScreen;

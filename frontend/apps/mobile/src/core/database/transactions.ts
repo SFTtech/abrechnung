@@ -1,5 +1,4 @@
 import { db } from "./index";
-import NotificationTracker from "../index";
 import {
     Transaction,
     TransactionPosition,
@@ -9,68 +8,107 @@ import {
     ValidationError,
 } from "@abrechnung/types";
 import { isOnline, api } from "../api";
-import { fromISOString, toISODateString, toISOString } from "@abrechnung/utils";
+import { fromISOString, fromISOStringNullable, toISODateString, toISOStringNullable } from "@abrechnung/utils";
 import { Connection } from "./async_wrapper";
+import { NotificationEmitter } from "@abrechnung/core";
 
-type transactionNotifierPayload = {
-    group_id: number;
-    transaction_id?: number;
-};
+interface TransactionIdentifier {
+    groupID: number;
+    transactionID?: number;
+}
 
-type transactionPositionPayload = {
-    transaction_id?: number;
-};
+interface TransactionEventMap {
+    changed: TransactionIdentifier;
+    // created: TransactionIdentifier;
+    // deleted: TransactionIdentifier;
+}
 
-export const transactionNotifier = new NotificationTracker<transactionNotifierPayload>();
-export const transactionPositionNotifier = new NotificationTracker<transactionPositionPayload>();
+interface PositionIdentifier {
+    groupID: number;
+    transactionID: number;
+    positionID?: number;
+}
+
+interface PositionEventMap {
+    changed: PositionIdentifier;
+    // created: PositionIdentifier;
+    // deleted: PositionIdentifier;
+}
+
+export const transactionNotifier = new NotificationEmitter<TransactionEventMap>();
+export const transactionPositionNotifier = new NotificationEmitter<PositionEventMap>();
+
+type TransactionEventPayload = { billedAt: string } & Pick<
+    Transaction,
+    | "groupID"
+    | "type"
+    | "description"
+    | "value"
+    | "currencySymbol"
+    | "currencyConversionRate"
+    | "creditorShares"
+    | "debitorShares"
+    | "deleted"
+>;
+type PositionEventPayload = Pick<
+    TransactionPosition,
+    "transactionID" | "name" | "price" | "usages" | "communistShares" | "deleted"
+>;
 
 function databaseRowToTransaction(row: any): Transaction {
-    const parsed_event = row.event_content !== null ? JSON.parse(row.event_content) : null;
-    if (parsed_event !== null) {
-        parsed_event.billed_at = fromISOString(parsed_event.billed_at);
+    const parsedEvent = row.event_content !== null ? JSON.parse(row.event_content) : null;
+    if (parsedEvent !== null) {
+        parsedEvent.billedAt = fromISOString(parsedEvent.billedAt);
     }
-    return <Transaction>{
+    const revision_started_at = fromISOStringNullable(row.revision_started_at);
+    const revision_committed_at = fromISOStringNullable(row.revision_committed_at);
+    const eventTime = fromISOStringNullable(row.event_time);
+    return {
         id: row.id,
         type: row.type,
         group_id: row.group_id,
         description: row.description,
         value: row.value,
-        currency_symbol: row.currency_symbol,
-        currency_conversion_rate: row.currency_conversion_rate,
-        billed_at: fromISOString(row.billed_at),
-        creditor_shares: row.creditor_shares ? JSON.parse(row.creditor_shares) : null,
-        debitor_shares: row.debitor_shares ? JSON.parse(row.debitor_shares) : null,
+        currencySymbol: row.currency_symbol,
+        currencyConversionRate: row.currency_conversion_rate,
+        billedAt: fromISOStringNullable(row.billed_at),
+        creditorShares: row.creditor_shares ? JSON.parse(row.creditor_shares) : null,
+        debitorShares: row.debitor_shares ? JSON.parse(row.debitor_shares) : null,
         deleted: row.deleted,
-        revision_started_at: fromISOString(row.revision_started_at),
-        revision_committed_at: fromISOString(row.revision_committed_at),
+        revisionStartedAt: revision_started_at,
+        revisionCommittedAt: revision_committed_at,
         version: row.version,
-        is_wip: row.is_wip,
-        last_changed:
-            row.event_time !== null
-                ? fromISOString(row.event_time)
-                : row.revision_committed_at !== null
-                ? fromISOString(row.revision_committed_at)
-                : fromISOString(row.revision_started_at),
-        ...parsed_event,
-        has_local_changes: row.event_content !== null,
+        isWip: row.is_wip,
+        lastChanged: eventTime ?? revision_committed_at ?? revision_started_at,
+        ...parsedEvent,
+        hasLocalChanges: row.event_content !== null,
     };
 }
 
-function transactionFromEvent(transaction_id: number, group_id: number, event_time: string, event): Transaction {
+function transactionFromEvent(
+    transactionID: number,
+    groupID: number,
+    eventTime: string,
+    event: TransactionEventPayload
+): Transaction {
     return {
-        id: transaction_id,
-        group_id: group_id,
+        id: transactionID,
         version: 0,
-        revision_started_at: null,
-        revision_committed_at: null,
-        last_changed: fromISOString(event_time),
+        revisionStartedAt: null,
+        revisionCommittedAt: null,
+        lastChanged: fromISOString(eventTime),
         ...event,
-        billed_at: fromISOString(event.billed_at),
-        has_local_changes: true,
-    } as Transaction;
+        isWip: false,
+        billedAt: fromISOString(event.billedAt),
+        hasLocalChanges: true,
+    };
 }
 
-async function saveTransactionToDatabase(transaction: Transaction, positions: TransactionPosition[], conn?) {
+async function saveTransactionToDatabase(
+    transaction: Transaction,
+    positions: TransactionPosition[],
+    conn?: Connection
+) {
     const transactionInsertQuery = `
         insert into "transaction" (
             id, group_id, type, description, value, billed_at, creditor_shares, debitor_shares, deleted,
@@ -81,37 +119,37 @@ async function saveTransactionToDatabase(transaction: Transaction, positions: Tr
             ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15
         )
         on conflict (id) do update set
-                                       group_id                 = excluded.group_id,
-                                       type                     = excluded.type,
-                                       description              = excluded.description,
-                                       value                    = excluded.value,
-                                       billed_at                = excluded.billed_at,
-                                       creditor_shares          = excluded.creditor_shares,
-                                       debitor_shares           = excluded.debitor_shares,
-                                       deleted                  = excluded.deleted,
-                                       currency_symbol          = excluded.currency_symbol,
-                                       currency_conversion_rate = excluded.currency_conversion_rate,
-                                       revision_started_at      = excluded.revision_started_at,
-                                       revision_committed_at    = excluded.revision_committed_at,
-                                       version                  = excluded.version,
-                                       is_wip                   = excluded.is_wip
+            group_id                 = excluded.group_id,
+            type                     = excluded.type,
+            description              = excluded.description,
+            value                    = excluded.value,
+            billed_at                = excluded.billed_at,
+            creditor_shares          = excluded.creditor_shares,
+            debitor_shares           = excluded.debitor_shares,
+            deleted                  = excluded.deleted,
+            currency_symbol          = excluded.currency_symbol,
+            currency_conversion_rate = excluded.currency_conversion_rate,
+            revision_started_at      = excluded.revision_started_at,
+            revision_committed_at    = excluded.revision_committed_at,
+            version                  = excluded.version,
+            is_wip                   = excluded.is_wip
     `;
     const queryParams = [
         transaction.id,
-        transaction.group_id,
+        transaction.groupID,
         transaction.type,
         transaction.description,
         transaction.value,
-        toISODateString(transaction.billed_at),
-        JSON.stringify(transaction.creditor_shares),
-        JSON.stringify(transaction.debitor_shares),
+        toISODateString(transaction.billedAt),
+        JSON.stringify(transaction.creditorShares),
+        JSON.stringify(transaction.debitorShares),
         transaction.deleted,
-        transaction.currency_symbol,
-        transaction.currency_conversion_rate,
-        toISOString(transaction.revision_started_at),
-        toISOString(transaction.revision_committed_at),
+        transaction.currencySymbol,
+        transaction.currencyConversionRate,
+        toISOStringNullable(transaction.revisionStartedAt),
+        toISOStringNullable(transaction.revisionCommittedAt),
         transaction.version,
-        transaction.is_wip,
+        transaction.isWip,
     ];
 
     const positionInsertQuery = `
@@ -122,13 +160,13 @@ async function saveTransactionToDatabase(transaction: Transaction, positions: Tr
             ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8
         )
         on conflict (id) do update set
-                                       group_id         = excluded.group_id,
-                                       transaction_id   = excluded.transaction_id,
-                                       name             = excluded.name,
-                                       price            = excluded.price,
-                                       usages           = excluded.usages,
-                                       deleted          = excluded.deleted,
-                                       communist_shares = excluded.communist_shares
+            group_id         = excluded.group_id,
+            transaction_id   = excluded.transaction_id,
+            name             = excluded.name,
+            price            = excluded.price,
+            usages           = excluded.usages,
+            deleted          = excluded.deleted,
+            communist_shares = excluded.communist_shares
     `;
     if (conn) {
         return Promise.all([
@@ -136,13 +174,13 @@ async function saveTransactionToDatabase(transaction: Transaction, positions: Tr
             ...positions.map((position) =>
                 conn.execute(positionInsertQuery, [
                     position.id,
-                    transaction.group_id,
+                    transaction.groupID,
                     transaction.id,
                     position.name,
                     position.price,
                     JSON.stringify(position.usages),
                     position.deleted,
-                    position.communist_shares,
+                    position.communistShares,
                 ])
             ),
         ]);
@@ -153,13 +191,13 @@ async function saveTransactionToDatabase(transaction: Transaction, positions: Tr
                 ...positions.map((position) =>
                     conn.execute(positionInsertQuery, [
                         position.id,
-                        transaction.group_id,
+                        transaction.groupID,
                         transaction.id,
                         position.name,
                         position.price,
                         JSON.stringify(position.usages),
                         position.deleted,
-                        position.communist_shares,
+                        position.communistShares,
                     ])
                 ),
             ]);
@@ -168,35 +206,34 @@ async function saveTransactionToDatabase(transaction: Transaction, positions: Tr
 }
 
 function databaseRowToPosition(row: any): TransactionPosition {
-    const parsed_event = row.event_content !== null ? JSON.parse(row.event_content) : {};
+    const parsed_event: PositionEventPayload | null = row.event_content !== null ? JSON.parse(row.event_content) : {};
     return {
         id: row.id,
-        transaction_id: row.transaction_id,
+        transactionID: row.transaction_id,
         price: row.price,
         usages: row.usages != null ? JSON.parse(row.usages) : null,
-        communist_shares: row.communist_shares,
+        communistShares: row.communist_shares,
         deleted: row.deleted,
         name: row.name,
-        group_id: row.group_id,
+        groupID: row.group_id,
         ...parsed_event,
-        has_local_changes: row.event_content !== null,
+        hasLocalChanges: row.event_content !== null,
     } as TransactionPosition;
 }
 
 function transactionPositionFromEvent(
-    position_id: number,
-    transaction_id: number,
-    group_id: number,
-    event_time: string,
-    event: any
+    positionID: number,
+    transactionID: number,
+    groupID: number,
+    eventTime: string,
+    event: PositionEventPayload
 ): TransactionPosition {
-    return <TransactionPosition>{
-        id: position_id,
-        transaction_id: transaction_id,
-        group_id: group_id,
+    return {
+        id: positionID,
+        groupID: groupID,
         ...event,
-        has_local_changes: true,
-    };
+        hasLocalChanges: true,
+    } as TransactionPosition;
 }
 
 export async function syncTransactions(groupID: number): Promise<[Transaction, TransactionPosition[]][]> {
@@ -204,18 +241,16 @@ export async function syncTransactions(groupID: number): Promise<[Transaction, T
     await db.transaction((conn: Connection) => {
         backendTransactions.forEach((t) => {
             const [transaction, positions] = t;
-            transactionPositionNotifier.notify(transaction.id, {
-                transaction_id: transaction.id,
-            });
+            transactionPositionNotifier.emit("changed", { groupID: groupID, transactionID: transaction.id });
             saveTransactionToDatabase(transaction, positions, conn);
         });
     });
     // TODO: upload pending changes to server
-    transactionNotifier.notify(groupID, { group_id: groupID });
+    transactionNotifier.emit("changed", { groupID: groupID });
     return backendTransactions;
 }
 
-export async function getTransactions(group_id: number): Promise<Transaction[]> {
+export async function getTransactions(groupID: number): Promise<Transaction[]> {
     const result = await db.execute(
         `select
              t.id,
@@ -248,7 +283,7 @@ export async function getTransactions(group_id: number): Promise<Transaction[]> 
                              pending_transaction_changes
                          where
                              transaction_id >= 0
-                             and group_id = ?
+                             and group_id = ?1
                      ) sub
                  where
                      sub.rank = 1
@@ -256,29 +291,28 @@ export async function getTransactions(group_id: number): Promise<Transaction[]> 
                              on aggregated_events.transaction_id = t.id and aggregated_events.group_id = t.group_id
          where
              t.id >= 0
-             and t.group_id = ?`,
-        [group_id, group_id]
+             and t.group_id = ?1`,
+        [groupID]
     );
 
     const serverTransactions = result.rows.map((row) => databaseRowToTransaction(row));
 
     const localTransactionsQueryResult = await db.execute(
-        `
-                select *
+        `select *
+        from
+            (
+                select
+                    row_number() over (partition by transaction_id order by event_id desc) as rank,
+                    *
                 from
-                    (
-                        select
-                            row_number() over (partition by transaction_id order by event_id desc) as rank,
-                            *
-                        from
-                            pending_transaction_changes
-                        where
-                            transaction_id < 0
-                            and group_id = ?
-                    ) sub
+                    pending_transaction_changes
                 where
-                    sub.rank = 1`,
-        [group_id]
+                    transaction_id < 0
+                    and group_id = ?
+            ) sub
+        where
+            sub.rank = 1`,
+        [groupID]
     );
     const localTransactions = localTransactionsQueryResult.rows.map((row) =>
         transactionFromEvent(row.transaction_id, row.group_id, row.event_time, JSON.parse(row.event_content))
@@ -287,8 +321,8 @@ export async function getTransactions(group_id: number): Promise<Transaction[]> 
     return localTransactions.concat(...serverTransactions);
 }
 
-export async function getTransaction(group_id: number, transaction_id: number): Promise<Transaction> {
-    if (transaction_id < 0) {
+export async function getTransaction(groupID: number, transactionID: number): Promise<Transaction> {
+    if (transactionID < 0) {
         // we are dealing with a local only account
         const result = await db.execute(
             `select *
@@ -305,11 +339,11 @@ export async function getTransaction(group_id: number, transaction_id: number): 
                  ) sub
              where
                  sub.rank = 1`,
-            [group_id, transaction_id]
+            [groupID, transactionID]
         );
         // TODO: check empty result
         const parsedEvent = JSON.parse(result.rows[0].event_content);
-        return transactionFromEvent(transaction_id, result.rows[0].group_id, result.rows[0].event_time, parsedEvent);
+        return transactionFromEvent(transactionID, result.rows[0].group_id, result.rows[0].event_time, parsedEvent);
     } else {
         const result = await db.execute(
             `select
@@ -352,14 +386,14 @@ export async function getTransaction(group_id: number, transaction_id: number): 
              where
                  t.id = ?2
                  and t.group_id = ?1`,
-            [group_id, transaction_id]
+            [groupID, transactionID]
         );
 
         return databaseRowToTransaction(result.rows[0]);
     }
 }
 
-export async function getTransactionsPositionsForGroup(group_id: number): Promise<TransactionPosition[]> {
+export async function getTransactionsPositionsForGroup(groupID: number): Promise<TransactionPosition[]> {
     const result = await db.execute(
         `select
              t.id,
@@ -393,28 +427,27 @@ export async function getTransactionsPositionsForGroup(group_id: number): Promis
          where
              t.id >= 0
              and t.group_id = ?1`,
-        [group_id]
+        [groupID]
     );
 
     const serverPositions = result.rows.map((row) => databaseRowToPosition(row));
 
     const localPositionsQueryResult = await db.execute(
-        `
-                select *
+        `select *
+        from
+            (
+                select
+                    row_number() over (partition by position_id order by event_id desc) as rank,
+                    *
                 from
-                    (
-                        select
-                            row_number() over (partition by position_id order by event_id desc) as rank,
-                            *
-                        from
-                            pending_transaction_position_changes ptc
-                        where
-                            position_id < 0
-                            and group_id = ?1
-                    ) sub
+                    pending_transaction_position_changes ptc
                 where
-                    sub.rank = 1`,
-        [group_id]
+                    position_id < 0
+                    and group_id = ?1
+            ) sub
+        where
+            sub.rank = 1`,
+        [groupID]
     );
     const localPositions = localPositionsQueryResult.rows.map((row) =>
         transactionPositionFromEvent(
@@ -429,7 +462,7 @@ export async function getTransactionsPositionsForGroup(group_id: number): Promis
     return localPositions.concat(...serverPositions);
 }
 
-export async function getTransactionsPositions(transaction_id: number): Promise<TransactionPosition[]> {
+export async function getTransactionsPositions(transactionID: number): Promise<TransactionPosition[]> {
     const result = await db.execute(
         `select
              t.id,
@@ -463,28 +496,27 @@ export async function getTransactionsPositions(transaction_id: number): Promise<
          where
              t.id >= 0
              and t.transaction_id = ?1`,
-        [transaction_id]
+        [transactionID]
     );
 
     const serverPositions = result.rows.map((row) => databaseRowToPosition(row));
 
     const localPositionsQueryResult = await db.execute(
-        `
-                select *
+        `select *
+        from
+            (
+                select
+                    row_number() over (partition by position_id order by event_id desc) as rank,
+                    *
                 from
-                    (
-                        select
-                            row_number() over (partition by position_id order by event_id desc) as rank,
-                            *
-                        from
-                            pending_transaction_position_changes
-                        where
-                            position_id < 0
-                            and transaction_id = ?1
-                    ) sub
+                    pending_transaction_position_changes
                 where
-                    sub.rank = 1`,
-        [transaction_id]
+                    position_id < 0
+                    and transaction_id = ?1
+            ) sub
+        where
+            sub.rank = 1`,
+        [transactionID]
     );
     const localPositions = localPositionsQueryResult.rows.map((row) =>
         transactionPositionFromEvent(
@@ -500,7 +532,7 @@ export async function getTransactionsPositions(transaction_id: number): Promise<
 }
 
 export async function pushLocalTransactionChanges(
-    transaction_id: number
+    transactionID: number
 ): Promise<[Transaction, TransactionPosition[]]> {
     if (!(await isOnline())) {
         console.log("cannot push changes to server as we are offline");
@@ -512,18 +544,17 @@ export async function pushLocalTransactionChanges(
         // fetch the transaction and its pending position changes from the database
         const transactionQueryResult = await conn.execute(
             `select *
-                                                           from
-                                                               pending_transaction_changes pac
-                                                           where
-                                                               transaction_id = ?1
-                                                           order by
-                                                               event_time desc
-                                                           limit 1`,
-            [transaction_id]
+            from
+                pending_transaction_changes pac
+            where
+                transaction_id = ?1
+            order by
+                event_time desc
+            limit 1`,
+            [transactionID]
         );
         const positionQueryResult = await conn.execute(
-            `
-            select *
+            `select *
             from
                 (
                     select
@@ -536,7 +567,7 @@ export async function pushLocalTransactionChanges(
                 ) sub
             where
                 sub.rank = 1`,
-            [transaction_id]
+            [transactionID]
         );
         if (transactionQueryResult.rows.length === 0 && positionQueryResult.rows.length === 0) {
             return;
@@ -552,7 +583,7 @@ export async function pushLocalTransactionChanges(
             )
         );
 
-        let [updatedTransaction, updatedPositions] = [null, null];
+        let updatedTransaction: Transaction, updatedPositions: TransactionPosition[];
 
         if (transactionQueryResult.rows.length > 0) {
             console.log("pushing transaction detail plus position changes to server");
@@ -565,45 +596,43 @@ export async function pushLocalTransactionChanges(
             );
             [updatedTransaction, updatedPositions] = await api.pushTransactionChanges(transaction, positions, true);
             await conn.execute(
-                `
-                delete
+                `delete
                 from
                     pending_transaction_changes
                 where
-                    transaction_id = ?1
-            `,
-                [transaction_id]
+                    transaction_id = ?1`,
+                [transactionID]
             );
         } else {
             console.log("pushing only position changes to server");
             [updatedTransaction, updatedPositions] = await api.pushTransactionPositionChanges(
-                transaction_id,
+                transactionID,
                 positions,
                 true
             );
         }
         await saveTransactionToDatabase(updatedTransaction, updatedPositions, conn);
         await conn.execute(
-            `
-            delete
+            `delete
             from
                 pending_transaction_position_changes
             where
-                transaction_id = ?1
-        `,
-            [transaction_id]
+                transaction_id = ?1`,
+            [transactionID]
         );
         console.log("successfully synced local changes with server and saved the result to local database");
 
-        transactionNotifier.notify(updatedTransaction.group_id, {
-            group_id: updatedTransaction.groupID,
+        transactionNotifier.emit("changed", {
+            groupID: updatedTransaction.groupID,
         });
-        transactionPositionNotifier.notify(updatedTransaction.id, {
-            transaction_id: transaction_id,
+        transactionPositionNotifier.emit("changed", {
+            groupID: updatedTransaction.groupID,
+            transactionID: transactionID,
         });
-        if (updatedTransaction.transaction_id !== transaction_id) {
-            transactionPositionNotifier.notify(transaction_id, {
-                transaction_id: transaction_id,
+        if (updatedTransaction.id !== transactionID) {
+            transactionPositionNotifier.emit("changed", {
+                groupID: updatedTransaction.groupID,
+                transactionID: transactionID,
             });
         }
 
@@ -618,34 +647,34 @@ export async function updateTransaction(transaction: Transaction) {
     }
 
     console.log("saving local transaction changes");
-    const event_payload = {
+    const eventPayload: Partial<TransactionEventPayload> = {
         description: transaction.description,
         value: transaction.value,
-        currency_symbol: transaction.currency_symbol,
-        currency_conversion_rate: transaction.currency_conversion_rate,
-        billed_at: toISODateString(transaction.billed_at),
-        creditor_shares: transaction.creditor_shares,
-        debitor_shares: transaction.debitor_shares,
+        currencySymbol: transaction.currencySymbol,
+        currencyConversionRate: transaction.currencyConversionRate,
+        billedAt: toISODateString(transaction.billedAt),
+        creditorShares: transaction.creditorShares,
+        debitorShares: transaction.debitorShares,
         deleted: transaction.deleted,
     };
     return await db.transaction(async (conn: Connection) => {
         // get previous pending change
         const previous = await conn.execute(
             `select *
-                                             from
-                                                 pending_transaction_changes
-                                             where
-                                                 transaction_id = ?1
-                                             order by
-                                                 event_time desc
-                                             limit 1`,
+            from
+                pending_transaction_changes
+            where
+                transaction_id = ?1
+            order by
+                event_time desc
+            limit 1`,
             [transaction.id]
         );
 
         const updatedPayload =
             previous.rows.length > 0
-                ? { ...JSON.parse(previous.rows[0].event_content), ...event_payload }
-                : event_payload;
+                ? { ...JSON.parse(previous.rows[0].event_content), ...eventPayload }
+                : eventPayload;
 
         await conn.execute(
             `insert into pending_transaction_changes (
@@ -654,139 +683,126 @@ export async function updateTransaction(transaction: Transaction) {
              values (
                  ?, ?, ?, ?
              )`,
-            [transaction.id, transaction.group_id, JSON.stringify(updatedPayload), toISOString(new Date())]
+            [transaction.id, transaction.groupID, JSON.stringify(updatedPayload), new Date().toISOString()]
         );
-        transactionNotifier.notify(transaction.group_id, {
-            group_id: transaction.group_id,
-            transaction_id: transaction.id,
-        });
+        transactionNotifier.emit("changed", { groupID: transaction.groupID, transactionID: transaction.id });
     });
 }
 
-export async function createTransaction(group_id: number, type: TransactionType): Promise<[number, Date]> {
-    const event_payload = {
+export async function createTransaction(groupID: number, type: TransactionType): Promise<[number, Date]> {
+    const eventPayload = {
         type: type,
-        group_id: group_id,
+        groupID: groupID,
         value: 0,
-        billed_at: toISODateString(new Date()),
+        billedAt: toISODateString(new Date()),
         description: "",
-        currency_conversion_rate: 1.0,
-        currency_symbol: "€",
-        creditor_shares: {},
-        debitor_shares: {},
+        currencyConversionRate: 1.0,
+        currencySymbol: "€",
+        creditorShares: {},
+        debitorShares: {},
         deleted: false,
     };
 
     return await db.transaction(async (conn: Connection) => {
         const res = await conn.execute(
-            `
-            select
+            `select
                 coalesce(min(pac.transaction_id), -1) as curr_min_id
             from
                 pending_transaction_changes pac
             where
-                pac.group_id = ?
-        `,
-            [group_id]
+                pac.group_id = ?`,
+            [groupID]
         );
-        const next_id = Math.min(res.rows[0].curr_min_id, 0) - 1;
+        const nextID = Math.min(res.rows[0].curr_min_id, 0) - 1;
         const creationDate = new Date();
         await conn.execute(
-            `
-            insert into pending_transaction_changes (
+            `insert into pending_transaction_changes (
                 transaction_id, group_id, event_content, event_time
             )
             values (
                 ?, ?, ?, ?
             )`,
-            [next_id, group_id, JSON.stringify(event_payload), toISOString(creationDate)]
+            [nextID, groupID, JSON.stringify(eventPayload), creationDate.toISOString()]
         );
-        transactionNotifier.notify(group_id, { group_id: group_id });
-        return [next_id, creationDate];
+        transactionNotifier.emit("changed", { groupID: groupID });
+        return [nextID, creationDate];
     });
 }
 
-export async function deleteTransaction(group_id: number, transaction_id: number) {
-    if (transaction_id < 0) {
-        return await deleteLocalTransactionChanges(group_id, transaction_id);
+export async function deleteTransaction(groupID: number, transactionID: number) {
+    if (transactionID < 0) {
+        return await deleteLocalTransactionChanges(groupID, transactionID);
     }
 
-    const transaction = await getTransaction(group_id, transaction_id);
+    const transaction = await getTransaction(groupID, transactionID);
     transaction.deleted = true;
     return await updateTransaction(transaction);
 }
 
 export async function deleteLocalTransactionChanges(
-    group_id: number,
-    transaction_id: number,
+    groupID: number,
+    transactionID: number,
     olderThan?: string
 ): Promise<boolean> {
-    console.log("deleting local transaction changes to transaction", transaction_id, "older than", olderThan);
+    console.log("deleting local transaction changes to transaction", transactionID, "older than", olderThan);
     // returns true if a local only transaction was deleted fully
     return await db.transaction(async (conn: Connection) => {
         if (olderThan) {
             await conn.execute(
-                `
-                delete
+                `delete
                 from
                     pending_transaction_changes
                 where
                     transaction_id = ?1
-                    and event_time >= ?2
-            `,
-                [transaction_id, olderThan]
+                    and event_time >= ?2`,
+                [transactionID, olderThan]
             );
             await conn.execute(
-                `
-                delete
+                `delete
                 from
                     pending_transaction_position_changes
                 where
                     transaction_id = ?1
-                    and event_time >= ?2
-            `,
-                [transaction_id, olderThan]
+                    and event_time >= ?2`,
+                [transactionID, olderThan]
             );
         } else {
             await conn.execute(
-                `
-                delete
+                `delete
                 from
                     pending_transaction_changes
                 where
-                    transaction_id = ?1
-            `,
-                [transaction_id]
+                    transaction_id = ?1`,
+                [transactionID]
             );
             await conn.execute(
-                `
-                delete
+                `delete
                 from
                     pending_transaction_position_changes
                 where
-                    transaction_id = ?1
-            `,
-                [transaction_id]
+                    transaction_id = ?1`,
+                [transactionID]
             );
         }
 
         let deletedLocalTransaction = false;
-        if (transaction_id < 0) {
-            const n_local_changes = await conn.execute(
+        if (transactionID < 0) {
+            const nLocalChanges = await conn.execute(
                 `select
-                                                            count(*) as n_local_changes
-                                                        from
-                                                            pending_transaction_changes
-                                                        where
-                                                            transaction_id = ?1`,
-                [transaction_id]
+                    count(*) as n_local_changes
+                from
+                    pending_transaction_changes
+                where
+                    transaction_id = ?1`,
+                [transactionID]
             );
-            deletedLocalTransaction = n_local_changes.rows[0].n_local_changes === 0;
+            deletedLocalTransaction = nLocalChanges.rows[0].n_local_changes === 0;
         }
 
-        transactionNotifier.notify(group_id, { group_id: group_id });
-        transactionPositionNotifier.notify(transaction_id, {
-            transaction_id: transaction_id,
+        transactionNotifier.emit("changed", { groupID: groupID });
+        transactionPositionNotifier.emit("changed", {
+            groupID: groupID,
+            transactionID: transactionID,
         });
 
         return deletedLocalTransaction;
@@ -794,15 +810,15 @@ export async function deleteLocalTransactionChanges(
 }
 
 export async function createPosition(
-    group_id: number,
-    transaction_id: number,
+    groupID: number,
+    transactionID: number,
     copyFromPosition: TransactionPosition | null = null
 ) {
-    const event_payload = {
-        transaction_id: transaction_id,
+    const eventPayload = {
+        transactionID: transactionID,
         name: copyFromPosition?.name ?? "",
         price: copyFromPosition?.price ?? 0,
-        communist_shares: copyFromPosition?.communist_shares ?? 0,
+        communistShares: copyFromPosition?.communistShares ?? 0,
         usages: copyFromPosition?.usages ?? {},
         deleted: false,
     };
@@ -817,9 +833,9 @@ export async function createPosition(
             where
                 pac.transaction_id = ?
         `,
-            [transaction_id]
+            [transactionID]
         );
-        const next_id = Math.min(res.rows[0].curr_min_id, 0) - 1;
+        const nextID = Math.min(res.rows[0].curr_min_id, 0) - 1;
         await conn.execute(
             `
             insert into pending_transaction_position_changes (
@@ -828,13 +844,14 @@ export async function createPosition(
             values (
                 ?, ?, ?, ?, ?
             )`,
-            [group_id, next_id, transaction_id, JSON.stringify(event_payload), toISOString(new Date())]
+            [groupID, nextID, transactionID, JSON.stringify(eventPayload), new Date().toISOString()]
         );
-        transactionPositionNotifier.notify(transaction_id, {
-            transaction_id: transaction_id,
+        transactionPositionNotifier.emit("changed", {
+            groupID: groupID,
+            transactionID: transactionID,
         });
-        console.log("created new local position for transaction with id", transaction_id);
-        return next_id;
+        console.log("created new local position for transaction with id", transactionID);
+        return nextID;
     });
 }
 
@@ -844,10 +861,10 @@ export async function updatePosition(position: TransactionPosition) {
         throw new ValidationError(validationErrors);
     }
 
-    const event_payload = {
+    const eventPayload = {
         name: position.name,
         price: position.price,
-        communist_shares: position.communist_shares,
+        communistShares: position.communistShares,
         usages: position.usages,
         deleted: position.deleted,
     };
@@ -861,14 +878,15 @@ export async function updatePosition(position: TransactionPosition) {
              )`,
             [
                 position.id,
-                position.group_id,
-                position.transaction_id,
-                JSON.stringify(event_payload),
-                toISOString(new Date()),
+                position.groupID,
+                position.transactionID,
+                JSON.stringify(eventPayload),
+                new Date().toISOString(),
             ]
         );
-        transactionPositionNotifier.notify(position.transaction_id, {
-            transaction_id: position.transaction_id,
+        transactionPositionNotifier.emit("changed", {
+            groupID: position.groupID,
+            transactionID: position.transactionID,
         });
     });
 }
@@ -876,11 +894,11 @@ export async function updatePosition(position: TransactionPosition) {
 export async function deletePosition(position: TransactionPosition) {
     // TODO: determine if we keep around local only positions once deleted
     return await db.transaction(async (conn: Connection) => {
-        const event_payload = {
-            transaction_id: position.transaction_id,
+        const eventPayload = {
+            transactionID: position.transactionID,
             name: position.name,
             price: position.price,
-            communist_shares: position.communist_shares,
+            communistShares: position.communistShares,
             usages: position.usages,
             deleted: true,
         };
@@ -894,14 +912,15 @@ export async function deletePosition(position: TransactionPosition) {
             )`,
             [
                 position.id,
-                position.group_id,
-                position.transaction_id,
-                JSON.stringify(event_payload),
-                toISOString(new Date()),
+                position.groupID,
+                position.transactionID,
+                JSON.stringify(eventPayload),
+                new Date().toISOString(),
             ]
         );
-        transactionPositionNotifier.notify(position.transaction_id, {
-            transaction_id: position.transaction_id,
+        transactionPositionNotifier.emit("changed", {
+            groupID: position.groupID,
+            transactionID: position.transactionID,
         });
     });
 }

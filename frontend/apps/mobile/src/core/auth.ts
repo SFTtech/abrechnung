@@ -1,4 +1,4 @@
-import { db, flushDatabase } from "./database";
+import { db } from "./database";
 import { atom } from "recoil";
 import { logout as logoutAPI } from "./api/auth";
 import { initializeAPIURL } from "./api";

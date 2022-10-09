@@ -1,14 +1,15 @@
-import { StyleSheet } from "react-native";
+import React from "react";
+import { StyleSheet, View } from "react-native";
+import { Text } from "react-native-paper";
+import { RootDrawerScreenProps } from "../navigation/types";
 
-import { Text, View } from "../components/Themed";
-
-export default function Register() {
+export const Register: React.FC<RootDrawerScreenProps<"Register">> = () => {
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Login</Text>
         </View>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
@@ -26,3 +27,5 @@ const styles = StyleSheet.create({
         width: "80%",
     },
 });
+
+export default Register;

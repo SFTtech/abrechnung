@@ -2,8 +2,8 @@ import { IApi } from "./types";
 import { validateJWTToken } from "./auth";
 import deepmerge from "deepmerge";
 import { Account, Group, Transaction, TransactionPosition } from "@abrechnung/types";
-import { backendAccountToAccount } from "./accounts";
-import { backendTransactionToTransaction, toBackendPosition } from "./transactions";
+import { BackendAccount, backendAccountToAccount } from "./accounts";
+import { BackendTransaction, backendTransactionToTransaction, toBackendPosition } from "./transactions";
 import { toISODateString } from "@abrechnung/utils";
 
 export class Api implements IApi {
@@ -41,7 +41,7 @@ export class Api implements IApi {
 
     public fetchAccounts = async (groupID: number): Promise<Account[]> => {
         const accounts = await this.makeGet(`/groups/${groupID}/accounts`);
-        return accounts.map((acc: any) => backendAccountToAccount(acc));
+        return accounts.map((acc: BackendAccount) => backendAccountToAccount(acc));
     };
 
     public fetchAccount = async (accountID: number): Promise<Account> => {
@@ -51,20 +51,20 @@ export class Api implements IApi {
 
     public pushAccountChanges = async (account: Account) => {
         if (account.id < 0) {
-            const updatedAccount = await this.makePost(`/groups/${account.group_id}/accounts`, {
+            const updatedAccount = await this.makePost(`/groups/${account.groupID}/accounts`, {
                 type: account.type,
                 name: account.name,
                 description: account.description,
-                owning_user_id: account.owning_user_id,
-                clearing_shares: account.clearing_shares,
+                owning_user_id: account.owningUserID,
+                clearing_shares: account.clearingShares,
             });
             return backendAccountToAccount(updatedAccount);
         } else {
             const updatedAccount = await this.makePost(`/accounts/${account.id}`, {
                 name: account.name,
                 description: account.description,
-                owning_user_id: account.owning_user_id,
-                clearing_shares: account.clearing_shares,
+                owning_user_id: account.owningUserID,
+                clearing_shares: account.clearingShares,
             });
             return backendAccountToAccount(updatedAccount);
         }
@@ -87,7 +87,7 @@ export class Api implements IApi {
             }
         }
         const transactions = await this.makeGet(url);
-        return transactions.map((t: any) => backendTransactionToTransaction(t));
+        return transactions.map((t: BackendTransaction) => backendTransactionToTransaction(t));
     };
 
     public fetchTransaction = async (transactionID: number): Promise<[Transaction, TransactionPosition[]]> => {
@@ -101,15 +101,15 @@ export class Api implements IApi {
         performCommit = true
     ): Promise<[Transaction, TransactionPosition[]]> => {
         if (transaction.id < 0) {
-            const updatedTransaction = await this.makePost(`/groups/${transaction.group_id}/transactions`, {
+            const updatedTransaction = await this.makePost(`/groups/${transaction.groupID}/transactions`, {
                 description: transaction.description,
                 value: transaction.value,
                 type: transaction.type,
-                billed_at: toISODateString(transaction.billed_at),
-                currency_symbol: transaction.currency_symbol,
-                currency_conversion_rate: transaction.currency_conversion_rate,
-                creditor_shares: transaction.creditor_shares,
-                debitor_shares: transaction.debitor_shares,
+                billed_at: toISODateString(transaction.billedAt),
+                currency_symbol: transaction.currencySymbol,
+                currency_conversion_rate: transaction.currencyConversionRate,
+                creditor_shares: transaction.creditorShares,
+                debitor_shares: transaction.debitorShares,
                 positions: toBackendPosition(positions),
                 perform_commit: performCommit,
             });
@@ -118,11 +118,11 @@ export class Api implements IApi {
             const updatedTransaction = await this.makePost(`/transactions/${transaction.id}`, {
                 description: transaction.description,
                 value: transaction.value,
-                billed_at: toISODateString(transaction.billed_at),
-                currency_symbol: transaction.currency_symbol,
-                currency_conversion_rate: transaction.currency_conversion_rate,
-                creditor_shares: transaction.creditor_shares,
-                debitor_shares: transaction.debitor_shares,
+                billed_at: toISODateString(transaction.billedAt),
+                currency_symbol: transaction.currencySymbol,
+                currency_conversion_rate: transaction.currencyConversionRate,
+                creditor_shares: transaction.creditorShares,
+                debitor_shares: transaction.debitorShares,
                 positions: toBackendPosition(positions),
                 perform_commit: performCommit,
             });
@@ -134,12 +134,13 @@ export class Api implements IApi {
         transactionID: number,
         positions: TransactionPosition[],
         performCommit = true
-    ) => {
+    ): Promise<[Transaction, TransactionPosition[]]> => {
         const payload = {
             perform_commit: performCommit,
             positions: toBackendPosition(positions),
         };
-        return await this.makePost(`/transactions/${transactionID}/positions`, payload);
+        const resp = await this.makePost(`/transactions/${transactionID}/positions`, payload);
+        return backendTransactionToTransaction(resp);
     };
 
     public uploadFile = async (transactionID: number, filename: string, file: any, onUploadProgress: any) => {

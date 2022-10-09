@@ -1,3 +1,4 @@
+import React from "react";
 import { Portal, Snackbar } from "react-native-paper";
 import { useEffect, useState } from "react";
 import NotificationTracker from "./core";
@@ -23,7 +24,7 @@ export function notify(params: notificationParams) {
     });
 }
 
-export function NotificationProvider() {
+export const NotificationProvider: React.FC = () => {
     const [state, setState] = useState({
         text: "",
         timeout: null,
@@ -66,4 +67,6 @@ export function NotificationProvider() {
             </Snackbar>
         </Portal>
     );
-}
+};
+
+export default NotificationProvider;

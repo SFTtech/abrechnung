@@ -1,14 +1,27 @@
-import { HelperText, TextInput } from "react-native-paper";
-import * as React from "react";
+import { HelperText, TextInput, TextInputProps } from "react-native-paper";
+import React from "react";
 import { useEffect, useState } from "react";
-import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+import { DateTimePickerAndroid, DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { toISODateString } from "@abrechnung/utils";
 
-export default function DateTimeInput(props) {
-    const { value, onChange, mode, disabled = false, editable = true } = props;
+interface Props {
+    value: Date;
+    onChange: (newValue: Date) => void;
+    mode: "time" | "date";
+    disabled?: boolean;
+    editable?: boolean;
+}
 
+export const DateTimeInput: React.FC<Props> = ({
+    value,
+    onChange,
+    mode,
+    disabled = false,
+    editable = false,
+    ...props
+}) => {
     const [textValue, setTextValue] = useState("");
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         setTextValue(toISODateString(value));
@@ -18,8 +31,10 @@ export default function DateTimeInput(props) {
         setTextValue(newValue);
     };
 
-    const onPickerChange = (event, selectedDate: Date) => {
-        propagateChange(selectedDate);
+    const onPickerChange = (event: DateTimePickerEvent, selectedDate: Date | undefined) => {
+        if (selectedDate) {
+            propagateChange(selectedDate);
+        }
     };
 
     const onInputChange = () => {
@@ -51,7 +66,7 @@ export default function DateTimeInput(props) {
         <>
             <TextInput
                 {...props}
-                onChange={null}
+                onChange={() => null}
                 value={textValue} // TODO: proper input validation
                 onChangeText={onTextInputChange} // TODO: fix date input with keyboard
                 onEndEditing={onInputChange}
@@ -61,4 +76,6 @@ export default function DateTimeInput(props) {
             {!!error && <HelperText type="error">{error}</HelperText>}
         </>
     );
-}
+};
+
+export default DateTimeInput;

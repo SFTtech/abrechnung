@@ -1,16 +1,18 @@
 import * as SQLite from "expo-sqlite";
 import { ResultSet, ResultSetError, WebSQLDatabase } from "expo-sqlite";
 
+type SQLType = string | number | Date | boolean | null;
+
 export class Connection {
     private _db: WebSQLDatabase;
     private transacting: boolean;
 
-    constructor(databaseName) {
+    constructor(databaseName: string) {
         this._db = SQLite.openDatabase(databaseName);
         this.transacting = false;
     }
 
-    execute(sqlStatement, args = []) {
+    execute(sqlStatement: string, args: Array<SQLType> = []) {
         return new Promise<ResultSet>((resolve, reject) => {
             this._db.exec([{ sql: sqlStatement, args }], false, (err, res) => {
                 if (err) {
@@ -18,10 +20,10 @@ export class Connection {
                 }
 
                 if (res[0].hasOwnProperty("error")) {
-                    return reject((<ResultSetError>res[0]).error);
+                    return reject((res[0] as ResultSetError).error);
                 }
 
-                resolve(<ResultSet>res[0]);
+                resolve(res[0] as ResultSet);
             });
         });
     }
@@ -46,14 +48,20 @@ export class Connection {
     }
 }
 
+type PrepareConnFunction = (conn: Connection) => void;
+type MigrateFunction = (conn: Connection) => void;
+
 export class Database {
     private _connection: Connection;
     private _dbName: string;
-    private _params: { prepareConnFn: any; migrateFn: any };
+    private _params: { prepareConnFn?: PrepareConnFunction; migrateFn?: MigrateFunction };
     private _prepareConnectionPromise: any;
     private _migrationPromise: Promise<void>;
 
-    constructor(name = "main", { prepareConnFn, migrateFn } = {}) {
+    constructor(
+        name = "main",
+        { prepareConnFn, migrateFn }: { prepareConnFn?: PrepareConnFunction; migrateFn?: MigrateFunction } = {}
+    ) {
         this._dbName = name;
         this._connection = new Connection(this._dbName);
         this._params = { prepareConnFn, migrateFn };
@@ -65,21 +73,23 @@ export class Database {
 
         const performMigration = async () => {
             const connection = new Connection(this._dbName);
-            await this._params.migrateFn(connection);
+            if (this._params.migrateFn) {
+                await this._params.migrateFn(connection);
+            }
             connection.close();
         };
 
         this._migrationPromise = typeof this._params.migrateFn === "function" ? performMigration() : Promise.resolve();
     }
 
-    async execute(sqlQuery, args = []) {
+    async execute(sqlQuery: string, args: Array<SQLType> = []) {
         await this._prepareConnectionPromise;
         await this._migrationPromise;
 
         return await this._connection.execute(sqlQuery, args);
     }
 
-    async transaction(cb) {
+    async transaction(cb: (conn: Connection) => any) {
         await this._prepareConnectionPromise;
         await this._migrationPromise;
         const connection = new Connection(this._dbName);

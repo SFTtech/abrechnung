@@ -1,5 +1,3 @@
-import { ErrorStruct } from "./general";
-
 export type ClearingShares = { [k: number]: number };
 
 export type AccountType = "personal" | "clearing";
@@ -7,32 +5,46 @@ export type AccountType = "personal" | "clearing";
 export interface Account {
     id: number;
     type: AccountType;
-    group_id: number;
+    groupID: number;
     name: string;
     description: string;
     priority: number;
-    owning_user_id: number | null;
-    clearing_shares: ClearingShares;
+    owningUserID: number | null;
+    clearingShares: ClearingShares | null;
     deleted: boolean;
 
-    revision_started_at: Date | null;
-    revision_committed_at: Date | null;
+    revisionStartedAt: Date | null;
+    revisionCommittedAt: Date | null;
     version: number;
 
-    last_changed: Date;
+    lastChanged: Date;
 
-    is_wip: boolean;
-    has_local_changes: boolean;
+    isWip: boolean;
+    hasLocalChanges: boolean;
 }
 
-export function validateAccount(a: Account): ErrorStruct | null {
-    const errors: ErrorStruct = {};
-    let hasErrors = false;
+export interface AccountValidationErrors {
+    name?: string;
+    description?: string;
+    clearingShares?: string;
+}
+
+export const validateAccount = (a: Account): AccountValidationErrors => {
+    const errors: AccountValidationErrors = {};
 
     if (a.name === "") {
-        errors["name"] = "name cannot be empty";
-        hasErrors = true;
+        errors.name = "name cannot be empty";
     }
 
-    return hasErrors ? errors : null;
+    return errors;
+};
+
+export interface AccountBalance {
+    balance: number;
+    beforeClearing: number;
+    totalConsumed: number;
+    totalPaid: number;
+    clearingResolution: Map<number, number>;
 }
+
+export type AccountBalanceMap = Map<number, AccountBalance>;

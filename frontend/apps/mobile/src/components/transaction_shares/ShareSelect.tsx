@@ -1,30 +1,41 @@
+import React from "react";
 import { Checkbox, List, Searchbar } from "react-native-paper";
 import { ScrollView, View } from "react-native";
 import { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { accountState } from "../../core/accounts";
 import { createComparator, lambdaComparator } from "@abrechnung/utils";
-import { activeGroupIDState } from "../../core/groups";
+import { useActiveGroupID } from "../../core/groups";
+import { Account, TransactionShare } from "@abrechnung/types";
 
-export default function ShareSelect({
+interface Props {
+    value: TransactionShare;
+    onChange: (value: TransactionShare) => void;
+    title: string;
+    disabled?: boolean;
+    enableAdvanced?: boolean;
+    multiSelect?: boolean;
+}
+
+export const ShareSelect: React.FC<Props> = ({
     value,
     onChange,
     title,
     disabled = false,
     enableAdvanced = false,
     multiSelect = true,
-}) {
-    const groupID = useRecoilValue(activeGroupIDState);
+}) => {
+    const groupID = useActiveGroupID();
     const [shares, setShares] = useState({});
     const [searchTerm, setSearchTerm] = useState("");
     const accounts = useRecoilValue(accountState(groupID));
-    const [filteredAccounts, setFilteredAccounts] = useState([]);
+    const [filteredAccounts, setFilteredAccounts] = useState<Account[]>([]);
 
     const toggleShare = (account_id: number) => {
         const currVal = shares.hasOwnProperty(account_id) ? shares[account_id] : 0;
         if (multiSelect) {
             setShares((shares) => {
-                let newShares = { ...shares };
+                const newShares = { ...shares };
                 if (currVal > 0) {
                     delete newShares[account_id];
                 } else {
@@ -82,4 +93,6 @@ export default function ShareSelect({
             </ScrollView>
         </View>
     );
-}
+};
+
+export default ShareSelect;

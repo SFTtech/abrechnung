@@ -1,5 +1,5 @@
 import { DrawerContentScrollView } from "@react-navigation/drawer";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, ScrollView, ScrollViewProps } from "react-native";
 import * as React from "react";
 import { ActivityIndicator, Drawer } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -7,7 +7,9 @@ import { useNavigation } from "@react-navigation/native";
 import { activeGroupIDState, groupState } from "../core/groups";
 import { useRecoilState, useRecoilValue } from "recoil";
 
-export default function DrawerContent(props) {
+type Props = React.ForwardRefExoticComponent<ScrollViewProps & React.RefAttributes<ScrollView>>;
+
+export const DrawerContent: React.FC<Props> = (props) => {
     const navigation = useNavigation();
     const groups = useRecoilValue(groupState);
     const [activeGroupID, setActiveGroupID] = useRecoilState(activeGroupIDState);
@@ -81,7 +83,7 @@ export default function DrawerContent(props) {
             </View>
         </DrawerContentScrollView>
     );
-}
+};
 
 const styles = StyleSheet.create({
     drawerContent: {
@@ -111,3 +113,5 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
     },
 });
+
+export default DrawerContent;

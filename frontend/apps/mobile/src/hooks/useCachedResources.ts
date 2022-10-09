@@ -4,7 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
 import { initializeAuthCache } from "../core/api";
 
-export default function useCachedResources() {
+export const useCachedResources = () => {
     const [isLoadingComplete, setLoadingComplete] = useState(false);
 
     // Load any resources or data that we need prior to rendering the app
@@ -35,4 +35,6 @@ export default function useCachedResources() {
     }, []);
 
     return isLoadingComplete;
-}
+};
+
+export default useCachedResources;

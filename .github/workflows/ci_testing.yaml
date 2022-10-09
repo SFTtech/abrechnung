@@ -99,8 +99,8 @@ jobs:
         with:
           node-version: "16"
           cache: "npm"
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
       - name: Install dependencies
-        run: npm --prefix web install --force
+        run: npm --prefix frontend install
       - name: Check JavaScript formatting
-        run: make check-format-web
+        run: make check-format-frontend

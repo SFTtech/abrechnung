@@ -1,25 +1,25 @@
 import { RefreshControl, ScrollView, StyleSheet } from "react-native";
-import { GroupTabScreenProps } from "../../types";
+import { GroupTabScreenProps } from "../../navigation/types";
 import { Appbar, FAB, Menu, Portal, RadioButton, Text, TextInput, useTheme } from "react-native-paper";
 import * as React from "react";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useIsFocused } from "@react-navigation/native";
 import { purchaseIcon, transferIcon } from "../../constants/Icons";
 import { createTransaction } from "../../core/database/transactions";
-import { useRecoilValue, useRecoilValueLoadable } from "recoil";
-import { activeGroupIDState } from "../../core/groups";
+import { useRecoilValueLoadable } from "recoil";
+import { useActiveGroupID } from "../../core/groups";
 import { transactionState } from "../../core/transactions";
 import { Transaction, TransactionType } from "@abrechnung/types";
-import { createComparator, lambdaComparator, toISODateString, toISOString } from "@abrechnung/utils";
+import { createComparator, lambdaComparator, toISODateString } from "@abrechnung/utils";
 import { syncLocalGroupState } from "../../core/sync";
 import LoadingIndicator from "../../components/LoadingIndicator";
 import TransactionListItem from "../../components/TransactionListItem";
 
-type SortMode = "last_changed" | "billed_at" | "description";
+type SortMode = "lastChanged" | "billedAt" | "description";
 
-export default function TransactionList({ navigation }: GroupTabScreenProps<"TransactionList">) {
+export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> = ({ navigation }) => {
     const theme = useTheme();
-    const groupID = useRecoilValue(activeGroupIDState);
+    const groupID = useActiveGroupID();
     const transactions = useRecoilValueLoadable(transactionState(groupID));
 
     const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -29,7 +29,7 @@ export default function TransactionList({ navigation }: GroupTabScreenProps<"Tra
     const [search, setSearch] = useState<string>("");
     const [sortedTransactions, setSortedTransactions] = useState<Array<Transaction>>([]);
 
-    const [sortMode, setSortMode] = useState<SortMode>("last_changed");
+    const [sortMode, setSortMode] = useState<SortMode>("lastChanged");
 
     const onRefresh = () => {
         setRefreshing(true);
@@ -45,7 +45,7 @@ export default function TransactionList({ navigation }: GroupTabScreenProps<"Tra
 
     useLayoutEffect(() => {
         if (isFocused) {
-            navigation.getParent().setOptions({
+            navigation.getParent()?.setOptions({
                 headerTitle: "Transactions",
                 titleShown: !showSearchInput,
                 headerRight: () => {
@@ -73,9 +73,12 @@ export default function TransactionList({ navigation }: GroupTabScreenProps<"Tra
                                 <Text variant="labelLarge" style={{ paddingLeft: 16, fontWeight: "bold" }}>
                                     Sort by
                                 </Text>
-                                <RadioButton.Group value={sortMode} onValueChange={(value) => setSortMode(value)}>
-                                    <RadioButton.Item position="trailing" label="Last changed" value="last_changed" />
-                                    <RadioButton.Item position="trailing" label="Billed at" value="billed_at" />
+                                <RadioButton.Group
+                                    value={sortMode}
+                                    onValueChange={(value) => setSortMode(value as SortMode)}
+                                >
+                                    <RadioButton.Item position="trailing" label="Last changed" value="lastChanged" />
+                                    <RadioButton.Item position="trailing" label="Billed at" value="billedAt" />
                                     <RadioButton.Item position="trailing" label="Description" value="description" />
                                 </RadioButton.Group>
                             </Menu>
@@ -93,15 +96,15 @@ export default function TransactionList({ navigation }: GroupTabScreenProps<"Tra
         if (transactions.state === "hasValue") {
             let sortComparator;
             switch (sortMode) {
-                case "billed_at":
-                    sortComparator = lambdaComparator((t: Transaction) => toISODateString(t.billed_at), true);
+                case "billedAt":
+                    sortComparator = lambdaComparator((t: Transaction) => toISODateString(t.billedAt), true);
                     break;
                 case "description":
                     sortComparator = lambdaComparator((t: Transaction) => t.description);
                     break;
-                case "last_changed":
+                case "lastChanged":
                 default:
-                    sortComparator = lambdaComparator((t: Transaction) => toISOString(t.last_changed), true);
+                    sortComparator = lambdaComparator((t: Transaction) => t.lastChanged.toISOString(), true);
                     break;
             }
             setSortedTransactions(
@@ -119,7 +122,7 @@ export default function TransactionList({ navigation }: GroupTabScreenProps<"Tra
                 navigation.navigate("TransactionDetail", {
                     transactionID: newTransactionID,
                     groupID: groupID,
-                    editingStart: toISOString(creationDate),
+                    editingStart: creationDate.toISOString(),
                 });
             })
             .catch((err) => console.log("error creating new transaction"));
@@ -165,7 +168,7 @@ export default function TransactionList({ navigation }: GroupTabScreenProps<"Tra
             </Portal>
         </ScrollView>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {},
@@ -179,3 +182,5 @@ const styles = StyleSheet.create({
         marginBottom: 48,
     },
 });
+
+export default TransactionList;

@@ -1,49 +1,29 @@
-import { GroupStackParamList } from "../../types";
+import { GroupStackScreenProps } from "../../navigation/types";
 import { BackHandler, StyleSheet, View } from "react-native";
 import { ActivityIndicator, Button, HelperText, TextInput, useTheme } from "react-native-paper";
 import * as React from "react";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { deleteLocalAccountChanges, pushLocalAccountChanges, updateAccount } from "../../core/database/accounts";
-import { useRecoilValue } from "recoil";
-import { accountByIDState } from "../../core/accounts";
+import { useAccount } from "../../core/accounts";
 import { notify } from "../../notifications";
-import { StackScreenProps } from "@react-navigation/stack";
 import { useFocusEffect } from "@react-navigation/native";
-import { ValidationError } from "@abrechnung/types";
+import { Account, AccountValidationErrors, ClearingShares, ValidationError } from "@abrechnung/types";
 import TransactionShareInput from "../../components/transaction_shares/TransactionShareInput";
 
-export default function AccountEdit({ route, navigation }: StackScreenProps<GroupStackParamList, "AccountEdit">) {
+type LocalEditingState = Pick<Account, "name" | "description" | "clearingShares" | "owningUserID">;
+
+export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ route, navigation }) => {
     const theme = useTheme();
 
     const { groupID, accountID, editingStart } = route.params;
 
-    const account = useRecoilValue(accountByIDState({ groupID, accountID }));
-    const [localEditingState, setLocalEditingState] = useState(null);
-    const [inputErrors, setInputErrors] = useState({});
+    const account = useAccount(groupID, accountID);
+    const [localEditingState, setLocalEditingState] = useState<LocalEditingState | null>(null);
+    const [inputErrors, setInputErrors] = useState<AccountValidationErrors>({});
 
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            onGoBack: onGoBack,
-            headerTitle: localEditingState?.name ?? account?.name ?? "",
-            headerRight: () => {
-                return (
-                    <>
-                        <Button onPress={cancelEdit} textColor={theme.colors.error}>
-                            Cancel
-                        </Button>
-                        <Button onPress={save}>Save</Button>
-                    </>
-                );
-            },
-        });
-    }, [theme, account, navigation, localEditingState, setLocalEditingState]); // FIXME: figure out why we need setLocalEditingState as an effect dependency
-
-    const onGoBack = async () => {
-        if (account != null) {
-            return await deleteLocalAccountChanges(groupID, account.id, editingStart);
-        }
-        return;
-    };
+    const onGoBack = React.useCallback(async () => {
+        return await deleteLocalAccountChanges(groupID, account.id, editingStart);
+    }, [account, groupID, editingStart]);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -57,7 +37,7 @@ export default function AccountEdit({ route, navigation }: StackScreenProps<Grou
             BackHandler.addEventListener("hardwareBackPress", onBackPress);
 
             return () => BackHandler.removeEventListener("hardwareBackPress", onBackPress);
-        }, [account])
+        }, [onGoBack])
     );
 
     useEffect(() => {
@@ -69,14 +49,14 @@ export default function AccountEdit({ route, navigation }: StackScreenProps<Grou
                     name: account.name,
                     description: account.description,
                     priority: account.priority,
-                    clearing_shares: account.clearing_shares,
-                    owning_user_id: account.owning_user_id,
+                    clearingShares: account.clearingShares,
+                    owningUserID: account.owningUserID,
                 };
             });
         }
     }, [account]);
 
-    const save = () => {
+    const save = React.useCallback(() => {
         updateAccount({
             ...account,
             ...localEditingState,
@@ -106,9 +86,9 @@ export default function AccountEdit({ route, navigation }: StackScreenProps<Grou
                     notify({ text: `Error while saving account: ${err.toString()}` });
                 }
             });
-    };
+    }, [account, localEditingState, groupID, setInputErrors, navigation]);
 
-    const cancelEdit = () => {
+    const cancelEdit = React.useCallback(() => {
         deleteLocalAccountChanges(groupID, account.id, editingStart).then((deletedAccount) => {
             if (deletedAccount) {
                 navigation.navigate("BottomTabNavigator", { screen: "AccountList" });
@@ -116,8 +96,8 @@ export default function AccountEdit({ route, navigation }: StackScreenProps<Grou
                 setLocalEditingState({
                     name: account.name,
                     description: account.description,
-                    priority: account.priority,
-                    owning_user_id: account.owning_user_id,
+                    owningUserID: account.owningUserID,
+                    clearingShares: account.clearingShares,
                 });
                 navigation.navigate("AccountDetail", {
                     accountID: accountID,
@@ -125,17 +105,37 @@ export default function AccountEdit({ route, navigation }: StackScreenProps<Grou
                 });
             }
         });
-    };
+    }, [groupID, account, editingStart, navigation, setLocalEditingState, accountID]);
 
-    const onChangeLocalEditingValueFactory = (fieldName: string) => (value) => {
-        setInputErrors({});
-        setLocalEditingState((prevState) => {
-            return {
-                ...prevState,
-                [fieldName]: value,
-            };
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            onGoBack: onGoBack,
+            headerTitle: localEditingState?.name ?? account?.name ?? "",
+            headerRight: () => {
+                return (
+                    <>
+                        <Button onPress={cancelEdit} textColor={theme.colors.error}>
+                            Cancel
+                        </Button>
+                        <Button onPress={save}>Save</Button>
+                    </>
+                );
+            },
         });
-    };
+    }, [theme, account, navigation, localEditingState, cancelEdit, onGoBack, save]); // FIXME: figure out why we need setLocalEditingState as an effect dependency
+
+    const onChangeName = (name: string) =>
+        setLocalEditingState((prevState) => {
+            return prevState === null ? null : { ...prevState, name: name };
+        });
+    const onChangeDescription = (description: string) =>
+        setLocalEditingState((prevState) => {
+            return prevState === null ? null : { ...prevState, description: description };
+        });
+    const onChangeClearingShares = (clearingShares: ClearingShares) =>
+        setLocalEditingState((prevState) => {
+            return prevState === null ? null : { ...prevState, clearingShares: clearingShares };
+        });
 
     if (account == null || localEditingState == null) {
         return (
@@ -152,41 +152,37 @@ export default function AccountEdit({ route, navigation }: StackScreenProps<Grou
                 value={localEditingState.name}
                 style={styles.input}
                 editable={true}
-                onChangeText={onChangeLocalEditingValueFactory("name")}
-                error={inputErrors.hasOwnProperty("name")}
+                onChangeText={onChangeName}
+                error={inputErrors.name !== undefined}
             />
-            {inputErrors.hasOwnProperty("name") && <HelperText type="error">{inputErrors["name"]}</HelperText>}
+            {inputErrors.name && <HelperText type="error">{inputErrors.name}</HelperText>}
             <TextInput
                 label="Description"
                 value={localEditingState.description}
                 style={styles.input}
                 editable={true}
-                onChangeText={onChangeLocalEditingValueFactory("description")}
-                error={inputErrors.hasOwnProperty("description")}
+                onChangeText={onChangeDescription}
+                error={inputErrors.description !== undefined}
             />
-            {inputErrors.hasOwnProperty("description") && (
-                <HelperText type="error">{inputErrors["description"]}</HelperText>
-            )}
+            {inputErrors.description && <HelperText type="error">{inputErrors.description}</HelperText>}
             {account.type === "clearing" && (
                 <>
                     <TransactionShareInput
                         title="Participated"
                         disabled={false}
                         groupID={groupID}
-                        value={localEditingState.clearing_shares}
-                        onChange={onChangeLocalEditingValueFactory("clearing_shares")}
+                        value={localEditingState.clearingShares == null ? {} : localEditingState.clearingShares}
+                        onChange={onChangeClearingShares}
                         enableAdvanced={true}
                         multiSelect={true}
                         excludedAccounts={[account.id]}
                     />
-                    {inputErrors.hasOwnProperty("clearing_shares") && (
-                        <HelperText type="error">{inputErrors["clearing_shares"]}</HelperText>
-                    )}
+                    {inputErrors.clearingShares && <HelperText type="error">{inputErrors.clearingShares}</HelperText>}
                 </>
             )}
         </View>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
@@ -205,3 +201,5 @@ const styles = StyleSheet.create({
         backgroundColor: "#1e1e1e",
     },
 });
+
+export default AccountEdit;

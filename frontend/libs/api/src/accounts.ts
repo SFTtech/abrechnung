@@ -1,29 +1,53 @@
-import { Account } from "@abrechnung/types";
+import { Account, AccountType, ClearingShares } from "@abrechnung/types";
+import { fromISOString } from "@abrechnung/utils";
 
-export function backendAccountToAccount(acc): Account {
-    const detailsToFields = (details) => {
-        if (details === null) {
-            return {};
-        }
+export interface BackendAccountDetails {
+    name: string;
+    description: string;
+    priority: number;
+    owning_user_id: number | null;
+    clearing_shares: ClearingShares;
+    revision_committed_at: string;
+    revision_started_at: string;
+    deleted: boolean;
+}
+
+export interface BackendAccount {
+    id: number;
+    group_id: number;
+    type: AccountType;
+    last_changed: string;
+    is_wip: boolean;
+    version: number;
+    committed_details: BackendAccountDetails | null;
+    pending_details: BackendAccountDetails | null;
+}
+
+export function backendAccountToAccount(acc: BackendAccount): Account {
+    const detailsToFields = (details: BackendAccountDetails) => {
         return {
-            clearing_shares: details.clearing_shares,
-            revision_committed_at: details.revision_committed_at,
-            revision_started_at: details.revision_started_at,
+            clearingShares: details.clearing_shares,
+            revisionCommittedAt: fromISOString(details.revision_committed_at),
+            revisionStartedAt: fromISOString(details.revision_started_at),
             deleted: details.deleted,
             description: details.description,
             name: details.name,
             priority: details.priority,
-            owning_user_id: details.owning_user_id,
+            owningUserID: details.owning_user_id,
         };
     };
+    if (acc.committed_details === null && acc.pending_details === null) {
+        throw Error("received invalid account from backend");
+    }
+
     return {
         id: acc.id,
-        group_id: acc.group_id,
+        groupID: acc.group_id,
         type: acc.type,
         version: acc.version,
-        is_wip: acc.is_wip,
-        ...detailsToFields(acc.committed_details),
-        ...detailsToFields(acc.pending_details),
-        has_local_changes: false,
-    } as Account;
+        isWip: acc.is_wip,
+        ...detailsToFields((acc.pending_details ?? acc.committed_details) as BackendAccountDetails),
+        lastChanged: fromISOString(acc.last_changed),
+        hasLocalChanges: false,
+    };
 }

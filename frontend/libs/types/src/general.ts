@@ -7,6 +7,6 @@ export class ValidationError extends Error {
     }
 }
 
-export type ErrorStruct = {
+export interface ErrorStruct {
     [k: string]: string;
-};
+}

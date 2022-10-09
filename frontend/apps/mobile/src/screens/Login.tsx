@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { nameValidator, passwordValidator, urlValidator } from "../core/validators";
-import { RootDrawerScreenProps } from "../types";
+import { nameValidator, passwordValidator, urlValidator } from "@abrechnung/utils";
+import { RootDrawerScreenProps } from "../navigation/types";
 import { Appbar, Button, HelperText, Text, TextInput, useTheme } from "react-native-paper";
 import { login } from "../core/api/auth";
 import { useSetRecoilState } from "recoil";
@@ -9,7 +9,7 @@ import { authState } from "../core/auth";
 import { notify } from "../notifications";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-export default function LoginScreen({ navigation }: RootDrawerScreenProps<"Login">) {
+export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigation }) => {
     const theme = useTheme();
     const setAuthState = useSetRecoilState(authState);
 
@@ -131,7 +131,7 @@ export default function LoginScreen({ navigation }: RootDrawerScreenProps<"Login
             </View>
         </>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
@@ -146,3 +146,5 @@ const styles = StyleSheet.create({
         // color: theme.colors.primary,
     },
 });
+
+export default LoginScreen;

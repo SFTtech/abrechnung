@@ -1,16 +1,17 @@
 import { StyleSheet, View } from "react-native";
 import { Button, Divider, Switch, Text } from "react-native-paper";
 import * as React from "react";
-import { useRecoilState } from "recoil";
+import { useContext } from "react";
+import { useSetRecoilState } from "recoil";
 import { authState, logout } from "../core/auth";
 import { flushDatabase } from "../core/database";
 import { notify } from "../notifications";
 import { syncGroups } from "../core/database/groups";
-import { useContext } from "react";
 import { PreferencesContext } from "../core/preferences";
+import { RootDrawerScreenProps } from "../navigation/types";
 
-export default function PreferencesScreen() {
-    const [auth, setAuth] = useRecoilState(authState);
+export const PreferencesScreen: React.FC<RootDrawerScreenProps<"Preferences">> = () => {
+    const setAuth = useSetRecoilState(authState);
     const preferences = useContext(PreferencesContext);
 
     const onLogout = () => {
@@ -50,7 +51,7 @@ export default function PreferencesScreen() {
             <Button onPress={onSyncGroups}>Reload Groups</Button>
         </View>
     );
-}
+};
 
 const styles = StyleSheet.create({
     toggleSetting: {
@@ -61,3 +62,5 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
     },
 });
+
+export default PreferencesScreen;

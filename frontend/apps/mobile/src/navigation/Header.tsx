@@ -1,8 +1,38 @@
 import { Appbar, useTheme } from "react-native-paper";
 import * as React from "react";
-import { StackHeaderProps } from "@react-navigation/stack";
+import { StackHeaderProps, StackNavigationProp } from "@react-navigation/stack";
+import { GroupStackParamList, GroupTabParamList, RootDrawerParamList } from "./types";
+import { DrawerNavigationProp } from "@react-navigation/drawer";
+import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
+import { Route } from "@react-navigation/native";
+import { HeaderTitleProps } from "@react-navigation/elements";
 
-export default function Header({ navigation, route, options, back }: StackHeaderProps) {
+type Props = StackHeaderProps;
+
+export interface HeaderOptions {
+    title?: string;
+    headerTitle?: string | ((props: HeaderTitleProps) => React.ReactNode);
+    titleShown?: boolean;
+    onGoBack?: (() => void) | (() => Promise<void>);
+    headerRight?: (props: Record<string, never>) => React.ReactNode;
+}
+
+export interface HeaderProps {
+    back?: {
+        /**
+         * Title of the previous screen.
+         */
+        title: string;
+    };
+    options: HeaderOptions;
+    navigation:
+        | DrawerNavigationProp<RootDrawerParamList>
+        | BottomTabNavigationProp<GroupTabParamList>
+        | StackNavigationProp<GroupStackParamList>;
+    route: Route<string>;
+}
+
+export const Header: React.FC<Props> = ({ navigation, route, options, back }) => {
     const title =
         options.headerTitle !== undefined
             ? options.headerTitle
@@ -44,4 +74,6 @@ export default function Header({ navigation, route, options, back }: StackHeader
             {options.headerRight ? options.headerRight({}) : null}
         </Appbar.Header>
     );
-}
+};
+
+export default Header;

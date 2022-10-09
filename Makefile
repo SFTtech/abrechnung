@@ -5,15 +5,15 @@ test:
 .PHONY: format
 format:
 	black .
-	cd web && npx prettier --write . && cd ..
+	cd frontend && npx prettier --write . && cd ..
 
 .PHONY: check-format
 check-format:
 	black --check .
 
-.PHONY: check-format-web
-check-format-web:
-	cd web && npx prettier --check . && cd ..
+.PHONY: check-format-frontend
+check-format-frontend:
+	cd frontend && npx prettier --check . && cd ..
 
 .PHONY: lint
 lint: pylint mypy
@@ -21,6 +21,10 @@ lint: pylint mypy
 .PHONY: pylint
 pylint:
 	pylint ./**/*.py
+
+.PHONY: eslint
+eslint:
+	cd frontend && npx nx lint && cd ..
 
 .PHONY: mypy
 mypy:

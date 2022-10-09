@@ -1,50 +1,58 @@
-import { ErrorStruct } from "./general";
-
 export type TransactionShare = { [k: number]: number };
 
 export type TransactionType = "purchase" | "transfer" | "mimo";
 
 export interface Transaction {
     id: number;
-    group_id: number;
+    groupID: number;
     type: TransactionType;
 
     description: string;
     value: number;
-    currency_symbol: string;
-    currency_conversion_rate: number;
-    billed_at: Date;
-    creditor_shares: TransactionShare;
-    debitor_shares: TransactionShare;
+    currencySymbol: string;
+    currencyConversionRate: number;
+    billedAt: Date;
+    creditorShares: TransactionShare;
+    debitorShares: TransactionShare;
     deleted: boolean;
 
-    revision_started_at: Date | null;
-    revision_committed_at: Date | null;
+    revisionStartedAt: Date | null;
+    revisionCommittedAt: Date | null;
     version: number;
 
-    last_changed: Date;
+    lastChanged: Date;
 
-    is_wip: boolean;
-    has_local_changes: boolean;
+    isWip: boolean;
+    hasLocalChanges: boolean;
 }
 
-export function validateTransaction(t: Transaction): ErrorStruct {
-    const errors: ErrorStruct = {};
+export interface TransactionValidationErrors {
+    description?: string;
+    billedAt?: string;
+    value?: string;
+    creditorShares?: string;
+    debitorShares?: string;
+}
 
-    const emptyChecks = ["description", "billed_at", "currency_symbol", "currency_conversion_rate"];
+export function validateTransaction(t: Transaction): TransactionValidationErrors {
+    const errors: TransactionValidationErrors = {};
+
+    const emptyChecks = ["description", "billedAt", "currencySymbol", "currencyConversionRate"];
     for (const check of emptyChecks) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         if (t[check] === "") {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             errors[check] = `${check} cannot be empty`;
         }
     }
 
-    if (Object.keys(t.creditor_shares).length === 0) {
-        errors["creditor_shares"] = "somebody needs to pay for this";
+    if (Object.keys(t.creditorShares).length === 0) {
+        errors.creditorShares = "somebody needs to pay for this";
     }
-    if (Object.keys(t.debitor_shares).length === 0) {
-        errors["debitor_shares"] = "select at least one";
+    if (Object.keys(t.debitorShares).length === 0) {
+        errors.debitorShares = "select at least one";
     }
 
     return errors;
@@ -54,35 +62,39 @@ export function validateTransaction(t: Transaction): ErrorStruct {
 export interface TransactionAttachment {
     id: number;
     filename: string;
-    blob_id: number;
+    blobID: number;
     deleted: boolean;
     url: string;
 }
 
 export interface TransactionPosition {
     id: number;
-    transaction_id: number;
-    group_id: number;
+    transactionID: number;
+    groupID: number;
     price: number;
-    communist_shares: number;
+    communistShares: number;
     deleted: boolean;
     name: string;
     usages: TransactionShare;
 
-    has_local_changes: boolean;
+    hasLocalChanges: boolean;
 }
 
-export function validatePosition(p: TransactionPosition): ErrorStruct | null {
-    const errors: ErrorStruct = {};
-    let hasErrors = false;
+export interface PositionValidationErrors {
+    name?: string;
+    price?: string;
+    usages?: string;
+}
+
+export function validatePosition(p: TransactionPosition): PositionValidationErrors {
+    const errors: PositionValidationErrors = {};
 
     if (p.name === "") {
-        errors["name"] = "name cannot be empty";
-        hasErrors = true;
+        errors.name = "name cannot be empty";
     }
     if (Object.keys(p.usages).length === 0) {
-        errors["usages"] = "select at least one";
+        errors.usages = "select at least one";
     }
 
-    return hasErrors ? errors : null;
+    return errors;
 }

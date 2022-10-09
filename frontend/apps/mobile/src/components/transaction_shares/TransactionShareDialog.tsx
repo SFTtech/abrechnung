@@ -6,9 +6,9 @@ import { accountState } from "../../core/accounts";
 import { createComparator, lambdaComparator } from "@abrechnung/utils";
 import { getAccountIcon } from "../../constants/Icons";
 import { KeyboardAvoidingView, Platform, ScrollView } from "react-native";
-import { TransactionShare } from "@abrechnung/types";
+import { Account, TransactionShare } from "@abrechnung/types";
 
-type Props = {
+interface Props {
     groupID: number;
     value: TransactionShare;
     onChange: (share: TransactionShare) => void;
@@ -19,9 +19,9 @@ type Props = {
     enableAdvanced: boolean;
     multiSelect: boolean;
     excludedAccounts: number[];
-};
+}
 
-export default function TransactionShareDialog({
+export const TransactionShareDialog: React.FC<Props> = ({
     groupID,
     value,
     onChange,
@@ -32,18 +32,18 @@ export default function TransactionShareDialog({
     enableAdvanced = false,
     multiSelect = true,
     excludedAccounts = [],
-}: Props) {
-    const [shares, setShares] = useState({});
+}) => {
+    const [shares, setShares] = useState<TransactionShare>({});
     const [searchTerm, setSearchTerm] = useState("");
     const accounts = useRecoilValue(accountState(groupID));
-    const [sortedAccounts, setSortedAccounts] = useState([]);
-    const [filteredAccounts, setFilteredAccounts] = useState([]);
+    const [sortedAccounts, setSortedAccounts] = useState<Account[]>([]);
+    const [filteredAccounts, setFilteredAccounts] = useState<Account[]>([]);
 
     const toggleShare = (account_id: number) => {
-        const currVal = shares.hasOwnProperty(account_id) ? shares[account_id] : 0;
+        const currVal = shares[account_id] !== undefined ? shares[account_id] : 0;
         if (multiSelect) {
             setShares((shares) => {
-                let newShares = { ...shares };
+                const newShares = { ...shares };
                 if (currVal > 0) {
                     delete newShares[account_id];
                 } else {
@@ -63,7 +63,7 @@ export default function TransactionShareDialog({
                 .filter(
                     (acc) =>
                         acc.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-                        (!disabled || (shares[acc.id] ?? 0 > 0))
+                        (!disabled || (shares[acc.id] ?? 0) > 0)
                 )
         );
     }, [disabled, shares, sortedAccounts, searchTerm, excludedAccounts]);
@@ -84,7 +84,7 @@ export default function TransactionShareDialog({
                 )
             );
         }
-    }, [accounts, showDialog]);
+    }, [accounts, showDialog, shares]);
 
     const finishDialog = () => {
         onChange(shares);
@@ -111,7 +111,7 @@ export default function TransactionShareDialog({
                                 right={(props) => (
                                     <Checkbox.Android
                                         status={
-                                            shares.hasOwnProperty(account.id) && shares[account.id] > 0
+                                            shares[account.id] !== undefined && shares[account.id] > 0
                                                 ? "checked"
                                                 : "unchecked"
                                         }
@@ -129,4 +129,6 @@ export default function TransactionShareDialog({
             </KeyboardAvoidingView>
         </Dialog>
     );
-}
+};
+
+export default TransactionShareDialog;

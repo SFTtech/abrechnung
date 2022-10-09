@@ -3,6 +3,7 @@
     "version": 2,
     "projects": {
         "api": "libs/api",
+        "core": "libs/core",
         "mobile": "apps/mobile",
         "mobile-e2e": "apps/mobile-e2e",
         "types": "libs/types",

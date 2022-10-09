@@ -3,8 +3,16 @@ import PositionDialog from "./PositionDialog";
 import React, { useState } from "react";
 import { createPosition, deletePosition } from "../core/database/transactions";
 import { notify } from "../notifications";
+import { TransactionPosition } from "@abrechnung/types";
 
-export default function PositionListItem({ currency_symbol, position, editing }) {
+interface Props {
+    groupID: number;
+    currencySymbol: string;
+    position: TransactionPosition;
+    editing: boolean;
+}
+
+export const PositionListItem: React.FC<Props> = ({ groupID, currencySymbol, position, editing }) => {
     const theme = useTheme();
     const [showPositionDialog, setShowPositionDialog] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
@@ -23,7 +31,7 @@ export default function PositionListItem({ currency_symbol, position, editing })
     };
 
     const onCopyPosition = () => {
-        createPosition(position.transaction_id, position).catch((err) => {
+        createPosition(groupID, position.transaction_id, position).catch((err) => {
             notify({ text: `Error while copying position: ${err.toString()}` });
         });
     };
@@ -47,7 +55,7 @@ export default function PositionListItem({ currency_symbol, position, editing })
                         onLongPress={openMenu}
                         right={(props) => (
                             <Text>
-                                {parseFloat(position.price).toFixed(2)} {currency_symbol}
+                                {parseFloat(position.price).toFixed(2)} {currencySymbol}
                             </Text>
                         )}
                     />
@@ -59,14 +67,17 @@ export default function PositionListItem({ currency_symbol, position, editing })
             <Portal>
                 <React.Suspense fallback={<ActivityIndicator animating={true} />}>
                     <PositionDialog
+                        groupID={groupID}
                         position={position}
                         editing={editing}
                         showDialog={showPositionDialog}
                         onHideDialog={() => setShowPositionDialog(false)}
-                        currencySymbol={currency_symbol}
+                        currencySymbol={currencySymbol}
                     />
                 </React.Suspense>
             </Portal>
         </>
     );
-}
+};
+
+export default PositionListItem;

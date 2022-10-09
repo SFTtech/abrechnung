@@ -2,19 +2,19 @@ export interface Group {
     id: number;
     name: string;
     description: string;
-    currency_symbol: string;
+    currencySymbol: string;
     terms: string;
-    created_at: string;
-    created_by: number;
-    add_user_account_on_join: boolean;
+    createdAt: string;
+    createdBy: number;
+    addUserAccountOnJoin: boolean;
 }
 
 export interface GroupMember {
-    user_id: number;
+    userID: number;
     username: string;
-    is_owner: boolean;
-    can_write: boolean;
+    isOwner: boolean;
+    canWrite: boolean;
     description: string;
-    joined_at: string;
-    invited_by: number | null;
+    joinedAt: string;
+    invitedBy: number | null;
 }

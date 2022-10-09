@@ -1,3 +1,4 @@
+import React from "react";
 import { Portal, Text, useTheme } from "react-native-paper";
 import TransactionShareDialog from "./TransactionShareDialog";
 import { useEffect, useState } from "react";
@@ -6,7 +7,7 @@ import { useRecoilValue } from "recoil";
 import { accountState } from "../../core/accounts";
 import { TransactionShare } from "@abrechnung/types";
 
-type Props = {
+interface Props {
     groupID: number;
     title: string;
     multiSelect: boolean;
@@ -15,9 +16,9 @@ type Props = {
     onChange: (newValue: TransactionShare) => void;
     disabled: boolean;
     excludedAccounts?: number[];
-};
+}
 
-export default function TransactionShareInput({
+export const TransactionShareInput: React.FC<Props> = ({
     groupID,
     title,
     multiSelect,
@@ -26,7 +27,7 @@ export default function TransactionShareInput({
     onChange,
     disabled,
     excludedAccounts = [],
-}: Props) {
+}) => {
     const [showDialog, setShowDialog] = useState(false);
     const [stringifiedValue, setStringifiedValue] = useState("");
     const theme = useTheme();
@@ -34,7 +35,7 @@ export default function TransactionShareInput({
 
     useEffect(() => {
         const s = accounts
-            .filter((acc) => value.hasOwnProperty(acc.id) && value[acc.id] > 0)
+            .filter((acc) => value[acc.id] !== undefined && value[acc.id] > 0)
             .map((acc) => acc.name)
             .join(", ");
         setStringifiedValue(s);
@@ -91,4 +92,6 @@ export default function TransactionShareInput({
             </Portal>
         </>
     );
-}
+};
+
+export default TransactionShareInput;

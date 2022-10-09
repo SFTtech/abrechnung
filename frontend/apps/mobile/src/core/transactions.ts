@@ -1,4 +1,4 @@
-import { atomFamily, selectorFamily } from "recoil";
+import { atomFamily, selectorFamily, useRecoilValue } from "recoil";
 import { Transaction, TransactionPosition } from "@abrechnung/types";
 import {
     getTransaction,
@@ -8,6 +8,7 @@ import {
     transactionNotifier,
     transactionPositionNotifier,
 } from "./database/transactions";
+import { useNavigation } from "@react-navigation/native";
 
 function filterTransactions(transactions: Transaction[]): Transaction[] {
     return transactions.filter((t) => !t.deleted);
@@ -18,17 +19,21 @@ export const transactionState = atomFamily<Transaction[], number>({
     default: (groupID) => (groupID === null ? [] : (async () => filterTransactions(await getTransactions(groupID)))()),
     effects: (groupID) => [
         ({ setSelf }) => {
-            return transactionNotifier.subscribe(groupID, (payload) => {
-                if (payload.transaction_id === undefined) {
+            return transactionNotifier.on("changed", (payload) => {
+                if (payload.groupID !== groupID) {
+                    return;
+                }
+
+                if (payload.transactionID === undefined) {
                     getTransactions(groupID).then((result) => {
                         console.log("received transaction update:", groupID);
                         setSelf(filterTransactions(result));
                     });
                 } else {
-                    getTransaction(groupID, payload.transaction_id).then((transaction) => {
+                    getTransaction(groupID, payload.transactionID).then((transaction) => {
                         console.log("received transaction update:", groupID);
                         setSelf((currVal) => {
-                            return (<Transaction[]>currVal).map((t) => (t.id === transaction.id ? transaction : t));
+                            return (currVal as Transaction[]).map((t) => (t.id === transaction.id ? transaction : t));
                         });
                     });
                 }
@@ -52,6 +57,16 @@ export const transactionByIDState = selectorFamily<Transaction | undefined, tran
         },
 });
 
+export const useTransaction = (groupID: number, transactionID: number): Transaction => {
+    const transaction = useRecoilValue(transactionByIDState({ groupID, transactionID }));
+    const navigation = useNavigation();
+    if (transaction == null) {
+        navigation.navigate("TransactionList", { groupID: groupID });
+        throw new Error("transaction was null unexpectedly");
+    }
+    return transaction;
+};
+
 function filterPositions(positions: TransactionPosition[]): TransactionPosition[] {
     return positions.filter((t) => !t.deleted);
 }
@@ -61,7 +76,11 @@ export const positionState = atomFamily<TransactionPosition[], number>({
     default: (groupID) => (groupID === null ? [] : (async () => await getTransactionsPositionsForGroup(groupID))()),
     effects: (groupID) => [
         ({ setSelf }) => {
-            return transactionNotifier.subscribe(groupID, (payload) => {
+            return transactionNotifier.on("changed", (payload) => {
+                if (payload.groupID !== groupID) {
+                    return;
+                }
+
                 getTransactionsPositionsForGroup(groupID).then((result) => {
                     console.log("received transaction position update:", groupID);
                     setSelf(result);
@@ -77,7 +96,11 @@ export const positionStateByTransaction = atomFamily<TransactionPosition[], numb
         transactionID === null ? [] : (async () => filterPositions(await getTransactionsPositions(transactionID)))(),
     effects: (transactionID) => [
         ({ setSelf }) => {
-            return transactionPositionNotifier.subscribe(transactionID, (payload) => {
+            return transactionPositionNotifier.on("changed", (payload) => {
+                if (payload.transactionID !== transactionID) {
+                    return;
+                }
+
                 getTransactionsPositions(transactionID).then((result) => {
                     console.log("received transaction position update:", transactionID);
                     setSelf(filterPositions(result));
@@ -103,13 +126,13 @@ export const transactionsInvolvingAccount = selectorFamily<Transaction[], accoun
             const transactions = get(transactionState(groupID));
             const positions = get(positionState(groupID));
             const involvedTransactionIDsThroughPositions = new Set<number>(
-                positions.filter((p) => p.usages.hasOwnProperty(accountID)).map((p) => p.transaction_id)
+                positions.filter((p) => p.usages[accountID] !== undefined).map((p) => p.transactionID)
             );
 
             return transactions.filter(
                 (t) =>
-                    t.debitor_shares.hasOwnProperty(accountID) ||
-                    t.creditor_shares.hasOwnProperty(accountID) ||
+                    t.debitorShares[accountID] !== undefined ||
+                    t.creditorShares[accountID] !== undefined ||
                     involvedTransactionIDsThroughPositions.has(t.id)
             );
         },

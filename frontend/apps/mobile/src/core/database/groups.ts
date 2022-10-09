@@ -12,10 +12,10 @@ function databaseRowToGroup(row): Group {
         name: row.name,
         description: row.description,
         terms: row.terms,
-        currency_symbol: row.currency_symbol,
-        created_at: row.created_at,
-        created_by: row.created_by,
-        add_user_account_on_join: row.add_user_account_on_join,
+        currencySymbol: row.currency_symbol,
+        createdAt: row.created_at,
+        createdBy: row.created_by,
+        addUserAccountOnJoin: row.add_user_account_on_join,
     } as Group;
 }
 
@@ -43,8 +43,7 @@ export async function syncGroups(): Promise<Group[]> {
     await db.transaction((conn: Connection) => {
         backendGroups.forEach((group) => {
             conn.execute(
-                `
-                insert into grp (
+                `insert into grp (
                     id, "name", description, terms, currency_symbol, created_by, created_at, add_user_account_on_join
                 )
                 values (
@@ -57,17 +56,16 @@ export async function syncGroups(): Promise<Group[]> {
                                                currency_symbol          = excluded.currency_symbol,
                                                created_by               = excluded.created_by,
                                                created_at               = excluded.created_at,
-                                               add_user_account_on_join = excluded.add_user_account_on_join
-            `,
+                                               add_user_account_on_join = excluded.add_user_account_on_join`,
                 [
                     group.id,
                     group.name,
                     group.description,
                     group.terms,
-                    group.currency_symbol,
-                    group.created_by,
-                    group.created_at,
-                    group.add_user_account_on_join,
+                    group.currencySymbol,
+                    group.createdBy,
+                    group.createdAt,
+                    group.addUserAccountOnJoin,
                 ]
             );
         });

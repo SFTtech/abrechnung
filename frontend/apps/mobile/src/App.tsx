@@ -5,7 +5,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { Provider as PaperProvider } from "react-native-paper";
 import useCachedResources from "./hooks/useCachedResources";
 import useColorScheme from "./hooks/useColorScheme";
-import Navigation from "./navigation";
+import { Navigation } from "./navigation";
 import { MaterialIcons } from "@expo/vector-icons";
 import { CombinedDarkTheme, CombinedDefaultTheme } from "./theme";
 import { PreferencesContext } from "./core/preferences";
@@ -13,7 +13,7 @@ import SplashScreen from "./screens/SplashScreen";
 import { RecoilRoot } from "recoil";
 import { NotificationProvider } from "./notifications";
 
-export default function App() {
+export const App: React.FC = () => {
     const isLoadingComplete = useCachedResources();
     const colorScheme = useColorScheme(); // TODO: incorporate
 
@@ -56,4 +56,6 @@ export default function App() {
             </RecoilRoot>
         );
     }
-}
+};
+
+export default App;

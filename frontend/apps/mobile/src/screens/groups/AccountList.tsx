@@ -3,27 +3,31 @@ import { Appbar, FAB, List, Menu, Portal, RadioButton, Text, TextInput, useTheme
 import { useIsFocused } from "@react-navigation/native";
 import { getAccountIcon } from "../../constants/Icons";
 import { createAccount } from "../../core/database/accounts";
-import { useRecoilValue, useRecoilValueLoadable } from "recoil";
-import { activeGroupIDState, activeGroupState } from "../../core/groups";
-import { AccountBalance, accountBalancesState, accountStateByType } from "../../core/accounts";
-import { Account } from "@abrechnung/types";
+import { useRecoilValueLoadable } from "recoil";
+import { useActiveGroup } from "../../core/groups";
+import { accountBalancesState, accountStateByType } from "../../core/accounts";
+import { Account, AccountBalance, AccountType } from "@abrechnung/types";
 import * as React from "react";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { syncLocalGroupState } from "../../core/sync";
-import { createComparator, lambdaComparator, toISOString } from "@abrechnung/utils";
+import { createComparator, lambdaComparator } from "@abrechnung/utils";
 import LoadingIndicator from "../../components/LoadingIndicator";
 import { successColor } from "../../theme";
 import { MaterialIcons } from "@expo/vector-icons";
+import { GroupTabScreenProps } from "../../navigation/types";
 
-type SortMode = "name" | "description" | "last_changed";
+type SortMode = "name" | "description" | "lastChanged";
 
-export default function AccountList({ navigation, accountType }) {
+type AccountTypeProp = { accountType: AccountType };
+
+type Props = GroupTabScreenProps<"AccountList" | "ClearingAccountList"> & AccountTypeProp;
+
+export const AccountList: React.FC<Props> = ({ navigation, accountType }) => {
     const theme = useTheme();
 
-    const groupID = useRecoilValue(activeGroupIDState);
-    const activeGroup = useRecoilValue(activeGroupState);
-    const accounts = useRecoilValueLoadable(accountStateByType({ groupID, accountType }));
-    const accountBalances = useRecoilValueLoadable(accountBalancesState(groupID));
+    const activeGroup = useActiveGroup();
+    const accounts = useRecoilValueLoadable(accountStateByType({ groupID: activeGroup.id, accountType }));
+    const accountBalances = useRecoilValueLoadable(accountBalancesState(activeGroup.id));
 
     const [isMenuOpen, setMenuOpen] = useState<boolean>(false);
     const [showSearchInput, setShowSearchInput] = useState<boolean>(false);
@@ -34,7 +38,7 @@ export default function AccountList({ navigation, accountType }) {
     const [refreshing, setRefreshing] = useState<boolean>(false);
     const onRefresh = () => {
         setRefreshing(true);
-        syncLocalGroupState(groupID).then(() => setRefreshing(false));
+        syncLocalGroupState(activeGroup.id).then(() => setRefreshing(false));
     };
 
     const isFocused = useIsFocused();
@@ -46,7 +50,7 @@ export default function AccountList({ navigation, accountType }) {
 
     useLayoutEffect(() => {
         if (isFocused) {
-            navigation.getParent().setOptions({
+            navigation.getParent()?.setOptions({
                 headerTitle: accountType === "personal" ? "People" : "Events",
                 titleShown: !showSearchInput,
                 headerRight: () => {
@@ -74,10 +78,13 @@ export default function AccountList({ navigation, accountType }) {
                                 <Text variant="labelLarge" style={{ paddingLeft: 16, fontWeight: "bold" }}>
                                     Sort by
                                 </Text>
-                                <RadioButton.Group value={sortMode} onValueChange={(value) => setSortMode(value)}>
+                                <RadioButton.Group
+                                    value={sortMode}
+                                    onValueChange={(value) => setSortMode(value as SortMode)}
+                                >
                                     <RadioButton.Item position="trailing" label="Name" value="name" />
                                     <RadioButton.Item position="trailing" label="Description" value="description" />
-                                    <RadioButton.Item position="trailing" label="Last changed" value="last_changed" />
+                                    <RadioButton.Item position="trailing" label="Last changed" value="lastChanged" />
                                 </RadioButton.Group>
                             </Menu>
                         </>
@@ -88,7 +95,7 @@ export default function AccountList({ navigation, accountType }) {
             // !isFocuesd
             closeSearch();
         }
-    }, [isFocused, showSearchInput, isMenuOpen, setMenuOpen, sortMode, theme, navigation]);
+    }, [isFocused, showSearchInput, isMenuOpen, setMenuOpen, sortMode, theme, navigation, accountType]);
 
     useEffect(() => {
         if (accounts.state === "hasValue") {
@@ -100,9 +107,9 @@ export default function AccountList({ navigation, accountType }) {
                 case "description":
                     sortComparator = lambdaComparator((a: Account) => a.description);
                     break;
-                case "last_changed":
+                case "lastChanged":
                 default:
-                    sortComparator = lambdaComparator((a: Account) => toISOString(a.last_changed), true);
+                    sortComparator = lambdaComparator((a: Account) => a.lastChanged.toISOString(), true);
                     break;
             }
             setSortedAccounts(
@@ -119,20 +126,23 @@ export default function AccountList({ navigation, accountType }) {
     }, [accounts, sortMode, search]);
 
     const createNewAccount = () => {
-        createAccount(groupID, accountType)
+        createAccount(activeGroup.id, accountType)
             .then((res) => {
                 const [newAccountID, creationDate] = res;
                 navigation.navigate("AccountEdit", {
                     accountID: newAccountID,
-                    groupID: groupID,
-                    editingStart: toISOString(creationDate),
+                    groupID: activeGroup.id,
+                    editingStart: creationDate.toISOString(),
                 });
             })
             .catch((err) => console.log("error creating new account"));
     };
 
     const renderItem = (account: Account) => {
-        const balance: AccountBalance = accountBalances.contents[account.id];
+        const balance: AccountBalance | undefined = accountBalances.getValue().get(account.id);
+        if (balance === undefined) {
+            return null;
+        }
         const textColor = balance.balance > 0 ? successColor : theme.colors.error;
         return (
             <List.Item
@@ -142,7 +152,7 @@ export default function AccountList({ navigation, accountType }) {
                 left={(props) => <List.Icon {...props} icon={getAccountIcon(account.type)} />}
                 right={(props) => (
                     <>
-                        {account.has_local_changes && (
+                        {account.hasLocalChanges && (
                             <MaterialIcons
                                 style={{ marginRight: 8, marginTop: 4 }}
                                 size={20}
@@ -151,15 +161,14 @@ export default function AccountList({ navigation, accountType }) {
                             />
                         )}
                         <Text style={{ color: textColor }}>
-                            {balance.balance.toFixed(2)} {activeGroup.currency_symbol}
+                            {balance.balance.toFixed(2)} {activeGroup.currencySymbol}
                         </Text>
                     </>
                 )}
                 onPress={() =>
                     navigation.navigate("AccountDetail", {
                         accountID: account.id,
-                        groupID: groupID,
-                        editingStart: null,
+                        groupID: activeGroup.id,
                     })
                 }
             />
@@ -181,7 +190,7 @@ export default function AccountList({ navigation, accountType }) {
             </Portal>
         </ScrollView>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {},
@@ -198,3 +207,5 @@ const styles = StyleSheet.create({
         bottom: 48,
     },
 });
+
+export default AccountList;

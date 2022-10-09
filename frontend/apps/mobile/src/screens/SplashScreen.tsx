@@ -1,13 +1,14 @@
+import React from "react";
 import { StyleSheet, View } from "react-native";
 import { ActivityIndicator } from "react-native-paper";
 
-export default function SplashScreen() {
+export const SplashScreen: React.FC = () => {
     return (
         <View style={styles.container}>
             <ActivityIndicator animating={true} />
         </View>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
@@ -15,3 +16,5 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
 });
+
+export default SplashScreen;

@@ -1,4 +1,4 @@
-import { GroupStackParamList } from "../../types";
+import { GroupStackParamList, GroupStackScreenProps } from "../../navigation/types";
 import { BackHandler, ScrollView, StyleSheet, View } from "react-native";
 import * as React from "react";
 import { useEffect, useLayoutEffect, useState } from "react";
@@ -21,56 +21,48 @@ import {
     updateTransaction,
 } from "../../core/database/transactions";
 import DateTimeInput from "../../components/DateTimeInput";
-import { useRecoilValue, useRecoilValueLoadable } from "recoil";
-import { positionStateByTransaction, transactionByIDState } from "../../core/transactions";
+import { useRecoilValueLoadable } from "recoil";
+import { positionStateByTransaction, useTransaction } from "../../core/transactions";
 import PositionListItem from "../../components/PositionListItem";
 import { notify } from "../../notifications";
-import { toISOString } from "@abrechnung/utils";
 import { StackScreenProps } from "@react-navigation/stack";
 import LoadingIndicator from "../../components/LoadingIndicator";
 import { useFocusEffect } from "@react-navigation/native";
-import { ValidationError } from "@abrechnung/types";
+import {
+    Transaction,
+    TransactionPosition,
+    TransactionShare,
+    TransactionValidationErrors,
+    ValidationError,
+} from "@abrechnung/types";
 
-export default function TransactionDetail({
-    route,
-    navigation,
-}: StackScreenProps<GroupStackParamList, "TransactionDetail">) {
+type LocalEditingState = Pick<
+    Transaction,
+    | "description"
+    | "value"
+    | "billedAt"
+    | "currencySymbol"
+    | "currencyConversionRate"
+    | "creditorShares"
+    | "debitorShares"
+>;
+
+export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetail">> = ({ route, navigation }) => {
     const theme = useTheme();
     const { groupID, transactionID, editingStart } = route.params;
 
     const editing = editingStart !== null;
 
-    const transaction = useRecoilValue(transactionByIDState({ groupID, transactionID }));
+    const transaction = useTransaction(groupID, transactionID);
     const positions = useRecoilValueLoadable(positionStateByTransaction(transactionID));
-    const [localEditingState, setLocalEditingState] = useState(null);
-    const [inputErrors, setInputErrors] = useState({});
-
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            onGoBack: onGoBack,
-            headerTitle: localEditingState?.description ?? transaction?.description ?? "",
-            headerRight: () => {
-                if (editing) {
-                    return (
-                        <>
-                            <Button onPress={cancelEdit} textColor={theme.colors.error}>
-                                Cancel
-                            </Button>
-                            <Button onPress={save}>Save</Button>
-                        </>
-                    );
-                }
-                return <Button onPress={edit}>Edit</Button>;
-            },
-        });
-    }, [theme, editing, navigation, localEditingState, setLocalEditingState]); // FIXME: figure out why we need localEditingState as an effect dependency
-
-    const onGoBack = async () => {
+    const [localEditingState, setLocalEditingState] = useState<LocalEditingState | null>(null);
+    const [inputErrors, setInputErrors] = useState<TransactionValidationErrors>({});
+    const onGoBack = React.useCallback(async () => {
         if (editing && transaction != null) {
             return await deleteLocalTransactionChanges(groupID, transaction.id, editingStart);
         }
         return;
-    };
+    }, [editing, transaction, groupID, editingStart]);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -84,33 +76,29 @@ export default function TransactionDetail({
             BackHandler.addEventListener("hardwareBackPress", onBackPress);
 
             return () => BackHandler.removeEventListener("hardwareBackPress", onBackPress);
-        }, [editing, transaction])
+        }, [onGoBack])
     );
 
     useEffect(() => {
-        if (transaction != null) {
-            setInputErrors({});
-            setLocalEditingState((prevState) => {
-                return {
-                    ...prevState,
-                    description: transaction.description,
-                    value: transaction.value,
-                    billed_at: transaction.billed_at,
-                    currency_symbol: transaction.currency_symbol,
-                    currency_conversion_rate: transaction.currency_conversion_rate,
-                    creditor_shares: transaction.creditor_shares,
-                    debitor_shares: transaction.debitor_shares,
-                };
-            });
-        }
+        setInputErrors({});
+        setLocalEditingState((prevState) => {
+            return {
+                ...prevState,
+                description: transaction.description,
+                value: transaction.value,
+                billedAt: transaction.billedAt,
+                currencySymbol: transaction.currencySymbol,
+                currencyConversionRate: transaction.currencyConversionRate,
+                creditorShares: transaction.creditorShares,
+                debitorShares: transaction.debitorShares,
+            };
+        });
     }, [transaction]);
 
-    const save = () => {
+    const save = React.useCallback(() => {
         updateTransaction({
             ...transaction,
             ...localEditingState,
-            value: parseFloat(localEditingState.value),
-            currency_conversion_rate: parseFloat(localEditingState.currency_conversion_rate),
         })
             .then(() => {
                 setInputErrors({});
@@ -149,40 +137,62 @@ export default function TransactionDetail({
                     notify({ text: `Error while saving transaction: ${err.toString()}` });
                 }
             });
-    };
+    }, [navigation, groupID, transaction, setInputErrors, localEditingState]);
 
-    const edit = () => {
+    const edit = React.useCallback(() => {
         navigation.navigate("TransactionDetail", {
             transactionID: transactionID,
             groupID: groupID,
-            editingStart: toISOString(new Date()),
+            editingStart: new Date().toISOString(),
         });
-    };
+    }, [navigation, transactionID, groupID]);
 
-    const cancelEdit = () => {
-        deleteLocalTransactionChanges(groupID, transaction.id, editingStart).then((deletedTransaction) => {
-            if (deletedTransaction) {
-                navigation.navigate("BottomTabNavigator", {
-                    screen: "TransactionList",
-                });
-            } else {
-                setLocalEditingState({
-                    description: transaction.description,
-                    value: transaction.value,
-                    billed_at: transaction.billed_at,
-                    currency_symbol: transaction.currency_symbol,
-                    currency_conversion_rate: transaction.currency_conversion_rate,
-                    creditor_shares: transaction.creditor_shares,
-                    debitor_shares: transaction.debitor_shares,
-                });
-                navigation.navigate("TransactionDetail", {
-                    transactionID: transactionID,
-                    groupID: groupID,
-                    editingStart: null,
-                });
+    const cancelEdit = React.useCallback(() => {
+        deleteLocalTransactionChanges(groupID, transaction.id, editingStart === null ? undefined : editingStart).then(
+            (deletedTransaction) => {
+                if (deletedTransaction) {
+                    navigation.navigate("BottomTabNavigator", {
+                        screen: "TransactionList",
+                    });
+                } else {
+                    setLocalEditingState({
+                        description: transaction.description,
+                        value: transaction.value,
+                        billedAt: transaction.billedAt,
+                        currencySymbol: transaction.currencySymbol,
+                        currencyConversionRate: transaction.currencyConversionRate,
+                        creditorShares: transaction.creditorShares,
+                        debitorShares: transaction.debitorShares,
+                    });
+                    navigation.navigate("TransactionDetail", {
+                        transactionID: transactionID,
+                        groupID: groupID,
+                        editingStart: null,
+                    });
+                }
             }
+        );
+    }, [transaction, groupID, editingStart, navigation, transactionID]);
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            onGoBack: onGoBack,
+            headerTitle: localEditingState?.description ?? transaction?.description ?? "",
+            headerRight: () => {
+                if (editing) {
+                    return (
+                        <>
+                            <Button onPress={cancelEdit} textColor={theme.colors.error}>
+                                Cancel
+                            </Button>
+                            <Button onPress={save}>Save</Button>
+                        </>
+                    );
+                }
+                return <Button onPress={edit}>Edit</Button>;
+            },
         });
-    };
+    }, [theme, editing, navigation, localEditingState, onGoBack, cancelEdit, save, edit, transaction]); // FIXME: figure out why we need localEditingState as an effect dependency
 
     const onCreatePosition = () => {
         createPosition(groupID, transaction.id).catch((err) => {
@@ -190,15 +200,36 @@ export default function TransactionDetail({
         });
     };
 
-    const onChangeLocalEditingValueFactory = (fieldName: string) => (value) => {
-        setInputErrors({});
+    const onChangeDescription = (description: string) =>
         setLocalEditingState((prevState) => {
-            return {
-                ...prevState,
-                [fieldName]: value,
-            };
+            return prevState === null ? null : { ...prevState, description: description };
         });
-    };
+    const onChangeValue = (value: string) =>
+        setLocalEditingState((prevState) => {
+            return prevState === null ? null : { ...prevState, value: parseFloat(value) };
+        });
+    const onChangedBilledAt = (billedAt: Date) =>
+        setLocalEditingState((prevState) => {
+            return prevState === null ? null : { ...prevState, billedAt: billedAt };
+        });
+    const onChangeCurrencySymbol = (currencySymbol: string) =>
+        setLocalEditingState((prevState) => {
+            return prevState === null ? null : { ...prevState, currencySymbol: currencySymbol };
+        });
+    const onChangeCurrencyConversionRate = (currencyConversionRate: string) =>
+        setLocalEditingState((prevState) => {
+            return prevState === null
+                ? null
+                : { ...prevState, currencyConversionRate: parseFloat(currencyConversionRate) };
+        });
+    const onChangeCreditorShares = (creditorShares: TransactionShare) =>
+        setLocalEditingState((prevState) => {
+            return prevState === null ? null : { ...prevState, creditorShares: creditorShares };
+        });
+    const onChangeDebitorSharesShares = (debitorShares: TransactionShare) =>
+        setLocalEditingState((prevState) => {
+            return prevState === null ? null : { ...prevState, debitorShares: debitorShares };
+        });
 
     if (transaction == null || localEditingState == null) {
         return (
@@ -223,60 +254,52 @@ export default function TransactionDetail({
                 value={localEditingState.description}
                 editable={editing}
                 // disabled={!editing}
-                onChangeText={onChangeLocalEditingValueFactory("description")}
+                onChangeText={onChangeDescription}
                 style={inputStyles}
-                error={inputErrors.hasOwnProperty("description")}
+                error={inputErrors.description !== undefined}
             />
-            {inputErrors.hasOwnProperty("description") && (
-                <HelperText type="error">{inputErrors["description"]}</HelperText>
-            )}
+            {inputErrors.description && <HelperText type="error">{inputErrors.description}</HelperText>}
             <DateTimeInput
                 label="Billed At"
-                value={localEditingState.billed_at}
+                value={localEditingState.billedAt}
                 editable={editing}
                 style={inputStyles}
-                onChange={onChangeLocalEditingValueFactory("billed_at")}
-                error={inputErrors.hasOwnProperty("billed_at")}
+                onChange={onChangedBilledAt}
+                error={inputErrors.billedAt !== undefined}
             />
-            {inputErrors.hasOwnProperty("billed_at") && (
-                <HelperText type="error">{inputErrors["billed_at"]}</HelperText>
-            )}
+            {inputErrors.billedAt && <HelperText type="error">{inputErrors.billedAt}</HelperText>}
             <TextInput
                 label="Value" // TODO: proper float input
                 value={editing ? String(localEditingState.value) : String(localEditingState.value.toFixed(2))}
                 editable={editing}
                 keyboardType="numeric"
-                onChangeText={onChangeLocalEditingValueFactory("value")}
+                onChangeText={onChangeValue}
                 style={inputStyles}
-                right={<TextInput.Affix text={transaction.currency_symbol} />}
-                error={inputErrors.hasOwnProperty("value")}
+                right={<TextInput.Affix text={transaction.currencySymbol} />}
+                error={inputErrors.value !== undefined}
             />
-            {inputErrors.hasOwnProperty("value") && <HelperText type="error">{inputErrors["value"]}</HelperText>}
+            {inputErrors.value && <HelperText type="error">{inputErrors.value}</HelperText>}
 
             <TransactionShareInput
                 title="Paid by"
                 groupID={groupID}
                 disabled={!editing}
-                value={localEditingState.creditor_shares}
-                onChange={onChangeLocalEditingValueFactory("creditor_shares")}
+                value={localEditingState.creditorShares}
+                onChange={onChangeCreditorShares}
                 enableAdvanced={false}
                 multiSelect={false}
             />
-            {inputErrors.hasOwnProperty("creditor_shares") && (
-                <HelperText type="error">{inputErrors["creditor_shares"]}</HelperText>
-            )}
+            {inputErrors.creditorShares && <HelperText type="error">{inputErrors.creditorShares}</HelperText>}
             <TransactionShareInput
                 title="For"
                 disabled={!editing}
                 groupID={groupID}
-                value={localEditingState.debitor_shares}
-                onChange={onChangeLocalEditingValueFactory("debitor_shares")}
+                value={localEditingState.debitorShares}
+                onChange={onChangeDebitorSharesShares}
                 enableAdvanced={transaction.type === "purchase"}
                 multiSelect={transaction.type === "purchase"}
             />
-            {inputErrors.hasOwnProperty("debitor_shares") && (
-                <HelperText type="error">{inputErrors["debitor_shares"]}</HelperText>
-            )}
+            {inputErrors.debitorShares && <HelperText type="error">{inputErrors.debitorShares}</HelperText>}
 
             {positions.state === "loading" ? (
                 <LoadingIndicator />
@@ -286,10 +309,11 @@ export default function TransactionDetail({
                         <List.Item title="Postions" />
                         <>
                             <Divider />
-                            {positions.contents.map((position) => (
+                            {positions.contents.map((position: TransactionPosition) => (
                                 <PositionListItem
                                     key={position.id}
-                                    currency_symbol={transaction.currency_symbol}
+                                    groupID={groupID}
+                                    currencySymbol={transaction.currencySymbol}
                                     position={position}
                                     editing={editing}
                                 />
@@ -300,10 +324,10 @@ export default function TransactionDetail({
                                 right={(props) => (
                                     <Text>
                                         {positions.contents
-                                            .map((p) => p.price)
-                                            .reduce((acc, curr) => acc + curr, 0)
+                                            .map((p: TransactionPosition) => p.price)
+                                            .reduce((acc: number, curr: number) => acc + curr, 0)
                                             .toFixed(2)}{" "}
-                                        {transaction.currency_symbol}
+                                        {transaction.currencySymbol}
                                     </Text>
                                 )}
                             />
@@ -318,7 +342,7 @@ export default function TransactionDetail({
             )}
         </ScrollView>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
@@ -337,3 +361,5 @@ const styles = StyleSheet.create({
         backgroundColor: "#1e1e1e",
     },
 });
+
+export default TransactionDetail;

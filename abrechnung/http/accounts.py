@@ -1,8 +1,8 @@
-from marshmallow import Schema, fields
 from aiohttp import web
+from marshmallow import Schema, fields
 
 from abrechnung.http.openapi import docs, json_schema
-from abrechnung.http.serializers import AccountSchema
+from abrechnung.http.serializers import AccountSchema, SharesField
 from abrechnung.http.utils import json_response, PrefixedRouteTableDef
 
 routes = PrefixedRouteTableDef("/api")
@@ -35,6 +35,34 @@ async def list_accounts(request):
 
     serializer = AccountSchema()
     return json_response(data=serializer.dump(accounts, many=True))
+
+
+class AccountUpdateSchema(Schema):
+    id = fields.Int()
+    type = fields.Str()
+    name = fields.Str()
+    description = fields.Str()
+    priority = fields.Int()
+    owning_user_id = fields.Int(allow_none=True)
+    clearing_shares = SharesField()
+    deleted = fields.Bool()
+
+
+@routes.post(r"/v1/groups/{group_id:\d+}/accounts/sync")
+@docs(
+    tags=["accounts"],
+    summary="update a collection of accounts",
+    description="",
+)
+@json_schema(AccountUpdateSchema)
+async def sync_accounts(request: web.Request):
+    updated_ids = await request.app["account_service"].sync_accounts(
+        user=request["user"],
+        group_id=int(request.match_info["group_id"]),
+        accounts=request["json"] # TODO: FIXME, convert to proper parameters
+    )
+
+    await json_response(data=updated_ids)
 
 
 @routes.post(r"/v1/groups/{group_id:\d+}/accounts")

@@ -1,10 +1,15 @@
 {
     "root": true,
     "ignorePatterns": ["**/*"],
-    "plugins": ["@nrwl/nx"],
+    "plugins": ["@nrwl/nx", "prettier"],
+    "extends": ["prettier"],
+    "rules": {
+        "prettier/prettier": ["error"]
+    },
     "overrides": [
         {
             "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
+            "extends": ["eslint:recommended"],
             "rules": {
                 "@nrwl/nx/enforce-module-boundaries": [
                     "error",
@@ -30,6 +35,10 @@
             "files": ["*.js", "*.jsx"],
             "extends": ["plugin:@nrwl/nx/javascript"],
             "rules": {}
+        },
+        {
+            "files": ["*.jsx", "*.tsx"],
+            "extends": ["plugin:react/recommended"]
         },
         {
             "files": ["*.spec.ts", "*.spec.tsx", "*.spec.js", "*.spec.jsx"],
