@@ -150,7 +150,7 @@ export default function Balances({ group }) {
                                         width={yaxiswidth}
                                     />
                                     <Tooltip
-                                        formatter={(label) =>
+                                        formatter={(label: string) =>
                                             parseFloat(label).toFixed(2) + ` ${group.currency_symbol}`
                                         }
                                         labelStyle={{
