@@ -1,0 +1,145 @@
+import React, { ReactNode } from "react";
+import { toast } from "react-toastify";
+import { Form, Formik, FormikProps } from "formik";
+import { createTransaction } from "../../../core/api";
+import { DateTime } from "luxon";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
+import DatePicker from "@mui/lab/DatePicker";
+import { useSetRecoilState } from "recoil";
+import { addTransactionInState, groupTransactions } from "../../../state/transactions";
+import AccountSelect from "../../style/AccountSelect";
+import * as yup from "yup";
+
+interface FormValues {
+    value: string;
+    description: string;
+    billedAt: DateTime;
+    creditor: { [k: number]: number };
+}
+
+const validationSchema = yup.object({
+    value: yup.number().required("value is required"),
+    description: yup.string().required("description is required"),
+    creditor: yup.object().required("from is required"),
+    // billedAt: yup.date("Enter a description").required("from is required"),
+});
+
+export default function PurchaseCreateModal({ group, show, onClose }) {
+    const setTransactions = useSetRecoilState(groupTransactions(group.id));
+    const initialValues: FormValues = {
+        description: "",
+        value: "0.0",
+        billedAt: DateTime.now(),
+        creditor: undefined,
+    };
+
+    const handleSubmit = (values, { setSubmitting }) => {
+        createTransaction({
+            groupID: group.id,
+            type: "purchase",
+            description: values.description,
+            value: parseFloat(values.value),
+            billedAt: values.billedAt.toISODate(),
+            currencySymbol: group.currency_symbol,
+            currencyConversionRate: 1.0,
+            creditorShares: { [values.creditor.id]: 1.0 },
+        })
+            .then((t) => {
+                addTransactionInState(t, setTransactions);
+                setSubmitting(false);
+                onClose();
+            })
+            .catch((err) => {
+                toast.error(err);
+                setSubmitting(false);
+            });
+    };
+
+    return (
+        <Dialog open={show} onClose={onClose}>
+            <DialogTitle>Create Purchase</DialogTitle>
+            <DialogContent>
+                <Formik initialValues={initialValues} onSubmit={handleSubmit} validationSchema={validationSchema}>
+                    {({
+                        values,
+                        errors,
+                        touched,
+                        setFieldValue,
+                        handleChange,
+                        handleBlur,
+                        handleSubmit,
+                        isSubmitting,
+                    }: FormikProps<FormValues>) => (
+                        <Form>
+                            <TextField
+                                margin="normal"
+                                required
+                                fullWidth
+                                variant="standard"
+                                name="description"
+                                label="Description"
+                                autoFocus
+                                value={values.description}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                error={touched.description && Boolean(errors.description)}
+                                helperText={touched.description && (errors.description as ReactNode)}
+                            />
+                            <DatePicker
+                                inputFormat="yyyy-MM-dd"
+                                renderInput={(params) => (
+                                    <TextField
+                                        name="billedAt"
+                                        required
+                                        variant="standard"
+                                        fullWidth
+                                        {...params}
+                                        helperText={null}
+                                    />
+                                )}
+                                label="Billed at"
+                                value={values.billedAt}
+                                onChange={(val) => setFieldValue("billedAt", val, true)}
+                            />
+                            <TextField
+                                margin="normal"
+                                required
+                                fullWidth
+                                type="number"
+                                inputProps={{ step: "any" }}
+                                variant="standard"
+                                name="value"
+                                label="Value"
+                                value={values.value}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                error={touched.value && Boolean(errors.value)}
+                                helperText={touched.value && (errors.value as ReactNode)}
+                            />
+                            <AccountSelect
+                                label="Paid by"
+                                name="creditor"
+                                group={group}
+                                value={values.creditor}
+                                onChange={(val) => setFieldValue("creditor", val, true)}
+                                noDisabledStyling={true}
+                                disabled={false}
+                                error={touched.creditor && Boolean(errors.creditor)}
+                                helperText={touched.creditor && (errors.creditor as ReactNode)}
+                            />
+                            {isSubmitting && <LinearProgress />}
+                            <DialogActions>
+                                <Button type="submit" color="primary" disabled={isSubmitting}>
+                                    Save
+                                </Button>
+                                <Button color="error" onClick={onClose}>
+                                    Cancel
+                                </Button>
+                            </DialogActions>
+                        </Form>
+                    )}
+                </Formik>
+            </DialogContent>
+        </Dialog>
+    );
+}

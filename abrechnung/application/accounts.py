@@ -1,4 +1,5 @@
 import json
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Optional, Union
 
@@ -14,6 +15,19 @@ from . import (
     create_group_log,
 )
 from ..domain.users import User
+
+
+@dataclass
+class RawAccount:
+    id: int
+    group_id: int
+    name: str
+    description: str
+    priority: int
+    owning_user_id: Optional[int]
+    deleted: bool
+    type: Optional[str] = field(default=None)
+    clearing_shares: Optional[dict[int, float]] = field(default=None)
 
 
 class AccountService(Application):
@@ -250,6 +264,78 @@ class AccountService(Application):
             )
             return self._account_db_row(account)
 
+    async def _create_account(
+        self,
+        *,
+        conn: asyncpg.Connection,
+        user: User,
+        group_id: int,
+        type: str,
+        name: str,
+        description: str,
+        owning_user_id: Optional[int] = None,
+        priority: int = 0,
+        clearing_shares: Optional[dict[int, float]] = None,
+    ) -> int:
+        if clearing_shares and type != AccountType.clearing.value:
+            raise InvalidCommand(
+                f"'{type}' accounts cannot have associated settlement distribution shares"
+            )
+
+        can_write, is_owner = await check_group_permissions(
+            conn=conn, group_id=group_id, user=user, can_write=True
+        )
+        if owning_user_id is not None:
+            if not is_owner and owning_user_id != user.id:
+                raise PermissionError(
+                    f"only group owners can associate others with accounts"
+                )
+
+        account_id = await conn.fetchval(
+            "insert into account (group_id, type) values ($1, $2) returning id",
+            group_id,
+            type,
+        )
+
+        revision_id = await self._get_or_create_revision(conn, user, account_id)
+        await conn.execute(
+            "insert into account_history (id, revision_id, name, description, owning_user_id, priority) "
+            "values ($1, $2, $3, $4, $5, $6)",
+            account_id,
+            revision_id,
+            name,
+            description,
+            owning_user_id,
+            priority,
+        )
+        if clearing_shares and type == AccountType.clearing.value:
+            # TODO: make this more efficient
+            for share_account_id, value in clearing_shares.items():
+                if value == 0:
+                    continue
+                await self._check_account_exists(conn, group_id, share_account_id)
+                await conn.execute(
+                    "insert into clearing_account_share (account_id, revision_id, share_account_id, shares) "
+                    "values ($1, $2, $3, $4)",
+                    account_id,
+                    revision_id,
+                    share_account_id,
+                    value,
+                )
+
+        await create_group_log(
+            conn=conn,
+            group_id=group_id,
+            user=user,
+            type="account-committed",
+            message=f"created account {name}",
+        )
+        await conn.execute(
+            "update account_revision set committed = now() where id = $1",
+            revision_id,
+        )
+        return account_id
+
     async def create_account(
         self,
         *,
@@ -264,66 +350,100 @@ class AccountService(Application):
     ) -> int:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                if clearing_shares and type != AccountType.clearing.value:
-                    raise InvalidCommand(
-                        f"'{type}' accounts cannot have associated settlement distribution shares"
-                    )
-
-                can_write, is_owner = await check_group_permissions(
-                    conn=conn, group_id=group_id, user=user, can_write=True
-                )
-                if owning_user_id is not None:
-                    if not is_owner and owning_user_id != user.id:
-                        raise PermissionError(
-                            f"only group owners can associate others with accounts"
-                        )
-
-                account_id = await conn.fetchval(
-                    "insert into account (group_id, type) values ($1, $2) returning id",
-                    group_id,
-                    type,
+                return await self._create_account(
+                    conn=conn,
+                    user=user,
+                    group_id=group_id,
+                    type=type,
+                    name=name,
+                    description=description,
+                    owning_user_id=owning_user_id,
+                    priority=priority,
+                    clearing_shares=clearing_shares,
                 )
 
-                revision_id = await self._get_or_create_revision(conn, user, account_id)
+    async def _update_account(
+        self,
+        conn: asyncpg.Connection,
+        user: User,
+        account_id: int,
+        name: str,
+        description: str,
+        owning_user_id: Optional[int] = None,
+        priority: int = 0,
+        clearing_shares: Optional[dict[int, float]] = None,
+    ):
+        group_id, account_type = await self._check_account_permissions(
+            conn=conn, user=user, account_id=account_id, can_write=True
+        )
+        can_write, is_owner = await check_group_permissions(
+            conn=conn, group_id=group_id, user=user, can_write=True
+        )
+        if clearing_shares and account_type != AccountType.clearing.value:
+            raise InvalidCommand(
+                f"'{account_type}' accounts cannot have associated settlement distribution shares"
+            )
+
+        revision_id = await self._get_or_create_revision(
+            conn=conn, user=user, account_id=account_id
+        )
+
+        committed_account = await conn.fetchrow(
+            "select owning_user_id from committed_account_state_valid_at() where account_id = $1",
+            account_id,
+        )
+
+        if owning_user_id is not None:
+            if not is_owner and owning_user_id != user.id:
+                raise PermissionError(
+                    f"only group owners can associate others with accounts"
+                )
+        elif (
+            committed_account["owning_user_id"] is not None
+            and committed_account["owning_user_id"] != user.id
+            and not is_owner
+        ):
+            raise PermissionError(
+                f"only group owners can remove other users as account owners"
+            )
+
+        await conn.execute(
+            "insert into account_history (id, revision_id, name, description, owning_user_id, priority) "
+            "values ($1, $2, $3, $4, $5, $6) ",
+            account_id,
+            revision_id,
+            name,
+            description,
+            owning_user_id,
+            priority,
+        )
+        if clearing_shares and account_type == AccountType.clearing.value:
+            # TODO: make this more efficient
+            for share_account_id, value in clearing_shares.items():
+                if value == 0:
+                    continue
+                await self._check_account_exists(conn, group_id, share_account_id)
                 await conn.execute(
-                    "insert into account_history (id, revision_id, name, description, owning_user_id, priority) "
-                    "values ($1, $2, $3, $4, $5, $6)",
+                    "insert into clearing_account_share (account_id, revision_id, share_account_id, shares) "
+                    "values ($1, $2, $3, $4)",
                     account_id,
                     revision_id,
-                    name,
-                    description,
-                    owning_user_id,
-                    priority,
+                    share_account_id,
+                    value,
                 )
-                if clearing_shares and type == AccountType.clearing.value:
-                    # TODO: make this more efficient
-                    for share_account_id, value in clearing_shares.items():
-                        if value == 0:
-                            continue
-                        await self._check_account_exists(
-                            conn, group_id, share_account_id
-                        )
-                        await conn.execute(
-                            "insert into clearing_account_share (account_id, revision_id, share_account_id, shares) "
-                            "values ($1, $2, $3, $4)",
-                            account_id,
-                            revision_id,
-                            share_account_id,
-                            value,
-                        )
 
-                await create_group_log(
-                    conn=conn,
-                    group_id=group_id,
-                    user=user,
-                    type="account-committed",
-                    message=f"created account {name}",
-                )
-                await conn.execute(
-                    "update account_revision set committed = now() where id = $1",
-                    revision_id,
-                )
-                return account_id
+        await self._increment_account_version(conn=conn, revision_id=revision_id)
+        await create_group_log(
+            conn=conn,
+            group_id=group_id,
+            user=user,
+            type="account-committed",
+            message=f"updated account {name}",
+        )
+        await conn.execute(
+            "update account_revision set committed = now() where id = $1",
+            revision_id,
+        )
 
     async def update_account(
         self,
@@ -337,81 +457,15 @@ class AccountService(Application):
     ):
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
-                group_id, account_type = await self._check_account_permissions(
-                    conn=conn, user=user, account_id=account_id, can_write=True
-                )
-                can_write, is_owner = await check_group_permissions(
-                    conn=conn, group_id=group_id, user=user, can_write=True
-                )
-
-                if clearing_shares and account_type != AccountType.clearing.value:
-                    raise InvalidCommand(
-                        f"'{account_type}' accounts cannot have associated settlement distribution shares"
-                    )
-
-                revision_id = await self._get_or_create_revision(
-                    conn=conn, user=user, account_id=account_id
-                )
-
-                committed_account = await conn.fetchrow(
-                    "select owning_user_id from committed_account_state_valid_at() where account_id = $1",
-                    account_id,
-                )
-
-                if owning_user_id is not None:
-                    if not is_owner and owning_user_id != user.id:
-                        raise PermissionError(
-                            f"only group owners can associate others with accounts"
-                        )
-                elif (
-                    committed_account["owning_user_id"] is not None
-                    and committed_account["owning_user_id"] != user.id
-                    and not is_owner
-                ):
-                    raise PermissionError(
-                        f"only group owners can remove other users as account owners"
-                    )
-
-                await conn.execute(
-                    "insert into account_history (id, revision_id, name, description, owning_user_id, priority) "
-                    "values ($1, $2, $3, $4, $5, $6) ",
-                    account_id,
-                    revision_id,
-                    name,
-                    description,
-                    owning_user_id,
-                    priority,
-                )
-                if clearing_shares and account_type == AccountType.clearing.value:
-                    # TODO: make this more efficient
-                    for share_account_id, value in clearing_shares.items():
-                        if value == 0:
-                            continue
-                        await self._check_account_exists(
-                            conn, group_id, share_account_id
-                        )
-                        await conn.execute(
-                            "insert into clearing_account_share (account_id, revision_id, share_account_id, shares) "
-                            "values ($1, $2, $3, $4)",
-                            account_id,
-                            revision_id,
-                            share_account_id,
-                            value,
-                        )
-
-                await self._increment_account_version(
-                    conn=conn, revision_id=revision_id
-                )
-                await create_group_log(
+                return await self._update_account(
                     conn=conn,
-                    group_id=group_id,
                     user=user,
-                    type="account-committed",
-                    message=f"updated account {name}",
-                )
-                await conn.execute(
-                    "update account_revision set committed = now() where id = $1",
-                    revision_id,
+                    account_id=account_id,
+                    name=name,
+                    description=description,
+                    owning_user_id=owning_user_id,
+                    priority=priority,
+                    clearing_shares=clearing_shares,
                 )
 
     async def delete_account(
@@ -527,3 +581,84 @@ class AccountService(Application):
                     type="account-deleted",
                     message=f"deleted account account {row['name']}",
                 )
+
+    async def sync_account(
+        self, *, conn: asyncpg.Connection, user: User, account: RawAccount
+    ) -> tuple[int, int]:
+        if account.id > 0:
+            await self._update_account(
+                conn=conn,
+                user=user,
+                account_id=account.id,
+                name=account.name,
+                description=account.description,
+                owning_user_id=account.owning_user_id,
+                priority=account.priority,
+                clearing_shares=account.clearing_shares,
+            )
+            return account.id, account.id
+
+        if account.type is None:
+            raise InvalidCommand("new account must have 'type' set")
+
+        new_acc_id = await self._create_account(
+            conn=conn,
+            user=user,
+            group_id=account.group_id,
+            type=account.type,
+            name=account.name,
+            description=account.description,
+            owning_user_id=account.owning_user_id,
+            priority=account.priority,
+            clearing_shares=account.clearing_shares,
+        )
+        return account.id, new_acc_id
+
+    async def sync_accounts(
+        self, *, user: User, group_id: int, accounts: list[RawAccount]
+    ) -> dict[int, int]:
+        all_accounts_in_same_group = all([a.group_id == group_id for a in accounts])
+        if not all_accounts_in_same_group:
+            raise InvalidCommand("all accounts must belong to the same group")
+
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                can_write, _ = await check_group_permissions(
+                    conn=conn, group_id=group_id, user=user, can_write=True
+                )
+
+                if not can_write:
+                    raise PermissionError("need write access to group")
+
+                new_account_id_map: dict[int, int] = {}
+
+                for account in filter(
+                    lambda acc: acc.type == AccountType.personal, accounts
+                ):
+                    old_acc_id, new_acc_id = await self.sync_account(
+                        conn=conn, user=user, account=account
+                    )
+                    new_account_id_map[old_acc_id] = new_acc_id
+
+                clearing_accounts = list(
+                    filter(lambda acc: acc.type == AccountType.clearing, accounts)
+                )
+                # TODO: improve this very inefficient implementation
+                # first step: use a dict instead of a list
+                while len(clearing_accounts) > 0:
+                    for account in clearing_accounts[:]:  # copy as we remove items
+                        if account.clearing_shares:
+                            account.clearing_shares = {
+                                new_account_id_map.get(k, k): v
+                                for k, v in account.clearing_shares.items()
+                            }
+                        if account.clearing_shares and all(
+                            [x > 0 for x in account.clearing_shares.keys()]
+                        ):
+                            old_acc_id, new_acc_id = await self.sync_account(
+                                conn=conn, user=user, account=account
+                            )
+                            new_account_id_map[old_acc_id] = new_acc_id
+                            clearing_accounts.remove(account)
+
+                return new_account_id_map

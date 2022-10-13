@@ -1,0 +1,36 @@
+{
+    "name": "@abrechnung/mobile",
+    "version": "0.0.1",
+    "private": true,
+    "dependencies": {
+        "@testing-library/jest-native": "*",
+        "@testing-library/react-native": "*",
+        "react-native": "*",
+        "expo": "*",
+        "expo-dev-client": "*",
+        "expo-status-bar": "*",
+        "expo-splash-screen": "*",
+        "expo-structured-headers": "*",
+        "expo-updates": "*",
+        "expo-system-ui": "*",
+        "expo-web-browser": "*",
+        "react-native-gesture-handler": "*",
+        "react-native-reanimated": "*",
+        "react-native-safe-area-context": "*",
+        "react-native-screens": "*",
+        "react-native-svg": "*",
+        "react-native-web": "*",
+        "@expo/vector-icons": "*",
+        "expo-asset": "*",
+        "expo-constants": "*",
+        "expo-file-system": "*",
+        "expo-font": "*",
+        "expo-linking": "*",
+        "expo-network": "*",
+        "expo-sqlite": "*"
+    },
+    "scripts": {
+        "eas-build-pre-install": "cd ../../ && cp package-lock.json ./apps/mobile/",
+        "postinstall": "rm -r node_modules && cd ../../ && npm install && npx nx sync-deps mobile && npx nx ensure-symlink mobile"
+    }
+}

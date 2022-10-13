@@ -64,9 +64,9 @@ interest dh-virtualenv-interpreter-update
 EOF
 
 export DESTDIR="debian/abrechnung"
-cd web && yarn install && yarn build && cd ..
+cd frontend && npm install && npx nx build web && cd ..
 mkdir -p $DESTDIR/usr/share/
-mv web/build $DESTDIR/usr/share/abrechnung_web
+mv frontend/dist/web $DESTDIR/usr/share/abrechnung_web
 
 #mkdir -p $DESTDIR/etc/abrechnung
 #mkdir -p $DESTDIR/etc/nginx/sites-available

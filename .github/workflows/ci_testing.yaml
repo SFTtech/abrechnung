@@ -99,8 +99,23 @@ jobs:
         with:
           node-version: "16"
           cache: "npm"
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
       - name: Install dependencies
-        run: npm --prefix web install --force
+        run: npm --prefix frontend install
       - name: Check JavaScript formatting
-        run: make check-format-web
+        run: make check-format-frontend
+
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Nodejs
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install dependencies
+        run: npm --prefix frontend install
+      - name: Build web app
+        run: cd frontend && npx nx build web && cd ..
