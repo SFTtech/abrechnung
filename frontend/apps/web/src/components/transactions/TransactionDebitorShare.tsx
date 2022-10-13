@@ -1,10 +1,18 @@
 import React from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { accountsSeenByUser } from "../../state/accounts";
-import AccountSelect from "../style/AccountSelect";
-import { pendingTransactionDetailChanges } from "../../state/transactions";
+import AccountSelect, { AccountSelectProps } from "../style/AccountSelect";
+import { pendingTransactionDetailChanges, Transaction } from "../../state/transactions";
+import { Group } from "../../state/groups";
 
-export default function TransactionDebitorShare({ group, transaction, isEditing, ...props }) {
+type Props = {
+    group: Group;
+    transaction: Transaction;
+    isEditing: boolean;
+    onChange?: AccountSelectProps["onChange"];
+} & Omit<AccountSelectProps, "onChange">;
+
+export const TransactionDebitorShare: React.FC<Props> = ({ group, transaction, isEditing, ...props }) => {
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const shareAccountID =
         Object.keys(transaction.debitor_shares).length === 0 ? null : Object.keys(transaction.debitor_shares)[0];
@@ -40,4 +48,6 @@ export default function TransactionDebitorShare({ group, transaction, isEditing,
             {...props}
         />
     );
-}
+};
+
+export default TransactionDebitorShare;

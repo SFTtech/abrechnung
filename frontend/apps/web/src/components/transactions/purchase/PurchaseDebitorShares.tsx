@@ -19,13 +19,25 @@ import {
     Typography,
     useMediaQuery,
 } from "@mui/material";
-import { pendingTransactionDetailChanges } from "../../../state/transactions";
-import { accountsSeenByUser } from "../../../state/accounts";
+import { pendingTransactionDetailChanges, Transaction } from "../../../state/transactions";
+import { AccountConsolidated, accountsSeenByUser } from "../../../state/accounts";
+import { Group } from "../../../state/groups";
 import { ShareInput } from "../../ShareInput";
 import { Clear, Search as SearchIcon } from "@mui/icons-material";
 import { ClearingAccountIcon, PersonalAccountIcon } from "../../style/AbrechnungIcons";
 
-function AccountTableRow({
+interface AccountTableRowProps {
+    transaction: Transaction;
+    account: AccountConsolidated;
+    showAdvanced: boolean;
+    debitorShareValueForAccount: (accountID: number) => number;
+    showPositions: boolean;
+    positionValueForAccount: (accountID: number) => number;
+    debitorValueForAccount: (accountID: number) => number;
+    updateDebShare: (accountID: number, value: number) => void;
+}
+
+const AccountTableRow: React.FC<AccountTableRowProps> = ({
     transaction,
     account,
     showAdvanced,
@@ -34,7 +46,7 @@ function AccountTableRow({
     positionValueForAccount,
     debitorValueForAccount,
     updateDebShare,
-}) {
+}) => {
     const transactionHasPositions =
         transaction.positions != null && transaction.positions.find((item) => !item.deleted) !== undefined;
 
@@ -87,9 +99,19 @@ function AccountTableRow({
             )}
         </TableRow>
     );
+};
+
+interface PurchaseDebitorSharesProps {
+    group: Group;
+    transaction: Transaction;
+    showPositions: boolean;
 }
 
-export default function PurchaseDebitorShares({ group, transaction, showPositions = false }) {
+export const PurchaseDebitorShares: React.FC<PurchaseDebitorSharesProps> = ({
+    group,
+    transaction,
+    showPositions = false,
+}) => {
     const isSmallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
 
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
@@ -286,4 +308,6 @@ export default function PurchaseDebitorShares({ group, transaction, showPosition
             </TableContainer>
         </div>
     );
-}
+};
+
+export default PurchaseDebitorShares;

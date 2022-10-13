@@ -1,17 +1,28 @@
 import React from "react";
 
 import { useRecoilValue } from "recoil";
-import { accountsSeenByUser } from "../../state/accounts";
-import { Autocomplete, Box, Popper, TextField, Typography } from "@mui/material";
+import { AccountConsolidated, accountsSeenByUser } from "../../state/accounts";
+import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
 import { DisabledTextField } from "./DisabledTextField";
 import { CompareArrows, Person } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
+import { Group } from "../../state/groups";
 
 const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
     minWidth: 200,
 }));
 
-export default function AccountSelect({
+export type AccountSelectProps = {
+    group: Group;
+    onChange: (acc: AccountConsolidated) => void;
+    value?: AccountConsolidated | null;
+    exclude?: number[] | null;
+    disabled?: boolean;
+    noDisabledStyling?: boolean;
+    className?: string | null;
+} & Omit<TextFieldProps, "value" | "onChange">;
+
+export const AccountSelect: React.FC<AccountSelectProps> = ({
     group,
     onChange,
     value = null,
@@ -20,7 +31,7 @@ export default function AccountSelect({
     noDisabledStyling = false,
     className = null,
     ...props
-}) {
+}) => {
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const filteredAccounts =
         exclude !== null ? accounts.filter((account) => exclude.indexOf(account.id) < 0) : accounts;
@@ -28,7 +39,7 @@ export default function AccountSelect({
     return (
         <Autocomplete
             options={filteredAccounts}
-            getOptionLabel={(option) => option.name}
+            getOptionLabel={(acc: AccountConsolidated) => acc.name}
             value={value}
             disabled={disabled}
             openOnFocus
@@ -36,7 +47,7 @@ export default function AccountSelect({
             PopperComponent={StyledAutocompletePopper}
             disableClearable
             className={className}
-            onChange={(event, newValue) => onChange(newValue)}
+            onChange={(event, newValue: AccountConsolidated) => onChange(newValue)}
             renderOption={(props, option) => (
                 <Box component="li" {...props}>
                     {option.type === "personal" ? <Person /> : <CompareArrows />}
@@ -52,4 +63,6 @@ export default function AccountSelect({
             }
         />
     );
-}
+};
+
+export default AccountSelect;

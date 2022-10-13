@@ -6,7 +6,7 @@ import { confirmEmailChange } from "../../core/api";
 import { Button, Typography } from "@mui/material";
 import { useTitle } from "../../core/utils";
 
-export default function ConfirmEmailChange() {
+export const ConfirmEmailChange: React.FC = () => {
     const [status, setStatus] = useState("idle");
     const { token } = useParams();
 
@@ -50,4 +50,6 @@ export default function ConfirmEmailChange() {
             )}
         </div>
     );
-}
+};
+
+export default ConfirmEmailChange;

@@ -6,7 +6,7 @@ import { Button, LinearProgress, TextField, Typography } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
 
-export default function ChangeEmail() {
+export const ChangeEmail: React.FC = () => {
     useTitle("Abrechnung - Change E-Mail");
 
     const handleSubmit = (values, { setSubmitting }) => {
@@ -68,4 +68,6 @@ export default function ChangeEmail() {
             </Formik>
         </MobilePaper>
     );
-}
+};
+
+export default ChangeEmail;

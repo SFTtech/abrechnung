@@ -7,15 +7,17 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgre
 import DatePicker from "@mui/lab/DatePicker";
 import { useSetRecoilState } from "recoil";
 import { addTransactionInState, groupTransactions } from "../../../state/transactions";
+import { Group } from "../../../state/groups";
 import AccountSelect from "../../style/AccountSelect";
 import * as yup from "yup";
+import { AccountConsolidated } from "../../../state/accounts";
 
 interface FormValues {
     value: string;
     description: string;
     billedAt: DateTime;
-    creditor: { [k: number]: number };
-    debitor: { [k: number]: number };
+    creditor: AccountConsolidated;
+    debitor: AccountConsolidated;
 }
 
 const validationSchema = yup.object({
@@ -26,7 +28,16 @@ const validationSchema = yup.object({
     // billedAt: yup.date("Enter a description").required("from is required"),
 });
 
-export default function TransferCreateModal({ group, show, onClose }) {
+interface Props {
+    group: Group;
+    show: boolean;
+    onClose: (
+        event: Record<string, never>,
+        reason: "escapeKeyDown" | "backdropClick" | "completed" | "closeButton"
+    ) => void;
+}
+
+export const TransferCreateModal: React.FC<Props> = ({ group, show, onClose }) => {
     const setTransactions = useSetRecoilState(groupTransactions(group.id));
 
     const handleSubmit = (values, { setSubmitting }) => {
@@ -45,7 +56,7 @@ export default function TransferCreateModal({ group, show, onClose }) {
             .then((t) => {
                 addTransactionInState(t, setTransactions);
                 setSubmitting(false);
-                onClose();
+                onClose({}, "completed");
             })
             .catch((err) => {
                 toast.error(err);
@@ -135,7 +146,7 @@ export default function TransferCreateModal({ group, show, onClose }) {
                                 noDisabledStyling={true}
                                 disabled={false}
                                 error={touched.creditor && Boolean(errors.creditor)}
-                                helperText={touched.creditor && errors.creditor}
+                                helperText={touched.creditor && (errors.creditor as string)}
                             />
                             <AccountSelect
                                 label="To"
@@ -146,14 +157,14 @@ export default function TransferCreateModal({ group, show, onClose }) {
                                 noDisabledStyling={true}
                                 disabled={false}
                                 error={touched.debitor && Boolean(errors.debitor)}
-                                helperText={touched.debitor && errors.debitor}
+                                helperText={touched.debitor && (errors.debitor as string)}
                             />
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
                                 <Button type="submit" color="primary" disabled={isSubmitting}>
                                     Save
                                 </Button>
-                                <Button color="error" onClick={onClose}>
+                                <Button color="error" onClick={() => onClose({}, "closeButton")}>
                                     Cancel
                                 </Button>
                             </DialogActions>
@@ -163,4 +174,6 @@ export default function TransferCreateModal({ group, show, onClose }) {
             </DialogContent>
         </Dialog>
     );
-}
+};
+
+export default TransferCreateModal;

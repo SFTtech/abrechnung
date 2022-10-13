@@ -6,7 +6,7 @@ import { Form, Formik } from "formik";
 import { toast } from "react-toastify";
 import { updateGroupMemberPrivileges } from "../../core/api";
 import { DateTime } from "luxon";
-import { currUserPermissions, groupMembers } from "../../state/groups";
+import { currUserPermissions, Group, groupMembers } from "../../state/groups";
 import {
     Button,
     Checkbox,
@@ -27,7 +27,11 @@ import { Edit } from "@mui/icons-material";
 import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
 
-export default function GroupMemberList({ group }) {
+interface Props {
+    group: Group;
+}
+
+export const GroupMemberList: React.FC<Props> = ({ group }) => {
     const [showEditMemberDialog, setShowEditMemberDialog] = useState(false);
     const [memberToEdit, setMemberToEdit] = useState(null);
     const currentUser = useRecoilValue(userData);
@@ -200,4 +204,6 @@ export default function GroupMemberList({ group }) {
             </Dialog>
         </MobilePaper>
     );
-}
+};
+
+export default GroupMemberList;

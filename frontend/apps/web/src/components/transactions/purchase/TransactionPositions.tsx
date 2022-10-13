@@ -11,18 +11,29 @@ import {
     TableHead,
     TableRow,
     TextField,
+    TextFieldProps,
     Typography,
 } from "@mui/material";
 import { useRecoilState, useRecoilValue } from "recoil";
 import { accountsSeenByUser } from "../../../state/accounts";
 import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import AccountSelect from "../../style/AccountSelect";
-import { LocalPositionChanges, pendingTransactionPositionChanges, Transaction } from "../../../state/transactions";
+import {
+    LocalPositionChanges,
+    pendingTransactionPositionChanges,
+    Transaction,
+    TransactionPosition,
+} from "../../../state/transactions";
 import { MobilePaper } from "../../style/mobile";
 import { Group } from "../../../state/groups";
 
-function ShareInput({ value, onChange, ...props }) {
-    const [currValue, setValue] = useState("0");
+type ShareInputProps = {
+    value: number;
+    onChange: (newValue: number) => void;
+} & TextFieldProps;
+
+const ShareInput: React.FC<ShareInputProps> = ({ value, onChange, ...props }) => {
+    const [currValue, setValue] = useState<string>("0");
     const [error, setError] = useState(false);
 
     function validate(val) {
@@ -30,7 +41,7 @@ function ShareInput({ value, onChange, ...props }) {
     }
 
     useEffect(() => {
-        setValue(value);
+        setValue(String(value));
         setError(!validate(value));
     }, [value]);
 
@@ -65,9 +76,24 @@ function ShareInput({ value, onChange, ...props }) {
             {...props}
         />
     );
-}
+};
 
-function WrappedTextField({ value, onChange, initial = null, errorMsg = null, validate = null, ...props }) {
+type WrappedTextFieldProps = {
+    value: string;
+    onChange: (newValue: string) => void;
+    initial?: string | null;
+    errorMsg?: string | null;
+    validate?: (value: string) => boolean;
+} & TextFieldProps;
+
+const WrappedTextField: React.FC<WrappedTextFieldProps> = ({
+    value,
+    onChange,
+    initial = null,
+    errorMsg = null,
+    validate = null,
+    ...props
+}) => {
     const [currValue, setValue] = useState(initial);
     const [error, setError] = useState(false);
 
@@ -79,7 +105,7 @@ function WrappedTextField({ value, onChange, initial = null, errorMsg = null, va
                 setError(!validate(value));
             }
         }
-    }, [value]);
+    }, [value, validate, setValue, setError]);
 
     const onSave = () => {
         if (!error) {
@@ -114,9 +140,26 @@ function WrappedTextField({ value, onChange, initial = null, errorMsg = null, va
             {...props}
         />
     );
+};
+
+interface PositionTableRowProps {
+    position: TransactionPosition;
+    updatePosition: (
+        position: TransactionPosition,
+        newName: string,
+        newPrice: number,
+        newCommunistShares: number
+    ) => void;
+    transactionAccounts: number[];
+    showAdvanced: boolean;
+    copyPosition: (position: TransactionPosition) => void;
+    updatePositionUsage: (position: TransactionPosition, accountID: number, usages: number) => void;
+    showAccountSelect: boolean;
+    showAddAccount: boolean;
+    deletePosition: (position: TransactionPosition) => void;
 }
 
-function PositionTableRow({
+const PositionTableRow: React.FC<PositionTableRowProps> = ({
     position,
     updatePosition,
     transactionAccounts,
@@ -126,7 +169,7 @@ function PositionTableRow({
     showAccountSelect,
     showAddAccount,
     deletePosition,
-}) {
+}) => {
     const validateFloat = (value) => {
         return !(value === null || value === undefined || value === "" || isNaN(parseFloat(value)));
     };
@@ -145,7 +188,7 @@ function PositionTableRow({
                 <WrappedTextField
                     key={`position-${position.id}-communist`}
                     id={`position-${position.id}-communist`}
-                    value={position.price}
+                    value={String(position.price)}
                     style={{ width: 70 }}
                     onChange={(value) =>
                         updatePosition(position, position.name, parseFloat(value), position.communist_shares)
@@ -206,14 +249,14 @@ function PositionTableRow({
             </TableCell>
         </>
     );
-}
+};
 
-export interface PropTypes {
+interface TransactionPositionsProps {
     group: Group;
     transaction: Transaction;
 }
 
-export default function TransactionPositions({ group, transaction }: PropTypes) {
+export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ group, transaction }) => {
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const [localPositionChanges, setLocalPositionChanges] = useRecoilState(
         pendingTransactionPositionChanges(transaction.id)
@@ -275,7 +318,7 @@ export default function TransactionPositions({ group, transaction }: PropTypes) 
         }
         if (position.only_local) {
             setLocalPositionChanges((currPositions) => {
-                let mappedAdded = { ...currPositions.added };
+                const mappedAdded = { ...currPositions.added };
                 mappedAdded[position.id] = {
                     ...position,
                     name: name,
@@ -290,7 +333,7 @@ export default function TransactionPositions({ group, transaction }: PropTypes) 
             });
         } else {
             setLocalPositionChanges((currPositions) => {
-                let mappedModified = { ...currPositions.modified };
+                const mappedModified = { ...currPositions.modified };
                 mappedModified[position.id] = {
                     ...position,
                     name: name,
@@ -312,8 +355,8 @@ export default function TransactionPositions({ group, transaction }: PropTypes) 
         }
         if (position.only_local) {
             setLocalPositionChanges((currPositions) => {
-                let mappedAdded = { ...currPositions.added };
-                let usages = { ...currPositions.added[position.id].usages };
+                const mappedAdded = { ...currPositions.added };
+                const usages = { ...currPositions.added[position.id].usages };
                 if (shares === 0) {
                     delete usages[accountID];
                 } else {
@@ -331,7 +374,7 @@ export default function TransactionPositions({ group, transaction }: PropTypes) 
             });
         } else {
             setLocalPositionChanges((currPositions) => {
-                let mappedModified = { ...currPositions.modified };
+                const mappedModified = { ...currPositions.modified };
                 let usages;
                 if (mappedModified.hasOwnProperty(position.id)) {
                     // we already did change something locally
@@ -367,7 +410,7 @@ export default function TransactionPositions({ group, transaction }: PropTypes) 
 
         if (position.only_local) {
             setLocalPositionChanges((currPositions) => {
-                let mappedAdded = { ...currPositions.added };
+                const mappedAdded = { ...currPositions.added };
                 delete mappedAdded[position.id];
                 return {
                     modified: currPositions.modified,
@@ -377,7 +420,7 @@ export default function TransactionPositions({ group, transaction }: PropTypes) 
             });
         } else {
             setLocalPositionChanges((currPositions) => {
-                let mappedModified = { ...currPositions.modified };
+                const mappedModified = { ...currPositions.modified };
                 mappedModified[position.id] = {
                     ...position,
                     deleted: true,
@@ -419,7 +462,7 @@ export default function TransactionPositions({ group, transaction }: PropTypes) 
                 communist_shares: communistShares,
             };
             setLocalPositionChanges((currPositions) => {
-                let mappedAdded = { ...currPositions.added };
+                const mappedAdded = { ...currPositions.added };
                 mappedAdded[position.id] = copyOfEmpty;
                 return {
                     modified: currPositions.modified,
@@ -452,7 +495,7 @@ export default function TransactionPositions({ group, transaction }: PropTypes) 
 
     const updateEmptyPositionUsage = (position, accountID, value) => {
         setLocalPositionChanges((currPositions) => {
-            let newUsages = { ...position.usages };
+            const newUsages = { ...position.usages };
             if (value === 0) {
                 delete newUsages[accountID];
             } else {
@@ -475,7 +518,7 @@ export default function TransactionPositions({ group, transaction }: PropTypes) 
                 ...position,
                 id: nextEmptyPositionID(currPositions),
             };
-            let mappedAdded = { ...currPositions.added };
+            const mappedAdded = { ...currPositions.added };
             mappedAdded[newPosition.id] = newPosition;
             return {
                 modified: currPositions.modified,
@@ -618,4 +661,6 @@ export default function TransactionPositions({ group, transaction }: PropTypes) 
             </TableContainer>
         </MobilePaper>
     );
-}
+};
+
+export default TransactionPositions;

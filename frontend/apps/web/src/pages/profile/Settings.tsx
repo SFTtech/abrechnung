@@ -22,7 +22,7 @@ import { clearCache } from "../../state/cache";
 import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
 
-export default function Settings() {
+export const Settings: React.FC = () => {
     const [theme, setTheme] = useRecoilState(themeSettings);
 
     useTitle("Abrechnung - Settings");
@@ -112,4 +112,6 @@ export default function Settings() {
             </Dialog>
         </MobilePaper>
     );
-}
+};
+
+export default Settings;

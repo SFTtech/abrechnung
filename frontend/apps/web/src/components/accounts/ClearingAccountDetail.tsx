@@ -1,23 +1,20 @@
-import {
-    Grid,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Theme,
-    Typography,
-} from "@mui/material";
+import React from "react";
+import { Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 import { useRecoilValue } from "recoil";
-import { accountsSeenByUser } from "../../state/accounts";
+import { AccountConsolidated, accountsSeenByUser } from "../../state/accounts";
 import { useEffect, useState } from "react";
 import { accountBalances } from "../../state/transactions";
 import { ClearingAccountIcon, PersonalAccountIcon } from "../style/AbrechnungIcons";
 import { useTheme } from "@mui/material/styles";
+import { Group } from "../../state/groups";
 
-export default function ClearingAccountDetail({ group, account }) {
+interface Props {
+    group: Group;
+    account: AccountConsolidated;
+}
+
+export const ClearingAccountDetail: React.FC<Props> = ({ group, account }) => {
     const theme = useTheme();
 
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
@@ -94,4 +91,6 @@ export default function ClearingAccountDetail({ group, account }) {
             </Table>
         </TableContainer>
     );
-}
+};
+
+export default ClearingAccountDetail;

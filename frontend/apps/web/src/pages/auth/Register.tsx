@@ -29,7 +29,7 @@ const validationSchema = yup.object({
     password: yup.string().required("password is required"),
 });
 
-export default function Register() {
+export const Register: React.FC = () => {
     const loggedIn = useRecoilValue(isAuthenticated);
     const [loading, setLoading] = useState(true);
     const query = useQuery();
@@ -83,128 +83,121 @@ export default function Register() {
     };
 
     const validate = (values) => {
-        let errors = {};
+        const errors = {};
         if (values.password !== values.password2) {
             errors["password2"] = "Passwords do not match";
         }
         return errors;
     };
+    if (loading) {
+        return <Loading />;
+    }
 
     return (
-        <>
-            {loading ? (
-                <Loading />
-            ) : (
-                <>
-                    <Container maxWidth="xs">
-                        <CssBaseline />
-                        <Box
-                            sx={{
-                                display: "flex",
-                                flexDirection: "column",
-                                alignItems: "center",
-                            }}
-                        >
-                            <Avatar sx={{ margin: 1, backgroundColor: "primary.main" }}>
-                                <LockOutlined />
-                            </Avatar>
-                            <Typography component="h1" variant="h5">
-                                Register a new account
-                            </Typography>
-                            <Formik
-                                validate={validate}
-                                validationSchema={validationSchema}
-                                initialValues={{
-                                    username: "",
-                                    email: "",
-                                    password: "",
-                                    password2: "",
-                                }}
-                                onSubmit={handleSubmit}
+        <Container maxWidth="xs">
+            <CssBaseline />
+            <Box
+                sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                }}
+            >
+                <Avatar sx={{ margin: 1, backgroundColor: "primary.main" }}>
+                    <LockOutlined />
+                </Avatar>
+                <Typography component="h1" variant="h5">
+                    Register a new account
+                </Typography>
+                <Formik
+                    validate={validate}
+                    validationSchema={validationSchema}
+                    initialValues={{
+                        username: "",
+                        email: "",
+                        password: "",
+                        password2: "",
+                    }}
+                    onSubmit={handleSubmit}
+                >
+                    {({ values, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
+                        <Form onSubmit={handleSubmit}>
+                            <TextField
+                                variant="outlined"
+                                margin="normal"
+                                required
+                                fullWidth
+                                autoFocus
+                                type="text"
+                                label="Username"
+                                name="username"
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                value={values.username}
+                            />
+                            <TextField
+                                variant="outlined"
+                                margin="normal"
+                                required
+                                fullWidth
+                                type="email"
+                                name="email"
+                                label="E-Mail"
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                value={values.email}
+                            />
+
+                            <TextField
+                                variant="outlined"
+                                margin="normal"
+                                required
+                                fullWidth
+                                type="password"
+                                name="password"
+                                label="Password"
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                value={values.password}
+                            />
+
+                            <TextField
+                                variant="outlined"
+                                margin="normal"
+                                required
+                                fullWidth
+                                type="password"
+                                name="password2"
+                                label="Repeat Password"
+                                onBlur={handleBlur}
+                                onChange={handleChange}
+                                value={values.password2}
+                            />
+
+                            {isSubmitting && <LinearProgress />}
+                            <Button
+                                type="submit"
+                                fullWidth
+                                variant="contained"
+                                color="primary"
+                                disabled={isSubmitting}
+                                sx={{ mt: 1 }}
                             >
-                                {({ values, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
-                                    <Form onSubmit={handleSubmit}>
-                                        <TextField
-                                            variant="outlined"
-                                            margin="normal"
-                                            required
-                                            fullWidth
-                                            autoFocus
-                                            type="text"
-                                            label="Username"
-                                            name="username"
-                                            onBlur={handleBlur}
-                                            onChange={handleChange}
-                                            value={values.username}
-                                        />
-                                        <TextField
-                                            variant="outlined"
-                                            margin="normal"
-                                            required
-                                            fullWidth
-                                            type="email"
-                                            name="email"
-                                            label="E-Mail"
-                                            onBlur={handleBlur}
-                                            onChange={handleChange}
-                                            value={values.email}
-                                        />
-
-                                        <TextField
-                                            variant="outlined"
-                                            margin="normal"
-                                            required
-                                            fullWidth
-                                            type="password"
-                                            name="password"
-                                            label="Password"
-                                            onBlur={handleBlur}
-                                            onChange={handleChange}
-                                            value={values.password}
-                                        />
-
-                                        <TextField
-                                            variant="outlined"
-                                            margin="normal"
-                                            required
-                                            fullWidth
-                                            type="password"
-                                            name="password2"
-                                            label="Repeat Password"
-                                            onBlur={handleBlur}
-                                            onChange={handleChange}
-                                            value={values.password2}
-                                        />
-
-                                        {isSubmitting && <LinearProgress />}
-                                        <Button
-                                            type="submit"
-                                            fullWidth
-                                            variant="contained"
-                                            color="primary"
-                                            disabled={isSubmitting}
-                                            sx={{ mt: 1 }}
-                                        >
-                                            Register
-                                        </Button>
-                                        <Grid container={true} sx={{ justifyContent: "flex-end" }}>
-                                            <Grid item>
-                                                <Link
-                                                    to={`/login${queryArgsForward}`}
-                                                    component={RouterLink}
-                                                    variant="body2"
-                                                >
-                                                    Already have an account? Sign in
-                                                </Link>
-                                            </Grid>
-                                        </Grid>
-                                    </Form>
-                                )}
-                            </Formik>
-                        </Box>
-                    </Container>
-                </>
-            )}
-        </>
+                                Register
+                            </Button>
+                            <Grid container={true} sx={{ justifyContent: "flex-end" }}>
+                                <Grid item>
+                                    <Link to={`/login${queryArgsForward}`} component={RouterLink} variant="body2">
+                                        Already have an account? Sign in
+                                    </Link>
+                                </Grid>
+                            </Grid>
+                        </Form>
+                    )}
+                </Formik>
+            </Box>
+        </Container>
     );
-}
+};
+
+export default Register;

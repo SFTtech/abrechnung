@@ -4,7 +4,7 @@ import CreateClearingAccountModal from "../../components/accounts/CreateClearing
 import EditClearingAccountModal from "../../components/accounts/EditClearingAccountModal";
 import React, { useEffect, useState } from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
-import { currUserPermissions, groupMemberIDsToUsername } from "../../state/groups";
+import { currUserPermissions, Group, groupMemberIDsToUsername } from "../../state/groups";
 import {
     accountsSeenByUser,
     clearingAccountsSeenByUser,
@@ -57,9 +57,13 @@ const TextBadge = styled(Badge)<BadgeProps>(({ theme }: { theme: Theme }) => ({
         padding: "0 4px",
         marginRight: "5px",
     },
-}));
+})) as typeof Badge;
 
-export default function AccountList({ group }) {
+interface Props {
+    group: Group;
+}
+
+export const AccountList: React.FC<Props> = ({ group }) => {
     const [speedDialOpen, setSpeedDialOpen] = useState(false);
     const toggleSpeedDial = () => setSpeedDialOpen((currValue) => !currValue);
 
@@ -441,4 +445,6 @@ export default function AccountList({ group }) {
             )}
         </>
     );
-}
+};
+
+export default AccountList;

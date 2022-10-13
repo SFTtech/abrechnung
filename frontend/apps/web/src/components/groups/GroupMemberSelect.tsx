@@ -1,16 +1,25 @@
 import React from "react";
 
 import { useRecoilValue } from "recoil";
-import { Autocomplete, Box, Popper, TextField, Typography } from "@mui/material";
+import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
 import { DisabledTextField } from "../style/DisabledTextField";
 import { styled } from "@mui/material/styles";
-import { groupMemberIDsToUsername, groupMembers } from "../../state/groups";
+import { Group, groupMemberIDsToUsername, groupMembers } from "../../state/groups";
 
 const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
     minWidth: 200,
 }));
 
-export default function GroupMemberSelect({
+type Props = {
+    group: Group;
+    onChange: (memberID: number) => void;
+    value?: number | null;
+    disabled?: boolean;
+    noDisabledStyling?: boolean;
+    className?: string | null;
+} & TextFieldProps;
+
+export const GroupMemberSelect: React.FC<Props> = ({
     group,
     onChange,
     value = null,
@@ -18,7 +27,7 @@ export default function GroupMemberSelect({
     noDisabledStyling = false,
     className = null,
     ...props
-}) {
+}) => {
     const members = useRecoilValue(groupMembers(group.id));
     const memberIDToUsername = useRecoilValue(groupMemberIDsToUsername(group.id));
 
@@ -32,7 +41,7 @@ export default function GroupMemberSelect({
             fullWidth
             PopperComponent={StyledAutocompletePopper}
             className={className}
-            onChange={(event, newValue) => onChange(newValue)}
+            onChange={(event, newValue) => onChange(Number(newValue))}
             renderOption={(props, user_id) => (
                 <Box component="li" {...props}>
                     <Typography variant="body2" component="span" sx={{ ml: 1 }}>
@@ -47,4 +56,6 @@ export default function GroupMemberSelect({
             }
         />
     );
-}
+};
+
+export default GroupMemberSelect;

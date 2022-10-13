@@ -6,11 +6,11 @@ import { Button, LinearProgress, TextField, Typography } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
 
-export default function ChangePassword() {
+export const ChangePassword: React.FC = () => {
     useTitle("Abrechnung - Change Password");
 
     const validate = (values) => {
-        let errors = { newPassword: undefined };
+        const errors = { newPassword: undefined };
         if (values.newPassword !== values.newPassword2) {
             errors.newPassword = "Passwords do not match";
         }
@@ -97,4 +97,6 @@ export default function ChangePassword() {
             </Formik>
         </MobilePaper>
     );
-}
+};
+
+export default ChangePassword;

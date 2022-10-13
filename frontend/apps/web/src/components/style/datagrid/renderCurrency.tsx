@@ -5,15 +5,13 @@ function pnlFormatter(value, currencySymbol) {
     return `${value.toFixed(2)} ${currencySymbol}`;
 }
 
-const CurrencyValue = React.memo(function Pnl({
-    currencySymbol,
-    value,
-    forceColor,
-}: {
+interface CurrencyValueProps {
     currencySymbol: string;
     value: number;
     forceColor: string;
-}) {
+}
+
+const CurrencyValue = React.memo<CurrencyValueProps>(({ currencySymbol, value, forceColor }) => {
     const theme = useTheme();
 
     const positiveColor = theme.palette.mode === "light" ? theme.palette.success.dark : theme.palette.success.light;
@@ -34,9 +32,12 @@ const CurrencyValue = React.memo(function Pnl({
         </div>
     );
 });
+CurrencyValue.displayName = "CurrencyValue";
 
-export function renderCurrency(currencySymbol, forceColor = undefined) {
-    return (params) => {
+export function renderCurrency(currencySymbol, forceColor = undefined): (params: { value: number }) => React.ReactNode {
+    const component: React.FC<{ value: number }> = (params) => {
         return <CurrencyValue currencySymbol={currencySymbol} value={params.value} forceColor={forceColor} />;
     };
+    component.displayName = "CurrencyValue";
+    return component;
 }

@@ -13,13 +13,20 @@ import {
     TableRow,
     Typography,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { accountsSeenByUser } from "../../../state/accounts";
+import { Transaction } from "../../../state/transactions";
+import { Group } from "../../../state/groups";
 import { ClearingAccountIcon, PersonalAccountIcon } from "../../style/AbrechnungIcons";
 import { useTheme } from "@mui/material/styles";
 
-export default function PurchaseDebitorSharesReadOnly({ group, transaction }) {
+interface Props {
+    group: Group;
+    transaction: Transaction;
+}
+
+export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({ group, transaction }) => {
     const theme = useTheme();
 
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
@@ -161,4 +168,6 @@ export default function PurchaseDebitorSharesReadOnly({ group, transaction }) {
             </TableContainer>
         </List>
     );
-}
+};
+
+export default PurchaseDebitorSharesReadOnly;

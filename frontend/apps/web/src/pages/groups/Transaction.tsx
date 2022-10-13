@@ -9,7 +9,11 @@ import { useTitle } from "../../core/utils";
 import { Group } from "../../state/groups";
 import { Alert } from "@mui/material";
 
-export default function Transaction({ group }: { group: Group }) {
+interface Props {
+    group: Group;
+}
+
+export const Transaction: React.FC<Props> = ({ group }) => {
     const params = useParams();
     const transactionID = parseInt(params["id"]);
     const navigate = useNavigate();
@@ -37,4 +41,6 @@ export default function Transaction({ group }: { group: Group }) {
             )}
         </Suspense>
     );
-}
+};
+
+export default Transaction;

@@ -17,7 +17,7 @@ import {
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { addAccount, groupAccounts } from "../../state/accounts";
 import GroupMemberSelect from "../groups/GroupMemberSelect";
-import { currUserPermissions } from "../../state/groups";
+import { currUserPermissions, Group } from "../../state/groups";
 import { userData } from "../../state/auth";
 
 interface FormValues {
@@ -31,7 +31,16 @@ const validationSchema = yup.object({
     description: yup.string(),
 });
 
-export default function CreateAccountModal({ show, onClose, group }) {
+interface Props {
+    group: Group;
+    show: boolean;
+    onClose: (
+        event: Record<string, never>,
+        reason: "escapeKeyDown" | "backdropClick" | "completed" | "closeButton"
+    ) => void;
+}
+
+export const CreateAccountModal: React.FC<Props> = ({ show, onClose, group }) => {
     const setAccounts = useSetRecoilState(groupAccounts(group.id));
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
     const currentUser = useRecoilValue(userData);
@@ -47,7 +56,7 @@ export default function CreateAccountModal({ show, onClose, group }) {
                 toast.success(`Created account ${values.name}`);
                 addAccount(account, setAccounts);
                 setSubmitting(false);
-                onClose();
+                onClose({}, "completed");
             })
             .catch((err) => {
                 toast.error(err);
@@ -129,7 +138,7 @@ export default function CreateAccountModal({ show, onClose, group }) {
                                 <Button type="submit" color="primary" disabled={isSubmitting}>
                                     Save
                                 </Button>
-                                <Button color="error" onClick={onClose}>
+                                <Button color="error" onClick={() => onClose({}, "closeButton")}>
                                     Cancel
                                 </Button>
                             </DialogActions>
@@ -139,4 +148,6 @@ export default function CreateAccountModal({ show, onClose, group }) {
             </DialogContent>
         </Dialog>
     );
-}
+};
+
+export default CreateAccountModal;

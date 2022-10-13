@@ -26,7 +26,15 @@ const validationSchema = yup.object({
     description: yup.string(),
 });
 
-export default function GroupCreateModal({ show, onClose }) {
+interface Props {
+    show: boolean;
+    onClose: (
+        event: Record<string, never>,
+        reason: "escapeKeyDown" | "backdropClick" | "completed" | "closeButton"
+    ) => void;
+}
+
+export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
     const handleSubmit = (values, { setSubmitting }) => {
         createGroup({
             name: values.name,
@@ -35,7 +43,7 @@ export default function GroupCreateModal({ show, onClose }) {
         })
             .then((result) => {
                 setSubmitting(false);
-                onClose();
+                onClose({}, "completed");
             })
             .catch((err) => {
                 toast.error(err);
@@ -110,7 +118,7 @@ export default function GroupCreateModal({ show, onClose }) {
                                 <Button type="submit" color="primary" disabled={isSubmitting}>
                                     Save
                                 </Button>
-                                <Button color="error" onClick={onClose}>
+                                <Button color="error" onClick={() => onClose({}, "closeButton")}>
                                     Cancel
                                 </Button>
                             </DialogActions>
@@ -120,4 +128,6 @@ export default function GroupCreateModal({ show, onClose }) {
             </DialogContent>
         </Dialog>
     );
-}
+};
+
+export default GroupCreateModal;

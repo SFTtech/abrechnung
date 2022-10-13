@@ -14,9 +14,15 @@ import {
 } from "@mui/material";
 import placeholderImg from "./PlaceholderImage.svg";
 import { useSetRecoilState } from "recoil";
-import { groupTransactions, updateTransactionInState } from "../../state/transactions";
+import { groupTransactions, Transaction, updateTransactionInState } from "../../state/transactions";
 
-export default function ImageUploadDialog({ transaction, show, onClose }) {
+interface Props {
+    transaction: Transaction;
+    show: boolean;
+    onClose: () => void;
+}
+
+export const ImageUploadDialog: React.FC<Props> = ({ transaction, show, onClose }) => {
     const [fileState, setFileState] = useState({
         currentFile: undefined,
         previewImage: undefined,
@@ -147,4 +153,6 @@ export default function ImageUploadDialog({ transaction, show, onClose }) {
             </DialogActions>
         </Dialog>
     );
-}
+};
+
+export default ImageUploadDialog;

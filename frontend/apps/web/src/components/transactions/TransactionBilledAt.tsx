@@ -2,10 +2,17 @@ import React, { useState } from "react";
 import { DisabledTextField } from "../style/DisabledTextField";
 import { DatePicker } from "@mui/x-date-pickers";
 import { TextField } from "@mui/material";
+import { DateTime } from "luxon";
 import { useSetRecoilState } from "recoil";
-import { pendingTransactionDetailChanges } from "../../state/transactions";
+import { pendingTransactionDetailChanges, Transaction } from "../../state/transactions";
+import { Group } from "../../state/groups";
 
-export default function TransactionBilledAt({ group, transaction }) {
+interface Props {
+    group: Group;
+    transaction: Transaction;
+}
+
+export const TransactionBilledAt: React.FC<Props> = ({ group, transaction }) => {
     const [error, setError] = useState(null);
     const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
 
@@ -30,7 +37,7 @@ export default function TransactionBilledAt({ group, transaction }) {
                 label="Billed At"
                 variant="standard"
                 fullWidth
-                value={transaction.billed_at}
+                value={transaction.billed_at.toLocaleString(DateTime.DATE_FULL)}
                 disabled={true}
             />
         );
@@ -47,4 +54,6 @@ export default function TransactionBilledAt({ group, transaction }) {
             )}
         />
     );
-}
+};
+
+export default TransactionBilledAt;

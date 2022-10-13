@@ -39,4 +39,4 @@ export const StyledInputBase = styled(InputBase)(({ theme }: { theme: Theme }) =
             width: "20ch",
         },
     },
-}));
+})) as typeof InputBase;

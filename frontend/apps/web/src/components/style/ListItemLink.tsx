@@ -1,11 +1,19 @@
 import React from "react";
 import { Link as RouterLink } from "react-router-dom";
-import { ListItemButton } from "@mui/material";
+import { ListItemButton, ListItemButtonProps } from "@mui/material";
 
-export default function ListItemLink({ to, children, selected = false, ...props }) {
+type Props = {
+    to: string;
+    children: React.ReactNode;
+    selected?: boolean;
+} & ListItemButtonProps;
+
+export const ListItemLink: React.FC<Props> = ({ to, children, selected = false, ...props }) => {
     return (
         <ListItemButton component={RouterLink as any} selected={selected} to={to} {...props}>
             {children}
         </ListItemButton>
     );
-}
+};
+
+export default ListItemLink;

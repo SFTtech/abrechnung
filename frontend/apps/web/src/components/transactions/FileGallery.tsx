@@ -6,7 +6,7 @@ import { AddCircle, ChevronLeft, ChevronRight, Delete } from "@mui/icons-materia
 import ImageUploadDialog from "./ImageUploadDialog";
 import { Transition } from "react-transition-group";
 import placeholderImg from "./PlaceholderImage.svg";
-import { groupTransactions, updateTransactionInState } from "../../state/transactions";
+import { groupTransactions, Transaction, updateTransactionInState } from "../../state/transactions";
 import { useSetRecoilState } from "recoil";
 
 const duration = 200;
@@ -22,7 +22,11 @@ const transitionStyles = {
     exited: { opacity: 0, display: "none" },
 };
 
-export default function FileGallery({ transaction }) {
+interface Props {
+    transaction: Transaction;
+}
+
+export const FileGallery: React.FC<Props> = ({ transaction }) => {
     const [files, setFiles] = useState([]); // map of file id to object
     const [active, setActive] = useState(0);
     const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
@@ -98,7 +102,6 @@ export default function FileGallery({ transaction }) {
         }
     };
 
-    // @ts-ignore
     return (
         <>
             <Grid
@@ -227,4 +230,6 @@ export default function FileGallery({ transaction }) {
             </Dialog>
         </>
     );
-}
+};
+
+export default FileGallery;

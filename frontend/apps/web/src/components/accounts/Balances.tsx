@@ -22,8 +22,13 @@ import BalanceTable from "./BalanceTable";
 import { MobilePaper } from "../style/mobile";
 import ListItemLink from "../style/ListItemLink";
 import { useTitle } from "../../core/utils";
+import { Group } from "../../state/groups";
 
-export default function Balances({ group }) {
+interface Props {
+    group: Group;
+}
+
+export const Balances: React.FC<Props> = ({ group }) => {
     const theme: Theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
     const navigate = useNavigate();
@@ -195,4 +200,6 @@ export default function Balances({ group }) {
             </TabContext>
         </MobilePaper>
     );
-}
+};
+
+export default Balances;

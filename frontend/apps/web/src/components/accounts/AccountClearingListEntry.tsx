@@ -6,8 +6,16 @@ import { DateTime } from "luxon";
 import React from "react";
 import { balanceColor } from "../../core/utils";
 import { ClearingAccountIcon } from "../style/AbrechnungIcons";
+import { Group } from "../../state/groups";
+import { AccountConsolidated } from "../../state/accounts";
 
-export default function AccountClearingListEntry({ group, account, accountID }) {
+interface Props {
+    group: Group;
+    account: AccountConsolidated;
+    accountID: number;
+}
+
+export const AccountClearingListEntry: React.FC<Props> = ({ group, account, accountID }) => {
     const balances = useRecoilValue(accountBalances(group.id));
 
     return (
@@ -43,4 +51,6 @@ export default function AccountClearingListEntry({ group, account, accountID }) 
             </ListItemText>
         </ListItemLink>
     );
-}
+};
+
+export default AccountClearingListEntry;

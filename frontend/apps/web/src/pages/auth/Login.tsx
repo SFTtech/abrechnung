@@ -26,7 +26,7 @@ const validationSchema = yup.object({
     password: yup.string().required("password is required"),
 });
 
-export default function Login() {
+export const Login: React.FC = () => {
     const setUserData = useSetRecoilState(userData);
     const isLoggedIn = useRecoilValue(isAuthenticated);
     const query = useQuery();
@@ -145,4 +145,6 @@ export default function Login() {
             </Box>
         </Container>
     );
-}
+};
+
+export default Login;

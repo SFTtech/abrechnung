@@ -4,7 +4,7 @@ import { confirmPasswordRecovery } from "../../core/api";
 import { Form, Formik } from "formik";
 import { Alert, Box, Button, Container, CssBaseline, LinearProgress, Link, TextField, Typography } from "@mui/material";
 
-export default function ConfirmPasswordRecovery() {
+export const ConfirmPasswordRecovery: React.FC = () => {
     const [status, setStatus] = useState("idle");
     const [error, setError] = useState(null);
     const { token } = useParams();
@@ -24,7 +24,7 @@ export default function ConfirmPasswordRecovery() {
     };
 
     const validate = (values) => {
-        let errors = { password2: undefined };
+        const errors = { password2: undefined };
         if (values.password !== values.password2) {
             errors.password2 = "Passwords do not match";
         }
@@ -113,4 +113,6 @@ export default function ConfirmPasswordRecovery() {
             </Box>
         </Container>
     );
-}
+};
+
+export default ConfirmPasswordRecovery;

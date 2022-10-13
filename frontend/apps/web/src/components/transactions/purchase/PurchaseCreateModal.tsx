@@ -7,14 +7,16 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgre
 import DatePicker from "@mui/lab/DatePicker";
 import { useSetRecoilState } from "recoil";
 import { addTransactionInState, groupTransactions } from "../../../state/transactions";
+import { Group } from "../../../state/groups";
 import AccountSelect from "../../style/AccountSelect";
 import * as yup from "yup";
+import { AccountConsolidated } from "../../../state/accounts";
 
 interface FormValues {
     value: string;
     description: string;
     billedAt: DateTime;
-    creditor: { [k: number]: number };
+    creditor: AccountConsolidated;
 }
 
 const validationSchema = yup.object({
@@ -24,7 +26,16 @@ const validationSchema = yup.object({
     // billedAt: yup.date("Enter a description").required("from is required"),
 });
 
-export default function PurchaseCreateModal({ group, show, onClose }) {
+interface Props {
+    group: Group;
+    show: boolean;
+    onClose: (
+        event: Record<string, never>,
+        reason: "escapeKeyDown" | "backdropClick" | "completed" | "closeButton"
+    ) => void;
+}
+
+export const PurchaseCreateModal: React.FC<Props> = ({ group, show, onClose }) => {
     const setTransactions = useSetRecoilState(groupTransactions(group.id));
     const initialValues: FormValues = {
         description: "",
@@ -47,7 +58,7 @@ export default function PurchaseCreateModal({ group, show, onClose }) {
             .then((t) => {
                 addTransactionInState(t, setTransactions);
                 setSubmitting(false);
-                onClose();
+                onClose({}, "completed");
             })
             .catch((err) => {
                 toast.error(err);
@@ -132,7 +143,7 @@ export default function PurchaseCreateModal({ group, show, onClose }) {
                                 <Button type="submit" color="primary" disabled={isSubmitting}>
                                     Save
                                 </Button>
-                                <Button color="error" onClick={onClose}>
+                                <Button color="error" onClick={() => onClose({}, "closeButton")}>
                                     Cancel
                                 </Button>
                             </DialogActions>
@@ -142,4 +153,6 @@ export default function PurchaseCreateModal({ group, show, onClose }) {
             </DialogContent>
         </Dialog>
     );
-}
+};
+
+export default PurchaseCreateModal;
