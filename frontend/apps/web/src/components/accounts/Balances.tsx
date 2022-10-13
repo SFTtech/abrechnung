@@ -46,12 +46,14 @@ export const Balances: React.FC<Props> = ({ group }) => {
 
     useTitle(`${group.name} - Balances`);
 
+    const roundTwoDecimals = (val: number) => Math.round(val / 100) * 100;
+
     const chartData = personalAccounts.map((account) => {
         return {
             name: account.name,
-            balance: balances[account.id].balance,
-            totalPaid: balances[account.id].totalPaid,
-            totalConsumed: balances[account.id].totalConsumed,
+            balance: roundTwoDecimals(balances[account.id].balance),
+            totalPaid: roundTwoDecimals(balances[account.id].totalPaid),
+            totalConsumed: roundTwoDecimals(balances[account.id].totalConsumed),
             id: account.id,
         };
     });
