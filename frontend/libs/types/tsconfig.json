@@ -1,14 +1,5 @@
 {
     "extends": "../../tsconfig.base.json",
-    "compilerOptions": {
-        "module": "commonjs",
-        "forceConsistentCasingInFileNames": true,
-        "strict": true,
-        "noImplicitOverride": true,
-        "noPropertyAccessFromIndexSignature": true,
-        "noImplicitReturns": true,
-        "noFallthroughCasesInSwitch": true
-    },
     "files": [],
     "include": [],
     "references": [
@@ -18,5 +9,11 @@
         {
             "path": "./tsconfig.spec.json"
         }
-    ]
+    ],
+    "compilerOptions": {
+        "forceConsistentCasingInFileNames": true,
+        "strict": true,
+        "noImplicitReturns": true,
+        "noFallthroughCasesInSwitch": true
+    }
 }

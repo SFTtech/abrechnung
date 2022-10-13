@@ -3,10 +3,10 @@ import { Portal, Snackbar } from "react-native-paper";
 import { useEffect, useState } from "react";
 import NotificationTracker from "./core";
 
-type notificationParams = {
+interface notificationParams {
     text: string;
     timeout?: number | null;
-};
+}
 
 const DEFAULT_NOTIFICATION_PARAMS: notificationParams = {
     text: "",

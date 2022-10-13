@@ -49,15 +49,6 @@ function RootNavigator() {
     const groups = useRecoilValue(groupState);
 
     useEffect(() => {
-        // initial sync on login
-        if (auth.isLoggedIn && !auth.isLoading) {
-            syncLocalState().catch((err) => {
-                notify({ text: `Error on local state sync: ${err}` });
-            });
-        }
-    }, [auth]);
-
-    useEffect(() => {
         if (activeGroupID === null && groups.length > 0) {
             setActiveGroupID(groups[0].id);
         }
@@ -65,14 +56,26 @@ function RootNavigator() {
 
     useEffect(() => {
         // TODO: proper syncing
-        if (activeGroupID === null) {
-            return;
-        }
+        if (auth.isLoggedIn && !auth.isLoading) {
+            syncLocalState()
+                .then((syncedGroups) => {
+                    let newActiveGroupID = activeGroupID;
+                    if (activeGroupID === null && syncedGroups.length > 0) {
+                        newActiveGroupID = syncedGroups[0].id;
+                        setActiveGroupID(newActiveGroupID);
+                    }
 
-        syncLocalGroupState(activeGroupID).catch((err) => {
-            notify({ text: `Error when syncing group state: ${err}` });
-        });
-    }, [activeGroupID]);
+                    if (newActiveGroupID) {
+                        syncLocalGroupState(newActiveGroupID).catch((err) => {
+                            notify({ text: `Error on local state sync: ${err}` });
+                        });
+                    }
+                })
+                .catch((err) => {
+                    notify({ text: `Error when syncing group state: ${err}` });
+                });
+        }
+    }, [auth, activeGroupID, setActiveGroupID]);
 
     if (auth.isLoading) {
         return <SplashScreen />;
@@ -131,6 +134,8 @@ function GroupStackNavigator() {
 const BottomTab = createBottomTabNavigator<GroupTabParamList>();
 
 function BottomTabNavigator() {
+    const activeGroupID = useRecoilValue(activeGroupIDState);
+
     return (
         <BottomTab.Navigator
             initialRouteName="TransactionList"
@@ -141,7 +146,7 @@ function BottomTabNavigator() {
         >
             <BottomTab.Screen
                 name="TransactionList"
-                component={TransactionList}
+                component={activeGroupID == null ? SplashScreen : TransactionList}
                 options={{
                     title: "Transactions",
                     tabBarIcon: ({ color }) => <TabBarIcon name="euro" color={color} />,
@@ -154,7 +159,9 @@ function BottomTabNavigator() {
                     tabBarIcon: ({ color }) => <TabBarIcon name={personalAccountIcon} color={color} />,
                 }}
             >
-                {(props) => <AccountList accountType="personal" {...props} />}
+                {(props) => {
+                    return activeGroupID == null ? <SplashScreen /> : <AccountList accountType="personal" {...props} />;
+                }}
             </BottomTab.Screen>
             <BottomTab.Screen
                 name="ClearingAccountList"
@@ -163,7 +170,9 @@ function BottomTabNavigator() {
                     tabBarIcon: ({ color }) => <TabBarIcon name={clearingAccountIcon} color={color} />,
                 }}
             >
-                {(props) => <AccountList accountType="clearing" {...props} />}
+                {(props) => {
+                    return activeGroupID == null ? <SplashScreen /> : <AccountList accountType="clearing" {...props} />;
+                }}
             </BottomTab.Screen>
         </BottomTab.Navigator>
     );

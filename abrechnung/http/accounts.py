@@ -59,7 +59,7 @@ async def sync_accounts(request: web.Request):
     updated_ids = await request.app["account_service"].sync_accounts(
         user=request["user"],
         group_id=int(request.match_info["group_id"]),
-        accounts=request["json"] # TODO: FIXME, convert to proper parameters
+        accounts=request["json"],  # TODO: FIXME, convert to proper parameters
     )
 
     await json_response(data=updated_ids)

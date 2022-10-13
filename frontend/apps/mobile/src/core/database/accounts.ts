@@ -103,13 +103,29 @@ const saveAccountToDatabase = async (account: Account, conn?: Connection) => {
 };
 
 export const syncAccounts = async (groupID: number): Promise<Account[]> => {
-    const backendAccounts = await api.fetchAccounts(groupID);
+    let backendAccounts = await api.fetchAccounts(groupID);
     await db.transaction((conn: Connection) => {
         backendAccounts.forEach((account: Account) => {
             saveAccountToDatabase(account, conn);
         });
     });
-    // TODO: upload pending changes to server
+
+    // TODO: resolve conflicts after fetching accounts
+    const accounts = await getAccounts(groupID);
+    const accountsWithLocalChanges = accounts.filter((a: Account) => a.hasLocalChanges);
+    if (accountsWithLocalChanges.length > 0) {
+        await api.syncAccountsBatch(groupID, accountsWithLocalChanges);
+        backendAccounts = await api.fetchAccounts(groupID);
+        await db.transaction(async (conn: Connection) => {
+            await Promise.all(
+                backendAccounts.map((account: Account) => {
+                    return saveAccountToDatabase(account, conn);
+                })
+            );
+            await conn.execute(`delete from pending_account_changes where group_id = ?1`, [groupID]);
+        });
+    }
+
     accountNotifier.emit("changed", { groupID: groupID });
     return backendAccounts;
 };
@@ -266,7 +282,7 @@ export const pushPendingAccountChanges = async (groupID: number): Promise<void> 
     });
 };
 
-export const pushLocalAccountChanges = async (account_id: number): Promise<Account> => {
+export const pushLocalAccountChanges = async (accountID: number): Promise<Account> => {
     if (!(await isOnline())) {
         console.log("cannot push changes to server as we are offline");
         throw Error("Cannot push local changes to server as we are offline");
@@ -284,7 +300,7 @@ export const pushLocalAccountChanges = async (account_id: number): Promise<Accou
             order by
                 event_time desc
             limit 1`,
-            [account_id]
+            [accountID]
         );
         if (accountQueryResult.rows.length === 0) {
             return;
@@ -292,7 +308,7 @@ export const pushLocalAccountChanges = async (account_id: number): Promise<Accou
 
         console.log("pushing transaction detail plus position changes to server");
         const t = accountQueryResult.rows[0];
-        const account = accountFromEvent(account_id, t.group_id, t.event_time, JSON.parse(t.event_content));
+        const account = accountFromEvent(accountID, t.group_id, t.event_time, JSON.parse(t.event_content));
         const updatedAccount = await api.pushAccountChanges(account);
         await conn.execute(
             `
@@ -302,7 +318,7 @@ export const pushLocalAccountChanges = async (account_id: number): Promise<Accou
             where
                 account_id = ?1
         `,
-            [account_id]
+            [accountID]
         );
         await saveAccountToDatabase(updatedAccount, conn);
         console.log("successfully synced local changes with server and saved the result to local database");
@@ -410,12 +426,12 @@ export const createAccount = async (groupID: number, type: AccountType): Promise
     });
 };
 
-export const deleteAccount = async (group_id: number, account_id: number) => {
-    if (account_id < 0) {
-        return await deleteLocalAccountChanges(group_id, account_id);
+export const deleteAccount = async (groupID: number, accountID: number) => {
+    if (accountID < 0) {
+        return await deleteLocalAccountChanges(groupID, accountID);
     }
 
-    const account = await getAccount(group_id, account_id);
+    const account = await getAccount(groupID, accountID);
     account.deleted = true;
     return await updateAccount(account);
 };

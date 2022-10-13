@@ -598,6 +598,9 @@ class AccountService(Application):
             )
             return account.id, account.id
 
+        if account.type is None:
+            raise InvalidCommand("new account must have 'type' set")
+
         new_acc_id = await self._create_account(
             conn=conn,
             user=user,

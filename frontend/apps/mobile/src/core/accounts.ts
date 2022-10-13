@@ -4,6 +4,7 @@ import { accountNotifier, getAccount, getAccounts } from "./database/accounts";
 import { positionState, transactionState } from "./transactions";
 import { computeAccountBalances } from "@abrechnung/core";
 import { useNavigation } from "@react-navigation/native";
+import { RootDrawerNavigationProp } from "../navigation/types";
 
 function filterAccounts(account: Account[]): Account[] {
     return account.filter((a) => !a.deleted);

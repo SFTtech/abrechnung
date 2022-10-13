@@ -4,6 +4,11 @@
     "affected": {
         "defaultBase": "main"
     },
+    "pluginsConfig": {
+        "@nrwl/js": {
+            "analyzeSourceFiles": false
+        }
+    },
     "tasksRunnerOptions": {
         "default": {
             "runner": "nx/tasks-runners/default",

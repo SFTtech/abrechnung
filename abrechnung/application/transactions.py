@@ -829,7 +829,7 @@ class TransactionService(Application):
                     billed_at=billed_at,
                     currency_symbol=currency_symbol,
                     currency_conversion_rate=currency_conversion_rate,
-                    debitor_shares=debu,
+                    debitor_shares=debitor_shares,
                     creditor_shares=creditor_shares,
                     positions=positions,
                     perform_commit=perform_commit,
@@ -850,7 +850,7 @@ class TransactionService(Application):
                     user=user,
                     transaction_id=transaction_id,
                     can_write=True,
-                    transaction_type=TransactionType.purchase.value(),
+                    transaction_type=TransactionType.purchase.value,
                 )
                 revision_id = await self._get_or_create_revision(
                     conn=conn, user=user, transaction_id=transaction_id

@@ -1,4 +1,4 @@
-import { atom, selector, selectorFamily, useRecoilValue } from "recoil";
+import { atom, RecoilState, selector, selectorFamily, useRecoilValue } from "recoil";
 import { getGroups, groupNotifier } from "./database/groups";
 import { Group } from "@abrechnung/types";
 import { useNavigation } from "@react-navigation/native";
@@ -8,7 +8,7 @@ export const activeGroupIDState = atom<number | null>({
     default: null,
 });
 
-export const groupState = atom<Group[]>({
+export const groupState: RecoilState<Group[]> = atom<Group[]>({
     key: "groupState",
     default: getGroups(),
     effects: [

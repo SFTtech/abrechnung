@@ -1,2 +1,2 @@
-export * from "./utils";
-export * from "./validators";
+export * from "./lib/utils";
+export * from "./lib/validators";

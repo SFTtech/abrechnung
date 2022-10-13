@@ -6,7 +6,11 @@ from aiohttp.web_request import FileField
 from marshmallow import Schema, fields
 
 from abrechnung.http.openapi import docs, json_schema
-from abrechnung.http.serializers import TransactionSchema, TransactionPositionSchema, SharesField
+from abrechnung.http.serializers import (
+    TransactionSchema,
+    TransactionPositionSchema,
+    SharesField,
+)
 from abrechnung.http.utils import json_response, PrefixedRouteTableDef
 
 routes = PrefixedRouteTableDef("/api")
@@ -75,17 +79,13 @@ async def list_transactions(request):
 
 
 @routes.post(r"/v1/groups/{group_id:\d+}/transactions/sync")
-@docs(
-    tags=["transactions"],
-    summary="sync a batch of transactions",
-    description=""
-)
+@docs(tags=["transactions"], summary="sync a batch of transactions", description="")
 @json_schema(TransactionUpdateScheme(many=True))
 async def sync_transactions(request: Request):
     updated_ids = await request.app["transaction_service"].sync_transactions(
         user=request["user"],
         group_id=int(request.match_info["group_id"]),
-        transactions=request["json"]  # TODO: FIXME, convert to proper parameters
+        transactions=request["json"],  # TODO: FIXME, convert to proper parameters
     )
 
     await json_response(data=updated_ids)

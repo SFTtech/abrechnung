@@ -1,7 +1,6 @@
-tar-ignore = "web/node_modules"
+tar-ignore = "frontend/node_modules"
 tar-ignore = ".git"
 tar-ignore = ".pybuild"
-tar-ignore = "web/yarn-error.log"
 tar-ignore = "config.yaml"
 tar-ignore = ".idea"
 tar-ignore = "docs/_build"
