@@ -98,7 +98,7 @@ COPY --from=builder /dh-virtualenv_1.2.2-1_all.deb /
 RUN apt-get update -qq -o Acquire::Languages=none \
     && apt-get install -yq /dh-virtualenv_1.2.2-1_all.deb
 
-RUN mkdir -p /root/.cache/Cypress && chmod 777 /root/.cache/Cypress
+RUN mkdir -p /root/.cache/Cypress && chmod 777 /root/.cache
 
 WORKDIR /abrechnung/source
 ENTRYPOINT ["bash","/abrechnung/source/docker/build_debian.sh"]
