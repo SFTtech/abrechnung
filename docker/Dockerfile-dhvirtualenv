@@ -88,12 +88,8 @@ RUN apt-get update -qq -o Acquire::Languages=none \
         xmlsec1
 
 # install yarn
-RUN curl -fsSL https://deb.nodesource.com/setup_17.x | bash -
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
 RUN apt-get install -y nodejs
-
-RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
-RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-RUN apt-get update && apt-get install yarn
 
 COPY --from=builder /dh-virtualenv_1.2.2-1_all.deb /
 

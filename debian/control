@@ -14,7 +14,7 @@ Build-Depends:
  python3-pip,
  python3-venv,
  tar,
- yarn
+ nodejs
 Standards-Version: 3.9.8
 X-Python-Version: >= 3.9
 Rules-Requires-Root: binary-targets

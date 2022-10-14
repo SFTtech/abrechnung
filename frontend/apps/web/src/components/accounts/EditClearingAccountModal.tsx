@@ -2,16 +2,7 @@ import { Form, Formik } from "formik";
 import React from "react";
 import { toast } from "react-toastify";
 import { updateAccountDetails } from "../../core/api";
-import {
-    Button,
-    Dialog,
-    DialogProps,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    LinearProgress,
-    TextField,
-} from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
 import { AccountConsolidated, groupAccounts, updateAccount } from "../../state/accounts";
 import { useSetRecoilState } from "recoil";
 import ClearingSharesFormElement from "./ClearingSharesFormElement";

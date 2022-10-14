@@ -40,15 +40,16 @@ projdir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 class Builder(object):
     def __init__(
-        self, redirect_stdout=False, docker_build_args: Optional[Sequence[str]] = None
+        self, docker_executable: str, redirect_stdout=False, docker_build_args: Optional[Sequence[str]] = None
     ):
+        self.docker_executable = docker_executable
         self.redirect_stdout = redirect_stdout
         self._docker_build_args = tuple(docker_build_args or ())
         self.active_containers: set[str] = set()
         self._lock = threading.Lock()
         self._failed = False
 
-    def run_build(self, dist, skip_tests=False):
+    def run_build(self, dist: str, skip_tests=False):
         """Build deb for a single distribution"""
 
         if self._failed:
@@ -62,7 +63,7 @@ class Builder(object):
             self._failed = True
             raise
 
-    def _inner_build(self, dist, skip_tests=False):
+    def _inner_build(self, dist: str, skip_tests=False):
         tag = dist.split(":", 1)[1]
 
         # Make the dir where the debs will live.
@@ -84,7 +85,7 @@ class Builder(object):
         # first build a docker image for the build environment
         build_args = (
             (
-                "docker",
+                self.docker_executable,
                 "build",
                 "--tag",
                 "dh-venv-builder:" + tag,
@@ -111,7 +112,7 @@ class Builder(object):
         # then run the build itself
         subprocess.check_call(
             [
-                "docker",
+                self.docker_executable,
                 "run",
                 "--rm",
                 "--name",
@@ -156,7 +157,7 @@ class Builder(object):
                 self.active_containers.remove(c)
 
 
-def run_builds(builder, dists, jobs=1, skip_tests=False):
+def run_builds(builder: Builder, dists, jobs=1, skip_tests=False):
     def sig(signum, _frame):
         del signum  # unused
 
@@ -205,11 +206,18 @@ if __name__ == "__main__":
         default=DISTS,
         help="a list of distributions to build for. Default: %(default)s",
     )
+    parser.add_argument(
+        "--docker-executable",
+        default="docker",
+        type=str,
+        help="path to the docker executable"
+    )
     args = parser.parse_args()
     if args.show_dists_json:
         print(json.dumps(DISTS))
     else:
         global_builder = Builder(
+            docker_executable=args.docker_executable,
             redirect_stdout=(args.jobs > 1), docker_build_args=args.docker_build_arg
         )
         run_builds(
