@@ -40,7 +40,10 @@ projdir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 class Builder(object):
     def __init__(
-        self, docker_executable: str, redirect_stdout=False, docker_build_args: Optional[Sequence[str]] = None
+        self,
+        docker_executable: str,
+        redirect_stdout=False,
+        docker_build_args: Optional[Sequence[str]] = None,
     ):
         self.docker_executable = docker_executable
         self.redirect_stdout = redirect_stdout
@@ -210,7 +213,7 @@ if __name__ == "__main__":
         "--docker-executable",
         default="docker",
         type=str,
-        help="path to the docker executable"
+        help="path to the docker executable",
     )
     args = parser.parse_args()
     if args.show_dists_json:
@@ -218,7 +221,8 @@ if __name__ == "__main__":
     else:
         global_builder = Builder(
             docker_executable=args.docker_executable,
-            redirect_stdout=(args.jobs > 1), docker_build_args=args.docker_build_arg
+            redirect_stdout=(args.jobs > 1),
+            docker_build_args=args.docker_build_arg,
         )
         run_builds(
             global_builder,
