@@ -17,11 +17,17 @@ import {
     groupTransactions,
     pendingTransactionDetailChanges,
     pendingTransactionPositionChanges,
+    Transaction,
     TransactionBackend,
     updateTransactionInState,
 } from "../../state/transactions";
 
-export default function TransactionActions({ groupID, transaction }) {
+interface Props {
+    groupID: number;
+    transaction: Transaction;
+}
+
+export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) => {
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
 
     const navigate = useNavigate();
@@ -191,7 +197,7 @@ export default function TransactionActions({ groupID, transaction }) {
             <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={confirmDeleteDialogOpen}>
                 <DialogTitle id="confirmation-dialog-title">Confirm delete transaction</DialogTitle>
                 <DialogContent dividers>
-                    Are you sure you want to delete the transaction "{transaction.description}"
+                    Are you sure you want to delete the transaction &quot{transaction.description}&quot
                 </DialogContent>
                 <DialogActions>
                     <Button autoFocus onClick={() => setConfirmDeleteDialogOpen(false)} color="primary">
@@ -204,4 +210,6 @@ export default function TransactionActions({ groupID, transaction }) {
             </Dialog>
         </>
     );
-}
+};
+
+export default TransactionActions;

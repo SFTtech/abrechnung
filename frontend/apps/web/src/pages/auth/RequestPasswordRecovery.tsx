@@ -6,7 +6,7 @@ import { useRecoilValue } from "recoil";
 import { requestPasswordRecovery } from "../../core/api";
 import { Alert, Box, Button, Container, CssBaseline, LinearProgress, TextField, Typography } from "@mui/material";
 
-export default function RequestPasswordRecovery() {
+export const RequestPasswordRecovery: React.FC = () => {
     const isLoggedIn = useRecoilValue(isAuthenticated);
     const [status, setStatus] = useState("initial");
     const [error, setError] = useState(null);
@@ -93,4 +93,6 @@ export default function RequestPasswordRecovery() {
             </Box>
         </Container>
     );
-}
+};
+
+export default RequestPasswordRecovery;

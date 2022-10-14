@@ -8,8 +8,15 @@ import TransactionActions from "../TransactionActions";
 import { Divider, Grid } from "@mui/material";
 import FileGallery from "../FileGallery";
 import { MobilePaper } from "../../style/mobile";
+import { Group } from "../../../state/groups";
+import { Transaction } from "../../../state/transactions";
 
-export default function TransferDetails({ group, transaction }) {
+interface Props {
+    group: Group;
+    transaction: Transaction;
+}
+
+export const TransferDetails: React.FC<Props> = ({ group, transaction }) => {
     return (
         <MobilePaper>
             <TransactionActions groupID={group.id} transaction={transaction} />
@@ -43,4 +50,6 @@ export default function TransferDetails({ group, transaction }) {
             </Grid>
         </MobilePaper>
     );
-}
+};
+
+export default TransferDetails;

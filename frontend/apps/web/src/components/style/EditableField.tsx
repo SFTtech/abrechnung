@@ -3,7 +3,16 @@ import { IconButton } from "@mui/material";
 import { Check, Close, Edit } from "@mui/icons-material";
 import { DisabledTextField } from "./DisabledTextField";
 
-export default function EditableField({
+interface Props {
+    value: string;
+    onChange: (newValue: string) => void;
+    validate?: (value: string) => boolean;
+    helperText?: string;
+    onStopEdit?: () => void;
+    canEdit?: boolean;
+}
+
+export const EditableField: React.FC<Props> = ({
     value,
     onChange,
     validate = undefined,
@@ -11,7 +20,7 @@ export default function EditableField({
     onStopEdit = undefined,
     canEdit = true,
     ...props
-}) {
+}) => {
     const [currentValue, setValue] = useState("");
     const [editing, setEditing] = useState(false);
     const [error, setError] = useState(false);
@@ -83,4 +92,6 @@ export default function EditableField({
                 ))}
         </div>
     );
-}
+};
+
+export default EditableField;

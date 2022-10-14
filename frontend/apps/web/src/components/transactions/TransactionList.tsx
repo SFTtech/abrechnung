@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
 import { getTransactionSortFunc, transactionsSeenByUser } from "../../state/transactions";
-import { currUserPermissions } from "../../state/groups";
+import { currUserPermissions, Group } from "../../state/groups";
 import {
     Alert,
     Box,
@@ -33,7 +33,11 @@ import { userData } from "../../state/auth";
 import { accountIDsToName, accountsOwnedByUser } from "../../state/accounts";
 import { useTheme } from "@mui/material/styles";
 
-export default function TransactionList({ group }) {
+interface Props {
+    group: Group;
+}
+
+export const TransactionList: React.FC<Props> = ({ group }) => {
     const [speedDialOpen, setSpeedDialOpen] = useState(false);
     const toggleSpeedDial = () => setSpeedDialOpen((currValue) => !currValue);
 
@@ -199,4 +203,6 @@ export default function TransactionList({ group }) {
             )}
         </>
     );
-}
+};
+
+export default TransactionList;

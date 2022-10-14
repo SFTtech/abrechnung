@@ -22,8 +22,13 @@ import BalanceTable from "./BalanceTable";
 import { MobilePaper } from "../style/mobile";
 import ListItemLink from "../style/ListItemLink";
 import { useTitle } from "../../core/utils";
+import { Group } from "../../state/groups";
 
-export default function Balances({ group }) {
+interface Props {
+    group: Group;
+}
+
+export const Balances: React.FC<Props> = ({ group }) => {
     const theme: Theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
     const navigate = useNavigate();
@@ -41,12 +46,14 @@ export default function Balances({ group }) {
 
     useTitle(`${group.name} - Balances`);
 
+    const roundTwoDecimals = (val: number) => Math.round(val / 100) * 100;
+
     const chartData = personalAccounts.map((account) => {
         return {
             name: account.name,
-            balance: balances[account.id].balance,
-            totalPaid: balances[account.id].totalPaid,
-            totalConsumed: balances[account.id].totalConsumed,
+            balance: roundTwoDecimals(balances[account.id].balance),
+            totalPaid: roundTwoDecimals(balances[account.id].totalPaid),
+            totalConsumed: roundTwoDecimals(balances[account.id].totalConsumed),
             id: account.id,
         };
     });
@@ -195,4 +202,6 @@ export default function Balances({ group }) {
             </TabContext>
         </MobilePaper>
     );
-}
+};
+
+export default Balances;

@@ -1,13 +1,17 @@
 import { useRecoilValue } from "recoil";
 import { Grid, IconButton, List, ListItem, ListItemText } from "@mui/material";
-import { groupList } from "../../state/groups";
+import { Group, groupList } from "../../state/groups";
 import ListItemLink from "./ListItemLink";
 import GroupCreateModal from "../groups/GroupCreateModal";
 import React, { useState } from "react";
 import { Add } from "@mui/icons-material";
 import { isGuestUser } from "../../state/auth";
 
-export default function SidebarGroupList({ group = null }) {
+interface Props {
+    group?: Group | null;
+}
+
+export const SidebarGroupList: React.FC<Props> = ({ group = null }) => {
     const groups = useRecoilValue(groupList);
     const isGuest = useRecoilValue(isGuestUser);
     const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
@@ -46,4 +50,6 @@ export default function SidebarGroupList({ group = null }) {
             {!isGuest && <GroupCreateModal show={showGroupCreationModal} onClose={closeGroupCreateModal} />}
         </>
     );
-}
+};
+
+export default SidebarGroupList;

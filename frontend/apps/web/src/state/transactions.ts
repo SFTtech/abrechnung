@@ -161,7 +161,7 @@ export class Transaction {
                     continue;
                 }
 
-                let totalUsages =
+                const totalUsages =
                     purchaseItem.communist_shares +
                     Object.values(purchaseItem.usages).reduce((acc, curr) => acc + curr, 0);
 
@@ -265,7 +265,7 @@ export class Transaction {
                 : [];
 
         if (transaction.pending_positions || Object.keys(localPositionChanges.modified).length > 0) {
-            let mappedPosition = positions.reduce((map: { [k: number]: TransactionPosition }, position) => {
+            const mappedPosition = positions.reduce((map: { [k: number]: TransactionPosition }, position) => {
                 map[position.id] = position;
                 return map;
             }, {});
@@ -298,7 +298,7 @@ export class Transaction {
         let files: Array<TransactionAttachment> =
             transaction.committed_files != null ? transaction.committed_files.filter((file) => !file.deleted) : [];
         if (transaction.pending_files) {
-            let mappedFiles = files.reduce((map: { [k: number]: TransactionAttachment }, file) => {
+            const mappedFiles = files.reduce((map: { [k: number]: TransactionAttachment }, file) => {
                 map[file.id] = file;
                 return map;
             }, {});
@@ -535,7 +535,7 @@ export const accountBalances = selectorFamily<{ [k: number]: AccountBalance }, n
         async ({ get }) => {
             const transactions = get(transactionsSeenByUser(groupID));
             const accounts = get(accountsSeenByUser(groupID));
-            let accountBalances = Object.fromEntries(
+            const accountBalances = Object.fromEntries(
                 accounts.map((account) => [
                     account.id,
                     {
@@ -567,8 +567,8 @@ export const accountBalances = selectorFamily<{ [k: number]: AccountBalance }, n
                 }
                 return map;
             }, new Map<number, ClearingShares>());
-            let clearingDependencies: { [k: number]: Set<number> } = {};
-            let inDegree = accounts.reduce((map: { [k: number]: number }, curr) => {
+            const clearingDependencies: { [k: number]: Set<number> } = {};
+            const inDegree = accounts.reduce((map: { [k: number]: number }, curr) => {
                 map[curr.id] = 0;
                 return map;
             }, {});
@@ -585,10 +585,10 @@ export const accountBalances = selectorFamily<{ [k: number]: AccountBalance }, n
                     }
                 }
             });
-            let zeroDegreeAccounts: Array<number> = [...shareMap.keys()].filter(
+            const zeroDegreeAccounts: Array<number> = [...shareMap.keys()].filter(
                 (accountID) => inDegree[accountID] === 0
             );
-            let sorting = [];
+            const sorting = [];
 
             while (zeroDegreeAccounts.length > 0) {
                 const node = zeroDegreeAccounts.pop();
@@ -674,7 +674,7 @@ export const accountBalanceHistory = selectorFamily<Array<BalanceHistoryEntry>, 
                 return [];
             }
 
-            let balanceChanges = [];
+            const balanceChanges = [];
             for (const transaction of transactions) {
                 const a = transaction.account_balances[accountID];
                 balanceChanges.push({
@@ -701,7 +701,7 @@ export const accountBalanceHistory = selectorFamily<Array<BalanceHistoryEntry>, 
             }
             balanceChanges.sort((a1, a2) => a1.date - a2.date);
 
-            let accumulatedBalanceChanges: Array<BalanceHistoryEntry> = [];
+            const accumulatedBalanceChanges: Array<BalanceHistoryEntry> = [];
             let currBalance = 0;
             for (const change of balanceChanges) {
                 currBalance += change.change;

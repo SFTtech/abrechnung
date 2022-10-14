@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import InviteLinkCreate from "../../components/groups/InviteLinkCreate";
 import { toast } from "react-toastify";
 import { deleteGroupInvite } from "../../core/api";
-import { currUserPermissions, groupInvites, groupMembers } from "../../state/groups";
+import { currUserPermissions, Group, groupInvites, groupMembers } from "../../state/groups";
 import { useRecoilValue } from "recoil";
 import { DateTime } from "luxon";
 import {
@@ -21,7 +21,11 @@ import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
 import { isGuestUser } from "../../state/auth";
 
-export default function GroupInvites({ group }) {
+interface Props {
+    group: Group;
+}
+
+export const GroupInvites: React.FC<Props> = ({ group }) => {
     const [showModal, setShowModal] = useState(false);
     const invites = useRecoilValue(groupInvites(group.id));
     const members = useRecoilValue(groupMembers(group.id));
@@ -129,4 +133,6 @@ export default function GroupInvites({ group }) {
             )}
         </MobilePaper>
     );
-}
+};
+
+export default GroupInvites;

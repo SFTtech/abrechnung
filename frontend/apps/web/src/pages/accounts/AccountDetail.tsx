@@ -8,8 +8,13 @@ import { useTitle } from "../../core/utils";
 import BalanceHistoryGraph from "../../components/accounts/BalanceHistoryGraph";
 import AccountTransactionList from "../../components/accounts/AccountTransactionList";
 import ClearingAccountDetail from "../../components/accounts/ClearingAccountDetail";
+import { Group } from "../../state/groups";
 
-export default function AccountDetail({ group }) {
+interface Props {
+    group: Group;
+}
+
+export const AccountDetail: React.FC<Props> = ({ group }) => {
     const navigate = useNavigate();
     const params = useParams();
     const accountID = parseInt(params["id"]);
@@ -49,4 +54,6 @@ export default function AccountDetail({ group }) {
             </Grid>
         </Grid>
     );
-}
+};
+
+export default AccountDetail;

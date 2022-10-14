@@ -14,7 +14,7 @@ import Balances from "../../components/accounts/Balances";
 import AccountList from "../accounts/AccountList";
 import AccountDetail from "../accounts/AccountDetail";
 
-export default function Group() {
+export const Group: React.FC = () => {
     const params = useParams();
     const navigate = useNavigate();
     const groupID = params["id"];
@@ -97,4 +97,6 @@ export default function Group() {
             </Routes>
         </Layout>
     );
-}
+};
+
+export default Group;

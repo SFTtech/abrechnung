@@ -2,12 +2,17 @@ import React from "react";
 import { useEffect, useState } from "react";
 import { TextField } from "@mui/material";
 
-export function ShareInput({ value, onChange }) {
+interface Props {
+    value: number;
+    onChange: (newValue: number) => void;
+}
+
+export const ShareInput: React.FC<Props> = ({ value, onChange }) => {
     const [currValue, setValue] = useState("0");
     const [error, setError] = useState(false);
 
     useEffect(() => {
-        setValue(value);
+        setValue(String(value));
         setError(!validate(value));
     }, [value]);
 
@@ -46,4 +51,6 @@ export function ShareInput({ value, onChange }) {
             onKeyUp={onKeyUp}
         />
     );
-}
+};
+
+export default ShareInput;

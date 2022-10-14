@@ -6,7 +6,8 @@ import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgre
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { accountsSeenByUser, addAccount, groupAccounts } from "../../state/accounts";
 import ClearingSharesFormElement from "./ClearingSharesFormElement";
-import { ReactNode } from "react";
+import React, { ReactNode } from "react";
+import { Group } from "../../state/groups";
 
 interface FormValues {
     name: string;
@@ -20,7 +21,17 @@ const validationSchema = yup.object({
     clearing_shares: yup.object(),
 });
 
-export default function CreateClearingAccountModal({ show, onClose, group, initialValues }) {
+interface Props {
+    group: Group;
+    show: boolean;
+    onClose: (
+        event: Record<string, never>,
+        reason: "escapeKeyDown" | "backdropClick" | "completed" | "closeButton"
+    ) => void;
+    initialValues: FormValues | null;
+}
+
+export const CreateClearingAccountModal: React.FC<Props> = ({ show, onClose, group, initialValues }) => {
     const setAccounts = useSetRecoilState(groupAccounts(group.id));
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
 
@@ -48,7 +59,7 @@ export default function CreateClearingAccountModal({ show, onClose, group, initi
                 toast.success(`Created account ${values.name}`);
                 addAccount(account, setAccounts);
                 setSubmitting(false);
-                onClose();
+                onClose({}, "completed");
             })
             .catch((err) => {
                 toast.error(err);
@@ -113,7 +124,7 @@ export default function CreateClearingAccountModal({ show, onClose, group, initi
 
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button color="error" onClick={onClose}>
+                                <Button color="error" onClick={() => onClose({}, "closeButton")}>
                                     Cancel
                                 </Button>
                                 <Button type="submit" color="primary" disabled={isSubmitting}>
@@ -126,4 +137,6 @@ export default function CreateClearingAccountModal({ show, onClose, group, initi
             </DialogContent>
         </Dialog>
     );
-}
+};
+
+export default CreateClearingAccountModal;

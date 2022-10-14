@@ -2,11 +2,21 @@ import { Form, Formik } from "formik";
 import React from "react";
 import { toast } from "react-toastify";
 import { updateAccountDetails } from "../../core/api";
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
-import { groupAccounts, updateAccount } from "../../state/accounts";
+import {
+    Button,
+    Dialog,
+    DialogProps,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    LinearProgress,
+    TextField,
+} from "@mui/material";
+import { AccountConsolidated, groupAccounts, updateAccount } from "../../state/accounts";
 import { useSetRecoilState } from "recoil";
 import ClearingSharesFormElement from "./ClearingSharesFormElement";
 import * as yup from "yup";
+import { Group } from "../../state/groups";
 
 const validationSchema = yup.object({
     name: yup.string().required("Name is required"),
@@ -14,7 +24,17 @@ const validationSchema = yup.object({
     clearingShares: yup.object(),
 });
 
-export default function EditClearingAccountModal({ group, show, onClose, account }) {
+interface Props {
+    group: Group;
+    account: AccountConsolidated;
+    show: boolean;
+    onClose: (
+        event: Record<string, never>,
+        reason: "escapeKeyDown" | "backdropClick" | "completed" | "closeButton"
+    ) => void;
+}
+
+export const EditClearingAccountModal: React.FC<Props> = ({ group, show, onClose, account }) => {
     const setAccounts = useSetRecoilState(groupAccounts(group.id));
 
     const handleSubmit = (values, { setSubmitting }) => {
@@ -27,7 +47,7 @@ export default function EditClearingAccountModal({ group, show, onClose, account
             .then((account) => {
                 updateAccount(account, setAccounts);
                 setSubmitting(false);
-                onClose();
+                onClose({}, "completed");
             })
             .catch((err) => {
                 toast.error(err);
@@ -87,7 +107,7 @@ export default function EditClearingAccountModal({ group, show, onClose, account
                                 <Button color="primary" type="submit">
                                     Save
                                 </Button>
-                                <Button color="error" onClick={onClose}>
+                                <Button color="error" onClick={() => onClose({}, "closeButton")}>
                                     Close
                                 </Button>
                             </DialogActions>
@@ -97,4 +117,6 @@ export default function EditClearingAccountModal({ group, show, onClose, account
             </DialogContent>
         </Dialog>
     );
-}
+};
+
+export default EditClearingAccountModal;

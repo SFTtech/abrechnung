@@ -23,7 +23,7 @@ import { Check, Close, Delete, Edit } from "@mui/icons-material";
 import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
 
-export default function SessionList() {
+export const SessionList: React.FC = () => {
     // TODO: fix editing functions
     const [editedSessions, setEditedSessions] = useState({});
     const [sessionToDelete, setSessionToDelete] = useState({
@@ -47,7 +47,7 @@ export default function SessionList() {
 
     const stopEditSession = (id) => {
         if (editedSessions.hasOwnProperty(id)) {
-            let newEditedSessions = { ...editedSessions };
+            const newEditedSessions = { ...editedSessions };
             delete newEditedSessions[id];
             setEditedSessions(newEditedSessions);
         }
@@ -181,4 +181,6 @@ export default function SessionList() {
             </Dialog>
         </MobilePaper>
     );
-}
+};
+
+export default SessionList;

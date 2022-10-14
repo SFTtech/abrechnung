@@ -5,8 +5,16 @@ import { DateTime } from "luxon";
 import React from "react";
 import { balanceColor } from "../../core/utils";
 import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
+import { Group } from "../../state/groups";
+import { Transaction } from "../../state/transactions";
 
-export default function AccountTransactionListEntry({ group, transaction, accountID }) {
+interface Props {
+    group: Group;
+    transaction: Transaction;
+    accountID: number;
+}
+
+export const AccountTransactionListEntry: React.FC<Props> = ({ group, transaction, accountID }) => {
     return (
         <ListItemLink to={`/groups/${group.id}/transactions/${transaction.id}`}>
             <ListItemAvatar sx={{ minWidth: { xs: "40px", md: "56px" } }}>
@@ -56,4 +64,6 @@ export default function AccountTransactionListEntry({ group, transaction, accoun
             </ListItemText>
         </ListItemLink>
     );
-}
+};
+
+export default AccountTransactionListEntry;

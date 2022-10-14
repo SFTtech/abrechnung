@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
-import { groupLog, groupMembers } from "../../state/groups";
+import { Group, groupLog, groupMembers } from "../../state/groups";
 import { sendGroupMessage } from "../../core/api";
 import { toast } from "react-toastify";
 import { DateTime } from "luxon";
@@ -18,7 +18,11 @@ import {
 import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
 
-export default function GroupLog({ group }) {
+interface Props {
+    group: Group;
+}
+
+export const GroupLog: React.FC<Props> = ({ group }) => {
     const [message, setMessage] = useState("");
     const [showAllLogs, setShowAllLogs] = useState(false);
     const logEntries = useRecoilValue(groupLog(group.id));
@@ -100,4 +104,6 @@ export default function GroupLog({ group }) {
             </List>
         </MobilePaper>
     );
-}
+};
+
+export default GroupLog;

@@ -17,8 +17,15 @@ import {
 import DatePicker from "@mui/lab/DatePicker";
 import { useSetRecoilState } from "recoil";
 import { addTransactionInState, groupTransactions } from "../../state/transactions";
+import { Group } from "../../state/groups";
 
-export default function TransactionCreateModal({ group, show, onClose }) {
+interface Props {
+    group: Group;
+    show: boolean;
+    onClose: () => void;
+}
+
+export const TransactionCreateModal: React.FC<Props> = ({ group, show, onClose }) => {
     const setTransactions = useSetRecoilState(groupTransactions(group.id));
 
     const handleSubmit = (values, { setSubmitting }) => {
@@ -43,7 +50,7 @@ export default function TransactionCreateModal({ group, show, onClose }) {
     };
 
     const validate = (values) => {
-        let errors = {
+        const errors = {
             value: undefined,
             description: undefined,
             billedAt: undefined,
@@ -144,4 +151,6 @@ export default function TransactionCreateModal({ group, show, onClose }) {
             </DialogContent>
         </Dialog>
     );
-}
+};
+
+export default TransactionCreateModal;

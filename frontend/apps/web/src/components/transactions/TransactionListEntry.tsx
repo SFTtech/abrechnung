@@ -6,8 +6,15 @@ import React from "react";
 import { useRecoilValue } from "recoil";
 import { accountsSeenByUser } from "../../state/accounts";
 import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
+import { Group } from "../../state/groups";
+import { Transaction } from "../../state/transactions";
 
-export function TransactionListEntry({ group, transaction }) {
+interface Props {
+    group: Group;
+    transaction: Transaction;
+}
+
+export const TransactionListEntry: React.FC<Props> = ({ group, transaction }) => {
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const accountNamesFromShares = (shares) => {
         return shares.map((s) => accounts.find((a) => a.id === parseInt(s))?.name).join(", ");
@@ -67,4 +74,6 @@ export function TransactionListEntry({ group, transaction }) {
             <Divider sx={{ display: { lg: "none" } }} component="li" />
         </>
     );
-}
+};
+
+export default TransactionListEntry;

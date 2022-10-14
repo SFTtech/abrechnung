@@ -134,7 +134,7 @@ export const accountsSeenByUser = selectorFamily<Array<AccountConsolidated>, num
                         );
                     }
                     const has_committed_changes = account.committed_details != null;
-                    let mapped: AccountConsolidated = {
+                    const mapped: AccountConsolidated = {
                         id: account.id,
                         type: account.type,
                         version: account.version,

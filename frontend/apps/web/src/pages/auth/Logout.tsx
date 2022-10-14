@@ -4,7 +4,7 @@ import { useSetRecoilState } from "recoil";
 import { logout } from "../../core/api";
 import Loading from "../../components/style/Loading";
 
-export default function Logout() {
+export const Logout: React.FC = () => {
     const setUserState = useSetRecoilState(userData);
 
     useEffect(() => {
@@ -15,4 +15,6 @@ export default function Logout() {
     }, [setUserState]);
 
     return <Loading />;
-}
+};
+
+export default Logout;

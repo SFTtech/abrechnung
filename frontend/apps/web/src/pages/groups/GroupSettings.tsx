@@ -2,7 +2,7 @@ import React, { useState } from "react";
 
 import { toast } from "react-toastify";
 import { leaveGroup, updateGroupMetadata } from "../../core/api";
-import { currUserPermissions } from "../../state/groups";
+import { currUserPermissions, Group } from "../../state/groups";
 import { useRecoilValue } from "recoil";
 import { useNavigate } from "react-router-dom";
 import {
@@ -33,7 +33,11 @@ const validationSchema = yup.object({
     addUserAccountOnJoin: yup.boolean(),
 });
 
-export default function GroupSettings({ group }) {
+interface Props {
+    group: Group;
+}
+
+export const GroupSettings: React.FC<Props> = ({ group }) => {
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const navigate = useNavigate();
 
@@ -245,4 +249,6 @@ export default function GroupSettings({ group }) {
             </Dialog>
         </MobilePaper>
     );
-}
+};
+
+export default GroupSettings;

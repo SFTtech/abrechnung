@@ -6,7 +6,7 @@ import { List, Button, Grid, ListItem, ListItemText, Typography, Alert } from "@
 import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
 
-export default function GroupInvite() {
+export const GroupInvite: React.FC = () => {
     const [group, setGroup] = useState(null);
     const [error, setError] = useState(null);
     const params = useParams();
@@ -81,4 +81,6 @@ export default function GroupInvite() {
             )}
         </MobilePaper>
     );
-}
+};
+
+export default GroupInvite;

@@ -1,9 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { DisabledTextField } from "../style/DisabledTextField";
 import { useSetRecoilState } from "recoil";
-import { pendingTransactionDetailChanges } from "../../state/transactions";
+import { pendingTransactionDetailChanges, Transaction } from "../../state/transactions";
+import { Group } from "../../state/groups";
 
-export default function TransactionDescription({ group, transaction }) {
+interface Props {
+    group: Group;
+    transaction: Transaction;
+}
+
+export const TransactionDescription: React.FC<Props> = ({ group, transaction }) => {
     const [description, setDescription] = useState("");
     const [error, setError] = useState(false);
     const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
@@ -53,4 +59,6 @@ export default function TransactionDescription({ group, transaction }) {
             value={description}
         />
     );
-}
+};
+
+export default TransactionDescription;

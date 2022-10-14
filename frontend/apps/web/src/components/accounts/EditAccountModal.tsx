@@ -14,13 +14,23 @@ import {
     LinearProgress,
     TextField,
 } from "@mui/material";
-import { groupAccounts, updateAccount } from "../../state/accounts";
+import { AccountConsolidated, groupAccounts, updateAccount } from "../../state/accounts";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { userData } from "../../state/auth";
-import { currUserPermissions, groupMemberIDsToUsername } from "../../state/groups";
+import { currUserPermissions, Group, groupMemberIDsToUsername } from "../../state/groups";
 import GroupMemberSelect from "../groups/GroupMemberSelect";
 
-export default function EditAccountModal({ group, show, onClose, account }) {
+interface Props {
+    group: Group;
+    show: boolean;
+    account: AccountConsolidated;
+    onClose: (
+        event: Record<string, never>,
+        reason: "escapeKeyDown" | "backdropClick" | "completed" | "closeButton"
+    ) => void;
+}
+
+export const EditAccountModal: React.FC<Props> = ({ group, show, onClose, account }) => {
     const setAccounts = useSetRecoilState(groupAccounts(group.id));
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
     const currentUser = useRecoilValue(userData);
@@ -37,7 +47,7 @@ export default function EditAccountModal({ group, show, onClose, account }) {
                 console.log(account);
                 updateAccount(account, setAccounts);
                 setSubmitting(false);
-                onClose();
+                onClose({}, "completed");
             })
             .catch((err) => {
                 toast.error(err);
@@ -121,7 +131,7 @@ export default function EditAccountModal({ group, show, onClose, account }) {
                                 <Button color="primary" type="submit">
                                     Save
                                 </Button>
-                                <Button color="error" onClick={onClose}>
+                                <Button color="error" onClick={() => onClose({}, "closeButton")}>
                                     Cancel
                                 </Button>
                             </DialogActions>
@@ -131,4 +141,6 @@ export default function EditAccountModal({ group, show, onClose, account }) {
             </DialogContent>
         </Dialog>
     );
-}
+};
+
+export default EditAccountModal;

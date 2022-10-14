@@ -6,7 +6,7 @@ import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
 import { DateTime } from "luxon";
 
-export default function Profile() {
+export const Profile: React.FC = () => {
     const user = useRecoilValue(userData);
     const isGuest = useRecoilValue(isGuestUser);
     useTitle("Abrechnung - Profile");
@@ -38,4 +38,6 @@ export default function Profile() {
             </List>
         </MobilePaper>
     );
-}
+};
+
+export default Profile;

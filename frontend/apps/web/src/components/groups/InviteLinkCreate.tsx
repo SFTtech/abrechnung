@@ -15,8 +15,18 @@ import {
     TextField,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers";
+import { Group } from "../../state/groups";
 
-export default function InviteLinkCreate({ show, onClose, group }) {
+interface Props {
+    group: Group;
+    show: boolean;
+    onClose: (
+        event: Record<string, never>,
+        reason: "escapeKeyDown" | "backdropClick" | "completed" | "closeButton"
+    ) => void;
+}
+
+export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
     const handleSubmit = (values, { setSubmitting }) => {
         createGroupInvite({
             groupID: group.id,
@@ -28,7 +38,7 @@ export default function InviteLinkCreate({ show, onClose, group }) {
             .then((result) => {
                 toast.success("Successfully created invite token");
                 setSubmitting(false);
-                onClose();
+                onClose({}, "completed");
             })
             .catch((err) => {
                 toast.error(err);
@@ -112,7 +122,7 @@ export default function InviteLinkCreate({ show, onClose, group }) {
                                 <Button type="submit" color="primary" disabled={isSubmitting}>
                                     Save
                                 </Button>
-                                <Button color="error" onClick={onClose}>
+                                <Button color="error" onClick={() => onClose({}, "closeButton")}>
                                     Cancel
                                 </Button>
                             </DialogActions>
@@ -122,4 +132,6 @@ export default function InviteLinkCreate({ show, onClose, group }) {
             </DialogContent>
         </Dialog>
     );
-}
+};
+
+export default InviteLinkCreate;

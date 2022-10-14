@@ -16,6 +16,7 @@ export interface Group {
     currency_symbol: string;
     terms: string;
     created_by: number;
+    add_user_account_on_join: boolean;
 }
 
 export const groupList = atom<Array<Group>>({

@@ -2,12 +2,22 @@ import React from "react";
 import { deleteGroup } from "../../core/api";
 import { toast } from "react-toastify";
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import { Group } from "../../state/groups";
 
-export default function GroupDeleteModal({ show, onClose, groupToDelete }) {
+interface Props {
+    show: boolean;
+    onClose: (
+        event: Record<string, never>,
+        reason: "escapeKeyDown" | "backdropClick" | "completed" | "closeButton"
+    ) => void;
+    groupToDelete: Group;
+}
+
+export const GroupDeleteModal: React.FC<Props> = ({ show, onClose, groupToDelete }) => {
     const confirmDeleteGroup = () => {
         deleteGroup({ groupID: groupToDelete.id })
             .then((res) => {
-                onClose();
+                onClose({}, "completed");
             })
             .catch((err) => {
                 toast.error(err);
@@ -23,7 +33,7 @@ export default function GroupDeleteModal({ show, onClose, groupToDelete }) {
                 </DialogContentText>
             </DialogContent>
             <DialogActions>
-                <Button color="primary" onClick={onClose}>
+                <Button color="primary" onClick={() => onClose({}, "closeButton")}>
                     No
                 </Button>
                 <Button color="error" onClick={confirmDeleteGroup}>
@@ -32,4 +42,6 @@ export default function GroupDeleteModal({ show, onClose, groupToDelete }) {
             </DialogActions>
         </Dialog>
     );
-}
+};
+
+export default GroupDeleteModal;

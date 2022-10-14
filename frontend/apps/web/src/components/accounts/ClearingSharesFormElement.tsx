@@ -13,12 +13,25 @@ import {
     Typography,
 } from "@mui/material";
 import { ShareInput } from "../ShareInput";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
-import { accountsSeenByUser } from "../../state/accounts";
+import { accountsSeenByUser, ClearingShares } from "../../state/accounts";
 import { CompareArrows, Person, Search as SearchIcon } from "@mui/icons-material";
+import { Group } from "../../state/groups";
 
-export default function ClearingSharesFormElement({ group, clearingShares, setClearingShares, accountID = undefined }) {
+interface Props {
+    group: Group;
+    clearingShares: ClearingShares;
+    setClearingShares: (shares: ClearingShares) => void;
+    accountID?: number;
+}
+
+export const ClearingSharesFormElement: React.FC<Props> = ({
+    group,
+    clearingShares,
+    setClearingShares,
+    accountID = undefined,
+}) => {
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [searchValue, setSearchValue] = useState("");
@@ -128,4 +141,6 @@ export default function ClearingSharesFormElement({ group, clearingShares, setCl
             </TableContainer>
         </>
     );
-}
+};
+
+export default ClearingSharesFormElement;

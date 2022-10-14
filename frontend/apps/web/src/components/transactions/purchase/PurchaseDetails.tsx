@@ -11,8 +11,15 @@ import TransactionPositions from "./TransactionPositions";
 import { Add } from "@mui/icons-material";
 import PurchaseDebitorSharesReadOnly from "./PurchaseDebitorSharesReadOnly";
 import { MobilePaper } from "../../style/mobile";
+import { Group } from "../../../state/groups";
+import { Transaction } from "../../../state/transactions";
 
-export default function PurchaseDetails({ group, transaction }) {
+interface Props {
+    group: Group;
+    transaction: Transaction;
+}
+
+export const PurchaseDetails: React.FC<Props> = ({ group, transaction }) => {
     const [showPositions, setShowPositions] = useState(false);
 
     return (
@@ -70,4 +77,6 @@ export default function PurchaseDetails({ group, transaction }) {
             )}
         </>
     );
-}
+};
+
+export default PurchaseDetails;

@@ -6,7 +6,7 @@ import { Alert, Button, Container, Link, Typography } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
 
-export default function ConfirmRegistration() {
+export const ConfirmRegistration: React.FC = () => {
     const [error, setError] = useState(null);
     const [status, setStatus] = useState("idle");
     const { token } = useParams();
@@ -59,4 +59,6 @@ export default function ConfirmRegistration() {
             </MobilePaper>
         </Container>
     );
-}
+};
+
+export default ConfirmRegistration;

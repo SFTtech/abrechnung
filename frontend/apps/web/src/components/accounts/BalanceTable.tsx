@@ -1,10 +1,16 @@
+import React from "react";
 import { useRecoilValue } from "recoil";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { personalAccountsSeenByUser } from "../../state/accounts";
 import { accountBalances } from "../../state/transactions";
 import { renderCurrency } from "../style/datagrid/renderCurrency";
+import { Group } from "../../state/groups";
 
-export default function BalanceTable({ group }) {
+interface Props {
+    group: Group;
+}
+
+export const BalanceTable: React.FC<Props> = ({ group }) => {
     const personalAccounts = useRecoilValue(personalAccountsSeenByUser(group.id));
     const balances = useRecoilValue(accountBalances(group.id));
 
@@ -43,7 +49,7 @@ export default function BalanceTable({ group }) {
             <DataGrid
                 sx={{ border: 0 }}
                 rows={tableData}
-                columns={columns}
+                columns={columns as any} // TODO: fixme and figure out proper typing
                 disableSelectionOnClick
                 autoHeight
                 components={{
@@ -52,4 +58,6 @@ export default function BalanceTable({ group }) {
             />
         </div>
     );
-}
+};
+
+export default BalanceTable;

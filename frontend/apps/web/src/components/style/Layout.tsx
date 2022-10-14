@@ -41,10 +41,16 @@ import {
 import { config } from "../../state/config";
 import { useTheme } from "@mui/material/styles";
 import { Banner } from "./Banner";
+import { Group } from "../../state/groups";
 
 const drawerWidth = 240;
 
-export default function Layout({ group = null, children, ...props }) {
+interface Props {
+    group?: Group | null;
+    children: React.ReactNode;
+}
+
+export const Layout: React.FC<Props> = ({ group = null, children }) => {
     const authenticated = useRecoilValue(isAuthenticated);
     const [anchorEl, setAnchorEl] = useState(null);
     const theme: Theme = useTheme();
@@ -53,8 +59,6 @@ export default function Layout({ group = null, children, ...props }) {
     const location = useLocation();
 
     const [mobileOpen, setMobileOpen] = useState(true);
-
-    const { window } = props;
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -177,7 +181,7 @@ export default function Layout({ group = null, children, ...props }) {
         </div>
     );
 
-    const container = window !== undefined ? () => window().document.body : undefined;
+    const container = window !== undefined ? () => window.document.body : undefined;
 
     return (
         <Box sx={{ display: "flex" }}>
@@ -312,4 +316,6 @@ export default function Layout({ group = null, children, ...props }) {
             </Box>
         </Box>
     );
-}
+};
+
+export default Layout;

@@ -8,8 +8,14 @@ import { accountByIDMap } from "../../state/accounts";
 import { ClearingAccountIcon, PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 import { balanceColor } from "../../core/utils";
 import React from "react";
+import { Group } from "../../state/groups";
 
-export default function BalanceHistoryGraph({ group, accountID }) {
+interface Props {
+    group: Group;
+    accountID: number;
+}
+
+export const BalanceHistoryGraph: React.FC<Props> = ({ group, accountID }) => {
     const theme: Theme = useTheme();
     const balanceHistory = useRecoilValue(accountBalanceHistory({ groupID: group.id, accountID: accountID }));
     const navigate = useNavigate();
@@ -115,4 +121,6 @@ export default function BalanceHistoryGraph({ group, accountID }) {
             </LineChart>
         </ResponsiveContainer>
     );
-}
+};
+
+export default BalanceHistoryGraph;
