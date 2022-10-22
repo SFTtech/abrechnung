@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
-import { getTransactionSortFunc, transactionsSeenByUser } from "../../state/transactions";
-import { currUserPermissions, Group } from "../../state/groups";
+import { getTransactionSortFunc, TransactionSortMode, transactionsSeenByUser } from "../../state/transactions";
+import { currUserPermissions } from "../../state/groups";
 import {
     Alert,
     Box,
@@ -28,10 +28,11 @@ import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 import PurchaseCreateModal from "./purchase/PurchaseCreateModal";
 import TransferCreateModal from "./transfer/TransferCreateModal";
 import SearchIcon from "@mui/icons-material/Search";
-import { useTitle } from "../../core/utils";
+import { useTitle, filterTransaction } from "../../core/utils";
 import { userData } from "../../state/auth";
 import { accountIDsToName, accountsOwnedByUser } from "../../state/accounts";
 import { useTheme } from "@mui/material/styles";
+import { Group } from "@abrechnung/types";
 
 interface Props {
     group: Group;
@@ -56,17 +57,17 @@ export const TransactionList: React.FC<Props> = ({ group }) => {
 
     const [searchValue, setSearchValue] = useState("");
 
-    const [sortMode, setSortMode] = useState("last_changed"); // last_changed, description, value, billed_at
+    const [sortMode, setSortMode] = useState<TransactionSortMode>("lastChanged");
 
     useEffect(() => {
         let filtered = transactions;
         if (searchValue != null && searchValue !== "") {
-            filtered = transactions.filter((t) => t.filter(searchValue, groupAccountMap));
+            filtered = transactions.filter((t) => filterTransaction(t, searchValue, groupAccountMap));
         }
         filtered = [...filtered].sort(getTransactionSortFunc(sortMode));
 
         setFilteredTransactions(filtered);
-    }, [searchValue, setFilteredTransactions, sortMode, transactions, userAccounts]);
+    }, [searchValue, setFilteredTransactions, sortMode, transactions, userAccounts, groupAccountMap]);
 
     useTitle(`${group.name} - Transactions`);
 
@@ -120,13 +121,13 @@ export const TransactionList: React.FC<Props> = ({ group }) => {
                                 labelId="select-sort-by-label"
                                 id="select-sort-by"
                                 label="Sort by"
-                                onChange={(evt) => setSortMode(evt.target.value)}
+                                onChange={(evt) => setSortMode(evt.target.value as TransactionSortMode)}
                                 value={sortMode}
                             >
-                                <MenuItem value="last_changed">Last changed</MenuItem>
+                                <MenuItem value="lastChanged">Last changed</MenuItem>
                                 <MenuItem value="description">Description</MenuItem>
                                 <MenuItem value="value">Value</MenuItem>
-                                <MenuItem value="billed_at">Date</MenuItem>
+                                <MenuItem value="billedAt">Date</MenuItem>
                             </Select>
                         </FormControl>
                     </Box>
@@ -177,7 +178,7 @@ export const TransactionList: React.FC<Props> = ({ group }) => {
                     }}
                 />
             </MobilePaper>
-            {userPermissions.can_write && (
+            {userPermissions.canWrite && (
                 <SpeedDial
                     ariaLabel="Create Account"
                     sx={{ position: "fixed", bottom: 20, right: 20 }}

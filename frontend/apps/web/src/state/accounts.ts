@@ -1,5 +1,6 @@
+import { Account } from "@abrechnung/types";
 import { atomFamily, selectorFamily, SetterOrUpdater } from "recoil";
-import { fetchAccount, fetchAccounts } from "../core/api";
+import { api } from "../core/api";
 import { ws } from "../core/websocket";
 import { toast } from "react-toastify";
 import { DateTime } from "luxon";
@@ -9,59 +10,15 @@ const accountTypeSortingLookup = {
     clearing: 100,
 };
 
-export type ClearingShares = { [k: number]: number };
-
-export interface AccountDetail {
-    name: string;
-    description: string;
-    priority: number;
-    owning_user_id: number | null;
-    committed_at: string | null;
-    clearing_shares: ClearingShares;
-    deleted: boolean;
-}
-
-export type AccountType = "personal" | "clearing";
-
-export interface Account {
-    id: number;
-    type: AccountType;
-    is_wip: boolean;
-    last_changed: string;
-    group_id: number;
-    version: number;
-    pending_details: AccountDetail | null;
-    committed_details: AccountDetail | null;
-}
-
-export interface AccountConsolidated {
-    id: number;
-    type: AccountType;
-    is_wip: boolean;
-    last_changed: DateTime;
-    group_id: number;
-    version: number;
-    has_committed_changes: boolean;
-    name: string;
-    description: string;
-    owning_user_id: number | null;
-    priority: number;
-    committed_at: DateTime | null;
-    clearing_shares: ClearingShares;
-    deleted: boolean;
-}
-
 export const groupAccounts = atomFamily<Array<Account>, number>({
     key: "groupAccounts",
     effects_UNSTABLE: (groupID) => [
         ({ setSelf, getPromise, node }) => {
             // TODO: handle fetch error
-            setSelf(
-                fetchAccounts({ groupID: groupID }).catch((err) => toast.error(`error when fetching accounts: ${err}`))
-            );
+            setSelf(api.fetchAccounts(groupID));
 
             const fetchAndUpdateAccount = (currAccounts: Array<Account>, accountID: number, isNew: boolean) => {
-                fetchAccount({ accountID: accountID })
+                api.fetchAccount(accountID)
                     .then((account) => {
                         if (isNew) {
                             // new account
@@ -84,9 +41,9 @@ export const groupAccounts = atomFamily<Array<Account>, number>({
                                 currAccount === undefined ||
                                 (revision_committed === null && revision_version > currAccount.version) ||
                                 (revision_committed !== null &&
-                                    (currAccount.last_changed === null ||
+                                    (currAccount.lastChanged === null ||
                                         DateTime.fromISO(revision_committed) >
-                                            DateTime.fromISO(currAccount.last_changed)))
+                                            DateTime.fromJSDate(currAccount.lastChanged)))
                             ) {
                                 fetchAndUpdateAccount(currAccounts, account_id, currAccount === undefined);
                             }
@@ -115,50 +72,23 @@ export const updateAccount = (account: Account, setAccounts: SetterOrUpdater<Arr
     });
 };
 
-export const accountsSeenByUser = selectorFamily<Array<AccountConsolidated>, number>({
+export const accountsSeenByUser = selectorFamily<Account[], number>({
     key: "accountsSeenByUser",
     get:
         (groupID) =>
         async ({ get }) => {
             const accounts = get(groupAccounts(groupID));
-
-            return accounts
-                .filter((account) => {
-                    return !(account.committed_details && account.committed_details.deleted);
-                })
-                .map((account) => {
-                    const details = account.pending_details ? account.pending_details : account.committed_details;
-                    if (details === undefined) {
-                        throw new Error(
-                            "invalid account state: pending_details and committed_details should not be null at the same time"
-                        );
-                    }
-                    const has_committed_changes = account.committed_details != null;
-                    const mapped: AccountConsolidated = {
-                        id: account.id,
-                        type: account.type,
-                        version: account.version,
-                        last_changed: DateTime.fromISO(account.last_changed),
-                        group_id: account.group_id,
-                        is_wip: account.is_wip,
-                        has_committed_changes: has_committed_changes,
-                        ...details,
-                        committed_at: details.committed_at != null ? DateTime.fromISO(details.committed_at) : null,
-                    };
-
-                    return mapped;
-                })
-                .sort((t1, t2) => {
-                    return t1.type !== t2.type
-                        ? accountTypeSortingLookup[t1.type] - accountTypeSortingLookup[t2.type]
-                        : t1.name === t2.name
-                        ? t1.id - t2.id
-                        : t1.name.toLowerCase().localeCompare(t2.name.toLowerCase());
-                });
+            return [...accounts].sort((t1, t2) => {
+                return t1.type !== t2.type
+                    ? accountTypeSortingLookup[t1.type] - accountTypeSortingLookup[t2.type]
+                    : t1.name === t2.name
+                    ? t1.id - t2.id
+                    : t1.name.toLowerCase().localeCompare(t2.name.toLowerCase());
+            });
         },
 });
 
-export const accountByIDMap = selectorFamily<{ [k: number]: AccountConsolidated }, number>({
+export const accountByIDMap = selectorFamily<{ [k: number]: Account }, number>({
     key: "accountByIDMap",
     get:
         (groupID) =>
@@ -184,7 +114,7 @@ export const accountIDsToName = selectorFamily<{ [k: number]: string }, number>(
         },
 });
 
-export const personalAccountsSeenByUser = selectorFamily<Array<AccountConsolidated>, number>({
+export const personalAccountsSeenByUser = selectorFamily<Array<Account>, number>({
     key: "personalAccountsSeenByUser",
     get:
         (groupID) =>
@@ -194,7 +124,7 @@ export const personalAccountsSeenByUser = selectorFamily<Array<AccountConsolidat
         },
 });
 
-export const clearingAccountsSeenByUser = selectorFamily<Array<AccountConsolidated>, number>({
+export const clearingAccountsSeenByUser = selectorFamily<Array<Account>, number>({
     key: "clearingAccountsSeenByUser",
     get:
         (groupID) =>
@@ -209,18 +139,18 @@ export type ParamGroupAccount = {
     accountID: number;
 };
 
-export const clearingAccountsInvolvingUser = selectorFamily<Array<AccountConsolidated>, ParamGroupAccount>({
+export const clearingAccountsInvolvingUser = selectorFamily<Array<Account>, ParamGroupAccount>({
     key: "clearingAccountsInvolvingUser",
     get:
         ({ groupID, accountID }) =>
         async ({ get }) => {
-            return get(clearingAccountsSeenByUser(groupID)).filter((account) =>
-                account.clearing_shares.hasOwnProperty(accountID)
+            return get(clearingAccountsSeenByUser(groupID)).filter(
+                (account) => account.clearingShares[accountID] !== undefined
             );
         },
 });
 
-export const groupAccountByID = selectorFamily<AccountConsolidated | undefined, ParamGroupAccount>({
+export const groupAccountByID = selectorFamily<Account | undefined, ParamGroupAccount>({
     key: "groupAccountByID",
     get:
         ({ groupID, accountID }) =>
@@ -235,12 +165,12 @@ export type ParamGroupUser = {
     userID: number;
 };
 
-export const accountsOwnedByUser = selectorFamily<Array<AccountConsolidated>, ParamGroupUser>({
+export const accountsOwnedByUser = selectorFamily<Array<Account>, ParamGroupUser>({
     key: "groupAccountByID",
     get:
         ({ groupID, userID }) =>
         async ({ get }) => {
             const accounts = get(accountsSeenByUser(groupID));
-            return accounts.filter((account) => account.owning_user_id === userID);
+            return accounts.filter((account) => account.owningUserID === userID);
         },
 });

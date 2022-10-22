@@ -11,8 +11,8 @@ import Loading from "../../components/style/Loading";
 import Transaction from "./Transaction";
 import GroupSettings from "./GroupSettings";
 import Balances from "../../components/accounts/Balances";
-import AccountList from "../accounts/AccountList";
-import AccountDetail from "../accounts/AccountDetail";
+import AccountList from "../account-list/AccountList";
+import AccountDetail from "../AccountDetail";
 
 export const Group: React.FC = () => {
     const params = useParams();

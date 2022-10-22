@@ -2,16 +2,16 @@ import React from "react";
 import { Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
 import { useRecoilValue } from "recoil";
-import { AccountConsolidated, accountsSeenByUser } from "../../state/accounts";
+import { accountsSeenByUser } from "../../state/accounts";
+import { Group, Account } from "@abrechnung/types";
 import { useEffect, useState } from "react";
 import { accountBalances } from "../../state/transactions";
 import { ClearingAccountIcon, PersonalAccountIcon } from "../style/AbrechnungIcons";
 import { useTheme } from "@mui/material/styles";
-import { Group } from "../../state/groups";
 
 interface Props {
     group: Group;
-    account: AccountConsolidated;
+    account: Account;
 }
 
 export const ClearingAccountDetail: React.FC<Props> = ({ group, account }) => {
@@ -23,7 +23,7 @@ export const ClearingAccountDetail: React.FC<Props> = ({ group, account }) => {
     const [showAdvanced, setShowAdvanced] = useState(false);
 
     useEffect(() => {
-        for (const share of Object.values(account.clearing_shares)) {
+        for (const share of Object.values(account.clearingShares)) {
             if (share !== 1) {
                 setShowAdvanced(true);
                 break;
@@ -32,7 +32,7 @@ export const ClearingAccountDetail: React.FC<Props> = ({ group, account }) => {
     }, [account]);
 
     const clearingShareValue = (accountID) => {
-        return account.clearing_shares?.hasOwnProperty(accountID) ? account.clearing_shares[accountID] : 0;
+        return account.clearingShares?.hasOwnProperty(accountID) ? account.clearingShares[accountID] : 0;
     };
 
     return (
@@ -49,7 +49,7 @@ export const ClearingAccountDetail: React.FC<Props> = ({ group, account }) => {
                 </TableHead>
                 <TableBody>
                     {accounts
-                        .filter((a) => balances[account.id].clearingResolution.hasOwnProperty(a.id))
+                        .filter((a) => balances.get(account.id)?.clearingResolution.has(a.id))
                         .map((a) => (
                             <TableRow hover key={a.id}>
                                 <TableCell sx={{ padding: "0 16px" }}>
@@ -83,7 +83,8 @@ export const ClearingAccountDetail: React.FC<Props> = ({ group, account }) => {
                                 </TableCell>
                                 {showAdvanced && <TableCell width="50px">{clearingShareValue(a.id)}</TableCell>}
                                 <TableCell width="100px" align="right">
-                                    {balances[account.id].clearingResolution[a.id].toFixed(2)} {group.currency_symbol}
+                                    {balances.get(account.id)?.clearingResolution.get(a.id)?.toFixed(2)}{" "}
+                                    {group.currencySymbol}
                                 </TableCell>
                             </TableRow>
                         ))}

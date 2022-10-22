@@ -2,14 +2,7 @@ import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, 
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
 import React, { useState } from "react";
-import {
-    commitTransaction,
-    createTransactionChange,
-    deleteTransaction,
-    discardTransactionChange,
-    updateTransaction,
-    updateTransactionPositions,
-} from "../../core/api";
+import { api } from "../../core/api";
 import { toast } from "react-toastify";
 import { useRecoilTransaction_UNSTABLE, useRecoilValue, useResetRecoilState, useSetRecoilState } from "recoil";
 import { currUserPermissions } from "../../state/groups";
@@ -17,10 +10,9 @@ import {
     groupTransactions,
     pendingTransactionDetailChanges,
     pendingTransactionPositionChanges,
-    Transaction,
-    TransactionBackend,
     updateTransactionInState,
 } from "../../state/transactions";
+import { Transaction } from "@abrechnung/types";
 
 interface Props {
     groupID: number;
@@ -32,7 +24,7 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
 
     const navigate = useNavigate();
     const userPermissions = useRecoilValue(currUserPermissions(groupID));
-    const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
+    const setTransactions = useSetRecoilState(groupTransactions(transaction.groupID));
     const localTransactionChanges = useRecoilValue(pendingTransactionDetailChanges(transaction.id));
     const localPositionChanges = useRecoilValue(pendingTransactionPositionChanges(transaction.id));
     const resetLocalTransactionChanges = useResetRecoilState(pendingTransactionDetailChanges(transaction.id));
@@ -40,8 +32,8 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
 
     const updateTransactionAndClearLocal = useRecoilTransaction_UNSTABLE(
         ({ get, set, reset }) =>
-            (transaction: TransactionBackend) => {
-                set(groupTransactions(transaction.group_id), (currTransactions) => {
+            (transaction: Transaction) => {
+                set(groupTransactions(transaction.groupID), (currTransactions) => {
                     return currTransactions.map((t) => (t.id === transaction.id ? transaction : t));
                 });
                 reset(pendingTransactionDetailChanges(transaction.id));
@@ -50,10 +42,8 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
     );
 
     const edit = () => {
-        if (!transaction.is_wip) {
-            createTransactionChange({
-                transactionID: transaction.id,
-            })
+        if (!transaction.isWip) {
+            api.createTransactionChange(transaction.id)
                 .then((t) => {
                     updateTransactionAndClearLocal(t);
                 })
@@ -64,11 +54,9 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
     };
 
     const abortEdit = () => {
-        if (transaction.is_wip) {
-            if (transaction.has_committed_changes) {
-                discardTransactionChange({
-                    transactionID: transaction.id,
-                })
+        if (transaction.isWip) {
+            if (transaction.hasCommittedChanges) {
+                api.discardTransactionChange(transaction.id)
                     .then((t) => {
                         updateTransactionAndClearLocal(t);
                     })
@@ -82,38 +70,40 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
     };
 
     const commitEdit = () => {
-        if (transaction.is_wip) {
+        if (transaction.isWip) {
             // update the transaction given the currently pending changes
             // find out which local changes we have and send them to da server
-            const positions = Object.values(localPositionChanges.modified)
-                .concat(
-                    Object.values(localPositionChanges.added).map((position) => ({
-                        ...position,
-                        id: -1,
-                    }))
-                )
-                .map((p) => ({
-                    id: p.id,
-                    name: p.name,
-                    communist_shares: p.communist_shares,
-                    price: p.price,
-                    usages: p.usages,
-                    deleted: p.deleted,
-                }));
+            const positions = Object.values(localPositionChanges.modified).concat(
+                Object.values(localPositionChanges.added).map((position) => ({
+                    ...position,
+                    id: -1,
+                }))
+            );
 
             if (Object.keys(localTransactionChanges).length > 0) {
-                updateTransaction({
+                const transactionDetails = {
                     transactionID: transaction.id,
-                    description: transaction.description,
-                    value: transaction.value,
-                    billedAt: transaction.billed_at,
-                    currencySymbol: transaction.currency_symbol,
-                    currencyConversionRate: transaction.currency_conversion_rate,
-                    creditorShares: transaction.creditor_shares,
-                    debitorShares: transaction.debitor_shares,
+                    description: transaction.details.description,
+                    value: transaction.details.value,
+                    billedAt: transaction.details.billedAt,
+                    currencySymbol: transaction.details.currencySymbol,
+                    currencyConversionRate: transaction.details.currencyConversionRate,
+                    creditorShares: transaction.details.creditorShares,
+                    debitorShares: transaction.details.debitorShares,
                     ...localTransactionChanges,
                     positions: positions.length > 0 ? positions : null,
-                })
+                };
+                api.updateTransaction(
+                    transactionDetails.transactionID,
+                    transactionDetails.description,
+                    transactionDetails.value,
+                    transactionDetails.billedAt,
+                    transactionDetails.currencySymbol,
+                    transactionDetails.currencyConversionRate,
+                    transactionDetails.creditorShares,
+                    transactionDetails.debitorShares,
+                    transactionDetails.positions
+                )
                     .then((t) => {
                         updateTransactionAndClearLocal(t);
                     })
@@ -121,10 +111,7 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
                         toast.error(err);
                     });
             } else if (positions.length > 0) {
-                updateTransactionPositions({
-                    transactionID: transaction.id,
-                    positions: positions,
-                })
+                api.updateTransactionPositions(transaction.id, positions)
                     .then((t) => {
                         updateTransactionAndClearLocal(t);
                     })
@@ -132,7 +119,7 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
                         toast.error(err);
                     });
             } else {
-                commitTransaction({ transactionID: transaction.id })
+                api.commitTransaction(transaction.id)
                     .then((t) => {
                         updateTransactionAndClearLocal(t);
                     })
@@ -144,7 +131,7 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
     };
 
     const confirmDeleteTransaction = () => {
-        deleteTransaction({ transactionID: transaction.id })
+        api.deleteTransaction(transaction.id)
             .then((t) => {
                 // TODO: use recoil transaction
                 updateTransactionInState(t, setTransactions);
@@ -171,9 +158,9 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
                     <Chip color="primary" label={transaction.type} />
                 </Grid>
                 <Grid item>
-                    {userPermissions.can_write && (
+                    {userPermissions.canWrite && (
                         <>
-                            {transaction.is_wip ? (
+                            {transaction.isWip ? (
                                 <>
                                     <Button color="primary" onClick={commitEdit}>
                                         Save
@@ -197,7 +184,7 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
             <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={confirmDeleteDialogOpen}>
                 <DialogTitle id="confirmation-dialog-title">Confirm delete transaction</DialogTitle>
                 <DialogContent dividers>
-                    Are you sure you want to delete the transaction &quot{transaction.description}&quot
+                    Are you sure you want to delete the transaction &quot{transaction.details.description}&quot
                 </DialogContent>
                 <DialogActions>
                     <Button autoFocus onClick={() => setConfirmDeleteDialogOpen(false)} color="primary">

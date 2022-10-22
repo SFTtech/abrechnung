@@ -4,7 +4,8 @@ import { useRecoilValue } from "recoil";
 import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
 import { DisabledTextField } from "../style/DisabledTextField";
 import { styled } from "@mui/material/styles";
-import { Group, groupMemberIDsToUsername, groupMembers } from "../../state/groups";
+import { groupMemberIDsToUsername, groupMembers } from "../../state/groups";
+import { Group } from "@abrechnung/types";
 
 const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
     minWidth: 200,
@@ -33,7 +34,7 @@ export const GroupMemberSelect: React.FC<Props> = ({
 
     return (
         <Autocomplete
-            options={members.map((m) => m.user_id)}
+            options={members.map((m) => m.userID)}
             getOptionLabel={(option) => memberIDToUsername[option]}
             value={value}
             disabled={disabled}

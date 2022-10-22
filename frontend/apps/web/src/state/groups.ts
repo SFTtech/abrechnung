@@ -1,23 +1,14 @@
 import { atom, atomFamily, selectorFamily } from "recoil";
-import { fetchGroups, fetchInvites, fetchLog, fetchMembers, getUserIDFromToken } from "../core/api";
+import { api, getUserIDFromToken } from "../core/api";
 import { ws } from "../core/websocket";
 import { userData } from "./auth";
 import { DateTime } from "luxon";
 import { toast } from "react-toastify";
+import { Group, GroupMember, GroupInvite, GroupLogEntry } from "@abrechnung/types";
 
-const sortGroups = (groups) => {
-    return groups.sort((g1, g2) => g1.id > g2.id);
+const sortGroups = (groups: Group[]): Group[] => {
+    return groups.sort((g1, g2) => g1.id - g2.id);
 };
-
-export interface Group {
-    id: number;
-    name: string;
-    description: string;
-    currency_symbol: string;
-    terms: string;
-    created_by: number;
-    add_user_account_on_join: boolean;
-}
 
 export const groupList = atom<Array<Group>>({
     key: "groupList",
@@ -25,15 +16,14 @@ export const groupList = atom<Array<Group>>({
         ({ setSelf }) => {
             // TODO: handle fetch error
             setSelf(
-                fetchGroups()
-                    .then((groups) => sortGroups(groups))
-                    .catch((err) => toast.error(`error when fetching groups: ${err}`))
+                api.fetchGroups().then((groups) => sortGroups(groups))
+                // .catch((err) => toast.error(`error when fetching groups: ${err}`))
             );
 
             const userID = getUserIDFromToken();
             ws.subscribe("group", userID, (subscription_type, { element_id, group_id }) => {
                 if (element_id === userID) {
-                    fetchGroups().then((result) => setSelf(sortGroups(result)));
+                    api.fetchGroups().then((result) => setSelf(sortGroups(result)));
                 }
             });
             // TODO: handle registration errors
@@ -58,16 +48,6 @@ export const groupById = atomFamily({
     }),
 });
 
-export interface GroupMember {
-    user_id: number;
-    username: string;
-    is_owner: boolean;
-    can_write: boolean;
-    description: string;
-    joined_at: string;
-    invited_by: number | null;
-}
-
 export const currUserPermissions = selectorFamily<GroupMember, number>({
     key: "currUserPermissions",
     get:
@@ -75,27 +55,29 @@ export const currUserPermissions = selectorFamily<GroupMember, number>({
         async ({ get }) => {
             const members = get(groupMembers(groupID));
             const currUser = get(userData);
-            return members.find((member) => member.user_id === currUser.id);
+            return members.find((member) => member.userID === currUser.id);
         },
 });
 
-const sortMembers = (members) => {
-    return members.sort((m1, m2) => DateTime.fromISO(m1.joined_at) < DateTime.fromISO(m2.joined_at));
+const sortMembers = (members: GroupMember[]): GroupMember[] => {
+    return members.sort(
+        (m1, m2) => DateTime.fromISO(m1.joinedAt).toSeconds() - DateTime.fromISO(m2.joinedAt).toSeconds()
+    );
 };
 
 export const groupMembers = atomFamily<Array<GroupMember>, number>({
     key: "groupMembers",
     effects_UNSTABLE: (groupID) => [
         ({ setSelf }) => {
+            // TODO: handle fetch error
             setSelf(
-                fetchMembers({ groupID: groupID })
-                    .then((members) => sortMembers(members))
-                    .catch((err) => toast.error(`error when fetching group members: ${err}`))
+                api.fetchGroupMembers(groupID).then((members) => sortMembers(members))
+                // .catch((err) => toast.error(`error when fetching group members: ${err}`))
             );
 
             ws.subscribe("group_member", groupID, (subscription_type, { user_id, element_id }) => {
                 if (element_id === groupID) {
-                    fetchMembers({ groupID: element_id })
+                    api.fetchGroupMembers(element_id)
                         .then((result) => setSelf(sortMembers(result)))
                         .catch((err) => toast.error(`error when updating group members: ${err}`));
                 }
@@ -116,35 +98,24 @@ export const groupMemberIDsToUsername = selectorFamily<{ [k: number]: string }, 
         async ({ get }) => {
             const members = get(groupMembers(groupID));
             return members.reduce((map, member) => {
-                map[member.user_id] = member.username;
+                map[member.userID] = member.username;
                 return map;
             }, {});
         },
 });
-
-export interface GroupInvite {
-    id: number;
-    created_by: number;
-    single_use: boolean;
-    valid_until: string;
-    token: string;
-    description: string;
-    join_as_editor: boolean;
-}
 
 export const groupInvites = atomFamily<Array<GroupInvite>, number>({
     key: "groupInvites",
     effects_UNSTABLE: (groupID) => [
         ({ setSelf }) => {
             setSelf(
-                fetchInvites({ groupID: groupID }).catch((err) =>
-                    toast.error(`error when fetching group invites: ${err}`)
-                )
+                api.fetchGroupInvites(groupID)
+                // .catch((err) => toast.error(`error when fetching group invites: ${err}`))
             );
 
             ws.subscribe("group_invite", groupID, (subscription_type, { invite_id, element_id }) => {
                 if (element_id === groupID) {
-                    fetchInvites({ groupID: element_id }).then((result) => setSelf(result));
+                    api.fetchGroupInvites(element_id).then((result) => setSelf(result));
                 }
             });
             // TODO: handle registration errors
@@ -156,26 +127,18 @@ export const groupInvites = atomFamily<Array<GroupInvite>, number>({
     ],
 });
 
-export interface GroupLog {
-    id: number;
-    type: string;
-    message: string;
-    user_id: number;
-    logged_at: string;
-    affected_user_id: number;
-}
-
-export const groupLog = atomFamily<Array<GroupLog>, number>({
+export const groupLog = atomFamily<Array<GroupLogEntry>, number>({
     key: "groupLog",
     effects_UNSTABLE: (groupID) => [
         ({ setSelf }) => {
             setSelf(
-                fetchLog({ groupID: groupID }).catch((err) => toast.error(`error when fetching group log: ${err}`))
+                api.fetchGroupLog(groupID)
+                // .catch((err) => toast.error(`error when fetching group log: ${err}`))
             );
 
             ws.subscribe("group_log", groupID, (subscription_type, { log_id, element_id }) => {
                 if (element_id === groupID) {
-                    fetchLog({ groupID: element_id }).then((result) => setSelf(result));
+                    api.fetchGroupLog(element_id).then((result) => setSelf(result));
                 }
             });
             // TODO: handle registration errors

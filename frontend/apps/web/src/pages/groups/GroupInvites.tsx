@@ -2,8 +2,9 @@ import React, { useState } from "react";
 
 import InviteLinkCreate from "../../components/groups/InviteLinkCreate";
 import { toast } from "react-toastify";
-import { deleteGroupInvite } from "../../core/api";
-import { currUserPermissions, Group, groupInvites, groupMembers } from "../../state/groups";
+import { api } from "../../core/api";
+import { currUserPermissions, groupInvites, groupMembers } from "../../state/groups";
+import { Group } from "@abrechnung/types";
 import { useRecoilValue } from "recoil";
 import { DateTime } from "luxon";
 import {
@@ -36,13 +37,13 @@ export const GroupInvites: React.FC<Props> = ({ group }) => {
     useTitle(`${group.name} - Invite Links`);
 
     const deleteToken = (id) => {
-        deleteGroupInvite({ groupID: group.id, inviteID: id }).catch((err) => {
+        api.deleteGroupInvite(group.id, id).catch((err) => {
             toast.error(err);
         });
     };
 
-    const getMemberUsername = (member_id) => {
-        const member = members.find((member) => member.user_id === member_id);
+    const getMemberUsername = (memberID) => {
+        const member = members.find((member) => member.userID === memberID);
         if (member === undefined) {
             return "unknown";
         }
@@ -94,15 +95,15 @@ export const GroupInvites: React.FC<Props> = ({ group }) => {
                                 }
                                 secondary={
                                     <>
-                                        {invite.description}, created by {getMemberUsername(invite.created_by)}, valid
+                                        {invite.description}, created by {getMemberUsername(invite.createdBy)}, valid
                                         until{" "}
-                                        {DateTime.fromISO(invite.valid_until).toLocaleString(DateTime.DATETIME_FULL)}
-                                        {invite.single_use && ", single use"}
-                                        {invite.join_as_editor && ", join as editor"}
+                                        {DateTime.fromISO(invite.validUntil).toLocaleString(DateTime.DATETIME_FULL)}
+                                        {invite.singleUse && ", single use"}
+                                        {invite.joinAsEditor && ", join as editor"}
                                     </>
                                 }
                             />
-                            {userPermissions.can_write && (
+                            {userPermissions.canWrite && (
                                 <ListItemSecondaryAction>
                                     <IconButton
                                         color="primary"
@@ -121,7 +122,7 @@ export const GroupInvites: React.FC<Props> = ({ group }) => {
                     ))
                 )}
             </List>
-            {userPermissions.can_write && !isGuest && (
+            {userPermissions.canWrite && !isGuest && (
                 <>
                     <Grid container justifyContent="center">
                         <IconButton color="primary" onClick={() => setShowModal(true)}>

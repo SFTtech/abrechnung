@@ -29,7 +29,7 @@ import { StackScreenProps } from "@react-navigation/stack";
 import LoadingIndicator from "../../components/LoadingIndicator";
 import { useFocusEffect } from "@react-navigation/native";
 import {
-    Transaction,
+    TransactionDetails,
     TransactionPosition,
     TransactionShare,
     TransactionValidationErrors,
@@ -37,7 +37,7 @@ import {
 } from "@abrechnung/types";
 
 type LocalEditingState = Pick<
-    Transaction,
+    TransactionDetails,
     | "description"
     | "value"
     | "billedAt"

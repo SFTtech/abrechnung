@@ -2,8 +2,8 @@ import React from "react";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { accountsSeenByUser } from "../../state/accounts";
 import AccountSelect, { AccountSelectProps } from "../style/AccountSelect";
-import { pendingTransactionDetailChanges, Transaction } from "../../state/transactions";
-import { Group } from "../../state/groups";
+import { pendingTransactionDetailChanges } from "../../state/transactions";
+import { Group, Transaction } from "@abrechnung/types";
 
 type Props = {
     group: Group;
@@ -15,7 +15,9 @@ type Props = {
 export const TransactionCreditorShare: React.FC<Props> = ({ group, transaction, isEditing, ...props }) => {
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const shareAccountID =
-        Object.keys(transaction.creditor_shares).length === 0 ? null : Object.keys(transaction.creditor_shares)[0];
+        Object.keys(transaction.details.creditorShares).length === 0
+            ? null
+            : Object.keys(transaction.details.creditorShares)[0];
     const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
 
     const getAccount = (accountID) => {

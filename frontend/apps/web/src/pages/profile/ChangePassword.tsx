@@ -1,6 +1,6 @@
 import React from "react";
 import { Form, Formik } from "formik";
-import { changePassword } from "../../core/api";
+import { api } from "../../core/api";
 import { toast } from "react-toastify";
 import { Button, LinearProgress, TextField, Typography } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
@@ -18,10 +18,7 @@ export const ChangePassword: React.FC = () => {
     };
 
     const handleSubmit = (values, { setSubmitting }) => {
-        changePassword({
-            oldPassword: values.password,
-            newPassword: values.newPassword,
-        })
+        api.changePassword(values.password, values.newPassword)
             .then((res) => {
                 setSubmitting(false);
                 toast.success("Successfully changed password");

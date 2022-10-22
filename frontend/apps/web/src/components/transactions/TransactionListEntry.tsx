@@ -6,8 +6,7 @@ import React from "react";
 import { useRecoilValue } from "recoil";
 import { accountsSeenByUser } from "../../state/accounts";
 import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
-import { Group } from "../../state/groups";
-import { Transaction } from "../../state/transactions";
+import { Group, Transaction } from "@abrechnung/types";
 
 interface Props {
     group: Group;
@@ -41,32 +40,32 @@ export const TransactionListEntry: React.FC<Props> = ({ group, transaction }) =>
                 <ListItemText
                     primary={
                         <>
-                            {transaction.is_wip && (
+                            {transaction.isWip && (
                                 <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 1 }} />
                             )}
                             <Typography variant="body1" component="span">
-                                {transaction.description}
+                                {transaction.details.description}
                             </Typography>
                         </>
                     }
                     secondary={
                         <>
                             <Typography variant="body2" component="span" sx={{ color: "text.primary" }}>
-                                by {accountNamesFromShares(Object.keys(transaction.creditor_shares))}, for{" "}
-                                {accountNamesFromShares(Object.keys(transaction.debitor_shares))}
+                                by {accountNamesFromShares(Object.keys(transaction.details.creditorShares))}, for{" "}
+                                {accountNamesFromShares(Object.keys(transaction.details.debitorShares))}
                             </Typography>
                             <br />
-                            {DateTime.fromISO(transaction.billed_at).toLocaleString(DateTime.DATE_FULL)}
+                            {DateTime.fromJSDate(transaction.details.billedAt).toLocaleString(DateTime.DATE_FULL)}
                         </>
                     }
                 />
                 <ListItemText>
                     <Typography align="right" variant="body2">
-                        {transaction.value.toFixed(2)} {transaction.currency_symbol}
+                        {transaction.details.value.toFixed(2)} {transaction.details.currencySymbol}
                         <br />
                         <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
                             last changed:{" "}
-                            {DateTime.fromISO(transaction.last_changed).toLocaleString(DateTime.DATETIME_FULL)}
+                            {DateTime.fromJSDate(transaction.lastChanged).toLocaleString(DateTime.DATETIME_FULL)}
                         </Typography>
                     </Typography>
                 </ListItemText>

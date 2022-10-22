@@ -1,22 +1,21 @@
 import React, { ReactNode } from "react";
 import { toast } from "react-toastify";
 import { Form, Formik, FormikProps } from "formik";
-import { createTransaction } from "../../../core/api";
+import { api } from "../../../core/api";
 import { DateTime } from "luxon";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
-import DatePicker from "@mui/lab/DatePicker";
+import { DatePicker } from "@mui/x-date-pickers";
 import { useSetRecoilState } from "recoil";
 import { addTransactionInState, groupTransactions } from "../../../state/transactions";
-import { Group } from "../../../state/groups";
 import AccountSelect from "../../style/AccountSelect";
 import * as yup from "yup";
-import { AccountConsolidated } from "../../../state/accounts";
+import { Group, Account } from "@abrechnung/types";
 
 interface FormValues {
     value: string;
     description: string;
     billedAt: DateTime;
-    creditor: AccountConsolidated;
+    creditor: Account;
 }
 
 const validationSchema = yup.object({
@@ -45,16 +44,17 @@ export const PurchaseCreateModal: React.FC<Props> = ({ group, show, onClose }) =
     };
 
     const handleSubmit = (values, { setSubmitting }) => {
-        createTransaction({
-            groupID: group.id,
-            type: "purchase",
-            description: values.description,
-            value: parseFloat(values.value),
-            billedAt: values.billedAt.toISODate(),
-            currencySymbol: group.currency_symbol,
-            currencyConversionRate: 1.0,
-            creditorShares: { [values.creditor.id]: 1.0 },
-        })
+        api.createTransaction(
+            group.id,
+            "purchase",
+            values.description,
+            parseFloat(values.value),
+            values.billedAt.toJSDate(),
+            group.currencySymbol,
+            1.0,
+            { [values.creditor.id]: 1.0 },
+            null
+        )
             .then((t) => {
                 addTransactionInState(t, setTransactions);
                 setSubmitting(false);

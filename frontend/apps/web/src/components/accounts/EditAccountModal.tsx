@@ -1,7 +1,7 @@
 import { Form, Formik } from "formik";
 import React from "react";
 import { toast } from "react-toastify";
-import { updateAccountDetails } from "../../core/api";
+import { api } from "../../core/api";
 import {
     Button,
     Checkbox,
@@ -14,16 +14,17 @@ import {
     LinearProgress,
     TextField,
 } from "@mui/material";
-import { AccountConsolidated, groupAccounts, updateAccount } from "../../state/accounts";
+import { groupAccounts, updateAccount } from "../../state/accounts";
+import { Group, Account } from "@abrechnung/types";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { userData } from "../../state/auth";
-import { currUserPermissions, Group, groupMemberIDsToUsername } from "../../state/groups";
+import { currUserPermissions, groupMemberIDsToUsername } from "../../state/groups";
 import GroupMemberSelect from "../groups/GroupMemberSelect";
 
 interface Props {
     group: Group;
     show: boolean;
-    account: AccountConsolidated;
+    account: Account;
     onClose: (
         event: Record<string, never>,
         reason: "escapeKeyDown" | "backdropClick" | "completed" | "closeButton"
@@ -37,12 +38,7 @@ export const EditAccountModal: React.FC<Props> = ({ group, show, onClose, accoun
     const memberIDToUsername = useRecoilValue(groupMemberIDsToUsername(group.id));
 
     const handleSubmit = (values, { setSubmitting }) => {
-        updateAccountDetails({
-            accountID: values.accountID,
-            name: values.name,
-            description: values.description,
-            owningUserID: values.owningUserID,
-        })
+        api.updateAccountDetails(values.accountID, values.name, values.description, values.owningUserID, null)
             .then((account) => {
                 console.log(account);
                 updateAccount(account, setAccounts);
@@ -64,7 +60,7 @@ export const EditAccountModal: React.FC<Props> = ({ group, show, onClose, accoun
                         accountID: account?.id,
                         name: account?.name,
                         description: account?.description,
-                        owningUserID: account?.owning_user_id,
+                        owningUserID: account?.owningUserID,
                     }}
                     onSubmit={handleSubmit}
                     enableReinitialize={true}
@@ -93,7 +89,7 @@ export const EditAccountModal: React.FC<Props> = ({ group, show, onClose, accoun
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                             />
-                            {userPermissions.is_owner ? (
+                            {userPermissions.isOwner ? (
                                 <GroupMemberSelect
                                     margin="normal"
                                     group={group}
@@ -101,7 +97,7 @@ export const EditAccountModal: React.FC<Props> = ({ group, show, onClose, accoun
                                     value={values.owningUserID}
                                     onChange={(user_id) => setFieldValue("owningUserID", user_id)}
                                 />
-                            ) : account?.owning_user_id === null || account?.owning_user_id === currentUser.id ? (
+                            ) : account?.owningUserID === null || account?.owningUserID === currentUser.id ? (
                                 <FormControlLabel
                                     control={
                                         <Checkbox
@@ -121,7 +117,7 @@ export const EditAccountModal: React.FC<Props> = ({ group, show, onClose, accoun
                                         size="small"
                                         component="span"
                                         color="primary"
-                                        label={memberIDToUsername[account?.owning_user_id]}
+                                        label={memberIDToUsername[account?.owningUserID]}
                                     />
                                 </span>
                             )}

@@ -16,8 +16,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { accountsSeenByUser } from "../../../state/accounts";
-import { Transaction } from "../../../state/transactions";
-import { Group } from "../../../state/groups";
+import { Group, Transaction } from "@abrechnung/types";
 import { ClearingAccountIcon, PersonalAccountIcon } from "../../style/AbrechnungIcons";
 import { useTheme } from "@mui/material/styles";
 
@@ -38,8 +37,8 @@ export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({ group, transact
         transaction.positions != null && transaction.positions.find((item) => !item.deleted) !== undefined;
 
     useEffect(() => {
-        setDebitorShareValues(transaction.debitor_shares);
-        for (const share of Object.values(transaction.debitor_shares)) {
+        setDebitorShareValues(transaction.details.debitorShares);
+        for (const share of Object.values(transaction.details.debitorShares)) {
             if (share !== 1) {
                 setShowAdvanced(true);
                 break;
@@ -48,7 +47,7 @@ export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({ group, transact
     }, [transaction]);
 
     const debitorShareValueForAccount = (accountID) => {
-        return debitorShareValues.hasOwnProperty(accountID) ? debitorShareValues[accountID] : 0;
+        return debitorShareValues[accountID] ?? 0;
     };
 
     return (
@@ -97,9 +96,9 @@ export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({ group, transact
                         {accounts
                             .filter(
                                 (account) =>
-                                    transaction.account_balances.hasOwnProperty(account.id) &&
-                                    (transaction.account_balances[account.id].common_debitors !== 0 ||
-                                        transaction.account_balances[account.id].positions)
+                                    transaction.accountBalances[account.id] !== undefined &&
+                                    (transaction.accountBalances[account.id].commonDebitors !== 0 ||
+                                        transaction.accountBalances[account.id].positions)
                             )
                             .map((account) => (
                                 <TableRow hover key={account.id}>
@@ -138,27 +137,27 @@ export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({ group, transact
                                     {transactionHasPositions ? (
                                         <>
                                             <TableCell align="right">
-                                                {transaction.account_balances[account.id].positions.toFixed(2)}{" "}
-                                                {transaction.currency_symbol}
+                                                {transaction.accountBalances[account.id].positions.toFixed(2)}{" "}
+                                                {transaction.details.currencySymbol}
                                             </TableCell>
                                             <TableCell></TableCell>
                                             <TableCell align="right">
-                                                {transaction.account_balances[account.id].common_debitors.toFixed(2)}{" "}
-                                                {transaction.currency_symbol}
+                                                {transaction.accountBalances[account.id].commonDebitors.toFixed(2)}{" "}
+                                                {transaction.details.currencySymbol}
                                             </TableCell>
                                             <TableCell></TableCell>
                                             <TableCell width="100px" align="right">
                                                 {(
-                                                    transaction.account_balances[account.id].common_debitors +
-                                                    transaction.account_balances[account.id].positions
+                                                    transaction.accountBalances[account.id].commonDebitors +
+                                                    transaction.accountBalances[account.id].positions
                                                 ).toFixed(2)}{" "}
-                                                {transaction.currency_symbol}
+                                                {transaction.details.currencySymbol}
                                             </TableCell>
                                         </>
                                     ) : (
                                         <TableCell width="100px" align="right">
-                                            {transaction.account_balances[account.id].common_debitors.toFixed(2)}{" "}
-                                            {transaction.currency_symbol}
+                                            {transaction.accountBalances[account.id].commonDebitors.toFixed(2)}{" "}
+                                            {transaction.details.currencySymbol}
                                         </TableCell>
                                     )}
                                 </TableRow>

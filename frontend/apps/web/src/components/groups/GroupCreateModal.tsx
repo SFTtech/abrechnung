@@ -1,7 +1,7 @@
 import React, { ReactNode } from "react";
 import { toast } from "react-toastify";
 import { Form, Formik, FormikProps } from "formik";
-import { createGroup } from "../../core/api";
+import { api } from "../../core/api";
 import {
     Button,
     Checkbox,
@@ -36,11 +36,7 @@ interface Props {
 
 export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
     const handleSubmit = (values, { setSubmitting }) => {
-        createGroup({
-            name: values.name,
-            description: values.description,
-            addUserAccountOnJoin: values.addUserAccountOnJoin,
-        })
+        api.createGroup(values.name, values.description, "€", "", values.addUserAccountOnJoin)
             .then((result) => {
                 setSubmitting(false);
                 onClose({}, "completed");

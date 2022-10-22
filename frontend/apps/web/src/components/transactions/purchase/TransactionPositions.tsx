@@ -18,14 +18,9 @@ import { useRecoilState, useRecoilValue } from "recoil";
 import { accountsSeenByUser } from "../../../state/accounts";
 import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import AccountSelect from "../../style/AccountSelect";
-import {
-    LocalPositionChanges,
-    pendingTransactionPositionChanges,
-    Transaction,
-    TransactionPosition,
-} from "../../../state/transactions";
+import { LocalPositionChanges, pendingTransactionPositionChanges } from "../../../state/transactions";
 import { MobilePaper } from "../../style/mobile";
-import { Group } from "../../../state/groups";
+import { Group, Transaction, TransactionPosition } from "@abrechnung/types";
 
 type ShareInputProps = {
     value: number;
@@ -180,7 +175,7 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
                     key={`position-${position.id}-name`}
                     value={position.name}
                     id={`position-${position.id}-name`}
-                    onChange={(value) => updatePosition(position, value, position.price, position.communist_shares)}
+                    onChange={(value) => updatePosition(position, value, position.price, position.communistShares)}
                     validate={(value) => value !== "" && value != null}
                 />
             </TableCell>
@@ -191,7 +186,7 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
                     value={String(position.price)}
                     style={{ width: 70 }}
                     onChange={(value) =>
-                        updatePosition(position, position.name, parseFloat(value), position.communist_shares)
+                        updatePosition(position, position.name, parseFloat(value), position.communistShares)
                     }
                     validate={validateFloat}
                     errorMsg={"float required"}
@@ -201,18 +196,14 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
                 <TableCell align="right" key={accountID}>
                     {showAdvanced ? (
                         <ShareInput
-                            value={
-                                position.usages.hasOwnProperty(String(accountID))
-                                    ? position.usages[String(accountID)]
-                                    : 0
-                            }
+                            value={position.usages[accountID] !== undefined ? position.usages[String(accountID)] : 0}
                             onChange={(value) => updatePositionUsage(position, accountID, value)}
                             inputProps={{ tabIndex: -1 }}
                         />
                     ) : (
                         <Checkbox
                             name={`${accountID}-checked`}
-                            checked={position.usages.hasOwnProperty(String(accountID))}
+                            checked={position.usages[accountID] !== undefined}
                             onChange={(event) => updatePositionUsage(position, accountID, event.target.checked ? 1 : 0)}
                             inputProps={{ tabIndex: -1 }}
                         />
@@ -224,14 +215,14 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
             <TableCell align="right">
                 {showAdvanced ? (
                     <ShareInput
-                        value={position.communist_shares}
+                        value={position.communistShares}
                         onChange={(value) => updatePosition(position, position.name, position.price, parseFloat(value))}
                         inputProps={{ tabIndex: -1 }}
                     />
                 ) : (
                     <Checkbox
                         name="communist-checked"
-                        checked={position.communist_shares !== 0}
+                        checked={position.communistShares !== 0}
                         onChange={(event) =>
                             updatePosition(position, position.name, position.price, event.target.checked ? 1 : 0)
                         }
@@ -256,6 +247,8 @@ interface TransactionPositionsProps {
     transaction: Transaction;
 }
 
+type TransactionPositionWithLocalFlag = TransactionPosition & { isEmpty: boolean };
+
 export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ group, transaction }) => {
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const [localPositionChanges, setLocalPositionChanges] = useRecoilState(
@@ -263,16 +256,16 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
     );
     const [showAdvanced, setShowAdvanced] = useState(false);
 
-    const [positions, setPositions] = useState([]);
+    const [positions, setPositions] = useState<TransactionPositionWithLocalFlag[]>([]);
 
     useEffect(() => {
         setPositions(
             transaction.positions
-                .map((p) => ({ ...p, is_empty: false }))
+                .map((p) => ({ ...p, isEmpty: false }))
                 .concat([
                     {
                         ...localPositionChanges.empty,
-                        is_empty: true,
+                        isEmpty: true,
                     },
                 ])
         );
@@ -292,7 +285,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
     const [additionalPurchaseItemAccounts, setAdditionalPurchaseItemAccounts] = useState([]);
     const transactionAccounts: Array<number> = Array.from(
         new Set<number>(
-            Object.keys(transaction.debitor_shares)
+            Object.keys(transaction.details.debitorShares)
                 .map((id) => parseInt(id))
                 .concat(positionAccounts)
                 .concat(additionalPurchaseItemAccounts)
@@ -304,11 +297,11 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
     const [showAccountSelect, setShowAccountSelect] = useState(false);
 
     const totalPositionValue = positions.reduce((acc, curr) => acc + curr.price, 0);
-    const sharedTransactionValue = transaction.value - totalPositionValue;
+    const sharedTransactionValue = transaction.details.value - totalPositionValue;
 
     const purchaseItemSumForAccount = (accountID) => {
-        return transaction.account_balances.hasOwnProperty(accountID)
-            ? transaction.account_balances[accountID].positions
+        return transaction.accountBalances[accountID] !== undefined
+            ? transaction.accountBalances[accountID].positions
             : 0;
     };
 
@@ -376,7 +369,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
             setLocalPositionChanges((currPositions) => {
                 const mappedModified = { ...currPositions.modified };
                 let usages;
-                if (mappedModified.hasOwnProperty(position.id)) {
+                if (mappedModified[position.id] !== undefined) {
                     // we already did change something locally
                     usages = { ...currPositions.modified[position.id].usages };
                 } else {
@@ -446,9 +439,10 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                 id: nextEmptyPositionID(currValue),
                 name: "",
                 price: 0,
-                communist_shares: 0,
+                communistShares: 0,
                 usages: {},
                 deleted: false,
+                hasLocalChanges: true,
             },
         }));
     };
@@ -471,9 +465,10 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                         id: nextEmptyPositionID(currPositions),
                         name: "",
                         price: 0,
-                        communist_shares: 0,
+                        communistShares: 0,
                         usages: {},
                         deleted: false,
+                        hasLocalChanges: true,
                     },
                 };
             });
@@ -539,7 +534,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
         <MobilePaper sx={{ marginTop: 2 }}>
             <Grid container direction="row" justifyContent="space-between">
                 <Typography>Positions</Typography>
-                {transaction.is_wip && (
+                {transaction.isWip && (
                     <FormControlLabel
                         control={<Checkbox name={`show-advanced`} />}
                         checked={showAdvanced}
@@ -554,12 +549,12 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                         <TableRow>
                             <TableCell>Name</TableCell>
                             <TableCell align="right">Price</TableCell>
-                            {(transaction.is_wip ? transactionAccounts : positionAccounts).map((accountID) => (
+                            {(transaction.isWip ? transactionAccounts : positionAccounts).map((accountID) => (
                                 <TableCell align="right" sx={{ minWidth: 80 }} key={accountID}>
                                     {accounts.find((account) => account.id === accountID).name}
                                 </TableCell>
                             ))}
-                            {transaction.is_wip && (
+                            {transaction.isWip && (
                                 <>
                                     {showAccountSelect && (
                                         <TableCell align="right">
@@ -580,11 +575,11 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                                 </>
                             )}
                             <TableCell align="right">Shared</TableCell>
-                            {transaction.is_wip && <TableCell></TableCell>}
+                            {transaction.isWip && <TableCell></TableCell>}
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {transaction.is_wip
+                        {transaction.isWip
                             ? positions.map((position, idx) => (
                                   <TableRow hover key={position.id}>
                                       <PositionTableRow
@@ -602,20 +597,20 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                               ))
                             : positions.map(
                                   (position) =>
-                                      !position.is_empty && (
+                                      !position.isEmpty && (
                                           <TableRow hover key={position.id}>
                                               <TableCell>{position.name}</TableCell>
                                               <TableCell align="right" style={{ minWidth: 80 }}>
-                                                  {position.price.toFixed(2)} {transaction.currency_symbol}
+                                                  {position.price.toFixed(2)} {transaction.details.currencySymbol}
                                               </TableCell>
                                               {positionAccounts.map((accountID) => (
                                                   <TableCell align="right" key={accountID}>
-                                                      {position.usages.hasOwnProperty(String(accountID))
+                                                      {position.usages[accountID] !== undefined
                                                           ? position.usages[String(accountID)]
                                                           : 0}
                                                   </TableCell>
                                               ))}
-                                              <TableCell align="right">{position.communist_shares}</TableCell>
+                                              <TableCell align="right">{position.communistShares}</TableCell>
                                           </TableRow>
                                       )
                               )}
@@ -624,37 +619,38 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                                 <Typography sx={{ fontWeight: "bold" }}>Total:</Typography>
                             </TableCell>
                             <TableCell align="right">
-                                {totalPositionValue.toFixed(2)} {transaction.currency_symbol}
+                                {totalPositionValue.toFixed(2)} {transaction.details.currencySymbol}
                             </TableCell>
-                            {(transaction.is_wip ? transactionAccounts : positionAccounts).map((accountID) => (
+                            {(transaction.isWip ? transactionAccounts : positionAccounts).map((accountID) => (
                                 <TableCell align="right" key={accountID}>
-                                    {purchaseItemSumForAccount(accountID).toFixed(2)} {transaction.currency_symbol}
+                                    {purchaseItemSumForAccount(accountID).toFixed(2)}{" "}
+                                    {transaction.details.currencySymbol}
                                 </TableCell>
                             ))}
                             <TableCell align="right" colSpan={showAddAccount ? 2 : 1}>
                                 {(
                                     positions.reduce((acc, curr) => acc + curr.price, 0) -
-                                    Object.values(transaction.account_balances).reduce(
+                                    Object.values(transaction.accountBalances).reduce(
                                         (acc, curr) => acc + curr.positions,
                                         0
                                     )
                                 ).toFixed(2)}{" "}
-                                {transaction.currency_symbol}
+                                {transaction.details.currencySymbol}
                             </TableCell>
-                            {transaction.is_wip && <TableCell></TableCell>}
+                            {transaction.isWip && <TableCell></TableCell>}
                         </TableRow>
                         <TableRow hover>
                             <TableCell>
                                 <Typography sx={{ fontWeight: "bold" }}>Remaining:</Typography>
                             </TableCell>
                             <TableCell align="right">
-                                {sharedTransactionValue.toFixed(2)} {transaction.currency_symbol}
+                                {sharedTransactionValue.toFixed(2)} {transaction.details.currencySymbol}
                             </TableCell>
-                            {(transaction.is_wip ? transactionAccounts : positionAccounts).map((accountID) => (
+                            {(transaction.isWip ? transactionAccounts : positionAccounts).map((accountID) => (
                                 <TableCell align="right" key={accountID}></TableCell>
                             ))}
                             <TableCell align="right" colSpan={showAddAccount ? 2 : 1}></TableCell>
-                            {transaction.is_wip && <TableCell></TableCell>}
+                            {transaction.isWip && <TableCell></TableCell>}
                         </TableRow>
                     </TableBody>
                 </Table>

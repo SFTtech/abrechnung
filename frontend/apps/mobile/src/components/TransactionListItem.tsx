@@ -1,4 +1,4 @@
-import { Transaction } from "@abrechnung/types";
+import { TransactionDetails } from "@abrechnung/types";
 import { toISODateStringNullable } from "@abrechnung/utils";
 import { List, Menu, Text, useTheme } from "react-native-paper";
 import React, { useState } from "react";
@@ -9,7 +9,7 @@ import { notify } from "../notifications";
 import { MaterialIcons } from "@expo/vector-icons";
 
 interface Props {
-    transaction: Transaction;
+    transaction: TransactionDetails;
 }
 
 export const TransactionListItem: React.FC<Props> = ({ transaction }) => {

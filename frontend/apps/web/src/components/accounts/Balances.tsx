@@ -22,7 +22,7 @@ import BalanceTable from "./BalanceTable";
 import { MobilePaper } from "../style/mobile";
 import ListItemLink from "../style/ListItemLink";
 import { useTitle } from "../../core/utils";
-import { Group } from "../../state/groups";
+import { Group } from "@abrechnung/types";
 
 interface Props {
     group: Group;
@@ -46,29 +46,30 @@ export const Balances: React.FC<Props> = ({ group }) => {
 
     useTitle(`${group.name} - Balances`);
 
-    const roundTwoDecimals = (val: number) => Math.round(val / 100) * 100;
+    const roundTwoDecimals = (val: number) => +val.toFixed(2);
 
     const chartData = personalAccounts.map((account) => {
+        const balance = balances.get(account.id);
         return {
             name: account.name,
-            balance: roundTwoDecimals(balances[account.id].balance),
-            totalPaid: roundTwoDecimals(balances[account.id].totalPaid),
-            totalConsumed: roundTwoDecimals(balances[account.id].totalConsumed),
+            balance: roundTwoDecimals(balance?.balance ?? 0),
+            totalPaid: roundTwoDecimals(balance?.totalPaid ?? 0),
+            totalConsumed: roundTwoDecimals(balance?.totalConsumed ?? 0),
             id: account.id,
         };
     });
 
     const unbalancedClearingAccounts = clearingAccounts
-        .filter((account) => balances[account.id].balance !== 0)
+        .filter((account) => balances.get(account.id)?.balance !== 0)
         .map((account) => {
             return {
                 name: account.name,
                 id: account.id,
-                balance: balances[account.id].balance,
+                balance: balances.get(account.id)?.balance ?? 0,
             };
         });
 
-    const chartHeight = Object.keys(balances).length * 30 + 100;
+    const chartHeight = balances.size * 30 + 100;
 
     // TODO determine the rendered width of the account names and take the maximum
     const yaxiswidth = isSmallScreen
@@ -104,7 +105,7 @@ export const Balances: React.FC<Props> = ({ group }) => {
                                             color: account.balance < 0 ? colorRedInverted : colorGreenInverted,
                                         }}
                                     >
-                                        {account.balance.toFixed(2)} {group.currency_symbol}{" "}
+                                        {account.balance.toFixed(2)} {group.currencySymbol}{" "}
                                     </Typography>
                                 </Typography>
                             ))}
@@ -121,12 +122,12 @@ export const Balances: React.FC<Props> = ({ group }) => {
                                             variant="body2"
                                             sx={{
                                                 color:
-                                                    balances[account.id].balance < 0
+                                                    balances.get(account.id)?.balance < 0
                                                         ? colorRedInverted
                                                         : colorGreenInverted,
                                             }}
                                         >
-                                            {balances[account.id].balance.toFixed(2)} {group.currency_symbol}
+                                            {balances.get(account.id)?.balance.toFixed(2)} {group.currencySymbol}
                                         </Typography>
                                     </ListItemLink>
                                     <Divider key={account.id * 2} component="li" />
@@ -150,7 +151,7 @@ export const Balances: React.FC<Props> = ({ group }) => {
                                     <XAxis
                                         stroke={theme.palette.text.primary}
                                         type="number"
-                                        unit={group.currency_symbol}
+                                        unit={group.currencySymbol}
                                     />
                                     <YAxis
                                         dataKey="name"
@@ -160,7 +161,7 @@ export const Balances: React.FC<Props> = ({ group }) => {
                                     />
                                     <Tooltip
                                         formatter={(label) =>
-                                            parseFloat(String(label)).toFixed(2) + ` ${group.currency_symbol}`
+                                            parseFloat(String(label)).toFixed(2) + ` ${group.currencySymbol}`
                                         }
                                         labelStyle={{
                                             color: theme.palette.text.primary,
@@ -184,9 +185,7 @@ export const Balances: React.FC<Props> = ({ group }) => {
                                             );
                                         })}
                                         <LabelList
-                                            dataKey={(entry) =>
-                                                `${entry["balance"].toFixed(2)}${group.currency_symbol}`
-                                            }
+                                            dataKey={(entry) => `${entry["balance"].toFixed(2)}${group.currencySymbol}`}
                                             position="insideLeft"
                                             fill={theme.palette.text.primary}
                                         />

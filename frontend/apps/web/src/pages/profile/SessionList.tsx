@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
 import { userData } from "../../state/auth";
-import { deleteSession, renameSession } from "../../core/api";
+import { api } from "../../core/api";
 import { DateTime } from "luxon";
 import { toast } from "react-toastify";
 import {
@@ -36,7 +36,7 @@ export const SessionList: React.FC = () => {
     useTitle("Abrechnung - Sessions");
 
     const editSession = (id) => {
-        if (!editedSessions.hasOwnProperty(id)) {
+        if (editedSessions[id] === undefined) {
             const newSessions = {
                 ...editedSessions,
                 [id]: sessions.find((session) => session.id === id)?.name,
@@ -46,7 +46,7 @@ export const SessionList: React.FC = () => {
     };
 
     const stopEditSession = (id) => {
-        if (editedSessions.hasOwnProperty(id)) {
+        if (editedSessions[id] !== undefined) {
             const newEditedSessions = { ...editedSessions };
             delete newEditedSessions[id];
             setEditedSessions(newEditedSessions);
@@ -58,11 +58,8 @@ export const SessionList: React.FC = () => {
     };
 
     const performRename = (id) => {
-        if (editedSessions.hasOwnProperty(id)) {
-            renameSession({
-                sessionID: id,
-                name: editedSessions[id],
-            }).catch((err) => {
+        if (editedSessions[id] !== undefined) {
+            api.renameSession(id, editedSessions[id]).catch((err) => {
                 toast.error(err);
             });
             stopEditSession(id);
@@ -75,7 +72,7 @@ export const SessionList: React.FC = () => {
 
     const confirmDeleteSession = () => {
         if (sessionToDelete.toDelete !== null) {
-            deleteSession({ sessionID: sessionToDelete.toDelete }).catch((err) => {
+            api.deleteSession(sessionToDelete.toDelete).catch((err) => {
                 toast.error(err);
             });
             setSessionToDelete({ show: false, toDelete: null });
@@ -100,7 +97,7 @@ export const SessionList: React.FC = () => {
             </Typography>
             <List>
                 {sessions.map((session) => {
-                    if (editedSessions.hasOwnProperty(session.id)) {
+                    if (editedSessions[session.id] !== undefined) {
                         return (
                             <ListItem key={session.id}>
                                 <TextField

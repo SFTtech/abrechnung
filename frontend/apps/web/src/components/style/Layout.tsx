@@ -23,6 +23,7 @@ import {
     Toolbar,
     Tooltip,
     Typography,
+    useMediaQuery,
 } from "@mui/material";
 import {
     AccountBalance,
@@ -41,7 +42,7 @@ import {
 import { config } from "../../state/config";
 import { useTheme } from "@mui/material/styles";
 import { Banner } from "./Banner";
-import { Group } from "../../state/groups";
+import { Group } from "@abrechnung/types";
 
 const drawerWidth = 240;
 
@@ -57,6 +58,7 @@ export const Layout: React.FC<Props> = ({ group = null, children }) => {
     const dotsMenuOpen = Boolean(anchorEl);
     const cfg = useRecoilValue(config);
     const location = useLocation();
+    const isLargeScreen = useMediaQuery(theme.breakpoints.up("sm"));
 
     const [mobileOpen, setMobileOpen] = useState(true);
 
@@ -269,33 +271,18 @@ export const Layout: React.FC<Props> = ({ group = null, children }) => {
                 <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
                     <Drawer
                         container={container}
-                        variant="temporary"
+                        variant={isLargeScreen ? "permanent" : "temporary"}
                         open={mobileOpen}
                         onClose={handleDrawerToggle}
                         ModalProps={{
                             keepMounted: true, // Better open performance on mobile.
                         }}
                         sx={{
-                            display: { xs: "block", sm: "none" },
                             "& .MuiDrawer-paper": {
                                 boxSizing: "border-box",
                                 width: drawerWidth,
                             },
                         }}
-                    >
-                        {drawer}
-                    </Drawer>
-                    <Drawer
-                        variant="permanent"
-                        sx={{
-                            flexShrink: 0,
-                            display: { xs: "none", sm: "block" },
-                            "& .MuiDrawer-paper": {
-                                boxSizing: "border-box",
-                                width: drawerWidth,
-                            },
-                        }}
-                        open
                     >
                         {drawer}
                     </Drawer>

@@ -6,7 +6,7 @@ import Loading from "../../components/style/Loading";
 import TransferDetails from "../../components/transactions/transfer/TransferDetails";
 import PurchaseDetails from "../../components/transactions/purchase/PurchaseDetails";
 import { useTitle } from "../../core/utils";
-import { Group } from "../../state/groups";
+import { Group } from "@abrechnung/types";
 import { Alert } from "@mui/material";
 
 interface Props {
@@ -20,7 +20,7 @@ export const Transaction: React.FC<Props> = ({ group }) => {
 
     const transaction = useRecoilValue(transactionById({ groupID: group.id, transactionID: transactionID }));
 
-    useTitle(`${group.name} - ${transaction?.description}`);
+    useTitle(`${group.name} - ${transaction?.details.description}`);
 
     if (transaction === undefined) {
         navigate("/404");

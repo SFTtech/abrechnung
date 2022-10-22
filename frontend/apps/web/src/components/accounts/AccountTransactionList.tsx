@@ -2,12 +2,12 @@ import React from "react";
 import { List } from "@mui/material";
 import AccountTransactionListEntry from "./AccountTransactionListEntry";
 import { useRecoilValue } from "recoil";
-import { accountTransactions, Transaction } from "../../state/transactions";
-import { AccountConsolidated, clearingAccountsInvolvingUser } from "../../state/accounts";
+import { accountTransactions } from "../../state/transactions";
+import { clearingAccountsInvolvingUser } from "../../state/accounts";
+import { Group, Account, Transaction } from "@abrechnung/types";
 import AccountClearingListEntry from "./AccountClearingListEntry";
-import { Group } from "../../state/groups";
 
-type ArrayAccountsAndTransactions = Array<Transaction | AccountConsolidated>;
+type ArrayAccountsAndTransactions = Array<Transaction | Account>;
 
 interface Props {
     group: Group;
@@ -20,7 +20,7 @@ export const AccountTransactionList: React.FC<Props> = ({ group, accountID }) =>
 
     const combinedList: ArrayAccountsAndTransactions = (transactions as ArrayAccountsAndTransactions)
         .concat(clearingAccounts)
-        .sort((f1, f2) => f2.last_changed.toSeconds() - f1.last_changed.toSeconds());
+        .sort((f1, f2) => f2.lastChanged.getTime() - f1.lastChanged.getTime());
 
     return (
         <List>

@@ -1,4 +1,4 @@
-import React, { ReactNode, Suspense, useMemo } from "react";
+import React, { ReactNode, Suspense, useEffect, useMemo, useState } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
@@ -25,6 +25,7 @@ import { themeSettings } from "../state/settings";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 
 import "react-toastify/dist/ReactToastify.css";
+import { initApi } from "../core/api";
 
 const Profile = React.lazy(() => import("../pages/profile/Profile"));
 const ConfirmEmailChange = React.lazy(() => import("../pages/auth/ConfirmEmailChange"));
@@ -113,6 +114,7 @@ const router = createBrowserRouter([
 export default function App() {
     const darkModeSystem = useMediaQuery("(prefers-color-scheme: dark)");
     const userThemeSettings = useRecoilValue(themeSettings);
+    const [loading, setLoading] = useState(true);
 
     const useDarkMode: PaletteMode =
         userThemeSettings.darkMode === "browser" ? (darkModeSystem ? "dark" : "light") : userThemeSettings.darkMode;
@@ -126,6 +128,11 @@ export default function App() {
             }),
         [useDarkMode]
     );
+
+    useEffect(() => {
+        initApi();
+        setLoading(false); // TODO: do something with this
+    }, []);
 
     return (
         <StyledEngineProvider injectFirst>
@@ -143,7 +150,7 @@ export default function App() {
                         draggable
                         pauseOnHover
                     />
-                    <RouterProvider router={router} />
+                    {loading ? <div></div> : <RouterProvider router={router} />}
                 </LocalizationProvider>
             </ThemeProvider>
         </StyledEngineProvider>

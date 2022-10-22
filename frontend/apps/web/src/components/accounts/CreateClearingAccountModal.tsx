@@ -1,13 +1,13 @@
 import * as yup from "yup";
 import { Form, Formik, FormikProps } from "formik";
 import { toast } from "react-toastify";
-import { createAccount } from "../../core/api";
+import { api } from "../../core/api";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { accountsSeenByUser, addAccount, groupAccounts } from "../../state/accounts";
 import ClearingSharesFormElement from "./ClearingSharesFormElement";
 import React, { ReactNode } from "react";
-import { Group } from "../../state/groups";
+import { Group, Account } from "@abrechnung/types";
 
 interface FormValues {
     name: string;
@@ -48,14 +48,8 @@ export const CreateClearingAccountModal: React.FC<Props> = ({ show, onClose, gro
               };
 
     const handleSubmit = (values, { setSubmitting }) => {
-        createAccount({
-            groupID: group.id,
-            name: values.name,
-            accountType: "clearing",
-            description: values.description,
-            clearingShares: values.clearing_shares,
-        })
-            .then((account) => {
+        api.createAccount(group.id, "clearing", values.name, values.description, values.clearingShares, null)
+            .then((account: Account) => {
                 toast.success(`Created account ${values.name}`);
                 addAccount(account, setAccounts);
                 setSubmitting(false);

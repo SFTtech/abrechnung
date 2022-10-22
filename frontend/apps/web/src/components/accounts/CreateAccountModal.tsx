@@ -1,8 +1,9 @@
 import React, { ReactNode } from "react";
 import * as yup from "yup";
+import { Group, Account } from "@abrechnung/types";
 import { Form, Formik, FormikProps } from "formik";
 import { toast } from "react-toastify";
-import { createAccount } from "../../core/api";
+import { api } from "../../core/api";
 import {
     Button,
     Checkbox,
@@ -17,7 +18,7 @@ import {
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { addAccount, groupAccounts } from "../../state/accounts";
 import GroupMemberSelect from "../groups/GroupMemberSelect";
-import { currUserPermissions, Group } from "../../state/groups";
+import { currUserPermissions } from "../../state/groups";
 import { userData } from "../../state/auth";
 
 interface FormValues {
@@ -46,13 +47,8 @@ export const CreateAccountModal: React.FC<Props> = ({ show, onClose, group }) =>
     const currentUser = useRecoilValue(userData);
 
     const handleSubmit = (values, { setSubmitting }) => {
-        createAccount({
-            groupID: group.id,
-            name: values.name,
-            owningUserID: values.owningUserID,
-            description: values.description,
-        })
-            .then((account) => {
+        api.createAccount(group.id, "personal", values.name, values.description, null, values.owningUserID)
+            .then((account: Account) => {
                 toast.success(`Created account ${values.name}`);
                 addAccount(account, setAccounts);
                 setSubmitting(false);
@@ -110,7 +106,7 @@ export const CreateAccountModal: React.FC<Props> = ({ show, onClose, group }) =>
                                 error={touched.description && Boolean(errors.description)}
                                 helperText={touched.description && (errors.description as ReactNode)}
                             />
-                            {userPermissions.is_owner ? (
+                            {userPermissions.isOwner ? (
                                 <GroupMemberSelect
                                     margin="normal"
                                     group={group}

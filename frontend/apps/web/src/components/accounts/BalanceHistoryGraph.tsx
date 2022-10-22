@@ -8,7 +8,7 @@ import { accountByIDMap } from "../../state/accounts";
 import { ClearingAccountIcon, PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 import { balanceColor } from "../../core/utils";
 import React from "react";
-import { Group } from "../../state/groups";
+import { Group } from "@abrechnung/types";
 
 interface Props {
     group: Group;
@@ -72,7 +72,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ group, accountID }) => {
                             ml: 2,
                         }}
                     >
-                        {payload[0].value} {group.currency_symbol}
+                        {payload[0].value} {group.currencySymbol}
                     </Typography>
                 </div>
                 <Divider />
@@ -80,7 +80,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ group, accountID }) => {
                     <Typography variant="body1">{accountMap[payload[0].payload.changeOrigin.id].name}</Typography>
                 ) : (
                     <Typography variant="body1">
-                        {transactionMap[payload[0].payload.changeOrigin.id].description}
+                        {transactionMap[payload[0].payload.changeOrigin.id].details.description}
                     </Typography>
                 )}
             </Box>
@@ -112,7 +112,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ group, accountID }) => {
                 <YAxis
                     tickFormatter={(value) => value.toFixed(2)}
                     type="number"
-                    unit={group.currency_symbol}
+                    unit={group.currencySymbol}
                     stroke={theme.palette.text.primary}
                 />
                 <Tooltip content={renderTooltip} />

@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useRecoilValue } from "recoil";
-import { Group, groupLog, groupMembers } from "../../state/groups";
-import { sendGroupMessage } from "../../core/api";
+import { groupLog, groupMembers } from "../../state/groups";
+import { Group } from "@abrechnung/types";
+import { api } from "../../core/api";
 import { toast } from "react-toastify";
 import { DateTime } from "luxon";
 import {
@@ -31,10 +32,7 @@ export const GroupLog: React.FC<Props> = ({ group }) => {
     useTitle(`${group.name} - Log`);
 
     const sendMessage = () => {
-        sendGroupMessage({
-            groupID: group.id,
-            message: message,
-        })
+        api.sendGroupMessage(group.id, message)
             .then((result) => {
                 setMessage("");
             })
@@ -44,7 +42,7 @@ export const GroupLog: React.FC<Props> = ({ group }) => {
     };
 
     const getMemberUsername = (member_id) => {
-        const member = members.find((member) => member.user_id === member_id);
+        const member = members.find((member) => member.userID === member_id);
         if (member === undefined) {
             return "unknown";
         }
@@ -96,8 +94,8 @@ export const GroupLog: React.FC<Props> = ({ group }) => {
                     <ListItem key={logEntry.id}>
                         <ListItemText
                             primary={`${logEntry.type} - ${logEntry.message}`}
-                            secondary={`by ${getMemberUsername(logEntry.user_id)}
-                            on ${DateTime.fromISO(logEntry.logged_at).toLocaleString(DateTime.DATETIME_FULL)}`}
+                            secondary={`by ${getMemberUsername(logEntry.userID)}
+                            on ${DateTime.fromISO(logEntry.loggedAt).toLocaleString(DateTime.DATETIME_FULL)}`}
                         />
                     </ListItem>
                 ))}

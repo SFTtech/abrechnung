@@ -1,5 +1,5 @@
 import { atom, selector } from "recoil";
-import { fetchProfile, getUserIDFromToken } from "../core/api";
+import { api, getUserIDFromToken } from "../core/api";
 import { ws } from "../core/websocket";
 
 export interface Session {
@@ -24,7 +24,7 @@ export const userData = atom<User>({
         key: "userData/default",
         get: async ({ get }) => {
             try {
-                return await fetchProfile();
+                return await api.fetchProfile();
             } catch (err) {
                 return null;
             }
@@ -36,7 +36,7 @@ export const userData = atom<User>({
             if (userID !== null) {
                 ws.subscribe("user", userID, (subscriptionType, { subscription_type, element_id }) => {
                     if (subscription_type === "user" && element_id === userID) {
-                        fetchProfile().then((result) => {
+                        api.fetchProfile().then((result) => {
                             setSelf(result);
                         });
                     }

@@ -1,25 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { DisabledTextField } from "../style/DisabledTextField";
 import { useSetRecoilState } from "recoil";
-import { pendingTransactionDetailChanges, Transaction } from "../../state/transactions";
-import { Group } from "../../state/groups";
+import { pendingTransactionDetailChanges } from "../../state/transactions";
+import { Transaction } from "@abrechnung/types";
 
 interface Props {
-    group: Group;
     transaction: Transaction;
 }
 
-export const TransactionValue: React.FC<Props> = ({ group, transaction }) => {
+export const TransactionValue: React.FC<Props> = ({ transaction }) => {
     const [transactionValue, setTransactionValue] = useState("");
     const [error, setError] = useState(false);
     const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
 
     useEffect(() => {
-        setTransactionValue(transaction.value.toFixed(2));
+        setTransactionValue(transaction.details.value.toFixed(2));
     }, [transaction, setTransactionValue]);
 
     const save = () => {
-        if (!error && transaction.is_wip && transactionValue !== String(transaction.value)) {
+        if (!error && transaction.isWip && transactionValue !== String(transaction.details.value)) {
             setLocalTransactionDetails((currState) => {
                 return {
                     ...currState,
@@ -56,7 +55,7 @@ export const TransactionValue: React.FC<Props> = ({ group, transaction }) => {
             onKeyUp={onKeyUp}
             onBlur={save}
             value={transactionValue}
-            disabled={!transaction.is_wip}
+            disabled={!transaction.isWip}
         />
     );
 };

@@ -4,15 +4,14 @@ import { DatePicker } from "@mui/x-date-pickers";
 import { TextField } from "@mui/material";
 import { DateTime } from "luxon";
 import { useSetRecoilState } from "recoil";
-import { pendingTransactionDetailChanges, Transaction } from "../../state/transactions";
-import { Group } from "../../state/groups";
+import { pendingTransactionDetailChanges } from "../../state/transactions";
+import { Transaction } from "@abrechnung/types";
 
 interface Props {
-    group: Group;
     transaction: Transaction;
 }
 
-export const TransactionBilledAt: React.FC<Props> = ({ group, transaction }) => {
+export const TransactionBilledAt: React.FC<Props> = ({ transaction }) => {
     const [error, setError] = useState(null);
     const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
 
@@ -22,7 +21,7 @@ export const TransactionBilledAt: React.FC<Props> = ({ group, transaction }) => 
             return;
         }
         setError(null);
-        if (transaction.is_wip && billedAt !== transaction.billed_at) {
+        if (transaction.isWip && billedAt !== transaction.details.billedAt) {
             setLocalTransactionDetails((currState) => {
                 return {
                     ...currState,
@@ -31,13 +30,13 @@ export const TransactionBilledAt: React.FC<Props> = ({ group, transaction }) => 
             });
         }
     };
-    if (!transaction.is_wip) {
+    if (!transaction.isWip) {
         return (
             <DisabledTextField
                 label="Billed At"
                 variant="standard"
                 fullWidth
-                value={transaction.billed_at.toLocaleString(DateTime.DATE_FULL)}
+                value={DateTime.fromJSDate(transaction.details.billedAt).toLocaleString(DateTime.DATE_FULL)}
                 disabled={true}
             />
         );
@@ -47,7 +46,7 @@ export const TransactionBilledAt: React.FC<Props> = ({ group, transaction }) => 
         <DatePicker
             label="Billed At"
             inputFormat="yyyy-MM-dd"
-            value={transaction.billed_at}
+            value={DateTime.fromJSDate(transaction.details.billedAt)}
             onChange={save}
             renderInput={(params) => (
                 <TextField variant="standard" fullWidth {...params} helperText={error} error={error !== null} />

@@ -5,8 +5,7 @@ import { DateTime } from "luxon";
 import React from "react";
 import { balanceColor } from "../../core/utils";
 import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
-import { Group } from "../../state/groups";
-import { Transaction } from "../../state/transactions";
+import { Group, Transaction } from "@abrechnung/types";
 
 interface Props {
     group: Group;
@@ -35,30 +34,30 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ group, transactio
             <ListItemText
                 primary={
                     <>
-                        {transaction.is_wip && (
+                        {transaction.isWip && (
                             <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 3 }} />
                         )}
                         <Typography variant="body1" component="span">
-                            {transaction.description}
+                            {transaction.details.description}
                         </Typography>
                     </>
                 }
-                secondary={DateTime.fromISO(transaction.billed_at).toLocaleString(DateTime.DATE_FULL)}
+                secondary={DateTime.fromJSDate(transaction.details.billedAt).toLocaleString(DateTime.DATE_FULL)}
             />
             <ListItemText>
                 <Typography align="right" variant="body2">
                     <Typography
                         component="span"
                         sx={{
-                            color: (theme) => balanceColor(transaction.account_balances[accountID].total, theme),
+                            color: (theme) => balanceColor(transaction.accountBalances[accountID].total, theme),
                         }}
                     >
-                        {transaction.account_balances[accountID].total.toFixed(2)} {group.currency_symbol}
+                        {transaction.accountBalances[accountID].total.toFixed(2)} {group.currencySymbol}
                     </Typography>
                     <br />
                     <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
                         last changed:{" "}
-                        {DateTime.fromISO(transaction.last_changed).toLocaleString(DateTime.DATETIME_FULL)}
+                        {DateTime.fromJSDate(transaction.lastChanged).toLocaleString(DateTime.DATETIME_FULL)}
                     </Typography>
                 </Typography>
             </ListItemText>

@@ -1,12 +1,12 @@
 import React from "react";
 
 import { useRecoilValue } from "recoil";
-import { AccountConsolidated, accountsSeenByUser } from "../../state/accounts";
+import { accountsSeenByUser } from "../../state/accounts";
 import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
 import { DisabledTextField } from "./DisabledTextField";
 import { CompareArrows, Person } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
-import { Group } from "../../state/groups";
+import { Group, Account } from "@abrechnung/types";
 
 const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
     minWidth: 200,
@@ -14,8 +14,8 @@ const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
 
 export type AccountSelectProps = {
     group: Group;
-    onChange: (acc: AccountConsolidated) => void;
-    value?: AccountConsolidated | null;
+    onChange: (acc: Account) => void;
+    value?: Account | null;
     exclude?: number[] | null;
     disabled?: boolean;
     noDisabledStyling?: boolean;
@@ -39,7 +39,7 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
     return (
         <Autocomplete
             options={filteredAccounts}
-            getOptionLabel={(acc: AccountConsolidated) => acc.name}
+            getOptionLabel={(acc: Account) => acc.name}
             value={value}
             disabled={disabled}
             openOnFocus
@@ -47,7 +47,7 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
             PopperComponent={StyledAutocompletePopper}
             disableClearable
             className={className}
-            onChange={(event, newValue: AccountConsolidated) => onChange(newValue)}
+            onChange={(event, newValue: Account) => onChange(newValue)}
             renderOption={(props, option) => (
                 <Box component="li" {...props}>
                     {option.type === "personal" ? <Person /> : <CompareArrows />}

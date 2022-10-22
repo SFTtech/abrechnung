@@ -1,13 +1,13 @@
 import { Form, Formik } from "formik";
 import React from "react";
 import { toast } from "react-toastify";
-import { updateAccountDetails } from "../../core/api";
+import { api } from "../../core/api";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
-import { AccountConsolidated, groupAccounts, updateAccount } from "../../state/accounts";
+import { groupAccounts, updateAccount } from "../../state/accounts";
 import { useSetRecoilState } from "recoil";
 import ClearingSharesFormElement from "./ClearingSharesFormElement";
 import * as yup from "yup";
-import { Group } from "../../state/groups";
+import { Group, Account } from "@abrechnung/types";
 
 const validationSchema = yup.object({
     name: yup.string().required("Name is required"),
@@ -17,7 +17,7 @@ const validationSchema = yup.object({
 
 interface Props {
     group: Group;
-    account: AccountConsolidated;
+    account: Account;
     show: boolean;
     onClose: (
         event: Record<string, never>,
@@ -29,12 +29,7 @@ export const EditClearingAccountModal: React.FC<Props> = ({ group, show, onClose
     const setAccounts = useSetRecoilState(groupAccounts(group.id));
 
     const handleSubmit = (values, { setSubmitting }) => {
-        updateAccountDetails({
-            accountID: values.accountID,
-            name: values.name,
-            description: values.description,
-            clearingShares: values.clearingShares,
-        })
+        api.updateAccountDetails(values.accountID, values.name, values.description, null, values.clearingShares)
             .then((account) => {
                 updateAccount(account, setAccounts);
                 setSubmitting(false);
@@ -55,7 +50,7 @@ export const EditClearingAccountModal: React.FC<Props> = ({ group, show, onClose
                         accountID: account?.id,
                         name: account?.name,
                         description: account?.description,
-                        clearingShares: account?.clearing_shares,
+                        clearingShares: account?.clearingShares,
                     }}
                     onSubmit={handleSubmit}
                     enableReinitialize={true}

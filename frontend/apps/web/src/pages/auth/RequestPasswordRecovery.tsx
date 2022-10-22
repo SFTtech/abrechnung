@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Form, Formik } from "formik";
 import { isAuthenticated } from "../../state/auth";
 import { useRecoilValue } from "recoil";
-import { requestPasswordRecovery } from "../../core/api";
+import { api } from "../../core/api";
 import { Alert, Box, Button, Container, CssBaseline, LinearProgress, TextField, Typography } from "@mui/material";
 
 export const RequestPasswordRecovery: React.FC = () => {
@@ -19,7 +19,7 @@ export const RequestPasswordRecovery: React.FC = () => {
     }, [isLoggedIn, navigate]);
 
     const handleSubmit = (values, { setSubmitting }) => {
-        requestPasswordRecovery(values)
+        api.requestPasswordRecovery(values.email)
             .then((res) => {
                 setStatus("success");
                 setError(null);

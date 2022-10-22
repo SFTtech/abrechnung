@@ -11,8 +11,7 @@ import TransactionPositions from "./TransactionPositions";
 import { Add } from "@mui/icons-material";
 import PurchaseDebitorSharesReadOnly from "./PurchaseDebitorSharesReadOnly";
 import { MobilePaper } from "../../style/mobile";
-import { Group } from "../../../state/groups";
-import { Transaction } from "../../../state/transactions";
+import { Group, Transaction } from "@abrechnung/types";
 
 interface Props {
     group: Group;
@@ -28,27 +27,27 @@ export const PurchaseDetails: React.FC<Props> = ({ group, transaction }) => {
                 <TransactionActions groupID={group.id} transaction={transaction} />
                 <Divider sx={{ marginBottom: 1, marginTop: 1 }} />
                 <Grid container>
-                    <Grid item xs={12} md={transaction.is_wip || transaction.files.length > 0 ? 6 : 12}>
-                        <TransactionDescription group={group} transaction={transaction} />
-                        <TransactionBilledAt group={group} transaction={transaction} />
+                    <Grid item xs={12} md={transaction.isWip || transaction.attachments.length > 0 ? 6 : 12}>
+                        <TransactionDescription transaction={transaction} />
+                        <TransactionBilledAt transaction={transaction} />
 
                         <TransactionCreditorShare
                             group={group}
                             transaction={transaction}
-                            isEditing={transaction.is_wip}
+                            isEditing={transaction.isWip}
                             label="Paid by"
                         />
 
-                        <TransactionValue group={group} transaction={transaction} />
+                        <TransactionValue transaction={transaction} />
                     </Grid>
 
-                    {(transaction.is_wip || transaction.files.length > 0) && (
+                    {(transaction.isWip || transaction.attachments.length > 0) && (
                         <Grid item xs={12} md={6} sx={{ marginTop: { xs: 1 } }}>
                             <FileGallery transaction={transaction} />
                         </Grid>
                     )}
                     <Grid item xs={12}>
-                        {transaction.is_wip ? (
+                        {transaction.isWip ? (
                             <PurchaseDebitorShares
                                 group={group}
                                 transaction={transaction}
@@ -62,19 +61,17 @@ export const PurchaseDetails: React.FC<Props> = ({ group, transaction }) => {
             </MobilePaper>
 
             {!showPositions &&
-            transaction.is_wip &&
+            transaction.isWip &&
             transaction.positions.find((item) => !item.deleted) === undefined ? (
                 <Grid container justifyContent="center" sx={{ marginTop: 2 }}>
                     <Button startIcon={<Add />} onClick={() => setShowPositions(true)}>
                         Add Positions
                     </Button>
                 </Grid>
-            ) : (showPositions && transaction.is_wip) ||
+            ) : (showPositions && transaction.isWip) ||
               transaction.positions.find((item) => !item.deleted) !== undefined ? (
                 <TransactionPositions group={group} transaction={transaction} />
-            ) : (
-                <></>
-            )}
+            ) : null}
         </>
     );
 };

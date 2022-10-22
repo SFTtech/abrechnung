@@ -1,11 +1,12 @@
 import { useRecoilValue } from "recoil";
 import { Grid, IconButton, List, ListItem, ListItemText } from "@mui/material";
-import { Group, groupList } from "../../state/groups";
+import { groupList } from "../../state/groups";
 import ListItemLink from "./ListItemLink";
 import GroupCreateModal from "../groups/GroupCreateModal";
 import React, { useState } from "react";
 import { Add } from "@mui/icons-material";
 import { isGuestUser } from "../../state/auth";
+import { Group } from "@abrechnung/types";
 
 interface Props {
     group?: Group | null;

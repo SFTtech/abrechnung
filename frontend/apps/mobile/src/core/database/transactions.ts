@@ -1,10 +1,10 @@
 import { db } from "./index";
 import {
-    Transaction,
+    TransactionDetails,
     TransactionPosition,
     TransactionType,
     validatePosition,
-    validateTransaction,
+    validateTransactionDetails,
     ValidationError,
 } from "@abrechnung/types";
 import { isOnline, api } from "../api";
@@ -39,7 +39,7 @@ export const transactionNotifier = new NotificationEmitter<TransactionEventMap>(
 export const transactionPositionNotifier = new NotificationEmitter<PositionEventMap>();
 
 type TransactionEventPayload = { billedAt: string } & Pick<
-    Transaction,
+    TransactionDetails,
     | "groupID"
     | "type"
     | "description"
@@ -55,7 +55,7 @@ type PositionEventPayload = Pick<
     "transactionID" | "name" | "price" | "usages" | "communistShares" | "deleted"
 >;
 
-function databaseRowToTransaction(row: any): Transaction {
+function databaseRowToTransaction(row: any): TransactionDetails {
     const parsedEvent = row.event_content !== null ? JSON.parse(row.event_content) : null;
     if (parsedEvent !== null) {
         parsedEvent.billedAt = fromISOString(parsedEvent.billedAt);
@@ -90,7 +90,7 @@ function transactionFromEvent(
     groupID: number,
     eventTime: string,
     event: TransactionEventPayload
-): Transaction {
+): TransactionDetails {
     return {
         id: transactionID,
         version: 0,
@@ -105,7 +105,7 @@ function transactionFromEvent(
 }
 
 async function saveTransactionToDatabase(
-    transaction: Transaction,
+    transaction: TransactionDetails,
     positions: TransactionPosition[],
     conn?: Connection
 ) {
@@ -233,10 +233,10 @@ function transactionPositionFromEvent(
         groupID: groupID,
         ...event,
         hasLocalChanges: true,
-    } as TransactionPosition;
+    };
 }
 
-export async function syncTransactions(groupID: number): Promise<[Transaction, TransactionPosition[]][]> {
+export async function syncTransactions(groupID: number): Promise<[TransactionDetails, TransactionPosition[]][]> {
     const backendTransactions = await api.fetchTransactions(groupID);
     await db.transaction((conn: Connection) => {
         backendTransactions.forEach((t) => {
@@ -250,7 +250,7 @@ export async function syncTransactions(groupID: number): Promise<[Transaction, T
     return backendTransactions;
 }
 
-export async function getTransactions(groupID: number): Promise<Transaction[]> {
+export async function getTransactions(groupID: number): Promise<TransactionDetails[]> {
     const result = await db.execute(
         `select
              t.id,
@@ -321,7 +321,7 @@ export async function getTransactions(groupID: number): Promise<Transaction[]> {
     return localTransactions.concat(...serverTransactions);
 }
 
-export async function getTransaction(groupID: number, transactionID: number): Promise<Transaction> {
+export async function getTransaction(groupID: number, transactionID: number): Promise<TransactionDetails> {
     if (transactionID < 0) {
         // we are dealing with a local only account
         const result = await db.execute(
@@ -533,7 +533,7 @@ export async function getTransactionsPositions(transactionID: number): Promise<T
 
 export async function pushLocalTransactionChanges(
     transactionID: number
-): Promise<[Transaction, TransactionPosition[]]> {
+): Promise<[TransactionDetails, TransactionPosition[]]> {
     if (!(await isOnline())) {
         console.log("cannot push changes to server as we are offline");
         throw Error("Cannot push local changes to server as we are offline");
@@ -583,7 +583,7 @@ export async function pushLocalTransactionChanges(
             )
         );
 
-        let updatedTransaction: Transaction, updatedPositions: TransactionPosition[];
+        let updatedTransaction: TransactionDetails, updatedPositions: TransactionPosition[];
 
         if (transactionQueryResult.rows.length > 0) {
             console.log("pushing transaction detail plus position changes to server");
@@ -640,8 +640,8 @@ export async function pushLocalTransactionChanges(
     });
 }
 
-export async function updateTransaction(transaction: Transaction) {
-    const validationErrors = validateTransaction(transaction);
+export async function updateTransaction(transaction: TransactionDetails) {
+    const validationErrors = validateTransactionDetails(transaction);
     if (Object.keys(validationErrors).length > 0) {
         throw new ValidationError(validationErrors);
     }

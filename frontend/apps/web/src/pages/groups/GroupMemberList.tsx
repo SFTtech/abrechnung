@@ -4,9 +4,10 @@ import { useRecoilValue } from "recoil";
 import { userData } from "../../state/auth";
 import { Form, Formik } from "formik";
 import { toast } from "react-toastify";
-import { updateGroupMemberPrivileges } from "../../core/api";
+import { api } from "../../core/api";
 import { DateTime } from "luxon";
-import { currUserPermissions, Group, groupMembers } from "../../state/groups";
+import { currUserPermissions, groupMembers } from "../../state/groups";
+import { Group } from "@abrechnung/types";
 import {
     Button,
     Checkbox,
@@ -41,12 +42,7 @@ export const GroupMemberList: React.FC<Props> = ({ group }) => {
     useTitle(`${group.name} - Members`);
 
     const handleEditMemberSubmit = (values, { setSubmitting }) => {
-        updateGroupMemberPrivileges({
-            groupID: group.id,
-            userID: values.userID,
-            canWrite: values.canWrite,
-            isOwner: values.isOwner,
-        })
+        api.updateGroupMemberPrivileges(group.id, values.userID, values.canWrite, values.isOwner)
             .then((result) => {
                 setSubmitting(false);
                 setShowEditMemberDialog(false);
@@ -59,7 +55,7 @@ export const GroupMemberList: React.FC<Props> = ({ group }) => {
     };
 
     const getMemberUsername = (member_id) => {
-        const member = members.find((member) => member.user_id === member_id);
+        const member = members.find((member) => member.userID === member_id);
         if (member === undefined) {
             return "unknown";
         }
@@ -72,7 +68,7 @@ export const GroupMemberList: React.FC<Props> = ({ group }) => {
     };
 
     const openEditMemberModal = (userID) => {
-        const user = members.find((member) => member.user_id === userID);
+        const user = members.find((member) => member.userID === userID);
         // TODO: maybe deal with disappearing users in the list
         setMemberToEdit(user);
         setShowEditMemberDialog(true);
@@ -92,7 +88,7 @@ export const GroupMemberList: React.FC<Props> = ({ group }) => {
                                 primary={
                                     <>
                                         <span style={{ marginRight: 5 }}>{member.username}</span>
-                                        {member.is_owner ? (
+                                        {member.isOwner ? (
                                             <Chip
                                                 size="small"
                                                 sx={{ mr: 1 }}
@@ -101,7 +97,7 @@ export const GroupMemberList: React.FC<Props> = ({ group }) => {
                                                 label="owner"
                                                 variant="outlined"
                                             />
-                                        ) : member.can_write ? (
+                                        ) : member.canWrite ? (
                                             <Chip
                                                 size="small"
                                                 sx={{ mr: 1 }}
@@ -111,7 +107,7 @@ export const GroupMemberList: React.FC<Props> = ({ group }) => {
                                                 variant="outlined"
                                             />
                                         ) : null}
-                                        {member.user_id === currentUser.id ? (
+                                        {member.userID === currentUser.id ? (
                                             <Chip
                                                 size="small"
                                                 sx={{ mr: 1 }}
@@ -126,21 +122,21 @@ export const GroupMemberList: React.FC<Props> = ({ group }) => {
                                 }
                                 secondary={
                                     <>
-                                        {member.invited_by && (
+                                        {member.invitedBy && (
                                             <small className="text-muted">
-                                                invited by {getMemberUsername(member.invited_by)}
+                                                invited by {getMemberUsername(member.invitedBy)}
                                             </small>
                                         )}
                                         <small className="text-muted">
                                             joined{" "}
-                                            {DateTime.fromISO(member.joined_at).toLocaleString(DateTime.DATETIME_FULL)}
+                                            {DateTime.fromISO(member.joinedAt).toLocaleString(DateTime.DATETIME_FULL)}
                                         </small>
                                     </>
                                 }
                             />
-                            {permissions.is_owner || permissions.can_write ? (
+                            {permissions.isOwner || permissions.canWrite ? (
                                 <ListItemSecondaryAction>
-                                    <IconButton onClick={() => openEditMemberModal(member.user_id)}>
+                                    <IconButton onClick={() => openEditMemberModal(member.userID)}>
                                         <Edit />
                                     </IconButton>
                                 </ListItemSecondaryAction>

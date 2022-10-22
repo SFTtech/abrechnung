@@ -4,7 +4,7 @@ import { Form, Formik } from "formik";
 import { isAuthenticated, userData } from "../../state/auth";
 import { useRecoilValue, useSetRecoilState } from "recoil";
 import { toast } from "react-toastify";
-import { fetchProfile, login, removeToken } from "../../core/api";
+import { api, login, removeToken } from "../../core/api";
 import { useQuery, useTitle } from "../../core/utils";
 import {
     Avatar,
@@ -51,7 +51,7 @@ export const Login: React.FC = () => {
             .then((res) => {
                 toast.success(`Logged in...`);
                 setSubmitting(false);
-                fetchProfile()
+                api.fetchProfile()
                     .then((result) => {
                         setUserData(result);
                     })

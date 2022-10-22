@@ -1,23 +1,22 @@
 import React, { ReactNode } from "react";
 import { toast } from "react-toastify";
 import { Form, Formik, FormikProps } from "formik";
-import { createTransaction } from "../../../core/api";
+import { api } from "../../../core/api";
 import { DateTime } from "luxon";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
-import DatePicker from "@mui/lab/DatePicker";
+import { DatePicker } from "@mui/x-date-pickers";
 import { useSetRecoilState } from "recoil";
 import { addTransactionInState, groupTransactions } from "../../../state/transactions";
-import { Group } from "../../../state/groups";
+import { Group, Account } from "@abrechnung/types";
 import AccountSelect from "../../style/AccountSelect";
 import * as yup from "yup";
-import { AccountConsolidated } from "../../../state/accounts";
 
 interface FormValues {
     value: string;
     description: string;
     billedAt: DateTime;
-    creditor: AccountConsolidated;
-    debitor: AccountConsolidated;
+    creditor: Account;
+    debitor: Account;
 }
 
 const validationSchema = yup.object({
@@ -41,18 +40,18 @@ export const TransferCreateModal: React.FC<Props> = ({ group, show, onClose }) =
     const setTransactions = useSetRecoilState(groupTransactions(group.id));
 
     const handleSubmit = (values, { setSubmitting }) => {
-        createTransaction({
-            groupID: group.id,
-            type: "transfer",
-            description: values.description,
-            value: parseFloat(values.value),
-            billedAt: values.billedAt.toISODate(),
-            currencySymbol: group.currency_symbol,
-            currencyConversionRate: 1.0,
-            creditorShares: { [values.creditor.id]: 1.0 },
-            debitorShares: { [values.debitor.id]: 1.0 },
-            performCommit: true,
-        })
+        api.createTransaction(
+            group.id,
+            "transfer",
+            values.description,
+            parseFloat(values.value),
+            values.billedAt.toJSDate(),
+            group.currencySymbol,
+            1.0,
+            { [values.creditor.id]: 1.0 },
+            { [values.debitor.id]: 1.0 },
+            true
+        )
             .then((t) => {
                 addTransactionInState(t, setTransactions);
                 setSubmitting(false);

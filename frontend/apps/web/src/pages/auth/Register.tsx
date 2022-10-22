@@ -4,7 +4,7 @@ import { Form, Formik } from "formik";
 
 import { useRecoilValue } from "recoil";
 import { isAuthenticated } from "../../state/auth";
-import { register } from "../../core/api";
+import { api } from "../../core/api";
 import { toast } from "react-toastify";
 import Loading from "../../components/style/Loading";
 import {
@@ -63,12 +63,8 @@ export const Register: React.FC = () => {
                 inviteToken = m[1];
             }
         }
-        const payload = {
-            ...values,
-            inviteToken: inviteToken,
-        };
 
-        register(payload)
+        api.register(values.username, values.email, values.password, inviteToken)
             .then((res) => {
                 toast.success(`Registered successfully, please confirm your email before logging in...`, {
                     autoClose: 20000,

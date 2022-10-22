@@ -4,7 +4,7 @@ import { DataGrid, GridToolbar } from "@mui/x-data-grid";
 import { personalAccountsSeenByUser } from "../../state/accounts";
 import { accountBalances } from "../../state/transactions";
 import { renderCurrency } from "../style/datagrid/renderCurrency";
-import { Group } from "../../state/groups";
+import { Group } from "@abrechnung/types";
 
 interface Props {
     group: Group;
@@ -17,9 +17,9 @@ export const BalanceTable: React.FC<Props> = ({ group }) => {
     const tableData = personalAccounts.map((acc) => {
         return {
             ...acc,
-            balance: balances[acc.id].balance,
-            totalPaid: balances[acc.id].totalPaid,
-            totalConsumed: balances[acc.id].totalConsumed,
+            balance: balances.get(acc.id)?.balance,
+            totalPaid: balances.get(acc.id)?.totalPaid,
+            totalConsumed: balances.get(acc.id)?.totalConsumed,
         };
     });
 
@@ -30,17 +30,17 @@ export const BalanceTable: React.FC<Props> = ({ group }) => {
         {
             field: "totalConsumed",
             headerName: "Received / Consumed",
-            renderCell: renderCurrency(group.currency_symbol, "red"),
+            renderCell: renderCurrency(group.currencySymbol, "red"),
         },
         {
             field: "totalPaid",
             headerName: "Paid",
-            renderCell: renderCurrency(group.currency_symbol, "green"),
+            renderCell: renderCurrency(group.currencySymbol, "green"),
         },
         {
             field: "balance",
             headerName: "Balance",
-            renderCell: renderCurrency(group.currency_symbol),
+            renderCell: renderCurrency(group.currencySymbol),
         },
     ];
 

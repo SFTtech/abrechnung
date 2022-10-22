@@ -15,9 +15,9 @@ import {
 import { ShareInput } from "../ShareInput";
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
-import { accountsSeenByUser, ClearingShares } from "../../state/accounts";
+import { accountsSeenByUser } from "../../state/accounts";
+import { Group, ClearingShares } from "@abrechnung/types";
 import { CompareArrows, Person, Search as SearchIcon } from "@mui/icons-material";
-import { Group } from "../../state/groups";
 
 interface Props {
     group: Group;
