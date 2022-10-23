@@ -1,0 +1,40 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: api
+    command: api
+    env_file: .env
+    healthcheck:
+      test: ["CMD", "/usr/bin/curl", "--connect-timeout", "10", "--silent", "http://127.0.0.1:8080/"]
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: frontend
+  node:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: node
+
+  mailer:
+    extends:
+      service: api
+    command: mailer
+    healthcheck:
+      disable: true
+  cron:
+    extends:
+      service: api
+    command: cron
+    healthcheck:
+      disable: true
+  postgres:
+    image: postgres:14-alpine
+    env_file: .env
+    profiles:
+      - withdb
+      - devel
+

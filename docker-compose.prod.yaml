@@ -1,0 +1,27 @@
+services:
+  api:
+    extends:
+      file: docker-compose.base.yaml
+      service: api
+  frontend:
+    extends:
+      file: docker-compose.base.yaml
+      service: frontend
+    depends_on:
+      api:
+        condition: service_healthy
+    links:
+      - api
+
+  mailer:
+    extends:
+      file: docker-compose.base.yaml
+      service: mailer
+    links:
+      - api
+  cron:
+    extends:
+      file: docker-compose.base.yaml
+      service: cron
+    links:
+      - api

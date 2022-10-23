@@ -162,3 +162,7 @@ Sessionx.vim
 tags
 # Persistent undo
 [._]*.un~
+
+### Docker ###
+docker-compose.yaml
+docker-compose.yml
