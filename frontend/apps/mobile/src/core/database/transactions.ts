@@ -1,5 +1,6 @@
 import { db } from "./index";
 import {
+    Transaction,
     TransactionDetails,
     TransactionPosition,
     TransactionType,
@@ -9,7 +10,7 @@ import {
 } from "@abrechnung/types";
 import { isOnline, api } from "../api";
 import { fromISOString, fromISOStringNullable, toISODateString, toISOStringNullable } from "@abrechnung/utils";
-import { Connection } from "./async_wrapper";
+import { Connection } from "./database";
 import { NotificationEmitter } from "@abrechnung/core";
 
 interface TransactionIdentifier {
@@ -38,77 +39,65 @@ interface PositionEventMap {
 export const transactionNotifier = new NotificationEmitter<TransactionEventMap>();
 export const transactionPositionNotifier = new NotificationEmitter<PositionEventMap>();
 
-type TransactionEventPayload = { billedAt: string } & Pick<
-    TransactionDetails,
-    | "groupID"
-    | "type"
-    | "description"
-    | "value"
-    | "currencySymbol"
-    | "currencyConversionRate"
-    | "creditorShares"
-    | "debitorShares"
-    | "deleted"
->;
-type PositionEventPayload = Pick<
-    TransactionPosition,
-    "transactionID" | "name" | "price" | "usages" | "communistShares" | "deleted"
->;
+interface DatabaseRowTransaction {
+    id: number;
+    group_id: number;
+    type: TransactionType;
+    description: string;
+    value: number;
+    billed_at: string;
+    currency_conversion_rate: number;
+    currency_symbol: string;
+    creditor_shares: string;
+    debitor_shares: string;
+    deleted: boolean;
+    revision_committed_at: string | null;
+    revision_started_at: string | null;
+    last_changed: string;
+    version: number;
+    is_wip: boolean;
+    has_local_changes: boolean;
+}
 
-function databaseRowToTransaction(row: any): TransactionDetails {
-    const parsedEvent = row.event_content !== null ? JSON.parse(row.event_content) : null;
-    if (parsedEvent !== null) {
-        parsedEvent.billedAt = fromISOString(parsedEvent.billedAt);
-    }
-    const revision_started_at = fromISOStringNullable(row.revision_started_at);
-    const revision_committed_at = fromISOStringNullable(row.revision_committed_at);
-    const eventTime = fromISOStringNullable(row.event_time);
-    return {
-        id: row.id,
-        type: row.type,
-        group_id: row.group_id,
+interface DatabaseRowPosition {
+    id: number;
+    transaction_id: number;
+    name: string;
+    price: string;
+    communist_shares: number;
+    usages: string;
+}
+
+const databaseRowToTransaction = (row: DatabaseRowTransaction): Transaction => {
+    const details: TransactionDetails = {
         description: row.description,
         value: row.value,
         currencySymbol: row.currency_symbol,
         currencyConversionRate: row.currency_conversion_rate,
-        billedAt: fromISOStringNullable(row.billed_at),
+        billedAt: fromISOString(row.billed_at),
         creditorShares: row.creditor_shares ? JSON.parse(row.creditor_shares) : null,
         debitorShares: row.debitor_shares ? JSON.parse(row.debitor_shares) : null,
+        hasLocalChanges: row.has_local_changes,
         deleted: row.deleted,
-        revisionStartedAt: revision_started_at,
-        revisionCommittedAt: revision_committed_at,
+    };
+    return {
+        id: row.id,
+        type: row.type,
+        groupID: row.group_id,
+        //revisionStartedAt: fromISOStringNullable(row.revision_started_at),
+        //revisionCommittedAt: fromISOStringNullable(row.revision_committed_at),
         version: row.version,
         isWip: row.is_wip,
-        lastChanged: eventTime ?? revision_committed_at ?? revision_started_at,
-        ...parsedEvent,
-        hasLocalChanges: row.event_content !== null,
+        lastChanged: fromISOString(row.last_changed),
+        details: details,
     };
-}
+};
 
-function transactionFromEvent(
-    transactionID: number,
-    groupID: number,
-    eventTime: string,
-    event: TransactionEventPayload
-): TransactionDetails {
-    return {
-        id: transactionID,
-        version: 0,
-        revisionStartedAt: null,
-        revisionCommittedAt: null,
-        lastChanged: fromISOString(eventTime),
-        ...event,
-        isWip: false,
-        billedAt: fromISOString(event.billedAt),
-        hasLocalChanges: true,
-    };
-}
-
-async function saveTransactionToDatabase(
+const saveTransactionToDatabase = async (
     transaction: TransactionDetails,
     positions: TransactionPosition[],
     conn?: Connection
-) {
+) => {
     const transactionInsertQuery = `
         insert into "transaction" (
             id, group_id, type, description, value, billed_at, creditor_shares, debitor_shares, deleted,
@@ -203,9 +192,9 @@ async function saveTransactionToDatabase(
             ]);
         });
     }
-}
+};
 
-function databaseRowToPosition(row: any): TransactionPosition {
+const databaseRowToPosition = (row: any): TransactionPosition => {
     const parsed_event: PositionEventPayload | null = row.event_content !== null ? JSON.parse(row.event_content) : {};
     return {
         id: row.id,
@@ -219,24 +208,9 @@ function databaseRowToPosition(row: any): TransactionPosition {
         ...parsed_event,
         hasLocalChanges: row.event_content !== null,
     } as TransactionPosition;
-}
+};
 
-function transactionPositionFromEvent(
-    positionID: number,
-    transactionID: number,
-    groupID: number,
-    eventTime: string,
-    event: PositionEventPayload
-): TransactionPosition {
-    return {
-        id: positionID,
-        groupID: groupID,
-        ...event,
-        hasLocalChanges: true,
-    };
-}
-
-export async function syncTransactions(groupID: number): Promise<[TransactionDetails, TransactionPosition[]][]> {
+export const syncTransactions = async (groupID: number): Promise<[TransactionDetails, TransactionPosition[]][]> => {
     const backendTransactions = await api.fetchTransactions(groupID);
     await db.transaction((conn: Connection) => {
         backendTransactions.forEach((t) => {
@@ -248,9 +222,9 @@ export async function syncTransactions(groupID: number): Promise<[TransactionDet
     // TODO: upload pending changes to server
     transactionNotifier.emit("changed", { groupID: groupID });
     return backendTransactions;
-}
+};
 
-export async function getTransactions(groupID: number): Promise<TransactionDetails[]> {
+export const getTransactions = async (groupID: number): Promise<TransactionDetails[]> => {
     const result = await db.execute(
         `select
              t.id,
@@ -319,9 +293,9 @@ export async function getTransactions(groupID: number): Promise<TransactionDetai
     );
 
     return localTransactions.concat(...serverTransactions);
-}
+};
 
-export async function getTransaction(groupID: number, transactionID: number): Promise<TransactionDetails> {
+export const getTransaction = async (groupID: number, transactionID: number): Promise<TransactionDetails> => {
     if (transactionID < 0) {
         // we are dealing with a local only account
         const result = await db.execute(
@@ -391,9 +365,9 @@ export async function getTransaction(groupID: number, transactionID: number): Pr
 
         return databaseRowToTransaction(result.rows[0]);
     }
-}
+};
 
-export async function getTransactionsPositionsForGroup(groupID: number): Promise<TransactionPosition[]> {
+export const getTransactionsPositionsForGroup = async (groupID: number): Promise<TransactionPosition[]> => {
     const result = await db.execute(
         `select
              t.id,
@@ -460,9 +434,9 @@ export async function getTransactionsPositionsForGroup(groupID: number): Promise
     );
 
     return localPositions.concat(...serverPositions);
-}
+};
 
-export async function getTransactionsPositions(transactionID: number): Promise<TransactionPosition[]> {
+export const getTransactionsPositions = async (transactionID: number): Promise<TransactionPosition[]> => {
     const result = await db.execute(
         `select
              t.id,
@@ -529,11 +503,11 @@ export async function getTransactionsPositions(transactionID: number): Promise<T
     );
 
     return localPositions.concat(...serverPositions);
-}
+};
 
-export async function pushLocalTransactionChanges(
+export const pushLocalTransactionChanges = async (
     transactionID: number
-): Promise<[TransactionDetails, TransactionPosition[]]> {
+): Promise<[TransactionDetails, TransactionPosition[]]> => {
     if (!(await isOnline())) {
         console.log("cannot push changes to server as we are offline");
         throw Error("Cannot push local changes to server as we are offline");
@@ -638,9 +612,9 @@ export async function pushLocalTransactionChanges(
 
         return [updatedTransaction, updatedPositions];
     });
-}
+};
 
-export async function updateTransaction(transaction: TransactionDetails) {
+export const updateTransaction = async (transaction: TransactionDetails) => {
     const validationErrors = validateTransactionDetails(transaction);
     if (Object.keys(validationErrors).length > 0) {
         throw new ValidationError(validationErrors);
@@ -687,9 +661,9 @@ export async function updateTransaction(transaction: TransactionDetails) {
         );
         transactionNotifier.emit("changed", { groupID: transaction.groupID, transactionID: transaction.id });
     });
-}
+};
 
-export async function createTransaction(groupID: number, type: TransactionType): Promise<[number, Date]> {
+export const createTransaction = async (groupID: number, type: TransactionType): Promise<[number, Date]> => {
     const eventPayload = {
         type: type,
         groupID: groupID,
@@ -727,9 +701,9 @@ export async function createTransaction(groupID: number, type: TransactionType):
         transactionNotifier.emit("changed", { groupID: groupID });
         return [nextID, creationDate];
     });
-}
+};
 
-export async function deleteTransaction(groupID: number, transactionID: number) {
+export const deleteTransaction = async (groupID: number, transactionID: number) => {
     if (transactionID < 0) {
         return await deleteLocalTransactionChanges(groupID, transactionID);
     }
@@ -737,13 +711,13 @@ export async function deleteTransaction(groupID: number, transactionID: number) 
     const transaction = await getTransaction(groupID, transactionID);
     transaction.deleted = true;
     return await updateTransaction(transaction);
-}
+};
 
-export async function deleteLocalTransactionChanges(
+export const deleteLocalTransactionChanges = async (
     groupID: number,
     transactionID: number,
     olderThan?: string
-): Promise<boolean> {
+): Promise<boolean> => {
     console.log("deleting local transaction changes to transaction", transactionID, "older than", olderThan);
     // returns true if a local only transaction was deleted fully
     return await db.transaction(async (conn: Connection) => {
@@ -807,13 +781,13 @@ export async function deleteLocalTransactionChanges(
 
         return deletedLocalTransaction;
     });
-}
+};
 
-export async function createPosition(
+export const createPosition = async (
     groupID: number,
     transactionID: number,
     copyFromPosition: TransactionPosition | null = null
-) {
+) => {
     const eventPayload = {
         transactionID: transactionID,
         name: copyFromPosition?.name ?? "",
@@ -853,9 +827,9 @@ export async function createPosition(
         console.log("created new local position for transaction with id", transactionID);
         return nextID;
     });
-}
+};
 
-export async function updatePosition(position: TransactionPosition) {
+export const updatePosition = async (position: TransactionPosition) => {
     const validationErrors = validatePosition(position);
     if (validationErrors !== null) {
         throw new ValidationError(validationErrors);
@@ -889,9 +863,9 @@ export async function updatePosition(position: TransactionPosition) {
             transactionID: position.transactionID,
         });
     });
-}
+};
 
-export async function deletePosition(position: TransactionPosition) {
+export const deletePosition = async (position: TransactionPosition) => {
     // TODO: determine if we keep around local only positions once deleted
     return await db.transaction(async (conn: Connection) => {
         const eventPayload = {
@@ -923,4 +897,4 @@ export async function deletePosition(position: TransactionPosition) {
             transactionID: position.transactionID,
         });
     });
-}
+};

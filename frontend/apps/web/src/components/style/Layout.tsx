@@ -183,8 +183,6 @@ export const Layout: React.FC<Props> = ({ group = null, children }) => {
         </div>
     );
 
-    const container = window !== undefined ? () => window.document.body : undefined;
-
     return (
         <Box sx={{ display: "flex" }}>
             <CssBaseline />
@@ -270,7 +268,6 @@ export const Layout: React.FC<Props> = ({ group = null, children }) => {
             {authenticated ? (
                 <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
                     <Drawer
-                        container={container}
                         variant={isLargeScreen ? "permanent" : "temporary"}
                         open={mobileOpen}
                         onClose={handleDrawerToggle}

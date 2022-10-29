@@ -182,7 +182,7 @@ export const PurchaseDebitorShares: React.FC<PurchaseDebitorSharesProps> = ({
                 delete newDebitorShares[accountID];
                 return {
                     ...currState,
-                    debitor_shares: newDebitorShares,
+                    debitorShares: newDebitorShares,
                 };
             });
         } else {
@@ -201,7 +201,7 @@ export const PurchaseDebitorShares: React.FC<PurchaseDebitorSharesProps> = ({
                 }
                 return {
                     ...currState,
-                    debitor_shares: newDebitorShares,
+                    debitorShares: newDebitorShares,
                 };
             });
         }

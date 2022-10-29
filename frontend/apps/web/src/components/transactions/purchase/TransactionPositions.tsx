@@ -20,7 +20,7 @@ import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import AccountSelect from "../../style/AccountSelect";
 import { LocalPositionChanges, pendingTransactionPositionChanges } from "../../../state/transactions";
 import { MobilePaper } from "../../style/mobile";
-import { Group, Transaction, TransactionPosition } from "@abrechnung/types";
+import { Account, Group, Transaction, TransactionPosition, TransactionShare } from "@abrechnung/types";
 
 type ShareInputProps = {
     value: number;
@@ -138,20 +138,20 @@ const WrappedTextField: React.FC<WrappedTextFieldProps> = ({
 };
 
 interface PositionTableRowProps {
-    position: TransactionPosition;
+    position: TransactionPositionWithLocalFlag;
     updatePosition: (
-        position: TransactionPosition,
+        position: TransactionPositionWithLocalFlag,
         newName: string,
         newPrice: number,
         newCommunistShares: number
     ) => void;
     transactionAccounts: number[];
     showAdvanced: boolean;
-    copyPosition: (position: TransactionPosition) => void;
-    updatePositionUsage: (position: TransactionPosition, accountID: number, usages: number) => void;
+    copyPosition: (position: TransactionPositionWithLocalFlag) => void;
+    updatePositionUsage: (position: TransactionPositionWithLocalFlag, accountID: number, usages: number) => void;
     showAccountSelect: boolean;
     showAddAccount: boolean;
-    deletePosition: (position: TransactionPosition) => void;
+    deletePosition: (position: TransactionPositionWithLocalFlag) => void;
 }
 
 const PositionTableRow: React.FC<PositionTableRowProps> = ({
@@ -305,18 +305,23 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
             : 0;
     };
 
-    const updatePosition = (position, name, price, communistShares) => {
-        if (position.is_empty) {
+    const updatePosition = (
+        position: TransactionPositionWithLocalFlag,
+        name: string,
+        price: number,
+        communistShares: number
+    ) => {
+        if (position.isEmpty) {
             return updateEmptyPosition(position, name, price, communistShares);
         }
-        if (position.only_local) {
+        if (position.id < 0) {
             setLocalPositionChanges((currPositions) => {
                 const mappedAdded = { ...currPositions.added };
                 mappedAdded[position.id] = {
                     ...position,
                     name: name,
                     price: price,
-                    communist_shares: communistShares,
+                    communistShares: communistShares,
                 };
                 return {
                     modified: currPositions.modified,
@@ -331,7 +336,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                     ...position,
                     name: name,
                     price: price,
-                    communist_shares: communistShares,
+                    communistShares: communistShares,
                 };
                 return {
                     modified: mappedModified,
@@ -342,11 +347,11 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
         }
     };
 
-    const updatePositionUsage = (position, accountID, shares) => {
-        if (position.is_empty) {
+    const updatePositionUsage = (position: TransactionPositionWithLocalFlag, accountID: number, shares: number) => {
+        if (position.isEmpty) {
             return updateEmptyPositionUsage(position, accountID, shares);
         }
-        if (position.only_local) {
+        if (position.id < 0) {
             setLocalPositionChanges((currPositions) => {
                 const mappedAdded = { ...currPositions.added };
                 const usages = { ...currPositions.added[position.id].usages };
@@ -368,7 +373,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
         } else {
             setLocalPositionChanges((currPositions) => {
                 const mappedModified = { ...currPositions.modified };
-                let usages;
+                let usages: TransactionShare;
                 if (mappedModified[position.id] !== undefined) {
                     // we already did change something locally
                     usages = { ...currPositions.modified[position.id].usages };
@@ -396,12 +401,12 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
         }
     };
 
-    const deletePosition = (position) => {
-        if (position.is_empty) {
+    const deletePosition = (position: TransactionPositionWithLocalFlag) => {
+        if (position.isEmpty) {
             return resetEmptyPosition();
         }
 
-        if (position.only_local) {
+        if (position.id < 0) {
             setLocalPositionChanges((currPositions) => {
                 const mappedAdded = { ...currPositions.added };
                 delete mappedAdded[position.id];
@@ -447,15 +452,23 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
         }));
     };
 
-    const updateEmptyPosition = (position, name, price, communistShares) => {
+    const updateEmptyPosition = (
+        position: TransactionPositionWithLocalFlag,
+        name: string,
+        price: number,
+        communistShares: number
+    ) => {
         if (name !== "" && name != null) {
-            const copyOfEmpty = {
-                ...position,
+            const copyOfEmpty: TransactionPosition = {
+                id: position.id,
+                usages: position.usages,
+                hasLocalChanges: position.hasLocalChanges,
                 name: name,
+                deleted: position.deleted,
                 price: price,
-                communist_shares: communistShares,
+                communistShares: communistShares,
             };
-            setLocalPositionChanges((currPositions) => {
+            setLocalPositionChanges((currPositions): LocalPositionChanges => {
                 const mappedAdded = { ...currPositions.added };
                 mappedAdded[position.id] = copyOfEmpty;
                 return {
@@ -473,22 +486,25 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                 };
             });
         } else {
-            setLocalPositionChanges((currPositions) => {
+            setLocalPositionChanges((currPositions): LocalPositionChanges => {
                 return {
                     modified: currPositions.modified,
                     added: currPositions.added,
                     empty: {
-                        ...position,
+                        id: position.id,
+                        usages: position.usages,
                         name: name,
                         price: price,
-                        communist_shares: communistShares,
+                        communistShares: communistShares,
+                        deleted: false,
+                        hasLocalChanges: true,
                     },
                 };
             });
         }
     };
 
-    const updateEmptyPositionUsage = (position, accountID, value) => {
+    const updateEmptyPositionUsage = (position: TransactionPositionWithLocalFlag, accountID: number, value: number) => {
         setLocalPositionChanges((currPositions) => {
             const newUsages = { ...position.usages };
             if (value === 0) {
@@ -507,7 +523,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
         });
     };
 
-    const copyPosition = (position) => {
+    const copyPosition = (position: TransactionPositionWithLocalFlag) => {
         setLocalPositionChanges((currPositions) => {
             const newPosition = {
                 ...position,
@@ -523,10 +539,10 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
         });
     };
 
-    const addPurchaseItemAccount = (account) => {
+    const addPurchaseItemAccount = (account: Account) => {
         setShowAccountSelect(false);
         setAdditionalPurchaseItemAccounts((currAdditionalAccounts) =>
-            Array.from(new Set<number>([...currAdditionalAccounts, parseInt(account.id)]))
+            Array.from(new Set<number>([...currAdditionalAccounts, account.id]))
         );
     };
 

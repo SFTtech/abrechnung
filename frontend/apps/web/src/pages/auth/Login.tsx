@@ -46,8 +46,8 @@ export const Login: React.FC = () => {
         }
     }, [isLoggedIn, navigate, query]);
 
-    const handleSubmit = (values, { setSubmitting }) => {
-        login(values)
+    const handleSubmit = (values: { username: string; password: string }, { setSubmitting }) => {
+        login(values.username, values.password)
             .then((res) => {
                 toast.success(`Logged in...`);
                 setSubmitting(false);

@@ -32,7 +32,7 @@ export const TransactionCreditorShare: React.FC<Props> = ({ group, transaction, 
             setLocalTransactionDetails((currState) => {
                 return {
                     ...currState,
-                    creditor_shares: {
+                    creditorShares: {
                         [account.id]: 1.0,
                     },
                 };

@@ -1,6 +1,5 @@
 import { atom, selector } from "recoil";
-import { api, getUserIDFromToken } from "../core/api";
-import { ws } from "../core/websocket";
+import { api, ws, getUserIDFromToken } from "../core/api";
 
 export interface Session {
     id: number;
@@ -15,7 +14,7 @@ export interface User {
     email: string;
     is_guest_user: boolean;
     registered_at: string;
-    sessions: Array<Session>;
+    sessions: Session[];
 }
 
 export const userData = atom<User>({
@@ -30,26 +29,27 @@ export const userData = atom<User>({
             }
         },
     }),
-    effects_UNSTABLE: [
-        ({ setSelf, trigger }) => {
-            const userID = getUserIDFromToken();
-            if (userID !== null) {
-                ws.subscribe("user", userID, (subscriptionType, { subscription_type, element_id }) => {
-                    if (subscription_type === "user" && element_id === userID) {
-                        api.fetchProfile().then((result) => {
-                            setSelf(result);
-                        });
-                    }
-                });
-                // TODO: handle registration errors
+    // effects: [
+    //     ({ setSelf, trigger }) => {
+    //         console.log(api.accessToken);
+    //         const userID = getUserIDFromToken();
+    //         if (userID !== null) {
+    //             ws.subscribe("user", userID, (subscriptionType, { subscription_type, element_id }) => {
+    //                 if (subscription_type === "user" && element_id === userID) {
+    //                     api.fetchProfile().then((result) => {
+    //                         setSelf(result);
+    //                     });
+    //                 }
+    //             });
+    //             // TODO: handle registration errors
 
-                return () => {
-                    ws.unsubscribe("user", userID);
-                };
-            }
-            return null;
-        },
-    ],
+    //             return () => {
+    //                 ws.unsubscribe("user", userID);
+    //             };
+    //         }
+    //         return null;
+    //     },
+    // ],
 });
 
 export const isGuestUser = selector<boolean>({

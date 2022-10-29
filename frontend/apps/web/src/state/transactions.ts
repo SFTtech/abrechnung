@@ -1,6 +1,5 @@
 import { atomFamily, selectorFamily, SetterOrUpdater } from "recoil";
-import { api } from "../core/api";
-import { ws } from "../core/websocket";
+import { api, ws } from "../core/api";
 import { DateTime } from "luxon";
 import { toast } from "react-toastify";
 import { accountsSeenByUser } from "./accounts";
@@ -12,8 +11,7 @@ import {
     TransactionDetails,
 } from "@abrechnung/types";
 import { localStorageEffect } from "./cache";
-import { computeAccountBalances } from "@abrechnung/core";
-import { StartRounded } from "@mui/icons-material";
+import { computeAccountBalances, computeAccountBalancesForTransaction } from "@abrechnung/core";
 
 export const transactionCompareFn = (t1: Transaction, t2: Transaction) => {
     if (t1.isWip && !t2.isWip) {
@@ -46,8 +44,9 @@ export const getTransactionSortFunc = (sortMode: TransactionSortMode) => {
 
 export const groupTransactions = atomFamily<Transaction[], number>({
     key: "groupTransactions",
-    effects_UNSTABLE: (groupID) => [
+    effects: (groupID: number) => [
         ({ setSelf, node, getPromise }) => {
+            console.log("group transactions", groupID);
             const fullFetchPromise = (): Promise<Transaction[]> => {
                 return api.fetchTransactions(groupID).catch((err) => {
                     toast.error(`error when fetching transactions: ${err}`);
@@ -59,7 +58,7 @@ export const groupTransactions = atomFamily<Transaction[], number>({
             setSelf(fullFetchPromise());
 
             const fetchAndUpdateTransaction = (
-                currTransactions: Array<Transaction>,
+                currTransactions: Transaction[],
                 transactionID: number,
                 isNew: boolean
             ) => {
@@ -81,6 +80,14 @@ export const groupTransactions = atomFamily<Transaction[], number>({
                     subscription_type,
                     { element_id, transaction_id, revision_started, revision_committed, revision_version }
                 ) => {
+                    console.log(
+                        subscription_type,
+                        transaction_id,
+                        element_id,
+                        revision_started,
+                        revision_committed,
+                        revision_version
+                    );
                     if (element_id === groupID) {
                         getPromise(node).then((currTransactions) => {
                             const currTransaction = currTransactions.find((t) => t.id === transaction_id);
@@ -114,8 +121,9 @@ export const groupTransactions = atomFamily<Transaction[], number>({
 export const transactionDetails = selectorFamily<TransactionDetails[], number>({
     key: "transactionDetails",
     get:
-        (groupID) =>
+        (groupID: number) =>
         async ({ get }) => {
+            console.log("transaction details", groupID);
             const transactions = get(groupTransactions(groupID));
             return transactions.map((t) => t.details);
         },
@@ -180,17 +188,39 @@ export const pendingTransactionPositionChanges = atomFamily<LocalPositionChanges
             hasLocalChanges: true,
         },
     },
-    effects_UNSTABLE: (transactionID) => [localStorageEffect(`localTransactionPositionChanges-${transactionID}`)],
+    effects: (transactionID) => [localStorageEffect(`localTransactionPositionChanges-${transactionID}`)],
 });
 
 export const transactionsSeenByUser = selectorFamily<Array<Transaction>, number>({
     key: "transactionsSeenByUser",
     get:
-        (groupID) =>
+        (groupID: number) =>
         async ({ get }) => {
             const transactions = get(groupTransactions(groupID));
 
-            return [...transactions].sort(transactionCompareFn);
+            return transactions
+                .map((t: Transaction) => {
+                    const localDetailChanges = get(pendingTransactionDetailChanges(t.id));
+                    const localPositionChanges = get(pendingTransactionPositionChanges(t.id));
+                    const newPositions = t.positions
+                        .map((p) =>
+                            localPositionChanges.modified[p.id] !== undefined ? localPositionChanges.modified[p.id] : p
+                        )
+                        .concat(Object.values(localPositionChanges.added));
+
+                    const details = {
+                        ...t.details,
+                        ...localDetailChanges,
+                    };
+
+                    return {
+                        ...t,
+                        details: details,
+                        positions: newPositions,
+                        accountBalances: computeAccountBalancesForTransaction(details, newPositions),
+                    };
+                })
+                .sort(transactionCompareFn);
         },
 });
 

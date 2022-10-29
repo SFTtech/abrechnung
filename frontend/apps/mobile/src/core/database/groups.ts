@@ -2,11 +2,22 @@ import { db } from "./index";
 import NotificationTracker from "../index";
 import { Group } from "@abrechnung/types";
 import { api } from "../api";
-import { Connection } from "./async_wrapper";
+import { Connection } from "./database";
 
 export const groupNotifier = new NotificationTracker();
 
-function databaseRowToGroup(row): Group {
+interface DatabaseRowGroup {
+    id: number;
+    name: string;
+    description: string;
+    terms: string;
+    currency_symbol: string;
+    created_at: string;
+    created_by: number;
+    add_user_account_on_join: boolean;
+}
+
+const databaseRowToGroup = (row: DatabaseRowGroup): Group => {
     return {
         id: row.id,
         name: row.name,
@@ -16,8 +27,8 @@ function databaseRowToGroup(row): Group {
         createdAt: row.created_at,
         createdBy: row.created_by,
         addUserAccountOnJoin: row.add_user_account_on_join,
-    } as Group;
-}
+    };
+};
 
 export async function getGroups(): Promise<Group[]> {
     const result = await db.execute(
@@ -35,7 +46,7 @@ export async function getGroups(): Promise<Group[]> {
         []
     );
 
-    return result.rows.map((row) => databaseRowToGroup(row));
+    return result.rows.map((row) => databaseRowToGroup(row as DatabaseRowGroup));
 }
 
 export async function syncGroups(): Promise<Group[]> {

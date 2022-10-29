@@ -1,6 +1,6 @@
 import * as SQLite from "expo-sqlite";
 import migrations from "./migrations";
-import { Connection, Database } from "./async_wrapper";
+import { Connection, Database } from "./database";
 
 function openDatabase() {
     // if (Platform.OS === "web") {

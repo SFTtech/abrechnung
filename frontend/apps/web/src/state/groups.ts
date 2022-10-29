@@ -1,6 +1,5 @@
 import { atom, atomFamily, selectorFamily } from "recoil";
-import { api, getUserIDFromToken } from "../core/api";
-import { ws } from "../core/websocket";
+import { api, ws, getUserIDFromToken } from "../core/api";
 import { userData } from "./auth";
 import { DateTime } from "luxon";
 import { toast } from "react-toastify";

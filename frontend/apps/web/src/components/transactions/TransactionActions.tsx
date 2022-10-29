@@ -13,6 +13,7 @@ import {
     updateTransactionInState,
 } from "../../state/transactions";
 import { Transaction } from "@abrechnung/types";
+import { HttpError } from "@abrechnung/api";
 
 interface Props {
     groupID: number;
@@ -33,6 +34,7 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
     const updateTransactionAndClearLocal = useRecoilTransaction_UNSTABLE(
         ({ get, set, reset }) =>
             (transaction: Transaction) => {
+                console.log(transaction);
                 set(groupTransactions(transaction.groupID), (currTransactions) => {
                     return currTransactions.map((t) => (t.id === transaction.id ? transaction : t));
                 });
@@ -47,8 +49,8 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
                 .then((t) => {
                     updateTransactionAndClearLocal(t);
                 })
-                .catch((err) => {
-                    toast.error(err);
+                .catch((err: HttpError) => {
+                    toast.error(err.message);
                 });
         }
     };
@@ -60,8 +62,8 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
                     .then((t) => {
                         updateTransactionAndClearLocal(t);
                     })
-                    .catch((err) => {
-                        toast.error(err);
+                    .catch((err: HttpError) => {
+                        toast.error(err.message);
                     });
             } else {
                 navigate(`/groups/${groupID}/`);
@@ -70,63 +72,64 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
     };
 
     const commitEdit = () => {
-        if (transaction.isWip) {
-            // update the transaction given the currently pending changes
-            // find out which local changes we have and send them to da server
-            const positions = Object.values(localPositionChanges.modified).concat(
-                Object.values(localPositionChanges.added).map((position) => ({
-                    ...position,
-                    id: -1,
-                }))
-            );
+        if (!transaction.isWip) {
+            return;
+        }
+        // update the transaction given the currently pending changes
+        // find out which local changes we have and send them to da server
+        const positions = Object.values(localPositionChanges.modified).concat(
+            Object.values(localPositionChanges.added).map((position) => ({
+                ...position,
+                id: -1,
+            }))
+        );
 
-            if (Object.keys(localTransactionChanges).length > 0) {
-                const transactionDetails = {
-                    transactionID: transaction.id,
-                    description: transaction.details.description,
-                    value: transaction.details.value,
-                    billedAt: transaction.details.billedAt,
-                    currencySymbol: transaction.details.currencySymbol,
-                    currencyConversionRate: transaction.details.currencyConversionRate,
-                    creditorShares: transaction.details.creditorShares,
-                    debitorShares: transaction.details.debitorShares,
-                    ...localTransactionChanges,
-                    positions: positions.length > 0 ? positions : null,
-                };
-                api.updateTransaction(
-                    transactionDetails.transactionID,
-                    transactionDetails.description,
-                    transactionDetails.value,
-                    transactionDetails.billedAt,
-                    transactionDetails.currencySymbol,
-                    transactionDetails.currencyConversionRate,
-                    transactionDetails.creditorShares,
-                    transactionDetails.debitorShares,
-                    transactionDetails.positions
-                )
-                    .then((t) => {
-                        updateTransactionAndClearLocal(t);
-                    })
-                    .catch((err) => {
-                        toast.error(err);
-                    });
-            } else if (positions.length > 0) {
-                api.updateTransactionPositions(transaction.id, positions)
-                    .then((t) => {
-                        updateTransactionAndClearLocal(t);
-                    })
-                    .catch((err) => {
-                        toast.error(err);
-                    });
-            } else {
-                api.commitTransaction(transaction.id)
-                    .then((t) => {
-                        updateTransactionAndClearLocal(t);
-                    })
-                    .catch((err) => {
-                        toast.error(err);
-                    });
-            }
+        if (Object.keys(localTransactionChanges).length > 0) {
+            const transactionDetails = {
+                transactionID: transaction.id,
+                description: transaction.details.description,
+                value: transaction.details.value,
+                billedAt: transaction.details.billedAt,
+                currencySymbol: transaction.details.currencySymbol,
+                currencyConversionRate: transaction.details.currencyConversionRate,
+                creditorShares: transaction.details.creditorShares,
+                debitorShares: transaction.details.debitorShares,
+                ...localTransactionChanges,
+                positions: positions.length > 0 ? positions : null,
+            };
+            api.updateTransaction(
+                transactionDetails.transactionID,
+                transactionDetails.description,
+                transactionDetails.value,
+                transactionDetails.billedAt,
+                transactionDetails.currencySymbol,
+                transactionDetails.currencyConversionRate,
+                transactionDetails.creditorShares,
+                transactionDetails.debitorShares,
+                transactionDetails.positions
+            )
+                .then((t) => {
+                    updateTransactionAndClearLocal(t);
+                })
+                .catch((err: HttpError) => {
+                    toast.error(err.message);
+                });
+        } else if (positions.length > 0) {
+            api.updateTransactionPositions(transaction.id, positions)
+                .then((t) => {
+                    updateTransactionAndClearLocal(t);
+                })
+                .catch((err: HttpError) => {
+                    toast.error(err.message);
+                });
+        } else {
+            api.commitTransaction(transaction.id)
+                .then((t) => {
+                    updateTransactionAndClearLocal(t);
+                })
+                .catch((err: HttpError) => {
+                    toast.error(err.message);
+                });
         }
     };
 
@@ -139,8 +142,8 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
                 resetLocalTransactionChanges();
                 navigate(`/groups/${groupID}/`);
             })
-            .catch((err) => {
-                toast.error(err);
+            .catch((err: HttpError) => {
+                toast.error(err.message);
             });
     };
 

@@ -1,7 +1,6 @@
 import { Account } from "@abrechnung/types";
 import { atomFamily, selectorFamily, SetterOrUpdater } from "recoil";
-import { api } from "../core/api";
-import { ws } from "../core/websocket";
+import { api, ws } from "../core/api";
 import { toast } from "react-toastify";
 import { DateTime } from "luxon";
 
@@ -34,6 +33,7 @@ export const groupAccounts = atomFamily<Array<Account>, number>({
                 "account",
                 groupID,
                 (subscription_type, { account_id, element_id, revision_committed, revision_version }) => {
+                    console.log(subscription_type, account_id, element_id, revision_committed, revision_version);
                     if (element_id === groupID) {
                         getPromise(node).then((currAccounts) => {
                             const currAccount = currAccounts.find((a) => a.id === account_id);

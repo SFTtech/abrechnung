@@ -1,4 +1,4 @@
-import { StrictMode, Suspense } from "react";
+import React, { StrictMode, Suspense } from "react";
 import * as ReactDOM from "react-dom/client";
 import { RecoilRoot } from "recoil";
 

@@ -51,7 +51,6 @@ export const FileGallery: React.FC<Props> = ({ transaction }) => {
         setActive((oldActive) => Math.max(0, Math.min(oldActive, transaction.attachments.length - 1)));
 
         const newFiles = transaction.attachments.filter((file) => filteredFiles[file.id] === undefined);
-        console.log(newFiles);
         Promise.all(
             newFiles.map((newFile) => {
                 return api.fetchFile(newFile.id, newFile.blobID).then((objectUrl) => {

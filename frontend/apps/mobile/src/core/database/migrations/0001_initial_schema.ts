@@ -23,28 +23,108 @@ export const migration = [
 
     `create table if not exists account (
         id                    integer primary key not null,
-        "type"                text                not null,
         group_id              integer             not null references grp (id) on delete cascade,
+        type                  text                not null
+    )`,
+
+    `create table if not exists account_history (
+        id                    integer primary key not null references account (id) on delete cascade,
 
         "name"                text                not null,
-        description           text,
-        priority              integer             not null,
-        deleted               boolean             not null,
+        description           text                not null,
         owning_user_id        integer,
+        clearing_shares       text,
+        deleted               boolean             not null,
+
         revision_started_at   text                not null,
         revision_committed_at text,
         version               integer             not null,
-        is_wip                boolean             not null,
-
-        clearing_shares       text
+        is_wip                boolean             not null
     )`,
 
     `create table if not exists pending_account_changes (
-        event_id      integer primary key autoincrement not null,
-        event_time    text    not null,
-        account_id    integer not null, -- account id, will be negative for local only accounts
-        group_id      integer not null references grp (id) on delete cascade,
-        event_content text    not null
+        id                    integer               not null references account (id) on delete cascade,
+        change_id             integer autoincrement not null,
+        change_time           text                  not null,
+
+        "name"                text                  not null,
+        description           text                  not null,               
+        owning_user_id        integer,
+        clearing_shares       text,
+        deleted               boolean               not null,
+
+        primary key (id, change_id)
+    )`,
+
+    `create view if not exists last_pending_account_changes as (
+        select
+            id,
+            group_id,
+            type,
+            name,
+            description,
+            owning_user_id,
+            clearing_shares,
+            deleted,
+            null as revision_started_at,
+            null as revision_committed_at,
+            0 as version,
+            true as is_wip,
+            true as has_local_changes,
+            change_time as last_changed
+        from
+            (
+                select
+                    row_number() over (partition by a.group_id, pac.id order by pac.change_id desc) as rank,
+                    *
+                from
+                    account a join pending_account_changes pac on a.id = pac.id
+                group by a.group_id
+            ) sub
+        where
+            sub.rank = 1
+    )`,
+
+    `create view if not exists committed_account_changes as (
+        select 
+            *,  
+            coalesce(revision_committed_at, revision_started_at) as last_changed
+        from account_history ah join account a on a.id = ah.id
+    )`,
+
+    `create view if not exists accounts_including_pending_changes as (
+        select
+            lpac.id,
+            lpac.group_id,
+            lpac.type,
+            lpac.name,
+            lpac.description,
+            lpac.owning_user_id,
+            lpac.clearing_shares,
+            lpac.deleted,
+            lpac.revision_started_at,
+            lpac.revision_committed_at,
+            lpac.version,
+            lpac.is_wip,
+            lpac.has_local_changes,
+            lpac.last_changed
+        from last_pending_account_changes lpac where lpac.id < 0
+        union all
+        select 
+            cac.id,
+            cac.group_id,
+            coalesce(lpac.name, cac.name) as name,
+            coalesce(lpac.description, cac.description) as description,
+            coalesce(lpac.owning_user_id, cac.owning_user_id) as owning_user_id,
+            coalesce(lpac.clearing_shares, cac.clearing_shares) as clearing_shares,
+            coalesce(lpac.deleted, cac.deleted) as deleted
+            coalesce(lpac.revision_started_at, cac.revision_started_at),
+            coalesce(lpac.revision_committed_at, cac.revision_committed_at),
+            coalesce(lpac.version, cac.version),
+            coalesce(lpac.is_wip, cac.is_wip),
+            coalesce(lpac.has_local_changes, false)
+            coalesce(lpac.last_changed, cac.last_changed)
+        from committed_account_changes cac left join last_pending_account_changes lpac on cac.id = lpac.id
     )`,
 
     `create table if not exists group_member (
@@ -59,47 +139,200 @@ export const migration = [
     `create table if not exists "transaction" (
         id                       integer primary key not null,
         group_id                 integer             not null references grp (id) on delete cascade,
+        type                     text                not null
+
+        revision_started_at      text,
+        revision_committed_at    text,
+        version                  integer             not null,
+        is_wip                   boolean             not null
+    )`,
+
+    `create table if not exists transaction_history (
+        id                       integer primary key not null references "transaction" (id) on delete cascade,
+
         description              text                not null,
-        type                     text                not null,
         value                    real                not null,
         billed_at                text                not null,
         currency_conversion_rate real                not null,
         currency_symbol          text                not null,
         creditor_shares          text                not null,
         debitor_shares           text                not null,
-        deleted                  boolean             not null,
-
-        revision_started_at      text                not null,
-        revision_committed_at    text,
-        version                  integer             not null,
-        is_wip                   boolean             not null
+        deleted                  boolean             not null
     )`,
 
     `create table if not exists pending_transaction_changes (
-        event_id       integer primary key autoincrement not null,
-        event_time     text    not null,
-        transaction_id integer not null, -- transaction id, will be negative for local only transactions
-        group_id       integer not null references grp (id) on delete cascade,
-        event_content  text    not null
+        id                       integer               not null references "transaction" (id) on delete cascade,
+        change_id                integer autoincrement not null,
+        change_time              text                  not null,
+
+        description              text                  not null,
+        value                    real                  not null,
+        billed_at                text                  not null,
+        currency_conversion_rate real                  not null,
+        currency_symbol          text                  not null,
+        creditor_shares          text                  not null,
+        debitor_shares           text                  not null,
+        deleted                  boolean               not null,
+
+        primary key (id, change_id)
+    )`,
+
+    `create view if not exists last_pending_transaction_changes as (
+        select 
+            id,
+            group_id,
+            type,
+            description,
+            value,
+            billed_at,
+            currency_conversion_rate,
+            currency_symbol,
+            creditor_shares,
+            debitor_shares,
+            deleted,
+            null as revision_started_at,
+            null as revision_committed_at,
+            0 as version,
+            true as is_wip,
+            true as has_local_changes,
+            change_time as last_changed
+        from
+            (
+                select
+                    row_number() over (partition by t.group_id, ptc.id order by ptc.change_id desc) as rank,
+                    *
+                from
+                    "transaction" t join pending_transaction_changes ptc on t.id = ptc.id
+                group by t.group_id
+            ) sub
+        where
+            sub.rank = 1
+    )`,
+
+    `create view if not exists committed_transaction_changes as (
+        select 
+            *,
+            coalesce(revision_committed_at, revision_started_at) as last_changed
+        from transaction_history th join "transaction" t on t.id = th.id
+    )`,
+
+    `create view if not exists transactions_including_pending_changes as (
+        select
+            lptc.id,
+            lptc.group_id,
+            lptc.type,
+            lptc.description,
+            lptc.description,
+            lptc.value,
+            lptc.billed_at,
+            lptc.currency_conversion_rate,
+            lptc.currency_symbol,
+            lptc.creditor_shares,
+            lptc.debitor_shares,
+            lptc.deleted,
+            lptc.revision_started_at,
+            lptc.revision_committed_at,
+            lptc.version,
+            lptc.is_wip,
+            lptc.has_local_changes,
+            lptc.last_changed
+        from last_pending_transaction_changes lptc where lptc.id < 0
+        union all
+        select 
+            ctc.id,
+            ctc.group_id,
+            ctc.type,
+            coalesce(lptc.description, ctc.description) as description,
+            coalesce(lptc.value, ctc.value) as value,
+            coalesce(lptc.billed_at, ctc.billed_at) as billed_at,
+            coalesce(lptc.currency_conversion_rate, ctc.currency_conversion_rate) as currency_conversion_rate,
+            coalesce(lptc.currency_symbol, ctc.currency_symbol) as currency_symbol,
+            coalesce(lptc.creditor_shares, ctc.creditor_shares) as creditor_shares,
+            coalesce(lptc.debitor_shares, ctc.debitor_shares) as debitor_shares,
+            coalesce(lptc.deleted, ctc.deleted) as deleted,
+            coalesce(lptc.revision_started_at, ctc.revision_started_at),
+            coalesce(lptc.revision_committed_at, ctc.revision_committed_at),
+            coalesce(lptc.version, ctc.version),
+            coalesce(lptc.is_wip, ctc.is_wip),
+            coalesce(lptc.has_local_changes, false) as has_local_changes,
+            coalesce(lptc.last_changed, ctc.last_changed) as last_changed
+        from committed_transaction_changes ctc left join last_pending_transaction_changes lptc on ctc.id = lptc.id
     )`,
 
     `create table if not exists transaction_position (
         id               integer primary key not null,
-        group_id         integer             not null references grp (id) on delete cascade,
-        transaction_id   integer             not null references "transaction" (id) on delete cascade,
+        transaction_id   integer             not null references "transaction" (id) on delete cascade
+    )`,
+
+    `create table if not exists transaction_position_history (
+        id               integer primary key not null references transaction_position (id) on delete cascade,
+
         name             text                not null,
         price            real                not null,
         communist_shares real                not null,
-        deleted          boolean             not null,
-        usages           text                not null
+        usages           text                not null,
+        deleted          boolean             not null
     )`,
 
     `create table if not exists pending_transaction_position_changes (
-        event_id       integer primary key autoincrement not null,
-        event_time     text    not null,
-        position_id    integer not null, -- position id, will be negative for local only positions
-        group_id       integer not null references grp (id) on delete cascade,
-        transaction_id integer not null, -- cannot use foreign key as can point to local only transaction
-        event_content  text    not null
+        id               integer               not null references transaction_position (id) on delete cascade,
+        change_id        integer autoincrement not null,
+        change_time      text                  not null,
+
+        name             text                  not null,
+        price            real                  not null,
+        communist_shares real                  not null,
+        usages           text                  not null,
+        deleted          boolean               not null,
+
+        primary key (id, change_id)
+    )`,
+
+    `create view if not exists last_pending_transaction_position_changes as (
+        select 
+            id,
+            transaction_id,
+            name,
+            price,
+            communist_shares,
+            usages,
+            deleted
+        from
+            (
+                select
+                    row_number() over (partition by t.group_id, ptc.id order by ptc.change_id desc) as rank,
+                    *
+                from
+                    "transaction_position" t join pending_transaction_position_changes ptc on t.id = ptc.id
+                group by t.transaction_id
+            ) sub
+        where
+            sub.rank = 1
+    )`,
+
+    `create view if not exists committed_transaction_position_changes as (
+        select * from transaction_position_history th join transaction_position t on t.id = th.id
+    )`,
+
+    `create view if not exists transaction_positions_including_pending_changes as (
+        select
+            lptc.id,
+            lptc.transaction_id,
+            lptc.name,
+            lptc.price,
+            lptc.communist_shares,
+            lptc.usages,
+            lptc.deleted
+        from last_pending_transaction_position_changes lptc where lptc.id < 0
+        union all
+        select 
+            ctc.id,
+            ctc.transaction_id,
+            coalesce(lptc.name, ctc.name) as name,
+            coalesce(lptc.price, ctc.price) as price,
+            coalesce(lptc.communist_shares, ctc.creditor_shares) as creditor_shares,
+            coalesce(lptc.usages, ctc.usages) as usages,
+            coalesce(lptc.deleted, ctc.deleted) as deleted
+        from committed_transaction_position_changes ctc left join last_pending_transaction_position_changes lptc on ctc.id = lptc.id
     )`,
 ];
