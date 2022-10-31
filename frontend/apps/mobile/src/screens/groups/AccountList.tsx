@@ -152,14 +152,14 @@ export const AccountList: React.FC<Props> = ({ navigation, accountType }) => {
                 left={(props) => <List.Icon {...props} icon={getAccountIcon(account.type)} />}
                 right={(props) => (
                     <>
-                        {account.hasLocalChanges && (
+                        {/* {account.hasLocalChanges && (
                             <MaterialIcons
                                 style={{ marginRight: 8, marginTop: 4 }}
                                 size={20}
                                 color={theme.colors.primary}
                                 name="sync-disabled"
                             />
-                        )}
+                        )} */}
                         <Text style={{ color: textColor }}>
                             {balance.balance.toFixed(2)} {activeGroup.currencySymbol}
                         </Text>

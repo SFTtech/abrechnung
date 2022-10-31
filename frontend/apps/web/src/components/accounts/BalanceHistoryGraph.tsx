@@ -80,7 +80,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ group, accountID }) => {
                     <Typography variant="body1">{accountMap[payload[0].payload.changeOrigin.id].name}</Typography>
                 ) : (
                     <Typography variant="body1">
-                        {transactionMap[payload[0].payload.changeOrigin.id].details.description}
+                        {transactionMap[payload[0].payload.changeOrigin.id].description}
                     </Typography>
                 )}
             </Box>

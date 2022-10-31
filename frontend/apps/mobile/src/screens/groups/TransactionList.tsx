@@ -9,7 +9,7 @@ import { createTransaction } from "../../core/database/transactions";
 import { useRecoilValueLoadable } from "recoil";
 import { useActiveGroupID } from "../../core/groups";
 import { transactionState } from "../../core/transactions";
-import { TransactionDetails, TransactionType } from "@abrechnung/types";
+import { Transaction, TransactionType } from "@abrechnung/types";
 import { createComparator, lambdaComparator, toISODateString } from "@abrechnung/utils";
 import { syncLocalGroupState } from "../../core/sync";
 import LoadingIndicator from "../../components/LoadingIndicator";
@@ -27,7 +27,7 @@ export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> =
     const [isMenuOpen, setMenuOpen] = useState<boolean>(false);
     const [showSearchInput, setShowSearchInput] = useState<boolean>(false);
     const [search, setSearch] = useState<string>("");
-    const [sortedTransactions, setSortedTransactions] = useState<Array<TransactionDetails>>([]);
+    const [sortedTransactions, setSortedTransactions] = useState<Array<Transaction>>([]);
 
     const [sortMode, setSortMode] = useState<SortMode>("lastChanged");
 
@@ -97,14 +97,14 @@ export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> =
             let sortComparator;
             switch (sortMode) {
                 case "billedAt":
-                    sortComparator = lambdaComparator((t: TransactionDetails) => toISODateString(t.billedAt), true);
+                    sortComparator = lambdaComparator((t: Transaction) => toISODateString(t.billedAt), true);
                     break;
                 case "description":
-                    sortComparator = lambdaComparator((t: TransactionDetails) => t.description);
+                    sortComparator = lambdaComparator((t: Transaction) => t.description);
                     break;
                 case "lastChanged":
                 default:
-                    sortComparator = lambdaComparator((t: TransactionDetails) => t.lastChanged.toISOString(), true);
+                    sortComparator = lambdaComparator((t: Transaction) => t.lastChanged.toISOString(), true);
                     break;
             }
             setSortedTransactions(

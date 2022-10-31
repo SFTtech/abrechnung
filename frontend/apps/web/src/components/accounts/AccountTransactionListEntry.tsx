@@ -6,6 +6,8 @@ import React from "react";
 import { balanceColor } from "../../core/utils";
 import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 import { Group, Transaction } from "@abrechnung/types";
+import { useRecoilValue } from "recoil";
+import { transactionBalanceEffect } from "../../state/transactions";
 
 interface Props {
     group: Group;
@@ -14,6 +16,9 @@ interface Props {
 }
 
 export const AccountTransactionListEntry: React.FC<Props> = ({ group, transaction, accountID }) => {
+    const balanceEffect = useRecoilValue(
+        transactionBalanceEffect({ groupID: group.id, transactionID: transaction.id })
+    );
     return (
         <ListItemLink to={`/groups/${group.id}/transactions/${transaction.id}`}>
             <ListItemAvatar sx={{ minWidth: { xs: "40px", md: "56px" } }}>
@@ -34,25 +39,25 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ group, transactio
             <ListItemText
                 primary={
                     <>
-                        {transaction.isWip && (
+                        {transaction.hasUnpublishedChanges && (
                             <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 3 }} />
                         )}
                         <Typography variant="body1" component="span">
-                            {transaction.details.description}
+                            {transaction.description}
                         </Typography>
                     </>
                 }
-                secondary={DateTime.fromJSDate(transaction.details.billedAt).toLocaleString(DateTime.DATE_FULL)}
+                secondary={DateTime.fromJSDate(transaction.billedAt).toLocaleString(DateTime.DATE_FULL)}
             />
             <ListItemText>
                 <Typography align="right" variant="body2">
                     <Typography
                         component="span"
                         sx={{
-                            color: (theme) => balanceColor(transaction.accountBalances[accountID].total, theme),
+                            color: (theme) => balanceColor(balanceEffect[accountID].total, theme),
                         }}
                     >
-                        {transaction.accountBalances[accountID].total.toFixed(2)} {group.currencySymbol}
+                        {balanceEffect[accountID].total.toFixed(2)} {group.currencySymbol}
                     </Typography>
                     <br />
                     <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>

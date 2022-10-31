@@ -1,7 +1,8 @@
-import { TransactionDetails } from "@abrechnung/types";
+import { Transaction } from "@abrechnung/types";
 import { toISODateStringNullable } from "@abrechnung/utils";
 import { List, Menu, Text, useTheme } from "react-native-paper";
 import React, { useState } from "react";
+import { View } from "react-native";
 import { getTransactionIcon } from "../constants/Icons";
 import { useNavigation } from "@react-navigation/native";
 import { deleteTransaction, pushLocalTransactionChanges } from "../core/database/transactions";
@@ -9,7 +10,7 @@ import { notify } from "../notifications";
 import { MaterialIcons } from "@expo/vector-icons";
 
 interface Props {
-    transaction: TransactionDetails;
+    transaction: Transaction;
 }
 
 export const TransactionListItem: React.FC<Props> = ({ transaction }) => {
@@ -46,14 +47,14 @@ export const TransactionListItem: React.FC<Props> = ({ transaction }) => {
                     left={(props) => <List.Icon {...props} icon={getTransactionIcon(transaction.type)} />}
                     right={(props) => (
                         <>
-                            {transaction.hasLocalChanges && (
+                            {/* {transaction.hasLocalChanges && (
                                 <MaterialIcons
                                     style={{ marginRight: 8, marginTop: 4 }}
                                     size={20}
                                     color={theme.colors.primary}
                                     name="sync-disabled"
                                 />
-                            )}
+                            )} */}
                             <Text>
                                 {transaction.value.toFixed(2)}
                                 {transaction.currencySymbol}
@@ -62,7 +63,7 @@ export const TransactionListItem: React.FC<Props> = ({ transaction }) => {
                     )}
                     onPress={() =>
                         navigation.navigate("TransactionDetail", {
-                            groupID: transaction.group_id,
+                            groupID: transaction.groupID,
                             transactionID: transaction.id,
                             editingStart: null,
                         })

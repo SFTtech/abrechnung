@@ -14,11 +14,11 @@ export const TransactionDescription: React.FC<Props> = ({ transaction }) => {
     const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
 
     useEffect(() => {
-        setDescription(transaction.details.description);
+        setDescription(transaction.description);
     }, [transaction, setDescription]);
 
     const save = () => {
-        if (!error && transaction.isWip && description !== transaction.details.description) {
+        if (!error && transaction.hasUnpublishedChanges && description !== transaction.description) {
             setLocalTransactionDetails((currState) => {
                 return {
                     ...currState,
@@ -54,7 +54,7 @@ export const TransactionDescription: React.FC<Props> = ({ transaction }) => {
             onChange={onChange}
             onKeyUp={onKeyUp}
             onBlur={save}
-            disabled={!transaction.isWip}
+            disabled={!transaction.hasUnpublishedChanges}
             value={description}
         />
     );

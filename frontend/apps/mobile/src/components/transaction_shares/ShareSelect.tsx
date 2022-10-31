@@ -26,25 +26,25 @@ export const ShareSelect: React.FC<Props> = ({
     multiSelect = true,
 }) => {
     const groupID = useActiveGroupID();
-    const [shares, setShares] = useState({});
+    const [shares, setShares] = useState<TransactionShare>({});
     const [searchTerm, setSearchTerm] = useState("");
     const accounts = useRecoilValue(accountState(groupID));
     const [filteredAccounts, setFilteredAccounts] = useState<Account[]>([]);
 
-    const toggleShare = (account_id: number) => {
-        const currVal = shares.hasOwnProperty(account_id) ? shares[account_id] : 0;
+    const toggleShare = (accountID: number) => {
+        const currVal = shares[accountID] !== undefined ? shares[accountID] : 0;
         if (multiSelect) {
             setShares((shares) => {
                 const newShares = { ...shares };
                 if (currVal > 0) {
-                    delete newShares[account_id];
+                    delete newShares[accountID];
                 } else {
-                    newShares[account_id] = 1;
+                    newShares[accountID] = 1;
                 }
                 return newShares;
             });
         } else {
-            setShares(currVal > 0 ? {} : { [account_id]: 1 });
+            setShares(currVal > 0 ? {} : { [accountID]: 1 });
         }
     };
 
@@ -54,7 +54,7 @@ export const ShareSelect: React.FC<Props> = ({
                 .filter(
                     (acc) =>
                         acc.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-                        (!disabled || (shares[acc.id] ?? 0 > 0))
+                        (!disabled || (shares[acc.id] ?? 0) > 0)
                 )
                 .sort(
                     createComparator(
@@ -80,9 +80,7 @@ export const ShareSelect: React.FC<Props> = ({
                         right={(props) => (
                             <Checkbox.Android
                                 status={
-                                    shares.hasOwnProperty(account.id) && shares[account.id] > 0
-                                        ? "checked"
-                                        : "unchecked"
+                                    shares[account.id] !== undefined && shares[account.id] > 0 ? "checked" : "unchecked"
                                 }
                                 onPress={() => !disabled && toggleShare(account.id)}
                                 disabled={disabled}

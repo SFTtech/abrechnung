@@ -3,7 +3,7 @@ import { useRecoilValue, useSetRecoilState } from "recoil";
 import { accountsSeenByUser } from "../../state/accounts";
 import AccountSelect, { AccountSelectProps } from "../style/AccountSelect";
 import { pendingTransactionDetailChanges } from "../../state/transactions";
-import { Group, Transaction } from "@abrechnung/types";
+import { Account, Group, Transaction } from "@abrechnung/types";
 
 type Props = {
     group: Group;
@@ -14,17 +14,15 @@ type Props = {
 
 export const TransactionDebitorShare: React.FC<Props> = ({ group, transaction, isEditing, ...props }) => {
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
-    const shareAccountID =
-        Object.keys(transaction.details.debitorShares).length === 0
-            ? null
-            : Object.keys(transaction.details.debitorShares)[0];
+    const shareAccountID: null | number =
+        Object.keys(transaction.debitorShares).length === 0 ? null : Number(Object.keys(transaction.debitorShares)[0]);
     const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
 
-    const getAccount = (accountID) => {
+    const getAccount = (accountID: number) => {
         return accounts.find((account) => account.id === accountID);
     };
 
-    const onDebitorShareChange = (account) => {
+    const onDebitorShareChange = (account: Account) => {
         if (account === null) {
             return; // TODO: some error handling
         }
@@ -44,7 +42,7 @@ export const TransactionDebitorShare: React.FC<Props> = ({ group, transaction, i
         <AccountSelect
             group={group}
             noDisabledStyling={true}
-            value={shareAccountID === null ? null : getAccount(parseInt(shareAccountID))}
+            value={shareAccountID === null ? null : getAccount(shareAccountID)}
             onChange={onDebitorShareChange}
             disabled={!isEditing}
             {...props}

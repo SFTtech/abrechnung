@@ -1,8 +1,7 @@
-import { db } from "./index";
+import { db, Connection } from "./database";
 import NotificationTracker from "../index";
 import { Group } from "@abrechnung/types";
 import { api } from "../api";
-import { Connection } from "./database";
 
 export const groupNotifier = new NotificationTracker();
 
@@ -81,6 +80,6 @@ export async function syncGroups(): Promise<Group[]> {
             );
         });
     });
-    groupNotifier.notify("https://abrechnung.stusta.de");
+    groupNotifier.notify("https://abrechnung.stusta.de", {});
     return backendGroups;
 }

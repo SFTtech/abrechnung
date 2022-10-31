@@ -31,7 +31,7 @@ export const PositionListItem: React.FC<Props> = ({ groupID, currencySymbol, pos
     };
 
     const onCopyPosition = () => {
-        createPosition(groupID, position.transaction_id, position).catch((err) => {
+        createPosition(groupID, position.transactionID, position).catch((err) => {
             notify({ text: `Error while copying position: ${err.toString()}` });
         });
     };
@@ -55,7 +55,7 @@ export const PositionListItem: React.FC<Props> = ({ groupID, currencySymbol, pos
                         onLongPress={openMenu}
                         right={(props) => (
                             <Text>
-                                {parseFloat(position.price).toFixed(2)} {currencySymbol}
+                                {position.price.toFixed(2)} {currencySymbol}
                             </Text>
                         )}
                     />

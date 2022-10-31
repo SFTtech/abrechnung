@@ -16,16 +16,23 @@ import {
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { accountsSeenByUser } from "../../../state/accounts";
-import { Group, Transaction } from "@abrechnung/types";
+import { Group, Transaction, TransactionBalanceEffect, TransactionPosition } from "@abrechnung/types";
 import { ClearingAccountIcon, PersonalAccountIcon } from "../../style/AbrechnungIcons";
 import { useTheme } from "@mui/material/styles";
 
 interface Props {
     group: Group;
     transaction: Transaction;
+    positions: TransactionPosition[];
+    transactionBalanceEffect: TransactionBalanceEffect;
 }
 
-export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({ group, transaction }) => {
+export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({
+    group,
+    transaction,
+    positions,
+    transactionBalanceEffect,
+}) => {
     const theme = useTheme();
 
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
@@ -33,12 +40,11 @@ export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({ group, transact
     const [debitorShareValues, setDebitorShareValues] = useState({});
     const [showAdvanced, setShowAdvanced] = useState(false);
 
-    const transactionHasPositions =
-        transaction.positions != null && transaction.positions.find((item) => !item.deleted) !== undefined;
+    const transactionHasPositions = positions != null && positions.find((item) => !item.deleted) !== undefined;
 
     useEffect(() => {
-        setDebitorShareValues(transaction.details.debitorShares);
-        for (const share of Object.values(transaction.details.debitorShares)) {
+        setDebitorShareValues(transaction.debitorShares);
+        for (const share of Object.values(transaction.debitorShares)) {
             if (share !== 1) {
                 setShowAdvanced(true);
                 break;
@@ -54,7 +60,7 @@ export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({ group, transact
         <List>
             <ListItem sx={{ paddingLeft: 0 }}>
                 <Grid container direction="row" justifyContent="space-between">
-                    <Typography variant="subtitle1" sx={{ marginTop: 7, marginBottom: 7 }}>
+                    <Typography variant="subtitle1" sx={{ marginTop: 1, marginBottom: 1 }}>
                         <Box sx={{ display: "flex", alignItems: "flex-end" }}>For whom</Box>
                     </Typography>
                 </Grid>
@@ -96,9 +102,9 @@ export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({ group, transact
                         {accounts
                             .filter(
                                 (account) =>
-                                    transaction.accountBalances[account.id] !== undefined &&
-                                    (transaction.accountBalances[account.id].commonDebitors !== 0 ||
-                                        transaction.accountBalances[account.id].positions)
+                                    transactionBalanceEffect[account.id] !== undefined &&
+                                    (transactionBalanceEffect[account.id].commonDebitors !== 0 ||
+                                        transactionBalanceEffect[account.id].positions)
                             )
                             .map((account) => (
                                 <TableRow hover key={account.id}>
@@ -137,27 +143,27 @@ export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({ group, transact
                                     {transactionHasPositions ? (
                                         <>
                                             <TableCell align="right">
-                                                {transaction.accountBalances[account.id].positions.toFixed(2)}{" "}
-                                                {transaction.details.currencySymbol}
+                                                {transactionBalanceEffect[account.id].positions.toFixed(2)}{" "}
+                                                {transaction.currencySymbol}
                                             </TableCell>
                                             <TableCell></TableCell>
                                             <TableCell align="right">
-                                                {transaction.accountBalances[account.id].commonDebitors.toFixed(2)}{" "}
-                                                {transaction.details.currencySymbol}
+                                                {transactionBalanceEffect[account.id].commonDebitors.toFixed(2)}{" "}
+                                                {transaction.currencySymbol}
                                             </TableCell>
                                             <TableCell></TableCell>
                                             <TableCell width="100px" align="right">
                                                 {(
-                                                    transaction.accountBalances[account.id].commonDebitors +
-                                                    transaction.accountBalances[account.id].positions
+                                                    transactionBalanceEffect[account.id].commonDebitors +
+                                                    transactionBalanceEffect[account.id].positions
                                                 ).toFixed(2)}{" "}
-                                                {transaction.details.currencySymbol}
+                                                {transaction.currencySymbol}
                                             </TableCell>
                                         </>
                                     ) : (
                                         <TableCell width="100px" align="right">
-                                            {transaction.accountBalances[account.id].commonDebitors.toFixed(2)}{" "}
-                                            {transaction.details.currencySymbol}
+                                            {transactionBalanceEffect[account.id].commonDebitors.toFixed(2)}{" "}
+                                            {transaction.currencySymbol}
                                         </TableCell>
                                     )}
                                 </TableRow>

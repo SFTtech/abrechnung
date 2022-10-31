@@ -1,6 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useRecoilValue } from "recoil";
-import { getTransactionSortFunc, TransactionSortMode, transactionsSeenByUser } from "../../state/transactions";
+import {
+    getTransactionSortFunc,
+    TransactionSortMode,
+    groupTransactionsWithBalanceEffect,
+} from "../../state/transactions";
 import { currUserPermissions } from "../../state/groups";
 import {
     Alert,
@@ -44,7 +48,7 @@ export const TransactionList: React.FC<Props> = ({ group }) => {
 
     const [showTransferCreateDialog, setShowTransferCreateDialog] = useState(false);
     const [showPurchaseCreateDialog, setShowPurchaseCreateDialog] = useState(false);
-    const transactions = useRecoilValue(transactionsSeenByUser(group.id));
+    const transactions = useRecoilValue(groupTransactionsWithBalanceEffect(group.id));
     const currentUser = useRecoilValue(userData);
     const userPermissions = useRecoilValue(currUserPermissions(group.id));
     const userAccounts = useRecoilValue(accountsOwnedByUser({ groupID: group.id, userID: currentUser.id }));
@@ -62,7 +66,7 @@ export const TransactionList: React.FC<Props> = ({ group }) => {
     useEffect(() => {
         let filtered = transactions;
         if (searchValue != null && searchValue !== "") {
-            filtered = transactions.filter((t) => filterTransaction(t, searchValue, groupAccountMap));
+            filtered = transactions.filter((t) => filterTransaction(t, t.balanceEffect, searchValue, groupAccountMap));
         }
         filtered = [...filtered].sort(getTransactionSortFunc(sortMode));
 

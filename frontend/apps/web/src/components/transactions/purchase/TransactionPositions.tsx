@@ -20,7 +20,14 @@ import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import AccountSelect from "../../style/AccountSelect";
 import { LocalPositionChanges, pendingTransactionPositionChanges } from "../../../state/transactions";
 import { MobilePaper } from "../../style/mobile";
-import { Account, Group, Transaction, TransactionPosition, TransactionShare } from "@abrechnung/types";
+import {
+    Account,
+    Group,
+    Transaction,
+    TransactionBalanceEffect,
+    TransactionPosition,
+    TransactionShare,
+} from "@abrechnung/types";
 
 type ShareInputProps = {
     value: number;
@@ -245,22 +252,29 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
 interface TransactionPositionsProps {
     group: Group;
     transaction: Transaction;
+    positions: TransactionPosition[];
+    transactionBalanceEffect: TransactionBalanceEffect;
 }
 
 type TransactionPositionWithLocalFlag = TransactionPosition & { isEmpty: boolean };
 
-export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ group, transaction }) => {
+export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
+    group,
+    transaction,
+    positions,
+    transactionBalanceEffect,
+}) => {
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const [localPositionChanges, setLocalPositionChanges] = useRecoilState(
         pendingTransactionPositionChanges(transaction.id)
     );
     const [showAdvanced, setShowAdvanced] = useState(false);
 
-    const [positions, setPositions] = useState<TransactionPositionWithLocalFlag[]>([]);
+    const [localPositions, setLocalPositions] = useState<TransactionPositionWithLocalFlag[]>([]);
 
     useEffect(() => {
-        setPositions(
-            transaction.positions
+        setLocalPositions(
+            positions
                 .map((p) => ({ ...p, isEmpty: false }))
                 .concat([
                     {
@@ -269,13 +283,13 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                     },
                 ])
         );
-    }, [transaction, setPositions, localPositionChanges]);
+    }, [positions, setLocalPositions, localPositionChanges]);
 
     // find all accounts that take part in the transaction, either via debitor shares or purchase items
     // TODO: should we add creditor accounts as well?
     const positionAccounts: Array<number> = Array.from(
         new Set<number>(
-            positions
+            localPositions
                 .map((item) => Object.keys(item.usages))
                 .flat()
                 .map((id) => parseInt(id))
@@ -285,7 +299,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
     const [additionalPurchaseItemAccounts, setAdditionalPurchaseItemAccounts] = useState([]);
     const transactionAccounts: Array<number> = Array.from(
         new Set<number>(
-            Object.keys(transaction.details.debitorShares)
+            Object.keys(transaction.debitorShares)
                 .map((id) => parseInt(id))
                 .concat(positionAccounts)
                 .concat(additionalPurchaseItemAccounts)
@@ -296,13 +310,11 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
 
     const [showAccountSelect, setShowAccountSelect] = useState(false);
 
-    const totalPositionValue = positions.reduce((acc, curr) => acc + curr.price, 0);
-    const sharedTransactionValue = transaction.details.value - totalPositionValue;
+    const totalPositionValue = localPositions.reduce((acc, curr) => acc + curr.price, 0);
+    const sharedTransactionValue = transaction.value - totalPositionValue;
 
     const purchaseItemSumForAccount = (accountID) => {
-        return transaction.accountBalances[accountID] !== undefined
-            ? transaction.accountBalances[accountID].positions
-            : 0;
+        return transactionBalanceEffect[accountID] !== undefined ? transactionBalanceEffect[accountID].positions : 0;
     };
 
     const updatePosition = (
@@ -442,6 +454,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
             added: currValue.added,
             empty: {
                 id: nextEmptyPositionID(currValue),
+                transactionID: transaction.id,
                 name: "",
                 price: 0,
                 communistShares: 0,
@@ -461,8 +474,8 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
         if (name !== "" && name != null) {
             const copyOfEmpty: TransactionPosition = {
                 id: position.id,
+                transactionID: transaction.id,
                 usages: position.usages,
-                hasLocalChanges: position.hasLocalChanges,
                 name: name,
                 deleted: position.deleted,
                 price: price,
@@ -476,12 +489,12 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                     added: mappedAdded,
                     empty: {
                         id: nextEmptyPositionID(currPositions),
+                        transactionID: transaction.id,
                         name: "",
                         price: 0,
                         communistShares: 0,
                         usages: {},
                         deleted: false,
-                        hasLocalChanges: true,
                     },
                 };
             });
@@ -492,12 +505,12 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                     added: currPositions.added,
                     empty: {
                         id: position.id,
+                        transactionID: transaction.id,
                         usages: position.usages,
                         name: name,
                         price: price,
                         communistShares: communistShares,
                         deleted: false,
-                        hasLocalChanges: true,
                     },
                 };
             });
@@ -550,7 +563,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
         <MobilePaper sx={{ marginTop: 2 }}>
             <Grid container direction="row" justifyContent="space-between">
                 <Typography>Positions</Typography>
-                {transaction.isWip && (
+                {transaction.hasUnpublishedChanges && (
                     <FormControlLabel
                         control={<Checkbox name={`show-advanced`} />}
                         checked={showAdvanced}
@@ -565,12 +578,14 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                         <TableRow>
                             <TableCell>Name</TableCell>
                             <TableCell align="right">Price</TableCell>
-                            {(transaction.isWip ? transactionAccounts : positionAccounts).map((accountID) => (
-                                <TableCell align="right" sx={{ minWidth: 80 }} key={accountID}>
-                                    {accounts.find((account) => account.id === accountID).name}
-                                </TableCell>
-                            ))}
-                            {transaction.isWip && (
+                            {(transaction.hasUnpublishedChanges ? transactionAccounts : positionAccounts).map(
+                                (accountID) => (
+                                    <TableCell align="right" sx={{ minWidth: 80 }} key={accountID}>
+                                        {accounts.find((account) => account.id === accountID).name}
+                                    </TableCell>
+                                )
+                            )}
+                            {transaction.hasUnpublishedChanges && (
                                 <>
                                     {showAccountSelect && (
                                         <TableCell align="right">
@@ -591,12 +606,12 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                                 </>
                             )}
                             <TableCell align="right">Shared</TableCell>
-                            {transaction.isWip && <TableCell></TableCell>}
+                            {transaction.hasUnpublishedChanges && <TableCell></TableCell>}
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {transaction.isWip
-                            ? positions.map((position, idx) => (
+                        {transaction.hasUnpublishedChanges
+                            ? localPositions.map((position, idx) => (
                                   <TableRow hover key={position.id}>
                                       <PositionTableRow
                                           position={position}
@@ -611,13 +626,13 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                                       />
                                   </TableRow>
                               ))
-                            : positions.map(
+                            : localPositions.map(
                                   (position) =>
                                       !position.isEmpty && (
                                           <TableRow hover key={position.id}>
                                               <TableCell>{position.name}</TableCell>
                                               <TableCell align="right" style={{ minWidth: 80 }}>
-                                                  {position.price.toFixed(2)} {transaction.details.currencySymbol}
+                                                  {position.price.toFixed(2)} {transaction.currencySymbol}
                                               </TableCell>
                                               {positionAccounts.map((accountID) => (
                                                   <TableCell align="right" key={accountID}>
@@ -635,38 +650,41 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                                 <Typography sx={{ fontWeight: "bold" }}>Total:</Typography>
                             </TableCell>
                             <TableCell align="right">
-                                {totalPositionValue.toFixed(2)} {transaction.details.currencySymbol}
+                                {totalPositionValue.toFixed(2)} {transaction.currencySymbol}
                             </TableCell>
-                            {(transaction.isWip ? transactionAccounts : positionAccounts).map((accountID) => (
-                                <TableCell align="right" key={accountID}>
-                                    {purchaseItemSumForAccount(accountID).toFixed(2)}{" "}
-                                    {transaction.details.currencySymbol}
-                                </TableCell>
-                            ))}
+                            {(transaction.hasUnpublishedChanges ? transactionAccounts : positionAccounts).map(
+                                (accountID) => (
+                                    <TableCell align="right" key={accountID}>
+                                        {purchaseItemSumForAccount(accountID).toFixed(2)} {transaction.currencySymbol}
+                                    </TableCell>
+                                )
+                            )}
                             <TableCell align="right" colSpan={showAddAccount ? 2 : 1}>
                                 {(
-                                    positions.reduce((acc, curr) => acc + curr.price, 0) -
-                                    Object.values(transaction.accountBalances).reduce(
+                                    localPositions.reduce((acc, curr) => acc + curr.price, 0) -
+                                    Object.values(transactionBalanceEffect).reduce(
                                         (acc, curr) => acc + curr.positions,
                                         0
                                     )
                                 ).toFixed(2)}{" "}
-                                {transaction.details.currencySymbol}
+                                {transaction.currencySymbol}
                             </TableCell>
-                            {transaction.isWip && <TableCell></TableCell>}
+                            {transaction.hasUnpublishedChanges && <TableCell></TableCell>}
                         </TableRow>
                         <TableRow hover>
                             <TableCell>
                                 <Typography sx={{ fontWeight: "bold" }}>Remaining:</Typography>
                             </TableCell>
                             <TableCell align="right">
-                                {sharedTransactionValue.toFixed(2)} {transaction.details.currencySymbol}
+                                {sharedTransactionValue.toFixed(2)} {transaction.currencySymbol}
                             </TableCell>
-                            {(transaction.isWip ? transactionAccounts : positionAccounts).map((accountID) => (
-                                <TableCell align="right" key={accountID}></TableCell>
-                            ))}
+                            {(transaction.hasUnpublishedChanges ? transactionAccounts : positionAccounts).map(
+                                (accountID) => (
+                                    <TableCell align="right" key={accountID}></TableCell>
+                                )
+                            )}
                             <TableCell align="right" colSpan={showAddAccount ? 2 : 1}></TableCell>
-                            {transaction.isWip && <TableCell></TableCell>}
+                            {transaction.hasUnpublishedChanges && <TableCell></TableCell>}
                         </TableRow>
                     </TableBody>
                 </Table>

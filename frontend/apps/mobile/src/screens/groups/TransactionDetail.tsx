@@ -1,4 +1,4 @@
-import { GroupStackParamList, GroupStackScreenProps } from "../../navigation/types";
+import { GroupStackScreenProps } from "../../navigation/types";
 import { BackHandler, ScrollView, StyleSheet, View } from "react-native";
 import * as React from "react";
 import { useEffect, useLayoutEffect, useState } from "react";
@@ -25,11 +25,10 @@ import { useRecoilValueLoadable } from "recoil";
 import { positionStateByTransaction, useTransaction } from "../../core/transactions";
 import PositionListItem from "../../components/PositionListItem";
 import { notify } from "../../notifications";
-import { StackScreenProps } from "@react-navigation/stack";
 import LoadingIndicator from "../../components/LoadingIndicator";
 import { useFocusEffect } from "@react-navigation/native";
 import {
-    TransactionDetails,
+    Transaction,
     TransactionPosition,
     TransactionShare,
     TransactionValidationErrors,
@@ -37,7 +36,7 @@ import {
 } from "@abrechnung/types";
 
 type LocalEditingState = Pick<
-    TransactionDetails,
+    Transaction,
     | "description"
     | "value"
     | "billedAt"
@@ -104,18 +103,17 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 setInputErrors({});
                 console.log("saved transaction changes to local db");
                 pushLocalTransactionChanges(transaction.id)
-                    .then((res) => {
-                        const [updatedTransaction, updatedPositions] = res;
+                    .then((transactionContainer) => {
                         console.log(
                             "synced updated transaction with server: old id",
                             transaction.id,
                             "new id",
-                            updatedTransaction.id,
+                            transactionContainer.transaction.id,
                             "group",
                             groupID
                         );
                         navigation.navigate("TransactionDetail", {
-                            transactionID: updatedTransaction.id,
+                            transactionID: transactionContainer.transaction.id,
                             groupID: groupID,
                             editingStart: null,
                         });

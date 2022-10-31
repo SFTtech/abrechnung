@@ -21,13 +21,14 @@ import {
 } from "@mui/material";
 import { pendingTransactionDetailChanges } from "../../../state/transactions";
 import { accountsSeenByUser } from "../../../state/accounts";
-import { Group, Account, Transaction } from "@abrechnung/types";
+import { Group, Account, Transaction, TransactionPosition, TransactionBalanceEffect } from "@abrechnung/types";
 import { ShareInput } from "../../ShareInput";
 import { Clear, Search as SearchIcon } from "@mui/icons-material";
 import { ClearingAccountIcon, PersonalAccountIcon } from "../../style/AbrechnungIcons";
 
 interface AccountTableRowProps {
     transaction: Transaction;
+    positions: TransactionPosition[];
     account: Account;
     showAdvanced: boolean;
     debitorShareValueForAccount: (accountID: number) => number;
@@ -41,14 +42,14 @@ const AccountTableRow: React.FC<AccountTableRowProps> = ({
     transaction,
     account,
     showAdvanced,
+    positions,
     debitorShareValueForAccount,
     showPositions,
     positionValueForAccount,
     debitorValueForAccount,
     updateDebShare,
 }) => {
-    const transactionHasPositions =
-        transaction.positions != null && transaction.positions.find((item) => !item.deleted) !== undefined;
+    const transactionHasPositions = positions != null && positions.find((item) => !item.deleted) !== undefined;
 
     return (
         <TableRow hover>
@@ -71,7 +72,7 @@ const AccountTableRow: React.FC<AccountTableRowProps> = ({
                 ) : (
                     <Checkbox
                         name={`${account.name}-checked`}
-                        checked={transaction.details.debitorShares[account.id] !== undefined}
+                        checked={transaction.debitorShares[account.id] !== undefined}
                         onChange={(event) => updateDebShare(account.id, event.target.checked ? 1.0 : 0)}
                     />
                 )}
@@ -79,22 +80,22 @@ const AccountTableRow: React.FC<AccountTableRowProps> = ({
             {showPositions || transactionHasPositions ? (
                 <>
                     <TableCell align="right">
-                        {positionValueForAccount(account.id).toFixed(2)} {transaction.details.currencySymbol}
+                        {positionValueForAccount(account.id).toFixed(2)} {transaction.currencySymbol}
                     </TableCell>
                     <TableCell></TableCell>
                     <TableCell align="right">
-                        {debitorValueForAccount(account.id).toFixed(2)} {transaction.details.currencySymbol}
+                        {debitorValueForAccount(account.id).toFixed(2)} {transaction.currencySymbol}
                     </TableCell>
                     <TableCell></TableCell>
                     <TableCell width="100px" align="right">
                         {(debitorValueForAccount(account.id) + positionValueForAccount(account.id)).toFixed(2)}{" "}
-                        {transaction.details.currencySymbol}
+                        {transaction.currencySymbol}
                     </TableCell>
                 </>
             ) : (
                 <TableCell width="100px" align="right">
                     {(debitorValueForAccount(account.id) + positionValueForAccount(account.id)).toFixed(2)}{" "}
-                    {transaction.details.currencySymbol}
+                    {transaction.currencySymbol}
                 </TableCell>
             )}
         </TableRow>
@@ -105,11 +106,15 @@ interface PurchaseDebitorSharesProps {
     group: Group;
     transaction: Transaction;
     showPositions: boolean;
+    transactionBalanceEffect: TransactionBalanceEffect;
+    positions: TransactionPosition[];
 }
 
 export const PurchaseDebitorShares: React.FC<PurchaseDebitorSharesProps> = ({
     group,
     transaction,
+    positions,
+    transactionBalanceEffect,
     showPositions = false,
 }) => {
     const isSmallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
@@ -121,12 +126,11 @@ export const PurchaseDebitorShares: React.FC<PurchaseDebitorSharesProps> = ({
 
     const [showAdvanced, setShowAdvanced] = useState(false);
 
-    const transactionHasPositions =
-        transaction.positions != null && transaction.positions.find((item) => !item.deleted) !== undefined;
+    const transactionHasPositions = positions != null && positions.find((item) => !item.deleted) !== undefined;
     const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
 
     useEffect(() => {
-        for (const share of Object.values(transaction.details.debitorShares)) {
+        for (const share of Object.values(transaction.debitorShares)) {
             if (share !== 1) {
                 setShowAdvanced(true);
                 break;
@@ -147,23 +151,23 @@ export const PurchaseDebitorShares: React.FC<PurchaseDebitorSharesProps> = ({
     }, [searchValue, accounts]);
 
     const debitorShareValueForAccount = (accountID: number) => {
-        return transaction.details.debitorShares && transaction.details.debitorShares[accountID] !== undefined
-            ? transaction.details.debitorShares[accountID]
+        return transaction.debitorShares && transaction.debitorShares[accountID] !== undefined
+            ? transaction.debitorShares[accountID]
             : 0;
     };
 
     const debitorValueForAccount = (accountID: number) => {
-        if (transaction.accountBalances[accountID] === undefined) {
+        if (transactionBalanceEffect[accountID] === undefined) {
             return 0.0;
         }
-        return transaction.accountBalances[accountID].commonDebitors;
+        return transactionBalanceEffect[accountID].commonDebitors;
     };
 
     const positionValueForAccount = (accountID: number) => {
-        if (transaction.accountBalances[accountID] === undefined) {
+        if (transactionBalanceEffect[accountID] === undefined) {
             return 0.0;
         }
-        return transaction.accountBalances[accountID].positions;
+        return transactionBalanceEffect[accountID].positions;
     };
 
     const updateDebShare = (accountID, value) => {
@@ -172,7 +176,7 @@ export const PurchaseDebitorShares: React.FC<PurchaseDebitorSharesProps> = ({
                 let newDebitorShares;
                 if (currState.debitorShares === undefined) {
                     newDebitorShares = {
-                        ...transaction.details.debitorShares,
+                        ...transaction.debitorShares,
                     };
                 } else {
                     newDebitorShares = {
@@ -190,7 +194,7 @@ export const PurchaseDebitorShares: React.FC<PurchaseDebitorSharesProps> = ({
                 let newDebitorShares;
                 if (currState.debitorShares === undefined) {
                     newDebitorShares = {
-                        ...transaction.details.debitorShares,
+                        ...transaction.debitorShares,
                         [accountID]: value,
                     };
                 } else {
@@ -211,10 +215,10 @@ export const PurchaseDebitorShares: React.FC<PurchaseDebitorSharesProps> = ({
         <div>
             <Box sx={{ paddingLeft: 0 }}>
                 <Grid container direction="row" justifyContent="space-between">
-                    <Typography variant="subtitle1" sx={{ marginTop: 7, marginBottom: 7 }}>
+                    <Typography variant="subtitle1" sx={{ marginTop: 1, marginBottom: 1 }}>
                         <Box sx={{ display: "flex", alignItems: "flex-end" }}>For whom</Box>
                     </Typography>
-                    {transaction.isWip && (
+                    {transaction.hasUnpublishedChanges && (
                         <FormControlLabel
                             control={<Checkbox name={`show-advanced`} />}
                             checked={showAdvanced}
@@ -294,6 +298,7 @@ export const PurchaseDebitorShares: React.FC<PurchaseDebitorSharesProps> = ({
                             <AccountTableRow
                                 key={account.id}
                                 transaction={transaction}
+                                positions={positions}
                                 account={account}
                                 debitorValueForAccount={debitorValueForAccount}
                                 debitorShareValueForAccount={debitorShareValueForAccount}

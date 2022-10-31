@@ -1,5 +1,5 @@
 import { atomFamily, selectorFamily, useRecoilValue } from "recoil";
-import { TransactionDetails, TransactionPosition } from "@abrechnung/types";
+import { Transaction, TransactionPosition } from "@abrechnung/types";
 import {
     getTransaction,
     getTransactions,
@@ -10,11 +10,11 @@ import {
 } from "./database/transactions";
 import { useNavigation } from "@react-navigation/native";
 
-function filterTransactions(transactions: TransactionDetails[]): TransactionDetails[] {
+function filterTransactions(transactions: Transaction[]): Transaction[] {
     return transactions.filter((t) => !t.deleted);
 }
 
-export const transactionState = atomFamily<TransactionDetails[], number>({
+export const transactionState = atomFamily<Transaction[], number>({
     key: "transactionState",
     default: (groupID) => (groupID === null ? [] : (async () => filterTransactions(await getTransactions(groupID)))()),
     effects: (groupID) => [
@@ -33,9 +33,7 @@ export const transactionState = atomFamily<TransactionDetails[], number>({
                     getTransaction(groupID, payload.transactionID).then((transaction) => {
                         console.log("received transaction update:", groupID);
                         setSelf((currVal) => {
-                            return (currVal as TransactionDetails[]).map((t) =>
-                                t.id === transaction.id ? transaction : t
-                            );
+                            return (currVal as Transaction[]).map((t) => (t.id === transaction.id ? transaction : t));
                         });
                     });
                 }
@@ -49,7 +47,7 @@ type transactionIdentifierParam = {
     transactionID: number;
 };
 
-export const transactionByIDState = selectorFamily<TransactionDetails | undefined, transactionIdentifierParam>({
+export const transactionByIDState = selectorFamily<Transaction | undefined, transactionIdentifierParam>({
     key: "transactionByIDState",
     get:
         ({ groupID, transactionID }) =>
@@ -59,7 +57,7 @@ export const transactionByIDState = selectorFamily<TransactionDetails | undefine
         },
 });
 
-export const useTransaction = (groupID: number, transactionID: number): TransactionDetails => {
+export const useTransaction = (groupID: number, transactionID: number): Transaction => {
     const transaction = useRecoilValue(transactionByIDState({ groupID, transactionID }));
     const navigation = useNavigation();
     if (transaction == null) {
@@ -117,7 +115,7 @@ type accountIdentifierParam = {
     accountID: number;
 };
 
-export const transactionsInvolvingAccount = selectorFamily<TransactionDetails[], accountIdentifierParam>({
+export const transactionsInvolvingAccount = selectorFamily<Transaction[], accountIdentifierParam>({
     key: "transactionsInvolvingAccount",
     get:
         ({ groupID, accountID }) =>

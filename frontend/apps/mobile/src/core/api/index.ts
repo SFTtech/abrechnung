@@ -1,4 +1,4 @@
-import { db } from "../database";
+import { db } from "../database/database";
 import * as Network from "expo-network";
 import { Api } from "@abrechnung/api";
 
@@ -16,7 +16,6 @@ export async function initializeAuthCache() {
     );
     if (resp.rows.length > 0) {
         api.sessionToken = resp.rows[0].session_token;
-        api.accessToken = resp.rows[0].access_token;
     }
 }
 

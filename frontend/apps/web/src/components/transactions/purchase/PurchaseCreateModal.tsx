@@ -6,7 +6,7 @@ import { DateTime } from "luxon";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { useSetRecoilState } from "recoil";
-import { addTransactionInState, groupTransactions } from "../../../state/transactions";
+import { addTransactionInState, groupTransactionContainers } from "../../../state/transactions";
 import AccountSelect from "../../style/AccountSelect";
 import * as yup from "yup";
 import { Group, Account } from "@abrechnung/types";
@@ -35,7 +35,7 @@ interface Props {
 }
 
 export const PurchaseCreateModal: React.FC<Props> = ({ group, show, onClose }) => {
-    const setTransactions = useSetRecoilState(groupTransactions(group.id));
+    const setTransactions = useSetRecoilState(groupTransactionContainers(group.id));
     const initialValues: FormValues = {
         description: "",
         value: "0.0",

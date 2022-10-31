@@ -8,15 +8,21 @@ import {
     TransactionShare,
     AccountBalanceMap,
     TransactionPosition,
-    TransactionDetails,
+    TransactionContainer,
+    TransactionAttachment,
+    TransactionAccountBalance,
+    TransactionBalanceEffect,
 } from "@abrechnung/types";
 import { localStorageEffect } from "./cache";
-import { computeAccountBalances, computeAccountBalancesForTransaction } from "@abrechnung/core";
+import {
+    computeAccountBalances,
+    computeAccountBalancesForTransaction as computeTransactionBalanceEffect,
+} from "@abrechnung/core";
 
 export const transactionCompareFn = (t1: Transaction, t2: Transaction) => {
-    if (t1.isWip && !t2.isWip) {
+    if (t1.hasUnpublishedChanges && !t2.hasUnpublishedChanges) {
         return -1;
-    } else if (!t1.isWip && t2.isWip) {
+    } else if (!t1.hasUnpublishedChanges && t2.hasUnpublishedChanges) {
         return 1;
     }
     return t2.lastChanged.getTime() - t1.lastChanged.getTime();
@@ -28,26 +34,28 @@ export const getTransactionSortFunc = (sortMode: TransactionSortMode) => {
     switch (sortMode) {
         case "lastChanged":
             return (t1: Transaction, t2: Transaction) =>
-                +t2.isWip - +t1.isWip || t2.lastChanged.getTime() - t1.lastChanged.getTime();
+                +t2.hasUnpublishedChanges - +t1.hasUnpublishedChanges ||
+                t2.lastChanged.getTime() - t1.lastChanged.getTime();
         case "value":
-            return (t1: Transaction, t2: Transaction) => +t2.isWip - +t1.isWip || t2.details.value - t1.details.value;
+            return (t1: Transaction, t2: Transaction) =>
+                +t2.hasUnpublishedChanges - +t1.hasUnpublishedChanges || t2.value - t1.value;
         case "description":
             return (t1: Transaction, t2: Transaction) =>
-                +t2.isWip - +t1.isWip || t1.details.description.localeCompare(t2.details.description);
+                +t2.hasUnpublishedChanges - +t1.hasUnpublishedChanges || t1.description.localeCompare(t2.description);
         case "billedAt":
             return (t1: Transaction, t2: Transaction) =>
-                +t2.isWip - +t1.isWip || t2.details.billedAt.getTime() - t1.details.billedAt.getTime();
+                +t2.hasUnpublishedChanges - +t1.hasUnpublishedChanges || t2.billedAt.getTime() - t1.billedAt.getTime();
         default:
             throw new Error("unknown transaction sort mode");
     }
 };
 
-export const groupTransactions = atomFamily<Transaction[], number>({
+export const groupTransactionContainers = atomFamily<TransactionContainer[], number>({
     key: "groupTransactions",
     effects: (groupID: number) => [
         ({ setSelf, node, getPromise }) => {
             console.log("group transactions", groupID);
-            const fullFetchPromise = (): Promise<Transaction[]> => {
+            const fullFetchPromise = (): Promise<TransactionContainer[]> => {
                 return api.fetchTransactions(groupID).catch((err) => {
                     toast.error(`error when fetching transactions: ${err}`);
                     return [];
@@ -58,7 +66,7 @@ export const groupTransactions = atomFamily<Transaction[], number>({
             setSelf(fullFetchPromise());
 
             const fetchAndUpdateTransaction = (
-                currTransactions: Transaction[],
+                currTransactions: TransactionContainer[],
                 transactionID: number,
                 isNew: boolean
             ) => {
@@ -67,7 +75,11 @@ export const groupTransactions = atomFamily<Transaction[], number>({
                         if (isNew) {
                             setSelf([...currTransactions, transaction]);
                         } else {
-                            setSelf(currTransactions.map((t) => (t.id === transaction.id ? transaction : t)));
+                            setSelf(
+                                currTransactions.map((t) =>
+                                    t.transaction.id === transaction.transaction.id ? transaction : t
+                                )
+                            );
                         }
                     })
                     .catch((err) => toast.error(`error when fetching transaction: ${err}`));
@@ -90,14 +102,14 @@ export const groupTransactions = atomFamily<Transaction[], number>({
                     );
                     if (element_id === groupID) {
                         getPromise(node).then((currTransactions) => {
-                            const currTransaction = currTransactions.find((t) => t.id === transaction_id);
+                            const currTransaction = currTransactions.find((t) => t.transaction.id === transaction_id);
                             if (
                                 currTransaction === undefined ||
-                                (revision_committed === null && revision_version > currTransaction.version) ||
+                                //(revision_committed === null && revision_version > currTransaction.version) ||
                                 (revision_committed !== null &&
-                                    (currTransaction.lastChanged === null ||
+                                    (currTransaction.transaction.lastChanged === null ||
                                         DateTime.fromISO(revision_committed) >
-                                            DateTime.fromJSDate(currTransaction.lastChanged)))
+                                            DateTime.fromJSDate(currTransaction.transaction.lastChanged)))
                             ) {
                                 fetchAndUpdateTransaction(
                                     currTransactions,
@@ -118,32 +130,21 @@ export const groupTransactions = atomFamily<Transaction[], number>({
     ],
 });
 
-export const transactionDetails = selectorFamily<TransactionDetails[], number>({
-    key: "transactionDetails",
-    get:
-        (groupID: number) =>
-        async ({ get }) => {
-            console.log("transaction details", groupID);
-            const transactions = get(groupTransactions(groupID));
-            return transactions.map((t) => t.details);
-        },
-});
-
 export const addTransactionInState = (
-    transaction: Transaction,
-    setTransactions: SetterOrUpdater<Array<Transaction>>
+    transaction: TransactionContainer,
+    setTransactions: SetterOrUpdater<Array<TransactionContainer>>
 ) => {
-    setTransactions((currTransactions: Array<Transaction>) => {
+    setTransactions((currTransactions: Array<TransactionContainer>) => {
         return [...currTransactions, transaction];
     });
 };
 
 export const updateTransactionInState = (
-    transaction: Transaction,
-    setTransactions: SetterOrUpdater<Array<Transaction>>
+    transaction: TransactionContainer,
+    setTransactions: SetterOrUpdater<Array<TransactionContainer>>
 ) => {
-    setTransactions((currTransactions: Array<Transaction>) => {
-        return currTransactions.map((t) => (t.id === transaction.id ? transaction : t));
+    setTransactions((currTransactions: Array<TransactionContainer>) => {
+        return currTransactions.map((t) => (t.transaction.id === transaction.transaction.id ? transaction : t));
     });
 };
 
@@ -164,63 +165,137 @@ export interface LocalPositionChanges {
     empty: TransactionPosition;
 }
 
-// TODO: remove any type here
 export const pendingTransactionDetailChanges = atomFamily<LocalTransactionDetailChanges, number>({
     // transaction id -> pending changes
     key: "pendingTransactionDetailChanges",
     default: {},
-    effects_UNSTABLE: (transactionID) => [localStorageEffect(`localTransactionChanges-${transactionID}`)],
+    effects: (transactionID) => [localStorageEffect(`localTransactionChanges-${transactionID}`)],
 });
 
 export const pendingTransactionPositionChanges = atomFamily<LocalPositionChanges, number>({
     // transaction id -> pending changes
     key: "pendingTransactionPositionChanges",
-    default: {
-        modified: {}, // map of positions with server given ids
-        added: {}, // map of positions with local id to content
-        empty: {
-            id: -1,
-            name: "",
-            price: 0,
-            communistShares: 0,
-            usages: {},
-            deleted: false,
-            hasLocalChanges: true,
-        },
+    default: (transactionID: number) => {
+        return {
+            modified: {}, // map of positions with server given ids
+            added: {}, // map of positions with local id to content
+            empty: {
+                id: -1,
+                transactionID: transactionID,
+                name: "",
+                price: 0,
+                communistShares: 0,
+                usages: {},
+                deleted: false,
+            },
+        };
     },
     effects: (transactionID) => [localStorageEffect(`localTransactionPositionChanges-${transactionID}`)],
 });
 
-export const transactionsSeenByUser = selectorFamily<Array<Transaction>, number>({
-    key: "transactionsSeenByUser",
+export const groupTransactions = selectorFamily<Transaction[], number>({
+    key: "groupTransactions",
     get:
         (groupID: number) =>
         async ({ get }) => {
-            const transactions = get(groupTransactions(groupID));
-
+            console.log("transaction details", groupID);
+            const transactions = get(groupTransactionContainers(groupID));
             return transactions
-                .map((t: Transaction) => {
-                    const localDetailChanges = get(pendingTransactionDetailChanges(t.id));
-                    const localPositionChanges = get(pendingTransactionPositionChanges(t.id));
+                .map((t: TransactionContainer) => {
+                    const localDetailChanges = get(pendingTransactionDetailChanges(t.transaction.id));
+                    return {
+                        ...t.transaction,
+                        ...localDetailChanges,
+                    };
+                })
+                .sort(transactionCompareFn);
+        },
+});
+
+export const transactionByID = selectorFamily<Transaction | undefined, { groupID: number; transactionID: number }>({
+    key: "transactionByID",
+    get:
+        ({ groupID, transactionID }) =>
+        async ({ get }) => {
+            const transactions = get(groupTransactions(groupID));
+            return transactions.find((t) => t.id === transactionID);
+        },
+});
+
+export const groupPositions = selectorFamily<TransactionPosition[], number>({
+    key: "groupPositions",
+    get:
+        (groupID: number) =>
+        async ({ get }) => {
+            const containers = get(groupTransactionContainers(groupID));
+            return containers
+                .map((t: TransactionContainer) => {
+                    const localPositionChanges = get(pendingTransactionPositionChanges(t.transaction.id));
                     const newPositions = t.positions
                         .map((p) =>
                             localPositionChanges.modified[p.id] !== undefined ? localPositionChanges.modified[p.id] : p
                         )
                         .concat(Object.values(localPositionChanges.added));
-
-                    const details = {
-                        ...t.details,
-                        ...localDetailChanges,
-                    };
-
-                    return {
-                        ...t,
-                        details: details,
-                        positions: newPositions,
-                        accountBalances: computeAccountBalancesForTransaction(details, newPositions),
-                    };
+                    return newPositions;
                 })
-                .sort(transactionCompareFn);
+                .flat();
+        },
+});
+
+export const transactionPositions = selectorFamily<TransactionPosition[], { groupID: number; transactionID: number }>({
+    key: "transactionPositions",
+    get:
+        ({ groupID, transactionID }) =>
+        async ({ get }) => {
+            const positions = get(groupPositions(groupID));
+            return positions.filter((p) => p.transactionID === transactionID);
+        },
+});
+
+export const transactionAttachments = selectorFamily<
+    TransactionAttachment[] | undefined,
+    { groupID: number; transactionID: number }
+>({
+    key: "transactionAttachments",
+    get:
+        ({ groupID, transactionID }) =>
+        async ({ get }) => {
+            const containers = get(groupTransactionContainers(groupID));
+            return containers.find((t) => t.transaction.id === transactionID)?.attachments;
+        },
+});
+
+export const transactionBalanceEffect = selectorFamily<
+    TransactionBalanceEffect | undefined,
+    { groupID: number; transactionID: number }
+>({
+    key: "transactionAccountBalance",
+    get:
+        ({ groupID, transactionID }) =>
+        async ({ get }) => {
+            const transaction = get(transactionByID({ groupID, transactionID }));
+            if (transaction === undefined) {
+                return undefined;
+            }
+
+            const positions = get(transactionPositions({ groupID, transactionID }));
+            return computeTransactionBalanceEffect(transaction, positions);
+        },
+});
+
+interface TransactionWithBalanceEffect extends Transaction {
+    balanceEffect: TransactionBalanceEffect;
+}
+
+export const groupTransactionsWithBalanceEffect = selectorFamily<TransactionWithBalanceEffect[], number>({
+    key: "groupTransactionsWithBalanceEffect",
+    get:
+        (groupID) =>
+        async ({ get }) => {
+            const transactions = get(groupTransactions(groupID));
+            return transactions.map((t) => {
+                return { ...t, balanceEffect: get(transactionBalanceEffect({ groupID, transactionID: t.id })) };
+            });
         },
 });
 
@@ -229,39 +304,11 @@ export const transactionByIDMap = selectorFamily<{ [k: number]: Transaction }, n
     get:
         (groupID) =>
         async ({ get }) => {
-            const transactions = get(transactionsSeenByUser(groupID));
+            const transactions = get(groupTransactions(groupID));
             return transactions.reduce((map, curr) => {
                 map[curr.id] = curr;
                 return map;
             }, {});
-        },
-});
-
-export type ParamGroupTransaction = {
-    groupID: number;
-    transactionID: number;
-};
-
-export const transactionById = selectorFamily<Transaction | undefined, ParamGroupTransaction>({
-    key: "transactionById",
-    get:
-        ({ groupID, transactionID }) =>
-        async ({ get }) => {
-            const transactions = get(transactionsSeenByUser(groupID));
-            return transactions?.find((transaction) => transaction.id === transactionID);
-        },
-});
-
-export const transactionPositions = selectorFamily<TransactionPosition[], ParamGroupTransaction>({
-    key: "transactionPositions",
-    get:
-        ({ groupID, transactionID }) =>
-        async ({ get }) => {
-            const transaction = get(transactionById({ groupID, transactionID }));
-            if (transaction === undefined) {
-                return [];
-            }
-            return transaction.positions;
         },
 });
 
@@ -270,25 +317,23 @@ export const accountBalances = selectorFamily<AccountBalanceMap, number>({
     get:
         (groupID) =>
         async ({ get }) => {
-            const transactions = get(transactionsSeenByUser(groupID));
+            const transactions = get(groupTransactions(groupID));
+            const positions = get(groupPositions(groupID));
             const accounts = get(accountsSeenByUser(groupID));
-            return computeAccountBalances(accounts, transactions);
+            return computeAccountBalances(accounts, transactions, positions);
         },
 });
 
-export type ParamGroupAccount = {
-    groupID: number;
-    accountID: number;
-};
-
-export const accountTransactions = selectorFamily<Array<Transaction>, ParamGroupAccount>({
+export const accountTransactions = selectorFamily<Transaction[], { groupID: number; accountID: number }>({
     key: "accountTransactions",
     get:
         ({ groupID, accountID }) =>
         async ({ get }) => {
-            return get(transactionsSeenByUser(groupID)).filter(
-                (transaction) => transaction.accountBalances[accountID] !== undefined
-            );
+            const transactions = get(groupTransactions(groupID));
+            return transactions.filter((transaction) => {
+                const balanceEffect = get(transactionBalanceEffect({ groupID, transactionID: transaction.id }));
+                return balanceEffect[accountID] !== undefined;
+            });
         },
 });
 
@@ -299,7 +344,7 @@ export interface BalanceHistoryEntry {
     changeOrigin: { type: "clearing" | "transaction"; id: number };
 }
 
-export const accountBalanceHistory = selectorFamily<Array<BalanceHistoryEntry>, ParamGroupAccount>({
+export const accountBalanceHistory = selectorFamily<BalanceHistoryEntry[], { groupID: number; accountID: number }>({
     key: "accountBalanceHistory",
     get:
         ({ groupID, accountID }) =>
@@ -316,7 +361,8 @@ export const accountBalanceHistory = selectorFamily<Array<BalanceHistoryEntry>, 
 
             const balanceChanges = [];
             for (const transaction of transactions) {
-                const a = transaction.accountBalances[accountID];
+                const balanceEffect = get(transactionBalanceEffect({ groupID, transactionID: transaction.id }));
+                const a = balanceEffect[accountID];
                 balanceChanges.push({
                     date: transaction.lastChanged.getTime() / 1000,
                     change: a.total,
@@ -341,7 +387,7 @@ export const accountBalanceHistory = selectorFamily<Array<BalanceHistoryEntry>, 
             }
             balanceChanges.sort((a1, a2) => a1.date - a2.date);
 
-            const accumulatedBalanceChanges: Array<BalanceHistoryEntry> = [];
+            const accumulatedBalanceChanges: BalanceHistoryEntry[] = [];
             let currBalance = 0;
             for (const change of balanceChanges) {
                 currBalance += change.change;

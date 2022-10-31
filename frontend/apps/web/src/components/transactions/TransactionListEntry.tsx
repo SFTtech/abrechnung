@@ -40,28 +40,28 @@ export const TransactionListEntry: React.FC<Props> = ({ group, transaction }) =>
                 <ListItemText
                     primary={
                         <>
-                            {transaction.isWip && (
+                            {transaction.hasUnpublishedChanges && (
                                 <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 1 }} />
                             )}
                             <Typography variant="body1" component="span">
-                                {transaction.details.description}
+                                {transaction.description}
                             </Typography>
                         </>
                     }
                     secondary={
                         <>
                             <Typography variant="body2" component="span" sx={{ color: "text.primary" }}>
-                                by {accountNamesFromShares(Object.keys(transaction.details.creditorShares))}, for{" "}
-                                {accountNamesFromShares(Object.keys(transaction.details.debitorShares))}
+                                by {accountNamesFromShares(Object.keys(transaction.creditorShares))}, for{" "}
+                                {accountNamesFromShares(Object.keys(transaction.debitorShares))}
                             </Typography>
                             <br />
-                            {DateTime.fromJSDate(transaction.details.billedAt).toLocaleString(DateTime.DATE_FULL)}
+                            {DateTime.fromJSDate(transaction.billedAt).toLocaleString(DateTime.DATE_FULL)}
                         </>
                     }
                 />
                 <ListItemText>
                     <Typography align="right" variant="body2">
-                        {transaction.details.value.toFixed(2)} {transaction.details.currencySymbol}
+                        {transaction.value.toFixed(2)} {transaction.currencySymbol}
                         <br />
                         <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
                             last changed:{" "}

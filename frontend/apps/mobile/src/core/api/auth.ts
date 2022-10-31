@@ -27,18 +27,17 @@ export async function login({ server, username, password }: { server: string; us
         await db.execute(
             `
                 insert into abrechnung_instance (
-                    url, user_id, username, session_token, access_token, is_active_session
+                    url, user_id, username, session_token, is_active_session
                 )
                 values (
-                    ?, ?, ?, ?, ?, true
+                    ?, ?, ?, ?, true
                 )
                 on conflict (url) do update set
                                                 session_token     = excluded.session_token,
                                                 user_id           = excluded.user_id,
                                                 username          = excluded.username,
-                                                access_token      = excluded.access_token,
                                                 is_active_session = excluded.is_active_session`,
-            [server, jsonResp.user_id, username, jsonResp.session_token, jsonResp.access_token]
+            [server, jsonResp.user_id, username, jsonResp.session_token]
         );
         await initializeAPIURL(server);
         await initializeAuthCache();

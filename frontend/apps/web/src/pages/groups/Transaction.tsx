@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, Navigate } from "react-router-dom";
 import { useRecoilValue } from "recoil";
-import { transactionById } from "../../state/transactions";
+import { transactionByID } from "../../state/transactions";
 import Loading from "../../components/style/Loading";
 import TransferDetails from "../../components/transactions/transfer/TransferDetails";
 import PurchaseDetails from "../../components/transactions/purchase/PurchaseDetails";
@@ -16,15 +16,13 @@ interface Props {
 export const Transaction: React.FC<Props> = ({ group }) => {
     const params = useParams();
     const transactionID = parseInt(params["id"]);
-    const navigate = useNavigate();
 
-    const transaction = useRecoilValue(transactionById({ groupID: group.id, transactionID: transactionID }));
+    const transaction = useRecoilValue(transactionByID({ groupID: group.id, transactionID }));
 
-    useTitle(`${group.name} - ${transaction?.details.description}`);
+    useTitle(`${group.name} - ${transaction?.description}`);
 
     if (transaction === undefined) {
-        navigate("/404");
-        return null;
+        return <Navigate to="/404" />;
     }
 
     // TODO: handle 404
@@ -37,7 +35,7 @@ export const Transaction: React.FC<Props> = ({ group }) => {
             ) : transaction.type === "mimo" ? (
                 <Alert severity="error">Error: MIMO handling is not implemented yet</Alert>
             ) : (
-                <Alert severity="error">Error: Invalid Transaction Type "{transaction.type}"</Alert>
+                <Alert severity="error">Error: Invalid Transaction Type &quot{transaction.type}&quot</Alert>
             )}
         </Suspense>
     );

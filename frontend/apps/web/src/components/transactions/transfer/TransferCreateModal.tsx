@@ -6,7 +6,7 @@ import { DateTime } from "luxon";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { useSetRecoilState } from "recoil";
-import { addTransactionInState, groupTransactions } from "../../../state/transactions";
+import { addTransactionInState, groupTransactionContainers } from "../../../state/transactions";
 import { Group, Account } from "@abrechnung/types";
 import AccountSelect from "../../style/AccountSelect";
 import * as yup from "yup";
@@ -37,7 +37,7 @@ interface Props {
 }
 
 export const TransferCreateModal: React.FC<Props> = ({ group, show, onClose }) => {
-    const setTransactions = useSetRecoilState(groupTransactions(group.id));
+    const setTransactions = useSetRecoilState(groupTransactionContainers(group.id));
 
     const handleSubmit = (values, { setSubmitting }) => {
         api.createTransaction(

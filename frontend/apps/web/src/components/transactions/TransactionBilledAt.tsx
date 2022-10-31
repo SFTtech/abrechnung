@@ -21,7 +21,7 @@ export const TransactionBilledAt: React.FC<Props> = ({ transaction }) => {
             return;
         }
         setError(null);
-        if (transaction.isWip && billedAt !== transaction.details.billedAt) {
+        if (transaction.hasUnpublishedChanges && billedAt !== transaction.billedAt) {
             setLocalTransactionDetails((currState) => {
                 return {
                     ...currState,
@@ -30,13 +30,13 @@ export const TransactionBilledAt: React.FC<Props> = ({ transaction }) => {
             });
         }
     };
-    if (!transaction.isWip) {
+    if (!transaction.hasUnpublishedChanges) {
         return (
             <DisabledTextField
                 label="Billed At"
                 variant="standard"
                 fullWidth
-                value={DateTime.fromJSDate(transaction.details.billedAt).toLocaleString(DateTime.DATE_FULL)}
+                value={DateTime.fromJSDate(transaction.billedAt).toLocaleString(DateTime.DATE_FULL)}
                 disabled={true}
             />
         );
@@ -46,7 +46,7 @@ export const TransactionBilledAt: React.FC<Props> = ({ transaction }) => {
         <DatePicker
             label="Billed At"
             inputFormat="yyyy-MM-dd"
-            value={DateTime.fromJSDate(transaction.details.billedAt)}
+            value={DateTime.fromJSDate(transaction.billedAt)}
             onChange={save}
             renderInput={(params) => (
                 <TextField variant="standard" fullWidth {...params} helperText={error} error={error !== null} />

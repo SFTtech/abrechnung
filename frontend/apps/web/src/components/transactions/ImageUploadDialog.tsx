@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import placeholderImg from "./PlaceholderImage.svg";
 import { useSetRecoilState } from "recoil";
-import { groupTransactions, updateTransactionInState } from "../../state/transactions";
+import { groupTransactionContainers, updateTransactionInState } from "../../state/transactions";
 import { Transaction } from "@abrechnung/types";
 
 interface Props {
@@ -33,7 +33,7 @@ export const ImageUploadDialog: React.FC<Props> = ({ transaction, show, onClose 
         isError: false,
     });
     const [filename, setFilename] = useState("");
-    const setTransactions = useSetRecoilState(groupTransactions(transaction.groupID));
+    const setTransactions = useSetRecoilState(groupTransactionContainers(transaction.groupID));
 
     const selectFile = (event) => {
         setFileState({

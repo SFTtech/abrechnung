@@ -6,7 +6,7 @@ import { useLayoutEffect } from "react";
 import { useRecoilValue } from "recoil";
 import { accountBalancesState, accountByIDState } from "../../core/accounts";
 import { toISODateString } from "@abrechnung/utils";
-import { TransactionDetails, AccountBalance } from "@abrechnung/types";
+import { Transaction, AccountBalance, TransactionShare } from "@abrechnung/types";
 import { getTransactionIcon } from "../../constants/Icons";
 import TransactionShareInput from "../../components/transaction_shares/TransactionShareInput";
 import { successColor } from "../../theme";
@@ -40,7 +40,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
         });
     }, [accountID, groupID, theme, account, navigation]);
 
-    const renderTransactionListEntry = (transaction: TransactionDetails) => (
+    const renderTransactionListEntry = (transaction: Transaction) => (
         <List.Item
             key={transaction.id}
             title={transaction.description}
@@ -92,7 +92,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                     title="Participated"
                     disabled={true}
                     groupID={groupID}
-                    value={account.clearingShares}
+                    value={account.clearingShares as TransactionShare}
                     onChange={() => {
                         return;
                     }}

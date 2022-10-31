@@ -15,9 +15,7 @@ type Props = {
 export const TransactionCreditorShare: React.FC<Props> = ({ group, transaction, isEditing, ...props }) => {
     const accounts = useRecoilValue(accountsSeenByUser(group.id));
     const shareAccountID =
-        Object.keys(transaction.details.creditorShares).length === 0
-            ? null
-            : Object.keys(transaction.details.creditorShares)[0];
+        Object.keys(transaction.creditorShares).length === 0 ? null : Object.keys(transaction.creditorShares)[0];
     const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
 
     const getAccount = (accountID) => {

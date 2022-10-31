@@ -17,7 +17,8 @@ import { createComparator, lambdaComparator } from "@abrechnung/utils";
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native";
 import { updatePosition } from "../core/database/transactions";
 import { notify } from "../notifications";
-import { Account, TransactionPosition, ValidationError } from "@abrechnung/types";
+import { Account, PositionValidationErrors, TransactionPosition, ValidationError } from "@abrechnung/types";
+import { Value } from "react-native-reanimated";
 
 interface Props {
     groupID: number;
@@ -32,14 +33,14 @@ interface localEditingState {
     name: string;
     price: number;
     usages: { [k: number]: number };
-    communist_shares: number;
+    communistShares: number;
 }
 
 const initialEditingState: localEditingState = {
     name: "",
     price: 0,
     usages: {},
-    communist_shares: 0,
+    communistShares: 0,
 };
 
 export const PositionDialog: React.FC<Props> = ({
@@ -58,16 +59,16 @@ export const PositionDialog: React.FC<Props> = ({
     const accounts = useRecoilValue(accountState(groupID));
     const [sortedAccounts, setSortedAccounts] = useState<Account[]>([]);
     const [filteredAccounts, setFilteredAccounts] = useState<Account[]>([]);
-    const [errors, setErrors] = useState({});
+    const [errors, setErrors] = useState<PositionValidationErrors>({});
 
-    const toggleShare = (account_id: number) => {
-        const currVal = localEditingState.usages.hasOwnProperty(account_id) ? localEditingState.usages[account_id] : 0;
+    const toggleShare = (accountID: number) => {
+        const currVal = localEditingState.usages[accountID] !== undefined ? localEditingState.usages[accountID] : 0;
         setLocalEditingState((prevState) => {
             const newShares = { ...prevState.usages };
             if (currVal > 0) {
-                delete newShares[account_id];
+                delete newShares[accountID];
             } else {
-                newShares[account_id] = 1;
+                newShares[accountID] = 1;
             }
             return {
                 ...prevState,
@@ -107,7 +108,7 @@ export const PositionDialog: React.FC<Props> = ({
             setLocalEditingState({
                 name: position.name,
                 price: position.price,
-                communist_shares: position.communist_shares,
+                communistShares: position.communistShares,
                 usages: position.usages,
             });
         }
@@ -128,8 +129,8 @@ export const PositionDialog: React.FC<Props> = ({
         updatePosition({
             ...position,
             ...localEditingState,
-            communist_shares: parseFloat(localEditingState.communist_shares),
-            price: parseFloat(localEditingState.price),
+            communistShares: localEditingState.communistShares,
+            price: localEditingState.price,
         })
             .then(() => {
                 setErrors({});
@@ -149,11 +150,20 @@ export const PositionDialog: React.FC<Props> = ({
         onHideDialog();
     };
 
-    const onChangeLocalEditingValueFactory = (fieldName: string) => (value) => {
+    const onChangeName = (value: string) => {
         setLocalEditingState((prevState) => {
             return {
                 ...prevState,
-                [fieldName]: value,
+                name: value,
+            };
+        });
+    };
+
+    const onChangePrice = (value: string) => {
+        setLocalEditingState((prevState) => {
+            return {
+                ...prevState,
+                price: parseFloat(value),
             };
         });
     };
@@ -163,7 +173,7 @@ export const PositionDialog: React.FC<Props> = ({
             setLocalEditingState((prevState) => {
                 return {
                     ...prevState,
-                    communist_shares: prevState.communist_shares > 0 ? 0 : 1,
+                    communistShares: prevState.communistShares > 0 ? 0 : 1,
                 };
             });
         }
@@ -194,11 +204,11 @@ export const PositionDialog: React.FC<Props> = ({
                                 label="Name"
                                 value={localEditingState.name}
                                 editable={editing}
-                                onChangeText={onChangeLocalEditingValueFactory("name")}
+                                onChangeText={onChangeName}
                                 style={inputStyles}
-                                error={errors.hasOwnProperty("name")}
+                                error={errors.name !== undefined}
                             />
-                            {errors.hasOwnProperty("name") && <HelperText type="error">{errors["name"]}</HelperText>}
+                            {errors.name !== undefined && <HelperText type="error">{errors.name}</HelperText>}
                             <TextInput
                                 label="Price" // TODO: proper float input
                                 value={
@@ -208,18 +218,18 @@ export const PositionDialog: React.FC<Props> = ({
                                 }
                                 editable={editing}
                                 keyboardType="numeric"
-                                onChangeText={onChangeLocalEditingValueFactory("price")}
+                                onChangeText={onChangePrice}
                                 style={inputStyles}
                                 right={<TextInput.Affix text={currencySymbol} />}
-                                error={errors.hasOwnProperty("price")}
+                                error={errors.price !== undefined}
                             />
-                            {errors.hasOwnProperty("price") && <HelperText type="error">{errors["price"]}</HelperText>}
+                            {errors.price !== undefined && <HelperText type="error">{errors.price}</HelperText>}
 
                             <List.Item
                                 title="Communist Shares"
                                 right={(props) => (
                                     <Checkbox.Android
-                                        status={localEditingState.communist_shares > 0 ? "checked" : "unchecked"}
+                                        status={localEditingState.communistShares > 0 ? "checked" : "unchecked"}
                                         disabled={!editing}
                                     />
                                 )}
@@ -242,7 +252,7 @@ export const PositionDialog: React.FC<Props> = ({
                                         right={(props) => (
                                             <Checkbox.Android
                                                 status={
-                                                    localEditingState.usages.hasOwnProperty(account.id) &&
+                                                    localEditingState.usages[account.id] !== undefined &&
                                                     localEditingState.usages[account.id] > 0
                                                         ? "checked"
                                                         : "unchecked"

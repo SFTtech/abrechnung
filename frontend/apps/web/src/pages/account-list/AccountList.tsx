@@ -369,8 +369,8 @@ export const AccountList: React.FC<Props> = ({ group }) => {
                     <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={accountToDelete !== null}>
                         <DialogTitle id="confirmation-dialog-title">Confirm delete account</DialogTitle>
                         <DialogContent dividers>
-                            Are you sure you want to delete the account "
-                            {allAccounts.find((acc) => acc.id === accountToDelete)?.name}"
+                            Are you sure you want to delete the account &quot
+                            {allAccounts.find((acc) => acc.id === accountToDelete)?.name}&quot
                         </DialogContent>
                         <DialogActions>
                             <Button autoFocus onClick={() => setAccountToDelete(null)} color="primary">

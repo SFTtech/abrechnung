@@ -39,7 +39,7 @@ export const groupAccounts = atomFamily<Array<Account>, number>({
                             const currAccount = currAccounts.find((a) => a.id === account_id);
                             if (
                                 currAccount === undefined ||
-                                (revision_committed === null && revision_version > currAccount.version) ||
+                                // (revision_committed === null && revision_version > currAccount.version) ||
                                 (revision_committed !== null &&
                                     (currAccount.lastChanged === null ||
                                         DateTime.fromISO(revision_committed) >

@@ -6,9 +6,9 @@ import { AddCircle, ChevronLeft, ChevronRight, Delete } from "@mui/icons-materia
 import ImageUploadDialog from "./ImageUploadDialog";
 import { Transition } from "react-transition-group";
 import placeholderImg from "./PlaceholderImage.svg";
-import { groupTransactions, updateTransactionInState } from "../../state/transactions";
+import { groupTransactionContainers, updateTransactionInState } from "../../state/transactions";
 import { useSetRecoilState } from "recoil";
-import { Transaction } from "@abrechnung/types";
+import { Transaction, TransactionAttachment } from "@abrechnung/types";
 
 const duration = 200;
 
@@ -25,18 +25,19 @@ const transitionStyles = {
 
 interface Props {
     transaction: Transaction;
+    attachments: TransactionAttachment[];
 }
 
-export const FileGallery: React.FC<Props> = ({ transaction }) => {
+export const FileGallery: React.FC<Props> = ({ transaction, attachments }) => {
     const [files, setFiles] = useState([]); // map of file id to object
     const [active, setActive] = useState(0);
-    const setTransactions = useSetRecoilState(groupTransactions(transaction.groupID));
+    const setTransactions = useSetRecoilState(groupTransactionContainers(transaction.groupID));
 
     const [showUploadDialog, setShowUploadDialog] = useState(false);
     const [showImage, setShowImage] = useState(false);
 
     useEffect(() => {
-        const newFileIDs = new Set(transaction.attachments.map((file) => file.id));
+        const newFileIDs = new Set(attachments.map((file) => file.id));
         const filteredFiles = files.reduce((map, file) => {
             map[file.id] = file;
             return map;
@@ -48,9 +49,9 @@ export const FileGallery: React.FC<Props> = ({ transaction }) => {
             }
         }
         setFiles(Object.values(filteredFiles)); // TODO: maybe include placeholders
-        setActive((oldActive) => Math.max(0, Math.min(oldActive, transaction.attachments.length - 1)));
+        setActive((oldActive) => Math.max(0, Math.min(oldActive, attachments.length - 1)));
 
-        const newFiles = transaction.attachments.filter((file) => filteredFiles[file.id] === undefined);
+        const newFiles = attachments.filter((file) => filteredFiles[file.id] === undefined);
         Promise.all(
             newFiles.map((newFile) => {
                 return api.fetchFile(newFile.id, newFile.blobID).then((objectUrl) => {
@@ -148,7 +149,7 @@ export const FileGallery: React.FC<Props> = ({ transaction }) => {
                         <ChevronRight />
                     </IconButton>
                 )}
-                {transaction.isWip && (
+                {transaction.hasUnpublishedChanges && (
                     <>
                         <IconButton
                             color="primary"
@@ -217,7 +218,7 @@ export const FileGallery: React.FC<Props> = ({ transaction }) => {
                         )}
                     </Grid>
                 </DialogContent>
-                {transaction.isWip && (
+                {transaction.hasUnpublishedChanges && (
                     <DialogActions>
                         <Button startIcon={<Delete />} onClick={deleteSelectedFile} variant="outlined" color="error">
                             Delete

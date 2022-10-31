@@ -2,7 +2,7 @@ import { useLocation } from "react-router-dom";
 import { DateTime } from "luxon";
 import { useEffect } from "react";
 import { Theme } from "@mui/material";
-import { Transaction } from "@abrechnung/types";
+import { Transaction, TransactionBalanceEffect } from "@abrechnung/types";
 
 export const useQuery = (): URLSearchParams => {
     return new URLSearchParams(useLocation().search);
@@ -28,12 +28,13 @@ export const useTitle = (title: string) => {
 
 export const filterTransaction = (
     transaction: Transaction,
+    transactionBalanceEffect: TransactionBalanceEffect,
     searchTerm: string,
     accountIDToName: { [k: number]: string }
 ): boolean => {
     if (
-        transaction.details.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        DateTime.fromJSDate(transaction.details.billedAt)
+        transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        DateTime.fromJSDate(transaction.billedAt)
             .toLocaleString(DateTime.DATE_FULL)
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
@@ -41,12 +42,12 @@ export const filterTransaction = (
             .toLocaleString(DateTime.DATE_FULL)
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-        String(transaction.details.value).includes(searchTerm.toLowerCase())
+        String(transaction.value).includes(searchTerm.toLowerCase())
     ) {
         return true;
     }
 
-    return Object.keys(transaction.accountBalances).reduce((acc, curr) => {
+    return Object.keys(transactionBalanceEffect).reduce((acc: boolean, curr: string): boolean => {
         return acc || accountIDToName[curr].toLowerCase().includes(searchTerm.toLowerCase());
     }, false);
 };

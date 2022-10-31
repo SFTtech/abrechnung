@@ -1,9 +1,8 @@
-import { db } from "./index";
+import { db, Connection } from "./database";
 import { Account, AccountType, validateAccount, ValidationError } from "@abrechnung/types";
 import { api } from "../api";
 import { isOnline } from "../api";
-import { fromISOString, fromISOStringNullable, toISOStringNullable } from "@abrechnung/utils";
-import { Connection } from "./database";
+import { fromISOString } from "@abrechnung/utils";
 import { NotificationEmitter } from "@abrechnung/core";
 
 interface AccountIdentifier {
@@ -27,12 +26,9 @@ interface DatabaseRowAccount {
     clearing_shares: string | null;
     deleted: boolean;
 
-    last_changed: string;
-    revision_started_at: string | null;
-    revision_committed_at: string | null;
-    version: number;
-    is_wip: boolean;
+    has_unpublished_changes: boolean;
     has_local_changes: boolean;
+    last_changed: string;
 }
 
 const databaseRowToAccount = (row: DatabaseRowAccount): Account => {
@@ -45,61 +41,41 @@ const databaseRowToAccount = (row: DatabaseRowAccount): Account => {
         owningUserID: row.owning_user_id,
         clearingShares: row.clearing_shares ? JSON.parse(row.clearing_shares) : null,
         deleted: row.deleted,
-        revisionStartedAt: fromISOStringNullable(row.revision_started_at),
-        revisionCommittedAt: fromISOStringNullable(row.revision_committed_at),
-        version: row.version,
-        isWip: row.is_wip,
-        lastChanged: fromISOString(row.last_changed),
+        hasUnpublishedChanges: row.has_unpublished_changes,
         hasLocalChanges: row.has_local_changes,
+        lastChanged: fromISOString(row.last_changed),
     };
 };
 
-const saveAccountToDatabase = async (account: Account, conn?: Connection) => {
-    const query1 = `
-        insert into account (id, group_id, type) values (?1, ?2, ?3)
-    `;
-    const queryParams1 = [account.id, account.groupID, account.type];
-    const query2 = `
-        insert into account_history (
-            id, "name", description, priority, deleted, owning_user_id, revision_started_at,
-            revision_committed_at, version, clearing_shares, is_wip
+const saveAccountToDatabase = async (account: Account, conn: Connection) => {
+    await conn.execute(
+        `insert into account (id, group_id, type, last_changed, has_unpublished_changes) 
+        values (?1, ?2, ?3, ?4, ?5)
+        on conflict (id) do nothing`,
+        [account.id, account.groupID, account.type, account.hasUnpublishedChanges, account.lastChanged.toISOString()]
+    );
+    await conn.execute(
+        `insert into account_history (
+            id, "name", description, deleted, owning_user_id, clearing_shares
         )
         values (
-            ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11
+            ?1, ?2, ?3, ?4, ?5, ?6
         )
         on conflict (id) do update set
-            "name"                = excluded.name,
-            description           = excluded.description,
-            deleted               = excluded.deleted,
-            owning_user_id        = excluded.owning_user_id,
-            revision_started_at   = excluded.revision_started_at,
-            revision_committed_at = excluded.revision_committed_at,
-            version               = excluded.version,
-            clearing_shares       = excluded.clearing_shares,
-            is_wip                = excluded.is_wip
-    `;
-    const queryParams2 = [
-        account.id,
-        account.name,
-        account.description,
-        account.deleted,
-        account.owningUserID,
-        toISOStringNullable(account.revisionStartedAt),
-        toISOStringNullable(account.revisionCommittedAt),
-        account.version,
-        JSON.stringify(account.clearingShares),
-        account.isWip,
-    ];
-    if (conn) {
-        await conn.execute(query1, queryParams1);
-        await conn.execute(query2, queryParams2);
-        return;
-    } else {
-        return db.transaction(async (conn) => {
-            await conn.execute(query1, queryParams1);
-            await conn.execute(query2, queryParams2);
-        });
-    }
+            "name"                  = excluded.name,
+            description             = excluded.description,
+            deleted                 = excluded.deleted,
+            owning_user_id          = excluded.owning_user_id,
+            clearing_shares         = excluded.clearing_shares`,
+        [
+            account.id,
+            account.name,
+            account.description,
+            account.deleted,
+            account.owningUserID,
+            JSON.stringify(account.clearingShares),
+        ]
+    );
 };
 
 export const syncAccounts = async (groupID: number): Promise<Account[]> => {
@@ -111,7 +87,7 @@ export const syncAccounts = async (groupID: number): Promise<Account[]> => {
     });
 
     // TODO: resolve conflicts after fetching accounts
-    const accounts = await getAccounts(groupID);
+    const accounts = await getAccounts(groupID); // TODO: proper database query
     const accountsWithLocalChanges = accounts.filter((a: Account) => a.hasLocalChanges);
     if (accountsWithLocalChanges.length > 0) {
         await api.syncAccountsBatch(groupID, accountsWithLocalChanges);
@@ -135,7 +111,7 @@ export const getAccounts = async (groupID: number): Promise<Account[]> => {
         `select *
          from accounts_including_pending_changes
          where
-             and group_id = ?1`,
+             group_id = ?1`,
         [groupID]
     );
 
@@ -147,7 +123,7 @@ export const getAccount = async (group_id: number, account_id: number): Promise<
         `select *
          from accounts_including_pending_changes
          where
-             and group_id = ?1 and id = ?2`,
+             group_id = ?1 and id = ?2`,
         [group_id, account_id]
     );
     return databaseRowToAccount(result.rows[0] as DatabaseRowAccount);
@@ -216,6 +192,11 @@ export const updateAccount = async (account: Account) => {
 
     console.log("saving local account changes");
     return await db.transaction(async (conn: Connection) => {
+        const updateDate = new Date();
+        await conn.execute(`update account set last_changed = ?2, has_unpublished_changes = true where id = ?1`, [
+            account.id,
+            updateDate.toISOString(),
+        ]);
         await conn.execute(
             `insert into pending_account_changes (
                 id, change_time, name, description, owning_user_id, clearing_shares, deleted
@@ -225,7 +206,7 @@ export const updateAccount = async (account: Account) => {
              )`,
             [
                 account.id,
-                new Date().toISOString(),
+                updateDate.toISOString(),
                 account.name,
                 account.description,
                 account.owningUserID,
@@ -255,19 +236,20 @@ export const createAccount = async (groupID: number, type: AccountType): Promise
             `select
                 coalesce(min(a), 0) as curr_min_id
             from
-                account a`,
+                account a
+            where id < 0`,
             []
         );
-        const nextID = res.rows[0].curr_min_id - 1;
+        const nextID = Math.min(res.rows[0].curr_min_id, 0) - 1;
         const creationDate = new Date();
         await conn.execute(
             `insert into account (
-                id, group_id, type
+                id, group_id, type, has_unpublished_changes, last_changed
             )
             values (
-                ?1, ?2, ?3
+                ?1, ?2, ?3, true, ?4
             )`,
-            [nextID, groupID, type]
+            [nextID, groupID, type, creationDate.toISOString()]
         );
         await conn.execute(
             `insert into pending_account_changes (

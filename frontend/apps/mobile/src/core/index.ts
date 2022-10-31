@@ -11,7 +11,7 @@ export default class NotificationTracker<NotificationPayload> {
     }
 
     subscribe = (identifier: string | number, callback: (payload: NotificationPayload) => void) => {
-        if (!this.subscribers.hasOwnProperty(identifier)) {
+        if (this.subscribers[identifier] === undefined) {
             this.subscribers[identifier] = {};
         }
 
@@ -23,7 +23,7 @@ export default class NotificationTracker<NotificationPayload> {
     };
 
     notify = (identifier: string | number, payload: NotificationPayload) => {
-        if (this.subscribers.hasOwnProperty(identifier)) {
+        if (this.subscribers[identifier] !== undefined) {
             Object.values(this.subscribers[identifier]).forEach((callback) => callback(payload));
         }
     };
