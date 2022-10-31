@@ -2,7 +2,6 @@ import { Transaction } from "@abrechnung/types";
 import { toISODateStringNullable } from "@abrechnung/utils";
 import { List, Menu, Text, useTheme } from "react-native-paper";
 import React, { useState } from "react";
-import { View } from "react-native";
 import { getTransactionIcon } from "../constants/Icons";
 import { useNavigation } from "@react-navigation/native";
 import { deleteTransaction, pushLocalTransactionChanges } from "../core/database/transactions";
@@ -47,14 +46,14 @@ export const TransactionListItem: React.FC<Props> = ({ transaction }) => {
                     left={(props) => <List.Icon {...props} icon={getTransactionIcon(transaction.type)} />}
                     right={(props) => (
                         <>
-                            {/* {transaction.hasLocalChanges && (
+                            {transaction.hasLocalChanges ? (
                                 <MaterialIcons
                                     style={{ marginRight: 8, marginTop: 4 }}
                                     size={20}
                                     color={theme.colors.primary}
                                     name="sync-disabled"
                                 />
-                            )} */}
+                            ) : null}
                             <Text>
                                 {transaction.value.toFixed(2)}
                                 {transaction.currencySymbol}
