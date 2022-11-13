@@ -84,6 +84,10 @@
             "executor": "@nrwl/expo:rollback",
             "options": {}
         },
+        "prebuild": {
+            "executor": "@nrwl/expo:prebuild",
+            "options": {}
+        },
         "eject": {
             "executor": "@nrwl/expo:eject",
             "options": {}

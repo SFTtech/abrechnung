@@ -1,43 +1,43 @@
 {
-    "name": "@abrechnung/mobile",
-    "version": "0.0.1",
-    "private": true,
-    "dependencies": {
-        "@testing-library/jest-native": "*",
-        "@testing-library/react-native": "*",
-        "react-native": "0.69.6",
-        "expo": "*",
-        "expo-dev-client": "*",
-        "expo-status-bar": "*",
-        "expo-splash-screen": "*",
-        "expo-structured-headers": "*",
-        "expo-updates": "*",
-        "expo-system-ui": "*",
-        "expo-web-browser": "*",
-        "react-native-gesture-handler": "*",
-        "react-native-reanimated": "*",
-        "react-native-safe-area-context": "*",
-        "react-native-screens": "*",
-        "react-native-svg": "*",
-        "react-native-web": "*",
-        "@expo/vector-icons": "*",
-        "expo-asset": "*",
-        "expo-constants": "*",
-        "expo-file-system": "*",
-        "expo-font": "*",
-        "expo-linking": "*",
-        "expo-network": "*",
-        "react": "18.0.0",
-        "react-dom": "18.0.0"
-    },
-    "scripts": {
-        "eas-build-pre-install": "cd ../../ && cp package-lock.json ./apps/mobile/",
-        "postinstall": "rm -r node_modules && cd ../../ && npm install && npx nx sync-deps mobile && npx nx ensure-symlink mobile",
-        "start": "expo start --dev-client",
-        "android": "expo run:android",
-        "ios": "expo run:ios"
-    },
-    "devDependencies": {
-        "@babel/core": "^7.12.9"
-    }
+  "name": "@abrechnung/mobile",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "@testing-library/jest-native": "*",
+    "@testing-library/react-native": "*",
+    "react-native": "0.69.6",
+    "expo": "~46.0.17",
+    "expo-dev-client": "*",
+    "expo-status-bar": "*",
+    "expo-splash-screen": "~0.16.2",
+    "expo-structured-headers": "*",
+    "expo-updates": "*",
+    "expo-system-ui": "*",
+    "expo-web-browser": "*",
+    "react-native-gesture-handler": "*",
+    "react-native-reanimated": "*",
+    "react-native-safe-area-context": "*",
+    "react-native-screens": "*",
+    "react-native-svg": "*",
+    "react-native-web": "*",
+    "@expo/vector-icons": "*",
+    "expo-asset": "*",
+    "expo-constants": "*",
+    "expo-file-system": "*",
+    "expo-font": "*",
+    "expo-linking": "*",
+    "expo-network": "*",
+    "react": "18.0.0",
+    "react-dom": "18.0.0"
+  },
+  "scripts": {
+    "eas-build-pre-install": "cd ../../ && cp package-lock.json ./apps/mobile/",
+    "postinstall": "rm -r node_modules && cd ../../ && npm install && npx nx sync-deps mobile && npx nx ensure-symlink mobile",
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "ios": "expo run:ios"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.9"
+  }
 }
