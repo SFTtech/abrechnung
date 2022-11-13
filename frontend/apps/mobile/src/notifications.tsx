@@ -1,33 +1,31 @@
 import React from "react";
 import { Portal, Snackbar } from "react-native-paper";
 import { useEffect, useState } from "react";
-import NotificationTracker from "./core";
+import { EventEmitter } from "@abrechnung/utils";
 
-interface notificationParams {
+interface NotificationPayload {
     text: string;
-    timeout?: number | null;
+    timeout?: number | undefined;
 }
 
-const DEFAULT_NOTIFICATION_PARAMS: notificationParams = {
+const DEFAULT_NOTIFICATION_PARAMS: NotificationPayload = {
     text: "",
-    timeout: null,
+    timeout: undefined,
 };
 
-const NOTIFICATION_KEY = "notification";
+const notificationEmitter = new EventEmitter<NotificationPayload>();
 
-const notificationEmitter = new NotificationTracker();
-
-export function notify(params: notificationParams) {
-    notificationEmitter.notify(NOTIFICATION_KEY, {
+export function notify(params: NotificationPayload) {
+    notificationEmitter.emit({
         ...DEFAULT_NOTIFICATION_PARAMS,
         ...params,
     });
 }
 
 export const NotificationProvider: React.FC = () => {
-    const [state, setState] = useState({
+    const [state, setState] = useState<NotificationPayload & { visible: boolean }>({
         text: "",
-        timeout: null,
+        timeout: undefined,
         visible: false,
     });
 
@@ -41,7 +39,7 @@ export const NotificationProvider: React.FC = () => {
     };
 
     useEffect(() => {
-        return notificationEmitter.subscribe(NOTIFICATION_KEY, (event) => {
+        const callback = (event: NotificationPayload) => {
             console.log("received notification event", event);
             setState((prevState) => {
                 return {
@@ -50,7 +48,9 @@ export const NotificationProvider: React.FC = () => {
                     visible: true,
                 };
             });
-        });
+        };
+        notificationEmitter.addListener(callback);
+        return () => notificationEmitter.removeAllListeners();
     });
 
     return (

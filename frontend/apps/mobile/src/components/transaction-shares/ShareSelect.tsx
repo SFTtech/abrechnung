@@ -2,13 +2,13 @@ import React from "react";
 import { Checkbox, List, Searchbar } from "react-native-paper";
 import { ScrollView, View } from "react-native";
 import { useEffect, useState } from "react";
-import { useRecoilValue } from "recoil";
-import { accountState } from "../../core/accounts";
 import { createComparator, lambdaComparator } from "@abrechnung/utils";
-import { useActiveGroupID } from "../../core/groups";
 import { Account, TransactionShare } from "@abrechnung/types";
+import { useAppSelector, selectAccountSlice } from "../../store";
+import { selectGroupAccounts } from "@abrechnung/redux";
 
 interface Props {
+    groupId: number;
     value: TransactionShare;
     onChange: (value: TransactionShare) => void;
     title: string;
@@ -18,6 +18,7 @@ interface Props {
 }
 
 export const ShareSelect: React.FC<Props> = ({
+    groupId,
     value,
     onChange,
     title,
@@ -25,10 +26,9 @@ export const ShareSelect: React.FC<Props> = ({
     enableAdvanced = false,
     multiSelect = true,
 }) => {
-    const groupID = useActiveGroupID();
     const [shares, setShares] = useState<TransactionShare>({});
     const [searchTerm, setSearchTerm] = useState("");
-    const accounts = useRecoilValue(accountState(groupID));
+    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
     const [filteredAccounts, setFilteredAccounts] = useState<Account[]>([]);
 
     const toggleShare = (accountID: number) => {

@@ -14,38 +14,49 @@ import {
     LinearProgress,
     TextField,
 } from "@mui/material";
-import { groupAccounts, updateAccount } from "../../state/accounts";
-import { Group, Account } from "@abrechnung/types";
-import { useRecoilValue, useSetRecoilState } from "recoil";
-import { userData } from "../../state/auth";
-import { currUserPermissions, groupMemberIDsToUsername } from "../../state/groups";
 import GroupMemberSelect from "../groups/GroupMemberSelect";
+import { selectAccountSlice, useAppDispatch, selectGroupSlice, selectAuthSlice, useAppSelector } from "../../store";
+import {
+    saveAccount,
+    selectAccountById,
+    selectCurrentUserPermissions,
+    selectCurrentUserId,
+    selectGroupMemberIdToUsername,
+} from "@abrechnung/redux";
 
 interface Props {
-    group: Group;
+    groupId: number;
     show: boolean;
-    account: Account;
+    accountId: number;
     onClose: (
         event: Record<string, never>,
         reason: "escapeKeyDown" | "backdropClick" | "completed" | "closeButton"
     ) => void;
 }
 
-export const EditAccountModal: React.FC<Props> = ({ group, show, onClose, account }) => {
-    const setAccounts = useSetRecoilState(groupAccounts(group.id));
-    const userPermissions = useRecoilValue(currUserPermissions(group.id));
-    const currentUser = useRecoilValue(userData);
-    const memberIDToUsername = useRecoilValue(groupMemberIDsToUsername(group.id));
+export const EditAccountModal: React.FC<Props> = ({ groupId, show, onClose, accountId }) => {
+    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const currentUserId = useAppSelector((state) => selectCurrentUserId({ state: selectAuthSlice(state) }));
+    const memberIDToUsername = useAppSelector((state) =>
+        selectGroupMemberIdToUsername({ state: selectGroupSlice(state), groupId })
+    );
+
+    const account = useAppSelector((state) =>
+        selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
+    );
+    const dispatch = useAppDispatch();
+    // TODO: handle account does not exist
 
     const handleSubmit = (values, { setSubmitting }) => {
-        api.updateAccountDetails(values.accountID, values.name, values.description, values.owningUserID, null)
-            .then((account) => {
-                console.log(account);
-                updateAccount(account, setAccounts);
+        dispatch(saveAccount({ account: { ...account, ...values }, api: api }))
+            .then((res) => {
+                console.log(res);
                 setSubmitting(false);
                 onClose({}, "completed");
             })
             .catch((err) => {
+                console.log(err);
+                // TODO: determine what we get from error
                 toast.error(err);
                 setSubmitting(false);
             });
@@ -89,23 +100,23 @@ export const EditAccountModal: React.FC<Props> = ({ group, show, onClose, accoun
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                             />
-                            {userPermissions.isOwner ? (
+                            {permissions.isOwner ? (
                                 <GroupMemberSelect
                                     margin="normal"
-                                    group={group}
+                                    groupId={groupId}
                                     label="Owning user"
                                     value={values.owningUserID}
                                     onChange={(user_id) => setFieldValue("owningUserID", user_id)}
                                 />
-                            ) : account?.owningUserID === null || account?.owningUserID === currentUser.id ? (
+                            ) : account?.owningUserID === null || account?.owningUserID === currentUserId ? (
                                 <FormControlLabel
                                     control={
                                         <Checkbox
                                             name="owningUserID"
                                             onChange={(e) =>
-                                                setFieldValue("owningUserID", e.target.checked ? currentUser.id : null)
+                                                setFieldValue("owningUserID", e.target.checked ? currentUserId : null)
                                             }
-                                            checked={values.owningUserID === currentUser.id}
+                                            checked={values.owningUserID === currentUserId}
                                         />
                                     }
                                     label="This is me"

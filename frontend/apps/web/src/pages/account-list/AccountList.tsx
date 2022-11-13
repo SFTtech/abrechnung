@@ -1,57 +1,16 @@
-import CreateAccountModal from "../../components/accounts/CreateAccountModal";
-import EditAccountModal from "../../components/accounts/EditAccountModal";
-import CreateClearingAccountModal from "../../components/accounts/CreateClearingAccountModal";
-import EditClearingAccountModal from "../../components/accounts/EditClearingAccountModal";
-import React, { useEffect, useState } from "react";
-import { useRecoilValue, useSetRecoilState } from "recoil";
-import { currUserPermissions, groupMemberIDsToUsername } from "../../state/groups";
-import { Group } from "@abrechnung/types";
-import {
-    accountsSeenByUser,
-    clearingAccountsSeenByUser,
-    groupAccounts,
-    personalAccountsSeenByUser,
-    updateAccount,
-} from "../../state/accounts";
-import { api } from "../../core/api";
-import { toast } from "react-toastify";
-import {
-    Alert,
-    Badge,
-    BadgeProps,
-    Box,
-    Button,
-    Chip,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    Divider,
-    Grid,
-    IconButton,
-    Input,
-    InputAdornment,
-    List,
-    ListItem,
-    ListItemSecondaryAction,
-    ListItemText,
-    SpeedDial,
-    SpeedDialAction,
-    SpeedDialIcon,
-    styled,
-    Tab,
-    Theme,
-    Tooltip,
-} from "@mui/material";
-import { Add, Clear, ContentCopy, Delete, Edit } from "@mui/icons-material";
-import ListItemLink from "../../components/style/ListItemLink";
+import React, { useState } from "react";
+import { Badge, BadgeProps, Box, SpeedDial, SpeedDialAction, SpeedDialIcon, styled, Tab, Theme } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
 import { ClearingAccountIcon, PersonalAccountIcon } from "../../components/style/AbrechnungIcons";
 import { useTitle } from "../../core/utils";
-import { userData } from "../../state/auth";
-import { TabContext, TabList, TabPanel } from "@mui/lab";
-import PersonalAccountListItem from "./PersonalAccountListItem";
-import ClearingAccountListItem from "./ClearingAccountListItem";
+import { TabContext, TabList } from "@mui/lab";
+import TabClearingAccounts from "./TabClearingAccounts";
+import TabPersonalAccounts from "./TabPersonalAccounts";
+import { selectAccountSlice, useAppSelector } from "../../store";
+import { selectAccountsFilteredCount, selectCurrentUserPermissions } from "@abrechnung/redux";
+import { CreateClearingAccountModal } from "../../components/accounts/CreateClearingAccountModal";
+import { CreateAccountModal } from "../../components/accounts/CreateAccountModal";
+import { Account } from "@abrechnung/types";
 
 const TextBadge = styled(Badge)<BadgeProps>(({ theme }: { theme: Theme }) => ({
     "& .MuiBadge-badge": {
@@ -63,114 +22,49 @@ const TextBadge = styled(Badge)<BadgeProps>(({ theme }: { theme: Theme }) => ({
 })) as typeof Badge;
 
 interface Props {
-    group: Group;
+    groupId: number;
 }
 
-export const AccountList: React.FC<Props> = ({ group }) => {
+export const AccountList: React.FC<Props> = ({ groupId }) => {
     const [speedDialOpen, setSpeedDialOpen] = useState(false);
     const toggleSpeedDial = () => setSpeedDialOpen((currValue) => !currValue);
 
-    const [showPersonalAccountCreationModal, setShowPersonalAccountCreationModal] = useState(false);
-    const [showClearingAccountCreationModal, setShowClearingAccountCreationModal] = useState(false);
-
     const [activeTab, setActiveTab] = useState("personal");
-    const [searchValuePersonal, setSearchValuePersonal] = useState("");
-    const [searchValueClearing, setSearchValueClearing] = useState("");
 
-    const [showPersonalAccountEditModal, setShowPersonalAccountEditModal] = useState(false);
-    const [showClearingAccountEditModal, setShowClearingAccountEditModal] = useState(false);
-    const [clearingAccountToCopy, setClearingAccountToCopy] = useState(undefined);
-    const [accountToEdit, setAccountToEdit] = useState(null);
-    const [clearingAccountToEdit, setClearingAccountToEdit] = useState(null);
-    const setAccounts = useSetRecoilState(groupAccounts(group.id));
-    const personalAccounts = useRecoilValue(personalAccountsSeenByUser(group.id));
-    const clearingAccounts = useRecoilValue(clearingAccountsSeenByUser(group.id));
-    const allAccounts = useRecoilValue(accountsSeenByUser(group.id));
-    const [accountToDelete, setAccountToDelete] = useState(null);
-    const userPermissions = useRecoilValue(currUserPermissions(group.id));
-    const currentUser = useRecoilValue(userData);
-    const memberIDToUsername = useRecoilValue(groupMemberIDsToUsername(group.id));
+    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const numPersonalAccounts = useAppSelector((state) =>
+        selectAccountsFilteredCount({ state: selectAccountSlice(state), groupId, type: "personal" })
+    );
+    const numClearingAccounts = useAppSelector((state) =>
+        selectAccountsFilteredCount({ state: selectAccountSlice(state), groupId, type: "clearing" })
+    );
 
-    const [filteredPersonalAccounts, setFilteredPersonalAccounts] = useState([]);
-    const [filteredClearingAccounts, setFilteredClearingAccounts] = useState([]);
-    useEffect(() => {
-        if (searchValuePersonal != null && searchValuePersonal !== "") {
-            setFilteredPersonalAccounts(
-                personalAccounts.filter((t) => {
-                    return (
-                        t.name.toLowerCase().includes(searchValuePersonal.toLowerCase()) ||
-                        t.description.toLowerCase().includes(searchValuePersonal.toLowerCase())
-                    );
-                })
-            );
-        } else {
-            return setFilteredPersonalAccounts(personalAccounts);
-        }
-    }, [personalAccounts, searchValuePersonal, setFilteredPersonalAccounts]);
-
-    useEffect(() => {
-        if (searchValueClearing != null && searchValueClearing !== "") {
-            setFilteredClearingAccounts(
-                clearingAccounts.filter((t) => {
-                    return (
-                        t.name.toLowerCase().includes(searchValueClearing.toLowerCase()) ||
-                        t.description.toLowerCase().includes(searchValueClearing.toLowerCase())
-                    );
-                })
-            );
-        } else {
-            return setFilteredClearingAccounts(clearingAccounts);
-        }
-    }, [clearingAccounts, searchValueClearing, setFilteredClearingAccounts]);
-
-    useTitle(`${group.name} - Accounts`);
-
-    const openAccountEdit = (account) => {
-        setAccountToEdit(account);
-        setShowPersonalAccountEditModal(true);
-    };
-
-    const closeAccountEdit = (evt, reason) => {
+    const [showCreatePersonalModal, setShowCreatePersonalModal] = useState(false);
+    const openCreatePersonalModal = () => setShowCreatePersonalModal(true);
+    const onCloseCreatePersonalModal = (evt, reason) => {
         if (reason !== "backdropClick") {
-            setShowPersonalAccountEditModal(false);
-            setAccountToEdit(null);
+            setShowCreatePersonalModal(false);
         }
     };
 
-    const openClearingAccountEdit = (account) => {
-        setClearingAccountToEdit(account);
-        setShowClearingAccountEditModal(true);
-    };
-
-    const closeClearingAccountEdit = (evt, reason) => {
+    const [clearingAccountToCopy, setClearingAccountToCopy] = useState<Account | null>(null);
+    const [showCreateClearingModal, setShowCreateClearingModal] = useState(false);
+    const openCreateClearingModal = () => setShowCreateClearingModal(true);
+    const onCloseCreateClearingModal = (evt, reason) => {
         if (reason !== "backdropClick") {
-            setShowClearingAccountEditModal(false);
-            setClearingAccountToEdit(null);
+            setShowCreateClearingModal(false);
+            setClearingAccountToCopy(null);
         }
     };
-
-    const confirmDeleteAccount = () => {
-        if (accountToDelete !== null) {
-            api.deleteAccount(accountToDelete)
-                .then((account) => {
-                    updateAccount(account, setAccounts);
-                    setAccountToDelete(null);
-                })
-                .catch((err) => {
-                    toast.error(err);
-                });
-        }
-    };
-
-    const openCreateDialog = () => {
-        setClearingAccountToCopy(undefined);
-        setShowClearingAccountCreationModal(true);
-    };
-
-    const copyClearingAccount = (account) => {
+    const onCopyClearingAccount = (account: Account) => {
         setClearingAccountToCopy(account);
-        setShowClearingAccountCreationModal(true);
+        openCreateClearingModal();
     };
+
+    // TODO: FIXME
+    //useTitle(`${group.name} - Accounts`);
+
+    // TODO: make the speed dial work again with proper modals, though deprecated anyway when we implement proper editing
 
     return (
         <>
@@ -181,14 +75,14 @@ export const AccountList: React.FC<Props> = ({ group }) => {
                             <Tab
                                 value="personal"
                                 label={
-                                    <TextBadge badgeContent={personalAccounts.length} color="primary">
+                                    <TextBadge badgeContent={numPersonalAccounts} color="primary">
                                         <span>Personal Accounts</span>
                                     </TextBadge>
                                 }
                             />
                             <Tab
                                 label={
-                                    <TextBadge badgeContent={clearingAccounts.length} color="primary">
+                                    <TextBadge badgeContent={numClearingAccounts} color="primary">
                                         <span>Clearing Accounts</span>
                                     </TextBadge>
                                 }
@@ -196,153 +90,27 @@ export const AccountList: React.FC<Props> = ({ group }) => {
                             />
                         </TabList>
                     </Box>
-                    <TabPanel value="personal">
-                        <List>
-                            {personalAccounts.length === 0 ? (
-                                <Alert severity="info">No Accounts</Alert>
-                            ) : (
-                                <>
-                                    <ListItem>
-                                        <Input
-                                            value={searchValuePersonal}
-                                            onChange={(e) => setSearchValuePersonal(e.target.value)}
-                                            placeholder="Search…"
-                                            inputProps={{
-                                                "aria-label": "search",
-                                            }}
-                                            endAdornment={
-                                                <InputAdornment position="end">
-                                                    <IconButton
-                                                        aria-label="clear search input"
-                                                        onClick={(e) => setSearchValuePersonal("")}
-                                                        edge="end"
-                                                    >
-                                                        <Clear />
-                                                    </IconButton>
-                                                </InputAdornment>
-                                            }
-                                        />
-                                    </ListItem>
-                                    <Divider />
-                                    {filteredPersonalAccounts.map((account) => (
-                                        <PersonalAccountListItem
-                                            key={account.id}
-                                            groupID={group.id}
-                                            currentUserID={currentUser.id}
-                                            memberIDToUsername={memberIDToUsername}
-                                            userPermissions={userPermissions}
-                                            account={account}
-                                            openAccountEdit={openAccountEdit}
-                                            setAccountToDelete={setAccountToDelete}
-                                        />
-                                    ))}
-                                </>
-                            )}
-                        </List>
-                        {userPermissions.canWrite && (
-                            <>
-                                <Grid container justifyContent="center">
-                                    <Tooltip title="Create Personal Account">
-                                        <IconButton
-                                            color="primary"
-                                            onClick={() => setShowPersonalAccountCreationModal(true)}
-                                        >
-                                            <Add />
-                                        </IconButton>
-                                    </Tooltip>
-                                </Grid>
-                                <CreateAccountModal
-                                    show={showPersonalAccountCreationModal}
-                                    onClose={(evt, reason) => {
-                                        if (reason !== "backdropClick") {
-                                            setShowPersonalAccountCreationModal(false);
-                                        }
-                                    }}
-                                    group={group}
-                                />
-                                <EditAccountModal
-                                    show={showPersonalAccountEditModal}
-                                    onClose={closeAccountEdit}
-                                    account={accountToEdit}
-                                    group={group}
-                                />
-                            </>
-                        )}
-                    </TabPanel>
-                    <TabPanel value="clearing">
-                        <List>
-                            {clearingAccounts.length === 0 ? (
-                                <Alert severity="info">No Accounts</Alert>
-                            ) : (
-                                <>
-                                    <ListItem>
-                                        <Input
-                                            value={searchValueClearing}
-                                            onChange={(e) => setSearchValueClearing(e.target.value)}
-                                            placeholder="Search…"
-                                            inputProps={{
-                                                "aria-label": "search",
-                                            }}
-                                            endAdornment={
-                                                <InputAdornment position="end">
-                                                    <IconButton
-                                                        aria-label="clear search input"
-                                                        onClick={(e) => setSearchValueClearing("")}
-                                                        edge="end"
-                                                    >
-                                                        <Clear />
-                                                    </IconButton>
-                                                </InputAdornment>
-                                            }
-                                        />
-                                    </ListItem>
-                                    <Divider />
-                                    {filteredClearingAccounts.map((account) => (
-                                        <ClearingAccountListItem
-                                            key={account.id}
-                                            groupID={group.id}
-                                            account={account}
-                                            userPermissions={userPermissions}
-                                            openClearingAccountEdit={openClearingAccountEdit}
-                                            copyClearingAccount={copyClearingAccount}
-                                            setAccountToDelete={setAccountToDelete}
-                                        />
-                                    ))}
-                                </>
-                            )}
-                        </List>
-                        {userPermissions.canWrite && (
-                            <>
-                                <Grid container justifyContent="center">
-                                    <Tooltip title="Create Clearing Account">
-                                        <IconButton color="primary" onClick={openCreateDialog}>
-                                            <Add />
-                                        </IconButton>
-                                    </Tooltip>
-                                </Grid>
-                                <CreateClearingAccountModal
-                                    show={showClearingAccountCreationModal}
-                                    onClose={(evt, reason) => {
-                                        if (reason !== "backdropClick") {
-                                            setShowClearingAccountCreationModal(false);
-                                        }
-                                    }}
-                                    initialValues={clearingAccountToCopy}
-                                    group={group}
-                                />
-                                <EditClearingAccountModal
-                                    show={showClearingAccountEditModal}
-                                    onClose={closeClearingAccountEdit}
-                                    account={clearingAccountToEdit}
-                                    group={group}
-                                />
-                            </>
-                        )}
-                    </TabPanel>
+                    <TabPersonalAccounts groupId={groupId} onOpenCreateModal={openCreatePersonalModal} />
+                    <TabClearingAccounts
+                        groupId={groupId}
+                        onCopyClearingAccount={onCopyClearingAccount}
+                        onOpenCreateModal={openCreateClearingModal}
+                    />
                 </TabContext>
             </MobilePaper>
-            {userPermissions.canWrite && (
+            {permissions.canWrite && (
                 <>
+                    <CreateClearingAccountModal
+                        show={showCreateClearingModal}
+                        onClose={onCloseCreateClearingModal}
+                        initialValues={clearingAccountToCopy}
+                        groupId={groupId}
+                    />
+                    <CreateAccountModal
+                        show={showCreatePersonalModal}
+                        onClose={onCloseCreatePersonalModal}
+                        groupId={groupId}
+                    />
                     <SpeedDial
                         ariaLabel="Create Account"
                         sx={{ position: "fixed", bottom: 20, right: 20 }}
@@ -356,31 +124,15 @@ export const AccountList: React.FC<Props> = ({ group }) => {
                             icon={<PersonalAccountIcon />}
                             tooltipTitle="Personal"
                             tooltipOpen
-                            onClick={() => setShowPersonalAccountCreationModal(true)}
+                            onClick={openCreatePersonalModal}
                         />
                         <SpeedDialAction
                             icon={<ClearingAccountIcon />}
                             tooltipTitle="Clearing"
                             tooltipOpen
-                            onClick={openCreateDialog}
+                            onClick={openCreateClearingModal}
                         />
                     </SpeedDial>
-
-                    <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={accountToDelete !== null}>
-                        <DialogTitle id="confirmation-dialog-title">Confirm delete account</DialogTitle>
-                        <DialogContent dividers>
-                            Are you sure you want to delete the account &quot
-                            {allAccounts.find((acc) => acc.id === accountToDelete)?.name}&quot
-                        </DialogContent>
-                        <DialogActions>
-                            <Button autoFocus onClick={() => setAccountToDelete(null)} color="primary">
-                                Cancel
-                            </Button>
-                            <Button onClick={confirmDeleteAccount} color="error">
-                                Ok
-                            </Button>
-                        </DialogActions>
-                    </Dialog>
                 </>
             )}
         </>

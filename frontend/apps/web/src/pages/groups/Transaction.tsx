@@ -1,37 +1,44 @@
 import React, { Suspense } from "react";
 import { useParams, Navigate } from "react-router-dom";
-import { useRecoilValue } from "recoil";
-import { transactionByID } from "../../state/transactions";
 import Loading from "../../components/style/Loading";
 import TransferDetails from "../../components/transactions/transfer/TransferDetails";
 import PurchaseDetails from "../../components/transactions/purchase/PurchaseDetails";
-import { useTitle } from "../../core/utils";
-import { Group } from "@abrechnung/types";
+import { useQuery, useTitle } from "../../core/utils";
 import { Alert } from "@mui/material";
+import { useAppSelector, selectGroupSlice, selectTransactionSlice } from "../../store";
+import { selectGroupById, selectTransactionById } from "@abrechnung/redux";
 
 interface Props {
-    group: Group;
+    groupId: number;
 }
 
-export const Transaction: React.FC<Props> = ({ group }) => {
+export const Transaction: React.FC<Props> = ({ groupId }) => {
     const params = useParams();
-    const transactionID = parseInt(params["id"]);
+    const transactionId = Number(params["id"]);
 
-    const transaction = useRecoilValue(transactionByID({ groupID: group.id, transactionID }));
+    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const query = useQuery();
 
     useTitle(`${group.name} - ${transaction?.description}`);
 
     if (transaction === undefined) {
-        return <Navigate to="/404" />;
+        if (query.get("no-redirect") === "true") {
+            return <Loading />;
+        } else {
+            return <Navigate to="/404" />;
+        }
     }
 
     // TODO: handle 404
     return (
         <Suspense fallback={<Loading />}>
             {transaction.type === "transfer" ? (
-                <TransferDetails group={group} transaction={transaction} />
+                <TransferDetails groupId={groupId} transactionId={transactionId} />
             ) : transaction.type === "purchase" ? (
-                <PurchaseDetails group={group} transaction={transaction} />
+                <PurchaseDetails groupId={groupId} transactionId={transactionId} />
             ) : transaction.type === "mimo" ? (
                 <Alert severity="error">Error: MIMO handling is not implemented yet</Alert>
             ) : (

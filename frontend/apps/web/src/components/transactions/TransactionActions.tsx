@@ -4,149 +4,72 @@ import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
 import React, { useState } from "react";
 import { api } from "../../core/api";
 import { toast } from "react-toastify";
-import { useRecoilTransaction_UNSTABLE, useRecoilValue, useResetRecoilState, useSetRecoilState } from "recoil";
-import { currUserPermissions } from "../../state/groups";
+import { useAppSelector, selectTransactionSlice, useAppDispatch } from "../../store";
 import {
-    groupTransactionContainers,
-    pendingTransactionDetailChanges,
-    pendingTransactionPositionChanges,
-    updateTransactionInState,
-} from "../../state/transactions";
-import { Transaction, TransactionContainer } from "@abrechnung/types";
-import { HttpError } from "@abrechnung/api";
+    deleteTransaction,
+    discardTransactionChange,
+    saveTransaction,
+    selectTransactionById,
+    transactionEditStarted,
+    selectCurrentUserPermissions,
+} from "@abrechnung/redux";
 
 interface Props {
-    groupID: number;
-    transaction: Transaction;
+    groupId: number;
+    transactionId: number;
 }
 
-export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) => {
+export const TransactionActions: React.FC<Props> = ({ groupId, transactionId }) => {
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
 
     const navigate = useNavigate();
-    const userPermissions = useRecoilValue(currUserPermissions(groupID));
-    const setTransactions = useSetRecoilState(groupTransactionContainers(transaction.groupID));
-    const localTransactionChanges = useRecoilValue(pendingTransactionDetailChanges(transaction.id));
-    const localPositionChanges = useRecoilValue(pendingTransactionPositionChanges(transaction.id));
-    const resetLocalTransactionChanges = useResetRecoilState(pendingTransactionDetailChanges(transaction.id));
-    const resetLocalPositionChanges = useResetRecoilState(pendingTransactionPositionChanges(transaction.id));
+    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
 
-    const updateTransactionAndClearLocal = useRecoilTransaction_UNSTABLE(
-        ({ get, set, reset }) =>
-            (transaction: TransactionContainer) => {
-                console.log(transaction);
-                set(groupTransactionContainers(transaction.transaction.groupID), (currTransactions) => {
-                    return currTransactions.map((t) =>
-                        t.transaction.id === transaction.transaction.id ? transaction : t
-                    );
-                });
-                reset(pendingTransactionDetailChanges(transaction.transaction.id));
-                reset(pendingTransactionPositionChanges(transaction.transaction.id));
-            }
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
     );
+    const dispatch = useAppDispatch();
 
     const edit = () => {
-        if (!transaction.hasUnpublishedChanges) {
-            api.createTransactionChange(transaction.id)
-                .then((t) => {
-                    updateTransactionAndClearLocal(t);
-                })
-                .catch((err: HttpError) => {
-                    toast.error(err.message);
-                });
+        if (!transaction.isWip) {
+            dispatch(transactionEditStarted({ groupId, transactionId }));
         }
     };
 
     const abortEdit = () => {
-        if (transaction.hasUnpublishedChanges) {
-            if (transaction.hasCommittedChanges) {
-                api.discardTransactionChange(transaction.id)
-                    .then((t) => {
-                        updateTransactionAndClearLocal(t);
-                    })
-                    .catch((err: HttpError) => {
-                        toast.error(err.message);
-                    });
-            } else {
-                navigate(`/groups/${groupID}/`);
-            }
+        if (transaction.isWip) {
+            dispatch(discardTransactionChange({ groupId, transactionId, api }))
+                .unwrap()
+                .then(({ deletedTransaction }) => {
+                    if (deletedTransaction) {
+                        navigate(`/groups/${groupId}/`);
+                    }
+                })
+                .catch((err) => toast.error(`error while cancelling edit: ${err}`));
         }
     };
 
     const commitEdit = () => {
-        if (!transaction.hasUnpublishedChanges) {
+        if (!transaction.isWip) {
             return;
         }
-        // update the transaction given the currently pending changes
-        // find out which local changes we have and send them to da server
-        const positions = Object.values(localPositionChanges.modified).concat(
-            Object.values(localPositionChanges.added).map((position) => ({
-                ...position,
-                id: -1,
-            }))
-        );
-
-        if (Object.keys(localTransactionChanges).length > 0) {
-            const t = {
-                transactionID: transaction.id,
-                description: transaction.description,
-                value: transaction.value,
-                billedAt: transaction.billedAt,
-                currencySymbol: transaction.currencySymbol,
-                currencyConversionRate: transaction.currencyConversionRate,
-                creditorShares: transaction.creditorShares,
-                debitorShares: transaction.debitorShares,
-                ...localTransactionChanges,
-                positions: positions.length > 0 ? positions : null,
-            };
-            api.updateTransaction(
-                t.transactionID,
-                t.description,
-                t.value,
-                t.billedAt,
-                t.currencySymbol,
-                t.currencyConversionRate,
-                t.creditorShares,
-                t.debitorShares,
-                t.positions
-            )
-                .then((t) => {
-                    updateTransactionAndClearLocal(t);
-                })
-                .catch((err: HttpError) => {
-                    toast.error(err.message);
-                });
-        } else if (positions.length > 0) {
-            api.updateTransactionPositions(transaction.id, positions)
-                .then((t) => {
-                    updateTransactionAndClearLocal(t);
-                })
-                .catch((err: HttpError) => {
-                    toast.error(err.message);
-                });
-        } else {
-            api.commitTransaction(transaction.id)
-                .then((t) => {
-                    updateTransactionAndClearLocal(t);
-                })
-                .catch((err: HttpError) => {
-                    toast.error(err.message);
-                });
-        }
+        dispatch(saveTransaction({ groupId, transactionId, api }))
+            .unwrap()
+            .then(({ oldTransactionId, transactionContainer }) => {
+                if (oldTransactionId !== transactionContainer.transaction.id) {
+                    navigate(`/groups/${groupId}/transactions/${transactionContainer.transaction.id}?no-redirect=true`);
+                }
+            })
+            .catch((err) => toast.error(`error while saving transaction: ${err}`));
     };
 
     const confirmDeleteTransaction = () => {
-        api.deleteTransaction(transaction.id)
-            .then((t) => {
-                // TODO: use recoil transaction
-                updateTransactionInState(t, setTransactions);
-                resetLocalPositionChanges();
-                resetLocalTransactionChanges();
-                navigate(`/groups/${groupID}/`);
+        dispatch(deleteTransaction({ groupId, transactionId, api }))
+            .unwrap()
+            .then(() => {
+                navigate(`/groups/${groupId}/`);
             })
-            .catch((err: HttpError) => {
-                toast.error(err.message);
-            });
+            .catch((err) => toast.error(`error while deleting transaction: ${err}`));
     };
 
     return (
@@ -156,16 +79,16 @@ export const TransactionActions: React.FC<Props> = ({ groupID, transaction }) =>
                     <IconButton
                         sx={{ display: { xs: "none", md: "inline-flex" } }}
                         component={RouterLink}
-                        to={`/groups/${groupID}/`}
+                        to={`/groups/${groupId}/`}
                     >
                         <ChevronLeft />
                     </IconButton>
                     <Chip color="primary" label={transaction.type} />
                 </Grid>
                 <Grid item>
-                    {userPermissions.canWrite && (
+                    {permissions.canWrite && (
                         <>
-                            {transaction.hasUnpublishedChanges ? (
+                            {transaction.isWip ? (
                                 <>
                                     <Button color="primary" onClick={commitEdit}>
                                         Save

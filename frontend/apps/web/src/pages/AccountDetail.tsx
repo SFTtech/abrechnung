@@ -1,31 +1,31 @@
 import React from "react";
-import { groupAccountByID } from "../state/accounts";
-import { useParams, useNavigate } from "react-router-dom";
-import { useRecoilValue } from "recoil";
+import { useParams, Navigate } from "react-router-dom";
 import { Grid, Typography } from "@mui/material";
 import { MobilePaper } from "../components/style/mobile";
 import { useTitle } from "../core/utils";
 import BalanceHistoryGraph from "../components/accounts/BalanceHistoryGraph";
 import AccountTransactionList from "../components/accounts/AccountTransactionList";
 import ClearingAccountDetail from "../components/accounts/ClearingAccountDetail";
-import { Group } from "@abrechnung/types";
+import { selectAccountSlice, selectGroupSlice, useAppSelector } from "../store";
+import { selectAccountById, selectGroupById } from "@abrechnung/redux";
 
 interface Props {
-    group: Group;
+    groupId: number;
 }
 
-export const AccountDetail: React.FC<Props> = ({ group }) => {
-    const navigate = useNavigate();
+export const AccountDetail: React.FC<Props> = ({ groupId }) => {
     const params = useParams();
-    const accountID = parseInt(params["id"]);
+    const accountId = Number(params["id"]);
 
-    const account = useRecoilValue(groupAccountByID({ groupID: group.id, accountID: accountID }));
+    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
+    const account = useAppSelector((state) =>
+        selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
+    );
 
     useTitle(`${group.name} - Account ${account?.name}`);
 
     if (account === undefined) {
-        navigate("/404");
-        return null;
+        return <Navigate to="/404" />;
     }
 
     return (
@@ -34,7 +34,7 @@ export const AccountDetail: React.FC<Props> = ({ group }) => {
                 <Grid item xs={12}>
                     <MobilePaper>
                         <Typography variant="h6">Balance of {account.name}</Typography>
-                        <BalanceHistoryGraph group={group} accountID={accountID} />
+                        <BalanceHistoryGraph groupId={groupId} accountId={accountId} />
                     </MobilePaper>
                 </Grid>
             )}
@@ -42,14 +42,14 @@ export const AccountDetail: React.FC<Props> = ({ group }) => {
                 <Grid item xs={12}>
                     <MobilePaper>
                         <Typography variant="h6">Clearing distribution of {account.name}</Typography>
-                        <ClearingAccountDetail group={group} account={account} />
+                        <ClearingAccountDetail groupId={groupId} accountId={accountId} />
                     </MobilePaper>
                 </Grid>
             )}
             <Grid item xs={12}>
                 <MobilePaper>
                     <Typography variant="h6">Transactions involving {account.name}</Typography>
-                    <AccountTransactionList group={group} accountID={accountID} />
+                    <AccountTransactionList groupId={groupId} accountId={accountId} />
                 </MobilePaper>
             </Grid>
         </Grid>

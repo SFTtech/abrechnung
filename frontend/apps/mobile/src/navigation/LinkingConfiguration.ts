@@ -9,28 +9,34 @@ import * as Linking from "expo-linking";
 
 import { RootDrawerParamList } from "./types";
 
-const linking: LinkingOptions<RootDrawerParamList> = {
-    prefixes: [Linking.makeUrl("/")],
+const prefix = Linking.createURL("/");
+
+export const linkingOptions: LinkingOptions<RootDrawerParamList> = {
+    prefixes: [prefix],
     config: {
         screens: {
-            Root: {
+            GroupList: "groups",
+            GroupStackNavigator: {
+                path: ":groupId",
+                initialRouteName: "BottomTabNavigator",
                 screens: {
-                    TabOne: {
+                    BottomTabNavigator: {
+                        initialRouteName: "TransactionList",
                         screens: {
-                            TabOneScreen: "one",
+                            TransactionList: "transactions",
+                            AccountList: "personal-accounts",
+                            ClearingAccountList: "personal-accounts",
                         },
                     },
-                    TabTwo: {
-                        screens: {
-                            TabTwoScreen: "two",
-                        },
-                    },
+                    AccountDetail: "accounts/:accountId",
+                    AccountEdit: "accounts/:accountId/edit",
+                    // TransactionDetail: "transaction/:transactionId",
                 },
             },
-            Modal: "modal",
+            Preferences: "preferences",
+            Login: "login",
+            Register: "register",
             NotFound: "*",
         },
     },
 };
-
-export default linking;

@@ -1,30 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { DisabledTextField } from "../style/DisabledTextField";
-import { useSetRecoilState } from "recoil";
-import { pendingTransactionDetailChanges } from "../../state/transactions";
-import { Transaction } from "@abrechnung/types";
+import { useAppSelector, useAppDispatch, selectTransactionSlice } from "../../store";
+import { selectTransactionById, wipTransactionUpdated } from "@abrechnung/redux";
+import { parseAbrechnungFloat } from "@abrechnung/utils";
 
 interface Props {
-    transaction: Transaction;
+    groupId: number;
+    transactionId: number;
 }
 
-export const TransactionValue: React.FC<Props> = ({ transaction }) => {
+export const TransactionValue: React.FC<Props> = ({ groupId, transactionId }) => {
     const [transactionValue, setTransactionValue] = useState("");
     const [error, setError] = useState(false);
-    const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
+
+    const dispatch = useAppDispatch();
+
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
 
     useEffect(() => {
         setTransactionValue(transaction.value.toFixed(2));
     }, [transaction, setTransactionValue]);
 
     const save = () => {
-        if (!error && transaction.hasUnpublishedChanges && transactionValue !== String(transaction.value)) {
-            setLocalTransactionDetails((currState) => {
-                return {
-                    ...currState,
-                    value: parseFloat(transactionValue),
-                };
-            });
+        if (!error && transaction.isWip && transactionValue !== String(transaction.value)) {
+            dispatch(wipTransactionUpdated({ ...transaction, value: parseAbrechnungFloat(transactionValue) }));
         }
     };
 
@@ -35,7 +36,7 @@ export const TransactionValue: React.FC<Props> = ({ transaction }) => {
     };
 
     const onChange = (event) => {
-        const value = parseFloat(event.target.value);
+        const value = parseAbrechnungFloat(event.target.value);
         if (isNaN(value)) {
             setError(true);
         } else {
@@ -55,7 +56,7 @@ export const TransactionValue: React.FC<Props> = ({ transaction }) => {
             onKeyUp={onKeyUp}
             onBlur={save}
             value={transactionValue}
-            disabled={!transaction.hasUnpublishedChanges}
+            disabled={!transaction.isWip}
         />
     );
 };

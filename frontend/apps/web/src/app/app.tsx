@@ -1,8 +1,7 @@
-import React, { ReactNode, Suspense, useEffect, useMemo, useState } from "react";
+import React, { ReactNode, Suspense, useEffect, useMemo } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
-import { useRecoilValue } from "recoil";
 
 import Register from "../pages/auth/Register";
 import Login from "../pages/auth/Login";
@@ -21,11 +20,19 @@ import RequestPasswordRecovery from "../pages/auth/RequestPasswordRecovery";
 import { createTheme, CssBaseline, PaletteMode, ThemeProvider, useMediaQuery } from "@mui/material";
 import { StyledEngineProvider } from "@mui/material/styles";
 import Settings from "../pages/profile/Settings";
-import { themeSettings } from "../state/settings";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 
 import "react-toastify/dist/ReactToastify.css";
-import { initApi } from "../core/api";
+import { api, ws } from "../core/api";
+import { useAppDispatch, useAppSelector, selectAuthSlice, selectTheme, selectSettingsSlice } from "../store";
+import {
+    AbrechnungUpdateProvider,
+    fetchGroups,
+    selectSessionToken,
+    subscribe,
+    unsubscribe,
+    selectCurrentUserId,
+} from "@abrechnung/redux";
 
 const Profile = React.lazy(() => import("../pages/profile/Profile"));
 const ConfirmEmailChange = React.lazy(() => import("../pages/auth/ConfirmEmailChange"));
@@ -79,7 +86,7 @@ const router = createBrowserRouter([
     },
     {
         path: "logout",
-        element: makeRouteElement(<Logout />, true),
+        element: makeRouteElement(<Logout />, false),
     },
     {
         path: "confirm-registration/:token",
@@ -113,11 +120,14 @@ const router = createBrowserRouter([
 
 export default function App() {
     const darkModeSystem = useMediaQuery("(prefers-color-scheme: dark)");
-    const userThemeSettings = useRecoilValue(themeSettings);
-    const [loading, setLoading] = useState(true);
+    const dispatch = useAppDispatch();
+    const groupStoreStatus = useAppSelector((state) => state.groups.status);
+    const sessionToken = useAppSelector((state) => selectSessionToken({ state: selectAuthSlice(state) }));
+    const themeMode = useAppSelector((state) => selectTheme({ state: selectSettingsSlice(state) }));
+    const isAuthenticated = sessionToken !== undefined;
+    const userId = useAppSelector((state) => selectCurrentUserId({ state: selectAuthSlice(state) }));
 
-    const useDarkMode: PaletteMode =
-        userThemeSettings.darkMode === "browser" ? (darkModeSystem ? "dark" : "light") : userThemeSettings.darkMode;
+    const useDarkMode: PaletteMode = themeMode === "browser" ? (darkModeSystem ? "dark" : "light") : themeMode;
 
     const theme = useMemo(
         () =>
@@ -130,9 +140,26 @@ export default function App() {
     );
 
     useEffect(() => {
-        initApi();
-        setLoading(false); // TODO: do something with this
-    }, []);
+        if (sessionToken !== undefined) {
+            api.sessionToken = sessionToken;
+            console.log("dispatching fetch groups");
+            dispatch(fetchGroups({ api }));
+        }
+    }, [sessionToken, dispatch]);
+
+    useEffect(() => {
+        if (!isAuthenticated || userId === undefined) {
+            return () => {
+                return;
+            };
+        }
+
+        dispatch(subscribe({ subscription: { type: "group", userId }, websocket: ws }));
+
+        return () => {
+            dispatch(unsubscribe({ subscription: { type: "group", userId }, websocket: ws }));
+        };
+    }, [dispatch, isAuthenticated, userId]);
 
     return (
         <StyledEngineProvider injectFirst>
@@ -150,7 +177,13 @@ export default function App() {
                         draggable
                         pauseOnHover
                     />
-                    {loading ? <div></div> : <RouterProvider router={router} />}
+                    {isAuthenticated && groupStoreStatus !== "initialized" ? (
+                        <Loading />
+                    ) : (
+                        <AbrechnungUpdateProvider api={api} websocket={ws}>
+                            <RouterProvider router={router} />
+                        </AbrechnungUpdateProvider>
+                    )}
                 </LocalizationProvider>
             </ThemeProvider>
         </StyledEngineProvider>

@@ -1,11 +1,7 @@
-import React, { useState } from "react";
-
+import React, { useEffect, useState } from "react";
 import InviteLinkCreate from "../../components/groups/InviteLinkCreate";
 import { toast } from "react-toastify";
 import { api } from "../../core/api";
-import { currUserPermissions, groupInvites, groupMembers } from "../../state/groups";
-import { Group } from "@abrechnung/types";
-import { useRecoilValue } from "recoil";
 import { DateTime } from "luxon";
 import {
     Alert,
@@ -20,26 +16,55 @@ import {
 import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
-import { isGuestUser } from "../../state/auth";
+import { ws } from "../../core/api";
+import { useAppSelector, useAppDispatch, selectGroupSlice, selectAuthSlice } from "../../store";
+import {
+    selectGroupById,
+    selectCurrentUserPermissions,
+    selectGroupMembers,
+    selectGroupInvites,
+    selectIsGuestUser,
+    selectGroupInviteStatus,
+    fetchGroupInvites,
+    deleteGroupInvite,
+    subscribe,
+    unsubscribe,
+} from "@abrechnung/redux";
+import Loading from "../../components/style/Loading";
 
 interface Props {
-    group: Group;
+    groupId: number;
 }
 
-export const GroupInvites: React.FC<Props> = ({ group }) => {
+export const GroupInvites: React.FC<Props> = ({ groupId }) => {
     const [showModal, setShowModal] = useState(false);
-    const invites = useRecoilValue(groupInvites(group.id));
-    const members = useRecoilValue(groupMembers(group.id));
-    const userPermissions = useRecoilValue(currUserPermissions(group.id));
+    const dispatch = useAppDispatch();
+    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
+    const invites = useAppSelector((state) => selectGroupInvites({ state: selectGroupSlice(state), groupId }));
+    const members = useAppSelector((state) => selectGroupMembers({ state: selectGroupSlice(state), groupId }));
+    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const invitesLoadingStatus = useAppSelector((state) =>
+        selectGroupInviteStatus({ state: selectGroupSlice(state), groupId })
+    );
 
-    const isGuest = useRecoilValue(isGuestUser);
+    const isGuest = useAppSelector((state) => selectIsGuestUser({ state: selectAuthSlice(state) }));
 
     useTitle(`${group.name} - Invite Links`);
 
+    useEffect(() => {
+        dispatch(fetchGroupInvites({ groupId, api }));
+        dispatch(subscribe({ subscription: { type: "group_invite", groupId }, websocket: ws }));
+        return () => {
+            dispatch(unsubscribe({ subscription: { type: "group_invite", groupId }, websocket: ws }));
+        };
+    }, [dispatch, groupId]);
+
     const deleteToken = (id) => {
-        api.deleteGroupInvite(group.id, id).catch((err) => {
-            toast.error(err);
-        });
+        dispatch(deleteGroupInvite({ groupId, inviteId: id, api }))
+            .unwrap()
+            .catch((err) => {
+                toast.error(err);
+            });
     };
 
     const getMemberUsername = (memberID) => {
@@ -74,55 +99,59 @@ export const GroupInvites: React.FC<Props> = ({ group }) => {
                     You are a guest user on this Abrechnung and therefore not permitted to create group invites.
                 </Alert>
             )}
-            <List>
-                {invites.length === 0 ? (
-                    <ListItem>
-                        <ListItemText primary="No Links" />
-                    </ListItem>
-                ) : (
-                    invites.map((invite) => (
-                        <ListItem key={invite.id}>
-                            <ListItemText
-                                primary={
-                                    invite.token === null ? (
-                                        <span>token hidden, was created by another member</span>
-                                    ) : (
-                                        <span onClick={selectLink}>
-                                            {window.location.origin}/invite/
-                                            {invite.token}
-                                        </span>
-                                    )
-                                }
-                                secondary={
-                                    <>
-                                        {invite.description}, created by {getMemberUsername(invite.createdBy)}, valid
-                                        until{" "}
-                                        {DateTime.fromISO(invite.validUntil).toLocaleString(DateTime.DATETIME_FULL)}
-                                        {invite.singleUse && ", single use"}
-                                        {invite.joinAsEditor && ", join as editor"}
-                                    </>
-                                }
-                            />
-                            {userPermissions.canWrite && (
-                                <ListItemSecondaryAction>
-                                    <IconButton
-                                        color="primary"
-                                        onClick={() =>
-                                            copyToClipboard(`${window.location.origin}/invite/${invite.token}`)
-                                        }
-                                    >
-                                        <ContentCopy />
-                                    </IconButton>
-                                    <IconButton color="error" onClick={() => deleteToken(invite.id)}>
-                                        <Delete />
-                                    </IconButton>
-                                </ListItemSecondaryAction>
-                            )}
+            {invitesLoadingStatus === "loading" ? (
+                <Loading />
+            ) : (
+                <List>
+                    {invites.length === 0 ? (
+                        <ListItem>
+                            <ListItemText primary="No Links" />
                         </ListItem>
-                    ))
-                )}
-            </List>
-            {userPermissions.canWrite && !isGuest && (
+                    ) : (
+                        invites.map((invite) => (
+                            <ListItem key={invite.id}>
+                                <ListItemText
+                                    primary={
+                                        invite.token === null ? (
+                                            <span>token hidden, was created by another member</span>
+                                        ) : (
+                                            <span onClick={selectLink}>
+                                                {window.location.origin}/invite/
+                                                {invite.token}
+                                            </span>
+                                        )
+                                    }
+                                    secondary={
+                                        <>
+                                            {invite.description}, created by {getMemberUsername(invite.createdBy)},
+                                            valid until{" "}
+                                            {DateTime.fromISO(invite.validUntil).toLocaleString(DateTime.DATETIME_FULL)}
+                                            {invite.singleUse && ", single use"}
+                                            {invite.joinAsEditor && ", join as editor"}
+                                        </>
+                                    }
+                                />
+                                {permissions.canWrite && (
+                                    <ListItemSecondaryAction>
+                                        <IconButton
+                                            color="primary"
+                                            onClick={() =>
+                                                copyToClipboard(`${window.location.origin}/invite/${invite.token}`)
+                                            }
+                                        >
+                                            <ContentCopy />
+                                        </IconButton>
+                                        <IconButton color="error" onClick={() => deleteToken(invite.id)}>
+                                            <Delete />
+                                        </IconButton>
+                                    </ListItemSecondaryAction>
+                                )}
+                            </ListItem>
+                        ))
+                    )}
+                </List>
+            )}
+            {permissions.canWrite && !isGuest && (
                 <>
                     <Grid container justifyContent="center">
                         <IconButton color="primary" onClick={() => setShowModal(true)}>

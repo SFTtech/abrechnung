@@ -1,13 +1,8 @@
 import React, { useState } from "react";
-
-import { useRecoilValue } from "recoil";
-import { userData } from "../../state/auth";
 import { Form, Formik } from "formik";
 import { toast } from "react-toastify";
 import { api } from "../../core/api";
 import { DateTime } from "luxon";
-import { currUserPermissions, groupMembers } from "../../state/groups";
-import { Group } from "@abrechnung/types";
 import {
     Button,
     Checkbox,
@@ -27,25 +22,44 @@ import {
 import { Edit } from "@mui/icons-material";
 import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
+import {
+    selectCurrentUserId,
+    selectCurrentUserPermissions,
+    selectGroupById,
+    selectGroupMembers,
+    updateGroupMemberPrivileges,
+} from "@abrechnung/redux";
+import { useAppSelector, selectGroupSlice, selectAuthSlice, useAppDispatch } from "../../store";
+import { GroupMember } from "@abrechnung/types";
 
 interface Props {
-    group: Group;
+    groupId: number;
 }
 
-export const GroupMemberList: React.FC<Props> = ({ group }) => {
-    const [showEditMemberDialog, setShowEditMemberDialog] = useState(false);
-    const [memberToEdit, setMemberToEdit] = useState(null);
-    const currentUser = useRecoilValue(userData);
-    const members = useRecoilValue(groupMembers(group.id));
-    const permissions = useRecoilValue(currUserPermissions(group.id));
+export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
+    const dispatch = useAppDispatch();
+    const currentUserId = useAppSelector((state) => selectCurrentUserId({ state: selectAuthSlice(state) }));
+    const members = useAppSelector((state) => selectGroupMembers({ state: selectGroupSlice(state), groupId }));
+    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
+    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+
+    const [memberToEdit, setMemberToEdit] = useState<GroupMember | undefined>(undefined);
 
     useTitle(`${group.name} - Members`);
 
     const handleEditMemberSubmit = (values, { setSubmitting }) => {
-        api.updateGroupMemberPrivileges(group.id, values.userID, values.canWrite, values.isOwner)
+        dispatch(
+            updateGroupMemberPrivileges({
+                groupId,
+                memberId: values.userId,
+                permissions: { canWrite: values.canWrite, isOwner: values.isOwner },
+                api,
+            })
+        )
+            .unwrap()
             .then((result) => {
                 setSubmitting(false);
-                setShowEditMemberDialog(false);
+                setMemberToEdit(undefined);
                 toast.success("Successfully updated group member permissions");
             })
             .catch((err) => {
@@ -63,15 +77,13 @@ export const GroupMemberList: React.FC<Props> = ({ group }) => {
     };
 
     const closeEditMemberModal = () => {
-        setShowEditMemberDialog(false);
-        setMemberToEdit(null);
+        setMemberToEdit(undefined);
     };
 
     const openEditMemberModal = (userID) => {
         const user = members.find((member) => member.userID === userID);
         // TODO: maybe deal with disappearing users in the list
         setMemberToEdit(user);
-        setShowEditMemberDialog(true);
     };
 
     return (
@@ -107,7 +119,7 @@ export const GroupMemberList: React.FC<Props> = ({ group }) => {
                                                 variant="outlined"
                                             />
                                         ) : null}
-                                        {member.userID === currentUser.id ? (
+                                        {member.userID === currentUserId ? (
                                             <Chip
                                                 size="small"
                                                 sx={{ mr: 1 }}
@@ -125,6 +137,7 @@ export const GroupMemberList: React.FC<Props> = ({ group }) => {
                                         {member.invitedBy && (
                                             <small className="text-muted">
                                                 invited by {getMemberUsername(member.invitedBy)}
+                                                {", "}
                                             </small>
                                         )}
                                         <small className="text-muted">
@@ -147,26 +160,26 @@ export const GroupMemberList: React.FC<Props> = ({ group }) => {
                     ))
                 )}
             </List>
-            <Dialog open={showEditMemberDialog} onClose={closeEditMemberModal}>
+            <Dialog open={memberToEdit !== undefined} onClose={closeEditMemberModal}>
                 <DialogTitle>Edit Group Member</DialogTitle>
                 <DialogContent>
                     <Formik
                         initialValues={{
-                            userID: memberToEdit ? memberToEdit.user_id : -1,
-                            isOwner: memberToEdit ? memberToEdit.is_owner : false,
-                            canWrite: memberToEdit ? memberToEdit.can_write : false,
+                            userId: memberToEdit?.userID ?? -1,
+                            isOwner: memberToEdit?.isOwner ?? false,
+                            canWrite: memberToEdit?.canWrite ?? false,
                         }}
                         onSubmit={handleEditMemberSubmit}
                         enableReinitialize={true}
                     >
-                        {({ values, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
+                        {({ values, handleBlur, handleChange, isSubmitting, setFieldValue }) => (
                             <Form>
                                 <FormControlLabel
                                     control={
                                         <Checkbox
                                             name="canWrite"
                                             onBlur={handleBlur}
-                                            onChange={handleChange}
+                                            onChange={(evt) => setFieldValue("canWrite", evt.target.checked)}
                                             checked={values.canWrite}
                                         />
                                     }
@@ -177,7 +190,7 @@ export const GroupMemberList: React.FC<Props> = ({ group }) => {
                                         <Checkbox
                                             name="isOwner"
                                             onBlur={handleBlur}
-                                            onChange={handleChange}
+                                            onChange={(evt) => setFieldValue("isOwner", evt.target.checked)}
                                             checked={values.isOwner}
                                         />
                                     }

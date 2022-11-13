@@ -3,40 +3,42 @@ import { DisabledTextField } from "../style/DisabledTextField";
 import { DatePicker } from "@mui/x-date-pickers";
 import { TextField } from "@mui/material";
 import { DateTime } from "luxon";
-import { useSetRecoilState } from "recoil";
-import { pendingTransactionDetailChanges } from "../../state/transactions";
-import { Transaction } from "@abrechnung/types";
+import { useAppSelector, useAppDispatch, selectTransactionSlice } from "../../store";
+import { selectTransactionById, wipTransactionUpdated } from "@abrechnung/redux";
 
 interface Props {
-    transaction: Transaction;
+    groupId: number;
+    transactionId: number;
 }
 
-export const TransactionBilledAt: React.FC<Props> = ({ transaction }) => {
+export const TransactionBilledAt: React.FC<Props> = ({ groupId, transactionId }) => {
     const [error, setError] = useState(null);
-    const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
 
-    const save = (billedAt) => {
-        if (billedAt == null || billedAt.invalid) {
+    const dispatch = useAppDispatch();
+
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+
+    const save = (billedAt: DateTime) => {
+        //if (billedAt == null || billedAt.invalid) {
+        if (billedAt == null) {
             setError("Invalid date format");
             return;
         }
+        const formatted = billedAt.toLocaleString(DateTime.DATE_FULL);
         setError(null);
-        if (transaction.hasUnpublishedChanges && billedAt !== transaction.billedAt) {
-            setLocalTransactionDetails((currState) => {
-                return {
-                    ...currState,
-                    billed_at: billedAt,
-                };
-            });
+        if (transaction.isWip && formatted !== transaction.billedAt) {
+            dispatch(wipTransactionUpdated({ ...transaction, billedAt: formatted }));
         }
     };
-    if (!transaction.hasUnpublishedChanges) {
+    if (!transaction.isWip) {
         return (
             <DisabledTextField
                 label="Billed At"
                 variant="standard"
                 fullWidth
-                value={DateTime.fromJSDate(transaction.billedAt).toLocaleString(DateTime.DATE_FULL)}
+                value={DateTime.fromISO(transaction.billedAt).toLocaleString(DateTime.DATE_FULL)}
                 disabled={true}
             />
         );
@@ -46,7 +48,7 @@ export const TransactionBilledAt: React.FC<Props> = ({ transaction }) => {
         <DatePicker
             label="Billed At"
             inputFormat="yyyy-MM-dd"
-            value={DateTime.fromJSDate(transaction.billedAt)}
+            value={DateTime.fromISO(transaction.billedAt)}
             onChange={save}
             renderInput={(params) => (
                 <TextField variant="standard" fullWidth {...params} helperText={error} error={error !== null} />

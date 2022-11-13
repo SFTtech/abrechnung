@@ -46,8 +46,8 @@ export const Header: React.FC<Props> = ({ navigation, route, options, back }) =>
     const openDrawer = () => {
         if (navigation.openDrawer !== undefined) {
             navigation.openDrawer();
-        } else if (navigation.getParent() !== undefined && navigation.getParent().openDrawer !== undefined) {
-            navigation.getParent().openDrawer();
+        } else if (navigation.getParent("Drawer") !== undefined) {
+            navigation.getParent("Drawer").openDrawer();
         } else {
             console.error("cannot open drawer, unexpected location in navigation tree");
         }

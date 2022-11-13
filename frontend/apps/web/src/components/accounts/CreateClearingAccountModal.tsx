@@ -3,26 +3,26 @@ import { Form, Formik, FormikProps } from "formik";
 import { toast } from "react-toastify";
 import { api } from "../../core/api";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
-import { useRecoilValue, useSetRecoilState } from "recoil";
-import { accountsSeenByUser, addAccount, groupAccounts } from "../../state/accounts";
 import ClearingSharesFormElement from "./ClearingSharesFormElement";
 import React, { ReactNode } from "react";
-import { Group, Account } from "@abrechnung/types";
+import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
+import { selectGroupAccounts } from "@abrechnung/redux";
+import { createAccount } from "@abrechnung/redux";
 
 interface FormValues {
     name: string;
     description: string;
-    clearing_shares: { [k: number]: number };
+    clearingShares: { [k: number]: number };
 }
 
 const validationSchema = yup.object({
     name: yup.string().required("Name is required"),
     description: yup.string(),
-    clearing_shares: yup.object(),
+    clearingShares: yup.object(),
 });
 
 interface Props {
-    group: Group;
+    groupId: number;
     show: boolean;
     onClose: (
         event: Record<string, never>,
@@ -31,9 +31,9 @@ interface Props {
     initialValues: FormValues | null;
 }
 
-export const CreateClearingAccountModal: React.FC<Props> = ({ show, onClose, group, initialValues }) => {
-    const setAccounts = useSetRecoilState(groupAccounts(group.id));
-    const accounts = useRecoilValue(accountsSeenByUser(group.id));
+export const CreateClearingAccountModal: React.FC<Props> = ({ show, onClose, groupId, initialValues }) => {
+    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
+    const dispatch = useAppDispatch();
 
     const initial =
         initialValues != null
@@ -41,22 +41,25 @@ export const CreateClearingAccountModal: React.FC<Props> = ({ show, onClose, gro
             : {
                   name: "",
                   description: "",
-                  clearing_shares: accounts.reduce((map, curr) => {
+                  clearingShares: accounts.reduce((map, curr) => {
                       map[curr.id] = 0.0;
                       return map;
                   }, {}),
               };
 
     const handleSubmit = (values, { setSubmitting }) => {
-        api.createAccount(group.id, "clearing", values.name, values.description, values.clearingShares, null)
-            .then((account: Account) => {
-                toast.success(`Created account ${values.name}`);
-                addAccount(account, setAccounts);
+        dispatch(
+            createAccount({ account: { ...values, groupID: groupId, type: "clearing" }, api: api, keepWip: false })
+        )
+            .then((res) => {
+                console.log(res);
                 setSubmitting(false);
                 onClose({}, "completed");
             })
             .catch((err) => {
-                toast.error(err);
+                console.log(err);
+                // TODO: determine what we get from error
+                // toast.error(err);
                 setSubmitting(false);
             });
     };
@@ -111,18 +114,18 @@ export const CreateClearingAccountModal: React.FC<Props> = ({ show, onClose, gro
                             />
 
                             <ClearingSharesFormElement
-                                group={group}
-                                clearingShares={values.clearing_shares}
-                                setClearingShares={(clearingShares) => setFieldValue("clearing_shares", clearingShares)}
+                                groupId={groupId}
+                                clearingShares={values.clearingShares}
+                                setClearingShares={(clearingShares) => setFieldValue("clearingShares", clearingShares)}
                             />
 
                             {isSubmitting && <LinearProgress />}
                             <DialogActions>
-                                <Button color="error" onClick={() => onClose({}, "closeButton")}>
-                                    Cancel
-                                </Button>
                                 <Button type="submit" color="primary" disabled={isSubmitting}>
                                     Save
+                                </Button>
+                                <Button color="error" onClick={() => onClose({}, "closeButton")}>
+                                    Cancel
                                 </Button>
                             </DialogActions>
                         </Form>

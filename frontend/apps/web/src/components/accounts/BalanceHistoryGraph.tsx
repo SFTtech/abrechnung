@@ -1,35 +1,45 @@
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useNavigate } from "react-router-dom";
 import { DateTime } from "luxon";
-import { useRecoilValue } from "recoil";
-import { accountBalanceHistory, transactionByIDMap } from "../../state/transactions";
 import { Box, Divider, Theme, Typography, useTheme } from "@mui/material";
-import { accountByIDMap } from "../../state/accounts";
 import { ClearingAccountIcon, PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 import { balanceColor } from "../../core/utils";
 import React from "react";
-import { Group } from "@abrechnung/types";
+import { selectAccountSlice, selectGroupSlice, selectTransactionSlice, useAppSelector } from "../../store";
+import {
+    selectAccountIdToNameMap,
+    selectGroupCurrencySymbol,
+    selectAccountBalanceHistory,
+    selectTransactionByIdMap,
+} from "@abrechnung/redux";
 
 interface Props {
-    group: Group;
-    accountID: number;
+    groupId: number;
+    accountId: number;
 }
 
-export const BalanceHistoryGraph: React.FC<Props> = ({ group, accountID }) => {
+export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => {
     const theme: Theme = useTheme();
-    const balanceHistory = useRecoilValue(accountBalanceHistory({ groupID: group.id, accountID: accountID }));
+    const balanceHistory = useAppSelector((state) => selectAccountBalanceHistory({ state, groupId, accountId }));
     const navigate = useNavigate();
 
-    const transactionMap = useRecoilValue(transactionByIDMap(group.id));
-    const accountMap = useRecoilValue(accountByIDMap(group.id));
+    const currencySymbol = useAppSelector((state) =>
+        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
+    );
+    const transactionMap = useAppSelector((state) =>
+        selectTransactionByIdMap({ state: selectTransactionSlice(state), groupId })
+    );
+    const accountMap = useAppSelector((state) =>
+        selectAccountIdToNameMap({ state: selectAccountSlice(state), groupId })
+    );
 
     const onClick = (evt) => {
         if (evt.activePayload.length > 0) {
             const payload = evt.activePayload[0].payload;
             if (payload.changeOrigin.type === "clearing") {
-                navigate(`/groups/${group.id}/accounts/${payload.changeOrigin.id}`);
+                navigate(`/groups/${groupId}/accounts/${payload.changeOrigin.id}`);
             } else {
-                navigate(`/groups/${group.id}/transactions/${payload.changeOrigin.id}`);
+                navigate(`/groups/${groupId}/transactions/${payload.changeOrigin.id}`);
             }
         }
     };
@@ -72,12 +82,12 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ group, accountID }) => {
                             ml: 2,
                         }}
                     >
-                        {payload[0].value} {group.currencySymbol}
+                        {payload[0].value} {currencySymbol}
                     </Typography>
                 </div>
                 <Divider />
                 {payload[0].payload.changeOrigin.type === "clearing" ? (
-                    <Typography variant="body1">{accountMap[payload[0].payload.changeOrigin.id].name}</Typography>
+                    <Typography variant="body1">{accountMap[payload[0].payload.changeOrigin.id]}</Typography>
                 ) : (
                     <Typography variant="body1">
                         {transactionMap[payload[0].payload.changeOrigin.id].description}
@@ -112,7 +122,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ group, accountID }) => {
                 <YAxis
                     tickFormatter={(value) => value.toFixed(2)}
                     type="number"
-                    unit={group.currencySymbol}
+                    unit={currencySymbol}
                     stroke={theme.palette.text.primary}
                 />
                 <Tooltip content={renderTooltip} />

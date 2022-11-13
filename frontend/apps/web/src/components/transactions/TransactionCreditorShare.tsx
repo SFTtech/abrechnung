@@ -1,22 +1,24 @@
 import React from "react";
-import { useRecoilValue, useSetRecoilState } from "recoil";
-import { accountsSeenByUser } from "../../state/accounts";
 import AccountSelect, { AccountSelectProps } from "../style/AccountSelect";
-import { pendingTransactionDetailChanges } from "../../state/transactions";
-import { Group, Transaction } from "@abrechnung/types";
+import { useAppSelector, useAppDispatch, selectTransactionSlice, selectAccountSlice } from "../../store";
+import { selectTransactionById, selectGroupAccounts, wipTransactionUpdated } from "@abrechnung/redux";
 
 type Props = {
-    group: Group;
-    transaction: Transaction;
+    groupId: number;
+    transactionId: number;
     isEditing: boolean;
     onChange?: AccountSelectProps["onChange"];
 } & Omit<AccountSelectProps, "onChange">;
 
-export const TransactionCreditorShare: React.FC<Props> = ({ group, transaction, isEditing, ...props }) => {
-    const accounts = useRecoilValue(accountsSeenByUser(group.id));
+export const TransactionCreditorShare: React.FC<Props> = ({ groupId, transactionId, isEditing, ...props }) => {
+    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
+    const dispatch = useAppDispatch();
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+
     const shareAccountID =
         Object.keys(transaction.creditorShares).length === 0 ? null : Object.keys(transaction.creditorShares)[0];
-    const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
 
     const getAccount = (accountID) => {
         return accounts.find((account) => account.id === accountID);
@@ -27,20 +29,13 @@ export const TransactionCreditorShare: React.FC<Props> = ({ group, transaction, 
             return; // TODO: some error handling
         }
         if (shareAccountID !== account.id) {
-            setLocalTransactionDetails((currState) => {
-                return {
-                    ...currState,
-                    creditorShares: {
-                        [account.id]: 1.0,
-                    },
-                };
-            });
+            dispatch(wipTransactionUpdated({ ...transaction, creditorShares: { [account.id]: 1.0 } }));
         }
     };
 
     return (
         <AccountSelect
-            group={group}
+            groupId={groupId}
             value={shareAccountID === null ? null : getAccount(parseInt(shareAccountID))}
             onChange={onCreditorChange}
             noDisabledStyling={true}

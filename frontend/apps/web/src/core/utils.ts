@@ -34,11 +34,11 @@ export const filterTransaction = (
 ): boolean => {
     if (
         transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        DateTime.fromJSDate(transaction.billedAt)
+        DateTime.fromISO(transaction.billedAt)
             .toLocaleString(DateTime.DATE_FULL)
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-        DateTime.fromJSDate(transaction.lastChanged)
+        DateTime.fromISO(transaction.lastChanged)
             .toLocaleString(DateTime.DATE_FULL)
             .toLowerCase()
             .includes(searchTerm.toLowerCase()) ||

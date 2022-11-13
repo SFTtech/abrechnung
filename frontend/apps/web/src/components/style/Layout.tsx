@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link as RouterLink, useLocation } from "react-router-dom";
 import { useRecoilValue } from "recoil";
-import { isAuthenticated } from "../../state/auth";
 import ListItemLink from "./ListItemLink";
 import SidebarGroupList from "./SidebarGroupList";
 import {
@@ -42,17 +41,18 @@ import {
 import { config } from "../../state/config";
 import { useTheme } from "@mui/material/styles";
 import { Banner } from "./Banner";
-import { Group } from "@abrechnung/types";
+import { selectIsAuthenticated } from "@abrechnung/redux";
+import { useAppSelector, selectAuthSlice } from "../../store";
 
 const drawerWidth = 240;
 
 interface Props {
-    group?: Group | null;
+    groupId?: number;
     children: React.ReactNode;
 }
 
-export const Layout: React.FC<Props> = ({ group = null, children }) => {
-    const authenticated = useRecoilValue(isAuthenticated);
+export const Layout: React.FC<Props> = ({ groupId, children }) => {
+    const authenticated = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
     const [anchorEl, setAnchorEl] = useState(null);
     const theme: Theme = useTheme();
     const dotsMenuOpen = Boolean(anchorEl);
@@ -78,12 +78,12 @@ export const Layout: React.FC<Props> = ({ group = null, children }) => {
         <div style={{ height: "100%" }}>
             <Toolbar />
             <Divider />
-            {group != null && (
+            {groupId !== undefined && (
                 <List sx={{ pb: 0 }}>
                     <ListItemLink
-                        to={`/groups/${group.id}/`}
+                        to={`/groups/${groupId}/`}
                         selected={
-                            location.pathname === `/groups/${group.id}/` || location.pathname === `/groups/${group.id}`
+                            location.pathname === `/groups/${groupId}/` || location.pathname === `/groups/${groupId}`
                         }
                     >
                         <ListItemIcon>
@@ -92,8 +92,8 @@ export const Layout: React.FC<Props> = ({ group = null, children }) => {
                         <ListItemText primary="Transactions" />
                     </ListItemLink>
                     <ListItemLink
-                        to={`/groups/${group.id}/balances`}
-                        selected={location.pathname.startsWith(`/groups/${group.id}/balances`)}
+                        to={`/groups/${groupId}/balances`}
+                        selected={location.pathname.startsWith(`/groups/${groupId}/balances`)}
                     >
                         <ListItemIcon>
                             <BarChart />
@@ -101,8 +101,8 @@ export const Layout: React.FC<Props> = ({ group = null, children }) => {
                         <ListItemText primary="Balances" />
                     </ListItemLink>
                     <ListItemLink
-                        to={`/groups/${group.id}/accounts`}
-                        selected={location.pathname.startsWith(`/groups/${group.id}/accounts`)}
+                        to={`/groups/${groupId}/accounts`}
+                        selected={location.pathname.startsWith(`/groups/${groupId}/accounts`)}
                     >
                         <ListItemIcon>
                             <AccountBalance />
@@ -110,8 +110,8 @@ export const Layout: React.FC<Props> = ({ group = null, children }) => {
                         <ListItemText primary="Accounts" />
                     </ListItemLink>
                     <ListItemLink
-                        to={`/groups/${group.id}/detail`}
-                        selected={location.pathname.startsWith(`/groups/${group.id}/detail`)}
+                        to={`/groups/${groupId}/detail`}
+                        selected={location.pathname.startsWith(`/groups/${groupId}/detail`)}
                     >
                         <ListItemIcon>
                             <AdminPanelSettings />
@@ -119,8 +119,8 @@ export const Layout: React.FC<Props> = ({ group = null, children }) => {
                         <ListItemText primary="Group Settings" />
                     </ListItemLink>
                     <ListItemLink
-                        to={`/groups/${group.id}/members`}
-                        selected={location.pathname.startsWith(`/groups/${group.id}/members`)}
+                        to={`/groups/${groupId}/members`}
+                        selected={location.pathname.startsWith(`/groups/${groupId}/members`)}
                     >
                         <ListItemIcon>
                             <People />
@@ -128,8 +128,8 @@ export const Layout: React.FC<Props> = ({ group = null, children }) => {
                         <ListItemText primary="Group Members" />
                     </ListItemLink>
                     <ListItemLink
-                        to={`/groups/${group.id}/invites`}
-                        selected={location.pathname.startsWith(`/groups/${group.id}/invites`)}
+                        to={`/groups/${groupId}/invites`}
+                        selected={location.pathname.startsWith(`/groups/${groupId}/invites`)}
                     >
                         <ListItemIcon>
                             <Mail />
@@ -137,8 +137,8 @@ export const Layout: React.FC<Props> = ({ group = null, children }) => {
                         <ListItemText primary="Group Invites" />
                     </ListItemLink>
                     <ListItemLink
-                        to={`/groups/${group.id}/log`}
-                        selected={location.pathname.startsWith(`/groups/${group.id}/log`)}
+                        to={`/groups/${groupId}/log`}
+                        selected={location.pathname.startsWith(`/groups/${groupId}/log`)}
                     >
                         <ListItemIcon>
                             <Message />
@@ -148,7 +148,7 @@ export const Layout: React.FC<Props> = ({ group = null, children }) => {
                     <Divider />
                 </List>
             )}
-            <SidebarGroupList group={group} />
+            <SidebarGroupList activeGroupId={groupId} />
 
             <Box
                 sx={{

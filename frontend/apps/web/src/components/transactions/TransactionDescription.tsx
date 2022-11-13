@@ -1,30 +1,30 @@
 import React, { useEffect, useState } from "react";
 import { DisabledTextField } from "../style/DisabledTextField";
-import { useSetRecoilState } from "recoil";
-import { pendingTransactionDetailChanges } from "../../state/transactions";
-import { Transaction } from "@abrechnung/types";
+import { useAppSelector, useAppDispatch, selectTransactionSlice } from "../../store";
+import { selectTransactionById, wipTransactionUpdated } from "@abrechnung/redux";
 
 interface Props {
-    transaction: Transaction;
+    groupId: number;
+    transactionId: number;
 }
 
-export const TransactionDescription: React.FC<Props> = ({ transaction }) => {
+export const TransactionDescription: React.FC<Props> = ({ groupId, transactionId }) => {
     const [description, setDescription] = useState("");
     const [error, setError] = useState(false);
-    const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
+
+    const dispatch = useAppDispatch();
+
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
 
     useEffect(() => {
         setDescription(transaction.description);
     }, [transaction, setDescription]);
 
     const save = () => {
-        if (!error && transaction.hasUnpublishedChanges && description !== transaction.description) {
-            setLocalTransactionDetails((currState) => {
-                return {
-                    ...currState,
-                    description: description,
-                };
-            });
+        if (!error && transaction.isWip && description !== transaction.description) {
+            dispatch(wipTransactionUpdated({ ...transaction, description: description }));
         }
     };
 
@@ -54,7 +54,7 @@ export const TransactionDescription: React.FC<Props> = ({ transaction }) => {
             onChange={onChange}
             onKeyUp={onKeyUp}
             onBlur={save}
-            disabled={!transaction.hasUnpublishedChanges}
+            disabled={!transaction.isWip}
             value={description}
         />
     );

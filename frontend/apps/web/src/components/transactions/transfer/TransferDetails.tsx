@@ -8,45 +8,50 @@ import TransactionActions from "../TransactionActions";
 import { Divider, Grid } from "@mui/material";
 import FileGallery from "../FileGallery";
 import { MobilePaper } from "../../style/mobile";
-import { Group, Transaction } from "@abrechnung/types";
-import { useRecoilValue } from "recoil";
-import { transactionAttachments } from "../../../state/transactions";
+import { useAppSelector, selectTransactionSlice } from "../../../store";
+import { selectTransactionById, selectTransactionAttachments } from "@abrechnung/redux";
 
 interface Props {
-    group: Group;
-    transaction: Transaction;
+    groupId: number;
+    transactionId: number;
 }
 
-export const TransferDetails: React.FC<Props> = ({ group, transaction }) => {
-    const attachments = useRecoilValue(transactionAttachments({ groupID: group.id, transactionID: transaction.id }));
+export const TransferDetails: React.FC<Props> = ({ groupId, transactionId }) => {
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const attachments = useAppSelector((state) =>
+        selectTransactionAttachments({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+
     return (
         <MobilePaper>
-            <TransactionActions groupID={group.id} transaction={transaction} />
+            <TransactionActions groupId={groupId} transactionId={transactionId} />
             <Divider sx={{ marginBottom: 1, marginTop: 1 }} />
             <Grid container>
-                <Grid item xs={transaction.hasUnpublishedChanges || attachments.length > 0 ? 6 : 12}>
-                    <TransactionDescription transaction={transaction} />
-                    <TransactionValue transaction={transaction} />
-                    <TransactionBilledAt transaction={transaction} />
+                <Grid item xs={transaction.isWip || attachments.length > 0 ? 6 : 12}>
+                    <TransactionDescription transactionId={transactionId} groupId={groupId} />
+                    <TransactionValue transactionId={transactionId} groupId={groupId} />
+                    <TransactionBilledAt transactionId={transactionId} groupId={groupId} />
 
                     <TransactionCreditorShare
-                        group={group}
-                        transaction={transaction}
-                        isEditing={transaction.hasUnpublishedChanges}
+                        groupId={groupId}
+                        transactionId={transactionId}
+                        isEditing={transaction.isWip}
                         label="From"
                     />
 
                     <TransactionDebitorShare
-                        group={group}
-                        transaction={transaction}
-                        isEditing={transaction.hasUnpublishedChanges}
+                        groupId={groupId}
+                        transactionId={transactionId}
+                        isEditing={transaction.isWip}
                         label="To"
                     />
                 </Grid>
 
-                {(transaction.hasUnpublishedChanges || attachments.length > 0) && (
+                {(transaction.isWip || attachments.length > 0) && (
                     <Grid item xs={6}>
-                        <FileGallery transaction={transaction} attachments={attachments} />
+                        <FileGallery groupId={groupId} transactionId={transactionId} />
                     </Grid>
                 )}
             </Grid>

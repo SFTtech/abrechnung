@@ -14,25 +14,25 @@ import {
 } from "@mui/material";
 import { ShareInput } from "../ShareInput";
 import React, { useEffect, useState } from "react";
-import { useRecoilValue } from "recoil";
-import { accountsSeenByUser } from "../../state/accounts";
-import { Group, ClearingShares } from "@abrechnung/types";
+import { ClearingShares } from "@abrechnung/types";
 import { CompareArrows, Person, Search as SearchIcon } from "@mui/icons-material";
+import { useAppSelector, selectAccountSlice } from "../../store";
+import { selectGroupAccounts } from "@abrechnung/redux";
 
 interface Props {
-    group: Group;
+    groupId: number;
     clearingShares: ClearingShares;
     setClearingShares: (shares: ClearingShares) => void;
-    accountID?: number;
+    accountId?: number;
 }
 
 export const ClearingSharesFormElement: React.FC<Props> = ({
-    group,
+    groupId,
     clearingShares,
     setClearingShares,
-    accountID = undefined,
+    accountId = undefined,
 }) => {
-    const accounts = useRecoilValue(accountsSeenByUser(group.id));
+    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
     const [showAdvanced, setShowAdvanced] = useState(false);
     const [searchValue, setSearchValue] = useState("");
     const [filteredAccounts, setFilteredAccounts] = useState([]);
@@ -87,7 +87,7 @@ export const ClearingSharesFormElement: React.FC<Props> = ({
                     <TableBody>
                         {filteredAccounts.map(
                             (account) =>
-                                (accountID === undefined || account.id !== accountID) && (
+                                (accountId === undefined || account.id !== accountId) && (
                                     <TableRow hover key={account.id}>
                                         <TableCell>
                                             <Grid container direction="row" alignItems="center">
@@ -111,7 +111,7 @@ export const ClearingSharesFormElement: React.FC<Props> = ({
                                                         })
                                                     }
                                                     value={
-                                                        clearingShares && clearingShares.hasOwnProperty(account.id)
+                                                        clearingShares && clearingShares[account.id] !== undefined
                                                             ? clearingShares[account.id]
                                                             : 0.0
                                                     }
@@ -121,7 +121,7 @@ export const ClearingSharesFormElement: React.FC<Props> = ({
                                                     name={`${account.name}-checked`}
                                                     checked={
                                                         clearingShares &&
-                                                        clearingShares.hasOwnProperty(account.id) &&
+                                                        clearingShares[account.id] !== undefined &&
                                                         clearingShares[account.id] !== 0
                                                     }
                                                     onChange={(event) =>

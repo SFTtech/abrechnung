@@ -1,13 +1,14 @@
-import { HelperText, TextInput, TextInputProps } from "react-native-paper";
+import { HelperText, TextInput } from "react-native-paper";
 import React from "react";
 import { useEffect, useState } from "react";
 import { DateTimePickerAndroid, DateTimePickerEvent } from "@react-native-community/datetimepicker";
 import { toISODateString } from "@abrechnung/utils";
 
-interface Props {
+interface Props
+    extends Omit<React.ComponentProps<typeof TextInput>, "onChange" | "value" | "disabled" | "editable" | "mode"> {
     value: Date;
     onChange: (newValue: Date) => void;
-    mode: "time" | "date";
+    mode?: "time" | "date";
     disabled?: boolean;
     editable?: boolean;
 }
@@ -15,7 +16,7 @@ interface Props {
 export const DateTimeInput: React.FC<Props> = ({
     value,
     onChange,
-    mode,
+    mode = "date",
     disabled = false,
     editable = false,
     ...props
@@ -65,13 +66,13 @@ export const DateTimeInput: React.FC<Props> = ({
     return (
         <>
             <TextInput
-                {...props}
                 onChange={() => null}
                 value={textValue} // TODO: proper input validation
                 onChangeText={onTextInputChange} // TODO: fix date input with keyboard
                 onEndEditing={onInputChange}
-                right={<TextInput.Icon onPress={show} name="calendar-today" />}
+                right={<TextInput.Icon onPress={show} icon="calendar-today" forceTextInputFocus={false} />}
                 error={error !== null}
+                {...props}
             />
             {!!error && <HelperText type="error">{error}</HelperText>}
         </>

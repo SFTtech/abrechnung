@@ -11,85 +11,79 @@ import TransactionPositions from "./TransactionPositions";
 import { Add } from "@mui/icons-material";
 import PurchaseDebitorSharesReadOnly from "./PurchaseDebitorSharesReadOnly";
 import { MobilePaper } from "../../style/mobile";
-import { Group, Transaction } from "@abrechnung/types";
-import { useRecoilValue } from "recoil";
-import { transactionBalanceEffect, transactionPositions, transactionAttachments } from "../../../state/transactions";
+import { useAppSelector, selectTransactionSlice } from "../../../store";
+import {
+    selectTransactionById,
+    selectTransactionHasPositions,
+    selectTransactionHasAttachments,
+} from "@abrechnung/redux";
 
 interface Props {
-    group: Group;
-    transaction: Transaction;
+    groupId: number;
+    transactionId: number;
 }
 
-export const PurchaseDetails: React.FC<Props> = ({ group, transaction }) => {
+export const PurchaseDetails: React.FC<Props> = ({ groupId, transactionId }) => {
     const [showPositions, setShowPositions] = useState(false);
-    const positions = useRecoilValue(transactionPositions({ groupID: group.id, transactionID: transaction.id }));
-    const balanceEffect = useRecoilValue(
-        transactionBalanceEffect({ groupID: group.id, transactionID: transaction.id })
+
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
     );
-    const attachments = useRecoilValue(transactionAttachments({ groupID: group.id, transactionID: transaction.id }));
+
+    const hasAttachments = useAppSelector((state) =>
+        selectTransactionHasAttachments({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const hasPositions = useAppSelector((state) =>
+        selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
 
     return (
         <>
             <MobilePaper>
-                <TransactionActions groupID={group.id} transaction={transaction} />
+                <TransactionActions groupId={groupId} transactionId={transactionId} />
                 <Divider sx={{ marginBottom: 1, marginTop: 1 }} />
                 <Grid container>
-                    <Grid item xs={12} md={transaction.hasUnpublishedChanges || attachments.length > 0 ? 6 : 12}>
-                        <TransactionDescription transaction={transaction} />
-                        <TransactionBilledAt transaction={transaction} />
+                    <Grid item xs={12} md={transaction.isWip || hasAttachments ? 6 : 12}>
+                        <TransactionDescription groupId={groupId} transactionId={transactionId} />
+                        <TransactionBilledAt groupId={groupId} transactionId={transactionId} />
 
                         <TransactionCreditorShare
-                            group={group}
-                            transaction={transaction}
-                            isEditing={transaction.hasUnpublishedChanges}
+                            groupId={groupId}
+                            transactionId={transactionId}
+                            isEditing={transaction.isWip}
                             label="Paid by"
                         />
 
-                        <TransactionValue transaction={transaction} />
+                        <TransactionValue groupId={groupId} transactionId={transactionId} />
                     </Grid>
 
-                    {(transaction.hasUnpublishedChanges || attachments.length > 0) && (
+                    {(transaction.isWip || hasAttachments) && (
                         <Grid item xs={12} md={6} sx={{ marginTop: { xs: 1 } }}>
-                            <FileGallery transaction={transaction} attachments={attachments} />
+                            <FileGallery groupId={groupId} transactionId={transactionId} />
                         </Grid>
                     )}
                     <Grid item xs={12}>
-                        {transaction.hasUnpublishedChanges ? (
+                        {transaction.isWip ? (
                             <PurchaseDebitorShares
-                                group={group}
-                                transaction={transaction}
-                                positions={positions}
+                                groupId={groupId}
+                                transactionId={transactionId}
                                 showPositions={showPositions}
-                                transactionBalanceEffect={balanceEffect}
                             />
                         ) : (
-                            <PurchaseDebitorSharesReadOnly
-                                group={group}
-                                transaction={transaction}
-                                positions={positions}
-                                transactionBalanceEffect={balanceEffect}
-                            />
+                            <PurchaseDebitorSharesReadOnly groupId={groupId} transactionId={transactionId} />
                         )}
                     </Grid>
                 </Grid>
             </MobilePaper>
 
-            {!showPositions &&
-            transaction.hasUnpublishedChanges &&
-            positions.find((item) => !item.deleted) === undefined ? (
+            {!showPositions && transaction.isWip && !hasPositions ? (
                 <Grid container justifyContent="center" sx={{ marginTop: 2 }}>
                     <Button startIcon={<Add />} onClick={() => setShowPositions(true)}>
                         Add Positions
                     </Button>
                 </Grid>
-            ) : (showPositions && transaction.hasUnpublishedChanges) ||
-              positions.find((item) => !item.deleted) !== undefined ? (
-                <TransactionPositions
-                    group={group}
-                    transaction={transaction}
-                    positions={positions}
-                    transactionBalanceEffect={balanceEffect}
-                />
+            ) : (showPositions && transaction.isWip) || hasPositions ? (
+                <TransactionPositions groupId={groupId} transactionId={transactionId} />
             ) : null}
         </>
     );

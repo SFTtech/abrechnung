@@ -1,11 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useRecoilValue } from "recoil";
-import {
-    getTransactionSortFunc,
-    TransactionSortMode,
-    groupTransactionsWithBalanceEffect,
-} from "../../state/transactions";
-import { currUserPermissions } from "../../state/groups";
 import {
     Alert,
     Box,
@@ -29,33 +22,55 @@ import { Add, Clear } from "@mui/icons-material";
 import { TransactionListEntry } from "./TransactionListEntry";
 import { MobilePaper } from "../style/mobile";
 import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
-import PurchaseCreateModal from "./purchase/PurchaseCreateModal";
 import TransferCreateModal from "./transfer/TransferCreateModal";
 import SearchIcon from "@mui/icons-material/Search";
 import { useTitle, filterTransaction } from "../../core/utils";
-import { userData } from "../../state/auth";
-import { accountIDsToName, accountsOwnedByUser } from "../../state/accounts";
 import { useTheme } from "@mui/material/styles";
-import { Group } from "@abrechnung/types";
+import {
+    selectAccountSlice,
+    selectGroupSlice,
+    selectTransactionSlice,
+    useAppDispatch,
+    useAppSelector,
+} from "../../store";
+import {
+    createPurchase,
+    selectAccountIdToNameMap,
+    selectGroupById,
+    selectGroupTransactions,
+    selectTransactionBalanceEffects,
+    selectCurrentUserPermissions,
+} from "@abrechnung/redux";
+import { getTransactionSortFunc, TransactionSortMode } from "@abrechnung/core";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
-    group: Group;
+    groupId: number;
 }
 
-export const TransactionList: React.FC<Props> = ({ group }) => {
+export const TransactionList: React.FC<Props> = ({ groupId }) => {
+    const theme: Theme = useTheme();
+    const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+
+    const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+
+    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
+    const transactions = useAppSelector((state) =>
+        selectGroupTransactions({ state: selectTransactionSlice(state), groupId })
+    );
+    const balanceEffects = useAppSelector((state) =>
+        selectTransactionBalanceEffects({ state: selectTransactionSlice(state), groupId })
+    );
+
     const [speedDialOpen, setSpeedDialOpen] = useState(false);
     const toggleSpeedDial = () => setSpeedDialOpen((currValue) => !currValue);
 
     const [showTransferCreateDialog, setShowTransferCreateDialog] = useState(false);
-    const [showPurchaseCreateDialog, setShowPurchaseCreateDialog] = useState(false);
-    const transactions = useRecoilValue(groupTransactionsWithBalanceEffect(group.id));
-    const currentUser = useRecoilValue(userData);
-    const userPermissions = useRecoilValue(currUserPermissions(group.id));
-    const userAccounts = useRecoilValue(accountsOwnedByUser({ groupID: group.id, userID: currentUser.id }));
-    const groupAccountMap = useRecoilValue(accountIDsToName(group.id));
-
-    const theme: Theme = useTheme();
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const groupAccountMap = useAppSelector((state) =>
+        selectAccountIdToNameMap({ state: selectAccountSlice(state), groupId })
+    );
 
     const [filteredTransactions, setFilteredTransactions] = useState([]);
 
@@ -66,17 +81,23 @@ export const TransactionList: React.FC<Props> = ({ group }) => {
     useEffect(() => {
         let filtered = transactions;
         if (searchValue != null && searchValue !== "") {
-            filtered = transactions.filter((t) => filterTransaction(t, t.balanceEffect, searchValue, groupAccountMap));
+            filtered = transactions.filter((t) =>
+                filterTransaction(t, balanceEffects[t.id], searchValue, groupAccountMap)
+            );
         }
         filtered = [...filtered].sort(getTransactionSortFunc(sortMode));
 
         setFilteredTransactions(filtered);
-    }, [searchValue, setFilteredTransactions, sortMode, transactions, userAccounts, groupAccountMap]);
+    }, [searchValue, balanceEffects, setFilteredTransactions, sortMode, transactions, groupAccountMap]);
 
     useTitle(`${group.name} - Transactions`);
 
-    const openPurchaseCreateDialog = () => {
-        setShowPurchaseCreateDialog(true);
+    const onCreatePurchase = () => {
+        dispatch(createPurchase({ groupId }))
+            .unwrap()
+            .then(({ transaction }) => {
+                navigate(`/groups/${groupId}/transactions/${transaction.id}?no-redirect=true`);
+            });
     };
 
     const openTransferCreateDialog = () => {
@@ -141,7 +162,7 @@ export const TransactionList: React.FC<Props> = ({ group }) => {
                                 <Add color="primary" />
                             </div>
                             <Tooltip title="Create Purchase">
-                                <IconButton color="primary" onClick={openPurchaseCreateDialog}>
+                                <IconButton color="primary" onClick={onCreatePurchase}>
                                     <PurchaseIcon />
                                 </IconButton>
                             </Tooltip>
@@ -159,12 +180,16 @@ export const TransactionList: React.FC<Props> = ({ group }) => {
                         <Alert severity="info">No Transactions</Alert>
                     ) : (
                         filteredTransactions.map((transaction) => (
-                            <TransactionListEntry key={transaction.id} group={group} transaction={transaction} />
+                            <TransactionListEntry
+                                key={transaction.id}
+                                groupId={groupId}
+                                transactionId={transaction.id}
+                            />
                         ))
                     )}
                 </List>
                 <TransferCreateModal
-                    group={group}
+                    groupId={groupId}
                     show={showTransferCreateDialog}
                     onClose={(evt, reason) => {
                         if (reason !== "backdropClick") {
@@ -172,17 +197,8 @@ export const TransactionList: React.FC<Props> = ({ group }) => {
                         }
                     }}
                 />
-                <PurchaseCreateModal
-                    group={group}
-                    show={showPurchaseCreateDialog}
-                    onClose={(evt, reason) => {
-                        if (reason !== "backdropClick") {
-                            setShowPurchaseCreateDialog(false);
-                        }
-                    }}
-                />
             </MobilePaper>
-            {userPermissions.canWrite && (
+            {permissions.canWrite && (
                 <SpeedDial
                     ariaLabel="Create Account"
                     sx={{ position: "fixed", bottom: 20, right: 20 }}
@@ -196,7 +212,7 @@ export const TransactionList: React.FC<Props> = ({ group }) => {
                         icon={<PurchaseIcon />}
                         tooltipTitle="Purchase"
                         tooltipOpen
-                        onClick={openPurchaseCreateDialog}
+                        onClick={onCreatePurchase}
                     />
                     <SpeedDialAction
                         icon={<TransferIcon />}

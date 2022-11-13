@@ -6,9 +6,8 @@ import { AddCircle, ChevronLeft, ChevronRight, Delete } from "@mui/icons-materia
 import ImageUploadDialog from "./ImageUploadDialog";
 import { Transition } from "react-transition-group";
 import placeholderImg from "./PlaceholderImage.svg";
-import { groupTransactionContainers, updateTransactionInState } from "../../state/transactions";
-import { useSetRecoilState } from "recoil";
-import { Transaction, TransactionAttachment } from "@abrechnung/types";
+import { useAppSelector, selectTransactionSlice } from "../../store";
+import { selectTransactionAttachments, selectTransactionIsWip } from "@abrechnung/redux";
 
 const duration = 200;
 
@@ -24,14 +23,19 @@ const transitionStyles = {
 };
 
 interface Props {
-    transaction: Transaction;
-    attachments: TransactionAttachment[];
+    groupId: number;
+    transactionId: number;
 }
 
-export const FileGallery: React.FC<Props> = ({ transaction, attachments }) => {
+export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
+    const attachments = useAppSelector((state) =>
+        selectTransactionAttachments({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const isWip = useAppSelector((state) =>
+        selectTransactionIsWip({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
     const [files, setFiles] = useState([]); // map of file id to object
     const [active, setActive] = useState(0);
-    const setTransactions = useSetRecoilState(groupTransactionContainers(transaction.groupID));
 
     const [showUploadDialog, setShowUploadDialog] = useState(false);
     const [showImage, setShowImage] = useState(false);
@@ -68,7 +72,7 @@ export const FileGallery: React.FC<Props> = ({ transaction, attachments }) => {
             .catch((err) => {
                 toast.error(`Error loading file: ${err}`);
             });
-    }, [transaction]); // TODO: do not add files as dependencies, we'd get an infinite loop then
+    }, [attachments]); // TODO: do not add files as dependencies, we'd get an infinite loop then
 
     const toNextImage = () => {
         if (active < files.length - 1) {
@@ -89,9 +93,10 @@ export const FileGallery: React.FC<Props> = ({ transaction, attachments }) => {
     const deleteSelectedFile = () => {
         if (active < files.length) {
             // sanity check, should not be needed
+            // TODO: implement
             api.deleteFile(files[active].id)
                 .then((t) => {
-                    updateTransactionInState(t, setTransactions);
+                    // updateTransactionInState(t, setTransactions);
                     setShowImage(false);
                 })
                 .catch((err) => {
@@ -149,7 +154,7 @@ export const FileGallery: React.FC<Props> = ({ transaction, attachments }) => {
                         <ChevronRight />
                     </IconButton>
                 )}
-                {transaction.hasUnpublishedChanges && (
+                {isWip && (
                     <>
                         <IconButton
                             color="primary"
@@ -163,7 +168,8 @@ export const FileGallery: React.FC<Props> = ({ transaction, attachments }) => {
                             <AddCircle fontSize="large" />
                         </IconButton>
                         <ImageUploadDialog
-                            transaction={transaction}
+                            groupId={groupId}
+                            transactionId={transactionId}
                             show={showUploadDialog}
                             onClose={() => setShowUploadDialog(false)}
                         />
@@ -218,7 +224,7 @@ export const FileGallery: React.FC<Props> = ({ transaction, attachments }) => {
                         )}
                     </Grid>
                 </DialogContent>
-                {transaction.hasUnpublishedChanges && (
+                {isWip && (
                     <DialogActions>
                         <Button startIcon={<Delete />} onClick={deleteSelectedFile} variant="outlined" color="error">
                             Delete

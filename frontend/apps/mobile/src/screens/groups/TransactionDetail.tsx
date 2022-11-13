@@ -8,60 +8,77 @@ import {
     Divider,
     HelperText,
     List,
+    ProgressBar,
     Surface,
     Text,
     TextInput,
     useTheme,
 } from "react-native-paper";
-import TransactionShareInput from "../../components/transaction_shares/TransactionShareInput";
-import {
-    createPosition,
-    deleteLocalTransactionChanges,
-    pushLocalTransactionChanges,
-    updateTransaction,
-} from "../../core/database/transactions";
+import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
 import DateTimeInput from "../../components/DateTimeInput";
-import { useRecoilValueLoadable } from "recoil";
-import { positionStateByTransaction, useTransaction } from "../../core/transactions";
 import PositionListItem from "../../components/PositionListItem";
 import { notify } from "../../notifications";
-import LoadingIndicator from "../../components/LoadingIndicator";
 import { useFocusEffect } from "@react-navigation/native";
 import {
     Transaction,
     TransactionPosition,
     TransactionShare,
     TransactionValidationErrors,
-    ValidationError,
+    validateTransactionDetails,
 } from "@abrechnung/types";
+import { useAppSelector, selectTransactionSlice, useAppDispatch } from "../../store";
+import {
+    discardTransactionChange,
+    saveTransaction,
+    selectTransactionById,
+    selectTransactionPositions,
+    selectTransactionPositionTotal,
+    wipPositionAdded,
+    wipTransactionUpdated,
+    selectCurrentUserPermissions,
+} from "@abrechnung/redux";
+import { api } from "../../core/api";
+import { toISODateString, fromISOString } from "@abrechnung/utils";
+import { NumericInput } from "../../components/NumericInput";
 
-type LocalEditingState = Pick<
-    Transaction,
-    | "description"
-    | "value"
-    | "billedAt"
-    | "currencySymbol"
-    | "currencyConversionRate"
-    | "creditorShares"
-    | "debitorShares"
+type LocalEditingState = Partial<
+    Pick<
+        Transaction,
+        | "description"
+        | "value"
+        | "billedAt"
+        | "currencySymbol"
+        | "currencyConversionRate"
+        | "creditorShares"
+        | "debitorShares"
+    >
 >;
 
 export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetail">> = ({ route, navigation }) => {
     const theme = useTheme();
-    const { groupID, transactionID, editingStart } = route.params;
+    const dispatch = useAppDispatch();
+    const { groupId, transactionId, editing } = route.params;
 
-    const editing = editingStart !== null;
+    const [progress, setProgress] = useState(false);
 
-    const transaction = useTransaction(groupID, transactionID);
-    const positions = useRecoilValueLoadable(positionStateByTransaction(transactionID));
-    const [localEditingState, setLocalEditingState] = useState<LocalEditingState | null>(null);
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const positions = useAppSelector((state) =>
+        selectTransactionPositions({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const positionTotal = useAppSelector((state) =>
+        selectTransactionPositionTotal({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const [localEditingState, setLocalEditingState] = useState<LocalEditingState>({});
     const [inputErrors, setInputErrors] = useState<TransactionValidationErrors>({});
     const onGoBack = React.useCallback(async () => {
         if (editing && transaction != null) {
-            return await deleteLocalTransactionChanges(groupID, transaction.id, editingStart);
+            dispatch(discardTransactionChange({ groupId, transactionId: transaction.id, api }));
         }
         return;
-    }, [editing, transaction, groupID, editingStart]);
+    }, [dispatch, editing, transaction, groupId]);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -79,104 +96,111 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
     );
 
     useEffect(() => {
+        if (transaction == null) {
+            return;
+        }
+
         setInputErrors({});
-        setLocalEditingState((prevState) => {
-            return {
-                ...prevState,
-                description: transaction.description,
-                value: transaction.value,
-                billedAt: transaction.billedAt,
-                currencySymbol: transaction.currencySymbol,
-                currencyConversionRate: transaction.currencyConversionRate,
-                creditorShares: transaction.creditorShares,
-                debitorShares: transaction.debitorShares,
-            };
+        setLocalEditingState({
+            description: transaction.description,
+            value: transaction.value,
+            billedAt: transaction.billedAt,
+            currencySymbol: transaction.currencySymbol,
+            currencyConversionRate: transaction.currencyConversionRate,
+            creditorShares: transaction.creditorShares,
+            debitorShares: transaction.debitorShares,
         });
     }, [transaction]);
 
+    useEffect(() => {
+        if (editing && (permissions === undefined || !permissions.canWrite)) {
+            navigation.replace("TransactionDetail", { transactionId, groupId, editing: false });
+        }
+    }, [editing, permissions, transactionId, groupId, navigation]);
+
+    const onUpdate = React.useCallback(() => {
+        if (transaction) {
+            // TODO: validate
+            dispatch(wipTransactionUpdated({ ...transaction, ...localEditingState }));
+        }
+    }, [dispatch, transaction, localEditingState]);
+
     const save = React.useCallback(() => {
-        updateTransaction({
-            ...transaction,
-            ...localEditingState,
-        })
-            .then(() => {
-                setInputErrors({});
-                console.log("saved transaction changes to local db");
-                pushLocalTransactionChanges(transaction.id)
-                    .then((transactionContainer) => {
-                        console.log(
-                            "synced updated transaction with server: old id",
-                            transaction.id,
-                            "new id",
-                            transactionContainer.transaction.id,
-                            "group",
-                            groupID
-                        );
-                        navigation.navigate("TransactionDetail", {
-                            transactionID: transactionContainer.transaction.id,
-                            groupID: groupID,
-                            editingStart: null,
-                        });
-                    })
-                    .catch((err) => {
-                        console.log("error on pushing stuff to server", err);
-                        navigation.navigate("TransactionDetail", {
-                            transactionID: transaction.id,
-                            groupID: groupID,
-                            editingStart: null,
-                        });
-                    });
+        if (transaction === undefined || localEditingState === undefined) {
+            return;
+        }
+
+        const updatedTransaction = { ...transaction, ...localEditingState };
+        const validationErrors = validateTransactionDetails(updatedTransaction);
+
+        if (Object.keys(validationErrors).length !== 0) {
+            setInputErrors(validationErrors);
+            return;
+        }
+
+        setProgress(true);
+        onUpdate();
+        dispatch(saveTransaction({ api, transactionId, groupId }))
+            .unwrap()
+            .then(({ transactionContainer }) => {
+                setProgress(false);
+                navigation.navigate("TransactionDetail", {
+                    transactionId: transactionContainer.transaction.id,
+                    groupId: groupId,
+                    editing: false,
+                });
             })
-            .catch((err) => {
-                if (err instanceof ValidationError) {
-                    setInputErrors(err.data);
-                } else {
-                    console.log("error saving transaction details to local state:", err);
-                    notify({ text: `Error while saving transaction: ${err.toString()}` });
-                }
+            .catch(() => {
+                setProgress(false);
             });
-    }, [navigation, groupID, transaction, setInputErrors, localEditingState]);
+    }, [onUpdate, dispatch, navigation, transactionId, groupId, transaction, setInputErrors, localEditingState]);
 
     const edit = React.useCallback(() => {
         navigation.navigate("TransactionDetail", {
-            transactionID: transactionID,
-            groupID: groupID,
-            editingStart: new Date().toISOString(),
+            transactionId: transactionId,
+            groupId: groupId,
+            editing: true,
         });
-    }, [navigation, transactionID, groupID]);
+    }, [navigation, transactionId, groupId]);
 
     const cancelEdit = React.useCallback(() => {
-        deleteLocalTransactionChanges(groupID, transaction.id, editingStart === null ? undefined : editingStart).then(
-            (deletedTransaction) => {
+        dispatch(discardTransactionChange({ transactionId, groupId, api }))
+            .unwrap()
+            .then(({ deletedTransaction }) => {
                 if (deletedTransaction) {
                     navigation.navigate("BottomTabNavigator", {
                         screen: "TransactionList",
+                        params: { groupId },
                     });
                 } else {
-                    setLocalEditingState({
-                        description: transaction.description,
-                        value: transaction.value,
-                        billedAt: transaction.billedAt,
-                        currencySymbol: transaction.currencySymbol,
-                        currencyConversionRate: transaction.currencyConversionRate,
-                        creditorShares: transaction.creditorShares,
-                        debitorShares: transaction.debitorShares,
-                    });
-                    navigation.navigate("TransactionDetail", {
-                        transactionID: transactionID,
-                        groupID: groupID,
-                        editingStart: null,
+                    if (transaction) {
+                        setLocalEditingState({
+                            description: transaction.description,
+                            value: transaction.value,
+                            billedAt: transaction.billedAt,
+                            currencySymbol: transaction.currencySymbol,
+                            currencyConversionRate: transaction.currencyConversionRate,
+                            creditorShares: transaction.creditorShares,
+                            debitorShares: transaction.debitorShares,
+                        });
+                    }
+                    navigation.replace("TransactionDetail", {
+                        transactionId: transactionId,
+                        groupId: groupId,
+                        editing: false,
                     });
                 }
-            }
-        );
-    }, [transaction, groupID, editingStart, navigation, transactionID]);
+            });
+    }, [dispatch, transaction, groupId, navigation, transactionId]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
             onGoBack: onGoBack,
             headerTitle: localEditingState?.description ?? transaction?.description ?? "",
             headerRight: () => {
+                if (permissions === undefined || !permissions.canWrite) {
+                    return null;
+                }
                 if (editing) {
                     return (
                         <>
@@ -190,44 +214,62 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 return <Button onPress={edit}>Edit</Button>;
             },
         });
-    }, [theme, editing, navigation, localEditingState, onGoBack, cancelEdit, save, edit, transaction]); // FIXME: figure out why we need localEditingState as an effect dependency
+    }, [theme, editing, permissions, navigation, localEditingState, onGoBack, cancelEdit, save, edit, transaction]);
 
     const onCreatePosition = () => {
-        createPosition(groupID, transaction.id).catch((err) => {
-            notify({ text: `Error while creating position: ${err.toString()}` });
-        });
+        dispatch(
+            wipPositionAdded({
+                groupId,
+                transactionId,
+                position: {
+                    transactionID: transactionId,
+                    deleted: false,
+                    name: "",
+                    price: 0,
+                    usages: {},
+                    communistShares: 0,
+                },
+            })
+        );
+    };
+    const onChangeDescription = (description: string) => {
+        setLocalEditingState((prevState) => ({ ...prevState, description }));
     };
 
-    const onChangeDescription = (description: string) =>
-        setLocalEditingState((prevState) => {
-            return prevState === null ? null : { ...prevState, description: description };
-        });
-    const onChangeValue = (value: string) =>
-        setLocalEditingState((prevState) => {
-            return prevState === null ? null : { ...prevState, value: parseFloat(value) };
-        });
-    const onChangedBilledAt = (billedAt: Date) =>
-        setLocalEditingState((prevState) => {
-            return prevState === null ? null : { ...prevState, billedAt: billedAt };
-        });
-    const onChangeCurrencySymbol = (currencySymbol: string) =>
-        setLocalEditingState((prevState) => {
-            return prevState === null ? null : { ...prevState, currencySymbol: currencySymbol };
-        });
-    const onChangeCurrencyConversionRate = (currencyConversionRate: string) =>
-        setLocalEditingState((prevState) => {
-            return prevState === null
-                ? null
-                : { ...prevState, currencyConversionRate: parseFloat(currencyConversionRate) };
-        });
-    const onChangeCreditorShares = (creditorShares: TransactionShare) =>
-        setLocalEditingState((prevState) => {
-            return prevState === null ? null : { ...prevState, creditorShares: creditorShares };
-        });
-    const onChangeDebitorSharesShares = (debitorShares: TransactionShare) =>
-        setLocalEditingState((prevState) => {
-            return prevState === null ? null : { ...prevState, debitorShares: debitorShares };
-        });
+    const onChangeValue = (value: number) => {
+        setLocalEditingState((prevState) => ({ ...prevState, value }));
+    };
+
+    const onChangedBilledAt = (billedAt: Date) => {
+        if (transaction) {
+            // TODO: validate
+            dispatch(
+                wipTransactionUpdated({ ...transaction, ...localEditingState, billedAt: toISODateString(billedAt) })
+            );
+        }
+    };
+
+    const onChangeCurrencySymbol = (currencySymbol: string) => {
+        setLocalEditingState((prevState) => ({ ...prevState, currencySymbol }));
+    };
+
+    const onChangeCurrencyConversionRate = (currencyConversionRate: number) => {
+        setLocalEditingState((prevState) => ({ ...prevState, currencyConversionRate }));
+    };
+
+    const onChangeCreditorShares = (creditorShares: TransactionShare) => {
+        if (transaction) {
+            // TODO: validate
+            dispatch(wipTransactionUpdated({ ...transaction, creditorShares }));
+        }
+    };
+
+    const onChangeDebitorSharesShares = (debitorShares: TransactionShare) => {
+        if (transaction) {
+            // TODO: validate
+            dispatch(wipTransactionUpdated({ ...transaction, debitorShares }));
+        }
+    };
 
     if (transaction == null || localEditingState == null) {
         return (
@@ -247,31 +289,34 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
 
     return (
         <ScrollView style={styles.container}>
+            {progress ? <ProgressBar indeterminate /> : null}
             <TextInput
                 label="Description"
-                value={localEditingState.description}
+                value={localEditingState.description ?? transaction.description}
                 editable={editing}
                 // disabled={!editing}
                 onChangeText={onChangeDescription}
+                onBlur={onUpdate}
                 style={inputStyles}
                 error={inputErrors.description !== undefined}
             />
             {inputErrors.description && <HelperText type="error">{inputErrors.description}</HelperText>}
             <DateTimeInput
                 label="Billed At"
-                value={localEditingState.billedAt}
+                value={fromISOString(localEditingState.billedAt ?? transaction.billedAt)}
                 editable={editing}
                 style={inputStyles}
                 onChange={onChangedBilledAt}
                 error={inputErrors.billedAt !== undefined}
             />
             {inputErrors.billedAt && <HelperText type="error">{inputErrors.billedAt}</HelperText>}
-            <TextInput
+            <NumericInput
                 label="Value" // TODO: proper float input
-                value={editing ? String(localEditingState.value) : String(localEditingState.value.toFixed(2))}
+                value={localEditingState.value ?? transaction.value}
                 editable={editing}
                 keyboardType="numeric"
-                onChangeText={onChangeValue}
+                onChange={onChangeValue}
+                onBlur={onUpdate}
                 style={inputStyles}
                 right={<TextInput.Affix text={transaction.currencySymbol} />}
                 error={inputErrors.value !== undefined}
@@ -280,9 +325,9 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
 
             <TransactionShareInput
                 title="Paid by"
-                groupID={groupID}
+                groupId={groupId}
                 disabled={!editing}
-                value={localEditingState.creditorShares}
+                value={localEditingState.creditorShares ?? transaction.creditorShares}
                 onChange={onChangeCreditorShares}
                 enableAdvanced={false}
                 multiSelect={false}
@@ -291,47 +336,48 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
             <TransactionShareInput
                 title="For"
                 disabled={!editing}
-                groupID={groupID}
-                value={localEditingState.debitorShares}
+                groupId={groupId}
+                value={localEditingState.debitorShares ?? transaction.debitorShares}
                 onChange={onChangeDebitorSharesShares}
                 enableAdvanced={transaction.type === "purchase"}
                 multiSelect={transaction.type === "purchase"}
             />
             {inputErrors.debitorShares && <HelperText type="error">{inputErrors.debitorShares}</HelperText>}
 
-            {positions.state === "loading" ? (
-                <LoadingIndicator />
-            ) : (
-                positions.contents.length > 0 && (
-                    <Surface style={{ marginTop: 8 }} elevation={1}>
-                        <List.Item title="Postions" />
-                        <>
-                            <Divider />
-                            {positions.contents.map((position: TransactionPosition) => (
-                                <PositionListItem
-                                    key={position.id}
-                                    groupID={groupID}
-                                    currencySymbol={transaction.currencySymbol}
-                                    position={position}
-                                    editing={editing}
-                                />
-                            ))}
-                            <Divider />
-                            <List.Item
-                                title="Total"
-                                right={(props) => (
-                                    <Text>
-                                        {positions.contents
-                                            .map((p: TransactionPosition) => p.price)
-                                            .reduce((acc: number, curr: number) => acc + curr, 0)
-                                            .toFixed(2)}{" "}
-                                        {transaction.currencySymbol}
-                                    </Text>
-                                )}
+            {positions.length > 0 && (
+                <Surface style={{ marginTop: 8 }} elevation={1}>
+                    <List.Item title="Postions" />
+                    <>
+                        <Divider />
+                        {positions.map((position: TransactionPosition) => (
+                            <PositionListItem
+                                key={position.id}
+                                groupId={groupId}
+                                currencySymbol={transaction.currencySymbol}
+                                position={position}
+                                editing={editing}
                             />
-                        </>
-                    </Surface>
-                )
+                        ))}
+                        <Divider />
+                        <List.Item
+                            title="Total"
+                            right={(props) => (
+                                <Text>
+                                    {positionTotal.toFixed(2)} {transaction.currencySymbol}
+                                </Text>
+                            )}
+                        />
+                        <List.Item
+                            title="Remaining"
+                            right={(props) => (
+                                <Text>
+                                    {((localEditingState.value ?? transaction.value) - positionTotal).toFixed(2)}{" "}
+                                    {transaction.currencySymbol}
+                                </Text>
+                            )}
+                        />
+                    </>
+                </Surface>
             )}
             {transaction.type === "purchase" && editing && (
                 <Button icon="add" onPress={onCreatePosition}>

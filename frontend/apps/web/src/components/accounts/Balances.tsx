@@ -1,6 +1,3 @@
-import { useRecoilValue } from "recoil";
-import { clearingAccountsSeenByUser, personalAccountsSeenByUser } from "../../state/accounts";
-import { accountBalances } from "../../state/transactions";
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import React, { useState } from "react";
 import {
@@ -22,20 +19,26 @@ import BalanceTable from "./BalanceTable";
 import { MobilePaper } from "../style/mobile";
 import ListItemLink from "../style/ListItemLink";
 import { useTitle } from "../../core/utils";
-import { Group } from "@abrechnung/types";
+import { selectGroupAccountsFiltered, selectGroupById, selectAccountBalances } from "@abrechnung/redux";
+import { useAppSelector, selectAccountSlice, selectGroupSlice } from "../../store";
 
 interface Props {
-    group: Group;
+    groupId: number;
 }
 
-export const Balances: React.FC<Props> = ({ group }) => {
+export const Balances: React.FC<Props> = ({ groupId }) => {
     const theme: Theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
     const navigate = useNavigate();
 
-    const personalAccounts = useRecoilValue(personalAccountsSeenByUser(group.id));
-    const clearingAccounts = useRecoilValue(clearingAccountsSeenByUser(group.id));
-    const balances = useRecoilValue(accountBalances(group.id));
+    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
+    const personalAccounts = useAppSelector((state) =>
+        selectGroupAccountsFiltered({ state: selectAccountSlice(state), groupId, type: "personal" })
+    );
+    const clearingAccounts = useAppSelector((state) =>
+        selectGroupAccountsFiltered({ state: selectAccountSlice(state), groupId, type: "clearing" })
+    );
+    const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
 
     const [selectedTab, setSelectedTab] = useState("1");
 
@@ -49,7 +52,7 @@ export const Balances: React.FC<Props> = ({ group }) => {
     const roundTwoDecimals = (val: number) => +val.toFixed(2);
 
     const chartData = personalAccounts.map((account) => {
-        const balance = balances.get(account.id);
+        const balance = balances[account.id];
         return {
             name: account.name,
             balance: roundTwoDecimals(balance?.balance ?? 0),
@@ -60,16 +63,16 @@ export const Balances: React.FC<Props> = ({ group }) => {
     });
 
     const unbalancedClearingAccounts = clearingAccounts
-        .filter((account) => balances.get(account.id)?.balance !== 0)
+        .filter((account) => balances[account.id]?.balance !== 0)
         .map((account) => {
             return {
                 name: account.name,
                 id: account.id,
-                balance: balances.get(account.id)?.balance ?? 0,
+                balance: balances[account.id]?.balance ?? 0,
             };
         });
 
-    const chartHeight = balances.size * 30 + 100;
+    const chartHeight = Object.keys(balances).length * 30 + 100;
 
     // TODO determine the rendered width of the account names and take the maximum
     const yaxiswidth = isSmallScreen
@@ -122,12 +125,12 @@ export const Balances: React.FC<Props> = ({ group }) => {
                                             variant="body2"
                                             sx={{
                                                 color:
-                                                    balances.get(account.id)?.balance < 0
+                                                    balances[account.id]?.balance < 0
                                                         ? colorRedInverted
                                                         : colorGreenInverted,
                                             }}
                                         >
-                                            {balances.get(account.id)?.balance.toFixed(2)} {group.currencySymbol}
+                                            {balances[account.id]?.balance.toFixed(2)} {group.currencySymbol}
                                         </Typography>
                                     </ListItemLink>
                                     <Divider key={account.id * 2} component="li" />
@@ -196,7 +199,7 @@ export const Balances: React.FC<Props> = ({ group }) => {
                     )}
                 </TabPanel>
                 <TabPanel value="2" sx={{ padding: { xs: 1, md: 2 } }}>
-                    <BalanceTable group={group} />
+                    <BalanceTable groupId={groupId} />
                 </TabPanel>
             </TabContext>
         </MobilePaper>

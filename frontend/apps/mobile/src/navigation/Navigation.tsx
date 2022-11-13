@@ -10,32 +10,41 @@ import { createStackNavigator } from "@react-navigation/stack";
 import * as React from "react";
 import { useEffect } from "react";
 import { GroupStackParamList, GroupTabParamList, RootDrawerParamList } from "./types";
-import LinkingConfiguration from "./LinkingConfiguration";
+import { linkingOptions } from "./LinkingConfiguration";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import TransactionList from "../screens/groups/TransactionList";
 import AccountList from "../screens/groups/AccountList";
 import TransactionDetail from "../screens/groups/TransactionDetail";
 import LoginScreen from "../screens/Login";
 import RegisterScreen from "../screens/Register";
-import { Theme } from "react-native-paper";
+import { MD3Theme } from "react-native-paper";
 import AccountDetail from "../screens/groups/AccountDetail";
 import DrawerContent from "./DrawerContent";
-import { Header, HeaderProps } from "./Header";
+import { Header } from "./Header";
 import HomeScreen from "../screens/HomeScreen";
-import { authState } from "../core/auth";
-import { useRecoilState, useRecoilValue } from "recoil";
-import SplashScreen from "../screens/SplashScreen";
-import { syncLocalGroupState, syncLocalState } from "../core/sync";
-import { notify } from "../notifications";
-import { activeGroupIDState, groupState } from "../core/groups";
+import { SplashScreen } from "../screens/SplashScreen";
+import {
+    useAppSelector,
+    selectGroupSlice,
+    selectAuthSlice,
+    useAppDispatch,
+    selectUiSlice,
+    selectActiveGroupId,
+    changeActiveGroup,
+    fetchGroupDependencies,
+} from "../store";
+import { selectGroups, selectIsAuthenticated, subscribe, unsubscribe } from "@abrechnung/redux";
 import { clearingAccountIcon, personalAccountIcon } from "../constants/Icons";
 import PreferencesScreen from "../screens/PreferencesScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import AccountEdit from "../screens/groups/AccountEdit";
+import { api, websocket } from "../core/api";
+import { notify } from "../notifications";
+import { GroupList } from "../screens/GroupList";
 
-export const Navigation: React.FC<{ theme: Theme }> = ({ theme }) => {
+export const Navigation: React.FC<{ theme: MD3Theme }> = ({ theme }) => {
     return (
-        <NavigationContainer linking={LinkingConfiguration} theme={theme}>
+        <NavigationContainer linking={linkingOptions} theme={theme}>
             <RootNavigator />
         </NavigationContainer>
     );
@@ -43,43 +52,38 @@ export const Navigation: React.FC<{ theme: Theme }> = ({ theme }) => {
 
 const Drawer = createDrawerNavigator<RootDrawerParamList>();
 
-function RootNavigator() {
-    const auth = useRecoilValue(authState);
-    const [activeGroupID, setActiveGroupID] = useRecoilState(activeGroupIDState);
-    const groups = useRecoilValue(groupState);
+const RootNavigator: React.FC = () => {
+    const dispatch = useAppDispatch();
+    const activeGroupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) }));
+    const groups = useAppSelector((state) => selectGroups({ state: selectGroupSlice(state) }));
+    const isAuthenticated = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
 
     useEffect(() => {
-        if (activeGroupID === null && groups.length > 0) {
-            setActiveGroupID(groups[0].id);
-        }
-    }, [activeGroupID, groups, setActiveGroupID]);
-
-    useEffect(() => {
-        // TODO: proper syncing
-        if (auth.isLoggedIn && !auth.isLoading) {
-            syncLocalState()
-                .then((syncedGroups) => {
-                    let newActiveGroupID = activeGroupID;
-                    if (activeGroupID === null && syncedGroups.length > 0) {
-                        newActiveGroupID = syncedGroups[0].id;
-                        setActiveGroupID(newActiveGroupID);
-                    }
-
-                    if (newActiveGroupID) {
-                        syncLocalGroupState(newActiveGroupID).catch((err) => {
-                            notify({ text: `Error on local state sync: ${err}` });
-                        });
-                    }
-                })
-                .catch((err) => {
-                    notify({ text: `Error when syncing group state: ${err}` });
+        if (activeGroupId === undefined && groups.length > 0) {
+            dispatch(changeActiveGroup({ groupId: groups[0].id, api }))
+                .unwrap()
+                .then(() => {
+                    notify({ text: "error while changing selective group" });
                 });
+        } else if (activeGroupId !== undefined) {
+            dispatch(fetchGroupDependencies({ groupId: activeGroupId, api }));
         }
-    }, [auth, activeGroupID, setActiveGroupID]);
+    }, [dispatch, activeGroupId, groups]);
 
-    if (auth.isLoading) {
-        return <SplashScreen />;
-    }
+    useEffect(() => {
+        if (activeGroupId === undefined) {
+            return;
+        }
+        dispatch(subscribe({ subscription: { type: "transaction", groupId: activeGroupId }, websocket }));
+        dispatch(subscribe({ subscription: { type: "account", groupId: activeGroupId }, websocket }));
+        dispatch(subscribe({ subscription: { type: "group_member", groupId: activeGroupId }, websocket }));
+
+        return () => {
+            dispatch(unsubscribe({ subscription: { type: "transaction", groupId: activeGroupId }, websocket }));
+            dispatch(unsubscribe({ subscription: { type: "account", groupId: activeGroupId }, websocket }));
+            dispatch(unsubscribe({ subscription: { type: "group_member", groupId: activeGroupId }, websocket }));
+        };
+    }, [activeGroupId, dispatch]);
 
     const propsWithHeader = {
         headerShown: true,
@@ -88,16 +92,37 @@ function RootNavigator() {
 
     return (
         <Drawer.Navigator
-            initialRouteName="GroupStackNavigator"
+            id="Drawer"
+            initialRouteName={activeGroupId === undefined ? "GroupList" : "GroupStackNavigator"}
             drawerContent={(props) => <DrawerContent {...props} />}
             screenOptions={{ headerShown: false }}
         >
-            {auth.isLoggedIn ? (
+            {isAuthenticated ? (
                 <>
-                    <Drawer.Screen name="GroupStackNavigator" component={GroupStackNavigator} />
-                    <Drawer.Screen name="Home" options={propsWithHeader} component={HomeScreen} />
-                    <Drawer.Screen name="Preferences" options={propsWithHeader} component={PreferencesScreen} />
-                    <Drawer.Screen name="Profile" options={propsWithHeader} component={ProfileScreen} />
+                    <Drawer.Screen
+                        name="GroupList"
+                        options={{ ...propsWithHeader, headerTitle: "Groups" }}
+                        component={GroupList}
+                    />
+                    <Drawer.Screen
+                        name="GroupStackNavigator"
+                        component={activeGroupId === undefined ? SplashScreen : GroupStackNavigator}
+                    />
+                    <Drawer.Screen
+                        name="Home"
+                        options={{ ...propsWithHeader, headerTitle: "Home" }}
+                        component={HomeScreen}
+                    />
+                    <Drawer.Screen
+                        name="Preferences"
+                        options={{ ...propsWithHeader, headerTitle: "Preferences" }}
+                        component={PreferencesScreen}
+                    />
+                    <Drawer.Screen
+                        name="Profile"
+                        options={{ ...propsWithHeader, headerTitle: "Profile" }}
+                        component={ProfileScreen}
+                    />
                 </>
             ) : (
                 <Drawer.Group>
@@ -107,13 +132,16 @@ function RootNavigator() {
             )}
         </Drawer.Navigator>
     );
-}
+};
 
 const GroupStack = createStackNavigator<GroupStackParamList>();
 
-function GroupStackNavigator() {
+const GroupStackNavigator = () => {
+    const groupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) }));
+
     return (
         <GroupStack.Navigator
+            id="GroupStack"
             initialRouteName="BottomTabNavigator"
             screenOptions={{
                 header: (props) => <Header {...props} />,
@@ -124,20 +152,22 @@ function GroupStackNavigator() {
                 name="TransactionDetail"
                 component={TransactionDetail}
                 options={{ headerTitle: "Transaction Detail" }}
+                initialParams={{ groupId }}
             />
-            <GroupStack.Screen name="AccountDetail" component={AccountDetail} />
-            <GroupStack.Screen name="AccountEdit" component={AccountEdit} />
+            <GroupStack.Screen name="AccountDetail" component={AccountDetail} initialParams={{ groupId }} />
+            <GroupStack.Screen name="AccountEdit" component={AccountEdit} initialParams={{ groupId }} />
         </GroupStack.Navigator>
     );
-}
+};
 
 const BottomTab = createBottomTabNavigator<GroupTabParamList>();
 
-function BottomTabNavigator() {
-    const activeGroupID = useRecoilValue(activeGroupIDState);
+const BottomTabNavigator: React.FC = () => {
+    const activeGroupID = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) }));
 
     return (
         <BottomTab.Navigator
+            id="BottomTab"
             initialRouteName="TransactionList"
             screenOptions={{
                 // tabBarActiveTintColor: Colors[colorScheme].tint,
@@ -154,33 +184,31 @@ function BottomTabNavigator() {
             />
             <BottomTab.Screen
                 name="AccountList"
+                component={activeGroupID == null ? SplashScreen : AccountList}
                 options={{
                     title: "People",
                     tabBarIcon: ({ color }) => <TabBarIcon name={personalAccountIcon} color={color} />,
                 }}
-            >
-                {(props) => {
-                    return activeGroupID == null ? <SplashScreen /> : <AccountList accountType="personal" {...props} />;
-                }}
-            </BottomTab.Screen>
+            />
             <BottomTab.Screen
                 name="ClearingAccountList"
+                component={activeGroupID == null ? SplashScreen : AccountList}
                 options={{
                     title: "Events",
                     tabBarIcon: ({ color }) => <TabBarIcon name={clearingAccountIcon} color={color} />,
                 }}
-            >
-                {(props) => {
-                    return activeGroupID == null ? <SplashScreen /> : <AccountList accountType="clearing" {...props} />;
-                }}
-            </BottomTab.Screen>
+            />
         </BottomTab.Navigator>
     );
-}
+};
 
 /**
  * You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
  */
-function TabBarIcon(props: { name: React.ComponentProps<typeof MaterialIcons>["name"]; color: string }) {
-    return <MaterialIcons size={30} style={{ marginBottom: -3 }} {...props} />;
+interface TabBarIconProps {
+    name: React.ComponentProps<typeof MaterialIcons>["name"];
+    color: string;
 }
+const TabBarIcon: React.FC<TabBarIconProps> = (props) => {
+    return <MaterialIcons size={30} style={{ marginBottom: -3 }} {...props} />;
+};

@@ -9,13 +9,16 @@ import { DrawerScreenProps } from "@react-navigation/drawer";
 import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 
 declare global {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace ReactNavigation {
+        // @ts-ignore
         type RootParamList = RootDrawerParamList;
     }
 }
 
 export type RootDrawerParamList = {
     GroupStackNavigator: NavigatorScreenParams<GroupStackParamList>;
+    GroupList: undefined;
     Home: undefined;
     Preferences: undefined;
     Profile: undefined;
@@ -27,18 +30,18 @@ export type RootDrawerParamList = {
 export type GroupStackParamList = {
     BottomTabNavigator: NavigatorScreenParams<GroupTabParamList>;
     TransactionDetail: {
-        groupID: number;
-        transactionID: number;
-        editingStart: string | null;
+        groupId: number;
+        transactionId: number;
+        editing: boolean;
     };
-    AccountDetail: { groupID: number; accountID: number };
-    AccountEdit: { groupID: number; accountID: number; editingStart: string };
+    AccountDetail: { groupId: number; accountId: number };
+    AccountEdit: { groupId: number; accountId: number };
 };
 
 export type GroupTabParamList = {
-    TransactionList: undefined;
-    AccountList: undefined;
-    ClearingAccountList: undefined;
+    TransactionList: { groupId: number };
+    AccountList: { groupId: number };
+    ClearingAccountList: { groupId: number };
 };
 
 export type RootDrawerScreenProps<Screen extends keyof RootDrawerParamList> = DrawerScreenProps<

@@ -11,17 +11,16 @@ import {
     useTheme,
 } from "react-native-paper";
 import React, { useEffect, useState, useCallback } from "react";
-import { useRecoilValue } from "recoil";
-import { accountState } from "../core/accounts";
-import { createComparator, lambdaComparator } from "@abrechnung/utils";
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from "react-native";
-import { updatePosition } from "../core/database/transactions";
+import { ScrollView, StyleSheet } from "react-native";
+import { PositionValidationErrors, TransactionPosition, validatePosition, ValidationError } from "@abrechnung/types";
+import { useAppSelector, selectAccountSlice, useAppDispatch } from "../store";
+import { wipPositionUpdated, selectSortedAccounts } from "@abrechnung/redux";
+import { NumericInput } from "./NumericInput";
 import { notify } from "../notifications";
-import { Account, PositionValidationErrors, TransactionPosition, ValidationError } from "@abrechnung/types";
-import { Value } from "react-native-reanimated";
+import { KeyboardAvoidingDialog } from "./style/KeyboardAvoidingDialog";
 
 interface Props {
-    groupID: number;
+    groupId: number;
     position: TransactionPosition;
     editing: boolean;
     showDialog: boolean;
@@ -44,21 +43,31 @@ const initialEditingState: localEditingState = {
 };
 
 export const PositionDialog: React.FC<Props> = ({
-    groupID,
+    groupId,
     position,
     editing,
     showDialog,
     onHideDialog,
     currencySymbol,
 }) => {
+    const dispatch = useAppDispatch();
     const theme = useTheme();
 
     const [localEditingState, setLocalEditingState] = useState<localEditingState>(initialEditingState);
 
     const [searchTerm, setSearchTerm] = useState("");
-    const accounts = useRecoilValue(accountState(groupID));
-    const [sortedAccounts, setSortedAccounts] = useState<Account[]>([]);
-    const [filteredAccounts, setFilteredAccounts] = useState<Account[]>([]);
+    const accounts = useAppSelector((state) => {
+        const sorted = selectSortedAccounts({
+            state: selectAccountSlice(state),
+            groupId,
+            sortMode: "name",
+            searchTerm,
+        });
+        if (!editing) {
+            return sorted.filter((acc) => (localEditingState.usages[acc.id] ?? 0) > 0);
+        }
+        return sorted;
+    });
     const [errors, setErrors] = useState<PositionValidationErrors>({});
 
     const toggleShare = (accountID: number) => {
@@ -76,32 +85,6 @@ export const PositionDialog: React.FC<Props> = ({
             };
         });
     };
-
-    useEffect(() => {
-        if (localEditingState != null) {
-            setFilteredAccounts(
-                sortedAccounts.filter(
-                    (acc) =>
-                        acc.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-                        (editing || (localEditingState.usages[acc.id] ?? 0 > 0))
-                )
-            );
-        }
-    }, [editing, localEditingState, sortedAccounts, searchTerm]);
-
-    useEffect(() => {
-        if (showDialog) {
-            // we transition from a closed to an open dialog - fix sorting of shares
-            setSortedAccounts(
-                [...accounts].sort(
-                    createComparator(
-                        lambdaComparator((acc) => localEditingState.usages[acc.id] ?? 0, true),
-                        lambdaComparator((acc) => acc.name.toLowerCase())
-                    )
-                )
-            );
-        }
-    }, [accounts, showDialog, localEditingState]);
 
     const resetLocalState = useCallback(() => {
         if (position != null) {
@@ -125,24 +108,25 @@ export const PositionDialog: React.FC<Props> = ({
             return;
         }
 
-        console.log(position);
-        updatePosition({
+        const newPosition: TransactionPosition = {
             ...position,
             ...localEditingState,
             communistShares: localEditingState.communistShares,
             price: localEditingState.price,
-        })
-            .then(() => {
-                setErrors({});
-                onHideDialog();
-            })
-            .catch((err) => {
-                if (err instanceof ValidationError) {
-                    setErrors(err.data);
-                } else {
-                    notify({ text: `Error while saving position: ${err.toString()}` });
-                }
-            });
+        };
+        // TODO: perform input validation
+        try {
+            validatePosition(newPosition);
+            dispatch(wipPositionUpdated({ groupId, transactionId: position.transactionID, position: newPosition }));
+            setErrors({});
+            onHideDialog();
+        } catch (err) {
+            if (err instanceof ValidationError) {
+                setErrors(err.data);
+            } else {
+                notify({ text: `Error while saving position: ${(err as Error).toString()}` });
+            }
+        }
     };
 
     const cancelDialog = () => {
@@ -159,11 +143,11 @@ export const PositionDialog: React.FC<Props> = ({
         });
     };
 
-    const onChangePrice = (value: string) => {
+    const onChangePrice = (value: number) => {
         setLocalEditingState((prevState) => {
             return {
                 ...prevState,
-                price: parseFloat(value),
+                price: value,
             };
         });
     };
@@ -188,95 +172,87 @@ export const PositionDialog: React.FC<Props> = ({
           };
 
     return (
-        <Dialog visible={showDialog} onDismiss={onHideDialog}>
-            <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
-                {position == null || localEditingState == null ? (
+        <KeyboardAvoidingDialog visible={showDialog} onDismiss={onHideDialog}>
+            {position == null || localEditingState == null ? (
+                <Dialog.Content>
+                    <ActivityIndicator animating={true} />
+                </Dialog.Content>
+            ) : (
+                <>
+                    <Dialog.Title>
+                        <Text>Position</Text>
+                    </Dialog.Title>
                     <Dialog.Content>
-                        <ActivityIndicator animating={true} />
+                        <TextInput
+                            label="Name"
+                            value={localEditingState.name}
+                            editable={editing}
+                            onChangeText={onChangeName}
+                            style={inputStyles}
+                            error={errors.name !== undefined}
+                        />
+                        {errors.name !== undefined && <HelperText type="error">{errors.name}</HelperText>}
+                        <NumericInput
+                            label="Price" // TODO: proper float input
+                            value={localEditingState.price}
+                            editable={editing}
+                            keyboardType="numeric"
+                            onChange={onChangePrice}
+                            style={inputStyles}
+                            right={<TextInput.Affix text={currencySymbol} />}
+                            error={errors.price !== undefined}
+                        />
+                        {errors.price !== undefined && <HelperText type="error">{errors.price}</HelperText>}
+
+                        <List.Item
+                            title="Communist Shares"
+                            right={(props) => (
+                                <Checkbox.Android
+                                    status={localEditingState.communistShares > 0 ? "checked" : "unchecked"}
+                                    disabled={!editing}
+                                />
+                            )}
+                            onPress={toggleCommunistShare}
+                        />
+
+                        {editing && <Searchbar placeholder="Search" onChangeText={setSearchTerm} value={searchTerm} />}
                     </Dialog.Content>
-                ) : (
-                    <>
-                        <Dialog.Title>
-                            <Text>Position</Text>
-                        </Dialog.Title>
-                        <Dialog.Content>
-                            <TextInput
-                                label="Name"
-                                value={localEditingState.name}
-                                editable={editing}
-                                onChangeText={onChangeName}
-                                style={inputStyles}
-                                error={errors.name !== undefined}
-                            />
-                            {errors.name !== undefined && <HelperText type="error">{errors.name}</HelperText>}
-                            <TextInput
-                                label="Price" // TODO: proper float input
-                                value={
-                                    editing
-                                        ? String(localEditingState.price)
-                                        : String(localEditingState.price.toFixed(2))
-                                }
-                                editable={editing}
-                                keyboardType="numeric"
-                                onChangeText={onChangePrice}
-                                style={inputStyles}
-                                right={<TextInput.Affix text={currencySymbol} />}
-                                error={errors.price !== undefined}
-                            />
-                            {errors.price !== undefined && <HelperText type="error">{errors.price}</HelperText>}
 
-                            <List.Item
-                                title="Communist Shares"
-                                right={(props) => (
-                                    <Checkbox.Android
-                                        status={localEditingState.communistShares > 0 ? "checked" : "unchecked"}
-                                        disabled={!editing}
-                                    />
-                                )}
-                                onPress={toggleCommunistShare}
-                            />
+                    <Dialog.ScrollArea>
+                        <ScrollView>
+                            {accounts.map((account) => (
+                                <List.Item
+                                    key={account.id}
+                                    title={account.name}
+                                    onPress={() => editing && toggleShare(account.id)}
+                                    disabled={!editing}
+                                    right={(props) => (
+                                        <Checkbox.Android
+                                            status={
+                                                localEditingState.usages[account.id] !== undefined &&
+                                                localEditingState.usages[account.id] > 0
+                                                    ? "checked"
+                                                    : "unchecked"
+                                            }
+                                            disabled={!editing}
+                                        />
+                                    )}
+                                />
+                            ))}
+                        </ScrollView>
+                    </Dialog.ScrollArea>
 
-                            {editing && (
-                                <Searchbar placeholder="Search" onChangeText={setSearchTerm} value={searchTerm} />
-                            )}
-                        </Dialog.Content>
-
-                        <Dialog.ScrollArea>
-                            <ScrollView>
-                                {filteredAccounts.map((account) => (
-                                    <List.Item
-                                        key={account.id}
-                                        title={account.name}
-                                        onPress={() => editing && toggleShare(account.id)}
-                                        disabled={!editing}
-                                        right={(props) => (
-                                            <Checkbox.Android
-                                                status={
-                                                    localEditingState.usages[account.id] !== undefined &&
-                                                    localEditingState.usages[account.id] > 0
-                                                        ? "checked"
-                                                        : "unchecked"
-                                                }
-                                                disabled={!editing}
-                                            />
-                                        )}
-                                    />
-                                ))}
-                            </ScrollView>
-                        </Dialog.ScrollArea>
-
-                        <Dialog.Actions>
-                            {editing && (
-                                <Button onPress={cancelDialog} textColor={theme.colors.error}>
-                                    Cancel
-                                </Button>
-                            )}
-                            <Button onPress={finishDialog}>Done</Button>
-                        </Dialog.Actions>
-                    </>
-                )}
-            </KeyboardAvoidingView>
-        </Dialog>
+                    <Dialog.Actions>
+                        {editing && (
+                            <Button onPress={cancelDialog} textColor={theme.colors.error}>
+                                Cancel
+                            </Button>
+                        )}
+                        <Button onPress={finishDialog}>Done</Button>
+                    </Dialog.Actions>
+                </>
+            )}
+        </KeyboardAvoidingDialog>
     );
 };
 

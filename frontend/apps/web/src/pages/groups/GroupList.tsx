@@ -1,6 +1,4 @@
 import React, { useState } from "react";
-import { useRecoilValue } from "recoil";
-import { groupList } from "../../state/groups";
 import ListItemLink from "../../components/style/ListItemLink";
 import GroupCreateModal from "../../components/groups/GroupCreateModal";
 import GroupDeleteModal from "../../components/groups/GroupDeleteModal";
@@ -16,14 +14,15 @@ import {
 } from "@mui/material";
 import { Add, Delete } from "@mui/icons-material";
 import { MobilePaper } from "../../components/style/mobile";
-import { isGuestUser } from "../../state/auth";
+import { selectIsGuestUser, selectGroups } from "@abrechnung/redux";
+import { useAppSelector, selectGroupSlice, selectAuthSlice } from "../../store";
 
 export const GroupList: React.FC = () => {
     const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
     const [showGroupDeletionModal, setShowGroupDeletionModal] = useState(false);
     const [groupToDelete, setGroupToDelete] = useState(null);
-    const groups = useRecoilValue(groupList);
-    const isGuest = useRecoilValue(isGuestUser);
+    const groups = useAppSelector((state) => selectGroups({ state: selectGroupSlice(state) }));
+    const isGuest = useAppSelector((state) => selectIsGuestUser({ state: selectAuthSlice(state) }));
 
     const openGroupDeletionModal = (groupID) => {
         setGroupToDelete(groups.find((group) => group.id === groupID));

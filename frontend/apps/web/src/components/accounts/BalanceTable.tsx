@@ -1,25 +1,26 @@
 import React from "react";
-import { useRecoilValue } from "recoil";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
-import { personalAccountsSeenByUser } from "../../state/accounts";
-import { accountBalances } from "../../state/transactions";
 import { renderCurrency } from "../style/datagrid/renderCurrency";
-import { Group } from "@abrechnung/types";
+import { selectGroupAccountsFiltered, selectGroupById, selectAccountBalances } from "@abrechnung/redux";
+import { useAppSelector, selectAccountSlice, selectGroupSlice } from "../../store";
 
 interface Props {
-    group: Group;
+    groupId: number;
 }
 
-export const BalanceTable: React.FC<Props> = ({ group }) => {
-    const personalAccounts = useRecoilValue(personalAccountsSeenByUser(group.id));
-    const balances = useRecoilValue(accountBalances(group.id));
+export const BalanceTable: React.FC<Props> = ({ groupId }) => {
+    const personalAccounts = useAppSelector((state) =>
+        selectGroupAccountsFiltered({ state: selectAccountSlice(state), groupId, type: "personal" })
+    );
+    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
+    const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
 
     const tableData = personalAccounts.map((acc) => {
         return {
             ...acc,
-            balance: balances.get(acc.id)?.balance,
-            totalPaid: balances.get(acc.id)?.totalPaid,
-            totalConsumed: balances.get(acc.id)?.totalConsumed,
+            balance: balances[acc.id]?.balance ?? 0,
+            totalPaid: balances[acc.id]?.totalPaid ?? 0,
+            totalConsumed: balances[acc.id]?.totalConsumed ?? 0,
         };
     });
 

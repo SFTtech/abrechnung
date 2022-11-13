@@ -1,4 +1,3 @@
-import { useRecoilValue } from "recoil";
 import {
     Box,
     Divider,
@@ -15,32 +14,37 @@ import {
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { accountsSeenByUser } from "../../../state/accounts";
-import { Group, Transaction, TransactionBalanceEffect, TransactionPosition } from "@abrechnung/types";
 import { ClearingAccountIcon, PersonalAccountIcon } from "../../style/AbrechnungIcons";
 import { useTheme } from "@mui/material/styles";
+import { useAppSelector, selectAccountSlice, selectTransactionSlice } from "../../../store";
+import {
+    selectGroupAccounts,
+    selectTransactionBalanceEffect,
+    selectTransactionById,
+    selectTransactionHasPositions,
+} from "@abrechnung/redux";
 
 interface Props {
-    group: Group;
-    transaction: Transaction;
-    positions: TransactionPosition[];
-    transactionBalanceEffect: TransactionBalanceEffect;
+    groupId: number;
+    transactionId: number;
 }
 
-export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({
-    group,
-    transaction,
-    positions,
-    transactionBalanceEffect,
-}) => {
+export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({ groupId, transactionId }) => {
     const theme = useTheme();
 
-    const accounts = useRecoilValue(accountsSeenByUser(group.id));
+    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
 
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const transactionHasPositions = useAppSelector((state) =>
+        selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const transactionBalanceEffect = useAppSelector((state) =>
+        selectTransactionBalanceEffect({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
     const [debitorShareValues, setDebitorShareValues] = useState({});
     const [showAdvanced, setShowAdvanced] = useState(false);
-
-    const transactionHasPositions = positions != null && positions.find((item) => !item.deleted) !== undefined;
 
     useEffect(() => {
         setDebitorShareValues(transaction.debitorShares);
@@ -119,7 +123,7 @@ export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({
                                                 width: "100%",
                                                 padding: "16px 0",
                                             }}
-                                            to={`/groups/${group.id}/accounts/${account.id}`}
+                                            to={`/groups/${groupId}/accounts/${account.id}`}
                                         >
                                             <Grid container direction="row" alignItems="center">
                                                 <Grid item>

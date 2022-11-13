@@ -1,38 +1,42 @@
-import { Transaction } from "@abrechnung/types";
-import { toISODateStringNullable } from "@abrechnung/utils";
 import { List, Menu, Text, useTheme } from "react-native-paper";
 import React, { useState } from "react";
 import { getTransactionIcon } from "../constants/Icons";
 import { useNavigation } from "@react-navigation/native";
-import { deleteTransaction, pushLocalTransactionChanges } from "../core/database/transactions";
 import { notify } from "../notifications";
 import { MaterialIcons } from "@expo/vector-icons";
+import { deleteTransaction, selectTransactionById } from "@abrechnung/redux";
+import { selectTransactionSlice, useAppDispatch, useAppSelector } from "../store";
+import { api } from "../core/api";
 
 interface Props {
-    transaction: Transaction;
+    groupId: number;
+    transactionId: number;
 }
 
-export const TransactionListItem: React.FC<Props> = ({ transaction }) => {
+export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId }) => {
     const [showMenu, setShowMenu] = useState(false);
+    const dispatch = useAppDispatch();
     const navigation = useNavigation();
     const theme = useTheme();
+
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
 
     const openMenu = () => setShowMenu(true);
     const closeMenu = () => setShowMenu(false);
 
     const onDeleteTransaction = () => {
-        deleteTransaction(transaction.groupID, transaction.id)
-            .then(() => {
-                pushLocalTransactionChanges(transaction.id).catch((err) => {
-                    notify({
-                        text: `Error while syncing transaction state with server: ${err.toString()}`,
-                    });
-                });
-            })
+        dispatch(deleteTransaction({ api, groupId, transactionId }))
+            .unwrap()
             .catch((err) => {
                 notify({ text: `Error while deleting transaction: ${err.toString()}` });
             });
     };
+
+    if (transaction === undefined) {
+        return null;
+    }
 
     return (
         <Menu
@@ -40,9 +44,9 @@ export const TransactionListItem: React.FC<Props> = ({ transaction }) => {
             onDismiss={closeMenu}
             anchor={
                 <List.Item
-                    key={transaction.id}
+                    key={transactionId}
                     title={transaction.description}
-                    description={toISODateStringNullable(transaction.billedAt)}
+                    description={transaction.billedAt}
                     left={(props) => <List.Icon {...props} icon={getTransactionIcon(transaction.type)} />}
                     right={(props) => (
                         <>
@@ -62,9 +66,9 @@ export const TransactionListItem: React.FC<Props> = ({ transaction }) => {
                     )}
                     onPress={() =>
                         navigation.navigate("TransactionDetail", {
-                            groupID: transaction.groupID,
-                            transactionID: transaction.id,
-                            editingStart: null,
+                            groupId: groupId,
+                            transactionId: transactionId,
+                            editing: false,
                         })
                     }
                     onLongPress={openMenu}

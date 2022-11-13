@@ -1,23 +1,29 @@
-import { useRecoilValue } from "recoil";
-import { accountBalances } from "../../state/transactions";
 import ListItemLink from "../style/ListItemLink";
 import { ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
 import { balanceColor } from "../../core/utils";
 import { ClearingAccountIcon } from "../style/AbrechnungIcons";
-import { Group, Account } from "@abrechnung/types";
+import { selectAccountById, selectGroupCurrencySymbol, selectAccountBalances } from "@abrechnung/redux";
+import { useAppSelector, selectAccountSlice, selectGroupSlice } from "../../store";
 
 interface Props {
-    group: Group;
-    account: Account;
-    accountID: number;
+    groupId: number;
+    accountId: number;
+    clearingAccountId: number;
 }
 
-export const AccountClearingListEntry: React.FC<Props> = ({ group, account, accountID }) => {
-    const balances = useRecoilValue(accountBalances(group.id));
+export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, clearingAccountId }) => {
+    const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
+    const currencySymbol = useAppSelector((state) =>
+        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
+    );
+    const clearingAccount = useAppSelector((state) =>
+        selectAccountById({ state: selectAccountSlice(state), groupId, accountId: clearingAccountId })
+    );
+
     return (
-        <ListItemLink to={`/groups/${group.id}/accounts/${account.id}`}>
+        <ListItemLink to={`/groups/${groupId}/accounts/${clearingAccountId}`}>
             <ListItemAvatar sx={{ minWidth: { xs: "40px", md: "56px" } }}>
                 <Tooltip title="Clearing Account">
                     <ClearingAccountIcon color="primary" />
@@ -26,10 +32,10 @@ export const AccountClearingListEntry: React.FC<Props> = ({ group, account, acco
             <ListItemText
                 primary={
                     <Typography variant="body1" component="span">
-                        {account.name}
+                        {clearingAccount.name}
                     </Typography>
                 }
-                secondary={account.description}
+                secondary={clearingAccount.description}
             />
             <ListItemText>
                 <Typography align="right" variant="body2">
@@ -37,14 +43,15 @@ export const AccountClearingListEntry: React.FC<Props> = ({ group, account, acco
                         component="span"
                         sx={{
                             color: (theme) =>
-                                balanceColor(balances.get(account.id)?.clearingResolution.get(accountID), theme),
+                                balanceColor(balances[clearingAccount.id]?.clearingResolution[accountId], theme),
                         }}
                     >
-                        {balances.get(account.id)?.clearingResolution.get(accountID)?.toFixed(2)} {group.currencySymbol}
+                        {balances[clearingAccount.id]?.clearingResolution[accountId]?.toFixed(2)} {currencySymbol}
                     </Typography>
                     <br />
                     <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
-                        last changed: {DateTime.fromJSDate(account.lastChanged).toLocaleString(DateTime.DATETIME_FULL)}
+                        last changed:{" "}
+                        {DateTime.fromISO(clearingAccount.lastChanged).toLocaleString(DateTime.DATETIME_FULL)}
                     </Typography>
                 </Typography>
             </ListItemText>

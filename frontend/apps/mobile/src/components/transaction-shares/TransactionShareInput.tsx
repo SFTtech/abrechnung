@@ -3,12 +3,12 @@ import { Portal, Text, useTheme } from "react-native-paper";
 import TransactionShareDialog from "./TransactionShareDialog";
 import { useEffect, useState } from "react";
 import { TouchableHighlight, View } from "react-native";
-import { useRecoilValue } from "recoil";
-import { accountState } from "../../core/accounts";
 import { TransactionShare } from "@abrechnung/types";
+import { useAppSelector, selectAccountSlice } from "../../store";
+import { selectGroupAccounts } from "@abrechnung/redux";
 
 interface Props {
-    groupID: number;
+    groupId: number;
     title: string;
     multiSelect: boolean;
     enableAdvanced: boolean;
@@ -19,7 +19,7 @@ interface Props {
 }
 
 export const TransactionShareInput: React.FC<Props> = ({
-    groupID,
+    groupId,
     title,
     multiSelect,
     enableAdvanced,
@@ -31,7 +31,7 @@ export const TransactionShareInput: React.FC<Props> = ({
     const [showDialog, setShowDialog] = useState(false);
     const [stringifiedValue, setStringifiedValue] = useState("");
     const theme = useTheme();
-    const accounts = useRecoilValue(accountState(groupID));
+    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
 
     useEffect(() => {
         const s = accounts
@@ -60,8 +60,8 @@ export const TransactionShareInput: React.FC<Props> = ({
                     <Text
                         style={{
                             color: theme.colors.primary,
-                            fontWeight: theme.typescale.labelSmall.fontWeight,
-                            fontSize: theme.typescale.labelSmall.fontSize,
+                            fontWeight: theme.fonts.labelSmall.fontWeight,
+                            fontSize: theme.fonts.labelSmall.fontSize,
                         }}
                     >
                         {title}
@@ -79,7 +79,7 @@ export const TransactionShareInput: React.FC<Props> = ({
             <Portal>
                 <TransactionShareDialog
                     disabled={disabled}
-                    groupID={groupID}
+                    groupId={groupId}
                     value={value}
                     enableAdvanced={enableAdvanced}
                     multiSelect={multiSelect}

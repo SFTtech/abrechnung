@@ -1,10 +1,8 @@
 import React, { useEffect } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { Form, Formik } from "formik";
-import { isAuthenticated, userData } from "../../state/auth";
-import { useRecoilValue, useSetRecoilState } from "recoil";
+import { api } from "../../core/api";
 import { toast } from "react-toastify";
-import { api, login, removeToken } from "../../core/api";
 import { useQuery, useTitle } from "../../core/utils";
 import {
     Avatar,
@@ -20,6 +18,8 @@ import {
 } from "@mui/material";
 import { LockOutlined } from "@mui/icons-material";
 import * as yup from "yup";
+import { useAppDispatch, useAppSelector, selectAuthSlice } from "../../store";
+import { selectIsAuthenticated, login } from "@abrechnung/redux";
 
 const validationSchema = yup.object({
     username: yup.string().required("username is required"),
@@ -27,8 +27,8 @@ const validationSchema = yup.object({
 });
 
 export const Login: React.FC = () => {
-    const setUserData = useSetRecoilState(userData);
-    const isLoggedIn = useRecoilValue(isAuthenticated);
+    const isLoggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
+    const dispatch = useAppDispatch();
     const query = useQuery();
     const navigate = useNavigate();
 
@@ -47,25 +47,16 @@ export const Login: React.FC = () => {
     }, [isLoggedIn, navigate, query]);
 
     const handleSubmit = (values: { username: string; password: string }, { setSubmitting }) => {
-        login(values.username, values.password)
+        const sessionName = navigator.appVersion + " " + navigator.userAgent + " " + navigator.appName;
+        dispatch(login({ username: values.username, password: values.password, sessionName, api }))
+            .unwrap()
             .then((res) => {
                 toast.success(`Logged in...`);
                 setSubmitting(false);
-                api.fetchProfile()
-                    .then((result) => {
-                        setUserData(result);
-                    })
-                    .catch((err) => {
-                        toast.error(err);
-                        removeToken();
-                        setUserData(null);
-                    });
             })
             .catch((err) => {
                 toast.error(err);
                 setSubmitting(false);
-                removeToken();
-                setUserData(null);
             });
     };
 

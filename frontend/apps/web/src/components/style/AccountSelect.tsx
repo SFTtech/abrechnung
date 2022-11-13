@@ -1,19 +1,19 @@
 import React from "react";
 
-import { useRecoilValue } from "recoil";
-import { accountsSeenByUser } from "../../state/accounts";
 import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
 import { DisabledTextField } from "./DisabledTextField";
-import { CompareArrows, Person } from "@mui/icons-material";
 import { styled } from "@mui/material/styles";
-import { Group, Account } from "@abrechnung/types";
+import { Account } from "@abrechnung/types";
+import { useAppSelector, selectAccountSlice } from "../../store";
+import { selectGroupAccounts } from "@abrechnung/redux";
+import { ClearingAccountIcon, PersonalAccountIcon } from "./AbrechnungIcons";
 
 const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
     minWidth: 200,
 }));
 
 export type AccountSelectProps = {
-    group: Group;
+    groupId: number;
     onChange: (acc: Account) => void;
     value?: Account | null;
     exclude?: number[] | null;
@@ -23,7 +23,7 @@ export type AccountSelectProps = {
 } & Omit<TextFieldProps, "value" | "onChange">;
 
 export const AccountSelect: React.FC<AccountSelectProps> = ({
-    group,
+    groupId,
     onChange,
     value = null,
     exclude = null,
@@ -32,9 +32,15 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
     className = null,
     ...props
 }) => {
-    const accounts = useRecoilValue(accountsSeenByUser(group.id));
-    const filteredAccounts =
-        exclude !== null ? accounts.filter((account) => exclude.indexOf(account.id) < 0) : accounts;
+    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
+
+    const [filteredAccounts, setFilteredAccounts] = React.useState<Account[]>([]);
+
+    React.useEffect(() => {
+        setFilteredAccounts(
+            exclude !== null ? accounts.filter((account) => exclude.indexOf(account.id) < 0) : accounts
+        );
+    }, [exclude, setFilteredAccounts, accounts]);
 
     return (
         <Autocomplete
@@ -50,7 +56,7 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
             onChange={(event, newValue: Account) => onChange(newValue)}
             renderOption={(props, option) => (
                 <Box component="li" {...props}>
-                    {option.type === "personal" ? <Person /> : <CompareArrows />}
+                    {option.type === "personal" ? <PersonalAccountIcon /> : <ClearingAccountIcon />}
                     <Typography variant="body2" component="span" sx={{ ml: 1 }}>
                         {option.name}
                     </Typography>

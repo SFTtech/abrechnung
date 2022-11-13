@@ -159,7 +159,7 @@ class GroupService(Application):
         )
         return account_id
 
-    async def join_group(self, user: User, invite_token: str):
+    async def join_group(self, user: User, invite_token: str) -> int:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 invite = await conn.fetchrow(
@@ -203,6 +203,7 @@ class GroupService(Application):
                     await conn.execute(
                         "delete from group_invite where id = $1", invite["id"]
                     )
+                return group["id"]
 
     async def list_groups(self, user: User) -> list[Group]:
         async with self.db_pool.acquire() as conn:
@@ -473,6 +474,33 @@ class GroupService(Application):
                     )
                 return result
 
+    async def get_invite(
+        self, *, user: User, group_id: int, invite_id: int
+    ) -> GroupInvite:
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                await check_group_permissions(conn=conn, group_id=group_id, user=user)
+                row = await conn.fetchrow(
+                    "select id, case when created_by = $1 then token else null end as token, description, created_by, "
+                    "valid_until, single_use, join_as_editor "
+                    "from group_invite gi "
+                    "where gi.group_id = $2 and id = $3",
+                    user.id,
+                    group_id,
+                    invite_id,
+                )
+                if not row:
+                    raise NotFoundError()
+                return GroupInvite(
+                    id=row["id"],
+                    token=row["token"],
+                    created_by=row["created_by"],
+                    valid_until=row["valid_until"],
+                    single_use=row["single_use"],
+                    description=row["description"],
+                    join_as_editor=row["join_as_editor"],
+                )
+
     async def list_members(self, *, user: User, group_id: int) -> list[GroupMember]:
         async with self.db_pool.acquire() as conn:
             async with conn.transaction():
@@ -499,6 +527,33 @@ class GroupService(Application):
                         )
                     )
                 return result
+
+    async def get_member(
+        self, *, user: User, group_id: int, member_id: int
+    ) -> GroupMember:
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                await check_group_permissions(conn=conn, group_id=group_id, user=user)
+                row = await conn.fetchrow(
+                    "select usr.id, usr.username, gm.is_owner, gm.can_write, gm.description, "
+                    "gm.invited_by, gm.joined_at "
+                    "from usr "
+                    "join group_membership gm on gm.user_id = usr.id "
+                    "where gm.group_id = $1 and gm.user_id = $2",
+                    group_id,
+                    member_id,
+                )
+                if not row:
+                    raise NotFoundError()
+                return GroupMember(
+                    user_id=row["id"],
+                    username=row["username"],
+                    is_owner=row["is_owner"],
+                    can_write=row["can_write"],
+                    invited_by=row["invited_by"],
+                    joined_at=row["joined_at"],
+                    description=row["description"],
+                )
 
     async def list_log(self, *, user: User, group_id: int) -> list[GroupLog]:
         async with self.db_pool.acquire() as conn:

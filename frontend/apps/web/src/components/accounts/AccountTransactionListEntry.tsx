@@ -5,22 +5,28 @@ import { DateTime } from "luxon";
 import React from "react";
 import { balanceColor } from "../../core/utils";
 import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
-import { Group, Transaction } from "@abrechnung/types";
-import { useRecoilValue } from "recoil";
-import { transactionBalanceEffect } from "../../state/transactions";
+import { selectGroupSlice, selectTransactionSlice, useAppSelector } from "../../store";
+import { selectGroupCurrencySymbol, selectTransactionBalanceEffect, selectTransactionById } from "@abrechnung/redux";
 
 interface Props {
-    group: Group;
-    transaction: Transaction;
-    accountID: number;
+    groupId: number;
+    transactionId: number;
+    accountId: number;
 }
 
-export const AccountTransactionListEntry: React.FC<Props> = ({ group, transaction, accountID }) => {
-    const balanceEffect = useRecoilValue(
-        transactionBalanceEffect({ groupID: group.id, transactionID: transaction.id })
+export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transactionId, accountId }) => {
+    const balanceEffect = useAppSelector((state) =>
+        selectTransactionBalanceEffect({ state: selectTransactionSlice(state), groupId, transactionId })
     );
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const currencySymbol = useAppSelector((state) =>
+        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
+    );
+
     return (
-        <ListItemLink to={`/groups/${group.id}/transactions/${transaction.id}`}>
+        <ListItemLink to={`/groups/${groupId}/transactions/${transaction.id}`}>
             <ListItemAvatar sx={{ minWidth: { xs: "40px", md: "56px" } }}>
                 {transaction.type === "purchase" ? (
                     <Tooltip title="Purchase">
@@ -39,7 +45,7 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ group, transactio
             <ListItemText
                 primary={
                     <>
-                        {transaction.hasUnpublishedChanges && (
+                        {transaction.isWip && (
                             <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 3 }} />
                         )}
                         <Typography variant="body1" component="span">
@@ -47,22 +53,21 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ group, transactio
                         </Typography>
                     </>
                 }
-                secondary={DateTime.fromJSDate(transaction.billedAt).toLocaleString(DateTime.DATE_FULL)}
+                secondary={DateTime.fromISO(transaction.billedAt).toLocaleString(DateTime.DATE_FULL)}
             />
             <ListItemText>
                 <Typography align="right" variant="body2">
                     <Typography
                         component="span"
                         sx={{
-                            color: (theme) => balanceColor(balanceEffect[accountID].total, theme),
+                            color: (theme) => balanceColor(balanceEffect[accountId].total, theme),
                         }}
                     >
-                        {balanceEffect[accountID].total.toFixed(2)} {group.currencySymbol}
+                        {balanceEffect[accountId].total.toFixed(2)} {currencySymbol}
                     </Typography>
                     <br />
                     <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
-                        last changed:{" "}
-                        {DateTime.fromJSDate(transaction.lastChanged).toLocaleString(DateTime.DATETIME_FULL)}
+                        last changed: {DateTime.fromISO(transaction.lastChanged).toLocaleString(DateTime.DATETIME_FULL)}
                     </Typography>
                 </Typography>
             </ListItemText>
