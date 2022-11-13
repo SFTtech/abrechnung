@@ -66,53 +66,53 @@ export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> =
     };
 
     useLayoutEffect(() => {
-        if (isFocused) {
-            navigation.getParent()?.setOptions({
-                headerTitle: "Transactions",
-                titleShown: !showSearchInput,
-                headerRight: () => {
-                    if (showSearchInput) {
-                        return (
-                            <>
-                                <TextInput
-                                    mode="outlined"
-                                    dense={true}
-                                    autoFocus={true}
-                                    style={{ flexGrow: 1 }}
-                                    onChangeText={(val) => setSearch(val)}
-                                />
-                                <Appbar.Action icon="close" onPress={closeSearch} />
-                            </>
-                        );
-                    }
+        if (!isFocused) {
+            closeSearch();
+            setFabOpen(false);
+            return;
+        }
+        navigation.getParent()?.setOptions({
+            headerTitle: "Transactions",
+            titleShown: !showSearchInput,
+            headerRight: () => {
+                if (showSearchInput) {
                     return (
                         <>
-                            <Appbar.Action icon="search" onPress={openSearch} />
-                            <Menu
-                                visible={isMenuOpen}
-                                onDismiss={() => setMenuOpen(false)}
-                                anchor={<Appbar.Action icon="more-vert" onPress={() => setMenuOpen(true)} />}
-                            >
-                                <Text variant="labelLarge" style={{ paddingLeft: 16, fontWeight: "bold" }}>
-                                    Sort by
-                                </Text>
-                                <RadioButton.Group
-                                    value={sortMode}
-                                    onValueChange={(value) => setSortMode(value as TransactionSortMode)}
-                                >
-                                    <RadioButton.Item position="trailing" label="Last changed" value="lastChanged" />
-                                    <RadioButton.Item position="trailing" label="Billed at" value="billedAt" />
-                                    <RadioButton.Item position="trailing" label="Description" value="description" />
-                                </RadioButton.Group>
-                            </Menu>
+                            <TextInput
+                                mode="outlined"
+                                dense={true}
+                                autoFocus={true}
+                                style={{ flexGrow: 1 }}
+                                onChangeText={(val) => setSearch(val)}
+                            />
+                            <Appbar.Action icon="close" onPress={closeSearch} />
                         </>
                     );
-                },
-            });
-        } else {
-            // !isFocuesd
-            closeSearch();
-        }
+                }
+                return (
+                    <>
+                        <Appbar.Action icon="search" onPress={openSearch} />
+                        <Menu
+                            visible={isMenuOpen}
+                            onDismiss={() => setMenuOpen(false)}
+                            anchor={<Appbar.Action icon="more-vert" onPress={() => setMenuOpen(true)} />}
+                        >
+                            <Text variant="labelLarge" style={{ paddingLeft: 16, fontWeight: "bold" }}>
+                                Sort by
+                            </Text>
+                            <RadioButton.Group
+                                value={sortMode}
+                                onValueChange={(value) => setSortMode(value as TransactionSortMode)}
+                            >
+                                <RadioButton.Item position="trailing" label="Last changed" value="lastChanged" />
+                                <RadioButton.Item position="trailing" label="Billed at" value="billedAt" />
+                                <RadioButton.Item position="trailing" label="Description" value="description" />
+                            </RadioButton.Group>
+                        </Menu>
+                    </>
+                );
+            },
+        });
     }, [isFocused, showSearchInput, isMenuOpen, setMenuOpen, sortMode, theme, navigation]);
 
     const createNewTransaction = (type: TransactionType) => {

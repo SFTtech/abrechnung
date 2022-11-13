@@ -116,6 +116,6 @@ jobs:
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
       - name: Install dependencies
-        run: npm --prefix frontend install
+        run: cd frontend && npm install && cd ..
       - name: Build web app
         run: cd frontend && npx nx build web && cd ..
