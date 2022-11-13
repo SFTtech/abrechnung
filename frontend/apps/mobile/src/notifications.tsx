@@ -40,7 +40,6 @@ export const NotificationProvider: React.FC = () => {
 
     useEffect(() => {
         const callback = (event: NotificationPayload) => {
-            console.log("received notification event", event);
             setState((prevState) => {
                 return {
                     ...prevState,

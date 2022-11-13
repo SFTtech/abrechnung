@@ -63,7 +63,7 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                 validateOnBlur={false}
                 validateOnChange={false}
                 initialValues={{
-                    server: "http://10.150.9.104:8080",
+                    server: "https://demo.abrechnung.sft.lol",
                     username: "",
                     password: "",
                 }}
@@ -74,13 +74,13 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                         <TextInput
                             label="Server"
                             returnKeyType="next"
+                            autoCapitalize="none"
+                            textContentType="URL"
+                            keyboardType="url"
                             value={values.server}
                             onBlur={handleBlur("server")}
                             onChangeText={(val) => setFieldValue("server", val)}
                             error={touched.server && !!errors.server}
-                            autoCapitalize="none"
-                            textContentType="URL"
-                            keyboardType="url"
                         />
                         <HelperText type="error" visible={touched.server && !!errors.server}>
                             {errors.server}
@@ -89,12 +89,12 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                         <TextInput
                             label="Username"
                             returnKeyType="next"
+                            autoCapitalize="none"
+                            textContentType="username"
                             value={values.username}
                             onBlur={handleBlur("username")}
                             onChangeText={(val) => setFieldValue("username", val)}
                             error={touched.username && !!errors.username}
-                            autoCapitalize="none"
-                            textContentType="username"
                         />
                         <HelperText type="error" visible={touched.username && !!errors.username}>
                             {errors.username}
@@ -103,12 +103,13 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                         <TextInput
                             label="Password"
                             returnKeyType="done"
+                            textContentType="password"
+                            autoCapitalize="none"
                             value={values.password}
                             onBlur={handleBlur("password")}
                             onChangeText={(val) => setFieldValue("password", val)}
                             error={touched.password && !!errors.password}
                             secureTextEntry={!showPassword}
-                            textContentType="password"
                             right={
                                 <TextInput.Icon
                                     name={({ color, size }) => (

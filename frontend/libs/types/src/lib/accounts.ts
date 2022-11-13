@@ -39,7 +39,7 @@ export const validateAccount = <T extends AccountBase>(a: T): AccountValidationE
         errors.name = "name cannot be empty";
     }
 
-    if (a.type == "personal" && a.clearingShares !== null) {
+    if (a.type == "personal" && a.clearingShares != null && Object.keys(a.clearingShares).length === null) {
         errors.clearingShares = "a 'personal' account cannot have clearing shares";
     }
 

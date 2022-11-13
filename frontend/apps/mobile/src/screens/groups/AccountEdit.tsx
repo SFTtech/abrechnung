@@ -87,6 +87,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
         const validationErrors = validateAccount(updatedAccount);
         if (Object.keys(validationErrors).length !== 0) {
             setInputErrors(validationErrors);
+            console.log("validation error", validationErrors);
             return;
         }
 

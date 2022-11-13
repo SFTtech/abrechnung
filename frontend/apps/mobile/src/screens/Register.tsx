@@ -11,6 +11,7 @@ import { notify } from "../notifications";
 import { toFormikValidationSchema } from "@abrechnung/utils";
 
 const validationSchema = z.object({
+    server: z.string({ required_error: "server is required" }).url({ message: "invalid server url" }),
     username: z.string({ required_error: "username is required" }),
     email: z.string({ required_error: "email is required" }).email({ message: "invalid email" }),
     password: z.string({ required_error: "password is required" }),
@@ -30,6 +31,7 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
     }, [loggedIn, navigation]);
 
     const handleSubmit = (values: FormSchema, { setSubmitting }: FormikHelpers<FormSchema>) => {
+        api.baseApiUrl = values.server;
         api.register(values.username, values.email, values.password)
             .then((res) => {
                 notify({ text: `Registered successfully, please confirm your email before logging in...` });
@@ -37,7 +39,7 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                 navigation.navigate("Login");
             })
             .catch((err) => {
-                notify({ text: `${err}` });
+                notify({ text: `${err.toString()}` });
                 setSubmitting(false);
             });
     };
@@ -61,6 +63,7 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                 validateOnBlur={false}
                 validateOnChange={false}
                 initialValues={{
+                    server: "https://demo.abrechnung.sft.lol",
                     username: "",
                     email: "",
                     password: "",
@@ -71,11 +74,26 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                 {({ values, handleBlur, setFieldValue, touched, handleSubmit, isSubmitting, errors }) => (
                     <View style={styles.container}>
                         <TextInput
+                            label="Server"
+                            returnKeyType="next"
+                            autoCapitalize="none"
+                            textContentType="URL"
+                            keyboardType="url"
+                            value={values.server}
+                            onBlur={handleBlur("server")}
+                            onChangeText={(val) => setFieldValue("server", val)}
+                            error={touched.server && !!errors.server}
+                        />
+                        <HelperText type="error" visible={touched.server && !!errors.server}>
+                            {errors.server}
+                        </HelperText>
+
+                        <TextInput
                             autoFocus={true}
                             label="Username"
-                            keyboardType="default"
                             textContentType="username"
                             returnKeyType="next"
+                            autoCapitalize="none"
                             error={touched.username && !!errors.username}
                             onBlur={handleBlur("username")}
                             onChangeText={(val) => setFieldValue("username", val)}
@@ -88,8 +106,9 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                         <TextInput
                             label="E-Mail"
                             keyboardType="email-address"
-                            error={touched.email && !!errors.email}
                             returnKeyType="next"
+                            autoCapitalize="none"
+                            error={touched.email && !!errors.email}
                             onBlur={handleBlur("email")}
                             onChangeText={(val) => setFieldValue("email", val)}
                             value={values.email}
@@ -103,6 +122,7 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                             keyboardType="default"
                             secureTextEntry={true}
                             returnKeyType="next"
+                            autoCapitalize="none"
                             error={touched.password && !!errors.password}
                             onBlur={handleBlur("password")}
                             onChangeText={(val) => setFieldValue("password", val)}
@@ -113,10 +133,11 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                         </HelperText>
 
                         <TextInput
+                            label="Repeat Password"
                             keyboardType="default"
                             secureTextEntry={true}
                             returnKeyType="next"
-                            label="Repeat Password"
+                            autoCapitalize="none"
                             error={touched.password2 && !!errors.password2}
                             onBlur={handleBlur("password2")}
                             onChangeText={(val) => setFieldValue("password2", val)}
