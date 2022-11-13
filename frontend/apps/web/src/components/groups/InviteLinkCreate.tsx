@@ -1,7 +1,7 @@
 import { Form, Formik } from "formik";
 import React from "react";
 import { toast } from "react-toastify";
-import { createGroupInvite } from "../../core/api";
+import { api } from "../../core/api";
 import { DateTime } from "luxon";
 import {
     Button,
@@ -15,7 +15,7 @@ import {
     TextField,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers";
-import { Group } from "../../state/groups";
+import { Group } from "@abrechnung/types";
 
 interface Props {
     group: Group;
@@ -28,13 +28,7 @@ interface Props {
 
 export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
     const handleSubmit = (values, { setSubmitting }) => {
-        createGroupInvite({
-            groupID: group.id,
-            description: values.description,
-            validUntil: values.validUntil,
-            singleUse: values.singleUse,
-            joinAsEditor: values.joinAsEditor,
-        })
+        api.createGroupInvite(group.id, values.description, values.validUntil, values.singleUse, values.joinAsEditor)
             .then((result) => {
                 toast.success("Successfully created invite token");
                 setSubmitting(false);

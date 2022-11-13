@@ -1,7 +1,5 @@
-import React, { useState } from "react";
-import { useRecoilValue } from "recoil";
-import { Group, groupLog, groupMembers } from "../../state/groups";
-import { sendGroupMessage } from "../../core/api";
+import React, { useEffect, useState } from "react";
+import { api } from "../../core/api";
 import { toast } from "react-toastify";
 import { DateTime } from "luxon";
 import {
@@ -16,35 +14,60 @@ import {
     Typography,
 } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
+import { Loading } from "../../components/style/Loading";
 import { useTitle } from "../../core/utils";
+import { ws } from "../../core/api";
+import { selectGroupSlice, useAppDispatch, useAppSelector } from "../../store";
+import {
+    fetchGroupLog,
+    selectGroupById,
+    selectGroupLogs,
+    selectGroupLogStatus,
+    selectGroupMembers,
+    subscribe,
+    unsubscribe,
+} from "@abrechnung/redux";
 
 interface Props {
-    group: Group;
+    groupId: number;
 }
 
-export const GroupLog: React.FC<Props> = ({ group }) => {
-    const [message, setMessage] = useState("");
+export const GroupLog: React.FC<Props> = ({ groupId }) => {
+    const dispatch = useAppDispatch();
+    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
+    const members = useAppSelector((state) => selectGroupMembers({ state: selectGroupSlice(state), groupId }));
+    const logEntries = useAppSelector((state) => selectGroupLogs({ state: selectGroupSlice(state), groupId }));
+    const logLoadingStatus = useAppSelector((state) =>
+        selectGroupLogStatus({ state: selectGroupSlice(state), groupId })
+    );
+
     const [showAllLogs, setShowAllLogs] = useState(false);
-    const logEntries = useRecoilValue(groupLog(group.id));
-    const members = useRecoilValue(groupMembers(group.id));
+    const [message, setMessage] = useState("");
 
     useTitle(`${group.name} - Log`);
 
+    useEffect(() => {
+        dispatch(fetchGroupLog({ groupId, api }));
+        dispatch(subscribe({ subscription: { type: "group_log", groupId }, websocket: ws }));
+        return () => {
+            dispatch(unsubscribe({ subscription: { type: "group_log", groupId }, websocket: ws }));
+        };
+    }, [dispatch, groupId]);
+
     const sendMessage = () => {
-        sendGroupMessage({
-            groupID: group.id,
-            message: message,
-        })
+        api.sendGroupMessage(groupId, message)
             .then((result) => {
+                console.log("sent message");
                 setMessage("");
             })
             .catch((err) => {
+                console.log("error on send message", err);
                 toast.error(err);
             });
     };
 
     const getMemberUsername = (member_id) => {
-        const member = members.find((member) => member.user_id === member_id);
+        const member = members.find((member) => member.userID === member_id);
         if (member === undefined) {
             return "unknown";
         }
@@ -92,15 +115,19 @@ export const GroupLog: React.FC<Props> = ({ group }) => {
             </Button>
             <Divider variant="middle" />
             <List>
-                {log.map((logEntry) => (
-                    <ListItem key={logEntry.id}>
-                        <ListItemText
-                            primary={`${logEntry.type} - ${logEntry.message}`}
-                            secondary={`by ${getMemberUsername(logEntry.user_id)}
-                            on ${DateTime.fromISO(logEntry.logged_at).toLocaleString(DateTime.DATETIME_FULL)}`}
-                        />
-                    </ListItem>
-                ))}
+                {logLoadingStatus === undefined || logLoadingStatus === "loading" ? (
+                    <Loading />
+                ) : (
+                    log.map((logEntry) => (
+                        <ListItem key={logEntry.id}>
+                            <ListItemText
+                                primary={`${logEntry.type} - ${logEntry.message}`}
+                                secondary={`by ${getMemberUsername(logEntry.userID)}
+                            on ${DateTime.fromISO(logEntry.loggedAt).toLocaleString(DateTime.DATETIME_FULL)}`}
+                            />
+                        </ListItem>
+                    ))
+                )}
             </List>
         </MobilePaper>
     );

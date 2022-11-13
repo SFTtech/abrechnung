@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { uploadFile } from "../../core/api";
+import { api } from "../../core/api";
 import {
     Alert,
     Box,
@@ -13,16 +13,18 @@ import {
     Typography,
 } from "@mui/material";
 import placeholderImg from "./PlaceholderImage.svg";
-import { useSetRecoilState } from "recoil";
-import { groupTransactions, Transaction, updateTransactionInState } from "../../state/transactions";
+import { useAppDispatch } from "../../store";
+import { uploadFile } from "@abrechnung/redux";
 
 interface Props {
-    transaction: Transaction;
+    groupId: number;
+    transactionId: number;
     show: boolean;
     onClose: () => void;
 }
 
-export const ImageUploadDialog: React.FC<Props> = ({ transaction, show, onClose }) => {
+export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, show, onClose }) => {
+    const dispatch = useAppDispatch();
     const [fileState, setFileState] = useState({
         currentFile: undefined,
         previewImage: undefined,
@@ -32,7 +34,6 @@ export const ImageUploadDialog: React.FC<Props> = ({ transaction, show, onClose 
         isError: false,
     });
     const [filename, setFilename] = useState("");
-    const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
 
     const selectFile = (event) => {
         setFileState({
@@ -59,17 +60,8 @@ export const ImageUploadDialog: React.FC<Props> = ({ transaction, show, onClose 
             progress: 0,
         });
 
-        uploadFile({
-            transactionID: transaction.id,
-            filename: filename,
-            file: fileState.currentFile,
-            onUploadProgress: (event) => {
-                setFileState({
-                    ...fileState,
-                    progress: Math.round((100 * event.loaded) / event.total),
-                });
-            },
-        })
+        dispatch(uploadFile({ groupId, transactionId, filename, file: fileState.currentFile, api }))
+            .unwrap()
             .then((t) => {
                 setFileState({
                     currentFile: undefined,
@@ -79,7 +71,6 @@ export const ImageUploadDialog: React.FC<Props> = ({ transaction, show, onClose 
                     message: "",
                     isError: false,
                 });
-                updateTransactionInState(t, setTransactions);
                 onClose();
             })
             .catch((err) => {
@@ -87,7 +78,7 @@ export const ImageUploadDialog: React.FC<Props> = ({ transaction, show, onClose 
                 setFileState({
                     ...fileState,
                     progress: 0,
-                    message: `Could not upload the image! ${err}`,
+                    message: `Could not upload the image! ${err.message}`,
                     currentFile: undefined,
                     isError: true,
                 });

@@ -1,29 +1,40 @@
 import { GroupStackScreenProps } from "../../navigation/types";
 import { BackHandler, StyleSheet, View } from "react-native";
-import { ActivityIndicator, Button, HelperText, TextInput, useTheme } from "react-native-paper";
+import { ActivityIndicator, Button, HelperText, TextInput, useTheme, ProgressBar } from "react-native-paper";
 import * as React from "react";
 import { useEffect, useLayoutEffect, useState } from "react";
-import { deleteLocalAccountChanges, pushLocalAccountChanges, updateAccount } from "../../core/database/accounts";
-import { useAccount } from "../../core/accounts";
 import { notify } from "../../notifications";
 import { useFocusEffect } from "@react-navigation/native";
-import { Account, AccountValidationErrors, ClearingShares, ValidationError } from "@abrechnung/types";
-import TransactionShareInput from "../../components/transaction_shares/TransactionShareInput";
+import { Account, AccountValidationErrors, ClearingShares, validateAccount, ValidationError } from "@abrechnung/types";
+import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
+import { selectCurrentUserPermissions } from "@abrechnung/redux";
+import { api } from "../../core/api";
+
+import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
+import { discardAccountChange, saveAccount, selectAccountById, wipAccountUpdated } from "@abrechnung/redux";
 
 type LocalEditingState = Pick<Account, "name" | "description" | "clearingShares" | "owningUserID">;
 
 export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ route, navigation }) => {
     const theme = useTheme();
+    const dispatch = useAppDispatch();
 
-    const { groupID, accountID, editingStart } = route.params;
+    const { groupId, accountId } = route.params;
 
-    const account = useAccount(groupID, accountID);
+    const account = useAppSelector((state) =>
+        selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
+    );
+    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+
+    const [progress, setProgress] = useState(false);
     const [localEditingState, setLocalEditingState] = useState<LocalEditingState | null>(null);
     const [inputErrors, setInputErrors] = useState<AccountValidationErrors>({});
 
     const onGoBack = React.useCallback(async () => {
-        return await deleteLocalAccountChanges(groupID, account.id, editingStart);
-    }, [account, groupID, editingStart]);
+        if (account) {
+            return dispatch(discardAccountChange({ groupId, accountId: account.id, api })).unwrap();
+        }
+    }, [dispatch, account, groupId]);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -41,6 +52,12 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
     );
 
     useEffect(() => {
+        if (permissions === undefined || !permissions.canWrite) {
+            navigation.replace("AccountDetail", { accountId, groupId });
+        }
+    }, [navigation, accountId, permissions, groupId]);
+
+    useEffect(() => {
         if (account != null) {
             setInputErrors({});
             setLocalEditingState((prevState) => {
@@ -48,7 +65,6 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                     ...prevState,
                     name: account.name,
                     description: account.description,
-                    priority: account.priority,
                     clearingShares: account.clearingShares,
                     owningUserID: account.owningUserID,
                 };
@@ -56,56 +72,56 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
         }
     }, [account]);
 
+    const onUpdate = React.useCallback(() => {
+        if (account) {
+            dispatch(wipAccountUpdated({ ...account, ...localEditingState }));
+        }
+    }, [dispatch, account, localEditingState]);
+
     const save = React.useCallback(() => {
-        updateAccount({
-            ...account,
-            ...localEditingState,
-        })
+        if (localEditingState === null || account === undefined) {
+            return;
+        }
+
+        const updatedAccount = { ...account, ...localEditingState };
+        const validationErrors = validateAccount(updatedAccount);
+        if (Object.keys(validationErrors).length !== 0) {
+            setInputErrors(validationErrors);
+            return;
+        }
+
+        setProgress(true);
+        onUpdate();
+        dispatch(saveAccount({ account: updatedAccount, api }))
+            .unwrap()
             .then(() => {
-                setInputErrors({});
-                pushLocalAccountChanges(account.id)
-                    .then((updatedAccount) => {
-                        navigation.navigate("AccountDetail", {
-                            accountID: updatedAccount.id,
-                            groupID: groupID,
-                        });
-                    })
-                    .catch((err) => {
-                        console.log("error on pushing account to server", err);
-                        navigation.navigate("AccountDetail", {
-                            accountID: account.id,
-                            groupID: groupID,
-                        });
-                    });
+                setProgress(false);
+                navigation.pop(1);
             })
-            .catch((err) => {
-                if (err instanceof ValidationError) {
-                    setInputErrors(err.data);
-                } else {
-                    console.log("error saving account details to local state:", err);
-                    notify({ text: `Error while saving account: ${err.toString()}` });
-                }
+            .catch(() => {
+                setProgress(false);
             });
-    }, [account, localEditingState, groupID, setInputErrors, navigation]);
+    }, [dispatch, onUpdate, account, localEditingState, setInputErrors, navigation]);
 
     const cancelEdit = React.useCallback(() => {
-        deleteLocalAccountChanges(groupID, account.id, editingStart).then((deletedAccount) => {
-            if (deletedAccount) {
-                navigation.navigate("BottomTabNavigator", { screen: "AccountList" });
-            } else {
-                setLocalEditingState({
-                    name: account.name,
-                    description: account.description,
-                    owningUserID: account.owningUserID,
-                    clearingShares: account.clearingShares,
-                });
-                navigation.navigate("AccountDetail", {
-                    accountID: accountID,
-                    groupID: groupID,
-                });
-            }
-        });
-    }, [groupID, account, editingStart, navigation, setLocalEditingState, accountID]);
+        if (!account) {
+            return;
+        }
+
+        dispatch(discardAccountChange({ groupId, accountId: account.id, api }))
+            .unwrap()
+            .then(({ deletedAccount }) => {
+                if (deletedAccount) {
+                    setLocalEditingState({
+                        name: account.name,
+                        description: account.description,
+                        owningUserID: account.owningUserID,
+                        clearingShares: account.clearingShares,
+                    });
+                }
+                navigation.pop();
+            });
+    }, [dispatch, groupId, account, navigation, setLocalEditingState]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -147,12 +163,14 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
 
     return (
         <View style={styles.container}>
+            {progress ? <ProgressBar indeterminate /> : null}
             <TextInput
                 label="Name"
                 value={localEditingState.name}
                 style={styles.input}
                 editable={true}
                 onChangeText={onChangeName}
+                onBlur={onUpdate}
                 error={inputErrors.name !== undefined}
             />
             {inputErrors.name && <HelperText type="error">{inputErrors.name}</HelperText>}
@@ -161,6 +179,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                 value={localEditingState.description}
                 style={styles.input}
                 editable={true}
+                onBlur={onUpdate}
                 onChangeText={onChangeDescription}
                 error={inputErrors.description !== undefined}
             />
@@ -170,8 +189,8 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                     <TransactionShareInput
                         title="Participated"
                         disabled={false}
-                        groupID={groupID}
-                        value={localEditingState.clearingShares == null ? {} : localEditingState.clearingShares}
+                        groupId={groupId}
+                        value={localEditingState.clearingShares ?? account.clearingShares ?? {}}
                         onChange={onChangeClearingShares}
                         enableAdvanced={true}
                         multiSelect={true}

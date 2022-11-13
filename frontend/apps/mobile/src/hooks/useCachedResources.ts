@@ -2,7 +2,6 @@ import { FontAwesome, MaterialIcons, MaterialCommunityIcons } from "@expo/vector
 import * as Font from "expo-font";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect, useState } from "react";
-import { initializeAuthCache } from "../core/api";
 
 export const useCachedResources = () => {
     const [isLoadingComplete, setLoadingComplete] = useState(false);
@@ -20,8 +19,6 @@ export const useCachedResources = () => {
                     ...MaterialIcons.font,
                     "space-mono": require("../../assets/SpaceMono-Regular.ttf"),
                 });
-
-                await initializeAuthCache();
             } catch (e) {
                 // We might want to provide this error information to an error reporting service
                 console.warn(e);

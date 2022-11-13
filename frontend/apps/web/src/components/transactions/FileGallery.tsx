@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { deleteFile, fetchFile } from "../../core/api";
+import { api } from "../../core/api";
 import { toast } from "react-toastify";
 import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
 import { AddCircle, ChevronLeft, ChevronRight, Delete } from "@mui/icons-material";
 import ImageUploadDialog from "./ImageUploadDialog";
 import { Transition } from "react-transition-group";
 import placeholderImg from "./PlaceholderImage.svg";
-import { groupTransactions, Transaction, updateTransactionInState } from "../../state/transactions";
-import { useSetRecoilState } from "recoil";
+import { useAppSelector, selectTransactionSlice } from "../../store";
+import { selectTransactionAttachments, selectTransactionIsWip } from "@abrechnung/redux";
 
 const duration = 200;
 
@@ -23,19 +23,25 @@ const transitionStyles = {
 };
 
 interface Props {
-    transaction: Transaction;
+    groupId: number;
+    transactionId: number;
 }
 
-export const FileGallery: React.FC<Props> = ({ transaction }) => {
+export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
+    const attachments = useAppSelector((state) =>
+        selectTransactionAttachments({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const isWip = useAppSelector((state) =>
+        selectTransactionIsWip({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
     const [files, setFiles] = useState([]); // map of file id to object
     const [active, setActive] = useState(0);
-    const setTransactions = useSetRecoilState(groupTransactions(transaction.group_id));
 
     const [showUploadDialog, setShowUploadDialog] = useState(false);
     const [showImage, setShowImage] = useState(false);
 
     useEffect(() => {
-        const newFileIDs = new Set(transaction.files.map((file) => file.id));
+        const newFileIDs = new Set(attachments.map((file) => file.id));
         const filteredFiles = files.reduce((map, file) => {
             map[file.id] = file;
             return map;
@@ -47,16 +53,12 @@ export const FileGallery: React.FC<Props> = ({ transaction }) => {
             }
         }
         setFiles(Object.values(filteredFiles)); // TODO: maybe include placeholders
-        setActive(Math.max(0, Math.min(active, transaction.files.length - 1)));
+        setActive((oldActive) => Math.max(0, Math.min(oldActive, attachments.length - 1)));
 
-        const newFiles = transaction.files.filter((file) => !filteredFiles.hasOwnProperty(file.id));
+        const newFiles = attachments.filter((file) => filteredFiles[file.id] === undefined);
         Promise.all(
             newFiles.map((newFile) => {
-                return fetchFile({
-                    fileID: newFile.id,
-                    blobID: newFile.blob_id,
-                }).then((resp) => {
-                    const objectUrl = URL.createObjectURL(resp.data);
+                return api.fetchFile(newFile.id, newFile.blobID).then((objectUrl) => {
                     return {
                         ...newFile,
                         objectUrl: objectUrl,
@@ -70,7 +72,7 @@ export const FileGallery: React.FC<Props> = ({ transaction }) => {
             .catch((err) => {
                 toast.error(`Error loading file: ${err}`);
             });
-    }, [transaction]);
+    }, [attachments]); // TODO: do not add files as dependencies, we'd get an infinite loop then
 
     const toNextImage = () => {
         if (active < files.length - 1) {
@@ -91,9 +93,10 @@ export const FileGallery: React.FC<Props> = ({ transaction }) => {
     const deleteSelectedFile = () => {
         if (active < files.length) {
             // sanity check, should not be needed
-            deleteFile({ fileID: files[active].id })
+            // TODO: implement
+            api.deleteFile(files[active].id)
                 .then((t) => {
-                    updateTransactionInState(t, setTransactions);
+                    // updateTransactionInState(t, setTransactions);
                     setShowImage(false);
                 })
                 .catch((err) => {
@@ -151,7 +154,7 @@ export const FileGallery: React.FC<Props> = ({ transaction }) => {
                         <ChevronRight />
                     </IconButton>
                 )}
-                {transaction.is_wip && (
+                {isWip && (
                     <>
                         <IconButton
                             color="primary"
@@ -165,7 +168,8 @@ export const FileGallery: React.FC<Props> = ({ transaction }) => {
                             <AddCircle fontSize="large" />
                         </IconButton>
                         <ImageUploadDialog
-                            transaction={transaction}
+                            groupId={groupId}
+                            transactionId={transactionId}
                             show={showUploadDialog}
                             onClose={() => setShowUploadDialog(false)}
                         />
@@ -220,7 +224,7 @@ export const FileGallery: React.FC<Props> = ({ transaction }) => {
                         )}
                     </Grid>
                 </DialogContent>
-                {transaction.is_wip && (
+                {isWip && (
                     <DialogActions>
                         <Button startIcon={<Delete />} onClick={deleteSelectedFile} variant="outlined" color="error">
                             Delete

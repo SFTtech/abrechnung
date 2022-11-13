@@ -1,7 +1,7 @@
+import { selectIsAuthenticated } from "@abrechnung/redux";
 import React from "react";
-import { useRecoilValue } from "recoil";
-import { isAuthenticated } from "../state/auth";
 import { Navigate, useLocation } from "react-router-dom";
+import { selectAuthSlice, useAppSelector } from "../store";
 
 interface Props {
     authFallback?: string;
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export const RequireAuth: React.FC<Props> = ({ authFallback = "/login", children }) => {
-    const loggedIn = useRecoilValue(isAuthenticated);
+    const loggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
     const location = useLocation();
     if (!loggedIn) {
         return <Navigate to={`${authFallback}?next=${location.pathname}`} />;

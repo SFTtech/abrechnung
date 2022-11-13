@@ -1,24 +1,27 @@
 import React, { useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { nameValidator, passwordValidator, urlValidator } from "@abrechnung/utils";
 import { RootDrawerScreenProps } from "../navigation/types";
-import { Appbar, Button, HelperText, Text, TextInput, useTheme } from "react-native-paper";
-import { login } from "../core/api/auth";
-import { useSetRecoilState } from "recoil";
-import { authState } from "../core/auth";
+import { Appbar, Button, HelperText, ProgressBar, Text, TextInput, useTheme } from "react-native-paper";
 import { notify } from "../notifications";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useAppDispatch } from "../store";
+import { Formik, FormikHelpers } from "formik";
+import { login } from "@abrechnung/redux";
+import { api, websocket } from "../core/api";
+import { z } from "zod";
+import { SerializedError } from "@reduxjs/toolkit";
+import { toFormikValidationSchema } from "@abrechnung/utils";
+
+const validationSchema = z.object({
+    server: z.string({ required_error: "server is required" }).url({ message: "invalid server url" }),
+    username: z.string({ required_error: "username is required" }),
+    password: z.string({ required_error: "password is required" }),
+});
+type FormSchema = z.infer<typeof validationSchema>;
 
 export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigation }) => {
     const theme = useTheme();
-    const setAuthState = useSetRecoilState(authState);
-
-    const [server, setServer] = useState({
-        value: "http://192.168.178.26:8080",
-        error: "",
-    });
-    const [username, setUsername] = useState({ value: "", error: "" });
-    const [password, setPassword] = useState({ value: "", error: "" });
+    const dispatch = useAppDispatch();
 
     const [showPassword, setShowPassword] = useState(false);
 
@@ -26,33 +29,27 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
         setShowPassword((oldVal) => !oldVal);
     };
 
-    const onLoginPressed = () => {
-        const usernameError = nameValidator(username.value);
-        const passwordError = passwordValidator(password.value);
-        const urlError = urlValidator(server.value);
-
-        if (usernameError || passwordError || urlError) {
-            setUsername({ ...username, error: usernameError });
-            setPassword({ ...password, error: passwordError });
-            setServer({ ...server, error: urlError });
-            return;
-        }
-
-        login({
-            server: server.value,
-            username: username.value,
-            password: password.value,
-        })
-            .then((result) => {
-                console.log("logged in with result", result);
-                setAuthState({
-                    isLoading: false,
-                    isLoggedIn: true,
-                });
+    const handleSubmit = (values: FormSchema, { setSubmitting }: FormikHelpers<FormSchema>) => {
+        api.baseApiUrl = values.server;
+        dispatch(
+            login({
+                username: values.username,
+                password: values.password,
+                sessionName: "Abrechnung Mobile",
+                api,
             })
-            .catch((err) => {
+        )
+            .unwrap()
+            .then(() => {
+                websocket.setUrl(`${values.server.replace("http://", "ws://").replace("https://", "ws://")}/api/v1/ws`);
+                setSubmitting(false);
+            })
+            .catch((err: SerializedError) => {
                 console.log("error on login", err);
-                notify({ text: err.toString() });
+                if (err.message) {
+                    notify({ text: err.message });
+                }
+                setSubmitting(false);
             });
     };
 
@@ -61,74 +58,88 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
             <Appbar.Header theme={{ colors: { primary: theme.colors.surface } }}>
                 <Appbar.Content title="Abrechnung" />
             </Appbar.Header>
-            <View style={styles.container}>
-                <TextInput
-                    label="Server"
-                    returnKeyType="next"
-                    value={server.value}
-                    onChangeText={(text) => setServer({ value: text, error: "" })}
-                    error={!!server.error}
-                    // errorText={email.error}
-                    autoCapitalize="none"
-                    // autoCompleteType="email"
-                    textContentType="URL"
-                    keyboardType="url"
-                />
-                <HelperText type="error" visible={!!server.error}>
-                    {server.error}
-                </HelperText>
-
-                <TextInput
-                    label="Username"
-                    returnKeyType="next"
-                    value={username.value}
-                    onChangeText={(text) => setUsername({ value: text, error: "" })}
-                    error={!!username.error}
-                    // errorText={email.error}
-                    autoCapitalize="none"
-                    // autoCompleteType="email"
-                    textContentType="username"
-                />
-                <HelperText type="error" visible={!!username.error}>
-                    {username.error}
-                </HelperText>
-
-                <TextInput
-                    label="Password"
-                    returnKeyType="done"
-                    value={password.value}
-                    onChangeText={(text) => setPassword({ value: text, error: "" })}
-                    error={!!password.error}
-                    // errorText={password.error}
-                    secureTextEntry={!showPassword}
-                    right={
-                        <TextInput.Icon
-                            name={({ color, size }) => (
-                                <MaterialCommunityIcons
-                                    name={showPassword ? "eye-off" : "eye"}
-                                    color={color}
-                                    size={size}
-                                    onPress={toggleShowPassword}
-                                />
-                            )}
+            <Formik
+                validationSchema={toFormikValidationSchema(validationSchema)}
+                validateOnBlur={false}
+                validateOnChange={false}
+                initialValues={{
+                    server: "http://10.150.9.104:8080",
+                    username: "",
+                    password: "",
+                }}
+                onSubmit={handleSubmit}
+            >
+                {({ values, touched, handleSubmit, handleBlur, isSubmitting, errors, setFieldValue }) => (
+                    <View style={styles.container}>
+                        <TextInput
+                            label="Server"
+                            returnKeyType="next"
+                            value={values.server}
+                            onBlur={handleBlur("server")}
+                            onChangeText={(val) => setFieldValue("server", val)}
+                            error={touched.server && !!errors.server}
+                            autoCapitalize="none"
+                            textContentType="URL"
+                            keyboardType="url"
                         />
-                    }
-                />
-                <HelperText type="error" visible={!!password.error}>
-                    {password.error}
-                </HelperText>
+                        <HelperText type="error" visible={touched.server && !!errors.server}>
+                            {errors.server}
+                        </HelperText>
 
-                <Button mode="contained" onPress={onLoginPressed}>
-                    Login
-                </Button>
+                        <TextInput
+                            label="Username"
+                            returnKeyType="next"
+                            value={values.username}
+                            onBlur={handleBlur("username")}
+                            onChangeText={(val) => setFieldValue("username", val)}
+                            error={touched.username && !!errors.username}
+                            autoCapitalize="none"
+                            textContentType="username"
+                        />
+                        <HelperText type="error" visible={touched.username && !!errors.username}>
+                            {errors.username}
+                        </HelperText>
 
-                <View style={styles.row}>
-                    <Text>Don’t have an account? </Text>
-                    <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-                        <Text style={styles.link}>Sign up</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
+                        <TextInput
+                            label="Password"
+                            returnKeyType="done"
+                            value={values.password}
+                            onBlur={handleBlur("password")}
+                            onChangeText={(val) => setFieldValue("password", val)}
+                            error={touched.password && !!errors.password}
+                            secureTextEntry={!showPassword}
+                            textContentType="password"
+                            right={
+                                <TextInput.Icon
+                                    name={({ color, size }) => (
+                                        <MaterialCommunityIcons
+                                            name={showPassword ? "eye-off" : "eye"}
+                                            color={color}
+                                            size={size}
+                                            onPress={toggleShowPassword}
+                                        />
+                                    )}
+                                />
+                            }
+                        />
+                        <HelperText type="error" visible={touched.password && !!errors.password}>
+                            {errors.password}
+                        </HelperText>
+
+                        {isSubmitting ? <ProgressBar indeterminate={true} /> : null}
+                        <Button mode="contained" onPress={handleSubmit}>
+                            Login
+                        </Button>
+
+                        <View style={styles.row}>
+                            <Text>Don’t have an account? </Text>
+                            <TouchableOpacity onPress={() => navigation.navigate("Register")}>
+                                <Text style={styles.link}>Sign up</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                )}
+            </Formik>
         </>
     );
 };

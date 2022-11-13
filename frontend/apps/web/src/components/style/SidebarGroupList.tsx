@@ -1,19 +1,18 @@
-import { useRecoilValue } from "recoil";
 import { Grid, IconButton, List, ListItem, ListItemText } from "@mui/material";
-import { Group, groupList } from "../../state/groups";
 import ListItemLink from "./ListItemLink";
 import GroupCreateModal from "../groups/GroupCreateModal";
 import React, { useState } from "react";
 import { Add } from "@mui/icons-material";
-import { isGuestUser } from "../../state/auth";
+import { selectGroups, selectIsGuestUser } from "@abrechnung/redux";
+import { selectGroupSlice, useAppSelector, selectAuthSlice } from "../../store";
 
 interface Props {
-    group?: Group | null;
+    activeGroupId?: number;
 }
 
-export const SidebarGroupList: React.FC<Props> = ({ group = null }) => {
-    const groups = useRecoilValue(groupList);
-    const isGuest = useRecoilValue(isGuestUser);
+export const SidebarGroupList: React.FC<Props> = ({ activeGroupId }) => {
+    const isGuest = useAppSelector((state) => selectIsGuestUser({ state: selectAuthSlice(state) }));
+    const groups = useAppSelector((state) => selectGroups({ state: selectGroupSlice(state) }));
     const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
 
     const openGroupCreateModal = () => {
@@ -33,7 +32,11 @@ export const SidebarGroupList: React.FC<Props> = ({ group = null }) => {
                     <ListItemText secondary="Groups" />
                 </ListItem>
                 {groups.map((it) => (
-                    <ListItemLink key={it.id} to={`/groups/${it.id}`} selected={group && group.id === it.id}>
+                    <ListItemLink
+                        key={it.id}
+                        to={`/groups/${it.id}`}
+                        selected={activeGroupId && activeGroupId === it.id}
+                    >
                         <ListItemText primary={it.name} />
                     </ListItemLink>
                 ))}

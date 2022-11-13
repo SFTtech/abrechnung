@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { useRecoilValue, useSetRecoilState } from "recoil";
 import {
     Box,
     Checkbox,
@@ -19,16 +18,23 @@ import {
     Typography,
     useMediaQuery,
 } from "@mui/material";
-import { pendingTransactionDetailChanges, Transaction } from "../../../state/transactions";
-import { AccountConsolidated, accountsSeenByUser } from "../../../state/accounts";
-import { Group } from "../../../state/groups";
+import { Account } from "@abrechnung/types";
 import { ShareInput } from "../../ShareInput";
 import { Clear, Search as SearchIcon } from "@mui/icons-material";
 import { ClearingAccountIcon, PersonalAccountIcon } from "../../style/AbrechnungIcons";
+import { useAppSelector, useAppDispatch, selectAccountSlice, selectTransactionSlice } from "../../../store";
+import {
+    selectGroupAccounts,
+    selectTransactionById,
+    selectTransactionHasPositions,
+    selectTransactionBalanceEffect,
+    wipTransactionUpdated,
+} from "@abrechnung/redux";
 
 interface AccountTableRowProps {
-    transaction: Transaction;
-    account: AccountConsolidated;
+    groupId: number;
+    transactionId: number;
+    account: Account;
     showAdvanced: boolean;
     debitorShareValueForAccount: (accountID: number) => number;
     showPositions: boolean;
@@ -38,7 +44,8 @@ interface AccountTableRowProps {
 }
 
 const AccountTableRow: React.FC<AccountTableRowProps> = ({
-    transaction,
+    groupId,
+    transactionId,
     account,
     showAdvanced,
     debitorShareValueForAccount,
@@ -47,8 +54,12 @@ const AccountTableRow: React.FC<AccountTableRowProps> = ({
     debitorValueForAccount,
     updateDebShare,
 }) => {
-    const transactionHasPositions =
-        transaction.positions != null && transaction.positions.find((item) => !item.deleted) !== undefined;
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const transactionHasPositions = useAppSelector((state) =>
+        selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
 
     return (
         <TableRow hover>
@@ -71,7 +82,7 @@ const AccountTableRow: React.FC<AccountTableRowProps> = ({
                 ) : (
                     <Checkbox
                         name={`${account.name}-checked`}
-                        checked={transaction.debitor_shares.hasOwnProperty(account.id)}
+                        checked={transaction.debitorShares[account.id] !== undefined}
                         onChange={(event) => updateDebShare(account.id, event.target.checked ? 1.0 : 0)}
                     />
                 )}
@@ -79,22 +90,22 @@ const AccountTableRow: React.FC<AccountTableRowProps> = ({
             {showPositions || transactionHasPositions ? (
                 <>
                     <TableCell align="right">
-                        {positionValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
+                        {positionValueForAccount(account.id).toFixed(2)} {transaction.currencySymbol}
                     </TableCell>
                     <TableCell></TableCell>
                     <TableCell align="right">
-                        {debitorValueForAccount(account.id).toFixed(2)} {transaction.currency_symbol}
+                        {debitorValueForAccount(account.id).toFixed(2)} {transaction.currencySymbol}
                     </TableCell>
                     <TableCell></TableCell>
                     <TableCell width="100px" align="right">
                         {(debitorValueForAccount(account.id) + positionValueForAccount(account.id)).toFixed(2)}{" "}
-                        {transaction.currency_symbol}
+                        {transaction.currencySymbol}
                     </TableCell>
                 </>
             ) : (
                 <TableCell width="100px" align="right">
                     {(debitorValueForAccount(account.id) + positionValueForAccount(account.id)).toFixed(2)}{" "}
-                    {transaction.currency_symbol}
+                    {transaction.currencySymbol}
                 </TableCell>
             )}
         </TableRow>
@@ -102,31 +113,39 @@ const AccountTableRow: React.FC<AccountTableRowProps> = ({
 };
 
 interface PurchaseDebitorSharesProps {
-    group: Group;
-    transaction: Transaction;
+    groupId: number;
+    transactionId: number;
     showPositions: boolean;
 }
 
 export const PurchaseDebitorShares: React.FC<PurchaseDebitorSharesProps> = ({
-    group,
-    transaction,
+    groupId,
+    transactionId,
     showPositions = false,
 }) => {
     const isSmallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
 
-    const accounts = useRecoilValue(accountsSeenByUser(group.id));
+    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
+
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const transactionHasPositions = useAppSelector((state) =>
+        selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const transactionBalanceEffect = useAppSelector((state) =>
+        selectTransactionBalanceEffect({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+
+    const dispatch = useAppDispatch();
 
     const [searchValue, setSearchValue] = useState("");
     const [filteredAccounts, setFilteredAccounts] = useState([]);
 
     const [showAdvanced, setShowAdvanced] = useState(false);
 
-    const transactionHasPositions =
-        transaction.positions != null && transaction.positions.find((item) => !item.deleted) !== undefined;
-    const setLocalTransactionDetails = useSetRecoilState(pendingTransactionDetailChanges(transaction.id));
-
     useEffect(() => {
-        for (const share of Object.values(transaction.debitor_shares)) {
+        for (const share of Object.values(transaction.debitorShares)) {
             if (share !== 1) {
                 setShowAdvanced(true);
                 break;
@@ -146,64 +165,37 @@ export const PurchaseDebitorShares: React.FC<PurchaseDebitorSharesProps> = ({
         }
     }, [searchValue, accounts]);
 
-    const debitorShareValueForAccount = (accountID) => {
-        return transaction.debitor_shares && transaction.debitor_shares.hasOwnProperty(accountID)
-            ? transaction.debitor_shares[accountID]
+    const debitorShareValueForAccount = (accountID: number) => {
+        return transaction.debitorShares && transaction.debitorShares[accountID] !== undefined
+            ? transaction.debitorShares[accountID]
             : 0;
     };
 
-    const debitorValueForAccount = (accountID) => {
-        if (!transaction.account_balances.hasOwnProperty(accountID)) {
+    const debitorValueForAccount = (accountID: number) => {
+        if (transactionBalanceEffect[accountID] === undefined) {
             return 0.0;
         }
-        return transaction.account_balances[accountID].common_debitors;
+        return transactionBalanceEffect[accountID].commonDebitors;
     };
 
-    const positionValueForAccount = (accountID) => {
-        if (!transaction.account_balances.hasOwnProperty(accountID)) {
+    const positionValueForAccount = (accountID: number) => {
+        if (transactionBalanceEffect[accountID] === undefined) {
             return 0.0;
         }
-        return transaction.account_balances[accountID].positions;
+        return transactionBalanceEffect[accountID].positions;
     };
 
     const updateDebShare = (accountID, value) => {
         if (value === 0) {
-            setLocalTransactionDetails((currState) => {
-                let newDebitorShares;
-                if (currState.debitor_shares === undefined) {
-                    newDebitorShares = {
-                        ...transaction.debitor_shares,
-                    };
-                } else {
-                    newDebitorShares = {
-                        ...currState.debitor_shares,
-                    };
-                }
-                delete newDebitorShares[accountID];
-                return {
-                    ...currState,
-                    debitor_shares: newDebitorShares,
-                };
-            });
+            const newDebitorShares = { ...transaction.debitorShares };
+            delete newDebitorShares[accountID];
+
+            dispatch(wipTransactionUpdated({ ...transaction, debitorShares: newDebitorShares }));
         } else {
-            setLocalTransactionDetails((currState) => {
-                let newDebitorShares;
-                if (currState.debitor_shares === undefined) {
-                    newDebitorShares = {
-                        ...transaction.debitor_shares,
-                        [accountID]: value,
-                    };
-                } else {
-                    newDebitorShares = {
-                        ...currState.debitor_shares,
-                        [accountID]: value,
-                    };
-                }
-                return {
-                    ...currState,
-                    debitor_shares: newDebitorShares,
-                };
-            });
+            const newDebitorShares = { ...transaction.debitorShares, [accountID]: value };
+            newDebitorShares[accountID] = value;
+
+            dispatch(wipTransactionUpdated({ ...transaction, debitorShares: newDebitorShares }));
         }
     };
 
@@ -211,10 +203,10 @@ export const PurchaseDebitorShares: React.FC<PurchaseDebitorSharesProps> = ({
         <div>
             <Box sx={{ paddingLeft: 0 }}>
                 <Grid container direction="row" justifyContent="space-between">
-                    <Typography variant="subtitle1" sx={{ marginTop: 7, marginBottom: 7 }}>
+                    <Typography variant="subtitle1" sx={{ marginTop: 1, marginBottom: 1 }}>
                         <Box sx={{ display: "flex", alignItems: "flex-end" }}>For whom</Box>
                     </Typography>
-                    {transaction.is_wip && (
+                    {transaction.isWip && (
                         <FormControlLabel
                             control={<Checkbox name={`show-advanced`} />}
                             checked={showAdvanced}
@@ -293,7 +285,8 @@ export const PurchaseDebitorShares: React.FC<PurchaseDebitorSharesProps> = ({
                         {filteredAccounts.map((account) => (
                             <AccountTableRow
                                 key={account.id}
-                                transaction={transaction}
+                                groupId={groupId}
+                                transactionId={transactionId}
                                 account={account}
                                 debitorValueForAccount={debitorValueForAccount}
                                 debitorShareValueForAccount={debitorShareValueForAccount}

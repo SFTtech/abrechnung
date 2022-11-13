@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Loading from "../../components/style/Loading";
-import { confirmEmailChange } from "../../core/api";
+import { api } from "../../core/api";
 import { Button, Typography } from "@mui/material";
 import { useTitle } from "../../core/utils";
 
@@ -15,7 +15,7 @@ export const ConfirmEmailChange: React.FC = () => {
     const confirmEmail = (e) => {
         e.preventDefault();
         setStatus("loading");
-        confirmEmailChange({ token: token })
+        api.confirmEmailChange(token)
             .then((value) => {
                 setStatus("success");
             })

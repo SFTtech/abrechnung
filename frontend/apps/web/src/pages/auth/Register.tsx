@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { Form, Formik } from "formik";
-
-import { useRecoilValue } from "recoil";
-import { isAuthenticated } from "../../state/auth";
-import { register } from "../../core/api";
+import { api } from "../../core/api";
 import { toast } from "react-toastify";
 import Loading from "../../components/style/Loading";
 import {
@@ -22,6 +19,8 @@ import {
 import { LockOutlined } from "@mui/icons-material";
 import { useQuery, useTitle } from "../../core/utils";
 import * as yup from "yup";
+import { selectAuthSlice, useAppSelector } from "../../store";
+import { selectIsAuthenticated } from "@abrechnung/redux";
 
 const validationSchema = yup.object({
     username: yup.string().required("username is required"),
@@ -30,7 +29,7 @@ const validationSchema = yup.object({
 });
 
 export const Register: React.FC = () => {
-    const loggedIn = useRecoilValue(isAuthenticated);
+    const loggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
     const [loading, setLoading] = useState(true);
     const query = useQuery();
     const navigate = useNavigate();
@@ -63,12 +62,8 @@ export const Register: React.FC = () => {
                 inviteToken = m[1];
             }
         }
-        const payload = {
-            ...values,
-            inviteToken: inviteToken,
-        };
 
-        register(payload)
+        api.register(values.username, values.email, values.password, inviteToken)
             .then((res) => {
                 toast.success(`Registered successfully, please confirm your email before logging in...`, {
                     autoClose: 20000,

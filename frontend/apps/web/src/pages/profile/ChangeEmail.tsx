@@ -1,6 +1,6 @@
 import React from "react";
 import { Form, Formik } from "formik";
-import { changeEmail } from "../../core/api";
+import { api } from "../../core/api";
 import { toast } from "react-toastify";
 import { Button, LinearProgress, TextField, Typography } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
@@ -10,10 +10,7 @@ export const ChangeEmail: React.FC = () => {
     useTitle("Abrechnung - Change E-Mail");
 
     const handleSubmit = (values, { setSubmitting }) => {
-        changeEmail({
-            password: values.password,
-            newEmail: values.newEmail,
-        })
+        api.changeEmail(values.password, values.newEmail)
             .then((res) => {
                 setSubmitting(false);
                 toast.success("Requested email change, you should receive an email with a confirmation link soon");

@@ -1,19 +1,20 @@
 import { ActivityIndicator, List, Menu, Portal, Text, useTheme } from "react-native-paper";
 import PositionDialog from "./PositionDialog";
 import React, { useState } from "react";
-import { createPosition, deletePosition } from "../core/database/transactions";
-import { notify } from "../notifications";
 import { TransactionPosition } from "@abrechnung/types";
+import { useAppDispatch } from "../store";
+import { positionDeleted, wipPositionAdded } from "@abrechnung/redux";
 
 interface Props {
-    groupID: number;
+    groupId: number;
     currencySymbol: string;
     position: TransactionPosition;
     editing: boolean;
 }
 
-export const PositionListItem: React.FC<Props> = ({ groupID, currencySymbol, position, editing }) => {
+export const PositionListItem: React.FC<Props> = ({ groupId, currencySymbol, position, editing }) => {
     const theme = useTheme();
+    const dispatch = useAppDispatch();
     const [showPositionDialog, setShowPositionDialog] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
 
@@ -25,15 +26,11 @@ export const PositionListItem: React.FC<Props> = ({ groupID, currencySymbol, pos
     const closeMenu = () => setShowMenu(false);
 
     const onDeletePosition = () => {
-        deletePosition(position).catch((err) => {
-            notify({ text: `Error while deleting position: ${err.toString()}` });
-        });
+        dispatch(positionDeleted({ groupId, transactionId: position.transactionID, positionId: position.id }));
     };
 
     const onCopyPosition = () => {
-        createPosition(groupID, position.transaction_id, position).catch((err) => {
-            notify({ text: `Error while copying position: ${err.toString()}` });
-        });
+        dispatch(wipPositionAdded({ groupId, transactionId: position.transactionID, position }));
     };
 
     return (
@@ -55,7 +52,7 @@ export const PositionListItem: React.FC<Props> = ({ groupID, currencySymbol, pos
                         onLongPress={openMenu}
                         right={(props) => (
                             <Text>
-                                {parseFloat(position.price).toFixed(2)} {currencySymbol}
+                                {position.price.toFixed(2)} {currencySymbol}
                             </Text>
                         )}
                     />
@@ -65,16 +62,14 @@ export const PositionListItem: React.FC<Props> = ({ groupID, currencySymbol, pos
                 <Menu.Item title="Copy" leadingIcon="content-copy" onPress={onCopyPosition} />
             </Menu>
             <Portal>
-                <React.Suspense fallback={<ActivityIndicator animating={true} />}>
-                    <PositionDialog
-                        groupID={groupID}
-                        position={position}
-                        editing={editing}
-                        showDialog={showPositionDialog}
-                        onHideDialog={() => setShowPositionDialog(false)}
-                        currencySymbol={currencySymbol}
-                    />
-                </React.Suspense>
+                <PositionDialog
+                    groupId={groupId}
+                    position={position}
+                    editing={editing}
+                    showDialog={showPositionDialog}
+                    onHideDialog={() => setShowPositionDialog(false)}
+                    currencySymbol={currencySymbol}
+                />
             </Portal>
         </>
     );

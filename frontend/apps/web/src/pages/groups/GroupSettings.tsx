@@ -1,9 +1,6 @@
 import React, { useState } from "react";
-
 import { toast } from "react-toastify";
-import { leaveGroup, updateGroupMetadata } from "../../core/api";
-import { currUserPermissions, Group } from "../../state/groups";
-import { useRecoilValue } from "recoil";
+import { api } from "../../core/api";
 import { useNavigate } from "react-router-dom";
 import {
     Alert,
@@ -23,6 +20,8 @@ import { useTitle } from "../../core/utils";
 import { Form, Formik } from "formik";
 import * as yup from "yup";
 import { DisabledFormControlLabel, DisabledTextField } from "../../components/style/DisabledTextField";
+import { useAppSelector, selectGroupSlice, useAppDispatch } from "../../store";
+import { selectGroupById, selectCurrentUserPermissions, updateGroup, leaveGroup } from "@abrechnung/redux";
 import { Cancel, Edit, Save } from "@mui/icons-material";
 
 const validationSchema = yup.object({
@@ -34,14 +33,16 @@ const validationSchema = yup.object({
 });
 
 interface Props {
-    group: Group;
+    groupId: number;
 }
 
-export const GroupSettings: React.FC<Props> = ({ group }) => {
+export const GroupSettings: React.FC<Props> = ({ groupId }) => {
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
 
-    const userPermissions = useRecoilValue(currUserPermissions(group.id));
+    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
+    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
 
     const [isEditing, setIsEditing] = useState(false);
 
@@ -56,14 +57,20 @@ export const GroupSettings: React.FC<Props> = ({ group }) => {
     };
 
     const handleSubmit = (values, { setSubmitting }) => {
-        updateGroupMetadata({
-            groupID: group.id,
-            name: values.name,
-            description: values.description,
-            currencySymbol: values.currencySymbol,
-            terms: values.terms,
-            addUserAccountOnJoin: values.addUserAccountOnJoin,
-        })
+        dispatch(
+            updateGroup({
+                group: {
+                    id: group.id,
+                    name: values.name,
+                    description: values.description,
+                    currencySymbol: values.currencySymbol,
+                    terms: values.terms,
+                    addUserAccountOnJoin: values.addUserAccountOnJoin,
+                },
+                api,
+            })
+        )
+            .unwrap()
             .then((res) => {
                 setSubmitting(false);
                 setIsEditing(false);
@@ -75,7 +82,8 @@ export const GroupSettings: React.FC<Props> = ({ group }) => {
     };
 
     const confirmLeaveGroup = () => {
-        leaveGroup({ groupID: group.id })
+        dispatch(leaveGroup({ groupId, api }))
+            .unwrap()
             .then((res) => {
                 navigate("/");
             })
@@ -86,9 +94,9 @@ export const GroupSettings: React.FC<Props> = ({ group }) => {
 
     return (
         <MobilePaper>
-            {userPermissions.is_owner ? (
+            {permissions.isOwner ? (
                 <Alert severity="info">You are an owner of this group</Alert>
-            ) : !userPermissions.can_write ? (
+            ) : !permissions.canWrite ? (
                 <Alert severity="info">You only have read access to this group</Alert>
             ) : null}
 
@@ -97,8 +105,8 @@ export const GroupSettings: React.FC<Props> = ({ group }) => {
                     name: group.name,
                     description: group.description,
                     terms: group.terms,
-                    currencySymbol: group.currency_symbol,
-                    addUserAccountOnJoin: group.add_user_account_on_join,
+                    currencySymbol: group.currencySymbol,
+                    addUserAccountOnJoin: group.addUserAccountOnJoin,
                 }}
                 onSubmit={handleSubmit}
                 validationSchema={validationSchema}
@@ -114,7 +122,7 @@ export const GroupSettings: React.FC<Props> = ({ group }) => {
                             type="text"
                             label="Name"
                             name="name"
-                            disabled={!userPermissions.can_write || !isEditing}
+                            disabled={!permissions.canWrite || !isEditing}
                             onBlur={handleBlur}
                             onChange={handleChange}
                             value={values.name}
@@ -127,7 +135,7 @@ export const GroupSettings: React.FC<Props> = ({ group }) => {
                             type="text"
                             name="description"
                             label="Description"
-                            disabled={!userPermissions.can_write || !isEditing}
+                            disabled={!permissions.canWrite || !isEditing}
                             onBlur={handleBlur}
                             onChange={handleChange}
                             value={values.description}
@@ -140,7 +148,7 @@ export const GroupSettings: React.FC<Props> = ({ group }) => {
                             type="text"
                             name="currencySymbol"
                             label="Currency"
-                            disabled={!userPermissions.can_write || !isEditing}
+                            disabled={!permissions.canWrite || !isEditing}
                             onBlur={handleBlur}
                             onChange={handleChange}
                             value={values.currencySymbol}
@@ -153,7 +161,7 @@ export const GroupSettings: React.FC<Props> = ({ group }) => {
                             type="text"
                             name="terms"
                             label="Terms"
-                            disabled={!userPermissions.can_write || !isEditing}
+                            disabled={!permissions.canWrite || !isEditing}
                             onBlur={handleBlur}
                             onChange={handleChange}
                             value={values.terms}
@@ -163,7 +171,7 @@ export const GroupSettings: React.FC<Props> = ({ group }) => {
                                 control={
                                     <Checkbox
                                         name="addUserAccountOnJoin"
-                                        disabled={!userPermissions.can_write || !isEditing}
+                                        disabled={!permissions.canWrite || !isEditing}
                                         onBlur={handleBlur}
                                         onChange={handleChange}
                                         checked={values.addUserAccountOnJoin}
@@ -176,7 +184,7 @@ export const GroupSettings: React.FC<Props> = ({ group }) => {
                         {isSubmitting && <LinearProgress />}
                         <Grid container justifyContent="space-between" style={{ marginTop: 10 }}>
                             <div>
-                                {userPermissions.can_write && isEditing && (
+                                {permissions.canWrite && isEditing && (
                                     <>
                                         <Button
                                             type="submit"
@@ -199,7 +207,7 @@ export const GroupSettings: React.FC<Props> = ({ group }) => {
                                         </Button>
                                     </>
                                 )}
-                                {userPermissions.can_write && !isEditing && (
+                                {permissions.canWrite && !isEditing && (
                                     <Button
                                         variant="contained"
                                         color="primary"

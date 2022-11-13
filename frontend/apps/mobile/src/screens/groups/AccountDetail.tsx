@@ -3,48 +3,73 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import { ActivityIndicator, Button, Divider, List, Text, useTheme } from "react-native-paper";
 import * as React from "react";
 import { useLayoutEffect } from "react";
-import { useRecoilValue } from "recoil";
-import { accountBalancesState, accountByIDState } from "../../core/accounts";
-import { toISODateString } from "@abrechnung/utils";
-import { Transaction, AccountBalance } from "@abrechnung/types";
-import { getTransactionIcon } from "../../constants/Icons";
-import TransactionShareInput from "../../components/transaction_shares/TransactionShareInput";
+import { Transaction, AccountBalance, Account, TransactionShare } from "@abrechnung/types";
+import { clearingAccountIcon, getTransactionIcon } from "../../constants/Icons";
+import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
 import { successColor } from "../../theme";
-import { activeGroupState } from "../../core/groups";
-import { transactionsInvolvingAccount } from "../../core/transactions";
+import { selectAccountSlice, selectGroupSlice, selectTransactionSlice, useAppSelector } from "../../store";
+import {
+    selectAccountBalances,
+    selectAccountById,
+    selectGroupCurrencySymbol,
+    selectTransactionsInvolvingAccount,
+    selectCurrentUserPermissions,
+    selectGroupAccountsFiltered,
+} from "@abrechnung/redux";
+import { fromISOString } from "@abrechnung/utils";
+
+type ArrayAccountsAndTransactions = Array<Transaction | Account>;
 
 export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = ({ route, navigation }) => {
     const theme = useTheme();
 
-    const { groupID, accountID } = route.params;
+    const { groupId, accountId } = route.params;
 
-    const activeGroup = useRecoilValue(activeGroupState);
-    const account = useRecoilValue(accountByIDState({ groupID, accountID }));
-    const accountBalances = useRecoilValue(accountBalancesState(groupID));
-    const accountTransactions = useRecoilValue(transactionsInvolvingAccount({ groupID, accountID }));
+    const account = useAppSelector((state) =>
+        selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
+    );
+    const accountBalances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
+    const transactions = useAppSelector((state) =>
+        selectTransactionsInvolvingAccount({ state: selectTransactionSlice(state), groupId, accountId })
+    );
+
+    const clearingAccounts = useAppSelector((state) =>
+        selectGroupAccountsFiltered({ state: selectAccountSlice(state), groupId, type: "clearing" })
+    );
+
+    const combinedList: ArrayAccountsAndTransactions = (transactions as ArrayAccountsAndTransactions)
+        .concat(clearingAccounts)
+        .sort((f1, f2) => fromISOString(f2.lastChanged).getTime() - fromISOString(f1.lastChanged).getTime());
+
+    const currencySymbol = useAppSelector((state) =>
+        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
+    );
+    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
 
     useLayoutEffect(() => {
         const edit = () => {
             navigation.navigate("AccountEdit", {
-                accountID: accountID,
-                groupID: groupID,
-                editingStart: new Date().toISOString(),
+                accountId: accountId,
+                groupId: groupId,
             });
         };
 
         navigation.setOptions({
             headerTitle: account?.name || "",
             headerRight: () => {
+                if (permissions === undefined || !permissions.canWrite) {
+                    return null;
+                }
                 return <Button onPress={edit}>Edit</Button>;
             },
         });
-    }, [accountID, groupID, theme, account, navigation]);
+    }, [accountId, permissions, groupId, theme, account, navigation]);
 
-    const renderTransactionListEntry = (transaction: Transaction) => (
+    const renderTransactionListEntryTransaction = (transaction: Transaction) => (
         <List.Item
-            key={transaction.id}
+            key={`transaction-${transaction.id}`}
             title={transaction.description}
-            description={toISODateString(transaction.billedAt)}
+            description={transaction.billedAt}
             left={(props) => <List.Icon {...props} icon={getTransactionIcon(transaction.type)} />}
             right={(props) => (
                 <Text>
@@ -54,13 +79,43 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
             )}
             onPress={() =>
                 navigation.navigate("TransactionDetail", {
-                    groupID: transaction.groupID,
-                    transactionID: transaction.id,
-                    editingStart: null,
+                    groupId: transaction.groupID,
+                    transactionId: transaction.id,
+                    editing: false,
                 })
             }
         />
     );
+
+    const renderTransactionListEntryClearing = (account: Account) => (
+        <List.Item
+            key={`clearing-${account.id}`}
+            title={account.name}
+            description={account.description}
+            left={(props) => <List.Icon {...props} icon={clearingAccountIcon} />}
+            right={(props) => (
+                <Text>
+                    {accountBalances[account.id]?.clearingResolution[accountId]?.toFixed(2)}
+                    {currencySymbol}
+                </Text>
+            )}
+            onPress={() =>
+                navigation.navigate("AccountDetail", {
+                    groupId: account.groupID,
+                    accountId: account.id,
+                })
+            }
+        />
+    );
+
+    const renderTransactionListEntry = (element: Transaction | Account) => {
+        if (element.type === "purchase" || element.type === "transfer" || element.type === "mimo") {
+            return renderTransactionListEntryTransaction(element);
+        } else if (element.type === "clearing") {
+            return renderTransactionListEntryClearing(element);
+        }
+        return null;
+    };
 
     if (account == null) {
         return (
@@ -70,7 +125,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
         );
     }
 
-    const balance: AccountBalance | undefined = accountBalances.get(account.id);
+    const balance: AccountBalance | undefined = accountBalances[account.id];
     if (balance === undefined) {
         return null; // TODO: display some error
     }
@@ -83,7 +138,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                 title="Balance"
                 right={(props) => (
                     <Text style={{ color: textColor }}>
-                        {balance.balance.toFixed(2)} {activeGroup?.currencySymbol}
+                        {balance.balance.toFixed(2)} {currencySymbol}
                     </Text>
                 )}
             />
@@ -91,8 +146,8 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                 <TransactionShareInput
                     title="Participated"
                     disabled={true}
-                    groupID={groupID}
-                    value={account.clearingShares}
+                    groupId={groupId}
+                    value={account.clearingShares as TransactionShare}
                     onChange={() => {
                         return;
                     }}
@@ -102,15 +157,15 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                 />
             )}
 
-            {accountTransactions.length > 0 && (
+            {combinedList.length > 0 ? (
                 <>
                     <Divider />
                     <List.Section>
                         <List.Subheader>{account.type === "clearing" ? "Cleared" : "Participated in"}</List.Subheader>
-                        {accountTransactions.map((t) => renderTransactionListEntry(t))}
+                        {combinedList.map((t) => renderTransactionListEntry(t))}
                     </List.Section>
                 </>
-            )}
+            ) : null}
         </ScrollView>
     );
 };

@@ -2,7 +2,7 @@ import React, { ReactNode } from "react";
 import * as yup from "yup";
 import { Form, Formik, FormikProps } from "formik";
 import { toast } from "react-toastify";
-import { createAccount } from "../../core/api";
+import { api } from "../../core/api";
 import {
     Button,
     Checkbox,
@@ -14,11 +14,9 @@ import {
     LinearProgress,
     TextField,
 } from "@mui/material";
-import { useRecoilValue, useSetRecoilState } from "recoil";
-import { addAccount, groupAccounts } from "../../state/accounts";
 import GroupMemberSelect from "../groups/GroupMemberSelect";
-import { currUserPermissions, Group } from "../../state/groups";
-import { userData } from "../../state/auth";
+import { useAppDispatch, useAppSelector, selectAuthSlice } from "../../store";
+import { createAccount, selectCurrentUserId, selectCurrentUserPermissions } from "@abrechnung/redux";
 
 interface FormValues {
     name: string;
@@ -32,7 +30,7 @@ const validationSchema = yup.object({
 });
 
 interface Props {
-    group: Group;
+    groupId: number;
     show: boolean;
     onClose: (
         event: Record<string, never>,
@@ -40,29 +38,28 @@ interface Props {
     ) => void;
 }
 
-export const CreateAccountModal: React.FC<Props> = ({ show, onClose, group }) => {
-    const setAccounts = useSetRecoilState(groupAccounts(group.id));
-    const userPermissions = useRecoilValue(currUserPermissions(group.id));
-    const currentUser = useRecoilValue(userData);
+export const CreateAccountModal: React.FC<Props> = ({ show, onClose, groupId }) => {
+    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const currentUserId = useAppSelector((state) => selectCurrentUserId({ state: selectAuthSlice(state) }));
+    const dispatch = useAppDispatch();
 
     const handleSubmit = (values, { setSubmitting }) => {
-        createAccount({
-            groupID: group.id,
-            name: values.name,
-            owningUserID: values.owningUserID,
-            description: values.description,
-        })
-            .then((account) => {
-                toast.success(`Created account ${values.name}`);
-                addAccount(account, setAccounts);
+        dispatch(
+            createAccount({ account: { ...values, groupID: groupId, type: "personal" }, api: api, keepWip: false })
+        )
+            .then((res) => {
+                console.log(res);
                 setSubmitting(false);
                 onClose({}, "completed");
             })
             .catch((err) => {
+                console.log(err);
+                // TODO: determine what we get from error
                 toast.error(err);
                 setSubmitting(false);
             });
     };
+
     return (
         <Dialog open={show} onClose={onClose}>
             <DialogTitle>Create Personal Account</DialogTitle>
@@ -110,10 +107,10 @@ export const CreateAccountModal: React.FC<Props> = ({ show, onClose, group }) =>
                                 error={touched.description && Boolean(errors.description)}
                                 helperText={touched.description && (errors.description as ReactNode)}
                             />
-                            {userPermissions.is_owner ? (
+                            {permissions.isOwner ? (
                                 <GroupMemberSelect
                                     margin="normal"
-                                    group={group}
+                                    groupId={groupId}
                                     label="Owning user"
                                     value={values.owningUserID}
                                     onChange={(user_id) => setFieldValue("owningUserID", user_id)}
@@ -124,9 +121,9 @@ export const CreateAccountModal: React.FC<Props> = ({ show, onClose, group }) =>
                                         <Checkbox
                                             name="owningUserID"
                                             onChange={(e) =>
-                                                setFieldValue("owningUserID", e.target.checked ? currentUser.id : null)
+                                                setFieldValue("owningUserID", e.target.checked ? currentUserId : null)
                                             }
-                                            checked={values.owningUserID === currentUser.id}
+                                            checked={values.owningUserID === currentUserId}
                                         />
                                     }
                                     label="This is me"

@@ -4,15 +4,24 @@ import * as React from "react";
 import { ActivityIndicator, Drawer } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import { activeGroupIDState, groupState } from "../core/groups";
-import { useRecoilState, useRecoilValue } from "recoil";
+import {
+    useAppSelector,
+    selectGroupSlice,
+    selectUiSlice,
+    selectActiveGroupId,
+    useAppDispatch,
+    changeActiveGroup,
+} from "../store";
+import { selectGroups } from "@abrechnung/redux";
+import { api } from "../core/api";
 
 type Props = React.ForwardRefExoticComponent<ScrollViewProps & React.RefAttributes<ScrollView>>;
 
 export const DrawerContent: React.FC<Props> = (props) => {
+    const dispatch = useAppDispatch();
     const navigation = useNavigation();
-    const groups = useRecoilValue(groupState);
-    const [activeGroupID, setActiveGroupID] = useRecoilState(activeGroupIDState);
+    const activeGroupID = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) }));
+    const groups = useAppSelector((state) => selectGroups({ state: selectGroupSlice(state) }));
 
     return (
         <DrawerContentScrollView {...props}>
@@ -27,8 +36,14 @@ export const DrawerContent: React.FC<Props> = (props) => {
                                 label={group.name}
                                 active={group.id === activeGroupID}
                                 onPress={() => {
-                                    setActiveGroupID(group.id);
-                                    navigation.navigate("GroupStackNavigator");
+                                    dispatch(changeActiveGroup({ api, groupId: group.id }))
+                                        .unwrap()
+                                        .then(() => {
+                                            navigation.navigate("GroupStackNavigator", {
+                                                screen: "TransactionList",
+                                                params: { groupId: group.id },
+                                            });
+                                        });
                                 }}
                             />
                         ))

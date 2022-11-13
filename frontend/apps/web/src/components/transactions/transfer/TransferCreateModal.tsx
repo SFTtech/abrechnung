@@ -1,23 +1,23 @@
 import React, { ReactNode } from "react";
 import { toast } from "react-toastify";
 import { Form, Formik, FormikProps } from "formik";
-import { createTransaction } from "../../../core/api";
+import { api } from "../../../core/api";
 import { DateTime } from "luxon";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
-import DatePicker from "@mui/lab/DatePicker";
-import { useSetRecoilState } from "recoil";
-import { addTransactionInState, groupTransactions } from "../../../state/transactions";
-import { Group } from "../../../state/groups";
+import { DatePicker } from "@mui/x-date-pickers";
+import { Account } from "@abrechnung/types";
+import { useAppSelector, selectGroupSlice, useAppDispatch } from "../../../store";
+import { createTransfer, selectGroupCurrencySymbol } from "@abrechnung/redux";
 import AccountSelect from "../../style/AccountSelect";
 import * as yup from "yup";
-import { AccountConsolidated } from "../../../state/accounts";
+import { parseAbrechnungFloat } from "@abrechnung/utils";
 
 interface FormValues {
     value: string;
     description: string;
     billedAt: DateTime;
-    creditor: AccountConsolidated;
-    debitor: AccountConsolidated;
+    creditor: Account;
+    debitor: Account;
 }
 
 const validationSchema = yup.object({
@@ -29,7 +29,7 @@ const validationSchema = yup.object({
 });
 
 interface Props {
-    group: Group;
+    groupId: number;
     show: boolean;
     onClose: (
         event: Record<string, never>,
@@ -37,24 +37,32 @@ interface Props {
     ) => void;
 }
 
-export const TransferCreateModal: React.FC<Props> = ({ group, show, onClose }) => {
-    const setTransactions = useSetRecoilState(groupTransactions(group.id));
+export const TransferCreateModal: React.FC<Props> = ({ groupId, show, onClose }) => {
+    const currencySymbol = useAppSelector((state) =>
+        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
+    );
 
-    const handleSubmit = (values, { setSubmitting }) => {
-        createTransaction({
-            groupID: group.id,
-            type: "transfer",
-            description: values.description,
-            value: parseFloat(values.value),
-            billedAt: values.billedAt.toISODate(),
-            currencySymbol: group.currency_symbol,
-            currencyConversionRate: 1.0,
-            creditorShares: { [values.creditor.id]: 1.0 },
-            debitorShares: { [values.debitor.id]: 1.0 },
-            performCommit: true,
-        })
-            .then((t) => {
-                addTransactionInState(t, setTransactions);
+    const dispatch = useAppDispatch();
+
+    const handleSubmit = (values: FormValues, { setSubmitting }) => {
+        dispatch(
+            createTransfer({
+                transaction: {
+                    groupID: groupId,
+                    type: "transfer",
+                    description: values.description,
+                    value: parseAbrechnungFloat(values.value),
+                    billedAt: values.billedAt.toISODate(),
+                    currencySymbol: currencySymbol,
+                    currencyConversionRate: 1.0,
+                    creditorShares: { [values.creditor.id]: 1.0 },
+                    debitorShares: { [values.debitor.id]: 1.0 },
+                },
+                api: api,
+                keepWip: false,
+            })
+        )
+            .then((res) => {
                 setSubmitting(false);
                 onClose({}, "completed");
             })
@@ -140,7 +148,7 @@ export const TransferCreateModal: React.FC<Props> = ({ group, show, onClose }) =
                             <AccountSelect
                                 label="From"
                                 name="creditor"
-                                group={group}
+                                groupId={groupId}
                                 value={values.creditor}
                                 onChange={(val) => setFieldValue("creditor", val, true)}
                                 noDisabledStyling={true}
@@ -151,7 +159,7 @@ export const TransferCreateModal: React.FC<Props> = ({ group, show, onClose }) =
                             <AccountSelect
                                 label="To"
                                 name="debitor"
-                                group={group}
+                                groupId={groupId}
                                 value={values.debitor}
                                 onChange={(val) => setFieldValue("debitor", val, true)}
                                 noDisabledStyling={true}

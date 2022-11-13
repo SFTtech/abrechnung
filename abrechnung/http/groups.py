@@ -18,6 +18,15 @@ from abrechnung.http.utils import json_response, PrefixedRouteTableDef
 routes = PrefixedRouteTableDef("/api")
 
 
+async def _group_response(request, group_id: int) -> web.Response:
+    group = await request.app["group_service"].get_group(
+        user=request["user"], group_id=group_id
+    )
+
+    serializer = GroupSchema()
+    return json_response(data=serializer.dump(group))
+
+
 @routes.get("/v1/groups")
 @docs(tags=["groups"], summary="list the current users groups", description="")
 async def list_groups(request):
@@ -56,20 +65,13 @@ async def create_group(request: Request):
         terms=data.get("terms"),
     )
 
-    return json_response(data={"group_id": group_id})
+    return await _group_response(request, group_id)
 
 
 @routes.get(r"/v1/groups/{group_id:\d+}")
 @docs(tags=["groups"], summary="fetch group details", description="")
 async def get_group(request: Request):
-    group = await request.app["group_service"].get_group(
-        user=request["user"],
-        group_id=int(request.match_info["group_id"]),
-    )
-
-    serializer = GroupSchema()
-
-    return json_response(data=serializer.dump(group))
+    return await _group_response(request, int(request.match_info["group_id"]))
 
 
 @routes.post(r"/v1/groups/{group_id:\d+}")
@@ -88,9 +90,10 @@ async def get_group(request: Request):
 )
 async def update_group(request: Request):
     data = request["json"]
+    group_id = int(request.match_info["group_id"])
     await request.app["group_service"].update_group(
         user=request["user"],
-        group_id=int(request.match_info["group_id"]),
+        group_id=group_id,
         name=data["name"],
         description=data.get("description"),
         currency_symbol=data["currency_symbol"],
@@ -98,7 +101,7 @@ async def update_group(request: Request):
         terms=data.get("terms"),
     )
 
-    return web.Response(status=web.HTTPNoContent.status_code)
+    return await _group_response(request, group_id)
 
 
 @routes.delete(r"/v1/groups/{group_id:\d+}")
@@ -179,15 +182,21 @@ async def send_group_message(request: web.Request):
 )
 async def update_member_permissions(request: web.Request):
     data = request["json"]
+    group_id = int(request.match_info["group_id"])
     await request.app["group_service"].update_member_permissions(
         user=request["user"],
-        group_id=int(request.match_info["group_id"]),
+        group_id=group_id,
         member_id=data["user_id"],
         can_write=data["can_write"],
         is_owner=data["is_owner"],
     )
 
-    return web.Response(status=web.HTTPNoContent.status_code)
+    member = await request.app["group_service"].get_member(
+        user=request["user"], group_id=group_id, member_id=data["user_id"]
+    )
+    serializer = GroupMemberSchema()
+
+    return json_response(data=serializer.dump(member))
 
 
 @routes.get(r"/v1/groups/{group_id:\d+}/invites")
@@ -222,16 +231,20 @@ async def create_invite(request: Request):
     if valid_until.tzinfo is None:
         valid_until = valid_until.replace(tzinfo=timezone.utc)
 
-    await request.app["group_service"].create_invite(
+    group_id = int(request.match_info["group_id"])
+    invite_id = await request.app["group_service"].create_invite(
         user=request["user"],
-        group_id=int(request.match_info["group_id"]),
+        group_id=group_id,
         description=data["description"],
         single_use=data["single_use"],
         valid_until=valid_until,
         join_as_editor=data["join_as_editor"],
     )
-
-    return json_response(status=web.HTTPNoContent.status_code)
+    invite = await request.app["group_service"].get_invite(
+        user=request["user"], group_id=group_id, invite_id=invite_id
+    )
+    serializer = GroupInviteSchema()
+    return json_response(data=serializer.dump(invite))
 
 
 @routes.delete(r"/v1/groups/{group_id:\d+}/invites/{invite_id:\d+}")
@@ -276,9 +289,8 @@ async def preview_group(request: Request):
 )
 async def join_group(request: Request):
     data = request["json"]
-    await request.app["group_service"].join_group(
+    group_id = await request.app["group_service"].join_group(
         user=request["user"],
         invite_token=data["invite_token"],
     )
-
-    return json_response(status=web.HTTPNoContent.status_code)
+    return await _group_response(request, group_id)

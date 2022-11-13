@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
-import { confirmPasswordRecovery } from "../../core/api";
+import { api } from "../../core/api";
 import { Form, Formik } from "formik";
 import { Alert, Box, Button, Container, CssBaseline, LinearProgress, Link, TextField, Typography } from "@mui/material";
 
@@ -10,7 +10,7 @@ export const ConfirmPasswordRecovery: React.FC = () => {
     const { token } = useParams();
 
     const handleSubmit = (values, { setSubmitting }) => {
-        confirmPasswordRecovery({ newPassword: values.password, token: token })
+        api.confirmPasswordRecovery(values.password, token)
             .then((res) => {
                 setStatus("success");
                 setError(null);

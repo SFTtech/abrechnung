@@ -11,70 +11,80 @@ import TransactionPositions from "./TransactionPositions";
 import { Add } from "@mui/icons-material";
 import PurchaseDebitorSharesReadOnly from "./PurchaseDebitorSharesReadOnly";
 import { MobilePaper } from "../../style/mobile";
-import { Group } from "../../../state/groups";
-import { Transaction } from "../../../state/transactions";
+import { useAppSelector, selectTransactionSlice } from "../../../store";
+import {
+    selectTransactionById,
+    selectTransactionHasPositions,
+    selectTransactionHasAttachments,
+} from "@abrechnung/redux";
 
 interface Props {
-    group: Group;
-    transaction: Transaction;
+    groupId: number;
+    transactionId: number;
 }
 
-export const PurchaseDetails: React.FC<Props> = ({ group, transaction }) => {
+export const PurchaseDetails: React.FC<Props> = ({ groupId, transactionId }) => {
     const [showPositions, setShowPositions] = useState(false);
+
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+
+    const hasAttachments = useAppSelector((state) =>
+        selectTransactionHasAttachments({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const hasPositions = useAppSelector((state) =>
+        selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
 
     return (
         <>
             <MobilePaper>
-                <TransactionActions groupID={group.id} transaction={transaction} />
+                <TransactionActions groupId={groupId} transactionId={transactionId} />
                 <Divider sx={{ marginBottom: 1, marginTop: 1 }} />
                 <Grid container>
-                    <Grid item xs={12} md={transaction.is_wip || transaction.files.length > 0 ? 6 : 12}>
-                        <TransactionDescription group={group} transaction={transaction} />
-                        <TransactionBilledAt group={group} transaction={transaction} />
+                    <Grid item xs={12} md={transaction.isWip || hasAttachments ? 6 : 12}>
+                        <TransactionDescription groupId={groupId} transactionId={transactionId} />
+                        <TransactionBilledAt groupId={groupId} transactionId={transactionId} />
 
                         <TransactionCreditorShare
-                            group={group}
-                            transaction={transaction}
-                            isEditing={transaction.is_wip}
+                            groupId={groupId}
+                            transactionId={transactionId}
+                            isEditing={transaction.isWip}
                             label="Paid by"
                         />
 
-                        <TransactionValue group={group} transaction={transaction} />
+                        <TransactionValue groupId={groupId} transactionId={transactionId} />
                     </Grid>
 
-                    {(transaction.is_wip || transaction.files.length > 0) && (
+                    {(transaction.isWip || hasAttachments) && (
                         <Grid item xs={12} md={6} sx={{ marginTop: { xs: 1 } }}>
-                            <FileGallery transaction={transaction} />
+                            <FileGallery groupId={groupId} transactionId={transactionId} />
                         </Grid>
                     )}
                     <Grid item xs={12}>
-                        {transaction.is_wip ? (
+                        {transaction.isWip ? (
                             <PurchaseDebitorShares
-                                group={group}
-                                transaction={transaction}
+                                groupId={groupId}
+                                transactionId={transactionId}
                                 showPositions={showPositions}
                             />
                         ) : (
-                            <PurchaseDebitorSharesReadOnly group={group} transaction={transaction} />
+                            <PurchaseDebitorSharesReadOnly groupId={groupId} transactionId={transactionId} />
                         )}
                     </Grid>
                 </Grid>
             </MobilePaper>
 
-            {!showPositions &&
-            transaction.is_wip &&
-            transaction.positions.find((item) => !item.deleted) === undefined ? (
+            {!showPositions && transaction.isWip && !hasPositions ? (
                 <Grid container justifyContent="center" sx={{ marginTop: 2 }}>
                     <Button startIcon={<Add />} onClick={() => setShowPositions(true)}>
                         Add Positions
                     </Button>
                 </Grid>
-            ) : (showPositions && transaction.is_wip) ||
-              transaction.positions.find((item) => !item.deleted) !== undefined ? (
-                <TransactionPositions group={group} transaction={transaction} />
-            ) : (
-                <></>
-            )}
+            ) : (showPositions && transaction.isWip) || hasPositions ? (
+                <TransactionPositions groupId={groupId} transactionId={transactionId} />
+            ) : null}
         </>
     );
 };

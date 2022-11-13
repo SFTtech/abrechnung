@@ -44,8 +44,8 @@ class GroupAPITest(HTTPAPITest):
         )
         self.assertEqual(200, resp.status)
         ret_data = await resp.json()
-        self.assertIsNotNone(ret_data["group_id"])
-        group_id = ret_data["group_id"]
+        self.assertIsNotNone(ret_data["id"])
+        group_id = ret_data["id"]
 
         group = await self._fetch_group(group_id)
         self.assertEqual("name", group["name"])
@@ -63,7 +63,7 @@ class GroupAPITest(HTTPAPITest):
                 "add_user_account_on_join": False,
             },
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(200, resp.status)
 
         group = await self._fetch_group(group_id)
         self.assertEqual("name2", group["name"])
@@ -290,7 +290,7 @@ class GroupAPITest(HTTPAPITest):
             f"/api/v1/groups/{group_id}/members",
             json={"user_id": user2.id, "can_write": True, "is_owner": False},
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(200, resp.status)
 
         members = await self._fetch_members(group_id)
         self.assertEqual(2, len(members))
@@ -305,7 +305,7 @@ class GroupAPITest(HTTPAPITest):
             f"/api/v1/groups/{group_id}/members",
             json={"user_id": user2.id, "can_write": True, "is_owner": True},
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(200, resp.status)
 
         members = await self._fetch_members(group_id)
         self.assertEqual(2, len(members))
@@ -397,7 +397,7 @@ class GroupAPITest(HTTPAPITest):
                 "valid_until": (datetime.now() + timedelta(hours=1)).isoformat(),
             },
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(200, resp.status)
 
         resp = await self._get(f"/api/v1/groups/{group_id}/invites")
         self.assertEqual(200, resp.status)
@@ -425,7 +425,7 @@ class GroupAPITest(HTTPAPITest):
                 "valid_until": (datetime.now() + timedelta(hours=1)).isoformat(),
             },
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(200, resp.status)
 
         resp = await self._get(f"/api/v1/groups/{group_id}/invites")
         self.assertEqual(200, resp.status)
@@ -456,7 +456,7 @@ class GroupAPITest(HTTPAPITest):
             json={"invite_token": invite_token},
             headers={"Authorization": f"Bearer {jwt_token}"},
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(200, resp.status)
 
         resp = await self.client.get(
             f"/api/v1/groups",

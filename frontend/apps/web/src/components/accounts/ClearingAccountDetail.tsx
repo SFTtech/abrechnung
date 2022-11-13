@@ -1,29 +1,40 @@
 import React from "react";
 import { Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { Link } from "react-router-dom";
-import { useRecoilValue } from "recoil";
-import { AccountConsolidated, accountsSeenByUser } from "../../state/accounts";
 import { useEffect, useState } from "react";
-import { accountBalances } from "../../state/transactions";
 import { ClearingAccountIcon, PersonalAccountIcon } from "../style/AbrechnungIcons";
 import { useTheme } from "@mui/material/styles";
-import { Group } from "../../state/groups";
+import { useAppSelector, selectAccountSlice, selectGroupSlice } from "../../store";
+import {
+    selectAccountBalances,
+    selectAccountById,
+    selectGroupAccounts,
+    selectGroupCurrencySymbol,
+} from "@abrechnung/redux";
 
 interface Props {
-    group: Group;
-    account: AccountConsolidated;
+    groupId: number;
+    accountId: number;
 }
 
-export const ClearingAccountDetail: React.FC<Props> = ({ group, account }) => {
+export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) => {
     const theme = useTheme();
 
-    const accounts = useRecoilValue(accountsSeenByUser(group.id));
-    const balances = useRecoilValue(accountBalances(group.id));
+    const account = useAppSelector((state) =>
+        selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
+    );
+    const referencedAccounts = useAppSelector((state) =>
+        selectGroupAccounts({ state: selectAccountSlice(state), groupId })
+    );
+    const currencySymbol = useAppSelector((state) =>
+        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
+    );
+    const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
 
     const [showAdvanced, setShowAdvanced] = useState(false);
 
     useEffect(() => {
-        for (const share of Object.values(account.clearing_shares)) {
+        for (const share of Object.values(account.clearingShares)) {
             if (share !== 1) {
                 setShowAdvanced(true);
                 break;
@@ -31,8 +42,11 @@ export const ClearingAccountDetail: React.FC<Props> = ({ group, account }) => {
         }
     }, [account]);
 
-    const clearingShareValue = (accountID) => {
-        return account.clearing_shares?.hasOwnProperty(accountID) ? account.clearing_shares[accountID] : 0;
+    const clearingShareValue = (accountId) => {
+        if (account.clearingShares === null) {
+            return 0;
+        }
+        return account.clearingShares[accountId] ?? 0;
     };
 
     return (
@@ -48,8 +62,8 @@ export const ClearingAccountDetail: React.FC<Props> = ({ group, account }) => {
                     </TableRow>
                 </TableHead>
                 <TableBody>
-                    {accounts
-                        .filter((a) => balances[account.id].clearingResolution.hasOwnProperty(a.id))
+                    {referencedAccounts
+                        .filter((a) => balances[account.id]?.clearingResolution[a.id] !== undefined)
                         .map((a) => (
                             <TableRow hover key={a.id}>
                                 <TableCell sx={{ padding: "0 16px" }}>
@@ -63,7 +77,7 @@ export const ClearingAccountDetail: React.FC<Props> = ({ group, account }) => {
                                             width: "100%",
                                             padding: "16px 0",
                                         }}
-                                        to={`/groups/${group.id}/accounts/${a.id}`}
+                                        to={`/groups/${groupId}/accounts/${a.id}`}
                                     >
                                         <Grid container direction="row" alignItems="center">
                                             <Grid item>
@@ -83,7 +97,7 @@ export const ClearingAccountDetail: React.FC<Props> = ({ group, account }) => {
                                 </TableCell>
                                 {showAdvanced && <TableCell width="50px">{clearingShareValue(a.id)}</TableCell>}
                                 <TableCell width="100px" align="right">
-                                    {balances[account.id].clearingResolution[a.id].toFixed(2)} {group.currency_symbol}
+                                    {balances[account.id]?.clearingResolution[a.id]?.toFixed(2)} {currencySymbol}
                                 </TableCell>
                             </TableRow>
                         ))}

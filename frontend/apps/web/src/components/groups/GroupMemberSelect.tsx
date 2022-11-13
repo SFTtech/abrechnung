@@ -1,17 +1,16 @@
 import React from "react";
-
-import { useRecoilValue } from "recoil";
 import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
 import { DisabledTextField } from "../style/DisabledTextField";
 import { styled } from "@mui/material/styles";
-import { Group, groupMemberIDsToUsername, groupMembers } from "../../state/groups";
+import { selectGroupSlice, useAppSelector } from "../../store";
+import { selectGroupMemberIds, selectGroupMemberIdToUsername } from "@abrechnung/redux";
 
 const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
     minWidth: 200,
 }));
 
 type Props = {
-    group: Group;
+    groupId: number;
     onChange: (memberID: number) => void;
     value?: number | null;
     disabled?: boolean;
@@ -20,7 +19,7 @@ type Props = {
 } & TextFieldProps;
 
 export const GroupMemberSelect: React.FC<Props> = ({
-    group,
+    groupId,
     onChange,
     value = null,
     disabled = false,
@@ -28,12 +27,14 @@ export const GroupMemberSelect: React.FC<Props> = ({
     className = null,
     ...props
 }) => {
-    const members = useRecoilValue(groupMembers(group.id));
-    const memberIDToUsername = useRecoilValue(groupMemberIDsToUsername(group.id));
+    const memberIds = useAppSelector((state) => selectGroupMemberIds({ state: selectGroupSlice(state), groupId }));
+    const memberIDToUsername = useAppSelector((state) =>
+        selectGroupMemberIdToUsername({ state: selectGroupSlice(state), groupId })
+    );
 
     return (
         <Autocomplete
-            options={members.map((m) => m.user_id)}
+            options={memberIds}
             getOptionLabel={(option) => memberIDToUsername[option]}
             value={value}
             disabled={disabled}

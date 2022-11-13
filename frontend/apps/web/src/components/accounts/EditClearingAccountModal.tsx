@@ -1,13 +1,12 @@
 import { Form, Formik } from "formik";
 import React from "react";
-import { toast } from "react-toastify";
-import { updateAccountDetails } from "../../core/api";
+import { api } from "../../core/api";
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress, TextField } from "@mui/material";
-import { AccountConsolidated, groupAccounts, updateAccount } from "../../state/accounts";
-import { useSetRecoilState } from "recoil";
 import ClearingSharesFormElement from "./ClearingSharesFormElement";
 import * as yup from "yup";
-import { Group } from "../../state/groups";
+import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
+import { saveAccount, selectAccountById } from "@abrechnung/redux";
+import { toast } from "react-toastify";
 
 const validationSchema = yup.object({
     name: yup.string().required("Name is required"),
@@ -16,8 +15,8 @@ const validationSchema = yup.object({
 });
 
 interface Props {
-    group: Group;
-    account: AccountConsolidated;
+    groupId: number;
+    accountId: number;
     show: boolean;
     onClose: (
         event: Record<string, never>,
@@ -25,23 +24,24 @@ interface Props {
     ) => void;
 }
 
-export const EditClearingAccountModal: React.FC<Props> = ({ group, show, onClose, account }) => {
-    const setAccounts = useSetRecoilState(groupAccounts(group.id));
+export const EditClearingAccountModal: React.FC<Props> = ({ groupId, show, onClose, accountId }) => {
+    const account = useAppSelector((state) =>
+        selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
+    );
+    const dispatch = useAppDispatch();
+    // TODO: handle account does not exist
 
     const handleSubmit = (values, { setSubmitting }) => {
-        updateAccountDetails({
-            accountID: values.accountID,
-            name: values.name,
-            description: values.description,
-            clearingShares: values.clearingShares,
-        })
-            .then((account) => {
-                updateAccount(account, setAccounts);
+        dispatch(saveAccount({ account: { ...account, ...values }, api: api }))
+            .then((res) => {
+                console.log(res);
                 setSubmitting(false);
                 onClose({}, "completed");
             })
             .catch((err) => {
-                toast.error(err);
+                console.log(err);
+                // TODO: determine what we get from error
+                // toast.error(err);
                 setSubmitting(false);
             });
     };
@@ -55,7 +55,7 @@ export const EditClearingAccountModal: React.FC<Props> = ({ group, show, onClose
                         accountID: account?.id,
                         name: account?.name,
                         description: account?.description,
-                        clearingShares: account?.clearing_shares,
+                        clearingShares: account?.clearingShares,
                     }}
                     onSubmit={handleSubmit}
                     enableReinitialize={true}
@@ -87,9 +87,9 @@ export const EditClearingAccountModal: React.FC<Props> = ({ group, show, onClose
                             />
 
                             <ClearingSharesFormElement
-                                group={group}
+                                groupId={groupId}
                                 clearingShares={values.clearingShares}
-                                accountID={account?.id}
+                                accountId={account?.id}
                                 setClearingShares={(clearingShares) => setFieldValue("clearingShares", clearingShares)}
                             />
 

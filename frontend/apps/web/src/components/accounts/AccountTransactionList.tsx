@@ -1,33 +1,42 @@
 import React from "react";
+import { DateTime } from "luxon";
 import { List } from "@mui/material";
 import AccountTransactionListEntry from "./AccountTransactionListEntry";
-import { useRecoilValue } from "recoil";
-import { accountTransactions, Transaction } from "../../state/transactions";
-import { AccountConsolidated, clearingAccountsInvolvingUser } from "../../state/accounts";
+import { Account, Transaction } from "@abrechnung/types";
 import AccountClearingListEntry from "./AccountClearingListEntry";
-import { Group } from "../../state/groups";
+import { selectAccountSlice, selectTransactionSlice, useAppSelector } from "../../store";
+import { selectGroupAccountsFiltered, selectTransactionsInvolvingAccount } from "@abrechnung/redux";
 
-type ArrayAccountsAndTransactions = Array<Transaction | AccountConsolidated>;
+type ArrayAccountsAndTransactions = Array<Transaction | Account>;
 
 interface Props {
-    group: Group;
-    accountID: number;
+    groupId: number;
+    accountId: number;
 }
 
-export const AccountTransactionList: React.FC<Props> = ({ group, accountID }) => {
-    const transactions = useRecoilValue(accountTransactions({ groupID: group.id, accountID: accountID }));
-    const clearingAccounts = useRecoilValue(clearingAccountsInvolvingUser({ groupID: group.id, accountID: accountID }));
+export const AccountTransactionList: React.FC<Props> = ({ groupId, accountId }) => {
+    const transactions = useAppSelector((state) =>
+        selectTransactionsInvolvingAccount({ state: selectTransactionSlice(state), groupId, accountId })
+    );
+    const clearingAccounts = useAppSelector((state) =>
+        selectGroupAccountsFiltered({ state: selectAccountSlice(state), groupId, type: "clearing" })
+    );
 
     const combinedList: ArrayAccountsAndTransactions = (transactions as ArrayAccountsAndTransactions)
         .concat(clearingAccounts)
-        .sort((f1, f2) => f2.last_changed.toSeconds() - f1.last_changed.toSeconds());
+        .sort((f1, f2) => DateTime.fromISO(f2.lastChanged).toMillis() - DateTime.fromISO(f1.lastChanged).toMillis());
 
     return (
         <List>
             {combinedList.map((entry) => {
                 if (entry.type === "clearing") {
                     return (
-                        <AccountClearingListEntry key={entry.id} accountID={accountID} group={group} account={entry} />
+                        <AccountClearingListEntry
+                            key={entry.id}
+                            accountId={accountId}
+                            groupId={groupId}
+                            clearingAccountId={entry.id}
+                        />
                     );
                 }
                 if (entry.type === "personal") {
@@ -35,13 +44,13 @@ export const AccountTransactionList: React.FC<Props> = ({ group, accountID }) =>
                 }
 
                 // we need to case "entry" to Transaction as typescript cant deduce that it
-                // has to be a transaction as we handled all other "type" cases before
+                // has to be a transaction even though we handled all other "type" cases before
                 return (
                     <AccountTransactionListEntry
                         key={entry.id}
-                        accountID={accountID}
-                        group={group}
-                        transaction={entry as Transaction}
+                        accountId={accountId}
+                        groupId={groupId}
+                        transactionId={entry.id}
                     />
                 );
             })}

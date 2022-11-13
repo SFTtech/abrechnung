@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Form, Formik } from "formik";
-import { isAuthenticated } from "../../state/auth";
-import { useRecoilValue } from "recoil";
-import { requestPasswordRecovery } from "../../core/api";
+import { api } from "../../core/api";
 import { Alert, Box, Button, Container, CssBaseline, LinearProgress, TextField, Typography } from "@mui/material";
+import { selectIsAuthenticated } from "@abrechnung/redux";
+import { useAppSelector, selectAuthSlice } from "../../store";
 
 export const RequestPasswordRecovery: React.FC = () => {
-    const isLoggedIn = useRecoilValue(isAuthenticated);
+    const isLoggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
     const [status, setStatus] = useState("initial");
     const [error, setError] = useState(null);
     const navigate = useNavigate();
@@ -19,7 +19,7 @@ export const RequestPasswordRecovery: React.FC = () => {
     }, [isLoggedIn, navigate]);
 
     const handleSubmit = (values, { setSubmitting }) => {
-        requestPasswordRecovery(values)
+        api.requestPasswordRecovery(values.email)
             .then((res) => {
                 setStatus("success");
                 setError(null);

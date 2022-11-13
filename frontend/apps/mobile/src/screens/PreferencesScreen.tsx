@@ -1,54 +1,77 @@
 import { StyleSheet, View } from "react-native";
-import { Button, Divider, Switch, Text } from "react-native-paper";
+import { Button, Divider, Text, Menu } from "react-native-paper";
 import * as React from "react";
-import { useContext } from "react";
-import { useSetRecoilState } from "recoil";
-import { authState, logout } from "../core/auth";
-import { flushDatabase } from "../core/database";
 import { notify } from "../notifications";
-import { syncGroups } from "../core/database/groups";
-import { PreferencesContext } from "../core/preferences";
 import { RootDrawerScreenProps } from "../navigation/types";
+import {
+    useAppDispatch,
+    useAppSelector,
+    selectTheme,
+    selectSettingsSlice,
+    persistor,
+    ThemeMode,
+    themeChanged,
+} from "../store";
+import { logout } from "@abrechnung/redux";
+import { api } from "../core/api";
 
 export const PreferencesScreen: React.FC<RootDrawerScreenProps<"Preferences">> = () => {
-    const setAuth = useSetRecoilState(authState);
-    const preferences = useContext(PreferencesContext);
+    const dispatch = useAppDispatch();
+    const themeMode = useAppSelector((state) => selectTheme({ state: selectSettingsSlice(state) }));
+    const [themeSelectOpen, setThemeSelectOpen] = React.useState(false);
 
     const onLogout = () => {
-        logout()
-            .then(() => {
-                setAuth({ isLoggedIn: false, isLoading: false });
-            })
-            .catch((err) => {
-                console.log("logout had error", err);
-                setAuth({ isLoggedIn: false, isLoading: false });
+        dispatch(logout({ api }))
+            .unwrap()
+            .catch((err: Error) => {
+                console.error("logout had error", err);
             });
     };
 
-    const onClearDatabase = () => {
-        flushDatabase()
-            .then(() => notify({ text: "cleared database" }))
-            .catch((err) => notify({ text: `failed to clear database: ${err}` }));
+    const openThemeSelect = () => {
+        setThemeSelectOpen(true);
     };
 
-    const onSyncGroups = () => {
-        syncGroups().catch((err) =>
-            notify({
-                text: `Error when syncing groups: ${err}`,
-            })
-        );
+    const closeThemeSelect = () => {
+        setThemeSelectOpen(false);
+    };
+
+    const changeThemeMode = (mode: ThemeMode) => {
+        dispatch(themeChanged(mode));
+        closeThemeSelect();
     };
 
     return (
         <View>
             <View style={styles.toggleSetting}>
                 <Text>Dark Theme</Text>
-                <Switch value={preferences.isThemeDark} onValueChange={preferences.toggleTheme} />
+                <Menu
+                    visible={themeSelectOpen}
+                    onDismiss={closeThemeSelect}
+                    anchor={<Button onPress={openThemeSelect}>{themeMode}</Button>}
+                >
+                    <Menu.Item
+                        onPress={() => {
+                            changeThemeMode("dark");
+                        }}
+                        title="Dark Mode"
+                    />
+                    <Menu.Item
+                        onPress={() => {
+                            changeThemeMode("light");
+                        }}
+                        title="Light Mode"
+                    />
+                    <Menu.Item
+                        onPress={() => {
+                            changeThemeMode("system");
+                        }}
+                        title="Use System Settings"
+                    />
+                </Menu>
             </View>
             <Divider />
             <Button onPress={onLogout}>Logout</Button>
-            <Button onPress={onClearDatabase}>Clear Database</Button>
-            <Button onPress={onSyncGroups}>Reload Groups</Button>
         </View>
     );
 };

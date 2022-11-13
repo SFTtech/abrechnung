@@ -17,7 +17,7 @@
             }
         },
         "serve": {
-            "executor": "@nrwl/workspace:run-commands",
+            "executor": "nx:run-commands",
             "options": {
                 "command": "nx start mobile"
             }
@@ -82,6 +82,10 @@
         },
         "rollback": {
             "executor": "@nrwl/expo:rollback",
+            "options": {}
+        },
+        "prebuild": {
+            "executor": "@nrwl/expo:prebuild",
             "options": {}
         },
         "eject": {

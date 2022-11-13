@@ -1,6 +1,6 @@
 {
     "expo": {
-        "name": "abrechnung",
+        "name": "Abrechnung",
         "slug": "abrechnung",
         "version": "0.1.0",
         "orientation": "portrait",
@@ -17,7 +17,8 @@
         },
         "assetBundlePatterns": ["**/*"],
         "ios": {
-            "supportsTablet": true
+            "supportsTablet": true,
+            "bundleIdentifier": "lol.sft.abrechnung"
         },
         "android": {
             "adaptiveIcon": {
