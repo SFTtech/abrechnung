@@ -25,8 +25,7 @@ DISTS = (
     "debian:bullseye",
     "debian:bookworm",
     "debian:sid",
-    "ubuntu:hirsute",  # 21.04 (EOL 2022-01-05)
-    "ubuntu:impish",  # 21.10  (EOL 2022-07)
+    "ubuntu:jammy",  # 22.04
 )
 
 DESC = """\
