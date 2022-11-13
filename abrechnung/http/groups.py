@@ -192,8 +192,7 @@ async def update_member_permissions(request: web.Request):
     )
 
     member = await request.app["group_service"].get_member(
-        user=request["user"], group_id=group_id,
-        member_id=data["user_id"]
+        user=request["user"], group_id=group_id, member_id=data["user_id"]
     )
     serializer = GroupMemberSchema()
 
@@ -242,9 +241,7 @@ async def create_invite(request: Request):
         join_as_editor=data["join_as_editor"],
     )
     invite = await request.app["group_service"].get_invite(
-        user=request["user"],
-        group_id=group_id,
-        invite_id=invite_id
+        user=request["user"], group_id=group_id, invite_id=invite_id
     )
     serializer = GroupInviteSchema()
     return json_response(data=serializer.dump(invite))

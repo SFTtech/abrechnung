@@ -5,18 +5,18 @@ from marshmallow import fields, Schema
 
 class SharesField(fields.Field):
     def _serialize(
-            self, value: Mapping[int, float], attr: Optional[str], obj: Any, **kwargs
+        self, value: Mapping[int, float], attr: Optional[str], obj: Any, **kwargs
     ):
         return {
             str(account_id): usage_value for account_id, usage_value in value.items()
         }
 
     def _deserialize(
-            self,
-            value: Any,
-            attr: Optional[str],
-            data: Optional[Mapping[str, Any]],
-            **kwargs,
+        self,
+        value: Any,
+        attr: Optional[str],
+        data: Optional[Mapping[str, Any]],
+        **kwargs,
     ):
         if not isinstance(value, dict):
             raise fields.ValidationError(message="expected a dictionary")
@@ -48,8 +48,16 @@ s = Schema.from_dict(
     name="CreateTransactionSchema",
 )()
 
-data = {"description": "asdfasdf", "value": 11, "type": "purchase", "billed_at": "2022-10-21T18:57:12.628111",
-        "currency_symbol": "€", "currency_conversion_rate": 1, "creditor_shares": {"2": 1}, "debitor_shares": None,
-        "perform_commit": False}
+data = {
+    "description": "asdfasdf",
+    "value": 11,
+    "type": "purchase",
+    "billed_at": "2022-10-21T18:57:12.628111",
+    "currency_symbol": "€",
+    "currency_conversion_rate": 1,
+    "creditor_shares": {"2": 1},
+    "debitor_shares": None,
+    "perform_commit": False,
+}
 
 print(s.validate(data=data))
