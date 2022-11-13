@@ -30,18 +30,18 @@ jobs:
         name: python-dist
         path: dist/*
 
-    - name: Publish distribution 📦 to Test PyPI
-      if: startsWith(github.ref, 'refs/tags')
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-        repository_url: https://test.pypi.org/legacy/
+          #- name: Publish distribution 📦 to Test PyPI
+          #  if: startsWith(github.ref, 'refs/tags')
+          #  uses: pypa/gh-action-pypi-publish@master
+          #  with:
+          #    password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          #    repository_url: https://test.pypi.org/legacy/
 
-    - name: Publish distribution 📦 to PyPI
-      if: startsWith(github.ref, 'refs/tags')
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        password: ${{ secrets.PYPI_API_TOKEN }}
+          #- name: Publish distribution 📦 to PyPI
+          #  if: startsWith(github.ref, 'refs/tags')
+          #  uses: pypa/gh-action-pypi-publish@master
+          #  with:
+          #    password: ${{ secrets.PYPI_API_TOKEN }}
 
   get-distros:
     name: "Calculate list of debian distros"
@@ -113,7 +113,7 @@ jobs:
   deploy-demo:
     name: "Deploy demo application"
     environment: demo
-    if: ${{ !failure() && !cancelled() }}
+    if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/heads/master')}}
     needs:
       - build-debs
     runs-on: ubuntu-latest
