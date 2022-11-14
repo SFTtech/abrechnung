@@ -87,7 +87,7 @@ jobs:
           ./docker/Dockerfile-api
 
     - name: Push API Image To quay.io
-      id: push-to-quay
+      id: push-to-quay-api
       uses: redhat-actions/push-to-registry@v2
       with:
         image: ${{ steps.build-api-image.outputs.image }}
@@ -97,7 +97,7 @@ jobs:
         password: ${{ secrets.DOCKERHUB_REGISTRY_PASSWORD }}
     
     - name: Build Frontend Image
-      id: build-image
+      id: build-frontend-image
       uses: redhat-actions/buildah-build@v2
       with:
         image: ${{ env.DOCKER_IMAGE_NAME_FRONTEND }}
@@ -106,7 +106,7 @@ jobs:
           ./docker/Dockerfile-frontend
 
     - name: Push Frontend Image To quay.io
-      id: push-to-quay
+      id: push-to-quay-frontend
       uses: redhat-actions/push-to-registry@v2
       with:
         image: ${{ steps.build-frontend-image.outputs.image }}
