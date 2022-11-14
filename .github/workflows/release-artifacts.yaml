@@ -92,7 +92,7 @@ jobs:
       with:
         image: ${{ steps.build-api-image.outputs.image }}
         tags: ${{ steps.build-api-image.outputs.tags }}
-        registry: quay.io/mikonse
+        registry: quay.io/abrechnung
         username: ${{ secrets.DOCKERHUB_REGISTRY_USER }}
         password: ${{ secrets.DOCKERHUB_REGISTRY_PASSWORD }}
     
@@ -111,7 +111,7 @@ jobs:
       with:
         image: ${{ steps.build-frontend-image.outputs.image }}
         tags: ${{ steps.build-frontend-image.outputs.tags }}
-        registry: quay.io/mikonse
+        registry: quay.io/abrechnung
         username: ${{ secrets.DOCKERHUB_REGISTRY_USER }}
         password: ${{ secrets.DOCKERHUB_REGISTRY_PASSWORD }}
 
