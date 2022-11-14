@@ -31,6 +31,28 @@ Ubuntu Focal, Hirsute and Impish
 Follow the installation instructions for :ref:`Debian <abrechnung-installation-debian>`, just make sure to choose the correct
 ``.deb`` package file.
 
+.. _abrechnung-installation-docker:
+
+Docker Compose
+----------------
+We provide prebuilt docker containers for the api and the web frontend under `https://quay.io/abrechnung`.
+
+To use our docker compose clone the github repository ::
+
+  git clone https://github.com/SFTtech/abrechnung.git
+
+Then copy the ``.env.example`` file to ``.env`` and configure it to your liking ::
+
+  cd abrechnung
+  cp .env.example .env
+  vim .env
+
+Then a simple simple ::
+
+  docker-compuse -f docker-compose.prod.yaml up 
+
+Should suffice to get you up and running.
+
 Pip
 ---------------
 
