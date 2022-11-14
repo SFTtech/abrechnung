@@ -61,13 +61,14 @@ jobs:
           tags="latest $GITHUB_SHA"
           if [[ $GITHUB_REF == refs/tags/* ]]; then
               dists=$(tools/build_debian_packages.py --show-dists-json)
-              tags="latest $GITHUB_SHA $GITHUB_REF_NAME"
+              tags="latest $GITHUB_SHA latest-release $GITHUB_REF_NAME"
           fi
           echo "::set-output name=distros::$dists"
           echo "::set-output name=tags::$tags"
     # map the step outputs to job outputs
     outputs:
       distros: ${{ steps.set-distros.outputs.distros }}
+      tags: ${{ steps.set-distros.outputs.tags }}
   
   build-and-publish-docker:
     name: Build and publish ready made docker containers
@@ -102,7 +103,7 @@ jobs:
         image: ${{ env.DOCKER_IMAGE_NAME_FRONTEND }}
         tags: ${{ needs.get-distros.outputs.tags }}
         containerfiles: |
-          ./docker/Dockerfile-api
+          ./docker/Dockerfile-frontend
 
     - name: Push Frontend Image To quay.io
       id: push-to-quay
