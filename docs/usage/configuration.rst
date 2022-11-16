@@ -8,6 +8,8 @@ Configuration
 
 After any change to the configuration make sure to apply it by restarting the respective service.
 
+.. _abrechnung-database-config:
+
 Database
 ---------------
 The first step after installing the **abrechnung** is to setup the database. Due to the use of database specific features

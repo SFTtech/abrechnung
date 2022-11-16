@@ -3,12 +3,10 @@ services:
     extends:
       file: docker-compose.base.yaml
       service: api
-    image: quay.io/abrechnung/api:release-latest
+    image: quay.io/abrechnung/api:latest-release
+
   frontend:
-    extends:
-      file: docker-compose.base.yaml
-      service: frontend
-    image: quay.io/abrechnung/frontend:release-latest
+    image: quay.io/abrechnung/frontend:latest-release
     depends_on:
       api:
         condition: service_healthy
@@ -19,13 +17,14 @@ services:
     extends:
       file: docker-compose.base.yaml
       service: mailer
-    image: quay.io/abrechnung/api:release-latest
+    image: quay.io/abrechnung/api:latest-release
     links:
       - api
+
   cron:
     extends:
       file: docker-compose.base.yaml
       service: cron
-    image: quay.io/abrechnung/api:release-latest
+    image: quay.io/abrechnung/api:latest-release
     links:
       - api

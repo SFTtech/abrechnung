@@ -47,9 +47,15 @@ Then copy the ``.env.example`` file to ``.env`` and configure it to your liking 
   cp .env.example .env
   vim .env
 
+For production setups we recommend running an external postgres database but if you feel adventurous you 
+can adapt the docker-compose file to also run a postgres container (which we definitely do not recommend).
+In case of using an external postgres database make sure to 
+follow :ref:`the configuration instructions <abrechnung-database-config>` on how to create a database.
+Afterwards make sure to include the database configuration parameters in the ``.env`` configuration file.
+
 Then a simple simple ::
 
-  docker-compuse -f docker-compose.prod.yaml up 
+  docker-compose -f docker-compose.prod.yaml up 
 
 Should suffice to get you up and running.
 
