@@ -71,7 +71,9 @@ export const TransactionShareDialog: React.FC<Props> = ({
     }, [value, setShares]);
 
     const finishDialog = () => {
-        onChange(shares);
+        if (!disabled) {
+            onChange(shares);
+        }
         onHideDialog();
     };
 

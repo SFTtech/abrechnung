@@ -1,17 +1,31 @@
 import React from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { Grid, Typography } from "@mui/material";
-import { MobilePaper } from "../components/style/mobile";
-import { useTitle } from "../core/utils";
-import BalanceHistoryGraph from "../components/accounts/BalanceHistoryGraph";
-import AccountTransactionList from "../components/accounts/AccountTransactionList";
-import ClearingAccountDetail from "../components/accounts/ClearingAccountDetail";
-import { selectAccountSlice, selectGroupSlice, useAppSelector } from "../store";
+import { MobilePaper } from "../../components/style/mobile";
+import { useTitle, useQuery } from "../../core/utils";
+import BalanceHistoryGraph from "../../components/accounts/BalanceHistoryGraph";
+import AccountTransactionList from "../../components/accounts/AccountTransactionList";
+import ClearingAccountDetail from "../../components/accounts/ClearingAccountDetail";
+import { selectAccountSlice, selectGroupSlice, useAppSelector } from "../../store";
 import { selectAccountById, selectGroupById } from "@abrechnung/redux";
+import { AccountInfo } from "./AccountInfo";
+import { Loading } from "../../components/style/Loading";
 
 interface Props {
     groupId: number;
 }
+
+const AccountEdit: React.FC<{ groupId: number; accountId: number }> = ({ groupId, accountId }) => {
+    return (
+        <Grid container spacing={2}>
+            <Grid item xs={12}>
+                <MobilePaper>
+                    <AccountInfo groupId={groupId} accountId={accountId} />
+                </MobilePaper>
+            </Grid>
+        </Grid>
+    );
+};
 
 export const AccountDetail: React.FC<Props> = ({ groupId }) => {
     const params = useParams();
@@ -21,15 +35,29 @@ export const AccountDetail: React.FC<Props> = ({ groupId }) => {
     const account = useAppSelector((state) =>
         selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
     );
+    const query = useQuery();
 
-    useTitle(`${group.name} - Account ${account?.name}`);
+    useTitle(`${group.name} - ${account?.type === "clearing" ? "Event" : "Account"} ${account?.name}`);
 
     if (account === undefined) {
-        return <Navigate to="/404" />;
+        if (query.get("no-redirect") === "true") {
+            return <Loading />;
+        } else {
+            return <Navigate to="/404" />;
+        }
+    }
+
+    if (account.isWip) {
+        return <AccountEdit groupId={groupId} accountId={accountId} />;
     }
 
     return (
         <Grid container spacing={2}>
+            <Grid item xs={12}>
+                <MobilePaper>
+                    <AccountInfo groupId={groupId} accountId={accountId} />
+                </MobilePaper>
+            </Grid>
             {account.type === "personal" && (
                 <Grid item xs={12}>
                     <MobilePaper>
@@ -55,5 +83,3 @@ export const AccountDetail: React.FC<Props> = ({ groupId }) => {
         </Grid>
     );
 };
-
-export default AccountDetail;

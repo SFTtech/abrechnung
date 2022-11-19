@@ -252,6 +252,11 @@ export class Api {
         return await this.makePost(`/api/v1/groups/${groupId}/accounts/sync`, accounts);
     };
 
+    public discardAccountChange = async (accountId: number): Promise<Account> => {
+        const resp = await this.makePost(`/api/v1/accounts/${accountId}/discard`);
+        return backendAccountToAccount(resp);
+    };
+
     public deleteAccount = async (accountId: number): Promise<Account> => {
         return await this.makeDelete(`/api/v1/accounts/${accountId}`);
     };

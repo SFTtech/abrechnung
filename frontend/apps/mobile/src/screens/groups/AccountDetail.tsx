@@ -14,7 +14,7 @@ import {
     selectGroupCurrencySymbol,
     selectTransactionsInvolvingAccount,
     selectCurrentUserPermissions,
-    selectGroupAccountsFiltered,
+    selectClearingAccountsInvolvingAccounts,
 } from "@abrechnung/redux";
 import { fromISOString } from "@abrechnung/utils";
 
@@ -34,7 +34,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
     );
 
     const clearingAccounts = useAppSelector((state) =>
-        selectGroupAccountsFiltered({ state: selectAccountSlice(state), groupId, type: "clearing" })
+        selectClearingAccountsInvolvingAccounts({ state: selectAccountSlice(state), groupId, accountId })
     );
 
     const combinedList: ArrayAccountsAndTransactions = (transactions as ArrayAccountsAndTransactions)

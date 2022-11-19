@@ -34,6 +34,9 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
     );
 
     const onClick = (evt) => {
+        if (!evt || !evt.activePayload) {
+            return;
+        }
         if (evt.activePayload.length > 0) {
             const payload = evt.activePayload[0].payload;
             if (payload.changeOrigin.type === "clearing") {
@@ -44,8 +47,8 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
         }
     };
 
-    const renderTooltip = ({ payload, label, active }) => {
-        if (!active) {
+    const renderTooltip = ({ payload, active }) => {
+        if (!active || !payload) {
             return null;
         }
 
@@ -82,7 +85,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
                             ml: 2,
                         }}
                     >
-                        {payload[0].value} {currencySymbol}
+                        {payload[0].value.toFixed(2)} {currencySymbol}
                     </Typography>
                 </div>
                 <Divider />

@@ -1,6 +1,6 @@
 import { AccountType, TransactionType } from "@abrechnung/types";
 
-export const clearingAccountIcon = "calculate";
+export const clearingAccountIcon = "calendar-today";
 export const personalAccountIcon = "person";
 
 export const getAccountIcon = (accountType: AccountType) => {

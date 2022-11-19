@@ -2,24 +2,26 @@ import React from "react";
 import { ListItem, ListItemText, Chip, ListItemSecondaryAction, IconButton } from "@mui/material";
 import { Edit, Delete } from "@mui/icons-material";
 import { ListItemLink } from "../../components/style/ListItemLink";
-import { useAppSelector, selectAccountSlice, selectGroupSlice } from "../../store";
-import { selectAccountById, selectCurrentUserPermissions, selectGroupMemberIdToUsername } from "@abrechnung/redux";
+import { useAppSelector, selectAccountSlice, selectGroupSlice, useAppDispatch } from "../../store";
+import {
+    selectAccountById,
+    selectCurrentUserPermissions,
+    selectGroupMemberIdToUsername,
+    accountEditStarted,
+} from "@abrechnung/redux";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
     groupId: number;
     currentUserId: number;
     accountId: number;
-    openAccountEdit: (accountId: number) => void;
     setAccountToDelete: (accountId: number) => void;
 }
 
-const PersonalAccountListItem: React.FC<Props> = ({
-    groupId,
-    currentUserId,
-    accountId,
-    openAccountEdit,
-    setAccountToDelete,
-}) => {
+export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserId, accountId, setAccountToDelete }) => {
+    const dispatch = useAppDispatch();
+    const navigate = useNavigate();
+
     const account = useAppSelector((state) =>
         selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
     );
@@ -28,12 +30,22 @@ const PersonalAccountListItem: React.FC<Props> = ({
         selectGroupMemberIdToUsername({ state: selectGroupSlice(state), groupId })
     );
 
+    const edit = () => {
+        if (!account.isWip) {
+            dispatch(accountEditStarted({ groupId, accountId }));
+        }
+        navigate(`/groups/${groupId}/accounts/${accountId}`);
+    };
+
     return (
         <ListItem sx={{ padding: 0 }} key={account.id}>
             <ListItemLink to={`/groups/${groupId}/accounts/${account.id}`}>
                 <ListItemText
                     primary={
                         <div>
+                            {account.isWip && (
+                                <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 1 }} />
+                            )}
                             <span>{account.name}</span>
                             {account.owningUserID === currentUserId ? (
                                 <span>
@@ -59,7 +71,7 @@ const PersonalAccountListItem: React.FC<Props> = ({
             </ListItemLink>
             {permissions.canWrite && (
                 <ListItemSecondaryAction>
-                    <IconButton color="primary" onClick={() => openAccountEdit(account.id)}>
+                    <IconButton color="primary" onClick={edit}>
                         <Edit />
                     </IconButton>
                     <IconButton color="error" onClick={() => setAccountToDelete(account.id)}>

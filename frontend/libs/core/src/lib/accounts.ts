@@ -10,27 +10,28 @@ import { fromISOString } from "@abrechnung/utils";
 
 export type AccountSortMode = "lastChanged" | "name" | "description";
 
-export const getAccountSortFunc = (sortMode: AccountSortMode) => {
+export const getAccountSortFunc = (sortMode: AccountSortMode, wipAtTop = false) => {
     const sortingLookup = {
         personal: 50,
         clearing: 100,
     };
+    const baseComparer = (a1: Account, a2: Account) => {
+        if (wipAtTop) {
+            return sortingLookup[a1.type] - sortingLookup[a2.type] || +a2.isWip - +a1.isWip;
+        }
+        return sortingLookup[a1.type] - sortingLookup[a2.type];
+    };
     switch (sortMode) {
         case "lastChanged":
-            return (t1: Account, t2: Account) =>
-                sortingLookup[t1.type] - sortingLookup[t2.type] ||
-                +t2.isWip - +t1.isWip ||
-                fromISOString(t2.lastChanged).getTime() - fromISOString(t1.lastChanged).getTime();
+            return (a1: Account, a2: Account) =>
+                baseComparer(a1, a2) ||
+                fromISOString(a2.lastChanged).getTime() - fromISOString(a1.lastChanged).getTime();
         case "name":
-            return (t1: Account, t2: Account) =>
-                +t2.isWip - +t1.isWip ||
-                sortingLookup[t1.type] - sortingLookup[t2.type] ||
-                t1.name.toLowerCase().localeCompare(t2.name.toLowerCase());
+            return (a1: Account, a2: Account) =>
+                baseComparer(a1, a2) || a1.name.toLowerCase().localeCompare(a2.name.toLowerCase());
         case "description":
-            return (t1: Account, t2: Account) =>
-                +t2.isWip - +t1.isWip ||
-                sortingLookup[t1.type] - sortingLookup[t2.type] ||
-                t1.description.toLowerCase().localeCompare(t2.description.toLowerCase());
+            return (a1: Account, a2: Account) =>
+                baseComparer(a1, a2) || a1.description.toLowerCase().localeCompare(a2.description.toLowerCase());
     }
 };
 

@@ -37,20 +37,23 @@ export const TransactionActions: React.FC<Props> = ({ groupId, transactionId }) 
     };
 
     const abortEdit = () => {
-        if (transaction.isWip) {
-            dispatch(discardTransactionChange({ groupId, transactionId, api }))
-                .unwrap()
-                .then(({ deletedTransaction }) => {
-                    if (deletedTransaction) {
-                        navigate(`/groups/${groupId}/`);
-                    }
-                })
-                .catch((err) => toast.error(`error while cancelling edit: ${err}`));
+        if (!transaction.isWip) {
+            toast.error("Cannot save as there are not changes made");
+            return;
         }
+        dispatch(discardTransactionChange({ groupId, transactionId, api }))
+            .unwrap()
+            .then(({ deletedTransaction }) => {
+                if (deletedTransaction) {
+                    navigate(`/groups/${groupId}/`);
+                }
+            })
+            .catch((err) => toast.error(`error while cancelling edit: ${err}`));
     };
 
     const commitEdit = () => {
         if (!transaction.isWip) {
+            toast.error("Cannot cancel editing as there are not changes made");
             return;
         }
         dispatch(saveTransaction({ groupId, transactionId, api }))
@@ -72,6 +75,8 @@ export const TransactionActions: React.FC<Props> = ({ groupId, transactionId }) 
             .catch((err) => toast.error(`error while deleting transaction: ${err}`));
     };
 
+    const transactionTypeLabel = transaction.type === "purchase" ? "purchase" : "transfer";
+
     return (
         <>
             <Grid container justifyContent="space-between">
@@ -83,7 +88,7 @@ export const TransactionActions: React.FC<Props> = ({ groupId, transactionId }) 
                     >
                         <ChevronLeft />
                     </IconButton>
-                    <Chip color="primary" label={transaction.type} />
+                    <Chip color="primary" label={transactionTypeLabel} />
                 </Grid>
                 <Grid item>
                     {permissions.canWrite && (

@@ -2,7 +2,7 @@ import React from "react";
 import { api } from "../../core/api";
 import { Dialog, DialogTitle, DialogActions, DialogContent, Button } from "@mui/material";
 import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
-import { saveAccount, selectAccountById } from "@abrechnung/redux";
+import { deleteAccount, selectAccountById } from "@abrechnung/redux";
 import { toast } from "react-toastify";
 
 interface Props {
@@ -20,7 +20,7 @@ export const DeleteAccountModal: React.FC<Props> = ({ show, onClose, groupId, ac
 
     const onDeleteAccount = () => {
         if (account) {
-            dispatch(saveAccount({ account: { ...account, deleted: true }, api: api }))
+            dispatch(deleteAccount({ groupId, accountId, api }))
                 .then((res) => {
                     console.log("success in delete account modal", res);
                     onClose();
@@ -36,8 +36,8 @@ export const DeleteAccountModal: React.FC<Props> = ({ show, onClose, groupId, ac
         <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={show}>
             <DialogTitle id="confirmation-dialog-title">Confirm delete account</DialogTitle>
             <DialogContent dividers>
-                Are you sure you want to delete the account &quot
-                {account?.name}&quot
+                Are you sure you want to delete the account &quot;
+                {account?.name}&quot;
             </DialogContent>
             <DialogActions>
                 <Button autoFocus onClick={onClose} color="primary">

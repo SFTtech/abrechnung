@@ -9,8 +9,9 @@ import Loading from "../../components/style/Loading";
 import Transaction from "./Transaction";
 import GroupSettings from "./GroupSettings";
 import Balances from "../../components/accounts/Balances";
-import AccountList from "../account-list/AccountList";
-import AccountDetail from "../AccountDetail";
+import { AccountList } from "../AccountList";
+import { ClearingAccountList } from "../ClearingAccountList";
+import { AccountDetail } from "../AccountDetail";
 import { api, ws } from "../../core/api";
 import {
     selectAccountSlice,
@@ -109,6 +110,14 @@ export const Group: React.FC = () => {
                         element={
                             <Suspense fallback={<Loading />}>
                                 <AccountList groupId={groupId} />
+                            </Suspense>
+                        }
+                    />
+                    <Route
+                        path="events"
+                        element={
+                            <Suspense fallback={<Loading />}>
+                                <ClearingAccountList groupId={groupId} />
                             </Suspense>
                         }
                     />

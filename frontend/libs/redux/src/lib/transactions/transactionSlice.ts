@@ -440,6 +440,7 @@ export const createTransfer = createAsyncThunk<
         isSynced: isSynced,
     };
 });
+
 export const createPurchase = createAsyncThunk<
     { transaction: Transaction },
     { groupId: number },
@@ -530,7 +531,7 @@ export const discardTransactionChange = createAsyncThunk<
     { transaction: TransactionContainer | undefined; deletedTransaction: boolean },
     { groupId: number; transactionId: number; api: Api },
     { state: IRootState }
->("discardTransactionChange", async ({ groupId, transactionId, api }, { getState, dispatch, rejectWithValue }) => {
+>("discardTransactionChange", async ({ groupId, transactionId, api }, { getState, rejectWithValue }) => {
     const state = getState();
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state.transactions, groupId);
     const wipTransaction = s.wipTransactions.byId[transactionId];

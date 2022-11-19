@@ -5,7 +5,7 @@ import AccountTransactionListEntry from "./AccountTransactionListEntry";
 import { Account, Transaction } from "@abrechnung/types";
 import AccountClearingListEntry from "./AccountClearingListEntry";
 import { selectAccountSlice, selectTransactionSlice, useAppSelector } from "../../store";
-import { selectGroupAccountsFiltered, selectTransactionsInvolvingAccount } from "@abrechnung/redux";
+import { selectClearingAccountsInvolvingAccounts, selectTransactionsInvolvingAccount } from "@abrechnung/redux";
 
 type ArrayAccountsAndTransactions = Array<Transaction | Account>;
 
@@ -19,7 +19,7 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, accountId }) 
         selectTransactionsInvolvingAccount({ state: selectTransactionSlice(state), groupId, accountId })
     );
     const clearingAccounts = useAppSelector((state) =>
-        selectGroupAccountsFiltered({ state: selectAccountSlice(state), groupId, type: "clearing" })
+        selectClearingAccountsInvolvingAccounts({ state: selectAccountSlice(state), groupId, accountId })
     );
 
     const combinedList: ArrayAccountsAndTransactions = (transactions as ArrayAccountsAndTransactions)
