@@ -1,6 +1,6 @@
 import { GroupStackScreenProps } from "../../navigation/types";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { ActivityIndicator, Button, Divider, List, Text, useTheme } from "react-native-paper";
+import { ActivityIndicator, Button, Chip, Divider, List, Text, useTheme } from "react-native-paper";
 import * as React from "react";
 import { useLayoutEffect } from "react";
 import { Transaction, AccountBalance, Account, TransactionShare } from "@abrechnung/types";
@@ -15,6 +15,7 @@ import {
     selectTransactionsInvolvingAccount,
     selectCurrentUserPermissions,
     selectClearingAccountsInvolvingAccounts,
+    accountsUpdated,
 } from "@abrechnung/redux";
 import { fromISOString } from "@abrechnung/utils";
 
@@ -68,7 +69,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
     const renderTransactionListEntryTransaction = (transaction: Transaction) => (
         <List.Item
             key={`transaction-${transaction.id}`}
-            title={transaction.description}
+            title={transaction.name}
             description={transaction.billedAt}
             left={(props) => <List.Icon {...props} icon={getTransactionIcon(transaction.type)} />}
             right={(props) => (
@@ -134,6 +135,26 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
     return (
         <ScrollView style={styles.container}>
             <List.Item title={account.name} description={account.description} />
+            {account.type === "clearing" && (
+                <>
+                    {account.dateInfo != null && <List.Item title="Date" description={account.dateInfo} />}
+                    {account.tags.length > 0 && (
+                        <List.Item title="Tags" right={() => account.tags.map((tag) => <Chip key={tag}>{tag}</Chip>)} />
+                    )}
+                    <TransactionShareInput
+                        title="Participated"
+                        disabled={true}
+                        groupId={groupId}
+                        value={account.clearingShares as TransactionShare}
+                        onChange={() => {
+                            return;
+                        }}
+                        enableAdvanced={true}
+                        multiSelect={true}
+                        excludedAccounts={[account.id]}
+                    />
+                </>
+            )}
             <List.Item
                 title="Balance"
                 right={(props) => (
@@ -142,20 +163,6 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                     </Text>
                 )}
             />
-            {account.type === "clearing" && (
-                <TransactionShareInput
-                    title="Participated"
-                    disabled={true}
-                    groupId={groupId}
-                    value={account.clearingShares as TransactionShare}
-                    onChange={() => {
-                        return;
-                    }}
-                    enableAdvanced={true}
-                    multiSelect={true}
-                    excludedAccounts={[account.id]}
-                />
-            )}
 
             {combinedList.length > 0 ? (
                 <>

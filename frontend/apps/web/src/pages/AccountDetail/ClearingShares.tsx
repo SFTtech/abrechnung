@@ -51,16 +51,21 @@ const AccountTableRow: React.FC<AccountTableRowProps> = ({ groupId, clearingAcco
         selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
     );
 
-    const share = clearingAccount.clearingShares[accountId] ?? 0;
+    const clearingShares = clearingAccount.type === "clearing" ? clearingAccount.clearingShares : {};
+
+    const share = clearingShares[accountId] ?? 0;
 
     const updateClearingShares = (value) => {
+        if (clearingAccount.type !== "clearing") {
+            return;
+        }
         if (value === 0) {
-            const newShares = { ...clearingAccount.clearingShares };
+            const newShares = { ...clearingShares };
             delete newShares[accountId];
 
             dispatch(wipAccountUpdated({ ...clearingAccount, clearingShares: newShares }));
         } else {
-            const newShares = { ...clearingAccount.clearingShares, [accountId]: value };
+            const newShares = { ...clearingShares, [accountId]: value };
             newShares[accountId] = value;
 
             dispatch(wipAccountUpdated({ ...clearingAccount, clearingShares: newShares }));
@@ -117,6 +122,9 @@ export const ClearingShares: React.FC<ClearingSharesProps> = ({ groupId, account
     const [showAdvanced, setShowAdvanced] = useState(false);
 
     useEffect(() => {
+        if (account.type !== "clearing") {
+            return;
+        }
         for (const share of Object.values(account.clearingShares)) {
             if (share !== 1) {
                 setShowAdvanced(true);

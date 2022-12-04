@@ -1,8 +1,7 @@
+import { selectAccountById, wipAccountUpdated } from "@abrechnung/redux";
 import React, { useEffect, useState } from "react";
 import { DisabledTextField } from "../../components/style/DisabledTextField";
-import { useAppSelector, useAppDispatch, selectAccountSlice } from "../../store";
-import { selectAccountById, wipAccountUpdated } from "@abrechnung/redux";
-import { parseAbrechnungFloat } from "@abrechnung/utils";
+import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
 
 interface Props {
     groupId: number;
@@ -44,6 +43,7 @@ export const AccountName: React.FC<Props> = ({ groupId, accountId }) => {
             label="Name"
             helperText={error ? "name is required" : null}
             variant="standard"
+            margin="normal"
             fullWidth
             error={error}
             onChange={onChange}

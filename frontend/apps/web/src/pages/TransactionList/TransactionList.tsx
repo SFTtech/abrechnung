@@ -1,4 +1,12 @@
-import React, { useEffect, useState } from "react";
+import { TransactionSortMode } from "@abrechnung/core";
+import {
+    createPurchase,
+    selectCurrentUserPermissions,
+    selectGroupById,
+    selectSortedTransactions,
+} from "@abrechnung/redux";
+import { Add, Clear } from "@mui/icons-material";
+import SearchIcon from "@mui/icons-material/Search";
 import {
     Alert,
     Box,
@@ -18,35 +26,21 @@ import {
     Tooltip,
     useMediaQuery,
 } from "@mui/material";
-import { Add, Clear } from "@mui/icons-material";
-import { TransactionListEntry } from "./TransactionListEntry";
-import { MobilePaper } from "../style/mobile";
-import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
-import TransferCreateModal from "./transfer/TransferCreateModal";
-import SearchIcon from "@mui/icons-material/Search";
-import { useTitle, filterTransaction } from "../../core/utils";
 import { useTheme } from "@mui/material/styles";
-import {
-    selectAccountSlice,
-    selectGroupSlice,
-    selectTransactionSlice,
-    useAppDispatch,
-    useAppSelector,
-} from "../../store";
-import {
-    createPurchase,
-    selectAccountIdToNameMap,
-    selectGroupById,
-    selectGroupTransactions,
-    selectTransactionBalanceEffects,
-    selectCurrentUserPermissions,
-} from "@abrechnung/redux";
-import { getTransactionSortFunc, TransactionSortMode } from "@abrechnung/core";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { PurchaseIcon, TransferIcon } from "../../components/style/AbrechnungIcons";
+import { MobilePaper } from "../../components/style/mobile";
+import { TagSelector } from "../../components/TagSelector";
+import TransferCreateModal from "../../components/transactions/transfer/TransferCreateModal";
+import { useTitle } from "../../core/utils";
+import { selectGroupSlice, useAppDispatch, useAppSelector } from "../../store";
+import { TransactionListItem } from "./TransactionListItem";
 
 interface Props {
     groupId: number;
 }
+const emptyList = [];
 
 export const TransactionList: React.FC<Props> = ({ groupId }) => {
     const theme: Theme = useTheme();
@@ -56,39 +50,21 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
     const dispatch = useAppDispatch();
 
     const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
-    const transactions = useAppSelector((state) =>
-        selectGroupTransactions({ state: selectTransactionSlice(state), groupId })
-    );
-    const balanceEffects = useAppSelector((state) =>
-        selectTransactionBalanceEffects({ state: selectTransactionSlice(state), groupId })
-    );
 
     const [speedDialOpen, setSpeedDialOpen] = useState(false);
     const toggleSpeedDial = () => setSpeedDialOpen((currValue) => !currValue);
 
     const [showTransferCreateDialog, setShowTransferCreateDialog] = useState(false);
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
-    const groupAccountMap = useAppSelector((state) =>
-        selectAccountIdToNameMap({ state: selectAccountSlice(state), groupId })
-    );
-
-    const [filteredTransactions, setFilteredTransactions] = useState([]);
 
     const [searchValue, setSearchValue] = useState("");
+    const [tagFilter, setTagFilter] = useState<string[]>(emptyList);
 
     const [sortMode, setSortMode] = useState<TransactionSortMode>("lastChanged");
 
-    useEffect(() => {
-        let filtered = transactions;
-        if (searchValue != null && searchValue !== "") {
-            filtered = transactions.filter((t) =>
-                filterTransaction(t, balanceEffects[t.id], searchValue, groupAccountMap)
-            );
-        }
-        filtered = [...filtered].sort(getTransactionSortFunc(sortMode));
-
-        setFilteredTransactions(filtered);
-    }, [searchValue, balanceEffects, setFilteredTransactions, sortMode, transactions, groupAccountMap]);
+    const transactions = useAppSelector((state) =>
+        selectSortedTransactions({ state, groupId, searchTerm: searchValue, sortMode, tags: tagFilter })
+    );
 
     useTitle(`${group.name} - Transactions`);
 
@@ -103,6 +79,8 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
     const openTransferCreateDialog = () => {
         setShowTransferCreateDialog(true);
     };
+
+    const handleChangeTagFilter = (newTags: string[]) => setTagFilter(newTags);
 
     return (
         <>
@@ -155,6 +133,17 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                                 <MenuItem value="billedAt">Date</MenuItem>
                             </Select>
                         </FormControl>
+                        <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
+                            <TagSelector
+                                label="Filter by tags"
+                                groupId={groupId}
+                                editable={true}
+                                value={tagFilter}
+                                onChange={handleChangeTagFilter}
+                                addCreateNewOption={false}
+                                chipProps={{ size: "small" }}
+                            />
+                        </FormControl>
                     </Box>
                     {!isSmallScreen && (
                         <Box sx={{ display: "flex-item" }}>
@@ -179,8 +168,8 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                     {transactions.length === 0 ? (
                         <Alert severity="info">No Transactions</Alert>
                     ) : (
-                        filteredTransactions.map((transaction) => (
-                            <TransactionListEntry
+                        transactions.map((transaction) => (
+                            <TransactionListItem
                                 key={transaction.id}
                                 groupId={groupId}
                                 transactionId={transaction.id}

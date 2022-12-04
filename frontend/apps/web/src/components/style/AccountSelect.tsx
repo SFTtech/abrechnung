@@ -46,6 +46,7 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
         <Autocomplete
             options={filteredAccounts}
             getOptionLabel={(acc: Account) => acc.name}
+            multiple={false}
             value={value}
             disabled={disabled}
             openOnFocus

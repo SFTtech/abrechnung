@@ -1,34 +1,37 @@
-import React, { useEffect, useState } from "react";
+import { AccountSortMode } from "@abrechnung/core";
+import { createAccount, selectCurrentUserPermissions, selectSortedAccounts } from "@abrechnung/redux";
+import { Add as AddIcon, Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import {
     Alert,
     Box,
     Divider,
     Fab,
+    FormControl,
     IconButton,
     Input,
     InputAdornment,
-    List,
-    FormControl,
     InputLabel,
+    List,
+    MenuItem,
     Select,
     Theme,
-    useTheme,
-    MenuItem,
     Tooltip,
     useMediaQuery,
+    useTheme,
 } from "@mui/material";
-import { Add as AddIcon, Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
-import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
-import { createAccount, selectCurrentUserPermissions, selectSortedAccounts } from "@abrechnung/redux";
-import { DeleteAccountModal } from "../../components/accounts/DeleteAccountModal";
-import { ClearingAccountListItem } from "./ClearingAccountListItem";
-import { MobilePaper } from "../../components/style/mobile";
-import { AccountSortMode } from "@abrechnung/core";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { DeleteAccountModal } from "../../components/accounts/DeleteAccountModal";
+import { MobilePaper } from "../../components/style/mobile";
+import { TagSelector } from "../../components/TagSelector";
+import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
+import { ClearingAccountListItem } from "./ClearingAccountListItem";
 
 interface Props {
     groupId: number;
 }
+
+const emptyList = [];
 
 export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
     const dispatch = useAppDispatch();
@@ -36,6 +39,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
     const theme: Theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
     const [searchValue, setSearchValue] = useState("");
+    const [tagFilter, setTagFilter] = useState<string[]>(emptyList);
     const [sortMode, setSortMode] = useState<AccountSortMode>("lastChanged");
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
     const clearingAccounts = useAppSelector((state) =>
@@ -45,6 +49,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
             type: "clearing",
             searchTerm: searchValue,
             sortMode,
+            tags: tagFilter,
             wipAtTop: true,
         })
     );
@@ -59,6 +64,8 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
         setAccountDeleteId(null);
     };
 
+    const handleChangeTagFilter = (newTags: string[]) => setTagFilter(newTags);
+
     const onCreateEvent = () => {
         dispatch(createAccount({ groupId, type: "clearing" }))
             .unwrap()
@@ -66,23 +73,6 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                 navigate(`/groups/${groupId}/accounts/${account.id}?no-redirect=true`);
             });
     };
-
-    const [filteredClearingAccounts, setFilteredClearingAccounts] = useState([]);
-
-    useEffect(() => {
-        if (searchValue != null && searchValue !== "") {
-            setFilteredClearingAccounts(
-                clearingAccounts.filter((t) => {
-                    return (
-                        t.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-                        t.description.toLowerCase().includes(searchValue.toLowerCase())
-                    );
-                })
-            );
-        } else {
-            return setFilteredClearingAccounts(clearingAccounts);
-        }
-    }, [clearingAccounts, searchValue, setFilteredClearingAccounts]);
 
     return (
         <>
@@ -134,6 +124,17 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                                 <MenuItem value="description">Description</MenuItem>
                             </Select>
                         </FormControl>
+                        <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
+                            <TagSelector
+                                label="Filter by tags"
+                                groupId={groupId}
+                                editable={true}
+                                value={tagFilter}
+                                onChange={handleChangeTagFilter}
+                                addCreateNewOption={false}
+                                chipProps={{ size: "small" }}
+                            />
+                        </FormControl>
                     </Box>
                     {!isSmallScreen && (
                         <Box sx={{ display: "flex-item" }}>
@@ -150,7 +151,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                     {clearingAccounts.length === 0 ? (
                         <Alert severity="info">No Accounts</Alert>
                     ) : (
-                        filteredClearingAccounts.map((account) => (
+                        clearingAccounts.map((account) => (
                             <ClearingAccountListItem
                                 key={account.id}
                                 groupId={groupId}
@@ -169,7 +170,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                         onClose={onCloseDeleteModal}
                         accountId={accountDeleteId}
                     />
-                    <Fab color="primary" sx={{ position: "absolute", bottom: 16, right: 16 }}>
+                    <Fab color="primary" sx={{ position: "fixed", bottom: 16, right: 16 }}>
                         <AddIcon onClick={onCreateEvent} />
                     </Fab>
                 </>

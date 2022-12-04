@@ -109,7 +109,7 @@ export const computeAccountBalances = (
 
     // linearize the account dependency graph to properly redistribute clearing accounts
     const shareMap: Map<number, ClearingShares> = accounts.reduce((map, acc) => {
-        if (acc.clearingShares != null && Object.keys(acc.clearingShares).length) {
+        if (acc.type === "clearing" && acc.clearingShares != null && Object.keys(acc.clearingShares).length) {
             map.set(acc.id, acc.clearingShares);
         }
         return map;

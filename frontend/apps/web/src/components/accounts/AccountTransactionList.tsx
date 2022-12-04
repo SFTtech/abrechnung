@@ -32,7 +32,7 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, accountId }) 
                 if (entry.type === "clearing") {
                     return (
                         <AccountClearingListEntry
-                            key={entry.id}
+                            key={`clearing-${entry.id}`}
                             accountId={accountId}
                             groupId={groupId}
                             clearingAccountId={entry.id}
@@ -47,7 +47,7 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, accountId }) 
                 // has to be a transaction even though we handled all other "type" cases before
                 return (
                     <AccountTransactionListEntry
-                        key={entry.id}
+                        key={`transaction-${entry.id}`}
                         accountId={accountId}
                         groupId={groupId}
                         transactionId={entry.id}

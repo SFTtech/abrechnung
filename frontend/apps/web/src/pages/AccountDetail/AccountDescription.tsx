@@ -43,6 +43,7 @@ export const AccountDescription: React.FC<Props> = ({ groupId, accountId }) => {
             label="Description"
             helperText={error ? "name is required" : null}
             variant="standard"
+            margin="normal"
             fullWidth
             error={error}
             onChange={onChange}

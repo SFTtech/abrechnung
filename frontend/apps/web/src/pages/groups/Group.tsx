@@ -1,25 +1,3 @@
-import React, { Suspense } from "react";
-import { Route, Routes, Navigate, useParams } from "react-router-dom";
-import GroupInvites from "./GroupInvites";
-import GroupMemberList from "./GroupMemberList";
-import GroupLog from "./GroupLog";
-import TransactionList from "../../components/transactions/TransactionList";
-import Layout from "../../components/style/Layout";
-import Loading from "../../components/style/Loading";
-import Transaction from "./Transaction";
-import GroupSettings from "./GroupSettings";
-import Balances from "../../components/accounts/Balances";
-import { AccountList } from "../AccountList";
-import { ClearingAccountList } from "../ClearingAccountList";
-import { AccountDetail } from "../AccountDetail";
-import { api, ws } from "../../core/api";
-import {
-    selectAccountSlice,
-    selectGroupSlice,
-    selectTransactionSlice,
-    useAppDispatch,
-    useAppSelector,
-} from "../../store";
 import {
     fetchAccounts,
     fetchGroupMembers,
@@ -32,8 +10,30 @@ import {
     subscribe,
     unsubscribe,
 } from "@abrechnung/redux";
+import React, { Suspense } from "react";
 import { batch } from "react-redux";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import Balances from "../../components/accounts/Balances";
+import Layout from "../../components/style/Layout";
+import Loading from "../../components/style/Loading";
+import { api, ws } from "../../core/api";
+import {
+    selectAccountSlice,
+    selectGroupSlice,
+    selectTransactionSlice,
+    useAppDispatch,
+    useAppSelector,
+} from "../../store";
+import { AccountDetail } from "../AccountDetail";
+import { AccountList } from "../AccountList";
+import { ClearingAccountList } from "../ClearingAccountList";
+import { TransactionList } from "../TransactionList";
+import GroupInvites from "./GroupInvites";
+import GroupLog from "./GroupLog";
+import GroupMemberList from "./GroupMemberList";
+import GroupSettings from "./GroupSettings";
+import Transaction from "./Transaction";
 
 export const Group: React.FC = () => {
     const params = useParams();

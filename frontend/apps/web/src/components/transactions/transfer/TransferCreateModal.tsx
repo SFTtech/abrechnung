@@ -14,7 +14,9 @@ import { parseAbrechnungFloat } from "@abrechnung/utils";
 
 interface FormValues {
     value: string;
+    name: string;
     description: string;
+    tags: string[];
     billedAt: DateTime;
     creditor: Account;
     debitor: Account;
@@ -22,7 +24,8 @@ interface FormValues {
 
 const validationSchema = yup.object({
     value: yup.number().required("value is required"),
-    description: yup.string().required("description is required"),
+    name: yup.string().required("name is required"),
+    description: yup.string(),
     creditor: yup.object().required("from is required"),
     debitor: yup.object().required("to is required"),
     // billedAt: yup.date("Enter a description").required("from is required"),
@@ -50,9 +53,11 @@ export const TransferCreateModal: React.FC<Props> = ({ groupId, show, onClose })
                 transaction: {
                     groupID: groupId,
                     type: "transfer",
+                    name: values.name,
                     description: values.description,
                     value: parseAbrechnungFloat(values.value),
                     billedAt: values.billedAt.toISODate(),
+                    tags: values.tags,
                     currencySymbol: currencySymbol,
                     currencyConversionRate: 1.0,
                     creditorShares: { [values.creditor.id]: 1.0 },
@@ -78,8 +83,10 @@ export const TransferCreateModal: React.FC<Props> = ({ groupId, show, onClose })
             <DialogContent>
                 <Formik
                     initialValues={{
+                        name: "",
                         description: "",
                         value: "0.0",
+                        tags: [],
                         billedAt: DateTime.now(),
                         creditor: undefined,
                         debitor: undefined,
@@ -98,6 +105,20 @@ export const TransferCreateModal: React.FC<Props> = ({ groupId, show, onClose })
                         isSubmitting,
                     }: FormikProps<FormValues>) => (
                         <Form>
+                            <TextField
+                                margin="normal"
+                                required
+                                fullWidth
+                                variant="standard"
+                                name="name"
+                                label="Name"
+                                autoFocus
+                                value={values.name}
+                                onChange={handleChange}
+                                onBlur={handleBlur}
+                                error={touched.name && Boolean(errors.name)}
+                                helperText={touched.name && (errors.name as ReactNode)}
+                            />
                             <TextField
                                 margin="normal"
                                 required

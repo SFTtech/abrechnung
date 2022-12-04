@@ -1,7 +1,7 @@
 import { DrawerContentScrollView } from "@react-navigation/drawer";
 import { StyleSheet, View, ScrollView, ScrollViewProps } from "react-native";
 import * as React from "react";
-import { ActivityIndicator, Drawer } from "react-native-paper";
+import { ActivityIndicator, Drawer, IconButton, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import {
@@ -18,6 +18,7 @@ import { api } from "../core/api";
 type Props = React.ForwardRefExoticComponent<ScrollViewProps & React.RefAttributes<ScrollView>>;
 
 export const DrawerContent: React.FC<Props> = (props) => {
+    const theme = useTheme();
     const dispatch = useAppDispatch();
     const navigation = useNavigation();
     const activeGroupID = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) }));
@@ -48,6 +49,14 @@ export const DrawerContent: React.FC<Props> = (props) => {
                             />
                         ))
                     )}
+                    <IconButton
+                        icon="add"
+                        containerColor={theme.colors.primaryContainer}
+                        style={styles.addGroupButton}
+                        size={32}
+                        mode="contained"
+                        onPress={() => navigation.navigate("AddGroup")}
+                    />
                 </Drawer.Section>
                 <Drawer.Section style={styles.drawerSection}>
                     {/*<Drawer.Item*/}
@@ -71,30 +80,6 @@ export const DrawerContent: React.FC<Props> = (props) => {
                         }}
                     />
                 </Drawer.Section>
-                {/*<Drawer.Section title="PreferencesScreen">*/}
-                {/*    <TouchableRipple*/}
-                {/*        onPress={() => {*/}
-                {/*        }}*/}
-                {/*    >*/}
-                {/*        <View style={styles.preference}>*/}
-                {/*            <Text>Dark Theme</Text>*/}
-                {/*            <View pointerEvents="none">*/}
-                {/*                <Switch value={false} />*/}
-                {/*            </View>*/}
-                {/*        </View>*/}
-                {/*    </TouchableRipple>*/}
-                {/*    <TouchableRipple*/}
-                {/*        onPress={() => {*/}
-                {/*        }}*/}
-                {/*    >*/}
-                {/*        <View style={styles.preference}>*/}
-                {/*            <Text>RTL</Text>*/}
-                {/*            <View pointerEvents="none">*/}
-                {/*                <Switch value={false} />*/}
-                {/*            </View>*/}
-                {/*        </View>*/}
-                {/*    </TouchableRipple>*/}
-                {/*</Drawer.Section>*/}
             </View>
         </DrawerContentScrollView>
     );
@@ -126,6 +111,12 @@ const styles = StyleSheet.create({
         justifyContent: "space-between",
         paddingVertical: 12,
         paddingHorizontal: 16,
+    },
+    addGroupButton: {
+        position: "absolute",
+        right: 16,
+        bottom: -30,
+        zIndex: 100,
     },
 });
 

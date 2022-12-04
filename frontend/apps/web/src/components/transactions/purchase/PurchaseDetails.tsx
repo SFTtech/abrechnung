@@ -4,6 +4,7 @@ import TransactionCreditorShare from "../TransactionCreditorShare";
 import TransactionDescription from "../TransactionDescription";
 import TransactionBilledAt from "../TransactionBilledAt";
 import TransactionValue from "../TransactionValue";
+import TransactionName from "../TransactionName";
 import { Button, Divider, Grid } from "@mui/material";
 import FileGallery from "../FileGallery";
 import TransactionActions from "../TransactionActions";
@@ -17,6 +18,7 @@ import {
     selectTransactionHasPositions,
     selectTransactionHasAttachments,
 } from "@abrechnung/redux";
+import { TransactionTags } from "../TransactionTags";
 
 interface Props {
     groupId: number;
@@ -44,8 +46,11 @@ export const PurchaseDetails: React.FC<Props> = ({ groupId, transactionId }) => 
                 <Divider sx={{ marginBottom: 1, marginTop: 1 }} />
                 <Grid container>
                     <Grid item xs={12} md={transaction.isWip || hasAttachments ? 6 : 12}>
+                        <TransactionName transactionId={transactionId} groupId={groupId} />
                         <TransactionDescription groupId={groupId} transactionId={transactionId} />
+                        <TransactionValue groupId={groupId} transactionId={transactionId} />
                         <TransactionBilledAt groupId={groupId} transactionId={transactionId} />
+                        <TransactionTags groupId={groupId} transactionId={transactionId} />
 
                         <TransactionCreditorShare
                             groupId={groupId}
@@ -53,8 +58,6 @@ export const PurchaseDetails: React.FC<Props> = ({ groupId, transactionId }) => 
                             isEditing={transaction.isWip}
                             label="Paid by"
                         />
-
-                        <TransactionValue groupId={groupId} transactionId={transactionId} />
                     </Grid>
 
                     {(transaction.isWip || hasAttachments) && (

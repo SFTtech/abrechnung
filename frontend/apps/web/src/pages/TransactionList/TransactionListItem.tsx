@@ -1,18 +1,18 @@
-import ListItemLink from "../style/ListItemLink";
-import { Chip, Divider, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
+import { selectAccountIdToNameMap, selectTransactionById } from "@abrechnung/redux";
 import { HelpOutline } from "@mui/icons-material";
+import { Chip, Divider, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
-import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
-import { selectAccountIdToNameMap, selectTransactionById } from "@abrechnung/redux";
-import { useAppSelector, selectAccountSlice, selectTransactionSlice } from "../../store";
+import { PurchaseIcon, TransferIcon } from "../../components/style/AbrechnungIcons";
+import ListItemLink from "../../components/style/ListItemLink";
+import { selectAccountSlice, selectTransactionSlice, useAppSelector } from "../../store";
 
 interface Props {
     groupId: number;
     transactionId: number;
 }
 
-export const TransactionListEntry: React.FC<Props> = ({ groupId, transactionId }) => {
+export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId }) => {
     const accounts = useAppSelector((state) => selectAccountIdToNameMap({ state: selectAccountSlice(state), groupId }));
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
@@ -62,7 +62,7 @@ export const TransactionListEntry: React.FC<Props> = ({ groupId, transactionId }
                                 <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 1 }} />
                             )}
                             <Typography variant="body1" component="span">
-                                {transaction.description}
+                                {transaction.name}
                             </Typography>
                         </>
                     }
@@ -73,6 +73,9 @@ export const TransactionListEntry: React.FC<Props> = ({ groupId, transactionId }
                             </Typography>
                             <br />
                             {DateTime.fromISO(transaction.billedAt).toLocaleString(DateTime.DATE_FULL)}
+                            {transaction.tags.map((t) => (
+                                <Chip key={t} sx={{ ml: 1 }} variant="outlined" size="small" color="info" label={t} />
+                            ))}
                         </>
                     }
                 />
@@ -91,5 +94,3 @@ export const TransactionListEntry: React.FC<Props> = ({ groupId, transactionId }
         </>
     );
 };
-
-export default TransactionListEntry;

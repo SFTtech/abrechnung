@@ -1,10 +1,16 @@
+import {
+    accountEditStarted,
+    selectAccountById,
+    selectCurrentUserPermissions,
+    selectAccountIdToNameMap,
+} from "@abrechnung/redux";
+import { ContentCopy, Delete, Edit } from "@mui/icons-material";
+import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
+import { DateTime } from "luxon";
 import React from "react";
-import { Chip, ListItem, IconButton, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
-import { ListItemLink } from "../../components/style/ListItemLink";
-import { Edit, ContentCopy, Delete } from "@mui/icons-material";
-import { selectAccountById, selectCurrentUserPermissions, accountEditStarted } from "@abrechnung/redux";
-import { useAppSelector, selectAccountSlice, useAppDispatch } from "../../store";
 import { useNavigate } from "react-router-dom";
+import { ListItemLink } from "../../components/style/ListItemLink";
+import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
 
 interface Props {
     groupId: number;
@@ -17,9 +23,16 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, s
     const navigate = useNavigate();
 
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const accounts = useAppSelector((state) => selectAccountIdToNameMap({ state: selectAccountSlice(state), groupId }));
     const account = useAppSelector((state) =>
         selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
     );
+
+    if (account.type !== "clearing") {
+        return null;
+    }
+
+    const participatorNames = Object.keys(account.clearingShares).map((accountId) => accounts[Number(accountId)]);
 
     const edit = () => {
         if (!account.isWip) {
@@ -42,7 +55,18 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, s
                             </Typography>
                         </>
                     }
-                    secondary={account.description}
+                    secondary={
+                        <>
+                            <Typography variant="body2" component="span" sx={{ color: "text.primary" }}>
+                                {participatorNames.join(", ")}
+                            </Typography>
+                            <br />
+                            {account.dateInfo && DateTime.fromISO(account.dateInfo).toLocaleString(DateTime.DATE_FULL)}
+                            {account.tags.map((t) => (
+                                <Chip key={t} sx={{ ml: 1 }} variant="outlined" size="small" color="info" label={t} />
+                            ))}
+                        </>
+                    }
                 />
             </ListItemLink>
             {permissions.canWrite && (

@@ -164,7 +164,7 @@ export const AccountList: React.FC<Props> = ({ groupId }) => {
                         onClose={onCloseDeleteModal}
                         accountId={accountDeleteId}
                     />
-                    <Fab color="primary" sx={{ position: "absolute", bottom: 16, right: 16 }}>
+                    <Fab color="primary" sx={{ position: "fixed", bottom: 16, right: 16 }}>
                         <AddIcon onClick={onCreateEvent} />
                     </Fab>
                 </>

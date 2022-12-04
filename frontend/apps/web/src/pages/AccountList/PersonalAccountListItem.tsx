@@ -36,6 +36,28 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
         }
         navigate(`/groups/${groupId}/accounts/${accountId}`);
     };
+    let owningUserInfo = null;
+    if (account.type === "personal" && account.owningUserID !== null) {
+        if (account.owningUserID === currentUserId) {
+            owningUserInfo = (
+                <span>
+                    , owned by <Chip size="small" component="span" color="primary" label="you" />
+                </span>
+            );
+        } else {
+            owningUserInfo = (
+                <span>
+                    , owned by{" "}
+                    <Chip
+                        size="small"
+                        component="span"
+                        color="secondary"
+                        label={memberIDToUsername[account.owningUserID]}
+                    />
+                </span>
+            );
+        }
+    }
 
     return (
         <ListItem sx={{ padding: 0 }} key={account.id}>
@@ -47,23 +69,7 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
                                 <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 1 }} />
                             )}
                             <span>{account.name}</span>
-                            {account.owningUserID === currentUserId ? (
-                                <span>
-                                    , owned by <Chip size="small" component="span" color="primary" label="you" />
-                                </span>
-                            ) : (
-                                account.owningUserID !== null && (
-                                    <span>
-                                        , owned by{" "}
-                                        <Chip
-                                            size="small"
-                                            component="span"
-                                            color="secondary"
-                                            label={memberIDToUsername[account.owningUserID]}
-                                        />
-                                    </span>
-                                )
-                            )}
+                            {owningUserInfo}
                         </div>
                     }
                     secondary={account.description}

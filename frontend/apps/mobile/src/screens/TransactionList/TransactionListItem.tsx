@@ -1,12 +1,12 @@
-import { List, Menu, Text, useTheme } from "react-native-paper";
-import React, { useState } from "react";
-import { getTransactionIcon } from "../constants/Icons";
-import { useNavigation } from "@react-navigation/native";
-import { notify } from "../notifications";
-import { MaterialIcons } from "@expo/vector-icons";
 import { deleteTransaction, selectTransactionById } from "@abrechnung/redux";
-import { selectTransactionSlice, useAppDispatch, useAppSelector } from "../store";
-import { api } from "../core/api";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import React, { useState } from "react";
+import { List, Menu, Text, useTheme } from "react-native-paper";
+import { getTransactionIcon } from "../../constants/Icons";
+import { api } from "../../core/api";
+import { notify } from "../../notifications";
+import { selectTransactionSlice, useAppDispatch, useAppSelector } from "../../store";
 
 interface Props {
     groupId: number;
@@ -45,7 +45,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId })
             anchor={
                 <List.Item
                     key={transactionId}
-                    title={transaction.description}
+                    title={transaction.name}
                     description={transaction.billedAt}
                     left={(props) => <List.Icon {...props} icon={getTransactionIcon(transaction.type)} />}
                     right={(props) => (

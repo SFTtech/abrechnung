@@ -1,31 +1,31 @@
-import { RefreshControl, ScrollView, StyleSheet } from "react-native";
-import { GroupTabScreenProps } from "../../navigation/types";
-import { Appbar, FAB, Menu, Portal, RadioButton, Text, TextInput, useTheme } from "react-native-paper";
-import * as React from "react";
-import { useLayoutEffect, useState } from "react";
-import { useIsFocused } from "@react-navigation/native";
-import { purchaseIcon, transferIcon } from "../../constants/Icons";
-import { TransactionType } from "@abrechnung/types";
-import LoadingIndicator from "../../components/LoadingIndicator";
-import TransactionListItem from "../../components/TransactionListItem";
+import { TransactionSortMode } from "@abrechnung/core";
 import {
-    useAppSelector,
-    selectTransactionSlice,
-    useAppDispatch,
-    selectActiveGroupId,
-    selectUiSlice,
-} from "../../store";
-import {
-    fetchTransactions,
-    selectGroupTransactionsStatus,
     createPurchase,
     createTransfer,
-    selectSortedTransactions,
+    fetchTransactions,
     selectCurrentUserPermissions,
+    selectGroupTransactionsStatus,
+    selectSortedTransactions,
 } from "@abrechnung/redux";
-import { api } from "../../core/api";
+import { Transaction, TransactionType } from "@abrechnung/types";
 import { toISODateString } from "@abrechnung/utils";
-import { TransactionSortMode } from "@abrechnung/core";
+import { useIsFocused } from "@react-navigation/native";
+import * as React from "react";
+import { useLayoutEffect, useState } from "react";
+import { FlatList, StyleSheet, View } from "react-native";
+import { Appbar, FAB, Menu, Portal, RadioButton, Text, TextInput, useTheme } from "react-native-paper";
+import LoadingIndicator from "../../components/LoadingIndicator";
+import TransactionListItem from "./TransactionListItem";
+import { purchaseIcon, transferIcon } from "../../constants/Icons";
+import { api } from "../../core/api";
+import { GroupTabScreenProps } from "../../navigation/types";
+import {
+    selectActiveGroupId,
+    selectTransactionSlice,
+    selectUiSlice,
+    useAppDispatch,
+    useAppSelector,
+} from "../../store";
 
 export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> = ({ navigation, route }) => {
     const theme = useTheme();
@@ -34,7 +34,7 @@ export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> =
     const [search, setSearch] = useState<string>("");
     const [sortMode, setSortMode] = useState<TransactionSortMode>("lastChanged");
     const transactions = useAppSelector((state) =>
-        selectSortedTransactions({ state: selectTransactionSlice(state), groupId, searchTerm: search, sortMode })
+        selectSortedTransactions({ state: state, groupId, searchTerm: search, sortMode })
     );
     const transactionStatus = useAppSelector((state) =>
         selectGroupTransactionsStatus({ state: selectTransactionSlice(state), groupId })
@@ -132,7 +132,9 @@ export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> =
                     transaction: {
                         type: "transfer",
                         groupID: groupId,
+                        name: "",
                         description: "",
+                        tags: [],
                         billedAt: toISODateString(new Date()),
                         currencyConversionRate: 1.0,
                         currencySymbol: "€",
@@ -160,42 +162,49 @@ export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> =
         }
     };
 
-    return (
-        <ScrollView
-            style={styles.container}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        >
-            {transactionStatus === "loading" ? (
+    if (transactionStatus === "loading") {
+        return (
+            <View style={styles.container}>
                 <LoadingIndicator />
-            ) : (
-                transactions.map((transaction) => (
-                    <TransactionListItem key={transaction.id} groupId={groupId} transactionId={transaction.id} />
-                ))
+            </View>
+        );
+    }
+
+    return (
+        <FlatList
+            style={styles.container}
+            data={transactions}
+            renderItem={({ item }: { item: Transaction }) => (
+                <TransactionListItem key={item.id} groupId={groupId} transactionId={item.id} />
             )}
-            {permissions?.canWrite ? (
-                <Portal>
-                    <FAB.Group
-                        style={styles.fab}
-                        open={isFapOpen}
-                        visible={isFocused}
-                        icon="add"
-                        actions={[
-                            {
-                                icon: transferIcon,
-                                label: "Transfer",
-                                onPress: () => createNewTransaction("transfer"),
-                            },
-                            {
-                                icon: purchaseIcon,
-                                label: "Purchase",
-                                onPress: () => createNewTransaction("purchase"),
-                            },
-                        ]}
-                        onStateChange={({ open }) => setFabOpen(open)}
-                    />
-                </Portal>
-            ) : null}
-        </ScrollView>
+            onRefresh={onRefresh}
+            refreshing={refreshing}
+            ListFooterComponent={
+                permissions?.canWrite ? (
+                    <Portal>
+                        <FAB.Group
+                            style={styles.fab}
+                            open={isFapOpen}
+                            visible={isFocused}
+                            icon="add"
+                            actions={[
+                                {
+                                    icon: transferIcon,
+                                    label: "Transfer",
+                                    onPress: () => createNewTransaction("transfer"),
+                                },
+                                {
+                                    icon: purchaseIcon,
+                                    label: "Purchase",
+                                    onPress: () => createNewTransaction("purchase"),
+                                },
+                            ]}
+                            onStateChange={({ open }) => setFabOpen(open)}
+                        />
+                    </Portal>
+                ) : null
+            }
+        />
     );
 };
 
@@ -208,7 +217,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
     },
     fab: {
-        marginBottom: 48,
+        paddingBottom: 48,
     },
 });
 

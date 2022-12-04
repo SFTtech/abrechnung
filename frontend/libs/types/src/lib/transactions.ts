@@ -1,38 +1,45 @@
+import { z } from "zod";
+
 export type TransactionShare = { [k: number]: number };
 
-export type TransactionType = "purchase" | "transfer" | "mimo";
+export type TransactionType = "purchase" | "transfer";
 
-export interface TransactionValidationErrors {
-    description?: string;
-    billedAt?: string;
-    value?: string;
-    creditorShares?: string;
-    debitorShares?: string;
-}
+const BaseTransactionValidator = z.object({
+    name: z.string({ required_error: "Name is required" }),
+    value: z.number({ required_error: "Value is required" }),
+    description: z.string().optional(),
+    currencySymbol: z.string({ required_error: "Currency is required" }),
+    currencyConversionRate: z
+        .number({ required_error: "Currency conversion rate is required" })
+        .positive("Currency conversion rate must be larger than 0"),
+});
 
-export const validateTransactionDetails = <T extends TransactionBase>(t: T): TransactionValidationErrors => {
-    const errors: TransactionValidationErrors = {};
+export const PurchaseValidator = z
+    .object({
+        creditorShares: z
+            .record(z.number())
+            .refine((shares) => Object.keys(shares).length > 0, "somebody has payed for this"),
+        debitorShares: z.record(z.number()).refine((shares) => Object.keys(shares).length > 0, "select at least one"),
+    })
+    .merge(BaseTransactionValidator)
+    .passthrough();
 
-    const emptyChecks = ["description", "billedAt", "currencySymbol", "currencyConversionRate"];
-    for (const check of emptyChecks) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        if (t[check] === "") {
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            errors[check] = `${check} cannot be empty`;
-        }
-    }
+export const TransferValidator = z
+    .object({
+        creditorShares: z
+            .record(z.number())
+            .refine((shares) => Object.keys(shares).length > 0, "somebody has payed for this"),
+        debitorShares: z
+            .record(z.number())
+            .refine((shares) => Object.keys(shares).length > 0, "who received this money?"),
+    })
+    .merge(BaseTransactionValidator)
+    .passthrough();
 
-    if (Object.keys(t.creditorShares).length === 0) {
-        errors.creditorShares = "somebody needs to pay for this";
-    }
-    if (Object.keys(t.debitorShares).length === 0) {
-        errors.debitorShares = "select at least one";
-    }
-
-    return errors;
-};
+export const TransactionValidator = z.discriminatedUnion("type", [
+    PurchaseValidator.merge(z.object({ type: z.literal("purchase") })),
+    TransferValidator.merge(z.object({ type: z.literal("transfer") })),
+]);
 
 export interface TransactionAttachment {
     id: number;
@@ -81,35 +88,49 @@ export interface TransactionAccountBalance {
 
 export type TransactionBalanceEffect = { [k: number]: TransactionAccountBalance };
 
-export interface TransactionBase {
+interface CommonTransactionMetadata {
     // static fields which never change through the lifetime of a transaction
     id: number;
     groupID: number;
     type: TransactionType;
 
     // fields that can change and are part of a transaction
+    name: string;
     description: string;
     value: number;
     currencySymbol: string;
     currencyConversionRate: number;
     billedAt: string;
+    tags: string[];
     creditorShares: TransactionShare;
     debitorShares: TransactionShare;
     deleted: boolean;
 
-    positions: number[];
     attachments: number[];
 }
 
-export interface Transaction extends TransactionBase {
+export interface PurchaseBase extends CommonTransactionMetadata {
+    type: "purchase";
+    positions: number[];
+}
+
+export interface TransferBase extends CommonTransactionMetadata {
+    type: "transfer";
+}
+
+export type TransactionBase = PurchaseBase | TransferBase;
+
+interface TransactionMetadata {
     // fields that can change and are computed
     hasLocalChanges: boolean;
     lastChanged: string;
     isWip: boolean;
-
-    // soon to be deprecated fields
-    hasCommittedChanges?: boolean;
 }
+
+export type Purchase = PurchaseBase & TransactionMetadata;
+export type Transfer = TransferBase & TransactionMetadata;
+
+export type Transaction = Purchase | Transfer;
 
 /**
  * mainly used easier internal parameter passing,

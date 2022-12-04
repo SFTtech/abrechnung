@@ -1,12 +1,11 @@
 import json
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from typing import Optional, Union
 
 import asyncpg
 
 from abrechnung.domain.accounts import Account, AccountType, AccountDetails
-from abrechnung.util import parse_postgres_datetime
 from . import (
     Application,
     NotFoundError,
@@ -14,6 +13,7 @@ from . import (
     InvalidCommand,
     create_group_log,
 )
+from .common import _get_or_create_tag_ids
 from ..domain.users import User
 
 
@@ -23,21 +23,15 @@ class RawAccount:
     group_id: int
     name: str
     description: str
-    priority: int
     owning_user_id: Optional[int]
+    date_info: Optional[date]
     deleted: bool
+    tags: list[str]
     type: Optional[str] = field(default=None)
     clearing_shares: Optional[dict[int, float]] = field(default=None)
 
 
 class AccountService(Application):
-    @staticmethod
-    async def _increment_account_version(conn: asyncpg.Connection, revision_id: int):
-        await conn.execute(
-            "update account_revision set version = version + 1 where id = $1",
-            revision_id,
-        )
-
     @staticmethod
     async def _get_or_create_revision(
         conn: asyncpg.Connection, user: User, account_id: int
@@ -126,8 +120,8 @@ class AccountService(Application):
 
         # copy all existing transaction data into a new history entry
         await conn.execute(
-            "insert into account_history (id, revision_id, name, description, priority, deleted)"
-            "select id, $1, name, description, priority, deleted "
+            "insert into account_history (id, revision_id, name, description, owning_user_id, date_info, deleted)"
+            "select id, $1, name, description, owning_user_id, date_info, deleted "
             "from account_history where id = $2 and revision_id = $3",
             revision_id,
             account_id,
@@ -192,17 +186,15 @@ class AccountService(Application):
             name=db_json["name"],
             description=db_json["description"],
             deleted=db_json["deleted"],
-            priority=db_json["priority"],
             owning_user_id=db_json["owning_user_id"],
-            revision_started_at=parse_postgres_datetime(db_json["revision_started"]),
-            revision_committed_at=None
-            if db_json.get("revision_committed") is None
-            else parse_postgres_datetime(db_json["revision_committed"]),
+            date_info=date.fromisoformat(db_json["date_info"])
+            if db_json["date_info"] is not None
+            else None,
+            tags=db_json["tags"],
             clearing_shares={
                 cred["share_account_id"]: cred["shares"]
                 for cred in db_json["clearing_shares"]
             },
-            changed_by=db_json["changed_by"],
         )
 
     def _account_db_row(self, account: asyncpg.Record) -> Account:
@@ -225,7 +217,6 @@ class AccountService(Application):
             type=account["type"],
             is_wip=account["is_wip"],
             last_changed=account["last_changed"],
-            version=account["version"],
             committed_details=committed_details,
             pending_details=pending_details,
         )
@@ -235,7 +226,7 @@ class AccountService(Application):
             async with conn.transaction():
                 await check_group_permissions(conn=conn, group_id=group_id, user=user)
                 cur = conn.cursor(
-                    "select account_id, group_id, type, last_changed, version, is_wip, "
+                    "select account_id, group_id, type, last_changed, is_wip, "
                     "   committed_details, pending_details "
                     "from full_account_state_valid_at($1) "
                     "where group_id = $2",
@@ -255,7 +246,7 @@ class AccountService(Application):
                 conn=conn, user=user, account_id=account_id
             )
             account = await conn.fetchrow(
-                "select account_id, group_id, type, last_changed, version, is_wip, "
+                "select account_id, group_id, type, last_changed, is_wip, "
                 "   committed_details, pending_details "
                 "from full_account_state_valid_at($1) "
                 "where account_id = $2",
@@ -263,6 +254,25 @@ class AccountService(Application):
                 account_id,
             )
             return self._account_db_row(account)
+
+    async def _add_tags_to_revision(
+        self,
+        *,
+        conn: asyncpg.Connection,
+        account_id: int,
+        revision_id: int,
+        tag_ids: list[int],
+    ):
+        if len(tag_ids) <= 0:
+            return
+        for tag_id in tag_ids:
+            await conn.execute(
+                "insert into account_to_tag (account_id, revision_id, tag_id) "
+                "values ($1, $2, $3)",
+                account_id,
+                revision_id,
+                tag_id,
+            )
 
     async def _create_account(
         self,
@@ -273,8 +283,9 @@ class AccountService(Application):
         type: str,
         name: str,
         description: str,
+        tags: Optional[list[str]] = None,
         owning_user_id: Optional[int] = None,
-        priority: int = 0,
+        date_info: Optional[date] = None,
         clearing_shares: Optional[dict[int, float]] = None,
     ) -> int:
         if clearing_shares and type != AccountType.clearing.value:
@@ -299,15 +310,21 @@ class AccountService(Application):
 
         revision_id = await self._get_or_create_revision(conn, user, account_id)
         await conn.execute(
-            "insert into account_history (id, revision_id, name, description, owning_user_id, priority) "
+            "insert into account_history (id, revision_id, name, description, owning_user_id, date_info) "
             "values ($1, $2, $3, $4, $5, $6)",
             account_id,
             revision_id,
             name,
             description,
             owning_user_id,
-            priority,
+            date_info,
         )
+
+        tag_ids = await _get_or_create_tag_ids(conn=conn, group_id=group_id, tags=tags)
+        await self._add_tags_to_revision(
+            conn=conn, account_id=account_id, revision_id=revision_id, tag_ids=tag_ids
+        )
+
         if clearing_shares and type == AccountType.clearing.value:
             # TODO: make this more efficient
             for share_account_id, value in clearing_shares.items():
@@ -344,8 +361,9 @@ class AccountService(Application):
         type: str,
         name: str,
         description: str,
+        tags: Optional[list[str]] = None,
         owning_user_id: Optional[int] = None,
-        priority: int = 0,
+        date_info: Optional[date] = None,
         clearing_shares: Optional[dict[int, float]] = None,
     ) -> int:
         async with self.db_pool.acquire() as conn:
@@ -356,9 +374,10 @@ class AccountService(Application):
                     group_id=group_id,
                     type=type,
                     name=name,
+                    tags=tags,
                     description=description,
                     owning_user_id=owning_user_id,
-                    priority=priority,
+                    date_info=date_info,
                     clearing_shares=clearing_shares,
                 )
 
@@ -369,8 +388,9 @@ class AccountService(Application):
         account_id: int,
         name: str,
         description: str,
+        tags: Optional[list[str]] = None,
         owning_user_id: Optional[int] = None,
-        priority: int = 0,
+        date_info: Optional[date] = None,
         clearing_shares: Optional[dict[int, float]] = None,
     ):
         group_id, account_type = await self._check_account_permissions(
@@ -408,15 +428,20 @@ class AccountService(Application):
             )
 
         await conn.execute(
-            "insert into account_history (id, revision_id, name, description, owning_user_id, priority) "
+            "insert into account_history (id, revision_id, name, description, owning_user_id, date_info) "
             "values ($1, $2, $3, $4, $5, $6) ",
             account_id,
             revision_id,
             name,
             description,
             owning_user_id,
-            priority,
+            date_info,
         )
+        tag_ids = await _get_or_create_tag_ids(conn=conn, group_id=group_id, tags=tags)
+        await self._add_tags_to_revision(
+            conn=conn, account_id=account_id, revision_id=revision_id, tag_ids=tag_ids
+        )
+
         if clearing_shares and account_type == AccountType.clearing.value:
             # TODO: make this more efficient
             for share_account_id, value in clearing_shares.items():
@@ -432,7 +457,6 @@ class AccountService(Application):
                     value,
                 )
 
-        await self._increment_account_version(conn=conn, revision_id=revision_id)
         await create_group_log(
             conn=conn,
             group_id=group_id,
@@ -451,8 +475,9 @@ class AccountService(Application):
         account_id: int,
         name: str,
         description: str,
+        tags: Optional[list[str]] = None,
         owning_user_id: Optional[int] = None,
-        priority: int = 0,
+        date_info: Optional[date] = None,
         clearing_shares: Optional[dict[int, float]] = None,
     ):
         async with self.db_pool.acquire() as conn:
@@ -463,8 +488,9 @@ class AccountService(Application):
                     account_id=account_id,
                     name=name,
                     description=description,
+                    tags=tags,
                     owning_user_id=owning_user_id,
-                    priority=priority,
+                    date_info=date_info,
                     clearing_shares=clearing_shares,
                 )
 
@@ -566,8 +592,8 @@ class AccountService(Application):
                     now,
                 )
                 await conn.execute(
-                    "insert into account_history (id, revision_id, name, description, priority, deleted) "
-                    "select $1, $2, name, description, priority, true "
+                    "insert into account_history (id, revision_id, name, description, owning_user_id, date_info, deleted) "
+                    "select $1, $2, name, description, owning_user_id, date_info, true "
                     "from account_history ah where ah.id = $1 and ah.revision_id = $3 ",
                     account_id,
                     revision_id,
@@ -593,7 +619,8 @@ class AccountService(Application):
                 name=account.name,
                 description=account.description,
                 owning_user_id=account.owning_user_id,
-                priority=account.priority,
+                tags=account.tags,
+                date_info=account.date_info,
                 clearing_shares=account.clearing_shares,
             )
             return account.id, account.id
@@ -609,7 +636,7 @@ class AccountService(Application):
             name=account.name,
             description=account.description,
             owning_user_id=account.owning_user_id,
-            priority=account.priority,
+            date_info=account.date_info,
             clearing_shares=account.clearing_shares,
         )
         return account.id, new_acc_id

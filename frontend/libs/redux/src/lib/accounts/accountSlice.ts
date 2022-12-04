@@ -5,6 +5,7 @@ import { AccountSliceState, AccountState, ENABLE_OFFLINE_MODE, IRootState, State
 import { getGroupScopedState } from "../utils";
 import memoize from "proxy-memoize";
 import { AccountSortMode, getAccountSortFunc } from "@abrechnung/core";
+import { fromISOString, toISODateString } from "@abrechnung/utils";
 import { leaveGroup } from "../groups";
 import { addEntity, removeEntity } from "../utils";
 
@@ -124,25 +125,41 @@ export const selectSortedAccounts = memoize(
         sortMode: AccountSortMode;
         type?: AccountType;
         searchTerm?: string;
+        tags?: string[];
         wipAtTop?: boolean;
     }): Account[] => {
-        const { state, groupId, type, sortMode, searchTerm, wipAtTop = false } = args;
+        const { state, groupId, type, sortMode, searchTerm, wipAtTop = false, tags = [] } = args;
         const accounts = selectGroupAccountsInternal({ state, groupId });
         const compareFunction = getAccountSortFunc(sortMode, wipAtTop);
         // TODO: this has optimization potential
-        if (searchTerm) {
-            return accounts
-                .filter(
-                    (a) =>
-                        (a.type === undefined || a.type === type) &&
-                        (searchTerm === "" ||
-                            a.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            a.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                )
-                .sort(compareFunction);
-        } else {
-            return accounts.filter((a) => type === undefined || a.type === type).sort(compareFunction);
-        }
+        const filterFn = (a: Account): boolean => {
+            if (a.type === "clearing" && tags.length > 0 && a.tags) {
+                for (const tag of tags) {
+                    if (!a.tags.includes(tag)) {
+                        return false;
+                    }
+                }
+            }
+
+            if (type !== undefined && a.type !== type) {
+                return false;
+            }
+
+            if (searchTerm && searchTerm !== "") {
+                if (
+                    a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    a.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    fromISOString(a.lastChanged).toDateString().toLowerCase().includes(searchTerm.toLowerCase())
+                ) {
+                    return true;
+                }
+                return false;
+            }
+
+            return true;
+        };
+
+        return accounts.filter(filterFn).sort(compareFunction);
     }
 );
 
@@ -167,8 +184,8 @@ export const selectWipAccountById = memoize(
 export const selectAccountsOwnedByUser = memoize(
     (args: { state: AccountSliceState; groupId: number; userId: number }): Account[] => {
         const { state, groupId, userId } = args;
-        const accounts = selectGroupAccountsInternal({ state, groupId });
-        return accounts.filter((acc: Account) => acc.owningUserID === userId);
+        const accounts = selectGroupAccountsFilteredInternal({ state, groupId, type: "personal" });
+        return accounts.filter((acc: Account) => acc.type === "personal" && acc.owningUserID === userId);
     }
 );
 
@@ -176,19 +193,25 @@ export const selectClearingAccountsInvolvingAccounts = memoize(
     (args: { state: AccountSliceState; groupId: number; accountId: number }): Account[] => {
         const { state, groupId, accountId } = args;
         const accounts = selectGroupAccountsFilteredInternal({ state, groupId, type: "clearing" });
-        return accounts.filter((acc: Account) => acc.clearingShares && acc.clearingShares[accountId] !== undefined);
+        return accounts.filter(
+            (acc: Account) =>
+                acc.type === "clearing" && acc.clearingShares && acc.clearingShares[accountId] !== undefined
+        );
     }
 );
 
-export const selectAccountIdToNameMap = memoize(
-    (args: { state: AccountSliceState; groupId: number }): { [k: number]: string } => {
-        const accounts = selectGroupAccountsInternal(args);
-        return accounts.reduce<{ [k: number]: string }>((idNameMap, account) => {
-            idNameMap[account.id] = account.name;
-            return idNameMap;
-        }, {});
-    }
-);
+export const selectAccountIdToNameMapInternal = (args: {
+    state: AccountSliceState;
+    groupId: number;
+}): { [k: number]: string } => {
+    const accounts = selectGroupAccountsInternal(args);
+    return accounts.reduce<{ [k: number]: string }>((idNameMap, account) => {
+        idNameMap[account.id] = account.name;
+        return idNameMap;
+    }, {});
+};
+
+export const selectAccountIdToNameMap = memoize(selectAccountIdToNameMapInternal);
 
 // async thunks
 export const fetchAccounts = createAsyncThunk<
@@ -269,19 +292,36 @@ export const createAccount = createAsyncThunk<
 >("createAccount", async ({ groupId, type }, { getState, dispatch }) => {
     const state = getState();
     const accountId = state.accounts.nextLocalAccountId;
-    const account: Account = {
-        id: accountId,
-        groupID: groupId,
-        type: type,
-        name: "",
-        description: "",
-        owningUserID: null,
-        clearingShares: {},
-        deleted: false,
-        hasLocalChanges: true,
-        isWip: true,
-        lastChanged: new Date().toISOString(),
-    };
+    let account: Account;
+    if (type === "personal") {
+        account = {
+            id: accountId,
+            groupID: groupId,
+            type: type,
+            name: "",
+            description: "",
+            owningUserID: null,
+            deleted: false,
+            hasLocalChanges: true,
+            isWip: true,
+            lastChanged: new Date().toISOString(),
+        };
+    } else {
+        account = {
+            id: accountId,
+            groupID: groupId,
+            type: type,
+            name: "",
+            description: "",
+            clearingShares: {},
+            dateInfo: toISODateString(new Date()),
+            tags: [],
+            deleted: false,
+            hasLocalChanges: true,
+            isWip: true,
+            lastChanged: new Date().toISOString(),
+        };
+    }
     dispatch(advanceNextLocalAccountId());
     return { account };
 });
@@ -390,14 +430,15 @@ const accountSlice = createSlice({
                 s.wipAccounts.ids.push(account.id);
             }
             const currentAccount = getAccountWithWip(s, account.id);
-            if (currentAccount !== undefined) {
-                s.wipAccounts.byId[account.id] = {
+            if (currentAccount !== undefined && currentAccount.type === account.type) {
+                const newAccount: Account = {
                     ...currentAccount,
                     ...account,
                     isWip: true,
                     hasLocalChanges: true,
                     lastChanged: new Date().toISOString(),
                 };
+                s.wipAccounts.byId[account.id] = newAccount;
             }
         },
     },

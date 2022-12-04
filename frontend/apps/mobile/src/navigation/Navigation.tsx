@@ -1,48 +1,44 @@
-/**
- * If you are not familiar with React Navigation, refer to the "Fundamentals" guide:
- * https://reactnavigation.org/docs/getting-started
- *
- */
+import { selectGroups, selectIsAuthenticated, subscribe, unsubscribe } from "@abrechnung/redux";
 import { MaterialIcons } from "@expo/vector-icons";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import { createDrawerNavigator } from "@react-navigation/drawer";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import * as React from "react";
 import { useEffect } from "react";
-import { GroupStackParamList, GroupTabParamList, RootDrawerParamList } from "./types";
-import { linkingOptions } from "./LinkingConfiguration";
-import { createDrawerNavigator } from "@react-navigation/drawer";
-import TransactionList from "../screens/groups/TransactionList";
-import AccountList from "../screens/groups/AccountList";
-import TransactionDetail from "../screens/groups/TransactionDetail";
-import LoginScreen from "../screens/Login";
-import RegisterScreen from "../screens/Register";
-import { MD3Theme } from "react-native-paper";
-import AccountDetail from "../screens/groups/AccountDetail";
-import DrawerContent from "./DrawerContent";
-import { Header } from "./Header";
-import HomeScreen from "../screens/HomeScreen";
-import { SplashScreen } from "../screens/SplashScreen";
-import {
-    useAppSelector,
-    selectGroupSlice,
-    selectAuthSlice,
-    useAppDispatch,
-    selectUiSlice,
-    selectActiveGroupId,
-    changeActiveGroup,
-    fetchGroupDependencies,
-} from "../store";
-import { selectGroups, selectIsAuthenticated, subscribe, unsubscribe } from "@abrechnung/redux";
 import { clearingAccountIcon, personalAccountIcon } from "../constants/Icons";
-import PreferencesScreen from "../screens/PreferencesScreen";
-import ProfileScreen from "../screens/ProfileScreen";
-import AccountEdit from "../screens/groups/AccountEdit";
 import { api, websocket } from "../core/api";
 import { notify } from "../notifications";
 import { GroupList } from "../screens/GroupList";
+import AccountDetail from "../screens/groups/AccountDetail";
+import AccountEdit from "../screens/groups/AccountEdit";
+import AccountList from "../screens/groups/AccountList";
+import TransactionDetail from "../screens/groups/TransactionDetail";
+import { TransactionList } from "../screens/TransactionList";
+import HomeScreen from "../screens/HomeScreen";
+import LoginScreen from "../screens/Login";
+import PreferencesScreen from "../screens/PreferencesScreen";
+import ProfileScreen from "../screens/ProfileScreen";
+import RegisterScreen from "../screens/Register";
+import { SplashScreen } from "../screens/SplashScreen";
+import { AddGroup } from "../screens/AddGroup";
+import {
+    changeActiveGroup,
+    fetchGroupDependencies,
+    selectActiveGroupId,
+    selectAuthSlice,
+    selectGroupSlice,
+    selectUiSlice,
+    useAppDispatch,
+    useAppSelector,
+} from "../store";
+import { Theme } from "../theme";
+import DrawerContent from "./DrawerContent";
+import { Header } from "./Header";
+import { linkingOptions } from "./LinkingConfiguration";
+import { GroupStackParamList, GroupTabParamList, RootDrawerParamList } from "./types";
 
-export const Navigation: React.FC<{ theme: MD3Theme }> = ({ theme }) => {
+export const Navigation: React.FC<{ theme: Theme }> = ({ theme }) => {
     return (
         <NavigationContainer linking={linkingOptions} theme={theme}>
             <RootNavigator />
@@ -148,6 +144,7 @@ const GroupStackNavigator = () => {
             }}
         >
             <GroupStack.Screen name="BottomTabNavigator" component={BottomTabNavigator} />
+            <GroupStack.Screen name="AddGroup" options={{ headerTitle: "Add Group" }} component={AddGroup} />
             <GroupStack.Screen
                 name="TransactionDetail"
                 component={TransactionDetail}
@@ -160,7 +157,7 @@ const GroupStackNavigator = () => {
     );
 };
 
-const BottomTab = createBottomTabNavigator<GroupTabParamList>();
+const BottomTab = createMaterialTopTabNavigator<GroupTabParamList>();
 
 const BottomTabNavigator: React.FC = () => {
     const activeGroupID = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) }));
@@ -169,8 +166,8 @@ const BottomTabNavigator: React.FC = () => {
         <BottomTab.Navigator
             id="BottomTab"
             initialRouteName="TransactionList"
+            tabBarPosition="bottom"
             screenOptions={{
-                // tabBarActiveTintColor: Colors[colorScheme].tint,
                 headerShown: false,
             }}
         >
@@ -178,7 +175,7 @@ const BottomTabNavigator: React.FC = () => {
                 name="TransactionList"
                 component={activeGroupID == null ? SplashScreen : TransactionList}
                 options={{
-                    title: "Transactions",
+                    tabBarLabel: "Transactions",
                     tabBarIcon: ({ color }) => <TabBarIcon name="euro" color={color} />,
                 }}
             />
@@ -186,7 +183,7 @@ const BottomTabNavigator: React.FC = () => {
                 name="AccountList"
                 component={activeGroupID == null ? SplashScreen : AccountList}
                 options={{
-                    title: "People",
+                    tabBarLabel: "People",
                     tabBarIcon: ({ color }) => <TabBarIcon name={personalAccountIcon} color={color} />,
                 }}
             />
@@ -194,7 +191,7 @@ const BottomTabNavigator: React.FC = () => {
                 name="ClearingAccountList"
                 component={activeGroupID == null ? SplashScreen : AccountList}
                 options={{
-                    title: "Events",
+                    tabBarLabel: "Events",
                     tabBarIcon: ({ color }) => <TabBarIcon name={clearingAccountIcon} color={color} />,
                 }}
             />
@@ -210,5 +207,5 @@ interface TabBarIconProps {
     color: string;
 }
 const TabBarIcon: React.FC<TabBarIconProps> = (props) => {
-    return <MaterialIcons size={30} style={{ marginBottom: -3 }} {...props} />;
+    return <MaterialIcons size={22} style={{ marginBottom: -3 }} {...props} />;
 };

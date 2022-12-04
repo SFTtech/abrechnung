@@ -37,6 +37,7 @@ export const GroupMemberSelect: React.FC<Props> = ({
             options={memberIds}
             getOptionLabel={(option) => memberIDToUsername[option]}
             value={value}
+            multiple={false}
             disabled={disabled}
             openOnFocus
             fullWidth

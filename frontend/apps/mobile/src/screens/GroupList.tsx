@@ -6,7 +6,7 @@ import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { api } from "../core/api";
 import { GroupListItem } from "../components/GroupListItem";
 import LoadingIndicator from "../components/LoadingIndicator";
-import { FAB, Portal } from "react-native-paper";
+import { FAB } from "react-native-paper";
 
 export const GroupList: React.FC<RootDrawerScreenProps<"GroupList">> = ({ navigation, route }) => {
     const dispatch = useAppDispatch();
@@ -37,7 +37,7 @@ export const GroupList: React.FC<RootDrawerScreenProps<"GroupList">> = ({ naviga
                     style={styles.fab}
                     icon="add"
                     onPress={() => {
-                        console.log("creating group ...");
+                        navigation.navigate("AddGroup");
                     }}
                 />
             </View>

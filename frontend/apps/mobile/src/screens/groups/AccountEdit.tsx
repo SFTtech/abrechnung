@@ -1,19 +1,24 @@
-import { GroupStackScreenProps } from "../../navigation/types";
-import { BackHandler, StyleSheet, View } from "react-native";
-import { ActivityIndicator, Button, HelperText, TextInput, useTheme, ProgressBar } from "react-native-paper";
-import * as React from "react";
-import { useEffect, useLayoutEffect, useState } from "react";
-import { notify } from "../../notifications";
+import {
+    discardAccountChange,
+    saveAccount,
+    selectAccountById,
+    selectCurrentUserPermissions,
+    wipAccountUpdated,
+} from "@abrechnung/redux";
+import { AccountValidator } from "@abrechnung/types";
+import { fromISOStringNullable, toFormikValidationSchema, toISODateStringNullable } from "@abrechnung/utils";
 import { useFocusEffect } from "@react-navigation/native";
-import { Account, AccountValidationErrors, ClearingShares, validateAccount, ValidationError } from "@abrechnung/types";
+import { useFormik } from "formik";
+import React, { useEffect, useLayoutEffect } from "react";
+import { BackHandler, StyleSheet, View } from "react-native";
+import { ActivityIndicator, Button, HelperText, ProgressBar, TextInput, useTheme } from "react-native-paper";
+import DateTimeInput from "../../components/DateTimeInput";
+import { TagSelect } from "../../components/tag-select";
 import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
-import { selectCurrentUserPermissions } from "@abrechnung/redux";
 import { api } from "../../core/api";
-
+import { GroupStackScreenProps } from "../../navigation/types";
+import { notify } from "../../notifications";
 import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
-import { discardAccountChange, saveAccount, selectAccountById, wipAccountUpdated } from "@abrechnung/redux";
-
-type LocalEditingState = Pick<Account, "name" | "description" | "clearingShares" | "owningUserID">;
 
 export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ route, navigation }) => {
     const theme = useTheme();
@@ -25,10 +30,6 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
         selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
     );
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
-
-    const [progress, setProgress] = useState(false);
-    const [localEditingState, setLocalEditingState] = useState<LocalEditingState | null>(null);
-    const [inputErrors, setInputErrors] = useState<AccountValidationErrors>({});
 
     const onGoBack = React.useCallback(async () => {
         if (account) {
@@ -57,52 +58,51 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
         }
     }, [navigation, accountId, permissions, groupId]);
 
-    useEffect(() => {
-        if (account != null) {
-            setInputErrors({});
-            setLocalEditingState((prevState) => {
-                return {
-                    ...prevState,
-                    name: account.name,
-                    description: account.description,
-                    clearingShares: account.clearingShares,
-                    owningUserID: account.owningUserID,
-                };
-            });
-        }
-    }, [account]);
+    const formik = useFormik({
+        initialValues:
+            account === undefined
+                ? {}
+                : account.type === "clearing"
+                ? {
+                      type: account.type,
+                      name: account.name,
+                      description: account.description,
+                      clearingShares: account.clearingShares,
+                      dateInfo: account.dateInfo,
+                      tags: [],
+                  }
+                : {
+                      type: account.type,
+                      name: account.name,
+                      description: account.description,
+                      owningUserID: account.owningUserID,
+                  },
+        validationSchema: toFormikValidationSchema(AccountValidator),
+        onSubmit: (values, { setSubmitting }) => {
+            if (!account) {
+                return;
+            }
+
+            setSubmitting(true);
+            dispatch(wipAccountUpdated({ ...account, ...values }));
+            dispatch(saveAccount({ groupId: groupId, accountId: account.id, api }))
+                .unwrap()
+                .then(() => {
+                    setSubmitting(false);
+                    navigation.pop(1);
+                })
+                .catch(() => {
+                    setSubmitting(false);
+                });
+        },
+        enableReinitialize: true,
+    });
 
     const onUpdate = React.useCallback(() => {
         if (account) {
-            dispatch(wipAccountUpdated({ ...account, ...localEditingState }));
+            dispatch(wipAccountUpdated({ ...account, ...formik.values }));
         }
-    }, [dispatch, account, localEditingState]);
-
-    const save = React.useCallback(() => {
-        if (localEditingState === null || account === undefined) {
-            return;
-        }
-
-        const updatedAccount = { ...account, ...localEditingState };
-        const validationErrors = validateAccount(updatedAccount);
-        if (Object.keys(validationErrors).length !== 0) {
-            setInputErrors(validationErrors);
-            console.log("validation error", validationErrors);
-            return;
-        }
-
-        setProgress(true);
-        onUpdate();
-        dispatch(saveAccount({ account: updatedAccount, api }))
-            .unwrap()
-            .then(() => {
-                setProgress(false);
-                navigation.pop(1);
-            })
-            .catch(() => {
-                setProgress(false);
-            });
-    }, [dispatch, onUpdate, account, localEditingState, setInputErrors, navigation]);
+    }, [dispatch, account, formik]);
 
     const cancelEdit = React.useCallback(() => {
         if (!account) {
@@ -113,48 +113,30 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
             .unwrap()
             .then(({ deletedAccount }) => {
                 if (deletedAccount) {
-                    setLocalEditingState({
-                        name: account.name,
-                        description: account.description,
-                        owningUserID: account.owningUserID,
-                        clearingShares: account.clearingShares,
-                    });
+                    formik.resetForm();
                 }
                 navigation.pop();
             });
-    }, [dispatch, groupId, account, navigation, setLocalEditingState]);
+    }, [dispatch, groupId, account, navigation, formik]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
             onGoBack: onGoBack,
-            headerTitle: localEditingState?.name ?? account?.name ?? "",
+            headerTitle: formik.values?.name ?? account?.name ?? "",
             headerRight: () => {
                 return (
                     <>
                         <Button onPress={cancelEdit} textColor={theme.colors.error}>
                             Cancel
                         </Button>
-                        <Button onPress={save}>Save</Button>
+                        <Button onPress={formik.handleSubmit}>Save</Button>
                     </>
                 );
             },
         });
-    }, [theme, account, navigation, localEditingState, cancelEdit, onGoBack, save]); // FIXME: figure out why we need setLocalEditingState as an effect dependency
+    }, [theme, account, navigation, formik, cancelEdit, onGoBack]);
 
-    const onChangeName = (name: string) =>
-        setLocalEditingState((prevState) => {
-            return prevState === null ? null : { ...prevState, name: name };
-        });
-    const onChangeDescription = (description: string) =>
-        setLocalEditingState((prevState) => {
-            return prevState === null ? null : { ...prevState, description: description };
-        });
-    const onChangeClearingShares = (clearingShares: ClearingShares) =>
-        setLocalEditingState((prevState) => {
-            return prevState === null ? null : { ...prevState, clearingShares: clearingShares };
-        });
-
-    if (account == null || localEditingState == null) {
+    if (account == null) {
         return (
             <View>
                 <ActivityIndicator animating={true} />
@@ -164,40 +146,77 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
 
     return (
         <View style={styles.container}>
-            {progress ? <ProgressBar indeterminate /> : null}
+            {formik.isSubmitting ? <ProgressBar indeterminate /> : null}
             <TextInput
                 label="Name"
-                value={localEditingState.name}
+                value={formik.values.name}
                 style={styles.input}
                 editable={true}
-                onChangeText={onChangeName}
+                onChangeText={(val) => formik.setFieldValue("name", val)}
                 onBlur={onUpdate}
-                error={inputErrors.name !== undefined}
+                error={formik.touched.name && !!formik.errors.name}
             />
-            {inputErrors.name && <HelperText type="error">{inputErrors.name}</HelperText>}
+            {formik.touched.name && !!formik.errors.name ? (
+                <HelperText type="error">{formik.errors.name}</HelperText>
+            ) : null}
             <TextInput
                 label="Description"
-                value={localEditingState.description}
+                value={formik.values.description}
                 style={styles.input}
                 editable={true}
                 onBlur={onUpdate}
-                onChangeText={onChangeDescription}
-                error={inputErrors.description !== undefined}
+                onChangeText={(val) => formik.setFieldValue("description", val)}
+                error={formik.touched.description && !!formik.errors.description}
             />
-            {inputErrors.description && <HelperText type="error">{inputErrors.description}</HelperText>}
-            {account.type === "clearing" && (
+            {formik.touched.description && !!formik.errors.description ? (
+                <HelperText type="error">{formik.errors.description}</HelperText>
+            ) : null}
+            {account.type === "personal" && formik.touched.owningUserID && !!formik.errors.owningUserID && (
+                <HelperText type="error">{formik.errors.owningUserID}</HelperText>
+            )}
+            {formik.values.type === "clearing" && (
                 <>
+                    <DateTimeInput
+                        label="Date"
+                        value={fromISOStringNullable(formik.values.dateInfo)}
+                        editable={true}
+                        style={styles.input}
+                        onChange={(val) => formik.setFieldValue("dateInfo", toISODateStringNullable(val))}
+                        onBlur={onUpdate}
+                        error={formik.touched.dateInfo && !!formik.errors.dateInfo}
+                    />
+                    {formik.touched.dateInfo && !!formik.errors.dateInfo && (
+                        <HelperText type="error">{formik.errors.dateInfo}</HelperText>
+                    )}
+                    <TagSelect
+                        groupId={groupId}
+                        label="Tags"
+                        value={formik.values.tags}
+                        disabled={false}
+                        onChange={(val) => {
+                            formik.setFieldValue("tags", val);
+                            onUpdate();
+                        }}
+                    />
+                    {formik.touched.tags && !!formik.errors.tags && (
+                        <HelperText type="error">{formik.errors.tags}</HelperText>
+                    )}
                     <TransactionShareInput
                         title="Participated"
                         disabled={false}
                         groupId={groupId}
-                        value={localEditingState.clearingShares ?? account.clearingShares ?? {}}
-                        onChange={onChangeClearingShares}
+                        value={formik.values.clearingShares}
+                        onChange={(newValue) => {
+                            formik.setFieldValue("clearingShares", newValue);
+                            onUpdate();
+                        }}
                         enableAdvanced={true}
                         multiSelect={true}
                         excludedAccounts={[account.id]}
                     />
-                    {inputErrors.clearingShares && <HelperText type="error">{inputErrors.clearingShares}</HelperText>}
+                    {formik.touched.clearingShares && !!formik.errors.clearingShares && (
+                        <HelperText type="error">{formik.errors.clearingShares}</HelperText>
+                    )}
                 </>
             )}
         </View>

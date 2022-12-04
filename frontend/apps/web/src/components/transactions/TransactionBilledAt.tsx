@@ -26,7 +26,7 @@ export const TransactionBilledAt: React.FC<Props> = ({ groupId, transactionId })
             setError("Invalid date format");
             return;
         }
-        const formatted = billedAt.toLocaleString(DateTime.DATE_FULL);
+        const formatted = billedAt.toISODate();
         setError(null);
         if (transaction.isWip && formatted !== transaction.billedAt) {
             dispatch(wipTransactionUpdated({ ...transaction, billedAt: formatted }));
@@ -51,7 +51,14 @@ export const TransactionBilledAt: React.FC<Props> = ({ groupId, transactionId })
             value={DateTime.fromISO(transaction.billedAt)}
             onChange={save}
             renderInput={(params) => (
-                <TextField variant="standard" fullWidth {...params} helperText={error} error={error !== null} />
+                <TextField
+                    variant="standard"
+                    margin="normal"
+                    fullWidth
+                    {...params}
+                    helperText={error}
+                    error={error !== null}
+                />
             )}
         />
     );

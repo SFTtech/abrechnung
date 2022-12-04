@@ -6,7 +6,7 @@ import { toISODateString } from "@abrechnung/utils";
 
 interface Props
     extends Omit<React.ComponentProps<typeof TextInput>, "onChange" | "value" | "disabled" | "editable" | "mode"> {
-    value: Date;
+    value: Date | null;
     onChange: (newValue: Date) => void;
     mode?: "time" | "date";
     disabled?: boolean;
@@ -25,15 +25,17 @@ export const DateTimeInput: React.FC<Props> = ({
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        setTextValue(toISODateString(value));
+        setTextValue(value === null ? "" : toISODateString(value));
     }, [value, setTextValue]);
 
     const onTextInputChange = (newValue: string) => {
-        setTextValue(newValue);
+        if (!disabled && editable) {
+            setTextValue(newValue);
+        }
     };
 
     const onPickerChange = (event: DateTimePickerEvent, selectedDate: Date | undefined) => {
-        if (selectedDate) {
+        if (!disabled && editable && selectedDate) {
             propagateChange(selectedDate);
         }
     };
@@ -55,7 +57,7 @@ export const DateTimeInput: React.FC<Props> = ({
     const show = () => {
         if (!disabled && editable) {
             DateTimePickerAndroid.open({
-                value: value,
+                value: value ?? new Date(),
                 onChange: onPickerChange,
                 mode: mode,
                 is24Hour: true,
@@ -70,7 +72,13 @@ export const DateTimeInput: React.FC<Props> = ({
                 value={textValue} // TODO: proper input validation
                 onChangeText={onTextInputChange} // TODO: fix date input with keyboard
                 onEndEditing={onInputChange}
-                right={<TextInput.Icon onPress={show} icon="calendar-today" forceTextInputFocus={false} />}
+                disabled={disabled}
+                editable={editable}
+                right={
+                    disabled || !editable ? undefined : (
+                        <TextInput.Icon onPress={show} icon="calendar-today" forceTextInputFocus={false} />
+                    )
+                }
                 error={error !== null}
                 {...props}
             />

@@ -5,7 +5,7 @@ import { Provider as PaperProvider } from "react-native-paper";
 import useColorScheme from "./hooks/useColorScheme";
 import { Navigation } from "./navigation";
 import { MaterialIcons } from "@expo/vector-icons";
-import { CombinedDarkTheme, CombinedDefaultTheme } from "./theme";
+import { CustomDarkTheme, CustomLightTheme } from "./theme";
 import SplashScreen from "./screens/SplashScreen";
 import { NotificationProvider } from "./notifications";
 import { selectSettingsSlice, selectTheme, useAppSelector, selectAuthSlice, useAppDispatch } from "./store";
@@ -31,7 +31,7 @@ export const App: React.FC = () => {
     const groupStoreStatus = useAppSelector((state) => state.groups.status);
     const themeMode = useAppSelector((state) => selectTheme({ state: selectSettingsSlice(state) }));
     const useDarkTheme = themeMode === "system" ? colorScheme === "dark" : themeMode === "dark";
-    const theme = useDarkTheme ? CombinedDarkTheme : CombinedDefaultTheme;
+    const theme = useDarkTheme ? CustomDarkTheme : CustomLightTheme;
 
     React.useEffect(() => {
         if (sessionToken !== undefined && baseUrl !== undefined) {

@@ -12,6 +12,7 @@ from abrechnung.application import (
     InvalidCommand,
     create_group_log,
 )
+from abrechnung.application.common import _get_or_create_tag_ids
 from abrechnung.domain.transactions import (
     Transaction,
     TransactionDetails,
@@ -20,7 +21,6 @@ from abrechnung.domain.transactions import (
     TransactionType,
 )
 from abrechnung.domain.users import User
-from abrechnung.util import parse_postgres_datetime
 
 
 @dataclass
@@ -28,7 +28,8 @@ class RawTransaction:
     id: int
     group_id: int
     type: str
-    description: str
+    name: str
+    description: Optional[str]
     value: float
     currency_symbol: str
     currency_conversion_rate: float
@@ -36,6 +37,7 @@ class RawTransaction:
     deleted: bool
     creditor_shares: dict[int, float]
     debitor_shares: dict[int, float]
+    tags: list[str]
 
     positions: list[TransactionPosition]
 
@@ -77,27 +79,16 @@ class TransactionService(Application):
         return result["group_id"]
 
     @staticmethod
-    async def _increment_transaction_version(
-        conn: asyncpg.Connection, revision_id: int
-    ):
-        await conn.execute(
-            "update transaction_revision set version = version + 1 where id = $1",
-            revision_id,
-        )
-
-    @staticmethod
     def _transaction_detail_from_db_json(db_json: dict) -> TransactionDetails:
         return TransactionDetails(
+            name=db_json["name"],
             description=db_json["description"],
             value=db_json["value"],
             currency_symbol=db_json["currency_symbol"],
             currency_conversion_rate=db_json["currency_conversion_rate"],
             deleted=db_json["deleted"],
-            revision_started_at=parse_postgres_datetime(db_json["revision_started"]),
-            revision_committed_at=None
-            if db_json.get("revision_committed") is None
-            else parse_postgres_datetime(db_json["revision_committed"]),
             billed_at=date.fromisoformat(db_json["billed_at"]),
+            tags=db_json["tags"],
             creditor_shares={
                 cred["account_id"]: cred["shares"]
                 for cred in db_json["creditor_shares"]
@@ -105,7 +96,6 @@ class TransactionService(Application):
             debitor_shares={
                 deb["account_id"]: deb["shares"] for deb in db_json["debitor_shares"]
             },
-            changed_by=db_json["changed_by"],
         )
 
     @staticmethod
@@ -188,7 +178,6 @@ class TransactionService(Application):
             type=transaction["type"],
             is_wip=transaction["is_wip"],
             last_changed=transaction["last_changed"],
-            version=transaction["version"],
             committed_details=committed_details,
             pending_details=pending_details,
             committed_positions=committed_positions,
@@ -213,13 +202,12 @@ class TransactionService(Application):
                     # if a minimum last changed value is specified we must also return all transactions the current
                     # user has pending changes with to properly sync state across different devices of the user
                     cur = conn.cursor(
-                        "select transaction_id, group_id, type, last_changed, version, is_wip, "
+                        "select transaction_id, group_id, type, last_changed, is_wip, "
                         "   committed_details, pending_details, "
                         "   committed_positions, pending_positions, committed_files, pending_files "
                         "from full_transaction_state_valid_at($1) "
                         "where group_id = $2 "
-                        "   and (is_wip or last_changed is not null and last_changed >= $3"
-                        "       or (($4::int[]) is not null and transaction_id = any($4::int[])))",
+                        "   and (last_changed >= $3 or (($4::int[]) is not null and transaction_id = any($4::int[])))",
                         user.id,
                         group_id,
                         min_last_changed,
@@ -227,7 +215,7 @@ class TransactionService(Application):
                     )
                 else:
                     cur = conn.cursor(
-                        "select transaction_id, group_id, type, last_changed, version, is_wip, "
+                        "select transaction_id, group_id, type, last_changed, is_wip, "
                         "   committed_details, pending_details, "
                         "   committed_positions, pending_positions, committed_files, pending_files "
                         "from full_transaction_state_valid_at($1) "
@@ -248,7 +236,7 @@ class TransactionService(Application):
                 conn=conn, user=user, transaction_id=transaction_id
             )
             transaction = await conn.fetchrow(
-                "select transaction_id, group_id, type, last_changed, version, is_wip, "
+                "select transaction_id, group_id, type, last_changed, is_wip, "
                 "   committed_details, pending_details, "
                 "   committed_positions, pending_positions, committed_files, pending_files "
                 "from full_transaction_state_valid_at($1) "
@@ -259,6 +247,25 @@ class TransactionService(Application):
             )
             return self._transaction_db_row(transaction)
 
+    async def _add_tags_to_revision(
+        self,
+        *,
+        conn: asyncpg.Connection,
+        transaction_id: int,
+        revision_id: int,
+        tag_ids: list[int],
+    ):
+        if len(tag_ids) <= 0:
+            return
+        for tag_id in tag_ids:
+            await conn.execute(
+                "insert into transaction_to_tag (transaction_id, revision_id, tag_id) "
+                "values ($1, $2, $3)",
+                transaction_id,
+                revision_id,
+                tag_id,
+            )
+
     async def _create_transaction(
         self,
         *,
@@ -266,11 +273,13 @@ class TransactionService(Application):
         user: User,
         group_id: int,
         type: str,
-        description: str,
+        name: str,
+        description: Optional[str],
         billed_at: date,
         currency_symbol: str,
         currency_conversion_rate: float,
         value: float,
+        tags: list[str],
         debitor_shares: Optional[dict[int, float]] = None,
         creditor_shares: Optional[dict[int, float]] = None,
         positions: Optional[list[TransactionPosition]] = None,
@@ -290,15 +299,24 @@ class TransactionService(Application):
         )
         await conn.execute(
             "insert into transaction_history "
-            "   (id, revision_id, currency_symbol, currency_conversion_rate, value, description, billed_at) "
-            "values ($1, $2, $3, $4, $5, $6, $7)",
+            "   (id, revision_id, currency_symbol, currency_conversion_rate, value, name, description, billed_at) "
+            "values ($1, $2, $3, $4, $5, $6, $7, $8)",
             transaction_id,
             revision_id,
             currency_symbol,
             currency_conversion_rate,
             value,
+            name,
             description,
             billed_at,
+        )
+
+        tag_ids = await _get_or_create_tag_ids(conn=conn, group_id=group_id, tags=tags)
+        await self._add_tags_to_revision(
+            conn=conn,
+            transaction_id=transaction_id,
+            revision_id=revision_id,
+            tag_ids=tag_ids,
         )
 
         if debitor_shares:
@@ -343,11 +361,13 @@ class TransactionService(Application):
         user: User,
         group_id: int,
         type: str,
-        description: str,
+        name: str,
+        description: Optional[str],
         billed_at: date,
         currency_symbol: str,
         currency_conversion_rate: float,
         value: float,
+        tags: list[str],
         debitor_shares: Optional[dict[int, float]] = None,
         creditor_shares: Optional[dict[int, float]] = None,
         positions: Optional[list[TransactionPosition]] = None,
@@ -360,10 +380,12 @@ class TransactionService(Application):
                     user=user,
                     group_id=group_id,
                     type=type,
+                    name=name,
                     description=description,
                     billed_at=billed_at,
                     currency_symbol=currency_symbol,
                     currency_conversion_rate=currency_conversion_rate,
+                    tags=tags,
                     value=value,
                     debitor_shares=debitor_shares,
                     creditor_shares=creditor_shares,
@@ -446,7 +468,7 @@ class TransactionService(Application):
 
                 await conn.execute(
                     "update transaction_revision "
-                    "set committed = now(), version = version + 1 where id = $1",
+                    "set committed = now() where id = $1",
                     revision_id,
                 )
                 await create_group_log(
@@ -508,9 +530,6 @@ class TransactionService(Application):
                     filename,
                     blob_id,
                 )
-                await self._increment_transaction_version(
-                    conn=conn, revision_id=revision_id
-                )
                 return file_id
 
     async def delete_file(self, *, user: User, file_id: int) -> tuple[int, int]:
@@ -554,9 +573,6 @@ class TransactionService(Application):
                         file_id,
                         revision_id,
                     )
-                    await self._increment_transaction_version(
-                        conn=conn, revision_id=revision_id
-                    )
                     return transaction_id, pending_state["revision_id"]
 
                 revision_id = await self._get_or_create_revision(
@@ -569,9 +585,6 @@ class TransactionService(Application):
                     file_id,
                     revision_id,
                     committed_state["filename"],
-                )
-                await self._increment_transaction_version(
-                    conn=conn, revision_id=revision_id
                 )
                 return transaction_id, revision_id
 
@@ -722,10 +735,12 @@ class TransactionService(Application):
         user: User,
         transaction_id: int,
         value: float,
-        description: str,
+        name: str,
+        description: Optional[str],
         billed_at: date,
         currency_symbol: str,
         currency_conversion_rate: float,
+        tags: list[str],
         debitor_shares: Optional[dict[int, float]] = None,
         creditor_shares: Optional[dict[int, float]] = None,
         positions: Optional[list[TransactionPosition]] = None,
@@ -745,8 +760,8 @@ class TransactionService(Application):
         )
         await conn.execute(
             "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, "
-            "   value, billed_at, description)"
-            "values ($1, $2, $3, $4, $5, $6, $7) "
+            "   value, billed_at, name, description)"
+            "values ($1, $2, $3, $4, $5, $6, $7, $8) "
             "on conflict (id, revision_id) do update "
             "set currency_symbol = $3, currency_conversion_rate = $4, value = $5, "
             "   billed_at = $6, description = $7",
@@ -756,7 +771,16 @@ class TransactionService(Application):
             currency_conversion_rate,
             value,
             billed_at,
+            name,
             description,
+        )
+
+        tag_ids = await _get_or_create_tag_ids(conn=conn, group_id=group_id, tags=tags)
+        await self._add_tags_to_revision(
+            conn=conn,
+            transaction_id=transaction_id,
+            revision_id=revision_id,
+            tag_ids=tag_ids,
         )
 
         await conn.execute(
@@ -809,10 +833,12 @@ class TransactionService(Application):
         user: User,
         transaction_id: int,
         value: float,
-        description: str,
+        name: str,
+        description: Optional[str],
         billed_at: date,
         currency_symbol: str,
         currency_conversion_rate: float,
+            tags: list[str],
         debitor_shares: Optional[dict[int, float]] = None,
         creditor_shares: Optional[dict[int, float]] = None,
         positions: Optional[list[TransactionPosition]] = None,
@@ -825,10 +851,12 @@ class TransactionService(Application):
                     user=user,
                     transaction_id=transaction_id,
                     value=value,
+                    name=name,
                     description=description,
                     billed_at=billed_at,
                     currency_symbol=currency_symbol,
                     currency_conversion_rate=currency_conversion_rate,
+                    tags=tags,
                     debitor_shares=debitor_shares,
                     creditor_shares=creditor_shares,
                     positions=positions,
@@ -934,7 +962,7 @@ class TransactionService(Application):
                 )
 
                 row = await conn.fetchrow(
-                    "select description, revision_id, deleted "
+                    "select name, description, revision_id, deleted "
                     "from committed_transaction_state_valid_at() "
                     "where transaction_id = $1",
                     transaction_id,
@@ -1061,8 +1089,8 @@ class TransactionService(Application):
 
         # copy all existing transaction data into a new history entry
         await conn.execute(
-            "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, description, value, billed_at, deleted)"
-            "select id, $1, currency_symbol, currency_conversion_rate, description, value, billed_at, deleted "
+            "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, name, description, value, billed_at, deleted)"
+            "select id, $1, currency_symbol, currency_conversion_rate, name, description, value, billed_at, deleted "
             "from transaction_history where id = $2 and revision_id = $3",
             revision_id,
             transaction_id,
@@ -1100,9 +1128,11 @@ class TransactionService(Application):
                 user=user,
                 transaction_id=transaction.id,
                 value=transaction.value,
+                name=transaction.name,
                 description=transaction.description,
                 billed_at=transaction.billed_at,
                 currency_symbol=transaction.currency_symbol,
+                tags=transaction.tags,
                 currency_conversion_rate=transaction.currency_conversion_rate,
                 debitor_shares=transaction.debitor_shares,
                 creditor_shares=transaction.creditor_shares,
@@ -1115,6 +1145,7 @@ class TransactionService(Application):
             conn=conn,
             user=user,
             value=transaction.value,
+            name=transaction.name,
             description=transaction.description,
             billed_at=transaction.billed_at,
             currency_symbol=transaction.currency_symbol,

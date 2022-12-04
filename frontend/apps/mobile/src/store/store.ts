@@ -1,5 +1,6 @@
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
-import { persistStore, persistReducer, FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER } from "redux-persist";
+import thunk from "redux-thunk";
+import { persistStore, persistReducer } from "redux-persist";
 import { accountReducer, authReducer, groupReducer, subscriptionReducer, transactionReducer } from "@abrechnung/redux";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -9,7 +10,7 @@ import { uiReducer } from "./uiSlice";
 const persistConfig = {
     key: "root",
     version: 1,
-    // blacklist: ["subscriptions", "accounts", "groups", "transactions"],
+    // blacklist: ["subscriptions", "auth", "accounts", "groups", "transactions"],
     blacklist: ["subscriptions"],
     storage: AsyncStorage,
 };
@@ -28,12 +29,7 @@ const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
     reducer: persistedReducer,
-    middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware({
-            serializableCheck: {
-                ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
-            },
-        }),
+    middleware: [thunk],
 });
 export const persistor = persistStore(store);
 

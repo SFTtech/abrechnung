@@ -68,7 +68,7 @@ export const Header: React.FC<Props> = ({ navigation, route, options, back }) =>
     };
 
     return (
-        <Appbar.Header theme={{ colors: { primary: theme.colors.surface } }}>
+        <Appbar.Header elevated={true}>
             {back ? <Appbar.BackAction onPress={goBack} /> : <Appbar.Action icon="menu" onPress={openDrawer} />}
             {showTitle && <Appbar.Content title={title} />}
             {options.headerRight ? options.headerRight({}) : null}

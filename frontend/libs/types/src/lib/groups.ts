@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export interface GroupBase {
     id: number;
     name: string;
@@ -6,6 +8,14 @@ export interface GroupBase {
     terms: string;
     addUserAccountOnJoin: boolean;
 }
+
+export const GroupValidator = z.object({
+    name: z.string({ required_error: "Name is required" }),
+    description: z.string().optional(),
+    terms: z.string().optional(),
+    currencySymbol: z.string({ required_error: "Currency is required" }),
+    addUserAccountOnJoin: z.boolean(),
+});
 
 export interface Group extends GroupBase {
     // non-mutable properties

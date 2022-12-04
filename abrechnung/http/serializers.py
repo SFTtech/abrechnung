@@ -77,8 +77,8 @@ class AccountDetailSchema(Schema):
     description = fields.Str()
     priority = fields.Int()
     owning_user_id = fields.Int(allow_none=True)
-    revision_started_at = fields.DateTime()
-    revision_committed_at = fields.DateTime(required=False)
+    date_info = fields.Date(allow_none=True)
+    tags = fields.List(fields.Str(), allow_none=True, required=False)
     clearing_shares = SharesField()
     deleted = fields.Bool()
 
@@ -89,7 +89,6 @@ class AccountSchema(Schema):
     is_wip = fields.Bool()
     last_changed = fields.DateTime()
     group_id = fields.Int()
-    version = fields.Int()
     pending_details = fields.Nested(AccountDetailSchema, allow_none=True)
     committed_details = fields.Nested(AccountDetailSchema, allow_none=True)
 
@@ -108,15 +107,15 @@ class TransactionPositionSchema(Schema):
 
 
 class TransactionDetailSchema(Schema):
-    description = fields.Str()
+    name = fields.Str()
+    description = fields.Str(allow_none=True)
     value = fields.Number()
     currency_symbol = fields.Str()
     currency_conversion_rate = fields.Number()
     billed_at = fields.Date()
-    revision_started_at = fields.DateTime()
-    revision_committed_at = fields.DateTime(required=False)
     creditor_shares = SharesField()
     debitor_shares = SharesField()
+    tags = fields.List(fields.Str())
     deleted = fields.Bool()
 
 
@@ -142,7 +141,6 @@ class TransactionSchema(Schema):
     is_wip = fields.Bool()
     last_changed = fields.DateTime()
     group_id = fields.Int()
-    version = fields.Int()
     pending_details = fields.Nested(TransactionDetailSchema, allow_none=True)
     committed_details = fields.Nested(TransactionDetailSchema, allow_none=True)
     pending_positions = fields.List(
