@@ -1,11 +1,11 @@
-import { Appbar, useTheme } from "react-native-paper";
-import * as React from "react";
-import { StackHeaderProps, StackNavigationProp } from "@react-navigation/stack";
-import { GroupStackParamList, GroupTabParamList, RootDrawerParamList } from "./types";
-import { DrawerNavigationProp } from "@react-navigation/drawer";
 import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
-import { Route } from "@react-navigation/native";
+import { DrawerNavigationProp } from "@react-navigation/drawer";
 import { HeaderTitleProps } from "@react-navigation/elements";
+import { Route } from "@react-navigation/native";
+import { StackHeaderProps, StackNavigationProp } from "@react-navigation/stack";
+import * as React from "react";
+import { Appbar, useTheme } from "react-native-paper";
+import { GroupStackParamList, GroupTabParamList, RootDrawerParamList } from "./types";
 
 type Props = StackHeaderProps;
 
@@ -32,7 +32,7 @@ export interface HeaderProps {
     route: Route<string>;
 }
 
-export const Header: React.FC<Props> = ({ navigation, route, options, back }) => {
+export const Header: React.FC<Props> = ({ navigation, route, options, back, ...props }) => {
     const title =
         options.headerTitle !== undefined
             ? options.headerTitle
@@ -40,8 +40,6 @@ export const Header: React.FC<Props> = ({ navigation, route, options, back }) =>
             ? options.title
             : route.name;
     const showTitle = options.titleShown ?? true;
-
-    const theme = useTheme();
 
     const openDrawer = () => {
         if (navigation.openDrawer !== undefined) {
@@ -69,7 +67,13 @@ export const Header: React.FC<Props> = ({ navigation, route, options, back }) =>
 
     return (
         <Appbar.Header elevated={true}>
-            {back ? <Appbar.BackAction onPress={goBack} /> : <Appbar.Action icon="menu" onPress={openDrawer} />}
+            {showTitle ? (
+                back ? (
+                    <Appbar.BackAction onPress={goBack} />
+                ) : (
+                    <Appbar.Action icon="menu" onPress={openDrawer} />
+                )
+            ) : null}
             {showTitle && <Appbar.Content title={title} />}
             {options.headerRight ? options.headerRight({}) : null}
         </Appbar.Header>

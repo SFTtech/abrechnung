@@ -4,14 +4,26 @@ import {
     selectAccountById,
     selectCurrentUserPermissions,
     wipAccountUpdated,
+    deleteAccount,
 } from "@abrechnung/redux";
 import { AccountValidator } from "@abrechnung/types";
 import { fromISOStringNullable, toFormikValidationSchema, toISODateStringNullable } from "@abrechnung/utils";
 import { useFocusEffect } from "@react-navigation/native";
 import { useFormik } from "formik";
 import React, { useEffect, useLayoutEffect } from "react";
-import { BackHandler, StyleSheet, View } from "react-native";
-import { ActivityIndicator, Button, HelperText, ProgressBar, TextInput, useTheme } from "react-native-paper";
+import { BackHandler, StyleSheet, View, ScrollView } from "react-native";
+import {
+    ActivityIndicator,
+    Portal,
+    Dialog,
+    IconButton,
+    Button,
+    HelperText,
+    ProgressBar,
+    TextInput,
+    useTheme,
+    Text,
+} from "react-native-paper";
 import DateTimeInput from "../../components/DateTimeInput";
 import { TagSelect } from "../../components/tag-select";
 import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
@@ -36,6 +48,21 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
             return dispatch(discardAccountChange({ groupId, accountId: account.id, api })).unwrap();
         }
     }, [dispatch, account, groupId]);
+
+    const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
+    const onDeleteAccount = React.useCallback(() => {
+        dispatch(deleteAccount({ api, groupId, accountId }))
+            .unwrap()
+            .then(() => {
+                navigation.pop(2);
+            })
+            .catch((err) => {
+                notify({ text: `Error while deleting account: ${err.toString()}` });
+            });
+    }, [groupId, accountId, dispatch, navigation]);
+
+    const closeConfirmDeleteModal = () => setConfirmDeleteModalOpen(false);
+    const openConfirmDeleteModal = () => setConfirmDeleteModalOpen(true);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -69,7 +96,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                       description: account.description,
                       clearingShares: account.clearingShares,
                       dateInfo: account.dateInfo,
-                      tags: [],
+                      tags: account.tags,
                   }
                 : {
                       type: account.type,
@@ -130,6 +157,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                             Cancel
                         </Button>
                         <Button onPress={formik.handleSubmit}>Save</Button>
+                        <IconButton icon="delete" iconColor={theme.colors.error} onPress={openConfirmDeleteModal} />
                     </>
                 );
             },
@@ -145,7 +173,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
     }
 
     return (
-        <View style={styles.container}>
+        <ScrollView style={styles.container}>
             {formik.isSubmitting ? <ProgressBar indeterminate /> : null}
             <TextInput
                 label="Name"
@@ -213,13 +241,27 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                         enableAdvanced={true}
                         multiSelect={true}
                         excludedAccounts={[account.id]}
+                        error={formik.touched.clearingShares && !!formik.errors.clearingShares}
                     />
                     {formik.touched.clearingShares && !!formik.errors.clearingShares && (
                         <HelperText type="error">{formik.errors.clearingShares}</HelperText>
                     )}
                 </>
             )}
-        </View>
+            <Portal>
+                <Dialog visible={confirmDeleteModalOpen} onDismiss={closeConfirmDeleteModal}>
+                    <Dialog.Content>
+                        Do you really want to delete this {account.type === "clearing" ? "event" : "account"}?
+                    </Dialog.Content>
+                    <Dialog.Actions>
+                        <Button onPress={closeConfirmDeleteModal}>No</Button>
+                        <Button onPress={onDeleteAccount} textColor={theme.colors.error}>
+                            Yes
+                        </Button>
+                    </Dialog.Actions>
+                </Dialog>
+            </Portal>
+        </ScrollView>
     );
 };
 

@@ -3,7 +3,6 @@
     "version": 2,
     "projects": {
         "api": "libs/api",
-        "assets": "libs/assets",
         "backend": "apps/backend",
         "core": "libs/core",
         "mobile": "apps/mobile",

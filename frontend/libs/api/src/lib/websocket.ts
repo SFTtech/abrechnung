@@ -193,7 +193,7 @@ export class AbrechnungWebSocket {
                 }
             }
         } else {
-            console.log("WS received unhandled message", msg);
+            // console.log("WS received unhandled message", msg);
         }
     };
 
@@ -207,30 +207,39 @@ export class AbrechnungWebSocket {
     };
 
     public sendSubscriptionRequest = (subscriptionType: string, elementId: number) => {
-        console.log("sent subscription for ", subscriptionType);
-        this.api.getToken().then((token: string) => {
-            return this.send({
-                type: "subscribe",
-                token: token,
-                data: {
-                    subscription_type: subscriptionType,
-                    element_id: elementId,
-                },
+        this.api
+            .getToken()
+            .then((token: string) => {
+                return this.send({
+                    type: "subscribe",
+                    token: token,
+                    data: {
+                        subscription_type: subscriptionType,
+                        element_id: elementId,
+                    },
+                });
+            })
+            .catch((err) => {
+                console.error("error while trying to send subscribe request", err);
             });
-        });
     };
 
     public sendUnsubscriptionRequest = (subscriptionType: string, elementId: number) => {
-        this.api.getToken().then((token: string) => {
-            this.send({
-                type: "unsubscribe",
-                token: token,
-                data: {
-                    subscription_type: subscriptionType,
-                    element_id: elementId,
-                },
+        this.api
+            .getToken()
+            .then((token: string) => {
+                this.send({
+                    type: "unsubscribe",
+                    token: token,
+                    data: {
+                        subscription_type: subscriptionType,
+                        element_id: elementId,
+                    },
+                });
+            })
+            .catch((err) => {
+                console.error("error while trying to send unsubscribe request", err);
             });
-        });
     };
 
     public subscribe = (subscriptionType: SubscriptionType, elementId: number, callback: SubscriptionCallback) => {

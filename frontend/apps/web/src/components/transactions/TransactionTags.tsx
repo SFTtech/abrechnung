@@ -21,7 +21,7 @@ export const TransactionTags: React.FC<Props> = ({ groupId, transactionId }) => 
 
     return (
         <TagSelector
-            margin="normal"
+            margin="dense"
             fullWidth
             label="Tags"
             groupId={groupId}

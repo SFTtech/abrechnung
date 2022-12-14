@@ -5,7 +5,10 @@ import {
     saveAccount,
     selectAccountById,
     selectCurrentUserPermissions,
+    wipAccountUpdated,
 } from "@abrechnung/redux";
+import { AccountValidator } from "@abrechnung/types";
+import { toFormikValidationSchema } from "@abrechnung/utils";
 import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
 import {
     Button,
@@ -19,15 +22,15 @@ import {
     IconButton,
     LinearProgress,
 } from "@mui/material";
+import { useFormik } from "formik";
 import React from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { DateInput } from "../../components/DateInput";
+import { DisabledTextField } from "../../components/style/DisabledTextField";
+import { TagSelector } from "../../components/TagSelector";
 import { api } from "../../core/api";
 import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
-import AccountDescription from "./AccountDescription";
-import AccountName from "./AccountName";
-import { AccountTags } from "./AccountTags";
-import ClearingAccountDate from "./ClearingAccountDate";
 import { ClearingShares } from "./ClearingShares";
 
 interface Props {
@@ -72,25 +75,55 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
         }
     };
 
-    const commitEdit = () => {
-        if (!account.isWip) {
-            toast.error("Cannot save as there are not changes made");
-            return;
+    const formik = useFormik({
+        initialValues:
+            account === undefined
+                ? {}
+                : account.type === "clearing"
+                ? {
+                      type: account.type,
+                      name: account.name,
+                      description: account.description,
+                      clearingShares: account.clearingShares,
+                      dateInfo: account.dateInfo,
+                      tags: account.tags,
+                  }
+                : {
+                      type: account.type,
+                      name: account.name,
+                      description: account.description,
+                      owningUserID: account.owningUserID,
+                  },
+        validationSchema: toFormikValidationSchema(AccountValidator),
+        onSubmit: (values, { setSubmitting }) => {
+            if (!account || !account.isWip) {
+                toast.error("Cannot save as there are not changes made");
+                return;
+            }
+
+            setSubmitting(true);
+            dispatch(wipAccountUpdated({ ...account, ...values }));
+            dispatch(saveAccount({ groupId: groupId, accountId: account.id, api }))
+                .unwrap()
+                .then(({ oldAccountId, account }) => {
+                    setSubmitting(false);
+                    if (oldAccountId !== account.id) {
+                        navigate(`/groups/${groupId}/accounts/${account.id}?no-redirect=true`);
+                    }
+                })
+                .catch((err) => {
+                    setSubmitting(false);
+                    toast.error(`error while saving account: ${err.toString()}`);
+                });
+        },
+        enableReinitialize: true,
+    });
+
+    const onUpdate = React.useCallback(() => {
+        if (account) {
+            dispatch(wipAccountUpdated({ ...account, ...formik.values }));
         }
-        setShowProgress(true);
-        dispatch(saveAccount({ groupId, accountId, api }))
-            .unwrap()
-            .then(({ oldAccountId, account }) => {
-                setShowProgress(false);
-                if (oldAccountId !== account.id) {
-                    navigate(`/groups/${groupId}/accounts/${account.id}?no-redirect=true`);
-                }
-            })
-            .catch((err) => {
-                setShowProgress(false);
-                toast.error(`error while saving account: ${err.toString()}`);
-            });
-    };
+    }, [dispatch, account, formik]);
 
     const abortEdit = () => {
         if (!account.isWip) {
@@ -130,7 +163,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                         <>
                             {account.isWip ? (
                                 <>
-                                    <Button color="primary" onClick={commitEdit}>
+                                    <Button color="primary" onClick={() => formik.handleSubmit()}>
                                         Save
                                     </Button>
                                     <Button color="error" onClick={abortEdit}>
@@ -150,16 +183,56 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                 </Grid>
             </Grid>
             <Divider sx={{ marginBottom: 1, marginTop: 1 }} />
-            {showProgress && <LinearProgress />}
+            {(showProgress || formik.isSubmitting) && <LinearProgress />}
             <Grid container>
                 <Grid item xs={12}>
-                    <AccountName groupId={groupId} accountId={accountId} />
-                    <AccountDescription groupId={groupId} accountId={accountId} />
+                    <DisabledTextField
+                        label="Name"
+                        variant="standard"
+                        margin="dense"
+                        fullWidth
+                        name="name"
+                        error={formik.touched.name && !!formik.errors.name}
+                        helperText={formik.errors.name}
+                        onChange={formik.handleChange}
+                        onKeyUp={(key) => key.key === "Enter" && onUpdate()}
+                        onBlur={onUpdate}
+                        value={formik.values.name}
+                        disabled={!account.isWip}
+                    />
+                    <DisabledTextField
+                        label="Description"
+                        variant="standard"
+                        margin="dense"
+                        fullWidth
+                        name="description"
+                        error={formik.touched.description && !!formik.errors.description}
+                        helperText={formik.errors.description}
+                        onChange={formik.handleChange}
+                        onKeyUp={(key) => key.key === "Enter" && onUpdate()}
+                        onBlur={onUpdate}
+                        value={formik.values.description}
+                        disabled={!account.isWip}
+                    />
                     {account.type === "personal" && null}
                     {account.type === "clearing" && (
                         <>
-                            <AccountTags groupId={groupId} accountId={accountId} />
-                            <ClearingAccountDate groupId={groupId} accountId={accountId} />
+                            <TagSelector
+                                margin="dense"
+                                fullWidth
+                                label="Tags"
+                                groupId={groupId}
+                                value={formik.values.tags || []}
+                                editable={account.isWip}
+                                onChange={(newValue) => dispatch(wipAccountUpdated({ ...account, tags: newValue }))}
+                            />
+                            <DateInput
+                                value={formik.values.dateInfo || ""}
+                                onChange={(value) => dispatch(wipAccountUpdated({ ...account, dateInfo: value }))}
+                                error={formik.touched.dateInfo && !!formik.errors.dateInfo}
+                                helperText={formik.errors.dateInfo}
+                                disabled={!account.isWip}
+                            />
                         </>
                     )}
                 </Grid>

@@ -838,7 +838,7 @@ class TransactionService(Application):
         billed_at: date,
         currency_symbol: str,
         currency_conversion_rate: float,
-            tags: list[str],
+        tags: list[str],
         debitor_shares: Optional[dict[int, float]] = None,
         creditor_shares: Optional[dict[int, float]] = None,
         positions: Optional[list[TransactionPosition]] = None,

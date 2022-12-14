@@ -145,7 +145,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                             />
                         </FormControl>
                     </Box>
-                    {!isSmallScreen && (
+                    {!isSmallScreen && permissions.canWrite && (
                         <Box sx={{ display: "flex-item" }}>
                             <div style={{ padding: "8px" }}>
                                 <Add color="primary" />

@@ -14,9 +14,11 @@ export const GroupList: React.FC<RootDrawerScreenProps<"GroupList">> = ({ naviga
     const groupStatus = useAppSelector((state) => state.groups.status);
     const groupIds = useAppSelector((state) => selectGroupIds({ state: selectGroupSlice(state) }));
     const onRefresh = () => {
+        console.debug("refreshing groups");
         setRefreshing(true);
         dispatch(fetchGroups({ api })).then(() => setRefreshing(false));
     };
+    console.log("rendering group list");
 
     return (
         <>

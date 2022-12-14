@@ -1,7 +1,5 @@
 import {
-    fetchAccounts,
-    fetchGroupMembers,
-    fetchTransactions,
+    fetchGroupDependencies,
     selectGroupAccountsStatus,
     selectGroupById,
     selectGroupExists,
@@ -70,19 +68,14 @@ export const Group: React.FC = () => {
     }, [dispatch, groupId, groupExists]);
 
     React.useEffect(() => {
-        // TODO: make sure we only fetch once, especially when the group changes
-        // TODO: possible remedy: special selector that only checks whether a group
-        // id exists and does not return any group content
         if (groupExists) {
             batch(() => {
-                Promise.all([
-                    dispatch(fetchAccounts({ groupId, api })),
-                    dispatch(fetchTransactions({ groupId, api })),
-                    dispatch(fetchGroupMembers({ groupId, api })),
-                ]).catch((err) => {
-                    console.warn(err);
-                    toast.error(`Error while loading transactions and accounts: ${err}`);
-                });
+                dispatch(fetchGroupDependencies({ groupId, api, fetchAnyway: true }))
+                    .unwrap()
+                    .catch((err) => {
+                        console.warn(err);
+                        toast.error(`Error while loading transactions and accounts: ${err}`);
+                    });
             });
         }
     }, [groupExists, groupId, dispatch]);

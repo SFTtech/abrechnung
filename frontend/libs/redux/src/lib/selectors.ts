@@ -21,14 +21,17 @@ import {
 import { IRootState } from "./types";
 
 const selectAccountBalancesInternal = (args: { state: IRootState; groupId: number }): AccountBalanceMap => {
+    const s = performance.now();
     const { state, groupId } = args;
     const transactions = selectGroupTransactionsInternal({ state: state.transactions, groupId });
     const positions = selectGroupPositionsInternal({ state: state.transactions, groupId });
     const accounts = selectGroupAccountsInternal({ state: state.accounts, groupId });
-    return computeAccountBalances(accounts, transactions, positions);
+    const res = computeAccountBalances(accounts, transactions, positions);
+    console.log("selectAccountBalancesInternal took " + (performance.now() - s) + " milliseconds.");
+    return res;
 };
 
-export const selectAccountBalances = memoize(selectAccountBalancesInternal);
+export const selectAccountBalances = memoize(selectAccountBalancesInternal, { size: 5 });
 
 export const selectAccountBalanceHistory = memoize(
     (args: { state: IRootState; groupId: number; accountId: number }): BalanceHistoryEntry[] => {
@@ -95,6 +98,7 @@ export const selectSortedTransactions = memoize(
         searchTerm?: string;
         tags?: string[];
     }): Transaction[] => {
+        const s = performance.now();
         const { state, groupId, sortMode, searchTerm, tags = [] } = args;
         const balanceEffects = selectTransactionBalanceEffectsInternal({ state: state.transactions, groupId });
         const transactions = selectGroupTransactionsInternal({ state: state.transactions, groupId });
@@ -112,7 +116,7 @@ export const selectSortedTransactions = memoize(
 
             if (searchTerm && searchTerm !== "") {
                 if (
-                    t.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (t.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
                     t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     fromISOString(t.billedAt).toDateString().toLowerCase().includes(searchTerm.toLowerCase()) ||
                     fromISOString(t.lastChanged).toDateString().toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -129,6 +133,9 @@ export const selectSortedTransactions = memoize(
             return true;
         };
 
-        return transactions.filter(filterFn).sort(compareFunction);
-    }
+        const res = transactions.filter(filterFn).sort(compareFunction);
+        console.log("selectSortedTransactions took " + (performance.now() - s) + " milliseconds.");
+        return res;
+    },
+    { size: 5 }
 );

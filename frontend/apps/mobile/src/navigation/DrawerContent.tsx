@@ -59,19 +59,13 @@ export const DrawerContent: React.FC<Props> = (props) => {
                     />
                 </Drawer.Section>
                 <Drawer.Section style={styles.drawerSection}>
-                    {/*<Drawer.Item*/}
-                    {/*    icon={({ color, size }) => (*/}
-                    {/*        <MaterialCommunityIcons*/}
-                    {/*            name="account-outline"*/}
-                    {/*            color={color}*/}
-                    {/*            size={size}*/}
-                    {/*        />*/}
-                    {/*    )}*/}
-                    {/*    label="Profile"*/}
-                    {/*    onPress={() => {*/}
-                    {/*        navigation.navigate("Profile");*/}
-                    {/*    }}*/}
-                    {/*/>*/}
+                    <Drawer.Item
+                        icon="person"
+                        label="Profile"
+                        onPress={() => {
+                            navigation.navigate("Profile");
+                        }}
+                    />
                     <Drawer.Item
                         icon={({ color, size }) => <MaterialCommunityIcons name="tune" color={color} size={size} />}
                         label="Preferences"

@@ -25,7 +25,7 @@ export const AccountTags: React.FC<Props> = ({ groupId, accountId }) => {
 
     return (
         <TagSelector
-            margin="normal"
+            margin="dense"
             fullWidth
             label="Tags"
             groupId={groupId}

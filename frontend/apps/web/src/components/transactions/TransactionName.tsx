@@ -50,7 +50,7 @@ export const TransactionName: React.FC<Props> = ({ groupId, transactionId }) => 
             error={error}
             variant="standard"
             helperText={error ? "please input a name" : null}
-            margin="normal"
+            margin="dense"
             fullWidth
             onChange={onChange}
             onKeyUp={onKeyUp}

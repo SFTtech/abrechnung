@@ -4,7 +4,10 @@ import merge from "deepmerge";
 
 export const successColor = "#2f8a0c";
 
-const { LightTheme, DarkTheme } = adaptNavigationTheme({ light: NavigationLightTheme, dark: NavigationDarkTheme });
+const { LightTheme, DarkTheme } = adaptNavigationTheme({
+    reactNaivgationLight: NavigationLightTheme,
+    reactNavigationDark: NavigationDarkTheme,
+});
 
 export const CustomDarkTheme = merge(DarkTheme, MD3DarkTheme);
 export const CustomLightTheme = merge(LightTheme, MD3LightTheme);

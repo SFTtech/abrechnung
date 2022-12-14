@@ -15,6 +15,7 @@ interface Props {
     value: TransactionShare;
     onChange: (newValue: TransactionShare) => void;
     disabled: boolean;
+    error?: boolean | undefined;
     excludedAccounts?: number[];
 }
 
@@ -26,6 +27,7 @@ export const TransactionShareInput: React.FC<Props> = ({
     value,
     onChange,
     disabled,
+    error = false,
     excludedAccounts = [],
 }) => {
     const [showDialog, setShowDialog] = useState(false);
@@ -34,6 +36,10 @@ export const TransactionShareInput: React.FC<Props> = ({
     const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
 
     useEffect(() => {
+        if (!value) {
+            return;
+        }
+
         const s = accounts
             .filter((acc) => value[acc.id] !== undefined && value[acc.id] > 0)
             .map((acc) => acc.name)
@@ -49,7 +55,11 @@ export const TransactionShareInput: React.FC<Props> = ({
                         borderTopRightRadius: theme.roundness,
                         borderTopLeftRadius: theme.roundness,
                         backgroundColor: disabled ? theme.colors.background : theme.colors.surfaceVariant,
-                        borderBottomColor: showDialog ? theme.colors.primary : theme.colors.secondary,
+                        borderBottomColor: error
+                            ? theme.colors.error
+                            : showDialog
+                            ? theme.colors.primary
+                            : theme.colors.secondary,
                         borderBottomWidth: showDialog ? 2 : 0.5,
                         marginBottom: showDialog ? 2.5 : 4,
                         padding: 10,
@@ -59,7 +69,7 @@ export const TransactionShareInput: React.FC<Props> = ({
                 >
                     <Text
                         style={{
-                            color: theme.colors.primary,
+                            color: error ? theme.colors.error : theme.colors.primary,
                             fontWeight: theme.fonts.labelSmall.fontWeight,
                             fontSize: theme.fonts.labelSmall.fontSize,
                         }}

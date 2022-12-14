@@ -40,6 +40,7 @@ export const computeAccountBalances = (
     transactions: Transaction[],
     positions: TransactionPosition[]
 ): AccountBalanceMap => {
+    const s = performance.now();
     const accountBalances: AccountBalanceMap = accounts.reduce<AccountBalanceMap>((balances, account) => {
         balances[account.id] = {
             balance: 0,
@@ -202,14 +203,20 @@ export const computeAccountBalances = (
         }
     }
 
+    console.log("computeAccountBalances took " + (performance.now() - s) + " milliseconds.");
     return accountBalances;
 };
 
+export interface BalanceChangeOrigin {
+    type: "clearing" | "transaction";
+    id: number;
+}
+
 export interface BalanceHistoryEntry {
-    date: number;
+    date: string;
     change: number;
     balance: number;
-    changeOrigin: { type: "clearing" | "transaction"; id: number };
+    changeOrigin: BalanceChangeOrigin;
 }
 
 export const computeAccountBalanceHistory = (
@@ -229,7 +236,7 @@ export const computeAccountBalanceHistory = (
         const a = balanceEffect[accountId];
         if (a) {
             balanceChanges.push({
-                date: fromISOString(transaction.lastChanged).getTime() / 1000,
+                date: transaction.lastChanged,
                 change: a.total,
                 changeOrigin: {
                     type: "transaction",
@@ -242,7 +249,7 @@ export const computeAccountBalanceHistory = (
     for (const account of clearingAccounts) {
         if (balances[account.id]?.clearingResolution[accountId] !== undefined) {
             balanceChanges.push({
-                date: fromISOString(account.lastChanged).getTime() / 1000,
+                date: account.lastChanged,
                 change: balances[account.id].clearingResolution[accountId],
                 changeOrigin: {
                     type: "clearing",
@@ -251,7 +258,7 @@ export const computeAccountBalanceHistory = (
             });
         }
     }
-    balanceChanges.sort((a1, a2) => a1.date - a2.date);
+    balanceChanges.sort((a1, a2) => a1.date.localeCompare(a2.date));
 
     const accumulatedBalanceChanges: BalanceHistoryEntry[] = [];
     let currBalance = 0;

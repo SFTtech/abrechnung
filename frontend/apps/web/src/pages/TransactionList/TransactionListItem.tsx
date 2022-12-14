@@ -10,9 +10,10 @@ import { selectAccountSlice, selectTransactionSlice, useAppSelector } from "../.
 interface Props {
     groupId: number;
     transactionId: number;
+    style?: React.CSSProperties;
 }
 
-export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId }) => {
+export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, style }) => {
     const accounts = useAppSelector((state) => selectAccountIdToNameMap({ state: selectAccountSlice(state), groupId }));
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
@@ -39,7 +40,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId })
 
     return (
         <>
-            <ListItemLink to={`/groups/${groupId}/transactions/${transactionId}`}>
+            <ListItemLink to={`/groups/${groupId}/transactions/${transactionId}`} style={style}>
                 <ListItemAvatar sx={{ minWidth: { xs: "40px", md: "56px" } }}>
                     {transaction.type === "purchase" ? (
                         <Tooltip title="Purchase">

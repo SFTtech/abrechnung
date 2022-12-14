@@ -25,6 +25,22 @@ begin
 end;
 $$ language plpgsql;
 
+create or replace function update_related_transaction_last_changed() returns trigger as
+$$
+begin
+    update transaction_revision set last_changed = now() where id = NEW.revision_id;
+    return null;
+end;
+$$ language plpgsql;
+
+create or replace function update_related_account_last_changed() returns trigger as
+$$
+begin
+    update account_revision set last_changed = now() where id = NEW.revision_id;
+    return null;
+end;
+$$ language plpgsql;
+
 alter table account_revision
     add column last_changed timestamptz;
 update account_revision
@@ -39,6 +55,7 @@ drop trigger if exists account_revision_last_change_update_trig on account_revis
 create trigger account_revision_last_change_update_trig
     after insert or update
     on account_revision
+    for each row
 execute function update_last_changed();
 
 alter table transaction_revision
@@ -50,11 +67,34 @@ alter table transaction_revision
     alter column last_changed set not null;
 alter table transaction_revision
     alter column last_changed set default now();
+
 drop trigger if exists transaction_revision_last_change_update_trig on transaction_revision;
 create trigger transaction_revision_last_change_update_trig
     after insert or update
     on transaction_revision
+    for each row
 execute function update_last_changed();
+
+drop trigger if exists transaction_history_last_changed_update_trig on transaction_history;
+create trigger transaction_history_last_changed_update_trig
+    after insert or update
+    on transaction_history
+    for each row
+execute function update_related_transaction_last_changed();
+
+drop trigger if exists purchase_item_last_changed_update_trig on purchase_item_history;
+create trigger purchase_item_last_changed_update_trig
+    after insert or update
+    on purchase_item_history
+    for each row
+execute function update_related_transaction_last_changed();
+
+drop trigger if exists account_last_changed_update_trig on account_history;
+create trigger account_last_changed_update_trig
+    after insert or update
+    on account_history
+    for each row
+execute function update_related_account_last_changed();
 
 create table tag (
     id       serial primary key,
@@ -100,7 +140,7 @@ create table account_to_tag (
     primary key (account_id, revision_id, tag_id)
 );
 
-create view account_tags (account_id, revision_id, tag_names) as
+create or replace view account_tags (account_id, revision_id, tag_names) as
     SELECT
         att.account_id,
         att.revision_id,

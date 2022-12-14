@@ -1,7 +1,7 @@
-import { selectGroups, selectIsAuthenticated, subscribe, unsubscribe } from "@abrechnung/redux";
+import { selectGroups, selectIsAuthenticated, subscribe, unsubscribe, fetchGroupDependencies } from "@abrechnung/redux";
 import { MaterialIcons } from "@expo/vector-icons";
-import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { createDrawerNavigator } from "@react-navigation/drawer";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import * as React from "react";
@@ -9,22 +9,21 @@ import { useEffect } from "react";
 import { clearingAccountIcon, personalAccountIcon } from "../constants/Icons";
 import { api, websocket } from "../core/api";
 import { notify } from "../notifications";
+import { AddGroup } from "../screens/AddGroup";
 import { GroupList } from "../screens/GroupList";
 import AccountDetail from "../screens/groups/AccountDetail";
 import AccountEdit from "../screens/groups/AccountEdit";
 import AccountList from "../screens/groups/AccountList";
 import TransactionDetail from "../screens/groups/TransactionDetail";
-import { TransactionList } from "../screens/TransactionList";
 import HomeScreen from "../screens/HomeScreen";
 import LoginScreen from "../screens/Login";
 import PreferencesScreen from "../screens/PreferencesScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import RegisterScreen from "../screens/Register";
 import { SplashScreen } from "../screens/SplashScreen";
-import { AddGroup } from "../screens/AddGroup";
+import { TransactionList } from "../screens/TransactionList";
 import {
     changeActiveGroup,
-    fetchGroupDependencies,
     selectActiveGroupId,
     selectAuthSlice,
     selectGroupSlice,
@@ -55,19 +54,29 @@ const RootNavigator: React.FC = () => {
     const isAuthenticated = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
 
     useEffect(() => {
+        if (!isAuthenticated) {
+            return;
+        }
+
         if (activeGroupId === undefined && groups.length > 0) {
             dispatch(changeActiveGroup({ groupId: groups[0].id, api }))
                 .unwrap()
-                .then(() => {
+                .catch((err: Error) => {
+                    console.error("Error changing active group", err);
                     notify({ text: "error while changing selective group" });
                 });
         } else if (activeGroupId !== undefined) {
-            dispatch(fetchGroupDependencies({ groupId: activeGroupId, api }));
+            dispatch(fetchGroupDependencies({ groupId: activeGroupId, api, fetchAnyway: true }))
+                .unwrap()
+                .catch((err: Error) => {
+                    console.error("Error updating group content", err);
+                    notify({ text: "error while updating group content" });
+                });
         }
-    }, [dispatch, activeGroupId, groups]);
+    }, [isAuthenticated, dispatch, activeGroupId, groups]);
 
     useEffect(() => {
-        if (activeGroupId === undefined) {
+        if (!isAuthenticated || activeGroupId === undefined) {
             return;
         }
         dispatch(subscribe({ subscription: { type: "transaction", groupId: activeGroupId }, websocket }));
@@ -79,7 +88,7 @@ const RootNavigator: React.FC = () => {
             dispatch(unsubscribe({ subscription: { type: "account", groupId: activeGroupId }, websocket }));
             dispatch(unsubscribe({ subscription: { type: "group_member", groupId: activeGroupId }, websocket }));
         };
-    }, [activeGroupId, dispatch]);
+    }, [isAuthenticated, activeGroupId, dispatch]);
 
     const propsWithHeader = {
         headerShown: true,
@@ -163,14 +172,7 @@ const BottomTabNavigator: React.FC = () => {
     const activeGroupID = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) }));
 
     return (
-        <BottomTab.Navigator
-            id="BottomTab"
-            initialRouteName="TransactionList"
-            tabBarPosition="bottom"
-            screenOptions={{
-                headerShown: false,
-            }}
-        >
+        <BottomTab.Navigator id="BottomTab" initialRouteName="TransactionList" tabBarPosition="bottom">
             <BottomTab.Screen
                 name="TransactionList"
                 component={activeGroupID == null ? SplashScreen : TransactionList}

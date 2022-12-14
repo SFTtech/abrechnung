@@ -284,10 +284,6 @@ const groupSlice = createSlice({
     initialState,
     reducers: {},
     extraReducers: (builder) => {
-        builder.addCase(fetchGroups.rejected, (state, action) => {
-            // TODO: how to handle this failure case
-            state.status = "failed";
-        });
         builder.addCase(fetchGroups.fulfilled, (state, action) => {
             console.log("fetched groups");
             const groups = action.payload;
@@ -323,10 +319,6 @@ const groupSlice = createSlice({
 
             state.byGroupId[groupId].groupMembersStatus = "initialized";
         });
-        builder.addCase(fetchGroupMembers.rejected, (state, action) => {
-            const { groupId } = action.meta.arg;
-            state.byGroupId[groupId].groupMembersStatus = "failed";
-        });
         builder.addCase(fetchGroupInvites.fulfilled, (state, action) => {
             const { groupId } = action.meta.arg;
             const invites = action.payload;
@@ -340,10 +332,6 @@ const groupSlice = createSlice({
 
             state.byGroupId[groupId].groupInvitesStatus = "initialized";
         });
-        builder.addCase(fetchGroupInvites.rejected, (state, action) => {
-            const { groupId } = action.meta.arg;
-            state.byGroupId[groupId].groupInvitesStatus = "failed";
-        });
         builder.addCase(fetchGroupLog.fulfilled, (state, action) => {
             const { groupId } = action.meta.arg;
             const logs = action.payload;
@@ -356,10 +344,6 @@ const groupSlice = createSlice({
             state.byGroupId[groupId].groupLog.ids = logIds;
 
             state.byGroupId[groupId].groupLogStatus = "initialized";
-        });
-        builder.addCase(fetchGroupLog.rejected, (state, action) => {
-            const { groupId } = action.meta.arg;
-            state.byGroupId[groupId].groupLogStatus = "failed";
         });
         builder.addCase(updateGroup.fulfilled, (state, action) => {
             const group = action.payload;

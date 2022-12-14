@@ -6,6 +6,7 @@ import {
     selectTransactionPositions,
     selectTransactionPositionTotal,
     wipPositionAdded,
+    deleteTransaction,
     wipTransactionUpdated,
 } from "@abrechnung/redux";
 import { TransactionPosition, TransactionValidator } from "@abrechnung/types";
@@ -19,9 +20,12 @@ import {
     ActivityIndicator,
     Button,
     Chip,
+    Dialog,
     Divider,
     HelperText,
+    IconButton,
     List,
+    Portal,
     ProgressBar,
     Surface,
     Text,
@@ -43,7 +47,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
     const dispatch = useAppDispatch();
     const { groupId, transactionId, editing } = route.params;
 
-    const [progress, setProgress] = useState(false);
+    const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
 
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
@@ -62,6 +66,20 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
         }
         return;
     }, [dispatch, editing, transaction, groupId]);
+
+    const onDeleteTransaction = React.useCallback(() => {
+        dispatch(deleteTransaction({ api, groupId, transactionId }))
+            .unwrap()
+            .then(() => {
+                navigation.pop();
+            })
+            .catch((err) => {
+                notify({ text: `Error while deleting transaction: ${err.toString()}` });
+            });
+    }, [groupId, transactionId, dispatch, navigation]);
+
+    const closeConfirmDeleteModal = () => setConfirmDeleteModalOpen(false);
+    const openConfirmDeleteModal = () => setConfirmDeleteModalOpen(true);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -111,15 +129,15 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
             dispatch(saveTransaction({ api, transactionId, groupId }))
                 .unwrap()
                 .then(({ transactionContainer }) => {
-                    setProgress(false);
                     navigation.navigate("TransactionDetail", {
                         transactionId: transactionContainer.transaction.id,
                         groupId: groupId,
                         editing: false,
                     });
+                    setSubmitting(false);
                 })
                 .catch(() => {
-                    setProgress(false);
+                    setSubmitting(false);
                 });
         },
         enableReinitialize: true,
@@ -175,14 +193,20 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                             <Button onPress={cancelEdit} textColor={theme.colors.error}>
                                 Cancel
                             </Button>
-                            <Button onPress={formik.handleSubmit}>Save</Button>
+                            <Button onPress={() => formik.handleSubmit()}>Save</Button>
+                            <IconButton icon="delete" iconColor={theme.colors.error} onPress={openConfirmDeleteModal} />
                         </>
                     );
                 }
-                return <Button onPress={edit}>Edit</Button>;
+                return (
+                    <>
+                        <Button onPress={edit}>Edit</Button>
+                        <IconButton icon="delete" iconColor={theme.colors.error} onPress={openConfirmDeleteModal} />
+                    </>
+                );
             },
         });
-    }, [theme, editing, permissions, navigation, formik, onGoBack, cancelEdit, edit, transaction]);
+    }, [theme, editing, permissions, navigation, formik, onGoBack, cancelEdit, edit, transaction, onDeleteTransaction]);
 
     const onCreatePosition = () => {
         dispatch(
@@ -217,7 +241,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
 
     return (
         <ScrollView style={styles.container}>
-            {progress ? <ProgressBar indeterminate /> : null}
+            {formik.isSubmitting && <ProgressBar indeterminate />}
             <TextInput
                 label="Name"
                 value={formik.values.name}
@@ -258,7 +282,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
             )}
             <NumericInput
                 label="Value" // TODO: proper float input
-                value={formik.values.value}
+                value={formik.values.value ?? 0}
                 editable={editing}
                 keyboardType="numeric"
                 onChange={(val) => formik.setFieldValue("value", val)}
@@ -336,6 +360,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 onChange={(val) => formik.setFieldValue("creditorShares", val)}
                 enableAdvanced={false}
                 multiSelect={false}
+                error={formik.touched.creditorShares && !!formik.errors.creditorShares}
             />
             {formik.touched.creditorShares && !!formik.errors.creditorShares && (
                 <HelperText type="error">{formik.errors.creditorShares}</HelperText>
@@ -348,6 +373,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 onChange={(val) => formik.setFieldValue("debitorShares", val)}
                 enableAdvanced={transaction.type === "purchase"}
                 multiSelect={transaction.type === "purchase"}
+                error={formik.touched.debitorShares && !!formik.errors.debitorShares}
             />
             {formik.touched.debitorShares && !!formik.errors.debitorShares && (
                 <HelperText type="error">{formik.errors.debitorShares}</HelperText>
@@ -393,6 +419,19 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                     Add Position
                 </Button>
             )}
+            <Portal>
+                <Dialog visible={confirmDeleteModalOpen} onDismiss={closeConfirmDeleteModal}>
+                    <Dialog.Content>
+                        <Text>Do you really want to delete this transaction?</Text>
+                    </Dialog.Content>
+                    <Dialog.Actions>
+                        <Button onPress={closeConfirmDeleteModal}>No</Button>
+                        <Button onPress={onDeleteTransaction} textColor={theme.colors.error}>
+                            Yes
+                        </Button>
+                    </Dialog.Actions>
+                </Dialog>
+            </Portal>
         </ScrollView>
     );
 };

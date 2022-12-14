@@ -13,9 +13,9 @@ import { useIsFocused } from "@react-navigation/native";
 import * as React from "react";
 import { useLayoutEffect, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
-import { Appbar, FAB, Menu, Portal, RadioButton, Text, TextInput, useTheme } from "react-native-paper";
+import { Appbar, FAB, Menu, Portal, RadioButton, Text, useTheme } from "react-native-paper";
 import LoadingIndicator from "../../components/LoadingIndicator";
-import TransactionListItem from "./TransactionListItem";
+import Searchbar from "../../components/style/Searchbar";
 import { purchaseIcon, transferIcon } from "../../constants/Icons";
 import { api } from "../../core/api";
 import { GroupTabScreenProps } from "../../navigation/types";
@@ -26,8 +26,9 @@ import {
     useAppDispatch,
     useAppSelector,
 } from "../../store";
+import TransactionListItem from "./TransactionListItem";
 
-export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> = ({ navigation, route }) => {
+export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> = ({ navigation }) => {
     const theme = useTheme();
     const dispatch = useAppDispatch();
     const groupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) })) as number; // TODO: proper typing
@@ -65,6 +66,9 @@ export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> =
         setShowSearchInput(true);
     };
 
+    const openSortMenu = () => setMenuOpen(true);
+    const closeSortMenu = () => setMenuOpen(false);
+
     useLayoutEffect(() => {
         if (!isFocused) {
             closeSearch();
@@ -77,16 +81,14 @@ export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> =
             headerRight: () => {
                 if (showSearchInput) {
                     return (
-                        <>
-                            <TextInput
-                                mode="outlined"
-                                dense={true}
-                                autoFocus={true}
-                                style={{ flexGrow: 1 }}
-                                onChangeText={(val) => setSearch(val)}
-                            />
-                            <Appbar.Action icon="close" onPress={closeSearch} />
-                        </>
+                        <Searchbar
+                            placeholder="Search"
+                            value={search}
+                            clearButtonMode="always"
+                            onClearIconPress={closeSearch}
+                            onChangeText={setSearch}
+                            autoFocus={true}
+                        />
                     );
                 }
                 return (
@@ -94,8 +96,8 @@ export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> =
                         <Appbar.Action icon="search" onPress={openSearch} />
                         <Menu
                             visible={isMenuOpen}
-                            onDismiss={() => setMenuOpen(false)}
-                            anchor={<Appbar.Action icon="more-vert" onPress={() => setMenuOpen(true)} />}
+                            onDismiss={closeSortMenu}
+                            anchor={<Appbar.Action icon="more-vert" onPress={openSortMenu} />}
                         >
                             <Text variant="labelLarge" style={{ paddingLeft: 16, fontWeight: "bold" }}>
                                 Sort by
@@ -106,14 +108,14 @@ export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> =
                             >
                                 <RadioButton.Item position="trailing" label="Last changed" value="lastChanged" />
                                 <RadioButton.Item position="trailing" label="Billed at" value="billedAt" />
-                                <RadioButton.Item position="trailing" label="Description" value="description" />
+                                <RadioButton.Item position="trailing" label="Name" value="name" />
                             </RadioButton.Group>
                         </Menu>
                     </>
                 );
             },
         });
-    }, [isFocused, showSearchInput, isMenuOpen, setMenuOpen, sortMode, theme, navigation]);
+    }, [isFocused, showSearchInput, isMenuOpen, search, sortMode, theme, navigation]);
 
     const createNewTransaction = (type: TransactionType) => {
         if (type === "purchase") {
@@ -217,7 +219,7 @@ const styles = StyleSheet.create({
         marginHorizontal: 16,
     },
     fab: {
-        paddingBottom: 48,
+        paddingBottom: 52,
     },
 });
 

@@ -70,10 +70,12 @@ export const login = createAsyncThunk<
 });
 
 export const logout = createAsyncThunk<void, { api: Api }>("logout", async ({ api }, { dispatch }) => {
-    try {
-        await api.logout();
-    } catch {
-        // lol
+    if (await api.hasConnection()) {
+        try {
+            await api.logout();
+        } catch (err) {
+            console.error("Unexpected error occured while trying to logout.", err);
+        }
     }
     api.resetAuthState();
     dispatch({

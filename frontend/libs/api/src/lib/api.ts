@@ -60,7 +60,7 @@ export class Api {
 
     public resetAuthState = () => {
         this.sessionToken = null;
-        this.accessToken = null;
+        // this.accessToken = null; // we do not null the access token s.t. we can perform remaining requests
     };
 
     public setSessionToken = (token: string) => {
@@ -72,7 +72,9 @@ export class Api {
     };
 
     public updateAccessToken = async (): Promise<string | null> => {
-        console.log("request to ", `${this.baseApiUrl}/api/v1/auth/fetch_access_token`);
+        if (this.sessionToken === null) {
+            return null;
+        }
         const resp = await fetch(`${this.baseApiUrl}/api/v1/auth/fetch_access_token`, {
             method: "POST",
             body: JSON.stringify({ token: this.sessionToken }),
@@ -466,7 +468,9 @@ export class Api {
     };
 
     public logout = async () => {
-        return await this.makePost("/api/v1/auth/logout");
+        const resp = await this.makePost("/api/v1/auth/logout");
+        this.resetAuthState();
+        return resp;
     };
 
     public register = async (username: string, email: string, password: string, inviteToken?: string) => {
@@ -562,7 +566,15 @@ export class Api {
     };
 
     public getToken = async (): Promise<string> => {
-        if (this.sessionToken === null || this.accessToken === null || !validateJWTToken(this.accessToken)) {
+        if (this.sessionToken === null && this.accessToken !== null && validateJWTToken(this.accessToken)) {
+            return this.accessToken;
+        }
+
+        if (this.sessionToken === null) {
+            throw new Error("no session token present");
+        }
+
+        if (this.accessToken === null || !validateJWTToken(this.accessToken)) {
             this.accessToken = await this.updateAccessToken();
             console.log("fetched new access token", this.accessToken);
             if (this.accessToken !== null) {
@@ -596,6 +608,7 @@ export class Api {
     };
 
     private fetchJson = async (url: string, options: RequestOptions) => {
+        console.debug("Request to", url, "options", options);
         let headers: Record<string, string> = {};
         if (options.withAuth) {
             const authHeaders = await this.makeAuthHeader();

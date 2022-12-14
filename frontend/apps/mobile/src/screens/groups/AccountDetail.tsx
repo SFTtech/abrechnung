@@ -1,13 +1,30 @@
 import { GroupStackScreenProps } from "../../navigation/types";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { ActivityIndicator, Button, Chip, Divider, List, Text, useTheme } from "react-native-paper";
+import {
+    ActivityIndicator,
+    Portal,
+    Dialog,
+    IconButton,
+    Button,
+    Chip,
+    Divider,
+    List,
+    Text,
+    useTheme,
+} from "react-native-paper";
 import * as React from "react";
 import { useLayoutEffect } from "react";
 import { Transaction, AccountBalance, Account, TransactionShare } from "@abrechnung/types";
-import { clearingAccountIcon, getTransactionIcon } from "../../constants/Icons";
+import { clearingAccountIcon, getAccountIcon, getTransactionIcon } from "../../constants/Icons";
 import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
 import { successColor } from "../../theme";
-import { selectAccountSlice, selectGroupSlice, selectTransactionSlice, useAppSelector } from "../../store";
+import {
+    selectAccountSlice,
+    selectGroupSlice,
+    selectTransactionSlice,
+    useAppDispatch,
+    useAppSelector,
+} from "../../store";
 import {
     selectAccountBalances,
     selectAccountById,
@@ -15,14 +32,18 @@ import {
     selectTransactionsInvolvingAccount,
     selectCurrentUserPermissions,
     selectClearingAccountsInvolvingAccounts,
-    accountsUpdated,
+    deleteAccount,
 } from "@abrechnung/redux";
 import { fromISOString } from "@abrechnung/utils";
+import { api } from "../../core/api";
+import { notify } from "../../notifications";
+import { MaterialIcons } from "@expo/vector-icons";
 
 type ArrayAccountsAndTransactions = Array<Transaction | Account>;
 
 export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = ({ route, navigation }) => {
     const theme = useTheme();
+    const dispatch = useAppDispatch();
 
     const { groupId, accountId } = route.params;
 
@@ -47,6 +68,22 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
     );
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
 
+    const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
+
+    const onDeleteAccount = React.useCallback(() => {
+        dispatch(deleteAccount({ api, groupId, accountId }))
+            .unwrap()
+            .then(() => {
+                navigation.pop();
+            })
+            .catch((err) => {
+                notify({ text: `Error while deleting account: ${err.toString()}` });
+            });
+    }, [groupId, accountId, dispatch, navigation]);
+
+    const closeConfirmDeleteModal = () => setConfirmDeleteModalOpen(false);
+    const openConfirmDeleteModal = () => setConfirmDeleteModalOpen(true);
+
     useLayoutEffect(() => {
         const edit = () => {
             navigation.navigate("AccountEdit", {
@@ -61,7 +98,12 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                 if (permissions === undefined || !permissions.canWrite) {
                     return null;
                 }
-                return <Button onPress={edit}>Edit</Button>;
+                return (
+                    <>
+                        <Button onPress={edit}>Edit</Button>
+                        <IconButton icon="delete" iconColor={theme.colors.error} onPress={openConfirmDeleteModal} />
+                    </>
+                );
             },
         });
     }, [accountId, permissions, groupId, theme, account, navigation]);
@@ -139,7 +181,26 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                 <>
                     {account.dateInfo != null && <List.Item title="Date" description={account.dateInfo} />}
                     {account.tags.length > 0 && (
-                        <List.Item title="Tags" right={() => account.tags.map((tag) => <Chip key={tag}>{tag}</Chip>)} />
+                        <View style={{ paddingLeft: 16 }}>
+                            <Text style={{ fontSize: theme.fonts.bodyLarge.fontSize }}>Tags</Text>
+                            <View style={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
+                                {account.tags.map((tag) => (
+                                    <Chip
+                                        key={tag}
+                                        mode="outlined"
+                                        compact={true}
+                                        style={{
+                                            marginRight: 3,
+                                            backgroundColor: theme.colors.backdrop,
+                                            borderColor: theme.colors.primary,
+                                            marginBottom: 2,
+                                        }}
+                                    >
+                                        {tag}
+                                    </Chip>
+                                ))}
+                            </View>
+                        </View>
                     )}
                     <TransactionShareInput
                         title="Participated"
@@ -173,6 +234,21 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                     </List.Section>
                 </>
             ) : null}
+            <Portal>
+                <Dialog visible={confirmDeleteModalOpen} onDismiss={closeConfirmDeleteModal}>
+                    <Dialog.Content>
+                        <Text>
+                            Do you really want to delete this {account.type === "clearing" ? "event" : "account"}?
+                        </Text>
+                    </Dialog.Content>
+                    <Dialog.Actions>
+                        <Button onPress={closeConfirmDeleteModal}>No</Button>
+                        <Button onPress={onDeleteAccount} textColor={theme.colors.error}>
+                            Yes
+                        </Button>
+                    </Dialog.Actions>
+                </Dialog>
+            </Portal>
         </ScrollView>
     );
 };

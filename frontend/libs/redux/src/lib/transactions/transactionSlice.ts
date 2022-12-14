@@ -72,10 +72,11 @@ export const selectGroupTransactionsStatus = memoize(
 );
 
 const selectGroupTransactionIdsInternal = (args: { state: TransactionSliceState; groupId: number }): number[] => {
+    const t = performance.now();
     const { state, groupId } = args;
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
     // TODO: merge wip changes here
-    return s.transactions.ids
+    const res = s.transactions.ids
         .concat(...s.pendingTransactions.ids.filter((id) => id < 0))
         .concat(...s.wipTransactions.ids.filter((id) => id < 0 && s.pendingTransactions.ids[id] === undefined))
         .filter(
@@ -86,22 +87,27 @@ const selectGroupTransactionIdsInternal = (args: { state: TransactionSliceState;
                     s.transactions.byId[id]?.deleted
                 )
         );
+    console.log("selectGroupTransactionIdsInternal took " + (performance.now() - t) + " milliseconds.");
+    return res;
 };
 
-export const selectGroupTransactionIds = memoize(selectGroupTransactionIdsInternal);
+export const selectGroupTransactionIds = memoize(selectGroupTransactionIdsInternal, { size: 5 });
 
 export const selectGroupTransactionsInternal = (args: {
     state: TransactionSliceState;
     groupId: number;
 }): Transaction[] => {
+    const t = performance.now();
     const { state, groupId } = args;
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
     const transactionIds = selectGroupTransactionIdsInternal({ state, groupId });
-    return transactionIds.map(
+    const res = transactionIds.map(
         (id) => s.wipTransactions.byId[id] ?? s.pendingTransactions.byId[id] ?? s.transactions.byId[id]
     );
+    console.log("selectGroupTransactionsInternal took " + (performance.now() - t) + " milliseconds.");
+    return res;
 };
-export const selectGroupTransactions = memoize(selectGroupTransactionsInternal);
+export const selectGroupTransactions = memoize(selectGroupTransactionsInternal, { size: 5 });
 
 export const selectTransactionByIdMap = memoize(
     (args: { state: TransactionSliceState; groupId: number }): { [k: number]: Transaction } => {
@@ -132,7 +138,7 @@ const selectGroupPositionIdsInternal = (args: { state: TransactionSliceState; gr
         );
 };
 
-export const selectGroupPositionIds = memoize(selectGroupPositionIdsInternal);
+export const selectGroupPositionIds = memoize(selectGroupPositionIdsInternal, { size: 5 });
 
 export const selectGroupPositionsInternal = (args: {
     state: TransactionSliceState;
@@ -144,7 +150,7 @@ export const selectGroupPositionsInternal = (args: {
     return positionIds.map((id) => s.wipPositions.byId[id] ?? s.pendingPositions.byId[id] ?? s.positions.byId[id]);
 };
 
-export const selectGroupPositions = memoize(selectGroupPositionsInternal);
+export const selectGroupPositions = memoize(selectGroupPositionsInternal, { size: 5 });
 
 const selectTransactionByIdInternal = (args: {
     state: TransactionSliceState;
@@ -247,7 +253,7 @@ const selectTransactionPositionsInternal = (args: {
             }
             return pos;
         })
-        .filter((p) => !p.deleted);
+        .filter((p) => p && !p.deleted);
 };
 
 export const selectTransactionPositions = memoize(selectTransactionPositionsInternal);
@@ -309,15 +315,18 @@ export const selectTransactionBalanceEffectsInternal = (args: {
     state: TransactionSliceState;
     groupId: number;
 }): { [k: number]: TransactionBalanceEffect } => {
+    const s = performance.now();
     const { state, groupId } = args;
     const transactionIds = selectGroupTransactionIdsInternal(args);
-    return transactionIds.reduce<{ [k: number]: TransactionBalanceEffect }>((map, transactionId) => {
+    const res = transactionIds.reduce<{ [k: number]: TransactionBalanceEffect }>((map, transactionId) => {
         const balanceEffect = selectTransactionBalanceEffectInternal({ state, groupId, transactionId });
         if (balanceEffect) {
             map[transactionId] = balanceEffect;
         }
         return map;
     }, {});
+    console.log("selectTransactionBalanceEffectsInternal took " + (performance.now() - s) + " milliseconds.");
+    return res;
 };
 
 export const selectTransactionBalanceEffects = memoize(selectTransactionBalanceEffectsInternal);

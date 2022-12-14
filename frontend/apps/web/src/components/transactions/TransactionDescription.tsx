@@ -49,7 +49,7 @@ export const TransactionDescription: React.FC<Props> = ({ groupId, transactionId
             label="Description"
             error={error}
             variant="standard"
-            margin="normal"
+            margin="dense"
             helperText={error ? "please input a description" : null}
             fullWidth
             onChange={onChange}

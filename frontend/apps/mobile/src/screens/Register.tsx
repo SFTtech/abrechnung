@@ -75,6 +75,7 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                     <View style={styles.container}>
                         <TextInput
                             label="Server"
+                            style={styles.input}
                             returnKeyType="next"
                             autoCapitalize="none"
                             textContentType="URL"
@@ -84,13 +85,12 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                             onChangeText={(val) => setFieldValue("server", val)}
                             error={touched.server && !!errors.server}
                         />
-                        <HelperText type="error" visible={touched.server && !!errors.server}>
-                            {errors.server}
-                        </HelperText>
+                        {touched.server && !!errors.server && <HelperText type="error">{errors.server}</HelperText>}
 
                         <TextInput
                             autoFocus={true}
                             label="Username"
+                            style={styles.input}
                             textContentType="username"
                             returnKeyType="next"
                             autoCapitalize="none"
@@ -99,12 +99,13 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                             onChangeText={(val) => setFieldValue("username", val)}
                             value={values.username}
                         />
-                        <HelperText type="error" visible={touched.username && !!errors.username}>
-                            {errors.username}
-                        </HelperText>
+                        {touched.username && !!errors.username && (
+                            <HelperText type="error">{errors.username}</HelperText>
+                        )}
 
                         <TextInput
                             label="E-Mail"
+                            style={styles.input}
                             keyboardType="email-address"
                             returnKeyType="next"
                             autoCapitalize="none"
@@ -113,12 +114,11 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                             onChangeText={(val) => setFieldValue("email", val)}
                             value={values.email}
                         />
-                        <HelperText type="error" visible={touched.email && !!errors.email}>
-                            {errors.email}
-                        </HelperText>
+                        {touched.email && !!errors.email && <HelperText type="error">{errors.email}</HelperText>}
 
                         <TextInput
                             label="Password"
+                            style={styles.input}
                             keyboardType="default"
                             secureTextEntry={true}
                             returnKeyType="next"
@@ -128,12 +128,13 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                             onChangeText={(val) => setFieldValue("password", val)}
                             value={values.password}
                         />
-                        <HelperText type="error" visible={touched.password && !!errors.password}>
-                            {errors.password}
-                        </HelperText>
+                        {touched.password && !!errors.password && (
+                            <HelperText type="error">{errors.password}</HelperText>
+                        )}
 
                         <TextInput
                             label="Repeat Password"
+                            style={styles.input}
                             keyboardType="default"
                             secureTextEntry={true}
                             returnKeyType="next"
@@ -143,9 +144,9 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                             onChangeText={(val) => setFieldValue("password2", val)}
                             value={values.password2}
                         />
-                        <HelperText type="error" visible={touched.password2 && !!errors.password2}>
-                            {errors.password2}
-                        </HelperText>
+                        {touched.password2 && !!errors.password2 && (
+                            <HelperText type="error">{errors.password2}</HelperText>
+                        )}
 
                         {isSubmitting ? <ProgressBar indeterminate={true} /> : null}
                         <Button mode="contained" disabled={isSubmitting} onPress={handleSubmit}>
@@ -172,6 +173,9 @@ const styles = StyleSheet.create({
     row: {
         flexDirection: "row",
         marginTop: 4,
+    },
+    input: {
+        marginBottom: 6,
     },
     link: {
         fontWeight: "bold",

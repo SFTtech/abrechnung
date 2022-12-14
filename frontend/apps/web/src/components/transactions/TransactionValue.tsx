@@ -50,7 +50,7 @@ export const TransactionValue: React.FC<Props> = ({ groupId, transactionId }) =>
             label="Value"
             helperText={error ? "please input a valid decimal number" : null}
             variant="standard"
-            margin="normal"
+            margin="dense"
             fullWidth
             error={error}
             onChange={onChange}
