@@ -1,12 +1,18 @@
 import { Api } from "@abrechnung/api";
 import { fetchGroupDependencies } from "@abrechnung/redux";
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import memoize from "proxy-memoize";
 import { notify } from "../notifications";
 import { RootState } from "./store";
 
+export interface GlobalInfo {
+    text: string;
+    category: "info" | "warning" | "error";
+}
+
 export interface UiSliceState {
     activeGroupId: number | undefined;
+    globalInfo?: GlobalInfo | undefined;
 }
 
 const initialState: UiSliceState = {
@@ -18,6 +24,11 @@ export const selectActiveGroupId = memoize((args: { state: UiSliceState }): numb
     const { state } = args;
     return state.activeGroupId;
 });
+
+export const selectGlobalInfo = (args: { state: UiSliceState }): GlobalInfo | undefined => {
+    const { state } = args;
+    return state.globalInfo;
+};
 
 export const changeActiveGroup = createAsyncThunk<
     { groupId: number },
@@ -46,7 +57,11 @@ export const changeActiveGroup = createAsyncThunk<
 const uiSlice = createSlice({
     name: "ui",
     initialState,
-    reducers: {},
+    reducers: {
+        setGlobalInfo: (state, action: PayloadAction<GlobalInfo | undefined>) => {
+            state.globalInfo = action.payload;
+        },
+    },
     extraReducers: (builder) => {
         builder.addCase(changeActiveGroup.fulfilled, (state, action) => {
             const { groupId } = action.payload;
@@ -55,6 +70,6 @@ const uiSlice = createSlice({
     },
 });
 
-//export const { } = uiSlice.actions;
+export const { setGlobalInfo } = uiSlice.actions;
 
 export const { reducer: uiReducer } = uiSlice;

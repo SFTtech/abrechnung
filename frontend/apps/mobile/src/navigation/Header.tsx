@@ -1,10 +1,11 @@
-import { BottomTabNavigationProp } from "@react-navigation/bottom-tabs";
 import { DrawerNavigationProp } from "@react-navigation/drawer";
 import { HeaderTitleProps } from "@react-navigation/elements";
 import { Route } from "@react-navigation/native";
 import { StackHeaderProps, StackNavigationProp } from "@react-navigation/stack";
+import { MaterialTopTabNavigationProp } from "@react-navigation/material-top-tabs";
 import * as React from "react";
-import { Appbar, useTheme } from "react-native-paper";
+import { Appbar, useTheme, Banner } from "react-native-paper";
+import { selectGlobalInfo, useAppSelector } from "../store";
 import { GroupStackParamList, GroupTabParamList, RootDrawerParamList } from "./types";
 
 type Props = StackHeaderProps;
@@ -27,12 +28,13 @@ export interface HeaderProps {
     options: HeaderOptions;
     navigation:
         | DrawerNavigationProp<RootDrawerParamList>
-        | BottomTabNavigationProp<GroupTabParamList>
+        | MaterialTopTabNavigationProp<GroupTabParamList>
         | StackNavigationProp<GroupStackParamList>;
     route: Route<string>;
 }
 
 export const Header: React.FC<Props> = ({ navigation, route, options, back, ...props }) => {
+    const theme = useTheme();
     const title =
         options.headerTitle !== undefined
             ? options.headerTitle
@@ -40,6 +42,7 @@ export const Header: React.FC<Props> = ({ navigation, route, options, back, ...p
             ? options.title
             : route.name;
     const showTitle = options.titleShown ?? true;
+    const globalInfo = useAppSelector((state) => selectGlobalInfo({ state: state.ui }));
 
     const openDrawer = () => {
         if (navigation.openDrawer !== undefined) {
@@ -66,17 +69,30 @@ export const Header: React.FC<Props> = ({ navigation, route, options, back, ...p
     };
 
     return (
-        <Appbar.Header elevated={true}>
-            {showTitle ? (
-                back ? (
-                    <Appbar.BackAction onPress={goBack} />
-                ) : (
-                    <Appbar.Action icon="menu" onPress={openDrawer} />
-                )
-            ) : null}
-            {showTitle && <Appbar.Content title={title} />}
-            {options.headerRight ? options.headerRight({}) : null}
-        </Appbar.Header>
+        <>
+            <Appbar.Header elevated={true}>
+                {showTitle ? (
+                    back ? (
+                        <Appbar.BackAction onPress={goBack} />
+                    ) : (
+                        <Appbar.Action icon="menu" onPress={openDrawer} />
+                    )
+                ) : null}
+                {showTitle && <Appbar.Content title={title} />}
+                {options.headerRight ? options.headerRight({}) : null}
+            </Appbar.Header>
+            {globalInfo && (
+                <Banner
+                    visible={true}
+                    icon="error"
+                    style={{
+                        backgroundColor: globalInfo.category === "error" ? theme.colors.errorContainer : undefined,
+                    }}
+                >
+                    {globalInfo.text}
+                </Banner>
+            )}
+        </>
     );
 };
 
