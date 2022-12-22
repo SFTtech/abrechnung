@@ -33,10 +33,12 @@ import {
     backendGroupPreviewToPreview,
 } from "./groups";
 import { IConnectionStatusProvider, IHttpError } from "./types";
+import { isRequiredVersion, SemVersion } from "./version";
 
 type RequestOptions = {
     withAuth?: boolean;
     useJson?: boolean;
+    skipVersionCheck?: boolean;
     headers?: Record<string, string>;
 } & Omit<RequestInit, "headers">;
 
@@ -44,17 +46,14 @@ export class HttpError implements IHttpError {
     constructor(public statusCode: number, public message: string) {}
 }
 
-export interface ApiVersion {
-    version: string;
-    major: number;
-    minor: number;
-    patch: number;
-}
+export const MIN_BACKEND_VERSION = "0.9.0";
+export const MAX_BACKEND_VERSION = "0.9.0";
 
 export class Api {
-    baseApiUrl: string | null = null;
-    sessionToken: string | null = null;
-    accessToken: string | null = null;
+    private baseApiUrl: string | null = null;
+    private sessionToken: string | null = null;
+    private accessToken: string | null = null;
+    private backendVersion: string | null = null;
 
     constructor(private connectionStatusProvider: IConnectionStatusProvider) {}
 
@@ -63,8 +62,50 @@ export class Api {
         // this.accessToken = null; // we do not null the access token s.t. we can perform remaining requests
     };
 
+    public init = async (baseApiUrl: string, sessionToken?: string) => {
+        this.baseApiUrl = baseApiUrl;
+
+        if (sessionToken) {
+            this.sessionToken = sessionToken;
+        }
+        await this.checkBackendVersion();
+    };
+
+    private checkBackendVersion = async () => {
+        if (this.backendVersion === null) {
+            try {
+                const version = await this.getVersion();
+                this.backendVersion = version.version;
+            } catch {
+                // TODO: what to do here, should we propagate this error?
+                return;
+            }
+        }
+        if (!isRequiredVersion(this.backendVersion, MIN_BACKEND_VERSION, MAX_BACKEND_VERSION)) {
+            throw new Error(
+                `This app version is incompatible with the version your backend is running. Expected ${MIN_BACKEND_VERSION} - ${MAX_BACKEND_VERSION}, but the backend is running ${this.backendVersion}`
+            );
+        }
+    };
+
+    public getAccessToken = (): string | null => {
+        return this.accessToken;
+    };
+
+    public setBaseApiUrl = (url: string) => {
+        this.baseApiUrl = url;
+    };
+
+    public getBaseApiUrl = (): string | null => {
+        return this.baseApiUrl;
+    };
+
     public setSessionToken = (token: string) => {
         this.sessionToken = token;
+    };
+
+    public getSessionToken = (): string | null => {
+        return this.sessionToken;
     };
 
     public hasConnection = () => {
@@ -93,8 +134,8 @@ export class Api {
         return jsonResp.access_token;
     };
 
-    public getVersion = async (): Promise<ApiVersion> => {
-        const resp = await this.makeGet("/api/version", { withAuth: false });
+    public getVersion = async (): Promise<SemVersion> => {
+        const resp = await this.makeGet("/api/version", { withAuth: false, skipVersionCheck: true });
         return {
             version: resp.version,
             major: Number(resp.major_version),
@@ -610,6 +651,9 @@ export class Api {
     private fetchJson = async (url: string, options: RequestOptions) => {
         console.debug("Request to", url, "options", options);
         let headers: Record<string, string> = {};
+        if (!options.skipVersionCheck) {
+            await this.checkBackendVersion();
+        }
         if (options.withAuth) {
             const authHeaders = await this.makeAuthHeader();
             headers = {

@@ -7,8 +7,15 @@ import { Navigation } from "./navigation";
 import { MaterialIcons } from "@expo/vector-icons";
 import { CustomDarkTheme, CustomLightTheme } from "./theme";
 import SplashScreen from "./screens/SplashScreen";
-import { NotificationProvider } from "./notifications";
-import { selectSettingsSlice, selectTheme, useAppSelector, selectAuthSlice, useAppDispatch } from "./store";
+import { NotificationProvider, notify } from "./notifications";
+import {
+    selectSettingsSlice,
+    selectTheme,
+    useAppSelector,
+    selectAuthSlice,
+    useAppDispatch,
+    setGlobalInfo,
+} from "./store";
 import {
     AbrechnungUpdateProvider,
     selectSessionToken,
@@ -36,10 +43,14 @@ export const App: React.FC = () => {
     React.useEffect(() => {
         if (sessionToken !== undefined && baseUrl !== undefined) {
             console.log("initializing api with session token", sessionToken, "and api url:", baseUrl);
-            api.baseApiUrl = baseUrl;
-            api.sessionToken = sessionToken;
-            websocket.setUrl(`${baseUrl.replace("http://", "ws://").replace("https://", "ws://")}/api/v1/ws`);
-            dispatch(fetchGroups({ api }));
+            api.init(baseUrl, sessionToken)
+                .then(() => {
+                    websocket.setUrl(`${baseUrl.replace("http://", "ws://").replace("https://", "ws://")}/api/v1/ws`);
+                    dispatch(fetchGroups({ api }));
+                })
+                .catch((err) => {
+                    dispatch(setGlobalInfo({ text: err.toString(), category: "error" }));
+                });
         }
     }, [sessionToken, baseUrl, dispatch]);
 

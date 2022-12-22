@@ -23,7 +23,7 @@ import Settings from "../pages/profile/Settings";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 
 import "react-toastify/dist/ReactToastify.css";
-import { api, ws } from "../core/api";
+import { api, baseURL, ws } from "../core/api";
 import { useAppDispatch, useAppSelector, selectAuthSlice, selectTheme, selectSettingsSlice } from "../store";
 import {
     AbrechnungUpdateProvider,
@@ -141,9 +141,10 @@ export default function App() {
 
     useEffect(() => {
         if (sessionToken !== undefined) {
-            api.sessionToken = sessionToken;
-            console.log("dispatching fetch groups");
-            dispatch(fetchGroups({ api }));
+            api.init(baseURL, sessionToken).then(() => {
+                console.log("dispatching fetch groups");
+                dispatch(fetchGroups({ api }));
+            });
         }
     }, [sessionToken, dispatch]);
 
