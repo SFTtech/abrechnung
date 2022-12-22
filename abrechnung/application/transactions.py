@@ -764,7 +764,7 @@ class TransactionService(Application):
             "values ($1, $2, $3, $4, $5, $6, $7, $8) "
             "on conflict (id, revision_id) do update "
             "set currency_symbol = $3, currency_conversion_rate = $4, value = $5, "
-            "   billed_at = $6, description = $7",
+            "   billed_at = $6, name = $7, description = $8",
             transaction_id,
             revision_id,
             currency_symbol,
@@ -1149,6 +1149,7 @@ class TransactionService(Application):
             description=transaction.description,
             billed_at=transaction.billed_at,
             currency_symbol=transaction.currency_symbol,
+            tags=transaction.tags,
             currency_conversion_rate=transaction.currency_conversion_rate,
             debitor_shares=transaction.debitor_shares,
             creditor_shares=transaction.creditor_shares,

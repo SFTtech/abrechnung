@@ -112,10 +112,12 @@ class GroupAPITest(HTTPAPITest):
             user=self.test_user,
             group_id=group_id,
             type="purchase",
+            name="asdf",
             description="asdf",
             billed_at=datetime.now(tz=timezone.utc),
             currency_symbol="€",
             currency_conversion_rate=1.0,
+            tags=[],
             value=20.0,
             debitor_shares={account1_id: 1.0},
             creditor_shares={account2_id: 1.0},
@@ -211,6 +213,7 @@ class GroupAPITest(HTTPAPITest):
                 "description": "description",
             },
         )
+        print(await resp.text())
         self.assertEqual(200, resp.status)
 
         a = await self._fetch_account(account_id)
@@ -356,6 +359,7 @@ class GroupAPITest(HTTPAPITest):
                 "name": "claering name",
                 "description": "description",
                 "type": "clearing",
+                "date_info": datetime.now().date().isoformat(),
             },
         )
         self.assertEqual(200, resp.status)
@@ -376,6 +380,7 @@ class GroupAPITest(HTTPAPITest):
                 "name": "account1",
                 "description": "description",
                 "clearing_shares": {base_account_id: 2.0},
+                "date_info": datetime.now().date().isoformat(),
             },
         )
 

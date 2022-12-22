@@ -211,17 +211,20 @@ begin
         ah.id = check_committed_accounts.account_id
         and ah.revision_id = check_committed_accounts.revision_id;
 
-    if found then
-        if locals.date_info is null and locals.account_type = 'clearing' then
-            raise '"clearing" type accounts must have a date set';
-        end if;
-    end if;
-
     if locals.account_type = 'personal' then
         if locals.n_clearing_shares != 0 then
             raise '"personal" type accounts cannot have associated settlement distribution shares';
         end if;
-        if locals.n_tags != 0 then raise '"personal" type accounts cannot have tags'; end if;
+        if locals.date_info is not null then
+            raise '"personal" type accounts cannot have a date set';
+        end if;
+        if locals.n_tags != 0 then
+            raise '"personal" type accounts cannot have tags';
+            end if;
+    elsif locals.account_type = 'clearing' then
+        if locals.date_info is null then
+            raise '"clearing" type accounts must have a date set';
+        end if;
     end if;
 
     return true;
@@ -582,7 +585,7 @@ create or replace view aggregated_committed_transaction_history as
                 COALESCE(csaj.shares, '[]'::jsonb)                    AS creditor_shares,
                 COALESCE(dsaj.n_shares, 0::double precision)          AS n_debitor_shares,
                 COALESCE(dsaj.shares, '[]'::jsonb)                    AS debitor_shares,
-                COALESCE(dsaj.involved_accounts, ARRAY []::integer[]) AS involved_accounts,
+                coalesce(csaj.involved_accounts, array[]::int[]) || coalesce(dsaj.involved_accounts, array[]::int[]) as involved_accounts,
                 coalesce(tt.tag_names, array []::varchar(255)[])      as tags
             FROM
                 transaction_revision tr

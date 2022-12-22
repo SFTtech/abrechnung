@@ -80,8 +80,12 @@ async def sync_accounts(request: web.Request):
             "name": fields.Str(),
             "description": fields.Str(),
             "type": fields.Str(),
-            "date_info": fields.Date(allow_none=True),
-            "tags": fields.List(fields.Str(), allow_none=True),
+            "date_info": fields.Date(
+                allow_none=True, required=False, load_default=None
+            ),
+            "tags": fields.List(
+                fields.Str(), allow_none=True, required=False, load_default=None
+            ),
             "owning_user_id": fields.Int(
                 allow_none=True, load_default=None, required=False
             ),
@@ -100,10 +104,10 @@ async def create_account(request: web.Request):
         name=data["name"],
         description=data["description"],
         type=data["type"],
-        date_info=data["date_info"],
-        tags=data["tags"],
-        owning_user_id=data["owning_user_id"],
-        clearing_shares=data["clearing_shares"],
+        date_info=data.get("date_info"),
+        tags=data.get("tags"),
+        owning_user_id=data.get("owning_user_id"),
+        clearing_shares=data.get("clearing_shares"),
     )
 
     return await _account_response(request=request, account_id=account_id)
@@ -133,8 +137,12 @@ async def get_account(request: web.Request):
         {
             "name": fields.Str(),
             "description": fields.Str(),
-            "date_info": fields.Date(allow_none=True),
-            "tags": fields.List(fields.Str(), allow_none=True),
+            "date_info": fields.Date(
+                allow_none=True, load_default=None, required=False
+            ),
+            "tags": fields.List(
+                fields.Str(), allow_none=True, load_default=None, required=False
+            ),
             "owning_user_id": fields.Int(
                 allow_none=True, load_default=None, required=False
             ),
@@ -153,10 +161,10 @@ async def update_account(request: web.Request):
         account_id=account_id,
         name=data["name"],
         description=data["description"],
-        date_info=data["date_info"],
-        tags=data["tags"],
-        owning_user_id=data["owning_user_id"],
-        clearing_shares=data["clearing_shares"],
+        date_info=data.get("date_info"),
+        tags=data.get("tags"),
+        owning_user_id=data.get("owning_user_id"),
+        clearing_shares=data.get("clearing_shares"),
     )
 
     return await _account_response(request=request, account_id=account_id)

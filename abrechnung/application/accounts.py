@@ -511,6 +511,8 @@ class AccountService(Application):
                 if row is None:
                     raise InvalidCommand(f"Account does not exist")
 
+                # TODO: FIXME move this check into the database
+
                 has_committed_shares = await conn.fetchval(
                     "select 1 "
                     "from committed_transaction_state_valid_at() t "
@@ -521,6 +523,19 @@ class AccountService(Application):
                     "select 1 "
                     "from aggregated_pending_transaction_history t "
                     "where $1 = any(t.involved_accounts)",
+                    account_id,
+                )
+
+                has_committed_clearing_shares = await conn.fetchval(
+                    "select 1 "
+                    "from committed_account_state_valid_at() a "
+                    "where not deleted and $1 = any(involved_accounts)",
+                    account_id,
+                )
+                has_pending_clearing_shares = await conn.fetchval(
+                    "select 1 "
+                    "from aggregated_pending_account_history a "
+                    "where $1 = any(a.involved_accounts)",
                     account_id,
                 )
 
@@ -548,6 +563,11 @@ class AccountService(Application):
                 ):
                     raise InvalidCommand(
                         f"Cannot delete an account that is references by a transaction"
+                    )
+
+                if has_committed_clearing_shares or has_pending_clearing_shares:
+                    raise InvalidCommand(
+                        f"Cannot delete an account that is references by a clearing account"
                     )
 
                 row = await conn.fetchrow(
