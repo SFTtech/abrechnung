@@ -1,8 +1,7 @@
-export const parseAbrechnungFloat = (value: string): number => {
-    if (!isNaN(parseFloat(value))) {
-        return parseFloat(value);
+export const parseAbrechnungFloat = (value: string | number): number => {
+    if (typeof value === "number") {
+        return value;
     }
-
     let delocalized;
     if (value.includes(",")) {
         delocalized = value.replace(",", ".");

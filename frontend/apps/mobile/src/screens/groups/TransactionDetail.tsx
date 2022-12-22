@@ -1,65 +1,53 @@
-import { GroupStackScreenProps } from "../../navigation/types";
-import { BackHandler, ScrollView, StyleSheet, View } from "react-native";
+import {
+    discardTransactionChange,
+    saveTransaction,
+    selectCurrentUserPermissions,
+    selectTransactionById,
+    selectTransactionPositions,
+    selectTransactionPositionTotal,
+    wipPositionAdded,
+    deleteTransaction,
+    wipTransactionUpdated,
+} from "@abrechnung/redux";
+import { TransactionPosition, TransactionValidator } from "@abrechnung/types";
+import { fromISOStringNullable, toFormikValidationSchema, toISODateString } from "@abrechnung/utils";
+import { useFocusEffect } from "@react-navigation/native";
+import { useFormik } from "formik";
 import * as React from "react";
 import { useEffect, useLayoutEffect, useState } from "react";
+import { BackHandler, ScrollView, StyleSheet, View } from "react-native";
 import {
     ActivityIndicator,
     Button,
+    Chip,
+    Dialog,
     Divider,
     HelperText,
+    IconButton,
     List,
+    Portal,
     ProgressBar,
     Surface,
     Text,
     TextInput,
     useTheme,
 } from "react-native-paper";
-import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
 import DateTimeInput from "../../components/DateTimeInput";
-import PositionListItem from "../../components/PositionListItem";
-import { notify } from "../../notifications";
-import { useFocusEffect } from "@react-navigation/native";
-import {
-    Transaction,
-    TransactionPosition,
-    TransactionShare,
-    TransactionValidationErrors,
-    validateTransactionDetails,
-} from "@abrechnung/types";
-import { useAppSelector, selectTransactionSlice, useAppDispatch } from "../../store";
-import {
-    discardTransactionChange,
-    saveTransaction,
-    selectTransactionById,
-    selectTransactionPositions,
-    selectTransactionPositionTotal,
-    wipPositionAdded,
-    wipTransactionUpdated,
-    selectCurrentUserPermissions,
-} from "@abrechnung/redux";
-import { api } from "../../core/api";
-import { toISODateString, fromISOString } from "@abrechnung/utils";
 import { NumericInput } from "../../components/NumericInput";
-
-type LocalEditingState = Partial<
-    Pick<
-        Transaction,
-        | "description"
-        | "value"
-        | "billedAt"
-        | "currencySymbol"
-        | "currencyConversionRate"
-        | "creditorShares"
-        | "debitorShares"
-    >
->;
+import PositionListItem from "../../components/PositionListItem";
+import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
+import { api } from "../../core/api";
+import { GroupStackScreenProps } from "../../navigation/types";
+import { TagSelect } from "../../components/tag-select";
+import { notify } from "../../notifications";
+import { selectTransactionSlice, useAppDispatch, useAppSelector } from "../../store";
 
 export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetail">> = ({ route, navigation }) => {
     const theme = useTheme();
     const dispatch = useAppDispatch();
     const { groupId, transactionId, editing } = route.params;
 
-    const [progress, setProgress] = useState(false);
+    const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
 
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
@@ -71,14 +59,27 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
         selectTransactionPositionTotal({ state: selectTransactionSlice(state), groupId, transactionId })
     );
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
-    const [localEditingState, setLocalEditingState] = useState<LocalEditingState>({});
-    const [inputErrors, setInputErrors] = useState<TransactionValidationErrors>({});
+
     const onGoBack = React.useCallback(async () => {
         if (editing && transaction != null) {
             dispatch(discardTransactionChange({ groupId, transactionId: transaction.id, api }));
         }
         return;
     }, [dispatch, editing, transaction, groupId]);
+
+    const onDeleteTransaction = React.useCallback(() => {
+        dispatch(deleteTransaction({ api, groupId, transactionId }))
+            .unwrap()
+            .then(() => {
+                navigation.pop();
+            })
+            .catch((err) => {
+                notify({ text: `Error while deleting transaction: ${err.toString()}` });
+            });
+    }, [groupId, transactionId, dispatch, navigation]);
+
+    const closeConfirmDeleteModal = () => setConfirmDeleteModalOpen(false);
+    const openConfirmDeleteModal = () => setConfirmDeleteModalOpen(true);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -96,64 +97,57 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
     );
 
     useEffect(() => {
-        if (transaction == null) {
-            return;
-        }
-
-        setInputErrors({});
-        setLocalEditingState({
-            description: transaction.description,
-            value: transaction.value,
-            billedAt: transaction.billedAt,
-            currencySymbol: transaction.currencySymbol,
-            currencyConversionRate: transaction.currencyConversionRate,
-            creditorShares: transaction.creditorShares,
-            debitorShares: transaction.debitorShares,
-        });
-    }, [transaction]);
-
-    useEffect(() => {
         if (editing && (permissions === undefined || !permissions.canWrite)) {
             navigation.replace("TransactionDetail", { transactionId, groupId, editing: false });
         }
     }, [editing, permissions, transactionId, groupId, navigation]);
 
+    const formik = useFormik({
+        initialValues:
+            transaction === undefined
+                ? {}
+                : {
+                      type: transaction.type,
+                      name: transaction.name,
+                      value: transaction.value,
+                      currencySymbol: transaction.currencySymbol,
+                      currencyConversionRate: transaction.currencyConversionRate,
+                      description: transaction.description ?? "",
+                      creditorShares: transaction.creditorShares,
+                      debitorShares: transaction.debitorShares,
+                      billedAt: transaction.billedAt,
+                      tags: transaction.tags,
+                  },
+        validationSchema: toFormikValidationSchema(TransactionValidator),
+        onSubmit: (values, { setSubmitting }) => {
+            if (!transaction) {
+                return;
+            }
+
+            setSubmitting(true);
+            dispatch(wipTransactionUpdated({ ...transaction, ...values }));
+            dispatch(saveTransaction({ api, transactionId, groupId }))
+                .unwrap()
+                .then(({ transactionContainer }) => {
+                    navigation.navigate("TransactionDetail", {
+                        transactionId: transactionContainer.transaction.id,
+                        groupId: groupId,
+                        editing: false,
+                    });
+                    setSubmitting(false);
+                })
+                .catch(() => {
+                    setSubmitting(false);
+                });
+        },
+        enableReinitialize: true,
+    });
+
     const onUpdate = React.useCallback(() => {
         if (transaction) {
-            // TODO: validate
-            dispatch(wipTransactionUpdated({ ...transaction, ...localEditingState }));
+            dispatch(wipTransactionUpdated({ ...transaction, ...formik.values }));
         }
-    }, [dispatch, transaction, localEditingState]);
-
-    const save = React.useCallback(() => {
-        if (transaction === undefined || localEditingState === undefined) {
-            return;
-        }
-
-        const updatedTransaction = { ...transaction, ...localEditingState };
-        const validationErrors = validateTransactionDetails(updatedTransaction);
-
-        if (Object.keys(validationErrors).length !== 0) {
-            setInputErrors(validationErrors);
-            return;
-        }
-
-        setProgress(true);
-        onUpdate();
-        dispatch(saveTransaction({ api, transactionId, groupId }))
-            .unwrap()
-            .then(({ transactionContainer }) => {
-                setProgress(false);
-                navigation.navigate("TransactionDetail", {
-                    transactionId: transactionContainer.transaction.id,
-                    groupId: groupId,
-                    editing: false,
-                });
-            })
-            .catch(() => {
-                setProgress(false);
-            });
-    }, [onUpdate, dispatch, navigation, transactionId, groupId, transaction, setInputErrors, localEditingState]);
+    }, [dispatch, transaction, formik]);
 
     const edit = React.useCallback(() => {
         navigation.navigate("TransactionDetail", {
@@ -174,15 +168,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                     });
                 } else {
                     if (transaction) {
-                        setLocalEditingState({
-                            description: transaction.description,
-                            value: transaction.value,
-                            billedAt: transaction.billedAt,
-                            currencySymbol: transaction.currencySymbol,
-                            currencyConversionRate: transaction.currencyConversionRate,
-                            creditorShares: transaction.creditorShares,
-                            debitorShares: transaction.debitorShares,
-                        });
+                        formik.resetForm();
                     }
                     navigation.replace("TransactionDetail", {
                         transactionId: transactionId,
@@ -191,12 +177,12 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                     });
                 }
             });
-    }, [dispatch, transaction, groupId, navigation, transactionId]);
+    }, [dispatch, transaction, groupId, navigation, transactionId, formik]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
             onGoBack: onGoBack,
-            headerTitle: localEditingState?.description ?? transaction?.description ?? "",
+            headerTitle: formik.values?.name ?? transaction?.name ?? "",
             headerRight: () => {
                 if (permissions === undefined || !permissions.canWrite) {
                     return null;
@@ -207,14 +193,20 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                             <Button onPress={cancelEdit} textColor={theme.colors.error}>
                                 Cancel
                             </Button>
-                            <Button onPress={save}>Save</Button>
+                            <Button onPress={() => formik.handleSubmit()}>Save</Button>
+                            <IconButton icon="delete" iconColor={theme.colors.error} onPress={openConfirmDeleteModal} />
                         </>
                     );
                 }
-                return <Button onPress={edit}>Edit</Button>;
+                return (
+                    <>
+                        <Button onPress={edit}>Edit</Button>
+                        <IconButton icon="delete" iconColor={theme.colors.error} onPress={openConfirmDeleteModal} />
+                    </>
+                );
             },
         });
-    }, [theme, editing, permissions, navigation, localEditingState, onGoBack, cancelEdit, save, edit, transaction]);
+    }, [theme, editing, permissions, navigation, formik, onGoBack, cancelEdit, edit, transaction, onDeleteTransaction]);
 
     const onCreatePosition = () => {
         dispatch(
@@ -222,8 +214,6 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 groupId,
                 transactionId,
                 position: {
-                    transactionID: transactionId,
-                    deleted: false,
                     name: "",
                     price: 0,
                     usages: {},
@@ -232,46 +222,8 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
             })
         );
     };
-    const onChangeDescription = (description: string) => {
-        setLocalEditingState((prevState) => ({ ...prevState, description }));
-    };
 
-    const onChangeValue = (value: number) => {
-        setLocalEditingState((prevState) => ({ ...prevState, value }));
-    };
-
-    const onChangedBilledAt = (billedAt: Date) => {
-        if (transaction) {
-            // TODO: validate
-            dispatch(
-                wipTransactionUpdated({ ...transaction, ...localEditingState, billedAt: toISODateString(billedAt) })
-            );
-        }
-    };
-
-    const onChangeCurrencySymbol = (currencySymbol: string) => {
-        setLocalEditingState((prevState) => ({ ...prevState, currencySymbol }));
-    };
-
-    const onChangeCurrencyConversionRate = (currencyConversionRate: number) => {
-        setLocalEditingState((prevState) => ({ ...prevState, currencyConversionRate }));
-    };
-
-    const onChangeCreditorShares = (creditorShares: TransactionShare) => {
-        if (transaction) {
-            // TODO: validate
-            dispatch(wipTransactionUpdated({ ...transaction, creditorShares }));
-        }
-    };
-
-    const onChangeDebitorSharesShares = (debitorShares: TransactionShare) => {
-        if (transaction) {
-            // TODO: validate
-            dispatch(wipTransactionUpdated({ ...transaction, debitorShares }));
-        }
-    };
-
-    if (transaction == null || localEditingState == null) {
+    if (transaction == null) {
         return (
             <View>
                 <ActivityIndicator animating={true} />
@@ -289,60 +241,143 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
 
     return (
         <ScrollView style={styles.container}>
-            {progress ? <ProgressBar indeterminate /> : null}
+            {formik.isSubmitting && <ProgressBar indeterminate />}
             <TextInput
-                label="Description"
-                value={localEditingState.description ?? transaction.description}
+                label="Name"
+                value={formik.values.name ?? ""}
                 editable={editing}
                 // disabled={!editing}
-                onChangeText={onChangeDescription}
+                onChangeText={(val) => formik.setFieldValue("name", val)}
                 onBlur={onUpdate}
                 style={inputStyles}
-                error={inputErrors.description !== undefined}
+                error={formik.touched.name && !!formik.errors.name}
             />
-            {inputErrors.description && <HelperText type="error">{inputErrors.description}</HelperText>}
+            {formik.touched.name && !!formik.errors.name && <HelperText type="error">{formik.errors.name}</HelperText>}
+            <TextInput
+                label="Description"
+                value={formik.values.description ?? ""}
+                editable={editing}
+                // disabled={!editing}
+                onChangeText={(val) => formik.setFieldValue("description", val)}
+                onBlur={onUpdate}
+                style={inputStyles}
+                error={formik.touched.description && !!formik.errors.description}
+            />
+            {formik.touched.description && !!formik.errors.description && (
+                <HelperText type="error">{formik.errors.description}</HelperText>
+            )}
             <DateTimeInput
                 label="Billed At"
-                value={fromISOString(localEditingState.billedAt ?? transaction.billedAt)}
+                value={fromISOStringNullable(formik.values.billedAt)}
                 editable={editing}
                 style={inputStyles}
-                onChange={onChangedBilledAt}
-                error={inputErrors.billedAt !== undefined}
+                onChange={(val) => {
+                    formik.setFieldValue("billedAt", toISODateString(val));
+                    onUpdate();
+                }}
+                error={formik.touched.billedAt && !!formik.errors.billedAt}
             />
-            {inputErrors.billedAt && <HelperText type="error">{inputErrors.billedAt}</HelperText>}
+            {formik.touched.billedAt && !!formik.errors.billedAt && (
+                <HelperText type="error">{formik.errors.billedAt}</HelperText>
+            )}
             <NumericInput
-                label="Value" // TODO: proper float input
-                value={localEditingState.value ?? transaction.value}
+                label="Value"
+                value={formik.values.value ?? 0}
                 editable={editing}
                 keyboardType="numeric"
-                onChange={onChangeValue}
+                onChange={(val) => formik.setFieldValue("value", val)}
                 onBlur={onUpdate}
                 style={inputStyles}
-                right={<TextInput.Affix text={transaction.currencySymbol} />}
-                error={inputErrors.value !== undefined}
+                right={<TextInput.Affix text={formik.values.currencySymbol} />}
+                error={formik.touched.value && !!formik.errors.value}
             />
-            {inputErrors.value && <HelperText type="error">{inputErrors.value}</HelperText>}
+            {formik.touched.value && !!formik.errors.value && (
+                <HelperText type="error">{formik.errors.value}</HelperText>
+            )}
+            {editing ? (
+                <>
+                    <TagSelect
+                        groupId={groupId}
+                        label="Tags"
+                        value={formik.values.tags ?? []}
+                        disabled={false}
+                        onChange={(val) => {
+                            formik.setFieldValue("tags", val);
+                            onUpdate();
+                        }}
+                    />
+                    {formik.touched.tags && !!formik.errors.tags && (
+                        <HelperText type="error">{formik.errors.tags}</HelperText>
+                    )}
+                </>
+            ) : (
+                <View
+                    style={{
+                        borderTopRightRadius: theme.roundness,
+                        borderTopLeftRadius: theme.roundness,
+                        backgroundColor: theme.colors.background,
+                        borderBottomColor: theme.colors.secondary,
+                        borderBottomWidth: 0.5,
+                        marginBottom: 4,
+                        padding: 10,
+                        minHeight: 55,
+                        paddingLeft: 16,
+                    }}
+                >
+                    <Text
+                        style={{
+                            color: theme.colors.primary,
+                            fontWeight: theme.fonts.labelSmall.fontWeight,
+                            fontSize: theme.fonts.labelSmall.fontSize,
+                        }}
+                    >
+                        Tags
+                    </Text>
+                    <View style={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
+                        {transaction.tags.map((tag) => (
+                            <Chip
+                                key={tag}
+                                mode="outlined"
+                                style={{
+                                    marginRight: 4,
+                                    backgroundColor: theme.colors.background,
+                                    borderColor: theme.colors.primary,
+                                }}
+                                compact={true}
+                            >
+                                {tag}
+                            </Chip>
+                        ))}
+                    </View>
+                </View>
+            )}
 
             <TransactionShareInput
                 title="Paid by"
                 groupId={groupId}
                 disabled={!editing}
-                value={localEditingState.creditorShares ?? transaction.creditorShares}
-                onChange={onChangeCreditorShares}
+                value={formik.values.creditorShares ?? {}}
+                onChange={(val) => formik.setFieldValue("creditorShares", val)}
                 enableAdvanced={false}
                 multiSelect={false}
+                error={formik.touched.creditorShares && !!formik.errors.creditorShares}
             />
-            {inputErrors.creditorShares && <HelperText type="error">{inputErrors.creditorShares}</HelperText>}
+            {formik.touched.creditorShares && !!formik.errors.creditorShares && (
+                <HelperText type="error">{formik.errors.creditorShares}</HelperText>
+            )}
             <TransactionShareInput
                 title="For"
                 disabled={!editing}
                 groupId={groupId}
-                value={localEditingState.debitorShares ?? transaction.debitorShares}
-                onChange={onChangeDebitorSharesShares}
+                value={formik.values.debitorShares ?? {}}
+                onChange={(val) => formik.setFieldValue("debitorShares", val)}
                 enableAdvanced={transaction.type === "purchase"}
                 multiSelect={transaction.type === "purchase"}
+                error={formik.touched.debitorShares && !!formik.errors.debitorShares}
             />
-            {inputErrors.debitorShares && <HelperText type="error">{inputErrors.debitorShares}</HelperText>}
+            {formik.touched.debitorShares && !!formik.errors.debitorShares && (
+                <HelperText type="error">{formik.errors.debitorShares}</HelperText>
+            )}
 
             {positions.length > 0 && (
                 <Surface style={{ marginTop: 8 }} elevation={1}>
@@ -371,7 +406,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                             title="Remaining"
                             right={(props) => (
                                 <Text>
-                                    {((localEditingState.value ?? transaction.value) - positionTotal).toFixed(2)}{" "}
+                                    {((formik.values?.value ?? 0) - positionTotal).toFixed(2)}{" "}
                                     {transaction.currencySymbol}
                                 </Text>
                             )}
@@ -384,6 +419,19 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                     Add Position
                 </Button>
             )}
+            <Portal>
+                <Dialog visible={confirmDeleteModalOpen} onDismiss={closeConfirmDeleteModal}>
+                    <Dialog.Content>
+                        <Text>Do you really want to delete this transaction?</Text>
+                    </Dialog.Content>
+                    <Dialog.Actions>
+                        <Button onPress={closeConfirmDeleteModal}>No</Button>
+                        <Button onPress={onDeleteTransaction} textColor={theme.colors.error}>
+                            Yes
+                        </Button>
+                    </Dialog.Actions>
+                </Dialog>
+            </Portal>
         </ScrollView>
     );
 };

@@ -1,15 +1,17 @@
-import React from "react";
-import TransactionCreditorShare from "../TransactionCreditorShare";
-import TransactionDescription from "../TransactionDescription";
-import TransactionBilledAt from "../TransactionBilledAt";
-import TransactionValue from "../TransactionValue";
-import TransactionDebitorShare from "../TransactionDebitorShare";
-import TransactionActions from "../TransactionActions";
+import { selectTransactionAttachments, selectTransactionById } from "@abrechnung/redux";
 import { Divider, Grid } from "@mui/material";
-import FileGallery from "../FileGallery";
+import React from "react";
+import { selectTransactionSlice, useAppSelector } from "../../../store";
 import { MobilePaper } from "../../style/mobile";
-import { useAppSelector, selectTransactionSlice } from "../../../store";
-import { selectTransactionById, selectTransactionAttachments } from "@abrechnung/redux";
+import FileGallery from "../FileGallery";
+import TransactionActions from "../TransactionActions";
+import TransactionBilledAt from "../TransactionBilledAt";
+import TransactionCreditorShare from "../TransactionCreditorShare";
+import TransactionDebitorShare from "../TransactionDebitorShare";
+import TransactionDescription from "../TransactionDescription";
+import { TransactionTags } from "../TransactionTags";
+import TransactionName from "../TransactionName";
+import TransactionValue from "../TransactionValue";
 
 interface Props {
     groupId: number;
@@ -30,9 +32,11 @@ export const TransferDetails: React.FC<Props> = ({ groupId, transactionId }) => 
             <Divider sx={{ marginBottom: 1, marginTop: 1 }} />
             <Grid container>
                 <Grid item xs={transaction.isWip || attachments.length > 0 ? 6 : 12}>
+                    <TransactionName transactionId={transactionId} groupId={groupId} />
                     <TransactionDescription transactionId={transactionId} groupId={groupId} />
                     <TransactionValue transactionId={transactionId} groupId={groupId} />
                     <TransactionBilledAt transactionId={transactionId} groupId={groupId} />
+                    <TransactionTags groupId={groupId} transactionId={transactionId} />
 
                     <TransactionCreditorShare
                         groupId={groupId}

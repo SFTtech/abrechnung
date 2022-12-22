@@ -3,7 +3,7 @@ import { GroupInfo, GroupSliceState, IRootState, StateStatus } from "../types";
 import { Group, GroupMember, GroupInvite, GroupLogEntry, GroupBase, GroupPermissions } from "@abrechnung/types";
 import { Api } from "@abrechnung/api";
 import memoize from "proxy-memoize";
-import { getGroupScopedState, removeEntity } from "../utils";
+import { addEntity, getGroupScopedState, removeEntity } from "../utils";
 import { leaveGroup } from "./actions";
 import { lambdaComparator } from "@abrechnung/utils";
 
@@ -163,7 +163,7 @@ export const selectGroupLogStatus = memoize(
 );
 
 // async thunks
-export const fetchGroups = createAsyncThunk<Group[], { api: Api }, { state: IRootState }>(
+export const fetchGroups = createAsyncThunk<Group[], { api: Api }>(
     "fetchGroups",
     async ({ api }) => {
         return await api.fetchGroups();
@@ -183,6 +183,13 @@ export const fetchGroup = createAsyncThunk<Group, { groupId: number; api: Api },
     "fetchGroup",
     async ({ groupId, api }) => {
         return await api.fetchGroup(groupId);
+    }
+);
+
+export const createGroup = createAsyncThunk<Group, { group: Omit<GroupBase, "id">; api: Api }>(
+    "createGroup",
+    async ({ group, api }) => {
+        return await api.createGroup(group);
     }
 );
 
@@ -277,10 +284,6 @@ const groupSlice = createSlice({
     initialState,
     reducers: {},
     extraReducers: (builder) => {
-        builder.addCase(fetchGroups.rejected, (state, action) => {
-            // TODO: how to handle this failure case
-            state.status = "failed";
-        });
         builder.addCase(fetchGroups.fulfilled, (state, action) => {
             console.log("fetched groups");
             const groups = action.payload;
@@ -316,10 +319,6 @@ const groupSlice = createSlice({
 
             state.byGroupId[groupId].groupMembersStatus = "initialized";
         });
-        builder.addCase(fetchGroupMembers.rejected, (state, action) => {
-            const { groupId } = action.meta.arg;
-            state.byGroupId[groupId].groupMembersStatus = "failed";
-        });
         builder.addCase(fetchGroupInvites.fulfilled, (state, action) => {
             const { groupId } = action.meta.arg;
             const invites = action.payload;
@@ -333,10 +332,6 @@ const groupSlice = createSlice({
 
             state.byGroupId[groupId].groupInvitesStatus = "initialized";
         });
-        builder.addCase(fetchGroupInvites.rejected, (state, action) => {
-            const { groupId } = action.meta.arg;
-            state.byGroupId[groupId].groupInvitesStatus = "failed";
-        });
         builder.addCase(fetchGroupLog.fulfilled, (state, action) => {
             const { groupId } = action.meta.arg;
             const logs = action.payload;
@@ -349,10 +344,6 @@ const groupSlice = createSlice({
             state.byGroupId[groupId].groupLog.ids = logIds;
 
             state.byGroupId[groupId].groupLogStatus = "initialized";
-        });
-        builder.addCase(fetchGroupLog.rejected, (state, action) => {
-            const { groupId } = action.meta.arg;
-            state.byGroupId[groupId].groupLogStatus = "failed";
         });
         builder.addCase(updateGroup.fulfilled, (state, action) => {
             const group = action.payload;
@@ -379,6 +370,10 @@ const groupSlice = createSlice({
                 return;
             }
             removeEntity(state.byGroupId[groupId].groupInvites, inviteId);
+        });
+        builder.addCase(createGroup.fulfilled, (state, action) => {
+            const group = action.payload;
+            addEntity(state.groups, group);
         });
     },
 });

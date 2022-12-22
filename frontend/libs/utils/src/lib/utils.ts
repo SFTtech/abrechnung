@@ -24,8 +24,8 @@ export function fromISOString(date: string): Date {
     return new Date(parsedDate);
 }
 
-export function fromISOStringNullable(date: string | null): Date | null {
-    if (date === null) {
+export function fromISOStringNullable(date: string | null | undefined): Date | null {
+    if (date == null) {
         return null;
     }
     const parsedDate = Date.parse(date);

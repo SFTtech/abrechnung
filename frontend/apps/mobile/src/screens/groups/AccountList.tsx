@@ -1,5 +1,5 @@
-import { RefreshControl, ScrollView, StyleSheet } from "react-native";
-import { Appbar, FAB, List, Menu, Portal, RadioButton, Text, TextInput, useTheme } from "react-native-paper";
+import { FlatList, StyleSheet, View } from "react-native";
+import { Appbar, FAB, List, Menu, Portal, RadioButton, Text, useTheme, TextInput } from "react-native-paper";
 import { useIsFocused } from "@react-navigation/native";
 import { getAccountIcon } from "../../constants/Icons";
 import { Account, AccountBalance, AccountType } from "@abrechnung/types";
@@ -7,6 +7,7 @@ import * as React from "react";
 import { useLayoutEffect, useState } from "react";
 import LoadingIndicator from "../../components/LoadingIndicator";
 import { successColor } from "../../theme";
+import Searchbar from "../../components/style/Searchbar";
 import { MaterialIcons } from "@expo/vector-icons";
 import { GroupTabScreenProps } from "../../navigation/types";
 import {
@@ -79,6 +80,7 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
     useLayoutEffect(() => {
         if (!isFocused) {
             closeSearch();
+            setMenuOpen(false);
             return;
         }
 
@@ -88,16 +90,13 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
             headerRight: () => {
                 if (showSearchInput) {
                     return (
-                        <>
-                            <TextInput
-                                mode="outlined"
-                                dense={true}
-                                autoFocus={true}
-                                style={{ flexGrow: 1 }}
-                                onChangeText={(val) => setSearch(val)}
-                            />
-                            <Appbar.Action icon="close" onPress={closeSearch} />
-                        </>
+                        <Searchbar
+                            placeholder="Search"
+                            clearButtonMode="always"
+                            onClearIconPress={closeSearch}
+                            onChangeText={(val) => setSearch(val)}
+                            autoFocus={true}
+                        />
                     );
                 }
                 return (
@@ -124,21 +123,13 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
                 );
             },
         });
-    }, [isFocused, showSearchInput, isMenuOpen, setMenuOpen, sortMode, theme, navigation, accountType]);
+    }, [isFocused, showSearchInput, isMenuOpen, setMenuOpen, sortMode, theme, navigation, accountType, search]);
 
     const createNewAccount = () => {
         dispatch(
             createAccount({
-                account: {
-                    type: accountType,
-                    name: "",
-                    description: "",
-                    owningUserID: null,
-                    clearingShares: {},
-                    groupID: groupId,
-                },
-                keepWip: true,
-                api,
+                groupId: groupId,
+                type: accountType,
             })
         )
             .unwrap()
@@ -150,7 +141,7 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
             });
     };
 
-    const renderItem = (account: Account) => {
+    const renderItem = ({ item: account }: { item: Account }) => {
         const balance: AccountBalance | undefined = accountBalances[account.id];
         if (balance === undefined) {
             return null;
@@ -160,7 +151,16 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
             <List.Item
                 key={account.id}
                 title={account.name}
-                description={account.description}
+                description={(props) =>
+                    account.type === "personal" ? (
+                        account.description && <Text>{account.description}</Text>
+                    ) : (
+                        <>
+                            {account.description && <Text>{account.description}</Text>}
+                            <Text>{account.dateInfo}</Text>
+                        </>
+                    )
+                }
                 left={(props) => <List.Icon {...props} icon={getAccountIcon(account.type)} />}
                 right={(props) => (
                     <>
@@ -187,18 +187,29 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
         );
     };
 
+    if (accountStatus === "loading") {
+        return (
+            <View style={styles.container}>
+                <LoadingIndicator />
+            </View>
+        );
+    }
+
     return (
-        <ScrollView
+        <FlatList
             style={styles.container}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        >
-            {accountStatus === "loading" ? <LoadingIndicator /> : accounts.map((item) => renderItem(item))}
-            {permissions?.canWrite ? (
-                <Portal>
-                    <FAB style={styles.fab} visible={isFocused} icon="add" onPress={createNewAccount} />
-                </Portal>
-            ) : null}
-        </ScrollView>
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            data={accounts}
+            renderItem={renderItem}
+            ListFooterComponent={
+                permissions?.canWrite ? (
+                    <Portal>
+                        <FAB style={styles.fab} visible={isFocused} icon="add" onPress={createNewAccount} />
+                    </Portal>
+                ) : null
+            }
+        />
     );
 };
 
@@ -214,7 +225,7 @@ const styles = StyleSheet.create({
         position: "absolute",
         margin: 16,
         right: 0,
-        bottom: 48,
+        bottom: 52,
     },
 });
 

@@ -1,8 +1,9 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import memoize from "proxy-memoize";
 import { Api } from "@abrechnung/api";
+import { fetchGroupDependencies } from "@abrechnung/redux";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import memoize from "proxy-memoize";
+import { notify } from "../notifications";
 import { RootState } from "./store";
-import { fetchAccounts, fetchGroupMembers, fetchTransactions } from "@abrechnung/redux";
 
 export interface UiSliceState {
     activeGroupId: number | undefined;
@@ -30,31 +31,17 @@ export const changeActiveGroup = createAsyncThunk<
         state.transactions.byGroupId[groupId] === undefined ||
         state.groups.byGroupId[groupId] === undefined;
 
-    if (await api.hasConnection()) {
-        await Promise.all([
-            dispatch(fetchAccounts({ groupId, api })),
-            dispatch(fetchTransactions({ groupId, api })),
-            dispatch(fetchGroupMembers({ groupId, api })),
-        ]);
-    } else if (needsToFetch) {
-        throw new Error("no connection");
+    try {
+        await dispatch(fetchGroupDependencies({ groupId, api, fetchAnyway: true })).unwrap();
+    } catch {
+        if (needsToFetch) {
+            notify({ text: "Error changing active group. Could not fetch group content." });
+            throw new Error("no connection");
+        }
     }
 
     return { groupId };
 });
-
-export const fetchGroupDependencies = createAsyncThunk<void, { groupId: number; api: Api }, { state: RootState }>(
-    "fetchGroupDependencies",
-    async ({ groupId, api }, { dispatch }) => {
-        if (await api.hasConnection()) {
-            await Promise.all([
-                dispatch(fetchAccounts({ groupId, api })),
-                dispatch(fetchTransactions({ groupId, api })),
-                dispatch(fetchGroupMembers({ groupId, api })),
-            ]);
-        }
-    }
-);
 
 const uiSlice = createSlice({
     name: "ui",

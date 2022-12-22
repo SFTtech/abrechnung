@@ -1,7 +1,7 @@
 import { Transaction, TransactionBalanceEffect, TransactionPosition } from "@abrechnung/types";
 import { fromISOString } from "@abrechnung/utils";
 
-export type TransactionSortMode = "lastChanged" | "value" | "description" | "billedAt";
+export type TransactionSortMode = "lastChanged" | "value" | "name" | "description" | "billedAt";
 
 export const transactionCompareFn = (t1: Transaction, t2: Transaction) => {
     if (t1.isWip && !t2.isWip) {
@@ -22,7 +22,9 @@ export const getTransactionSortFunc = (sortMode: TransactionSortMode) => {
             return (t1: Transaction, t2: Transaction) => +t2.isWip - +t1.isWip || t2.value - t1.value;
         case "description":
             return (t1: Transaction, t2: Transaction) =>
-                +t2.isWip - +t1.isWip || t1.description.localeCompare(t2.description);
+                +t2.isWip - +t1.isWip || (t1.description || "").localeCompare(t2.description || "");
+        case "name":
+            return (t1: Transaction, t2: Transaction) => +t2.isWip - +t1.isWip || t1.name.localeCompare(t2.name);
         case "billedAt":
             return (t1: Transaction, t2: Transaction) =>
                 +t2.isWip - +t1.isWip || t2.billedAt.localeCompare(t1.billedAt); // TODO: is this the correct order for billed at comparison

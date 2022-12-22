@@ -1,6 +1,7 @@
 import React from "react";
 import { useEffect, useState } from "react";
 import { TextField } from "@mui/material";
+import { parseAbrechnungFloat } from "@abrechnung/utils";
 
 interface Props {
     value: number;
@@ -18,7 +19,7 @@ export const ShareInput: React.FC<Props> = ({ value, onChange }) => {
 
     const onSave = () => {
         if (!error) {
-            onChange(parseFloat(currValue));
+            onChange(parseAbrechnungFloat(currValue));
         }
     };
 
@@ -29,7 +30,7 @@ export const ShareInput: React.FC<Props> = ({ value, onChange }) => {
     };
 
     const validate = (value) => {
-        return !(value === null || value === undefined || value === "" || isNaN(parseFloat(value)));
+        return !(value === null || value === undefined || value === "" || isNaN(parseAbrechnungFloat(value)));
     };
 
     const onKeyUp = (key) => {

@@ -36,6 +36,7 @@ export const TransactionDebitorShare: React.FC<Props> = ({ groupId, transactionI
 
     return (
         <AccountSelect
+            margin="normal"
             groupId={groupId}
             noDisabledStyling={true}
             value={shareAccountID === null ? null : getAccount(shareAccountID)}

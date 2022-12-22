@@ -46,10 +46,10 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transact
                 primary={
                     <>
                         {transaction.isWip && (
-                            <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 3 }} />
+                            <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 1 }} />
                         )}
                         <Typography variant="body1" component="span">
-                            {transaction.description}
+                            {transaction.name}
                         </Typography>
                     </>
                 }

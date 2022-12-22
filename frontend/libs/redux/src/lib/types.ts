@@ -143,10 +143,28 @@ export interface TransactionState {
 export type TransactionSliceState = AbrechnungInstanceAwareState &
     GroupScopedState<TransactionState> & { nextLocalTransactionId: number; nextLocalPositionId: number };
 
-export interface IRootState {
-    auth: AuthSliceState;
-    accounts: AccountSliceState;
+export interface ITransactionRootState {
     transactions: TransactionSliceState;
+}
+
+export interface IAccountRootState {
+    accounts: AccountSliceState;
+}
+
+export interface IAuthRootState {
+    auth: AuthSliceState;
+}
+
+export interface IGroupRootState {
     groups: GroupSliceState;
+}
+
+export interface ISubscriptionRootState {
     subscriptions: SubscriptionSliceState;
 }
+
+export type IRootState = ITransactionRootState &
+    IAccountRootState &
+    IAuthRootState &
+    IGroupRootState &
+    ISubscriptionRootState;

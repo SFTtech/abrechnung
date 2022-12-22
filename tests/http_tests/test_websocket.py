@@ -137,7 +137,9 @@ class WebsocketAPITest(BaseHTTPAPITest):
             currency_symbol="€",
             currency_conversion_rate=1.0,
             billed_at=date.today(),
+            name="asdf",
             description="asdf",
+            tags=[],
         )
 
         await self.expect_ws_message(

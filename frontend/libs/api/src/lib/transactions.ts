@@ -13,9 +13,9 @@ export interface BackendTransactionDetails {
     value: number;
     debitor_shares: TransactionShare;
     creditor_shares: TransactionShare;
+    name: string;
     description: string;
-    revision_committed_at: string;
-    revision_started_at: string;
+    tags: string[];
     deleted: boolean;
 }
 
@@ -87,7 +87,9 @@ export const backendTransactionToTransaction = (transaction: BackendTransaction)
             currencyConversionRate: details.currency_conversion_rate,
             debitorShares: details.debitor_shares,
             creditorShares: details.creditor_shares,
+            name: details.name,
             description: details.description,
+            tags: details.tags,
         };
     };
 

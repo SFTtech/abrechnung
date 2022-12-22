@@ -1,12 +1,11 @@
 import { Button, Checkbox, Dialog, List, Searchbar } from "react-native-paper";
 import * as React from "react";
 import { useEffect, useState } from "react";
-import { createComparator, lambdaComparator } from "@abrechnung/utils";
 import { getAccountIcon } from "../../constants/Icons";
 import { ScrollView } from "react-native";
-import { Account, TransactionShare } from "@abrechnung/types";
+import { TransactionShare } from "@abrechnung/types";
 import { useAppSelector, selectAccountSlice } from "../../store";
-import { selectGroupAccounts, selectSortedAccounts } from "@abrechnung/redux";
+import { selectSortedAccounts } from "@abrechnung/redux";
 import { KeyboardAvoidingDialog } from "../style/KeyboardAvoidingDialog";
 
 interface Props {
@@ -71,7 +70,9 @@ export const TransactionShareDialog: React.FC<Props> = ({
     }, [value, setShares]);
 
     const finishDialog = () => {
-        onChange(shares);
+        if (!disabled) {
+            onChange(shares);
+        }
         onHideDialog();
     };
 
@@ -79,9 +80,11 @@ export const TransactionShareDialog: React.FC<Props> = ({
         <KeyboardAvoidingDialog visible={showDialog} onDismiss={finishDialog}>
             <Dialog.Title>{title}</Dialog.Title>
 
-            <Dialog.Content>
-                <Searchbar placeholder="Search" onChangeText={setSearchTerm} value={searchTerm} />
-            </Dialog.Content>
+            {accounts.length > 5 && (
+                <Dialog.Content>
+                    <Searchbar placeholder="Search" onChangeText={setSearchTerm} value={searchTerm} />
+                </Dialog.Content>
+            )}
 
             <Dialog.ScrollArea>
                 <ScrollView>

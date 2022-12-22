@@ -1,4 +1,7 @@
+import { Api } from "@abrechnung/api";
+import { computeAccountBalancesForTransaction, getTransactionSortFunc, TransactionSortMode } from "@abrechnung/core";
 import {
+    Purchase,
     Transaction,
     TransactionAttachment,
     TransactionBalanceEffect,
@@ -6,17 +9,21 @@ import {
     TransactionContainer,
     TransactionPosition,
 } from "@abrechnung/types";
-import { Api } from "@abrechnung/api";
-import { createSlice, Draft, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { getGroupScopedState, addEntity, removeEntity, EntityState } from "../utils";
-import { IRootState, StateStatus, ENABLE_OFFLINE_MODE, TransactionSliceState, TransactionState } from "../types";
-import memoize from "proxy-memoize";
-import { computeAccountBalancesForTransaction } from "@abrechnung/core";
-import { getTransactionSortFunc, TransactionSortMode } from "@abrechnung/core";
 import { toISODateString } from "@abrechnung/utils";
+import { createAsyncThunk, createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
+import memoize from "proxy-memoize";
 import { leaveGroup } from "../groups";
+import {
+    ENABLE_OFFLINE_MODE,
+    IRootState,
+    ITransactionRootState,
+    StateStatus,
+    TransactionSliceState,
+    TransactionState,
+} from "../types";
+import { addEntity, EntityState, getGroupScopedState, removeEntity } from "../utils";
 
-const initializeGroupState = (state: Draft<TransactionSliceState>, groupId: number) => {
+export const initializeGroupState = (state: Draft<TransactionSliceState>, groupId: number) => {
     if (state.byGroupId[groupId]) {
         return;
     }
@@ -65,10 +72,11 @@ export const selectGroupTransactionsStatus = memoize(
 );
 
 const selectGroupTransactionIdsInternal = (args: { state: TransactionSliceState; groupId: number }): number[] => {
+    const t = performance.now();
     const { state, groupId } = args;
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
     // TODO: merge wip changes here
-    return s.transactions.ids
+    const res = s.transactions.ids
         .concat(...s.pendingTransactions.ids.filter((id) => id < 0))
         .concat(...s.wipTransactions.ids.filter((id) => id < 0 && s.pendingTransactions.ids[id] === undefined))
         .filter(
@@ -79,22 +87,27 @@ const selectGroupTransactionIdsInternal = (args: { state: TransactionSliceState;
                     s.transactions.byId[id]?.deleted
                 )
         );
+    console.log("selectGroupTransactionIdsInternal took " + (performance.now() - t) + " milliseconds.");
+    return res;
 };
 
-export const selectGroupTransactionIds = memoize(selectGroupTransactionIdsInternal);
+export const selectGroupTransactionIds = memoize(selectGroupTransactionIdsInternal, { size: 5 });
 
 export const selectGroupTransactionsInternal = (args: {
     state: TransactionSliceState;
     groupId: number;
 }): Transaction[] => {
+    const t = performance.now();
     const { state, groupId } = args;
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
     const transactionIds = selectGroupTransactionIdsInternal({ state, groupId });
-    return transactionIds.map(
+    const res = transactionIds.map(
         (id) => s.wipTransactions.byId[id] ?? s.pendingTransactions.byId[id] ?? s.transactions.byId[id]
     );
+    console.log("selectGroupTransactionsInternal took " + (performance.now() - t) + " milliseconds.");
+    return res;
 };
-export const selectGroupTransactions = memoize(selectGroupTransactionsInternal);
+export const selectGroupTransactions = memoize(selectGroupTransactionsInternal, { size: 5 });
 
 export const selectTransactionByIdMap = memoize(
     (args: { state: TransactionSliceState; groupId: number }): { [k: number]: Transaction } => {
@@ -105,27 +118,6 @@ export const selectTransactionByIdMap = memoize(
             map[id] = s.wipTransactions.byId[id] ?? s.pendingTransactions.byId[id] ?? s.transactions.byId[id];
             return map;
         }, {});
-    }
-);
-
-export const selectSortedTransactions = memoize(
-    (args: {
-        state: TransactionSliceState;
-        groupId: number;
-        sortMode: TransactionSortMode;
-        searchTerm?: string;
-    }): Transaction[] => {
-        const { state, groupId, sortMode, searchTerm } = args;
-        const transactions = selectGroupTransactionsInternal({ state, groupId });
-        const compareFunction = getTransactionSortFunc(sortMode);
-        // TODO: this has optimization potential
-        if (searchTerm) {
-            return transactions
-                .filter((t) => searchTerm === "" || t.description.toLowerCase().includes(searchTerm.toLowerCase()))
-                .sort(compareFunction);
-        } else {
-            return transactions.sort(compareFunction);
-        }
     }
 );
 
@@ -146,7 +138,7 @@ const selectGroupPositionIdsInternal = (args: { state: TransactionSliceState; gr
         );
 };
 
-export const selectGroupPositionIds = memoize(selectGroupPositionIdsInternal);
+export const selectGroupPositionIds = memoize(selectGroupPositionIdsInternal, { size: 5 });
 
 export const selectGroupPositionsInternal = (args: {
     state: TransactionSliceState;
@@ -158,7 +150,7 @@ export const selectGroupPositionsInternal = (args: {
     return positionIds.map((id) => s.wipPositions.byId[id] ?? s.pendingPositions.byId[id] ?? s.positions.byId[id]);
 };
 
-export const selectGroupPositions = memoize(selectGroupPositionsInternal);
+export const selectGroupPositions = memoize(selectGroupPositionsInternal, { size: 5 });
 
 const selectTransactionByIdInternal = (args: {
     state: TransactionSliceState;
@@ -167,19 +159,7 @@ const selectTransactionByIdInternal = (args: {
 }): Transaction | undefined => {
     const { state, groupId, transactionId } = args;
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-    const transaction = getTransactionWithWip(s, transactionId);
-    // if (transaction === undefined) {
-    //     console.warn(
-    //         "transaction is undefined in state: groupId",
-    //         groupId,
-    //         "transactionId",
-    //         transactionId,
-    //         "state",
-    //         s
-    //     );
-    // }
-
-    return transaction;
+    return getTransactionWithWip(s, transactionId);
 };
 
 export const selectTransactionById = memoize(selectTransactionByIdInternal);
@@ -239,10 +219,20 @@ const selectTransactionPositionIdsInternal = (args: {
 }): number[] => {
     const { state, groupId, transactionId } = args;
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+    const wipTransaction = s.wipTransactions.byId[transactionId];
+    const pendingTransaction = s.pendingTransactions.byId[transactionId];
+    const transaction = s.transactions.byId[transactionId];
+    if (
+        (wipTransaction !== undefined && wipTransaction.type !== "purchase") ||
+        (pendingTransaction !== undefined && pendingTransaction.type !== "purchase") ||
+        (transaction !== undefined && transaction.type !== "purchase")
+    ) {
+        return [];
+    }
     const positionIds = new Set<number>([
-        ...(s.wipTransactions.byId[transactionId]?.positions ?? []),
-        ...(s.transactions.byId[transactionId]?.positions ?? []),
-        ...(s.pendingTransactions.byId[transactionId]?.positions ?? []),
+        ...((wipTransaction as Purchase | undefined)?.positions ?? []), // TODO: FIXME apparently the compiler is not smart enough to get this
+        ...((pendingTransaction as Purchase | undefined)?.positions ?? []),
+        ...((transaction as Purchase | undefined)?.positions ?? []),
     ]);
     return Array.from(positionIds);
 };
@@ -263,7 +253,7 @@ const selectTransactionPositionsInternal = (args: {
             }
             return pos;
         })
-        .filter((p) => !p.deleted);
+        .filter((p) => p && !p.deleted);
 };
 
 export const selectTransactionPositions = memoize(selectTransactionPositionsInternal);
@@ -325,15 +315,18 @@ export const selectTransactionBalanceEffectsInternal = (args: {
     state: TransactionSliceState;
     groupId: number;
 }): { [k: number]: TransactionBalanceEffect } => {
+    const s = performance.now();
     const { state, groupId } = args;
     const transactionIds = selectGroupTransactionIdsInternal(args);
-    return transactionIds.reduce<{ [k: number]: TransactionBalanceEffect }>((map, transactionId) => {
+    const res = transactionIds.reduce<{ [k: number]: TransactionBalanceEffect }>((map, transactionId) => {
         const balanceEffect = selectTransactionBalanceEffectInternal({ state, groupId, transactionId });
         if (balanceEffect) {
             map[transactionId] = balanceEffect;
         }
         return map;
     }, {});
+    console.log("selectTransactionBalanceEffectsInternal took " + (performance.now() - s) + " milliseconds.");
+    return res;
 };
 
 export const selectTransactionBalanceEffects = memoize(selectTransactionBalanceEffectsInternal);
@@ -440,17 +433,19 @@ export const createTransfer = createAsyncThunk<
         isSynced: isSynced,
     };
 });
+
 export const createPurchase = createAsyncThunk<
     { transaction: Transaction },
     { groupId: number },
-    { state: IRootState }
+    { state: ITransactionRootState }
 >("createPurchase", async ({ groupId }, { getState, dispatch }) => {
     const state = getState();
     const transactionId = state.transactions.nextLocalTransactionId;
-    const transaction: Transaction = {
+    const transaction: Purchase = {
         id: transactionId,
         groupID: groupId,
         type: "purchase",
+        name: "",
         description: "",
         value: 0,
         currencyConversionRate: 1.0,
@@ -458,6 +453,7 @@ export const createPurchase = createAsyncThunk<
         billedAt: toISODateString(new Date()),
         creditorShares: {},
         debitorShares: {},
+        tags: [],
         deleted: false,
         positions: [],
         attachments: [],
@@ -491,10 +487,12 @@ export const saveTransaction = createAsyncThunk<
     }
 
     // TODO: include pendingPositionChanges for offline mode
-    const wipPositionIds = wipTransaction.positions.filter(
-        (positionId) => s.wipPositions.byId[positionId] !== undefined
-    );
-    const wipPositions = wipPositionIds.map((positionId) => s.wipPositions.byId[positionId]);
+    let wipPositionIds: number[] = [];
+    let wipPositions: TransactionPosition[] = [];
+    if (wipTransaction.type === "purchase") {
+        wipPositionIds = wipTransaction.positions.filter((positionId) => s.wipPositions.byId[positionId] !== undefined);
+        wipPositions = wipPositionIds.map((positionId) => s.wipPositions.byId[positionId]);
+    }
 
     let updatedTransactionContainer: TransactionContainer;
     let isSynced: boolean;
@@ -530,7 +528,7 @@ export const discardTransactionChange = createAsyncThunk<
     { transaction: TransactionContainer | undefined; deletedTransaction: boolean },
     { groupId: number; transactionId: number; api: Api },
     { state: IRootState }
->("discardTransactionChange", async ({ groupId, transactionId, api }, { getState, dispatch, rejectWithValue }) => {
+>("discardTransactionChange", async ({ groupId, transactionId, api }, { getState, rejectWithValue }) => {
     const state = getState();
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state.transactions, groupId);
     const wipTransaction = s.wipTransactions.byId[transactionId];
@@ -619,10 +617,15 @@ const getTransactionWithWip = (state: TransactionState, transactionId: number): 
     );
 };
 
-const moveTransactionToWip = (s: TransactionState, transactionId: number) => {
+const moveTransactionToWip = (s: Draft<TransactionState>, transactionId: number) => {
     if (s.wipTransactions.byId[transactionId] === undefined) {
         const transaction = s.pendingTransactions.byId[transactionId] ?? s.transactions.byId[transactionId];
-        s.wipTransactions.byId[transactionId] = { ...transaction, hasLocalChanges: true, isWip: true };
+        s.wipTransactions.byId[transactionId] = {
+            ...transaction,
+            hasLocalChanges: true,
+            isWip: true,
+            lastChanged: new Date().toISOString(),
+        };
         s.wipTransactions.ids.push(transactionId);
     }
 };
@@ -641,8 +644,9 @@ const updateTransactionLastChanged = (s: Draft<TransactionState>, transactionId:
 
 const addPositionToWipTransaction = (s: Draft<TransactionState>, transactionId: number, positionId: number) => {
     moveTransactionToWip(s, transactionId);
-    if (!s.wipTransactions.byId[transactionId].positions.includes(positionId)) {
-        s.wipTransactions.byId[transactionId].positions.push(positionId);
+    const transaction = s.wipTransactions.byId[transactionId];
+    if (transaction && transaction.type === "purchase" && !transaction.positions.includes(positionId)) {
+        transaction.positions.push(positionId);
     }
 };
 
@@ -689,16 +693,20 @@ const transactionSlice = createSlice({
         },
         wipPositionAdded: (
             state,
-            action: PayloadAction<{ groupId: number; transactionId: number; position: Omit<TransactionPosition, "id"> }>
+            action: PayloadAction<{
+                groupId: number;
+                transactionId: number;
+                position: Omit<TransactionPosition, "id" | "transactionID" | "deleted">;
+            }>
         ) => {
             const { groupId, transactionId, position } = action.payload;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
             const positionId = state.nextLocalPositionId;
-            addEntity(s.wipPositions, { ...position, id: positionId });
+            addEntity(s.wipPositions, { ...position, id: positionId, transactionID: transactionId, deleted: false });
 
             state.nextLocalPositionId = positionId - 1;
             updateTransactionLastChanged(s, transactionId); // this makes sure the transaction exists as wip
-            s.wipTransactions.byId[transactionId].positions.push(positionId);
+            (s.wipTransactions.byId[transactionId] as Purchase).positions.push(positionId); // TODO: FIXME: remove typing hack
         },
         wipPositionUpdated: (
             state,
@@ -723,9 +731,10 @@ const transactionSlice = createSlice({
             if (s.pendingPositions.byId[positionId] === undefined && s.positions.byId[positionId] === undefined) {
                 removeEntity(s.wipPositions, positionId);
                 moveTransactionToWip(s, transactionId);
-                s.wipTransactions.byId[transactionId].positions = s.wipTransactions.byId[
-                    transactionId
-                ].positions.filter((id) => id !== positionId);
+                const transaction = s.wipTransactions.byId[transactionId];
+                if (transaction.type === "purchase") {
+                    transaction.positions = transaction.positions.filter((id) => id !== positionId);
+                }
             } else {
                 const position = s.pendingPositions.byId[positionId] ?? s.positions.byId[positionId];
                 addEntity(s.wipPositions, { ...position, deleted: true });

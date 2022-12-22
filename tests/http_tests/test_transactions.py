@@ -36,9 +36,11 @@ class TransactionAPITest(HTTPAPITest):
         self,
         transaction_id: int,
         value: float,
+        name: str,
         description: str,
         billed_at: date,
         currency_symbol: str,
+        tags: list[str],
         currency_conversion_rate: float,
         creditor_shares: dict[int, float],
         debitor_shares: dict[int, float],
@@ -47,10 +49,12 @@ class TransactionAPITest(HTTPAPITest):
     ) -> dict:
         payload = {
             "value": value,
+            "name": name,
             "description": description,
             "currency_symbol": currency_symbol,
             "currency_conversion_rate": currency_conversion_rate,
             "billed_at": billed_at.isoformat(),
+            "tags": tags,
             "creditor_shares": creditor_shares,
             "debitor_shares": debitor_shares,
         }
@@ -97,9 +101,11 @@ class TransactionAPITest(HTTPAPITest):
         resp = await self._post(
             f"/api/v1/groups/{group_id}/transactions",
             json={
+                "name": "name",
                 "description": "description",
                 "type": "purchase",
                 "currency_symbol": "€",
+                "tags": [],
                 "value": 123.22,
                 "billed_at": date.today().isoformat(),
                 "currency_conversion_rate": 1.33,
@@ -122,8 +128,10 @@ class TransactionAPITest(HTTPAPITest):
             user=self.test_user,
             group_id=group_id,
             type="purchase",
+            name="name123",
             description="description123",
             currency_symbol="€",
+            tags=[],
             billed_at=date.today(),
             currency_conversion_rate=1.22,
             value=122.22,
@@ -132,8 +140,10 @@ class TransactionAPITest(HTTPAPITest):
             user=self.test_user,
             group_id=group_id,
             type="purchase",
+            name="name123",
             description="description123",
             currency_symbol="€",
+            tags=[],
             billed_at=date.today(),
             currency_conversion_rate=1.22,
             value=122.22,
@@ -152,10 +162,12 @@ class TransactionAPITest(HTTPAPITest):
             user=self.test_user,
             group_id=group_id,
             type="purchase",
+            name="foobar",
             description="foobar",
             currency_symbol="€",
             billed_at=date.today(),
             currency_conversion_rate=1,
+            tags=[],
             value=100,
             creditor_shares={account_id: 1.0},
             debitor_shares={account_id: 1.0},
@@ -176,15 +188,14 @@ class TransactionAPITest(HTTPAPITest):
         )
         self.assertEqual(200, resp.status)
         ret_data = await resp.json()
-        self.assertEqual(2, len(ret_data))
-        self.assertNotIn(transaction3_id, [t["id"] for t in ret_data])
+        self.assertEqual(0, len(ret_data))
 
         resp = await self._get(
             f"/api/v1/groups/{group_id}/transactions?min_last_changed={datetime.now().isoformat()}&transaction_ids={transaction3_id}"
         )
         self.assertEqual(200, resp.status)
         ret_data = await resp.json()
-        self.assertEqual(3, len(ret_data))
+        self.assertEqual(1, len(ret_data))
 
     async def test_get_transaction(self):
         group_id = await self._create_group()
@@ -192,8 +203,10 @@ class TransactionAPITest(HTTPAPITest):
             user=self.test_user,
             group_id=group_id,
             type="purchase",
+            name="name123",
             description="description123",
             currency_symbol="€",
+            tags=[],
             billed_at=date.today(),
             currency_conversion_rate=1.22,
             value=122.22,
@@ -214,8 +227,10 @@ class TransactionAPITest(HTTPAPITest):
             user=self.test_user,
             group_id=group_id,
             type="purchase",
+            name="name123",
             description="description123",
             currency_symbol="€",
+            tags=[],
             billed_at=date.today(),
             currency_conversion_rate=1.22,
             value=122.22,
@@ -224,11 +239,13 @@ class TransactionAPITest(HTTPAPITest):
         account2_id = await self._create_account(group_id, "account2")
         await self._update_transaction(
             transaction_id,
-            200.0,
-            "some description",
-            date.today(),
-            "$",
-            2.0,
+            value=200.0,
+            name="some name",
+            description="some description",
+            billed_at=date.today(),
+            currency_symbol="$",
+            currency_conversion_rate=2.0,
+            tags=[],
             creditor_shares={account2_id: 1.0},
             debitor_shares={account1_id: 1.0},
         )
@@ -252,11 +269,13 @@ class TransactionAPITest(HTTPAPITest):
 
         await self._update_transaction(
             transaction_id,
-            100.0,
-            "foobar",
-            date.today(),
-            "€",
-            1.0,
+            value=100.0,
+            name="fiibaar",
+            description="foobar",
+            billed_at=date.today(),
+            currency_symbol="€",
+            currency_conversion_rate=1.0,
+            tags=[],
             creditor_shares={account2_id: 1.0},
             debitor_shares={account1_id: 1.0},
         )
@@ -281,11 +300,13 @@ class TransactionAPITest(HTTPAPITest):
         self.assertTrue(t["is_wip"])
         await self._update_transaction(
             transaction_id,
-            200.0,
-            "foofoo",
-            date.today(),
-            "$",
-            2.0,
+            value=200.0,
+            name="fiifii",
+            description="foofoo",
+            billed_at=date.today(),
+            currency_symbol="$",
+            currency_conversion_rate=2.0,
+            tags=[],
             creditor_shares={account2_id: 1.0},
             debitor_shares={account1_id: 1.0},
         )
@@ -322,8 +343,10 @@ class TransactionAPITest(HTTPAPITest):
             user=self.test_user,
             group_id=group_id,
             type="purchase",
+            name="name123",
             description="description123",
             currency_symbol="€",
+            tags=[],
             billed_at=date.today(),
             currency_conversion_rate=1.22,
             value=122.22,
@@ -335,11 +358,13 @@ class TransactionAPITest(HTTPAPITest):
         # create a creditor share and try to commit it, should not work as we do not have a debitor share
         await self._update_transaction(
             transaction_id,
-            200.0,
-            "description123",
-            date.today(),
-            "€",
-            2.0,
+            value=200.0,
+            name="name123",
+            description="description123",
+            billed_at=date.today(),
+            currency_symbol="€",
+            currency_conversion_rate=2.0,
+            tags=[],
             creditor_shares={account1_id: 1.0},
             debitor_shares={},
         )
@@ -347,11 +372,13 @@ class TransactionAPITest(HTTPAPITest):
 
         await self._update_transaction(
             transaction_id,
-            200.0,
-            "description123",
-            date.today(),
-            "€",
-            2.0,
+            value=200.0,
+            name="name123",
+            description="description123",
+            billed_at=date.today(),
+            currency_symbol="€",
+            currency_conversion_rate=2.0,
+            tags=[],
             creditor_shares={account1_id: 1.0},
             debitor_shares={account2_id: 1.0},
         )
@@ -369,11 +396,13 @@ class TransactionAPITest(HTTPAPITest):
         # create a second debitor share
         await self._update_transaction(
             transaction_id,
-            200.0,
-            "description123",
-            date.today(),
-            "€",
-            2.0,
+            value=200.0,
+            name="name123",
+            description="description123",
+            billed_at=date.today(),
+            currency_symbol="€",
+            currency_conversion_rate=2.0,
+            tags=[],
             creditor_shares={account1_id: 1.0},
             debitor_shares={account2_id: 1.0, account1_id: 1.0},
         )
@@ -392,11 +421,13 @@ class TransactionAPITest(HTTPAPITest):
         # try another edit and discard that
         await self._update_transaction(
             transaction_id,
-            200.0,
-            "description123",
-            date.today(),
-            "€",
-            2.0,
+            value=200.0,
+            name="name123",
+            description="description123",
+            billed_at=date.today(),
+            currency_symbol="€",
+            currency_conversion_rate=2.0,
+            tags=[],
             creditor_shares={account1_id: 1.0},
             debitor_shares={account2_id: 1.0},
         )
@@ -417,10 +448,12 @@ class TransactionAPITest(HTTPAPITest):
             user=self.test_user,
             group_id=group_id,
             type="purchase",
+            name="name123",
             description="description123",
             currency_symbol="€",
             billed_at=date.today(),
             currency_conversion_rate=1.22,
+            tags=[],
             value=122.22,
             debitor_shares={account1_id: 1.0},
         )
@@ -448,10 +481,12 @@ class TransactionAPITest(HTTPAPITest):
             user=self.test_user,
             group_id=group_id,
             type="purchase",
+            name="name123",
             description="description123",
             currency_symbol="€",
             billed_at=date.today(),
             currency_conversion_rate=1.22,
+            tags=[],
             value=122.22,
             debitor_shares={},
             creditor_shares={},
@@ -479,22 +514,26 @@ class TransactionAPITest(HTTPAPITest):
         # the account has been deleted, we should not be able to add more shares to it
         await self._update_transaction(
             transaction_id,
-            200.0,
-            "description123",
-            date.today(),
-            "€",
-            2.0,
+            value=200.0,
+            name="name123",
+            description="description123",
+            billed_at=date.today(),
+            currency_symbol="€",
+            currency_conversion_rate=2.0,
+            tags=[],
             creditor_shares={account1_id: 1.0},
             debitor_shares={},
             expected_status=400,
         )
         await self._update_transaction(
             transaction_id,
-            200.0,
-            "description123",
-            date.today(),
-            "€",
-            2.0,
+            value=200.0,
+            name="name123",
+            description="description123",
+            billed_at=date.today(),
+            currency_symbol="€",
+            currency_conversion_rate=2.0,
+            tags=[],
             creditor_shares={account2_id: 1.0},
             debitor_shares={account3_id: 1.0},
         )
@@ -506,11 +545,13 @@ class TransactionAPITest(HTTPAPITest):
 
         await self._update_transaction(
             transaction_id,
-            200.0,
-            "description123",
-            date.today(),
-            "€",
-            2.0,
+            value=200.0,
+            name="name123",
+            description="description123",
+            billed_at=date.today(),
+            currency_symbol="€",
+            currency_conversion_rate=2.0,
+            tags=[],
             creditor_shares={account3_id: 1.0},
             debitor_shares={account3_id: 1.0},
         )
@@ -540,21 +581,25 @@ class TransactionAPITest(HTTPAPITest):
             user=self.test_user,
             group_id=group_id,
             type="purchase",
+            name="name123",
             description="description123",
             currency_symbol="€",
             billed_at=date.today(),
             currency_conversion_rate=1.22,
+            tags=[],
             value=122.22,
             debitor_shares={account1_id: 1.0},
             creditor_shares={account2_id: 1.0},
         )
         await self._update_transaction(
             transaction_id,
-            200.0,
-            "description123",
-            date.today(),
-            "€",
-            2.0,
+            value=200.0,
+            name="name123",
+            description="description123",
+            billed_at=date.today(),
+            currency_symbol="€",
+            currency_conversion_rate=2.0,
+            tags=[],
             debitor_shares={account1_id: 1.0},
             creditor_shares={account2_id: 1.0},
             positions=[
@@ -571,11 +616,13 @@ class TransactionAPITest(HTTPAPITest):
         # now lets add some item shares, remove them again and commit
         await self._update_transaction(
             transaction_id,
-            200.0,
-            "description123",
-            date.today(),
-            "€",
-            2.0,
+            value=200.0,
+            name="name123",
+            description="description123",
+            billed_at=date.today(),
+            currency_symbol="€",
+            currency_conversion_rate=2.0,
+            tags=[],
             debitor_shares={account1_id: 1.0},
             creditor_shares={account2_id: 1.0},
             positions=[

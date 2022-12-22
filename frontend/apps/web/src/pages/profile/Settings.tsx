@@ -66,7 +66,7 @@ export const Settings: React.FC = () => {
                 Settings
             </Typography>
             <Alert sx={{ mt: 1 }} severity="info">
-                These settings are stored locally on your device. Clearing your Browser&aposs local storage will reset
+                These settings are stored locally on your device. Clearing your Browser&apos;s local storage will reset
                 them.
             </Alert>
             <Box sx={{ mt: 2 }}>

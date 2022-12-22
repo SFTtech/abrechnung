@@ -1,17 +1,19 @@
-import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { useNavigate } from "react-router-dom";
-import { DateTime } from "luxon";
-import { Box, Divider, Theme, Typography, useTheme } from "@mui/material";
-import { ClearingAccountIcon, PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
-import { balanceColor } from "../../core/utils";
-import React from "react";
-import { selectAccountSlice, selectGroupSlice, selectTransactionSlice, useAppSelector } from "../../store";
+import { BalanceChangeOrigin } from "@abrechnung/core";
 import {
+    selectAccountBalanceHistory,
     selectAccountIdToNameMap,
     selectGroupCurrencySymbol,
-    selectAccountBalanceHistory,
     selectTransactionByIdMap,
 } from "@abrechnung/redux";
+import { fromISOString, toISODateString } from "@abrechnung/utils";
+import { Box, Divider, Theme, Typography, useTheme } from "@mui/material";
+import { PointMouseHandler, PointTooltipProps, ResponsiveLine, Serie } from "@nivo/line";
+import { DateTime } from "luxon";
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { balanceColor } from "../../core/utils";
+import { selectAccountSlice, selectGroupSlice, selectTransactionSlice, useAppSelector } from "../../store";
+import { ClearingAccountIcon, PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 
 interface Props {
     groupId: number;
@@ -29,35 +31,59 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
     const transactionMap = useAppSelector((state) =>
         selectTransactionByIdMap({ state: selectTransactionSlice(state), groupId })
     );
-    const accountMap = useAppSelector((state) =>
+    const accountNameMap = useAppSelector((state) =>
         selectAccountIdToNameMap({ state: selectAccountSlice(state), groupId })
     );
 
-    const onClick = (evt) => {
-        if (evt.activePayload.length > 0) {
-            const payload = evt.activePayload[0].payload;
-            if (payload.changeOrigin.type === "clearing") {
-                navigate(`/groups/${groupId}/accounts/${payload.changeOrigin.id}`);
-            } else {
-                navigate(`/groups/${groupId}/transactions/${payload.changeOrigin.id}`);
-            }
+    const graphData: Serie[] = [
+        {
+            id: "positive",
+            data: balanceHistory.map((entry, index, arr) => {
+                const prevEntry = index > 0 ? arr[index - 1] : null;
+                const nextEntry = index < arr.length - 1 ? arr[index + 1] : null;
+                return {
+                    x: fromISOString(entry.date),
+                    y:
+                        entry.balance >= 0 ||
+                        (prevEntry && prevEntry.balance >= 0) ||
+                        (nextEntry && nextEntry.balance >= 0)
+                            ? entry.balance
+                            : null,
+                    changeOrigin: entry.changeOrigin,
+                };
+            }),
+        },
+        {
+            id: "negative",
+            data: balanceHistory.map((entry) => {
+                return {
+                    x: fromISOString(entry.date),
+                    y: entry.balance < 0 ? entry.balance : null,
+                    changeOrigin: entry.changeOrigin,
+                };
+            }),
+        },
+    ];
+
+    const onClick: PointMouseHandler = (point, event) => {
+        const changeOrigin: BalanceChangeOrigin = (point.data as any).changeOrigin;
+        if (changeOrigin.type === "clearing") {
+            navigate(`/groups/${groupId}/accounts/${changeOrigin.id}`);
+        } else {
+            navigate(`/groups/${groupId}/transactions/${changeOrigin.id}`);
         }
     };
 
-    const renderTooltip = ({ payload, label, active }) => {
-        if (!active) {
-            return null;
-        }
-
-        const changeOrigin = payload[0].payload.changeOrigin;
+    const renderTooltip: React.FC<PointTooltipProps> = ({ point }) => {
+        const changeOrigin: BalanceChangeOrigin = (point.data as any).changeOrigin;
 
         const icon =
             changeOrigin.type === "clearing" ? (
-                <ClearingAccountIcon color="primary" fontSize="small" />
+                <ClearingAccountIcon color="primary" sx={{ fontSize: theme.typography.fontSize }} />
             ) : transactionMap[changeOrigin.id].type === "purchase" ? (
                 <PurchaseIcon color="primary" sx={{ fontSize: theme.typography.fontSize }} />
             ) : (
-                <TransferIcon color="primary" fontSize="small" />
+                <TransferIcon color="primary" sx={{ fontSize: theme.typography.fontSize }} />
             );
 
         return (
@@ -73,24 +99,26 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
             >
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <Typography variant="body1" component="span">
-                        {DateTime.fromSeconds(payload[0].payload.date).toISODate()} {icon}
+                        {DateTime.fromJSDate(point.data.x as Date).toISODate()}
                     </Typography>
                     <Typography
                         component="span"
                         sx={{
-                            color: (theme) => balanceColor(payload[0].value, theme),
+                            color: (theme) => balanceColor(point.data.y as number, theme),
                             ml: 2,
                         }}
                     >
-                        {payload[0].value} {currencySymbol}
+                        {(point.data.y as number).toFixed(2)} {currencySymbol}
                     </Typography>
                 </div>
                 <Divider />
-                {payload[0].payload.changeOrigin.type === "clearing" ? (
-                    <Typography variant="body1">{accountMap[payload[0].payload.changeOrigin.id]}</Typography>
+                {changeOrigin.type === "clearing" ? (
+                    <Typography variant="body1">
+                        {icon} {accountNameMap[changeOrigin.id]}
+                    </Typography>
                 ) : (
                     <Typography variant="body1">
-                        {transactionMap[payload[0].payload.changeOrigin.id].description}
+                        {icon} {transactionMap[changeOrigin.id].name}
                     </Typography>
                 )}
             </Box>
@@ -98,38 +126,29 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
     };
 
     return (
-        <ResponsiveContainer width="100%" height={300}>
-            <LineChart
-                width={730}
-                height={250}
+        <div style={{ width: "100%", height: "300px" }}>
+            <ResponsiveLine
+                data={graphData}
+                margin={{ top: 50, right: 50, bottom: 50, left: 60 }}
+                xScale={{ type: "time", precision: "day", format: "native" }}
+                yScale={{ type: "linear", min: "auto", max: "auto" }}
+                colors={[theme.palette.success.main, theme.palette.error.main]}
+                tooltip={renderTooltip}
                 onClick={onClick}
-                data={balanceHistory}
-                margin={{
-                    top: 5,
-                    right: 30,
-                    left: 20,
-                    bottom: 5,
+                pointLabel={(p) => `${toISODateString(p.x as Date)}: ${p.y}`}
+                useMesh={true}
+                yFormat=">-.2f"
+                axisLeft={{
+                    format: (value: number) => `${value.toFixed(2)} ${currencySymbol}`,
                 }}
-            >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                    dataKey="date"
-                    stroke={theme.palette.text.primary}
-                    type="number"
-                    tickFormatter={(unixTime) => DateTime.fromSeconds(unixTime).toISODate()}
-                    domain={["dataMin", "dataMax"]}
-                />
-                <YAxis
-                    tickFormatter={(value) => value.toFixed(2)}
-                    type="number"
-                    unit={currencySymbol}
-                    stroke={theme.palette.text.primary}
-                />
-                <Tooltip content={renderTooltip} />
-                <Legend />
-                <Line type="stepAfter" dataKey="balance" />
-            </LineChart>
-        </ResponsiveContainer>
+                axisBottom={{
+                    tickValues: 4,
+                    format: (value: Date) => toISODateString(value),
+                }}
+                enableArea={true}
+                areaOpacity={0.07}
+            />
+        </div>
     );
 };
 

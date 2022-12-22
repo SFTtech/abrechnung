@@ -1,4 +1,4 @@
-import { ActivityIndicator, List, Menu, Portal, Text, useTheme } from "react-native-paper";
+import { List, Menu, Portal, Text, useTheme } from "react-native-paper";
 import PositionDialog from "./PositionDialog";
 import React, { useState } from "react";
 import { TransactionPosition } from "@abrechnung/types";

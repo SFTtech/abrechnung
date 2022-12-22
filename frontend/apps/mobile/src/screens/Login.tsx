@@ -63,7 +63,8 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                 validateOnBlur={false}
                 validateOnChange={false}
                 initialValues={{
-                    server: "https://demo.abrechnung.sft.lol",
+                    // server: "https://demo.abrechnung.sft.lol",
+                    server: "http://192.168.178.26:8080",
                     username: "",
                     password: "",
                 }}
@@ -73,6 +74,7 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                     <View style={styles.container}>
                         <TextInput
                             label="Server"
+                            style={styles.input}
                             returnKeyType="next"
                             autoCapitalize="none"
                             textContentType="URL"
@@ -82,12 +84,11 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                             onChangeText={(val) => setFieldValue("server", val)}
                             error={touched.server && !!errors.server}
                         />
-                        <HelperText type="error" visible={touched.server && !!errors.server}>
-                            {errors.server}
-                        </HelperText>
+                        {touched.server && !!errors.server && <HelperText type="error">{errors.server}</HelperText>}
 
                         <TextInput
                             label="Username"
+                            style={styles.input}
                             returnKeyType="next"
                             autoCapitalize="none"
                             textContentType="username"
@@ -96,12 +97,13 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                             onChangeText={(val) => setFieldValue("username", val)}
                             error={touched.username && !!errors.username}
                         />
-                        <HelperText type="error" visible={touched.username && !!errors.username}>
-                            {errors.username}
-                        </HelperText>
+                        {touched.username && !!errors.username && (
+                            <HelperText type="error">{errors.username}</HelperText>
+                        )}
 
                         <TextInput
                             label="Password"
+                            style={styles.input}
                             returnKeyType="done"
                             textContentType="password"
                             autoCapitalize="none"
@@ -112,7 +114,7 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                             secureTextEntry={!showPassword}
                             right={
                                 <TextInput.Icon
-                                    name={({ color, size }) => (
+                                    icon={({ color, size }) => (
                                         <MaterialCommunityIcons
                                             name={showPassword ? "eye-off" : "eye"}
                                             color={color}
@@ -123,12 +125,12 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                                 />
                             }
                         />
-                        <HelperText type="error" visible={touched.password && !!errors.password}>
-                            {errors.password}
-                        </HelperText>
+                        {touched.password && !!errors.password && (
+                            <HelperText type="error">{errors.password}</HelperText>
+                        )}
 
                         {isSubmitting ? <ProgressBar indeterminate={true} /> : null}
-                        <Button mode="contained" onPress={handleSubmit}>
+                        <Button mode="contained" style={styles.submit} onPress={handleSubmit}>
                             Login
                         </Button>
 
@@ -151,7 +153,13 @@ const styles = StyleSheet.create({
     },
     row: {
         flexDirection: "row",
-        marginTop: 4,
+        marginTop: 8,
+    },
+    submit: {
+        marginTop: 8,
+    },
+    input: {
+        marginBottom: 6,
     },
     link: {
         fontWeight: "bold",

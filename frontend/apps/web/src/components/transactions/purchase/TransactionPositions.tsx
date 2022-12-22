@@ -238,7 +238,7 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
                     />
                 )}
             </TableCell>
-            <TableCell>
+            <TableCell sx={{ minWidth: "120px" }}>
                 <IconButton onClick={() => copyPosition(position)} tabIndex={-1}>
                     <ContentCopy />
                 </IconButton>

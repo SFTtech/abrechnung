@@ -18,7 +18,7 @@ from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
 from abrechnung.database import db_connect
-from abrechnung.http import auth, groups, transactions, websocket, accounts
+from abrechnung.http import auth, groups, transactions, websocket, accounts, common
 from abrechnung.http.auth import jwt_middleware, decode_jwt_token
 from abrechnung.http.openapi import setup_aiohttp_apispec, validation_middleware
 from abrechnung.http.utils import error_middleware, encode_json
@@ -134,6 +134,7 @@ class HTTPService(SubCommand):
                     "/api/v1/ws",
                     "/api/v1/docs",
                     "/api/v1/static",
+                    "/api/version",
                 ],
             )
             middlewares = [auth_middleware]
@@ -158,6 +159,7 @@ class HTTPService(SubCommand):
         app.add_routes(transactions.routes)
         app.add_routes(auth.routes)
         app.add_routes(accounts.routes)
+        app.add_routes(common.routes)
 
         app.router.add_route("GET", "/api/v1/ws", self.handle_ws_connection)
 

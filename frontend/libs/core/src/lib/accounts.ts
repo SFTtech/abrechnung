@@ -10,27 +10,28 @@ import { fromISOString } from "@abrechnung/utils";
 
 export type AccountSortMode = "lastChanged" | "name" | "description";
 
-export const getAccountSortFunc = (sortMode: AccountSortMode) => {
+export const getAccountSortFunc = (sortMode: AccountSortMode, wipAtTop = false) => {
     const sortingLookup = {
         personal: 50,
         clearing: 100,
     };
+    const baseComparer = (a1: Account, a2: Account) => {
+        if (wipAtTop) {
+            return sortingLookup[a1.type] - sortingLookup[a2.type] || +a2.isWip - +a1.isWip;
+        }
+        return sortingLookup[a1.type] - sortingLookup[a2.type];
+    };
     switch (sortMode) {
         case "lastChanged":
-            return (t1: Account, t2: Account) =>
-                sortingLookup[t1.type] - sortingLookup[t2.type] ||
-                +t2.isWip - +t1.isWip ||
-                fromISOString(t2.lastChanged).getTime() - fromISOString(t1.lastChanged).getTime();
+            return (a1: Account, a2: Account) =>
+                baseComparer(a1, a2) ||
+                fromISOString(a2.lastChanged).getTime() - fromISOString(a1.lastChanged).getTime();
         case "name":
-            return (t1: Account, t2: Account) =>
-                +t2.isWip - +t1.isWip ||
-                sortingLookup[t1.type] - sortingLookup[t2.type] ||
-                t1.name.toLowerCase().localeCompare(t2.name.toLowerCase());
+            return (a1: Account, a2: Account) =>
+                baseComparer(a1, a2) || a1.name.toLowerCase().localeCompare(a2.name.toLowerCase());
         case "description":
-            return (t1: Account, t2: Account) =>
-                +t2.isWip - +t1.isWip ||
-                sortingLookup[t1.type] - sortingLookup[t2.type] ||
-                t1.description.toLowerCase().localeCompare(t2.description.toLowerCase());
+            return (a1: Account, a2: Account) =>
+                baseComparer(a1, a2) || a1.description.toLowerCase().localeCompare(a2.description.toLowerCase());
     }
 };
 
@@ -39,6 +40,7 @@ export const computeAccountBalances = (
     transactions: Transaction[],
     positions: TransactionPosition[]
 ): AccountBalanceMap => {
+    const s = performance.now();
     const accountBalances: AccountBalanceMap = accounts.reduce<AccountBalanceMap>((balances, account) => {
         balances[account.id] = {
             balance: 0,
@@ -108,7 +110,7 @@ export const computeAccountBalances = (
 
     // linearize the account dependency graph to properly redistribute clearing accounts
     const shareMap: Map<number, ClearingShares> = accounts.reduce((map, acc) => {
-        if (acc.clearingShares != null && Object.keys(acc.clearingShares).length) {
+        if (acc.type === "clearing" && acc.clearingShares != null && Object.keys(acc.clearingShares).length) {
             map.set(acc.id, acc.clearingShares);
         }
         return map;
@@ -201,14 +203,20 @@ export const computeAccountBalances = (
         }
     }
 
+    console.log("computeAccountBalances took " + (performance.now() - s) + " milliseconds.");
     return accountBalances;
 };
 
+export interface BalanceChangeOrigin {
+    type: "clearing" | "transaction";
+    id: number;
+}
+
 export interface BalanceHistoryEntry {
-    date: number;
+    date: string;
     change: number;
     balance: number;
-    changeOrigin: { type: "clearing" | "transaction"; id: number };
+    changeOrigin: BalanceChangeOrigin;
 }
 
 export const computeAccountBalanceHistory = (
@@ -228,7 +236,7 @@ export const computeAccountBalanceHistory = (
         const a = balanceEffect[accountId];
         if (a) {
             balanceChanges.push({
-                date: fromISOString(transaction.lastChanged).getTime() / 1000,
+                date: transaction.lastChanged,
                 change: a.total,
                 changeOrigin: {
                     type: "transaction",
@@ -241,7 +249,7 @@ export const computeAccountBalanceHistory = (
     for (const account of clearingAccounts) {
         if (balances[account.id]?.clearingResolution[accountId] !== undefined) {
             balanceChanges.push({
-                date: fromISOString(account.lastChanged).getTime() / 1000,
+                date: account.lastChanged,
                 change: balances[account.id].clearingResolution[accountId],
                 changeOrigin: {
                     type: "clearing",
@@ -250,7 +258,7 @@ export const computeAccountBalanceHistory = (
             });
         }
     }
-    balanceChanges.sort((a1, a2) => a1.date - a2.date);
+    balanceChanges.sort((a1, a2) => a1.date.localeCompare(a2.date));
 
     const accumulatedBalanceChanges: BalanceHistoryEntry[] = [];
     let currBalance = 0;

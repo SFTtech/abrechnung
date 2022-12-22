@@ -1,12 +1,11 @@
 import React from "react";
-
 import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
 import { DisabledTextField } from "./DisabledTextField";
 import { styled } from "@mui/material/styles";
 import { Account } from "@abrechnung/types";
 import { useAppSelector, selectAccountSlice } from "../../store";
 import { selectGroupAccounts } from "@abrechnung/redux";
-import { ClearingAccountIcon, PersonalAccountIcon } from "./AbrechnungIcons";
+import { getAccountIcon } from "./AbrechnungIcons";
 
 const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
     minWidth: 200,
@@ -46,6 +45,7 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
         <Autocomplete
             options={filteredAccounts}
             getOptionLabel={(acc: Account) => acc.name}
+            multiple={false}
             value={value}
             disabled={disabled}
             openOnFocus
@@ -54,12 +54,19 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
             disableClearable
             className={className}
             onChange={(event, newValue: Account) => onChange(newValue)}
-            renderOption={(props, option) => (
+            renderOption={(props, account) => (
                 <Box component="li" {...props}>
-                    {option.type === "personal" ? <PersonalAccountIcon /> : <ClearingAccountIcon />}
-                    <Typography variant="body2" component="span" sx={{ ml: 1 }}>
-                        {option.name}
-                    </Typography>
+                    {getAccountIcon(account.type)}
+                    <Box sx={{ ml: 1, display: "flex", flexDirection: "column" }}>
+                        <Typography variant="body2" component="span">
+                            {account.name}
+                        </Typography>
+                        {account.type === "clearing" && account.dateInfo != null && (
+                            <Typography variant="caption" component="span">
+                                {account.dateInfo}
+                            </Typography>
+                        )}
+                    </Box>
                 </Box>
             )}
             renderInput={

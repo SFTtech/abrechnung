@@ -1,8 +1,10 @@
+import { z } from "zod";
+
 export type ClearingShares = { [k: number]: number };
 
 export type AccountType = "personal" | "clearing";
 
-export interface AccountBase {
+interface CommonAccountMetadata {
     // static fields which never change through the lifetime of an account
     id: number;
     groupID: number;
@@ -11,12 +13,10 @@ export interface AccountBase {
     // fields that can change and are part of an account
     name: string;
     description: string;
-    owningUserID: number | null;
-    clearingShares: ClearingShares | null;
     deleted: boolean;
 }
 
-export interface Account extends AccountBase {
+interface AccountMetadata {
     // fields that can change and are computed
     hasLocalChanges: boolean;
     lastChanged: string; // ISO encoded
@@ -26,25 +26,49 @@ export interface Account extends AccountBase {
     hasCommittedChanges?: boolean;
 }
 
-export interface AccountValidationErrors {
-    name?: string;
-    description?: string;
-    clearingShares?: string;
+export interface PersonalAccountBase extends CommonAccountMetadata {
+    type: "personal";
+    owningUserID: number | null;
 }
 
-export const validateAccount = <T extends AccountBase>(a: T): AccountValidationErrors => {
-    const errors: AccountValidationErrors = {};
+export type PersonalAccount = PersonalAccountBase & AccountMetadata;
 
-    if (a.name === "") {
-        errors.name = "name cannot be empty";
-    }
+export interface ClearingAccountBase extends CommonAccountMetadata {
+    type: "clearing";
+    clearingShares: ClearingShares;
+    dateInfo: string;
+    tags: string[];
+}
+export type ClearingAccount = ClearingAccountBase & AccountMetadata;
 
-    if (a.type == "personal" && a.clearingShares != null && Object.keys(a.clearingShares).length === null) {
-        errors.clearingShares = "a 'personal' account cannot have clearing shares";
-    }
+export type AccountBase = PersonalAccountBase | ClearingAccountBase;
+export type Account = ClearingAccount | PersonalAccount;
 
-    return errors;
-};
+const BaseAccountValidator = z.object({
+    name: z.string({ required_error: "Name is required" }),
+    description: z.string().optional(),
+});
+
+export const PersonalAccountValidator = z
+    .object({
+        owningUserID: z.number().nullable(),
+    })
+    .merge(BaseAccountValidator)
+    .passthrough();
+
+export const ClearingAccountValidator = z
+    .object({
+        dateInfo: z.string(),
+        clearingShares: z.record(z.number()).refine((shares) => Object.keys(shares).length > 0, "select at least one"),
+        tags: z.array(z.string()),
+    })
+    .merge(BaseAccountValidator)
+    .passthrough();
+
+export const AccountValidator = z.discriminatedUnion("type", [
+    ClearingAccountValidator.merge(z.object({ type: z.literal("clearing") })),
+    PersonalAccountValidator.merge(z.object({ type: z.literal("personal") })),
+]);
 
 export interface AccountBalance {
     balance: number;

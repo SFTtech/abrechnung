@@ -26,6 +26,7 @@ import {
 } from "@mui/material";
 import {
     AccountBalance,
+    Event as EventIcon,
     AccountCircle as AccountCircleIcon,
     AdminPanelSettings,
     BarChart,
@@ -90,6 +91,15 @@ export const Layout: React.FC<Props> = ({ groupId, children }) => {
                             <Paid />
                         </ListItemIcon>
                         <ListItemText primary="Transactions" />
+                    </ListItemLink>
+                    <ListItemLink
+                        to={`/groups/${groupId}/events`}
+                        selected={location.pathname.startsWith(`/groups/${groupId}/events`)}
+                    >
+                        <ListItemIcon>
+                            <EventIcon />
+                        </ListItemIcon>
+                        <ListItemText primary="Events" />
                     </ListItemLink>
                     <ListItemLink
                         to={`/groups/${groupId}/balances`}

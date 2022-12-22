@@ -23,6 +23,7 @@ class TransactionUpdateScheme(Schema):
     currency_conversion_rate = fields.Number()
     billed_at = fields.Date()
     revision_started_at = fields.DateTime()
+    tags = fields.List(fields.Str())
     revision_committed_at = fields.DateTime(required=False)
     creditor_shares = SharesField()
     debitor_shares = SharesField()
@@ -101,12 +102,14 @@ async def sync_transactions(request: Request):
 @json_schema(
     Schema.from_dict(
         {
+            "name": fields.Str(),
             "description": fields.Str(),
             "type": fields.Str(),
             "value": fields.Number(),
             "currency_symbol": fields.Str(),
             "billed_at": fields.Date(),
             "currency_conversion_rate": fields.Number(),
+            "tags": fields.List(fields.Str()),
             "creditor_shares": fields.Dict(
                 fields.Int(), fields.Number(), load_default=None, required=False
             ),
@@ -131,11 +134,13 @@ async def create_transaction(request: Request):
     transaction_id = await request.app["transaction_service"].create_transaction(
         user=request["user"],
         group_id=group_id,
+        name=data["name"],
         description=data["description"],
         type=data["type"],
         currency_symbol=data["currency_symbol"],
         currency_conversion_rate=float(data["currency_conversion_rate"]),
         billed_at=data["billed_at"],
+        tags=data["tags"],
         value=float(data["value"]),
         creditor_shares=data["creditor_shares"],
         debitor_shares=data["debitor_shares"],
@@ -173,11 +178,13 @@ async def get_transaction(request: Request):
 @json_schema(
     Schema.from_dict(
         {
+            "name": fields.Str(),
             "description": fields.Str(),
             "value": fields.Number(),
             "currency_symbol": fields.Str(),
             "billed_at": fields.Date(),
             "currency_conversion_rate": fields.Number(),
+            "tags": fields.List(fields.Str()),
             "creditor_shares": fields.Dict(
                 fields.Int(), fields.Number(), load_default=None, required=False
             ),
@@ -203,10 +210,12 @@ async def update_transaction(request: Request):
         user=request["user"],
         transaction_id=transaction_id,
         value=data["value"],
+        name=data["name"],
         description=data["description"],
         currency_symbol=data["currency_symbol"],
         currency_conversion_rate=data["currency_conversion_rate"],
         billed_at=data["billed_at"],
+        tags=data["tags"],
         creditor_shares=data["creditor_shares"],
         debitor_shares=data["debitor_shares"],
         positions=data["positions"],

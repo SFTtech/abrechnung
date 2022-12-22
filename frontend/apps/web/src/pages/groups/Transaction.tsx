@@ -22,7 +22,7 @@ export const Transaction: React.FC<Props> = ({ groupId }) => {
     );
     const query = useQuery();
 
-    useTitle(`${group.name} - ${transaction?.description}`);
+    useTitle(`${group.name} - ${transaction?.name}`);
 
     if (transaction === undefined) {
         if (query.get("no-redirect") === "true") {
@@ -39,10 +39,8 @@ export const Transaction: React.FC<Props> = ({ groupId }) => {
                 <TransferDetails groupId={groupId} transactionId={transactionId} />
             ) : transaction.type === "purchase" ? (
                 <PurchaseDetails groupId={groupId} transactionId={transactionId} />
-            ) : transaction.type === "mimo" ? (
-                <Alert severity="error">Error: MIMO handling is not implemented yet</Alert>
             ) : (
-                <Alert severity="error">Error: Invalid Transaction Type &quot{transaction.type}&quot</Alert>
+                <Alert severity="error">Error: Invalid Transaction Type</Alert>
             )}
         </Suspense>
     );

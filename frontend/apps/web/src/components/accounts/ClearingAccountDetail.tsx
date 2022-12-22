@@ -34,6 +34,9 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) =
     const [showAdvanced, setShowAdvanced] = useState(false);
 
     useEffect(() => {
+        if (account.type !== "clearing") {
+            return;
+        }
         for (const share of Object.values(account.clearingShares)) {
             if (share !== 1) {
                 setShowAdvanced(true);
@@ -43,7 +46,7 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) =
     }, [account]);
 
     const clearingShareValue = (accountId) => {
-        if (account.clearingShares === null) {
+        if (account.type !== "clearing") {
             return 0;
         }
         return account.clearingShares[accountId] ?? 0;

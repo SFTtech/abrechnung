@@ -25,16 +25,14 @@ class TransactionPosition:
 
 @dataclass
 class TransactionDetails:
-    description: str
+    name: str
+    description: Optional[str]
     value: float
     currency_symbol: str
     currency_conversion_rate: float
     billed_at: date
+    tags: list[str]
     deleted: bool
-
-    changed_by: int
-    revision_started_at: datetime
-    revision_committed_at: Optional[datetime]
 
     # creditor and debitor shares map account IDs to portions of the communist share pool
     creditor_shares: dict[int, float]
@@ -58,7 +56,6 @@ class Transaction:
     type: str
     is_wip: bool
     last_changed: datetime
-    version: int
     committed_details: Optional[TransactionDetails]
     pending_details: Optional[TransactionDetails]
 

@@ -1,4 +1,14 @@
-import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
+import {
+    Button,
+    Chip,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Grid,
+    IconButton,
+    LinearProgress,
+} from "@mui/material";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
 import React, { useState } from "react";
@@ -21,6 +31,7 @@ interface Props {
 
 export const TransactionActions: React.FC<Props> = ({ groupId, transactionId }) => {
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
+    const [showProgress, setShowProgress] = useState(false);
 
     const navigate = useNavigate();
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
@@ -37,40 +48,60 @@ export const TransactionActions: React.FC<Props> = ({ groupId, transactionId }) 
     };
 
     const abortEdit = () => {
-        if (transaction.isWip) {
-            dispatch(discardTransactionChange({ groupId, transactionId, api }))
-                .unwrap()
-                .then(({ deletedTransaction }) => {
-                    if (deletedTransaction) {
-                        navigate(`/groups/${groupId}/`);
-                    }
-                })
-                .catch((err) => toast.error(`error while cancelling edit: ${err}`));
+        if (!transaction.isWip) {
+            toast.error("Cannot save as there are not changes made");
+            return;
         }
+        setShowProgress(true);
+        dispatch(discardTransactionChange({ groupId, transactionId, api }))
+            .unwrap()
+            .then(({ deletedTransaction }) => {
+                setShowProgress(false);
+                if (deletedTransaction) {
+                    navigate(`/groups/${groupId}/`);
+                }
+            })
+            .catch((err) => {
+                setShowProgress(false);
+                toast.error(`error while cancelling edit: ${err.toString()}`);
+            });
     };
 
     const commitEdit = () => {
         if (!transaction.isWip) {
+            toast.error("Cannot cancel editing as there are not changes made");
             return;
         }
+        setShowProgress(true);
         dispatch(saveTransaction({ groupId, transactionId, api }))
             .unwrap()
             .then(({ oldTransactionId, transactionContainer }) => {
+                setShowProgress(false);
                 if (oldTransactionId !== transactionContainer.transaction.id) {
                     navigate(`/groups/${groupId}/transactions/${transactionContainer.transaction.id}?no-redirect=true`);
                 }
             })
-            .catch((err) => toast.error(`error while saving transaction: ${err}`));
+            .catch((err) => {
+                setShowProgress(false);
+                toast.error(`error while saving transaction: ${err.toString()}`);
+            });
     };
 
     const confirmDeleteTransaction = () => {
+        setShowProgress(true);
         dispatch(deleteTransaction({ groupId, transactionId, api }))
             .unwrap()
             .then(() => {
+                setShowProgress(false);
                 navigate(`/groups/${groupId}/`);
             })
-            .catch((err) => toast.error(`error while deleting transaction: ${err}`));
+            .catch((err) => {
+                setShowProgress(false);
+                toast.error(`error while deleting transaction: ${err.toString()}`);
+            });
     };
+
+    const transactionTypeLabel = transaction.type === "purchase" ? "purchase" : "transfer";
 
     return (
         <>
@@ -83,7 +114,7 @@ export const TransactionActions: React.FC<Props> = ({ groupId, transactionId }) 
                     >
                         <ChevronLeft />
                     </IconButton>
-                    <Chip color="primary" label={transaction.type} />
+                    <Chip color="primary" label={transactionTypeLabel} />
                 </Grid>
                 <Grid item>
                     {permissions.canWrite && (
@@ -109,10 +140,11 @@ export const TransactionActions: React.FC<Props> = ({ groupId, transactionId }) 
                     )}
                 </Grid>
             </Grid>
+            {showProgress && <LinearProgress />}
             <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={confirmDeleteDialogOpen}>
                 <DialogTitle id="confirmation-dialog-title">Confirm delete transaction</DialogTitle>
                 <DialogContent dividers>
-                    Are you sure you want to delete the transaction &quot{transaction.description}&quot
+                    Are you sure you want to delete the transaction &quot;{transaction.name}&quot;
                 </DialogContent>
                 <DialogActions>
                     <Button autoFocus onClick={() => setConfirmDeleteDialogOpen(false)} color="primary">

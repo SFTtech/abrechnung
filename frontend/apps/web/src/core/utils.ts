@@ -1,8 +1,6 @@
-import { useLocation } from "react-router-dom";
-import { DateTime } from "luxon";
-import { useEffect } from "react";
 import { Theme } from "@mui/material";
-import { Transaction, TransactionBalanceEffect } from "@abrechnung/types";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 
 export const useQuery = (): URLSearchParams => {
     return new URLSearchParams(useLocation().search);
@@ -24,30 +22,4 @@ export const useTitle = (title: string) => {
             document.title = prevTitle;
         };
     });
-};
-
-export const filterTransaction = (
-    transaction: Transaction,
-    transactionBalanceEffect: TransactionBalanceEffect,
-    searchTerm: string,
-    accountIDToName: { [k: number]: string }
-): boolean => {
-    if (
-        transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        DateTime.fromISO(transaction.billedAt)
-            .toLocaleString(DateTime.DATE_FULL)
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-        DateTime.fromISO(transaction.lastChanged)
-            .toLocaleString(DateTime.DATE_FULL)
-            .toLowerCase()
-            .includes(searchTerm.toLowerCase()) ||
-        String(transaction.value).includes(searchTerm.toLowerCase())
-    ) {
-        return true;
-    }
-
-    return Object.keys(transactionBalanceEffect).reduce((acc: boolean, curr: string): boolean => {
-        return acc || accountIDToName[curr].toLowerCase().includes(searchTerm.toLowerCase());
-    }, false);
 };

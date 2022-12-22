@@ -1,22 +1,17 @@
 import { StyleSheet, View } from "react-native";
-import { Button, Divider, Text, Menu } from "react-native-paper";
+import { Divider, List, Portal, Dialog, Checkbox, useTheme, RadioButton } from "react-native-paper";
 import * as React from "react";
 import { notify } from "../notifications";
 import { RootDrawerScreenProps } from "../navigation/types";
-import {
-    useAppDispatch,
-    useAppSelector,
-    selectTheme,
-    selectSettingsSlice,
-    persistor,
-    ThemeMode,
-    themeChanged,
-} from "../store";
+import { useAppDispatch, useAppSelector, selectTheme, selectSettingsSlice, ThemeMode, themeChanged } from "../store";
 import { logout } from "@abrechnung/redux";
 import { api } from "../core/api";
 
+const themeModes: ThemeMode[] = ["system", "dark", "light"];
+
 export const PreferencesScreen: React.FC<RootDrawerScreenProps<"Preferences">> = () => {
     const dispatch = useAppDispatch();
+    const theme = useTheme();
     const themeMode = useAppSelector((state) => selectTheme({ state: selectSettingsSlice(state) }));
     const [themeSelectOpen, setThemeSelectOpen] = React.useState(false);
 
@@ -41,49 +36,41 @@ export const PreferencesScreen: React.FC<RootDrawerScreenProps<"Preferences">> =
         closeThemeSelect();
     };
 
+    const prettyThemeName = (mode: ThemeMode) => {
+        switch (mode) {
+            case "dark":
+                return "Dark";
+            case "light":
+                return "Light";
+            case "system":
+                return "System default";
+        }
+    };
+
     return (
         <View>
-            <View style={styles.toggleSetting}>
-                <Text>Dark Theme</Text>
-                <Menu
-                    visible={themeSelectOpen}
-                    onDismiss={closeThemeSelect}
-                    anchor={<Button onPress={openThemeSelect}>{themeMode}</Button>}
-                >
-                    <Menu.Item
-                        onPress={() => {
-                            changeThemeMode("dark");
-                        }}
-                        title="Dark Mode"
-                    />
-                    <Menu.Item
-                        onPress={() => {
-                            changeThemeMode("light");
-                        }}
-                        title="Light Mode"
-                    />
-                    <Menu.Item
-                        onPress={() => {
-                            changeThemeMode("system");
-                        }}
-                        title="Use System Settings"
-                    />
-                </Menu>
-            </View>
+            <List.Item title="Theme" description={prettyThemeName(themeMode)} onPress={openThemeSelect} />
             <Divider />
-            <Button onPress={onLogout}>Logout</Button>
+            <List.Item title="Logout" onPress={onLogout} titleStyle={{ color: theme.colors.error }} />
+            <Portal>
+                <Dialog visible={themeSelectOpen} onDismiss={closeThemeSelect}>
+                    <Dialog.Title>Theme</Dialog.Title>
+                    <Dialog.Content>
+                        <RadioButton.Group
+                            value={themeMode}
+                            onValueChange={(value) => changeThemeMode(value as ThemeMode)}
+                        >
+                            {themeModes.map((m) => (
+                                <RadioButton.Item key={m} label={prettyThemeName(m)} value={m} />
+                            ))}
+                        </RadioButton.Group>
+                    </Dialog.Content>
+                </Dialog>
+            </Portal>
         </View>
     );
 };
 
-const styles = StyleSheet.create({
-    toggleSetting: {
-        paddingRight: 30,
-        paddingLeft: 30,
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "space-between",
-    },
-});
+const styles = StyleSheet.create({});
 
 export default PreferencesScreen;

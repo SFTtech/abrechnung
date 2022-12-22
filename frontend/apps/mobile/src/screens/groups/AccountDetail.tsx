@@ -1,27 +1,49 @@
 import { GroupStackScreenProps } from "../../navigation/types";
 import { ScrollView, StyleSheet, View } from "react-native";
-import { ActivityIndicator, Button, Divider, List, Text, useTheme } from "react-native-paper";
+import {
+    ActivityIndicator,
+    Portal,
+    Dialog,
+    IconButton,
+    Button,
+    Chip,
+    Divider,
+    List,
+    Text,
+    useTheme,
+} from "react-native-paper";
 import * as React from "react";
 import { useLayoutEffect } from "react";
 import { Transaction, AccountBalance, Account, TransactionShare } from "@abrechnung/types";
-import { clearingAccountIcon, getTransactionIcon } from "../../constants/Icons";
+import { clearingAccountIcon, getAccountIcon, getTransactionIcon } from "../../constants/Icons";
 import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
 import { successColor } from "../../theme";
-import { selectAccountSlice, selectGroupSlice, selectTransactionSlice, useAppSelector } from "../../store";
+import {
+    selectAccountSlice,
+    selectGroupSlice,
+    selectTransactionSlice,
+    useAppDispatch,
+    useAppSelector,
+} from "../../store";
 import {
     selectAccountBalances,
     selectAccountById,
     selectGroupCurrencySymbol,
     selectTransactionsInvolvingAccount,
     selectCurrentUserPermissions,
-    selectGroupAccountsFiltered,
+    selectClearingAccountsInvolvingAccounts,
+    deleteAccount,
 } from "@abrechnung/redux";
 import { fromISOString } from "@abrechnung/utils";
+import { api } from "../../core/api";
+import { notify } from "../../notifications";
+import { MaterialIcons } from "@expo/vector-icons";
 
 type ArrayAccountsAndTransactions = Array<Transaction | Account>;
 
 export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = ({ route, navigation }) => {
     const theme = useTheme();
+    const dispatch = useAppDispatch();
 
     const { groupId, accountId } = route.params;
 
@@ -34,7 +56,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
     );
 
     const clearingAccounts = useAppSelector((state) =>
-        selectGroupAccountsFiltered({ state: selectAccountSlice(state), groupId, type: "clearing" })
+        selectClearingAccountsInvolvingAccounts({ state: selectAccountSlice(state), groupId, accountId })
     );
 
     const combinedList: ArrayAccountsAndTransactions = (transactions as ArrayAccountsAndTransactions)
@@ -45,6 +67,22 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
         selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
     );
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+
+    const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
+
+    const onDeleteAccount = React.useCallback(() => {
+        dispatch(deleteAccount({ api, groupId, accountId }))
+            .unwrap()
+            .then(() => {
+                navigation.pop();
+            })
+            .catch((err) => {
+                notify({ text: `Error while deleting account: ${err.toString()}` });
+            });
+    }, [groupId, accountId, dispatch, navigation]);
+
+    const closeConfirmDeleteModal = () => setConfirmDeleteModalOpen(false);
+    const openConfirmDeleteModal = () => setConfirmDeleteModalOpen(true);
 
     useLayoutEffect(() => {
         const edit = () => {
@@ -60,7 +98,12 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                 if (permissions === undefined || !permissions.canWrite) {
                     return null;
                 }
-                return <Button onPress={edit}>Edit</Button>;
+                return (
+                    <>
+                        <Button onPress={edit}>Edit</Button>
+                        <IconButton icon="delete" iconColor={theme.colors.error} onPress={openConfirmDeleteModal} />
+                    </>
+                );
             },
         });
     }, [accountId, permissions, groupId, theme, account, navigation]);
@@ -68,7 +111,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
     const renderTransactionListEntryTransaction = (transaction: Transaction) => (
         <List.Item
             key={`transaction-${transaction.id}`}
-            title={transaction.description}
+            title={transaction.name}
             description={transaction.billedAt}
             left={(props) => <List.Icon {...props} icon={getTransactionIcon(transaction.type)} />}
             right={(props) => (
@@ -134,6 +177,45 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
     return (
         <ScrollView style={styles.container}>
             <List.Item title={account.name} description={account.description} />
+            {account.type === "clearing" && (
+                <>
+                    {account.dateInfo != null && <List.Item title="Date" description={account.dateInfo} />}
+                    {account.tags.length > 0 && (
+                        <View style={{ paddingLeft: 16 }}>
+                            <Text style={{ fontSize: theme.fonts.bodyLarge.fontSize }}>Tags</Text>
+                            <View style={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
+                                {account.tags.map((tag) => (
+                                    <Chip
+                                        key={tag}
+                                        mode="outlined"
+                                        compact={true}
+                                        style={{
+                                            marginRight: 3,
+                                            backgroundColor: theme.colors.backdrop,
+                                            borderColor: theme.colors.primary,
+                                            marginBottom: 2,
+                                        }}
+                                    >
+                                        {tag}
+                                    </Chip>
+                                ))}
+                            </View>
+                        </View>
+                    )}
+                    <TransactionShareInput
+                        title="Participated"
+                        disabled={true}
+                        groupId={groupId}
+                        value={account.clearingShares as TransactionShare}
+                        onChange={() => {
+                            return;
+                        }}
+                        enableAdvanced={true}
+                        multiSelect={true}
+                        excludedAccounts={[account.id]}
+                    />
+                </>
+            )}
             <List.Item
                 title="Balance"
                 right={(props) => (
@@ -142,20 +224,6 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                     </Text>
                 )}
             />
-            {account.type === "clearing" && (
-                <TransactionShareInput
-                    title="Participated"
-                    disabled={true}
-                    groupId={groupId}
-                    value={account.clearingShares as TransactionShare}
-                    onChange={() => {
-                        return;
-                    }}
-                    enableAdvanced={true}
-                    multiSelect={true}
-                    excludedAccounts={[account.id]}
-                />
-            )}
 
             {combinedList.length > 0 ? (
                 <>
@@ -166,6 +234,21 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                     </List.Section>
                 </>
             ) : null}
+            <Portal>
+                <Dialog visible={confirmDeleteModalOpen} onDismiss={closeConfirmDeleteModal}>
+                    <Dialog.Content>
+                        <Text>
+                            Do you really want to delete this {account.type === "clearing" ? "event" : "account"}?
+                        </Text>
+                    </Dialog.Content>
+                    <Dialog.Actions>
+                        <Button onPress={closeConfirmDeleteModal}>No</Button>
+                        <Button onPress={onDeleteAccount} textColor={theme.colors.error}>
+                            Yes
+                        </Button>
+                    </Dialog.Actions>
+                </Dialog>
+            </Portal>
         </ScrollView>
     );
 };

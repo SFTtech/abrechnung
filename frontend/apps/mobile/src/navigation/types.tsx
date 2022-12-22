@@ -36,6 +36,7 @@ export type GroupStackParamList = {
     };
     AccountDetail: { groupId: number; accountId: number };
     AccountEdit: { groupId: number; accountId: number };
+    AddGroup: undefined;
 };
 
 export type GroupTabParamList = {

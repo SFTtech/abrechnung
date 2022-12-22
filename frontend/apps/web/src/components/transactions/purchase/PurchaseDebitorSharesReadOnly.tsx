@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ClearingAccountIcon, PersonalAccountIcon } from "../../style/AbrechnungIcons";
+import { getAccountIcon } from "../../style/AbrechnungIcons";
 import { useTheme } from "@mui/material/styles";
 import { useAppSelector, selectAccountSlice, selectTransactionSlice } from "../../../store";
 import {
@@ -126,17 +126,16 @@ export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({ groupId, transa
                                             to={`/groups/${groupId}/accounts/${account.id}`}
                                         >
                                             <Grid container direction="row" alignItems="center">
-                                                <Grid item>
-                                                    {account.type === "personal" ? (
-                                                        <PersonalAccountIcon />
-                                                    ) : (
-                                                        <ClearingAccountIcon />
-                                                    )}
-                                                </Grid>
-                                                <Grid item sx={{ ml: 1 }}>
+                                                <Grid item>{getAccountIcon(account.type)}</Grid>
+                                                <Grid item sx={{ ml: 1, display: "flex", flexDirection: "column" }}>
                                                     <Typography variant="body2" component="span">
                                                         {account.name}
                                                     </Typography>
+                                                    {account.type === "clearing" && account.dateInfo != null && (
+                                                        <Typography variant="caption" component="span">
+                                                            {account.dateInfo}
+                                                        </Typography>
+                                                    )}
                                                 </Grid>
                                             </Grid>
                                         </Link>

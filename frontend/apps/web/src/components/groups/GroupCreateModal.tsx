@@ -14,6 +14,8 @@ import {
     TextField,
 } from "@mui/material";
 import * as yup from "yup";
+import { useAppDispatch } from "../../store";
+import { createGroup } from "@abrechnung/redux";
 
 interface FormValues {
     name: string;
@@ -35,9 +37,23 @@ interface Props {
 }
 
 export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
+    const dispatch = useAppDispatch();
+
     const handleSubmit = (values, { setSubmitting }) => {
-        api.createGroup(values.name, values.description, "€", "", values.addUserAccountOnJoin)
-            .then((result) => {
+        dispatch(
+            createGroup({
+                api,
+                group: {
+                    name: values.name,
+                    description: values.description,
+                    currencySymbol: "€",
+                    terms: "",
+                    addUserAccountOnJoin: values.addUserAccountOnJoin,
+                },
+            })
+        )
+            .unwrap()
+            .then(() => {
                 setSubmitting(false);
                 onClose({}, "completed");
             })

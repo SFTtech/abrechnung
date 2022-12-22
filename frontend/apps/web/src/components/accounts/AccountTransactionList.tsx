@@ -1,11 +1,11 @@
 import React from "react";
 import { DateTime } from "luxon";
-import { List } from "@mui/material";
+import { List, Alert } from "@mui/material";
 import AccountTransactionListEntry from "./AccountTransactionListEntry";
 import { Account, Transaction } from "@abrechnung/types";
 import AccountClearingListEntry from "./AccountClearingListEntry";
 import { selectAccountSlice, selectTransactionSlice, useAppSelector } from "../../store";
-import { selectGroupAccountsFiltered, selectTransactionsInvolvingAccount } from "@abrechnung/redux";
+import { selectClearingAccountsInvolvingAccounts, selectTransactionsInvolvingAccount } from "@abrechnung/redux";
 
 type ArrayAccountsAndTransactions = Array<Transaction | Account>;
 
@@ -19,7 +19,7 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, accountId }) 
         selectTransactionsInvolvingAccount({ state: selectTransactionSlice(state), groupId, accountId })
     );
     const clearingAccounts = useAppSelector((state) =>
-        selectGroupAccountsFiltered({ state: selectAccountSlice(state), groupId, type: "clearing" })
+        selectClearingAccountsInvolvingAccounts({ state: selectAccountSlice(state), groupId, accountId })
     );
 
     const combinedList: ArrayAccountsAndTransactions = (transactions as ArrayAccountsAndTransactions)
@@ -28,11 +28,12 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, accountId }) 
 
     return (
         <List>
+            {combinedList.length === 0 && <Alert severity="info">None so far.</Alert>}
             {combinedList.map((entry) => {
                 if (entry.type === "clearing") {
                     return (
                         <AccountClearingListEntry
-                            key={entry.id}
+                            key={`clearing-${entry.id}`}
                             accountId={accountId}
                             groupId={groupId}
                             clearingAccountId={entry.id}
@@ -47,7 +48,7 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, accountId }) 
                 // has to be a transaction even though we handled all other "type" cases before
                 return (
                     <AccountTransactionListEntry
-                        key={entry.id}
+                        key={`transaction-${entry.id}`}
                         accountId={accountId}
                         groupId={groupId}
                         transactionId={entry.id}

@@ -35,6 +35,7 @@ export const TransactionCreditorShare: React.FC<Props> = ({ groupId, transaction
 
     return (
         <AccountSelect
+            margin="normal"
             groupId={groupId}
             value={shareAccountID === null ? null : getAccount(parseInt(shareAccountID))}
             onChange={onCreditorChange}

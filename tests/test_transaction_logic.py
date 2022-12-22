@@ -40,6 +40,7 @@ class TransactionLogicTest(AsyncTestCase):
                 type=account_type,
                 name=f"account{i}",
                 description="",
+                date_info=datetime.now().date() if account_type == "clearing" else None,
             )
             account_ids.append(acc_id)
 
@@ -58,6 +59,7 @@ class TransactionLogicTest(AsyncTestCase):
             name="Clearing",
             description="Foobar",
             clearing_shares={basic_account_id1: 1.0, basic_account_id2: 2.0},
+            date_info=datetime.now().date(),
         )
 
         account = await self.account_service.get_account(
@@ -79,6 +81,7 @@ class TransactionLogicTest(AsyncTestCase):
             account_id=account_id,
             name="Clearing",
             description="Foobar",
+            date_info=datetime.now().date(),
             clearing_shares={basic_account_id1: 1.0},
         )
         account = await self.account_service.get_account(
@@ -102,6 +105,7 @@ class TransactionLogicTest(AsyncTestCase):
             account_id=account2_id,
             name="account2",
             description="",
+            date_info=datetime.now().date(),
             clearing_shares={account1_id: 1.0},
         )
 
@@ -111,6 +115,7 @@ class TransactionLogicTest(AsyncTestCase):
                 account_id=account1_id,
                 name="account1",
                 description="",
+                date_info=datetime.now().date(),
                 clearing_shares={account2_id: 1.0},
             )
         self.assertTrue(
@@ -125,6 +130,7 @@ class TransactionLogicTest(AsyncTestCase):
                 account_id=account1_id,
                 name="account1",
                 description="",
+                date_info=datetime.now().date(),
                 clearing_shares={account1_id: 1.0},
             )
 
@@ -134,10 +140,12 @@ class TransactionLogicTest(AsyncTestCase):
             user=self.user,
             group_id=self.group_id,
             type="purchase",
+            name="foo",
             description="foo",
             billed_at=datetime.now().date(),
             currency_symbol="€",
             currency_conversion_rate=1.0,
+            tags=[],
             value=33,
             debitor_shares={account1_id: 1.0},
             creditor_shares={account2_id: 1.0},

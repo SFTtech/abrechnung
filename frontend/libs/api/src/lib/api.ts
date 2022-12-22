@@ -9,10 +9,11 @@ import {
     GroupLogEntry,
     TransactionPosition,
     Transaction,
-    TransactionShare,
     TransactionContainer,
     TransactionBase,
     GroupBase,
+    PersonalAccountBase,
+    ClearingAccountBase,
 } from "@abrechnung/types";
 import { BackendAccount, backendAccountToAccount } from "./accounts";
 import {
@@ -43,6 +44,13 @@ export class HttpError implements IHttpError {
     constructor(public statusCode: number, public message: string) {}
 }
 
+export interface ApiVersion {
+    version: string;
+    major: number;
+    minor: number;
+    patch: number;
+}
+
 export class Api {
     baseApiUrl: string | null = null;
     sessionToken: string | null = null;
@@ -52,7 +60,7 @@ export class Api {
 
     public resetAuthState = () => {
         this.sessionToken = null;
-        this.accessToken = null;
+        // this.accessToken = null; // we do not null the access token s.t. we can perform remaining requests
     };
 
     public setSessionToken = (token: string) => {
@@ -64,7 +72,9 @@ export class Api {
     };
 
     public updateAccessToken = async (): Promise<string | null> => {
-        console.log("request to ", `${this.baseApiUrl}/api/v1/auth/fetch_access_token`);
+        if (this.sessionToken === null) {
+            return null;
+        }
         const resp = await fetch(`${this.baseApiUrl}/api/v1/auth/fetch_access_token`, {
             method: "POST",
             body: JSON.stringify({ token: this.sessionToken }),
@@ -81,6 +91,16 @@ export class Api {
         const jsonResp = await resp.json();
         this.accessToken = jsonResp.access_token;
         return jsonResp.access_token;
+    };
+
+    public getVersion = async (): Promise<ApiVersion> => {
+        const resp = await this.makeGet("/api/version", { withAuth: false });
+        return {
+            version: resp.version,
+            major: Number(resp.major_version),
+            minor: Number(resp.minor_version),
+            patch: Number(resp.patch_version),
+        };
     };
 
     public fetchGroups = async (): Promise<Group[]> => {
@@ -100,19 +120,13 @@ export class Api {
         return backendGroupPreviewToPreview(resp);
     };
 
-    public createGroup = async (
-        name: string,
-        description: string,
-        currencySymbol: string,
-        terms: string,
-        addUserAccountOnJoin: boolean
-    ): Promise<Group> => {
+    public createGroup = async (group: Omit<GroupBase, "id">): Promise<Group> => {
         const resp = await this.makePost("/api/v1/groups", {
-            name: name,
-            description: description,
-            currency_symbol: currencySymbol,
-            terms: terms,
-            add_user_account_on_join: addUserAccountOnJoin,
+            name: group.name,
+            description: group.description,
+            currency_symbol: group.currencySymbol,
+            terms: group.terms,
+            add_user_account_on_join: group.addUserAccountOnJoin,
         });
         return backendGroupToGroup(resp);
     };
@@ -207,12 +221,15 @@ export class Api {
     };
 
     public createAccount = async (account: Omit<AccountBase, "id" | "deleted">): Promise<Account> => {
+        // TODO: figure out why typescript does not like this
         const updatedAccount = await this.makePost(`/api/v1/groups/${account.groupID}/accounts`, {
             type: account.type,
             name: account.name,
             description: account.description,
-            owning_user_id: account.owningUserID,
-            clearing_shares: account.clearingShares,
+            owning_user_id: account.type === "personal" ? (account as PersonalAccountBase).owningUserID : null,
+            clearing_shares: account.type === "clearing" ? (account as ClearingAccountBase).clearingShares : null,
+            tags: account.type === "clearing" ? (account as ClearingAccountBase).tags : null,
+            date_info: account.type === "clearing" ? (account as ClearingAccountBase).dateInfo : null,
         });
         return backendAccountToAccount(updatedAccount);
     };
@@ -221,8 +238,10 @@ export class Api {
         const updatedAccount = await this.makePost(`/api/v1/accounts/${account.id}`, {
             name: account.name,
             description: account.description,
-            owning_user_id: account.owningUserID,
-            clearing_shares: account.clearingShares,
+            owning_user_id: account.type === "personal" ? account.owningUserID : null,
+            clearing_shares: account.type === "clearing" ? account.clearingShares : null,
+            tags: account.type === "clearing" ? account.tags : null,
+            date_info: account.type === "clearing" ? account.dateInfo : null,
         });
         return backendAccountToAccount(updatedAccount);
     };
@@ -233,16 +252,20 @@ export class Api {
                 type: account.type,
                 name: account.name,
                 description: account.description,
-                owning_user_id: account.owningUserID,
-                clearing_shares: account.clearingShares,
+                owning_user_id: account.type === "personal" ? account.owningUserID : null,
+                clearing_shares: account.type === "clearing" ? account.clearingShares : null,
+                tags: account.type === "clearing" ? account.tags : null,
+                date_info: account.type === "clearing" ? account.dateInfo : null,
             });
             return backendAccountToAccount(updatedAccount);
         } else {
             const updatedAccount = await this.makePost(`/api/v1/accounts/${account.id}`, {
                 name: account.name,
                 description: account.description,
-                owning_user_id: account.owningUserID,
-                clearing_shares: account.clearingShares,
+                owning_user_id: account.type === "personal" ? account.owningUserID : null,
+                clearing_shares: account.type === "clearing" ? account.clearingShares : null,
+                tags: account.type === "clearing" ? account.tags : null,
+                date_info: account.type === "clearing" ? account.dateInfo : null,
             });
             return backendAccountToAccount(updatedAccount);
         }
@@ -252,8 +275,14 @@ export class Api {
         return await this.makePost(`/api/v1/groups/${groupId}/accounts/sync`, accounts);
     };
 
+    public discardAccountChange = async (accountId: number): Promise<Account> => {
+        const resp = await this.makePost(`/api/v1/accounts/${accountId}/discard`);
+        return backendAccountToAccount(resp);
+    };
+
     public deleteAccount = async (accountId: number): Promise<Account> => {
-        return await this.makeDelete(`/api/v1/accounts/${accountId}`);
+        const resp = await this.makeDelete(`/api/v1/accounts/${accountId}`);
+        return backendAccountToAccount(resp);
     };
 
     public fetchTransactions = async (
@@ -282,9 +311,11 @@ export class Api {
         performCommit = false
     ): Promise<TransactionContainer> => {
         const resp = await this.makePost(`/api/v1/groups/${transaction.groupID}/transactions`, {
+            name: transaction.name,
             description: transaction.description,
             value: transaction.value,
             type: transaction.type,
+            tags: transaction.tags,
             billed_at: transaction.billedAt,
             currency_symbol: transaction.currencySymbol,
             currency_conversion_rate: transaction.currencyConversionRate,
@@ -292,33 +323,6 @@ export class Api {
             debitor_shares: transaction.debitorShares,
             perform_commit: performCommit,
         });
-        return backendTransactionToTransactionContainer(resp);
-    };
-
-    public updateTransaction = async (
-        transactionId: number,
-        description: string,
-        value: number,
-        billedAt: string,
-        currencySymbol: string,
-        currencyConversionRate: number,
-        creditorShares: TransactionShare,
-        debitorShares: TransactionShare,
-        positions?: TransactionPosition[],
-        performCommit = true
-    ): Promise<TransactionContainer> => {
-        const payload = {
-            description: description,
-            value: value,
-            billed_at: billedAt,
-            currency_symbol: currencySymbol,
-            currency_conversion_rate: currencyConversionRate,
-            perform_commit: performCommit,
-            creditor_shares: creditorShares ?? {},
-            debitor_shares: debitorShares ?? {},
-            positions: toBackendPosition(positions ?? []),
-        };
-        const resp = await this.makePost(`/api/v1/transactions/${transactionId}`, payload);
         return backendTransactionToTransactionContainer(resp);
     };
 
@@ -341,12 +345,14 @@ export class Api {
     ): Promise<TransactionContainer> => {
         if (transaction.id < 0) {
             const updatedTransaction = await this.makePost(`/api/v1/groups/${transaction.groupID}/transactions`, {
+                name: transaction.name,
                 description: transaction.description,
                 value: transaction.value,
                 type: transaction.type,
                 billed_at: transaction.billedAt,
                 currency_symbol: transaction.currencySymbol,
                 currency_conversion_rate: transaction.currencyConversionRate,
+                tags: transaction.tags,
                 creditor_shares: transaction.creditorShares,
                 debitor_shares: transaction.debitorShares,
                 positions: transaction.type === "purchase" ? toBackendPosition(positions) : null,
@@ -355,11 +361,13 @@ export class Api {
             return backendTransactionToTransactionContainer(updatedTransaction);
         } else {
             const updatedTransaction = await this.makePost(`/api/v1/transactions/${transaction.id}`, {
+                name: transaction.name,
                 description: transaction.description,
                 value: transaction.value,
                 billed_at: transaction.billedAt,
                 currency_symbol: transaction.currencySymbol,
                 currency_conversion_rate: transaction.currencyConversionRate,
+                tags: transaction.tags,
                 creditor_shares: transaction.creditorShares,
                 debitor_shares: transaction.debitorShares,
                 positions: transaction.type === "purchase" ? toBackendPosition(positions) : null,
@@ -460,7 +468,9 @@ export class Api {
     };
 
     public logout = async () => {
-        return await this.makePost("/api/v1/auth/logout");
+        const resp = await this.makePost("/api/v1/auth/logout");
+        this.resetAuthState();
+        return resp;
     };
 
     public register = async (username: string, email: string, password: string, inviteToken?: string) => {
@@ -556,7 +566,15 @@ export class Api {
     };
 
     public getToken = async (): Promise<string> => {
-        if (this.sessionToken === null || this.accessToken === null || !validateJWTToken(this.accessToken)) {
+        if (this.sessionToken === null && this.accessToken !== null && validateJWTToken(this.accessToken)) {
+            return this.accessToken;
+        }
+
+        if (this.sessionToken === null) {
+            throw new Error("no session token present");
+        }
+
+        if (this.accessToken === null || !validateJWTToken(this.accessToken)) {
             this.accessToken = await this.updateAccessToken();
             console.log("fetched new access token", this.accessToken);
             if (this.accessToken !== null) {
@@ -590,6 +608,7 @@ export class Api {
     };
 
     private fetchJson = async (url: string, options: RequestOptions) => {
+        console.debug("Request to", url, "options", options);
         let headers: Record<string, string> = {};
         if (options.withAuth) {
             const authHeaders = await this.makeAuthHeader();

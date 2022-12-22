@@ -36,7 +36,7 @@ export const TransactionDescription: React.FC<Props> = ({ groupId, transactionId
 
     const onChange = (event) => {
         const value = event.target.value;
-        if (value == null || value === "") {
+        if (value == null) {
             setError(true);
         } else {
             setError(false);
@@ -49,6 +49,7 @@ export const TransactionDescription: React.FC<Props> = ({ groupId, transactionId
             label="Description"
             error={error}
             variant="standard"
+            margin="dense"
             helperText={error ? "please input a description" : null}
             fullWidth
             onChange={onChange}
