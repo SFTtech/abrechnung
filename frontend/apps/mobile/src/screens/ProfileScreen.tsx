@@ -2,18 +2,16 @@ import { Banner, Divider, List } from "react-native-paper";
 import { View, ScrollView } from "react-native";
 import * as React from "react";
 import { RootDrawerScreenProps } from "../navigation/types";
-import { selectAuthSlice, useAppDispatch, useAppSelector } from "../store";
-import { fetchProfile, selectProfile } from "@abrechnung/redux";
-import { api } from "../core/api";
+import { selectAuthSlice, useAppSelector } from "../store";
+import { selectProfile } from "@abrechnung/redux";
 
 export const ProfileScreen: React.FC<RootDrawerScreenProps<"Profile">> = () => {
-    const dispatch = useAppDispatch();
     const profile = useAppSelector((state) => selectProfile({ state: selectAuthSlice(state) }));
 
-    React.useEffect(() => {
-        console.debug("fetching profile");
-        dispatch(fetchProfile({ api }));
-    });
+    // React.useEffect(() => {
+    //     console.debug("fetching profile");
+    //     dispatch(fetchProfile({ api }));
+    // });
 
     if (!profile) {
         return (
