@@ -140,7 +140,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                         <Box sx={{ display: "flex-item" }}>
                             <Tooltip title="Create Event">
                                 <IconButton color="primary" onClick={onCreateEvent}>
-                                    <AddIcon onClick={onCreateEvent} />
+                                    <AddIcon />
                                 </IconButton>
                             </Tooltip>
                         </Box>
@@ -149,7 +149,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                 <Divider sx={{ mt: 1 }} />
                 <List>
                     {clearingAccounts.length === 0 ? (
-                        <Alert severity="info">No Accounts</Alert>
+                        <Alert severity="info">No Events</Alert>
                     ) : (
                         clearingAccounts.map((account) => (
                             <ClearingAccountListItem
@@ -170,8 +170,8 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                         onClose={onCloseDeleteModal}
                         accountId={accountDeleteId}
                     />
-                    <Fab color="primary" sx={{ position: "fixed", bottom: 16, right: 16 }}>
-                        <AddIcon onClick={onCreateEvent} />
+                    <Fab color="primary" onClick={onCreateEvent} sx={{ position: "fixed", bottom: 16, right: 16 }}>
+                        <AddIcon />
                     </Fab>
                 </>
             )}

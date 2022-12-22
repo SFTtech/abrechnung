@@ -144,7 +144,7 @@ export const TransactionActions: React.FC<Props> = ({ groupId, transactionId }) 
             <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={confirmDeleteDialogOpen}>
                 <DialogTitle id="confirmation-dialog-title">Confirm delete transaction</DialogTitle>
                 <DialogContent dividers>
-                    Are you sure you want to delete the transaction &quot{transaction.description}&quot
+                    Are you sure you want to delete the transaction &quot;{transaction.name}&quot;
                 </DialogContent>
                 <DialogActions>
                     <Button autoFocus onClick={() => setConfirmDeleteDialogOpen(false)} color="primary">

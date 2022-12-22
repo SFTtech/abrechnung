@@ -1,6 +1,6 @@
 import React from "react";
 import { DateTime } from "luxon";
-import { List } from "@mui/material";
+import { List, Alert } from "@mui/material";
 import AccountTransactionListEntry from "./AccountTransactionListEntry";
 import { Account, Transaction } from "@abrechnung/types";
 import AccountClearingListEntry from "./AccountClearingListEntry";
@@ -28,6 +28,7 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, accountId }) 
 
     return (
         <List>
+            {combinedList.length === 0 && <Alert severity="info">None so far.</Alert>}
             {combinedList.map((entry) => {
                 if (entry.type === "clearing") {
                     return (

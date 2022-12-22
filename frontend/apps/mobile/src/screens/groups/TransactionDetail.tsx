@@ -244,7 +244,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
             {formik.isSubmitting && <ProgressBar indeterminate />}
             <TextInput
                 label="Name"
-                value={formik.values.name}
+                value={formik.values.name ?? ""}
                 editable={editing}
                 // disabled={!editing}
                 onChangeText={(val) => formik.setFieldValue("name", val)}
@@ -255,7 +255,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
             {formik.touched.name && !!formik.errors.name && <HelperText type="error">{formik.errors.name}</HelperText>}
             <TextInput
                 label="Description"
-                value={formik.values.description}
+                value={formik.values.description ?? ""}
                 editable={editing}
                 // disabled={!editing}
                 onChangeText={(val) => formik.setFieldValue("description", val)}
@@ -281,7 +281,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 <HelperText type="error">{formik.errors.billedAt}</HelperText>
             )}
             <NumericInput
-                label="Value" // TODO: proper float input
+                label="Value"
                 value={formik.values.value ?? 0}
                 editable={editing}
                 keyboardType="numeric"
@@ -299,7 +299,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                     <TagSelect
                         groupId={groupId}
                         label="Tags"
-                        value={formik.values.tags}
+                        value={formik.values.tags ?? []}
                         disabled={false}
                         onChange={(val) => {
                             formik.setFieldValue("tags", val);
@@ -356,7 +356,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 title="Paid by"
                 groupId={groupId}
                 disabled={!editing}
-                value={formik.values.creditorShares}
+                value={formik.values.creditorShares ?? {}}
                 onChange={(val) => formik.setFieldValue("creditorShares", val)}
                 enableAdvanced={false}
                 multiSelect={false}
@@ -369,7 +369,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 title="For"
                 disabled={!editing}
                 groupId={groupId}
-                value={formik.values.debitorShares}
+                value={formik.values.debitorShares ?? {}}
                 onChange={(val) => formik.setFieldValue("debitorShares", val)}
                 enableAdvanced={transaction.type === "purchase"}
                 multiSelect={transaction.type === "purchase"}

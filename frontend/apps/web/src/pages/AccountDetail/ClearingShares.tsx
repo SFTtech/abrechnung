@@ -77,10 +77,15 @@ const AccountTableRow: React.FC<AccountTableRowProps> = ({ groupId, clearingAcco
             <TableCell>
                 <Grid container direction="row" alignItems="center">
                     <Grid item>{account.type === "personal" ? <PersonalAccountIcon /> : <ClearingAccountIcon />}</Grid>
-                    <Grid item sx={{ ml: 1 }}>
+                    <Grid item sx={{ ml: 1, display: "flex", flexDirection: "column" }}>
                         <Typography variant="body2" component="span">
                             {account.name}
                         </Typography>
+                        {account.type === "clearing" && account.dateInfo != null && (
+                            <Typography variant="caption" component="span">
+                                {account.dateInfo}
+                            </Typography>
+                        )}
                     </Grid>
                 </Grid>
             </TableCell>

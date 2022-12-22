@@ -1,6 +1,5 @@
 import {
     accountEditStarted,
-    deleteAccount,
     discardAccountChange,
     saveAccount,
     selectAccountById,
@@ -10,22 +9,12 @@ import {
 import { AccountValidator } from "@abrechnung/types";
 import { toFormikValidationSchema } from "@abrechnung/utils";
 import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
-import {
-    Button,
-    Chip,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    Divider,
-    Grid,
-    IconButton,
-    LinearProgress,
-} from "@mui/material";
+import { Button, Chip, Divider, Grid, IconButton, LinearProgress } from "@mui/material";
 import { useFormik } from "formik";
 import React from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { DeleteAccountModal } from "../../components/accounts/DeleteAccountModal";
 import { DateInput } from "../../components/DateInput";
 import { DisabledTextField } from "../../components/style/DisabledTextField";
 import { TagSelector } from "../../components/TagSelector";
@@ -51,20 +40,10 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
     const [showProgress, setShowProgress] = React.useState(false);
 
     const openDeleteDialog = () => setConfirmDeleteDialogOpen(true);
-    const closeDeleteDialog = () => setConfirmDeleteDialogOpen(false);
+    const onCloseDeleteDialog = () => setConfirmDeleteDialogOpen(false);
 
-    const confirmDeleteAccount = () => {
-        setShowProgress(true);
-        dispatch(deleteAccount({ groupId, accountId, api }))
-            .unwrap()
-            .then(() => {
-                setShowProgress(false);
-                navigate(`/groups/${groupId}/${account.type === "personal" ? "accounts" : "events"}`);
-            })
-            .catch((err) => {
-                setShowProgress(false);
-                toast.error(`error while deleting transaction: ${err.toString()}`);
-            });
+    const onAccountDeleted = () => {
+        navigate(`/groups/${groupId}/${account.type === "personal" ? "accounts" : "events"}`);
     };
 
     const accountTypeLabel = account.type === "clearing" ? "event" : "account";
@@ -192,6 +171,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                         margin="dense"
                         fullWidth
                         name="name"
+                        autoFocus={true}
                         error={formik.touched.name && !!formik.errors.name}
                         helperText={formik.errors.name}
                         onChange={formik.handleChange}
@@ -243,20 +223,13 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                 ) : null}
             </Grid>
 
-            <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={confirmDeleteDialogOpen}>
-                <DialogTitle id="confirmation-dialog-title">Confirm delete {accountTypeLabel}</DialogTitle>
-                <DialogContent dividers>
-                    Are you sure you want to delete the {accountTypeLabel} &quot;{account.name}&quot;
-                </DialogContent>
-                <DialogActions>
-                    <Button autoFocus onClick={closeDeleteDialog} color="primary">
-                        Cancel
-                    </Button>
-                    <Button onClick={confirmDeleteAccount} color="error">
-                        Ok
-                    </Button>
-                </DialogActions>
-            </Dialog>
+            <DeleteAccountModal
+                show={confirmDeleteDialogOpen}
+                onClose={onCloseDeleteDialog}
+                accountId={account.id}
+                groupId={groupId}
+                onAccountDeleted={onAccountDeleted}
+            />
         </>
     );
 };

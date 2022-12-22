@@ -13,7 +13,7 @@ import * as yup from "yup";
 import { parseAbrechnungFloat } from "@abrechnung/utils";
 
 interface FormValues {
-    value: string;
+    value: number;
     name: string;
     description: string;
     tags: string[];
@@ -48,6 +48,7 @@ export const TransferCreateModal: React.FC<Props> = ({ groupId, show, onClose })
     const dispatch = useAppDispatch();
 
     const handleSubmit = (values: FormValues, { setSubmitting }) => {
+        console.log(values);
         dispatch(
             createTransfer({
                 transaction: {
@@ -55,7 +56,7 @@ export const TransferCreateModal: React.FC<Props> = ({ groupId, show, onClose })
                     type: "transfer",
                     name: values.name,
                     description: values.description,
-                    value: parseAbrechnungFloat(values.value),
+                    value: values.value,
                     billedAt: values.billedAt.toISODate(),
                     tags: values.tags,
                     currencySymbol: currencySymbol,
@@ -85,7 +86,7 @@ export const TransferCreateModal: React.FC<Props> = ({ groupId, show, onClose })
                     initialValues={{
                         name: "",
                         description: "",
-                        value: "0.0",
+                        value: null,
                         tags: [],
                         billedAt: DateTime.now(),
                         creditor: undefined,
@@ -107,7 +108,6 @@ export const TransferCreateModal: React.FC<Props> = ({ groupId, show, onClose })
                         <Form>
                             <TextField
                                 margin="normal"
-                                required
                                 fullWidth
                                 variant="standard"
                                 name="name"
@@ -121,12 +121,10 @@ export const TransferCreateModal: React.FC<Props> = ({ groupId, show, onClose })
                             />
                             <TextField
                                 margin="normal"
-                                required
                                 fullWidth
                                 variant="standard"
                                 name="description"
                                 label="Description"
-                                autoFocus
                                 value={values.description}
                                 onChange={handleChange}
                                 onBlur={handleBlur}
@@ -138,7 +136,7 @@ export const TransferCreateModal: React.FC<Props> = ({ groupId, show, onClose })
                                 renderInput={(params) => (
                                     <TextField
                                         name="billedAt"
-                                        required
+                                        margin="normal"
                                         variant="standard"
                                         fullWidth
                                         {...params}
@@ -153,7 +151,6 @@ export const TransferCreateModal: React.FC<Props> = ({ groupId, show, onClose })
                             />
                             <TextField
                                 margin="normal"
-                                required
                                 fullWidth
                                 type="number"
                                 inputProps={{ step: "any" }}

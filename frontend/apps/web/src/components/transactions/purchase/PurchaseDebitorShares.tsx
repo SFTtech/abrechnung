@@ -21,7 +21,7 @@ import {
 import { Account } from "@abrechnung/types";
 import { ShareInput } from "../../ShareInput";
 import { Clear, Search as SearchIcon } from "@mui/icons-material";
-import { ClearingAccountIcon, PersonalAccountIcon } from "../../style/AbrechnungIcons";
+import { getAccountIcon } from "../../style/AbrechnungIcons";
 import { useAppSelector, useAppDispatch, selectAccountSlice, selectTransactionSlice } from "../../../store";
 import {
     selectGroupAccounts,
@@ -65,11 +65,16 @@ const AccountTableRow: React.FC<AccountTableRowProps> = ({
         <TableRow hover>
             <TableCell>
                 <Grid container direction="row" alignItems="center">
-                    <Grid item>{account.type === "personal" ? <PersonalAccountIcon /> : <ClearingAccountIcon />}</Grid>
-                    <Grid item sx={{ ml: 1 }}>
+                    <Grid item>{getAccountIcon(account.type)}</Grid>
+                    <Grid item sx={{ ml: 1, display: "flex", flexDirection: "column" }}>
                         <Typography variant="body2" component="span">
                             {account.name}
                         </Typography>
+                        {account.type === "clearing" && account.dateInfo != null && (
+                            <Typography variant="caption" component="span">
+                                {account.dateInfo}
+                            </Typography>
+                        )}
                     </Grid>
                 </Grid>
             </TableCell>
