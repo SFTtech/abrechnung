@@ -1,31 +1,38 @@
 import React from "react";
-import { Form, Formik } from "formik";
+import { Form, Formik, FormikHelpers, FormikProps } from "formik";
 import { api } from "../../core/api";
 import { toast } from "react-toastify";
 import { Button, LinearProgress, TextField, Typography } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
+import { z } from "zod";
+import { toFormikValidationSchema } from "@abrechnung/utils";
+
+const validationSchema = z
+    .object({
+        password: z.string({ required_error: "password is required" }),
+        newPassword: z.string({ required_error: "new password is required" }),
+        newPassword2: z.string({ required_error: "please repeat your desired new password" }),
+    })
+    .refine((data) => data.newPassword === data.newPassword2, {
+        message: "passwords don't match",
+        path: ["newPassword2"],
+    });
+type FormSchema = z.infer<typeof validationSchema>;
 
 export const ChangePassword: React.FC = () => {
     useTitle("Abrechnung - Change Password");
 
-    const validate = (values) => {
-        const errors = { newPassword: undefined };
-        if (values.newPassword !== values.newPassword2) {
-            errors.newPassword = "Passwords do not match";
-        }
-        return errors;
-    };
-
-    const handleSubmit = (values, { setSubmitting }) => {
-        api.changePassword(values.password, values.newPassword)
-            .then((res) => {
+    const handleSubmit = (values: FormSchema, { setSubmitting, resetForm }: FormikHelpers<FormSchema>) => {
+        api.changePassword({ oldPassword: values.password, newPassword: values.newPassword })
+            .then(() => {
                 setSubmitting(false);
                 toast.success("Successfully changed password");
+                resetForm();
             })
             .catch((error) => {
                 setSubmitting(false);
-                toast.error(error);
+                toast.error(error.toString());
             });
     };
 
@@ -35,7 +42,7 @@ export const ChangePassword: React.FC = () => {
                 Change Password
             </Typography>
             <Formik
-                validate={validate}
+                validationSchema={toFormikValidationSchema(validationSchema)}
                 initialValues={{
                     password: "",
                     newPassword: "",
@@ -43,10 +50,9 @@ export const ChangePassword: React.FC = () => {
                 }}
                 onSubmit={handleSubmit}
             >
-                {({ values, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+                {({ values, handleChange, handleBlur, isSubmitting, errors, touched }: FormikProps<FormSchema>) => (
                     <Form>
                         <TextField
-                            required
                             fullWidth
                             autoFocus
                             margin="normal"
@@ -57,10 +63,11 @@ export const ChangePassword: React.FC = () => {
                             value={values.password}
                             onChange={handleChange}
                             onBlur={handleBlur}
+                            error={touched.password && !!errors.password}
+                            helperText={touched.password && errors.password}
                         />
 
                         <TextField
-                            required
                             fullWidth
                             margin="normal"
                             type="password"
@@ -70,10 +77,11 @@ export const ChangePassword: React.FC = () => {
                             value={values.newPassword}
                             onChange={handleChange}
                             onBlur={handleBlur}
+                            error={touched.newPassword && !!errors.newPassword}
+                            helperText={touched.newPassword && errors.newPassword}
                         />
 
                         <TextField
-                            required
                             fullWidth
                             variant="standard"
                             value={values.newPassword2}
@@ -83,6 +91,8 @@ export const ChangePassword: React.FC = () => {
                             type="password"
                             name="newPassword2"
                             label="Repeat Password"
+                            error={touched.newPassword2 && !!errors.newPassword2}
+                            helperText={touched.newPassword2 && errors.newPassword2}
                         />
 
                         {isSubmitting && <LinearProgress />}

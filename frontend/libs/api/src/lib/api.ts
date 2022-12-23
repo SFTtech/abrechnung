@@ -546,24 +546,28 @@ export class Api {
     };
 
     public requestPasswordRecovery = async (email: string) => {
-        return await this.makePost("/api/v1/auth/recover_password", { email: email });
+        return await this.makePost("/api/v1/auth/recover_password", { email: email }, { withAuth: false });
     };
 
-    public confirmPasswordRecovery = async (token: string, newPassword: string) => {
-        return await this.makePost("/api/v1/auth/confirm_password_recovery", {
-            token: token,
-            new_password: newPassword,
-        });
+    public confirmPasswordRecovery = async ({ token, newPassword }: { token: string; newPassword: string }) => {
+        return await this.makePost(
+            "/api/v1/auth/confirm_password_recovery",
+            {
+                token: token,
+                new_password: newPassword,
+            },
+            { withAuth: false }
+        );
     };
 
-    public changeEmail = async (password: string, newEmail: string) => {
+    public changeEmail = async ({ password, newEmail }: { password: string; newEmail: string }) => {
         return await this.makePost("/api/v1/profile/change_email", {
             password: password,
             email: newEmail,
         });
     };
 
-    public changePassword = async (oldPassword: string, newPassword: string) => {
+    public changePassword = async ({ oldPassword, newPassword }: { oldPassword: string; newPassword: string }) => {
         return await this.makePost("/api/v1/profile/change_password", {
             old_password: oldPassword,
             new_password: newPassword,

@@ -1,34 +1,40 @@
 import React, { useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import { api } from "../../core/api";
-import { Form, Formik } from "formik";
+import { Form, Formik, FormikHelpers, FormikProps } from "formik";
 import { Alert, Box, Button, Container, CssBaseline, LinearProgress, Link, TextField, Typography } from "@mui/material";
+import { z } from "zod";
+import { toFormikValidationSchema } from "@abrechnung/utils";
+
+const validationSchema = z
+    .object({
+        password: z.string({ required_error: "password is required" }),
+        password2: z.string({ required_error: "please repeat your desired password" }),
+    })
+    .refine((data) => data.password === data.password2, {
+        message: "passwords don't match",
+        path: ["password2"],
+    });
+type FormSchema = z.infer<typeof validationSchema>;
 
 export const ConfirmPasswordRecovery: React.FC = () => {
     const [status, setStatus] = useState("idle");
     const [error, setError] = useState(null);
     const { token } = useParams();
 
-    const handleSubmit = (values, { setSubmitting }) => {
-        api.confirmPasswordRecovery(values.password, token)
-            .then((res) => {
+    const handleSubmit = (values: FormSchema, { setSubmitting, resetForm }: FormikHelpers<FormSchema>) => {
+        api.confirmPasswordRecovery({ newPassword: values.password, token })
+            .then(() => {
                 setStatus("success");
                 setError(null);
                 setSubmitting(false);
+                resetForm();
             })
             .catch((err) => {
                 setStatus("error");
-                setError(err);
+                setError(err.toString());
                 setSubmitting(false);
             });
-    };
-
-    const validate = (values) => {
-        const errors = { password2: undefined };
-        if (values.password !== values.password2) {
-            errors.password2 = "Passwords do not match";
-        }
-        return errors;
     };
 
     return (
@@ -60,32 +66,40 @@ export const ConfirmPasswordRecovery: React.FC = () => {
                     </Alert>
                 ) : (
                     <Formik
-                        validate={validate}
+                        validationSchema={toFormikValidationSchema(validationSchema)}
                         initialValues={{
                             password: "",
                             password2: "",
                         }}
                         onSubmit={handleSubmit}
                     >
-                        {({ values, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+                        {({
+                            values,
+                            handleChange,
+                            handleBlur,
+                            isSubmitting,
+                            errors,
+                            touched,
+                        }: FormikProps<FormSchema>) => (
                             <Form>
                                 <TextField
                                     variant="outlined"
                                     margin="normal"
-                                    required
                                     fullWidth
+                                    autoFocus
                                     type="password"
                                     name="password"
                                     label="Password"
                                     onBlur={handleBlur}
                                     onChange={handleChange}
                                     value={values.password}
+                                    error={touched.password && !!errors.password}
+                                    helperText={touched.password && errors.password}
                                 />
 
                                 <TextField
                                     variant="outlined"
                                     margin="normal"
-                                    required
                                     fullWidth
                                     type="password"
                                     name="password2"
@@ -93,6 +107,8 @@ export const ConfirmPasswordRecovery: React.FC = () => {
                                     onBlur={handleBlur}
                                     onChange={handleChange}
                                     value={values.password2}
+                                    error={touched.password2 && !!errors.password2}
+                                    helperText={touched.password2 && errors.password2}
                                 />
 
                                 {isSubmitting && <LinearProgress />}
