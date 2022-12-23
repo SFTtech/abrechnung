@@ -30,12 +30,12 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
     };
 
     const handleSubmit = (values: FormSchema, { setSubmitting }: FormikHelpers<FormSchema>) => {
-        api.baseApiUrl = values.server;
         dispatch(
             login({
                 username: values.username,
                 password: values.password,
                 sessionName: "Abrechnung Mobile",
+                apiUrl: values.server,
                 api,
             })
         )

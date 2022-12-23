@@ -61,9 +61,12 @@ export const fetchProfile = createAsyncThunk<User, { api: Api }>("fetchProfile",
 
 export const login = createAsyncThunk<
     { profile: User; sessionToken: string; baseUrl: string },
-    { username: string; password: string; sessionName: string; api: Api }
->("login", async ({ username, password, sessionName, api }) => {
+    { username: string; password: string; sessionName: string; apiUrl?: string; api: Api }
+>("login", async ({ username, password, sessionName, apiUrl, api }) => {
     // TODO: error handling
+    if (apiUrl) {
+        await api.init(apiUrl);
+    }
     const loginResp = await api.login(username, password, sessionName);
     const profile = await api.fetchProfile();
     return { profile: profile, sessionToken: loginResp.sessionToken, baseUrl: loginResp.baseUrl };

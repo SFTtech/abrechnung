@@ -1,10 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Form, Formik } from "formik";
+import { Form, Formik, FormikHelpers, FormikProps } from "formik";
 import { api } from "../../core/api";
 import { Alert, Box, Button, Container, CssBaseline, LinearProgress, TextField, Typography } from "@mui/material";
 import { selectIsAuthenticated } from "@abrechnung/redux";
 import { useAppSelector, selectAuthSlice } from "../../store";
+import { z } from "zod";
+import { toFormikValidationSchema } from "@abrechnung/utils";
+
+const validationSchema = z.object({
+    email: z.string({ required_error: "email is required" }).email("please enter a valid email address"),
+});
+type FormSchema = z.infer<typeof validationSchema>;
 
 export const RequestPasswordRecovery: React.FC = () => {
     const isLoggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
@@ -18,16 +25,17 @@ export const RequestPasswordRecovery: React.FC = () => {
         }
     }, [isLoggedIn, navigate]);
 
-    const handleSubmit = (values, { setSubmitting }) => {
+    const handleSubmit = (values: FormSchema, { setSubmitting, resetForm }: FormikHelpers<FormSchema>) => {
         api.requestPasswordRecovery(values.email)
-            .then((res) => {
+            .then(() => {
                 setStatus("success");
                 setError(null);
                 setSubmitting(false);
+                resetForm();
             })
             .catch((err) => {
                 setStatus("error");
-                setError(err);
+                setError(err.toString());
                 setSubmitting(false);
             });
     };
@@ -59,13 +67,24 @@ export const RequestPasswordRecovery: React.FC = () => {
                         A recovery link has been sent to you via email.
                     </Alert>
                 ) : (
-                    <Formik initialValues={{ email: "" }} onSubmit={handleSubmit}>
-                        {({ values, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+                    <Formik
+                        validationSchema={toFormikValidationSchema(validationSchema)}
+                        initialValues={{ email: "" }}
+                        onSubmit={handleSubmit}
+                    >
+                        {({
+                            values,
+                            handleChange,
+                            handleBlur,
+                            handleSubmit,
+                            isSubmitting,
+                            touched,
+                            errors,
+                        }: FormikProps<FormSchema>) => (
                             <Form onSubmit={handleSubmit}>
                                 <TextField
                                     variant="outlined"
                                     margin="normal"
-                                    required
                                     fullWidth
                                     autoFocus
                                     type="text"
@@ -74,6 +93,8 @@ export const RequestPasswordRecovery: React.FC = () => {
                                     onBlur={handleBlur}
                                     onChange={handleChange}
                                     value={values.email}
+                                    error={touched.email && !!errors.email}
+                                    helperText={touched.email && errors.email}
                                 />
                                 {isSubmitting && <LinearProgress />}
                                 <Button
