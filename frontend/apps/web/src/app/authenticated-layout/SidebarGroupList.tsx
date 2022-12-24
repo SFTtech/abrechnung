@@ -1,6 +1,6 @@
 import { Grid, IconButton, List, ListItem, ListItemText } from "@mui/material";
-import ListItemLink from "./ListItemLink";
-import GroupCreateModal from "../groups/GroupCreateModal";
+import ListItemLink from "../../components/style/ListItemLink";
+import GroupCreateModal from "../../components/groups/GroupCreateModal";
 import React, { useState } from "react";
 import { Add } from "@mui/icons-material";
 import { selectGroups, selectIsGuestUser } from "@abrechnung/redux";

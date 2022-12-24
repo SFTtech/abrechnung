@@ -6,6 +6,7 @@ import { balanceColor } from "../../core/utils";
 import { ClearingAccountIcon } from "../style/AbrechnungIcons";
 import { selectAccountById, selectGroupCurrencySymbol, selectAccountBalances } from "@abrechnung/redux";
 import { useAppSelector, selectAccountSlice, selectGroupSlice } from "../../store";
+import { getAccountLink } from "../../utils";
 
 interface Props {
     groupId: number;
@@ -23,7 +24,7 @@ export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, 
     );
 
     return (
-        <ListItemLink to={`/groups/${groupId}/accounts/${clearingAccountId}`}>
+        <ListItemLink to={getAccountLink(groupId, clearingAccount.type, clearingAccount.id)}>
             <ListItemAvatar sx={{ minWidth: { xs: "40px", md: "56px" } }}>
                 <Tooltip title="Clearing Account">
                     <ClearingAccountIcon color="primary" />

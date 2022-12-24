@@ -13,7 +13,6 @@ import { batch } from "react-redux";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Balances from "../../components/accounts/Balances";
-import Layout from "../../components/style/Layout";
 import Loading from "../../components/style/Loading";
 import { api, ws } from "../../core/api";
 import {
@@ -36,7 +35,7 @@ import Transaction from "./Transaction";
 export const Group: React.FC = () => {
     const params = useParams();
     const dispatch = useAppDispatch();
-    const groupId = Number(params["id"]);
+    const groupId = Number(params["groupId"]);
     const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
     const groupExists = useAppSelector((state) => selectGroupExists({ state: selectGroupSlice(state), groupId }));
     const transactionStatus = useAppSelector((state) =>
@@ -85,94 +84,102 @@ export const Group: React.FC = () => {
         return <Navigate to="/404" />;
     }
 
+    if (
+        accountStatus === undefined ||
+        transactionStatus === undefined ||
+        groupMemberStatus === undefined ||
+        accountStatus === "loading" ||
+        transactionStatus === "loading" ||
+        groupMemberStatus === "loading"
+    ) {
+        return <Loading />;
+    }
+
     // TODO: handle 404
     return (
-        <Layout groupId={groupId}>
-            {accountStatus === undefined ||
-            transactionStatus === undefined ||
-            groupMemberStatus === undefined ||
-            accountStatus === "loading" ||
-            transactionStatus === "loading" ||
-            groupMemberStatus === "loading" ? (
-                <Loading />
-            ) : (
-                <Routes>
-                    <Route path="log" element={<GroupLog groupId={groupId} />} />
-                    <Route
-                        path="accounts"
-                        element={
-                            <Suspense fallback={<Loading />}>
-                                <AccountList groupId={groupId} />
-                            </Suspense>
-                        }
-                    />
-                    <Route
-                        path="events"
-                        element={
-                            <Suspense fallback={<Loading />}>
-                                <ClearingAccountList groupId={groupId} />
-                            </Suspense>
-                        }
-                    />
-                    <Route
-                        path="members"
-                        element={
-                            <Suspense fallback={<Loading />}>
-                                <GroupMemberList groupId={groupId} />
-                            </Suspense>
-                        }
-                    />
-                    <Route
-                        path="detail"
-                        element={
-                            <Suspense fallback={<Loading />}>
-                                <GroupSettings groupId={groupId} />
-                            </Suspense>
-                        }
-                    />
-                    <Route
-                        path="invites"
-                        element={
-                            <Suspense fallback={<Loading />}>
-                                <GroupInvites groupId={groupId} />
-                            </Suspense>
-                        }
-                    />
-                    <Route
-                        path="balances"
-                        element={
-                            <Suspense fallback={<Loading />}>
-                                <Balances groupId={groupId} />
-                            </Suspense>
-                        }
-                    />
-                    <Route
-                        path="/"
-                        element={
-                            <Suspense fallback={<Loading />}>
-                                <TransactionList groupId={groupId} />
-                            </Suspense>
-                        }
-                    />
-                    <Route
-                        path="transactions/:id"
-                        element={
-                            <Suspense fallback={<Loading />}>
-                                <Transaction groupId={groupId} />
-                            </Suspense>
-                        }
-                    />
-                    <Route
-                        path="accounts/:id"
-                        element={
-                            <Suspense fallback={<Loading />}>
-                                <AccountDetail groupId={group.id} />
-                            </Suspense>
-                        }
-                    />
-                </Routes>
-            )}
-        </Layout>
+        <Routes>
+            <Route path="log" element={<GroupLog groupId={groupId} />} />
+            <Route
+                path="accounts"
+                element={
+                    <Suspense fallback={<Loading />}>
+                        <AccountList groupId={groupId} />
+                    </Suspense>
+                }
+            />
+            <Route
+                path="events"
+                element={
+                    <Suspense fallback={<Loading />}>
+                        <ClearingAccountList groupId={groupId} />
+                    </Suspense>
+                }
+            />
+            <Route
+                path="members"
+                element={
+                    <Suspense fallback={<Loading />}>
+                        <GroupMemberList groupId={groupId} />
+                    </Suspense>
+                }
+            />
+            <Route
+                path="detail"
+                element={
+                    <Suspense fallback={<Loading />}>
+                        <GroupSettings groupId={groupId} />
+                    </Suspense>
+                }
+            />
+            <Route
+                path="invites"
+                element={
+                    <Suspense fallback={<Loading />}>
+                        <GroupInvites groupId={groupId} />
+                    </Suspense>
+                }
+            />
+            <Route
+                path="balances"
+                element={
+                    <Suspense fallback={<Loading />}>
+                        <Balances groupId={groupId} />
+                    </Suspense>
+                }
+            />
+            <Route
+                path="/"
+                element={
+                    <Suspense fallback={<Loading />}>
+                        <TransactionList groupId={groupId} />
+                    </Suspense>
+                }
+            />
+            <Route
+                path="transactions/:id"
+                element={
+                    <Suspense fallback={<Loading />}>
+                        <Transaction groupId={groupId} />
+                    </Suspense>
+                }
+            />
+            <Route
+                path="accounts/:id"
+                element={
+                    <Suspense fallback={<Loading />}>
+                        <AccountDetail groupId={group.id} />
+                    </Suspense>
+                }
+            />
+            <Route
+                path="events/:id"
+                element={
+                    <Suspense fallback={<Loading />}>
+                        <AccountDetail groupId={group.id} />
+                    </Suspense>
+                }
+            />
+        </Routes>
     );
 };
 

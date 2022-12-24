@@ -23,6 +23,7 @@ import {
     selectTransactionById,
     selectTransactionHasPositions,
 } from "@abrechnung/redux";
+import { getAccountLink } from "apps/web/src/utils";
 
 interface Props {
     groupId: number;
@@ -123,7 +124,7 @@ export const PurchaseDebitorSharesReadOnly: React.FC<Props> = ({ groupId, transa
                                                 width: "100%",
                                                 padding: "16px 0",
                                             }}
-                                            to={`/groups/${groupId}/accounts/${account.id}`}
+                                            to={getAccountLink(groupId, account.type, account.id)}
                                         >
                                             <Grid container direction="row" alignItems="center">
                                                 <Grid item>{getAccountIcon(account.type)}</Grid>
