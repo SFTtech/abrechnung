@@ -11,6 +11,7 @@ import {
     selectGroupAccounts,
     selectGroupCurrencySymbol,
 } from "@abrechnung/redux";
+import { getAccountLink } from "../../utils";
 
 interface Props {
     groupId: number;
@@ -80,7 +81,7 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) =
                                             width: "100%",
                                             padding: "16px 0",
                                         }}
-                                        to={`/groups/${groupId}/accounts/${a.id}`}
+                                        to={getAccountLink(groupId, a.type, a.id)}
                                     >
                                         <Grid container direction="row" alignItems="center">
                                             <Grid item>
@@ -90,10 +91,15 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) =
                                                     <ClearingAccountIcon />
                                                 )}
                                             </Grid>
-                                            <Grid item sx={{ ml: 1 }}>
+                                            <Grid item sx={{ ml: 1, display: "flex", flexDirection: "column" }}>
                                                 <Typography variant="body2" component="span">
                                                     {a.name}
                                                 </Typography>
+                                                {a.type === "clearing" && a.dateInfo != null && (
+                                                    <Typography variant="caption" component="span">
+                                                        {a.dateInfo}
+                                                    </Typography>
+                                                )}
                                             </Grid>
                                         </Grid>
                                     </Link>

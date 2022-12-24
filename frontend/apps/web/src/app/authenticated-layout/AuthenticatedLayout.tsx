@@ -1,12 +1,13 @@
-import React, { useState } from "react";
-import { Link as RouterLink, useLocation } from "react-router-dom";
+import * as React from "react";
+import { selectIsAuthenticated } from "@abrechnung/redux";
+import { Link as RouterLink, Navigate, Outlet, useLocation, useParams } from "react-router-dom";
+import { selectAuthSlice, useAppSelector } from "../../store";
 import { useRecoilValue } from "recoil";
-import ListItemLink from "./ListItemLink";
-import SidebarGroupList from "./SidebarGroupList";
+import ListItemLink from "../../components/style/ListItemLink";
+import SidebarGroupList from "../../app/authenticated-layout/SidebarGroupList";
 import {
     AppBar,
     Box,
-    Button,
     Container,
     CssBaseline,
     Divider,
@@ -41,27 +42,27 @@ import {
 } from "@mui/icons-material";
 import { config } from "../../state/config";
 import { useTheme } from "@mui/material/styles";
-import { Banner } from "./Banner";
-import { selectIsAuthenticated } from "@abrechnung/redux";
-import { useAppSelector, selectAuthSlice } from "../../store";
+import { Banner } from "../../components/style/Banner";
+import Loading from "../../components/style/Loading";
 
 const drawerWidth = 240;
+const AUTH_FALLBACK = "/login";
 
-interface Props {
-    groupId?: number;
-    children: React.ReactNode;
-}
-
-export const Layout: React.FC<Props> = ({ groupId, children }) => {
+export const AuthenticatedLayout: React.FC = () => {
     const authenticated = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
-    const [anchorEl, setAnchorEl] = useState(null);
+    const location = useLocation();
+    const params = useParams();
+    const groupId = params["groupId"] ? Number(params["groupId"]) : undefined;
+    const [anchorEl, setAnchorEl] = React.useState(null);
     const theme: Theme = useTheme();
     const dotsMenuOpen = Boolean(anchorEl);
     const cfg = useRecoilValue(config);
-    const location = useLocation();
     const isLargeScreen = useMediaQuery(theme.breakpoints.up("sm"));
 
-    const [mobileOpen, setMobileOpen] = useState(true);
+    const [mobileOpen, setMobileOpen] = React.useState(true);
+    if (!authenticated) {
+        return <Navigate to={`${AUTH_FALLBACK}?next=${location.pathname}`} />;
+    }
 
     const handleProfileMenuOpen = (event) => {
         setAnchorEl(event.currentTarget);
@@ -217,84 +218,76 @@ export const Layout: React.FC<Props> = ({ groupId, children }) => {
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         Abrechnung
                     </Typography>
-                    {authenticated ? (
-                        <div>
-                            <IconButton
-                                aria-label="account of current user"
-                                aria-controls="menu-appbar"
-                                aria-haspopup="true"
-                                onClick={handleProfileMenuOpen}
-                                color="inherit"
-                            >
-                                <AccountCircleIcon />
-                            </IconButton>
-                            <Menu
-                                id="menu-appbar"
-                                open={dotsMenuOpen}
-                                anchorOrigin={{
-                                    vertical: "top",
-                                    horizontal: "right",
-                                }}
-                                keepMounted
-                                anchorEl={anchorEl}
-                                transformOrigin={{
-                                    vertical: "top",
-                                    horizontal: "right",
-                                }}
-                                onClose={handleDotsMenuClose}
-                            >
-                                <MenuItem component={RouterLink} to="/profile">
-                                    Profile
-                                </MenuItem>
-                                <MenuItem component={RouterLink} to="/profile/settings">
-                                    Settings
-                                </MenuItem>
-                                <MenuItem component={RouterLink} to="/profile/sessions">
-                                    Sessions
-                                </MenuItem>
-                                <MenuItem component={RouterLink} to="/profile/change-email">
-                                    Change E-Mail
-                                </MenuItem>
-                                <MenuItem component={RouterLink} to="/profile/change-password">
-                                    Change Password
-                                </MenuItem>
-                                <Divider />
-                                <MenuItem component={RouterLink} to="/logout">
-                                    <ListItemIcon>
-                                        <Logout fontSize="small" />
-                                    </ListItemIcon>
-                                    <ListItemText>Sign out</ListItemText>
-                                </MenuItem>
-                            </Menu>
-                        </div>
-                    ) : (
-                        <Button component={RouterLink} color="inherit" to="/login">
-                            Login
-                        </Button>
-                    )}
+                    <div>
+                        <IconButton
+                            aria-label="account of current user"
+                            aria-controls="menu-appbar"
+                            aria-haspopup="true"
+                            onClick={handleProfileMenuOpen}
+                            color="inherit"
+                        >
+                            <AccountCircleIcon />
+                        </IconButton>
+                        <Menu
+                            id="menu-appbar"
+                            open={dotsMenuOpen}
+                            anchorOrigin={{
+                                vertical: "top",
+                                horizontal: "right",
+                            }}
+                            keepMounted
+                            anchorEl={anchorEl}
+                            transformOrigin={{
+                                vertical: "top",
+                                horizontal: "right",
+                            }}
+                            onClose={handleDotsMenuClose}
+                        >
+                            <MenuItem component={RouterLink} to="/profile">
+                                Profile
+                            </MenuItem>
+                            <MenuItem component={RouterLink} to="/profile/settings">
+                                Settings
+                            </MenuItem>
+                            <MenuItem component={RouterLink} to="/profile/sessions">
+                                Sessions
+                            </MenuItem>
+                            <MenuItem component={RouterLink} to="/profile/change-email">
+                                Change E-Mail
+                            </MenuItem>
+                            <MenuItem component={RouterLink} to="/profile/change-password">
+                                Change Password
+                            </MenuItem>
+                            <Divider />
+                            <MenuItem component={RouterLink} to="/logout">
+                                <ListItemIcon>
+                                    <Logout fontSize="small" />
+                                </ListItemIcon>
+                                <ListItemText>Sign out</ListItemText>
+                            </MenuItem>
+                        </Menu>
+                    </div>
                 </Toolbar>
             </AppBar>
 
-            {authenticated ? (
-                <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
-                    <Drawer
-                        variant={isLargeScreen ? "permanent" : "temporary"}
-                        open={mobileOpen}
-                        onClose={handleDrawerToggle}
-                        ModalProps={{
-                            keepMounted: true, // Better open performance on mobile.
-                        }}
-                        sx={{
-                            "& .MuiDrawer-paper": {
-                                boxSizing: "border-box",
-                                width: drawerWidth,
-                            },
-                        }}
-                    >
-                        {drawer}
-                    </Drawer>
-                </Box>
-            ) : null}
+            <Box component="nav" sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}>
+                <Drawer
+                    variant={isLargeScreen ? "permanent" : "temporary"}
+                    open={mobileOpen}
+                    onClose={handleDrawerToggle}
+                    ModalProps={{
+                        keepMounted: true, // Better open performance on mobile.
+                    }}
+                    sx={{
+                        "& .MuiDrawer-paper": {
+                            boxSizing: "border-box",
+                            width: drawerWidth,
+                        },
+                    }}
+                >
+                    {drawer}
+                </Drawer>
+            </Box>
             <Box
                 component="main"
                 sx={{
@@ -305,11 +298,11 @@ export const Layout: React.FC<Props> = ({ groupId, children }) => {
                 <Toolbar />
                 <Banner />
                 <Container maxWidth="lg" sx={{ padding: { xs: 0, md: 1, lg: 3 } }}>
-                    {children}
+                    <React.Suspense fallback={<Loading />}>
+                        <Outlet />
+                    </React.Suspense>
                 </Container>
             </Box>
         </Box>
     );
 };
-
-export default Layout;

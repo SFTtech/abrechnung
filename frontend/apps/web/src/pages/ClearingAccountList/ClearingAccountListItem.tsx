@@ -11,6 +11,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ListItemLink } from "../../components/style/ListItemLink";
 import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
+import { getAccountLink } from "../../utils";
 
 interface Props {
     groupId: number;
@@ -38,12 +39,12 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, s
         if (!account.isWip) {
             dispatch(accountEditStarted({ groupId, accountId }));
         }
-        navigate(`/groups/${groupId}/accounts/${accountId}`);
+        navigate(getAccountLink(groupId, account.type, account.id));
     };
 
     return (
         <ListItem sx={{ padding: 0 }} key={account.id}>
-            <ListItemLink to={`/groups/${groupId}/accounts/${account.id}`}>
+            <ListItemLink to={getAccountLink(groupId, account.type, account.id)}>
                 <ListItemText
                     primary={
                         <>

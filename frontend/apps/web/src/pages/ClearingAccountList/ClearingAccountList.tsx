@@ -25,6 +25,7 @@ import { DeleteAccountModal } from "../../components/accounts/DeleteAccountModal
 import { MobilePaper } from "../../components/style/mobile";
 import { TagSelector } from "../../components/TagSelector";
 import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
+import { getAccountLink } from "../../utils";
 import { ClearingAccountListItem } from "./ClearingAccountListItem";
 
 interface Props {
@@ -70,7 +71,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
         dispatch(createAccount({ groupId, type: "clearing" }))
             .unwrap()
             .then(({ account }) => {
-                navigate(`/groups/${groupId}/accounts/${account.id}?no-redirect=true`);
+                navigate(getAccountLink(groupId, account.type, account.id) + "?no-redirect=true");
             });
     };
 

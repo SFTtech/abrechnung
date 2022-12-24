@@ -10,6 +10,7 @@ import {
     accountEditStarted,
 } from "@abrechnung/redux";
 import { useNavigate } from "react-router-dom";
+import { getAccountLink } from "../../utils";
 
 interface Props {
     groupId: number;
@@ -34,7 +35,7 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
         if (!account.isWip) {
             dispatch(accountEditStarted({ groupId, accountId }));
         }
-        navigate(`/groups/${groupId}/accounts/${accountId}`);
+        navigate(getAccountLink(groupId, account.type, account.id));
     };
     let owningUserInfo = null;
     if (account.type === "personal" && account.owningUserID !== null) {
@@ -61,7 +62,7 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
 
     return (
         <ListItem sx={{ padding: 0 }} key={account.id}>
-            <ListItemLink to={`/groups/${groupId}/accounts/${account.id}`}>
+            <ListItemLink to={getAccountLink(groupId, account.type, account.id)}>
                 <ListItemText
                     primary={
                         <div>

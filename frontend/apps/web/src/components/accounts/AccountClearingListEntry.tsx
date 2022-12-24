@@ -1,11 +1,12 @@
 import ListItemLink from "../style/ListItemLink";
-import { ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
+import { Box, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
 import { balanceColor } from "../../core/utils";
 import { ClearingAccountIcon } from "../style/AbrechnungIcons";
 import { selectAccountById, selectGroupCurrencySymbol, selectAccountBalances } from "@abrechnung/redux";
 import { useAppSelector, selectAccountSlice, selectGroupSlice } from "../../store";
+import { getAccountLink } from "../../utils";
 
 interface Props {
     groupId: number;
@@ -21,9 +22,13 @@ export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, 
     const clearingAccount = useAppSelector((state) =>
         selectAccountById({ state: selectAccountSlice(state), groupId, accountId: clearingAccountId })
     );
+    if (clearingAccount.type !== "clearing") {
+        console.error("expected a clearing account but received a personal account");
+        return null;
+    }
 
     return (
-        <ListItemLink to={`/groups/${groupId}/accounts/${clearingAccountId}`}>
+        <ListItemLink to={getAccountLink(groupId, clearingAccount.type, clearingAccount.id)}>
             <ListItemAvatar sx={{ minWidth: { xs: "40px", md: "56px" } }}>
                 <Tooltip title="Clearing Account">
                     <ClearingAccountIcon color="primary" />
@@ -35,7 +40,12 @@ export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, 
                         {clearingAccount.name}
                     </Typography>
                 }
-                secondary={clearingAccount.description}
+                secondary={
+                    <Box sx={{ display: "flex", flexDirection: "column" }}>
+                        <span>{clearingAccount.description}</span>
+                        {clearingAccount.dateInfo != null && <span>{clearingAccount.dateInfo}</span>}
+                    </Box>
+                }
             />
             <ListItemText>
                 <Typography align="right" variant="body2">
