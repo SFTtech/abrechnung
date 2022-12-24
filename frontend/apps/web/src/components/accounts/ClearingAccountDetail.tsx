@@ -91,10 +91,15 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) =
                                                     <ClearingAccountIcon />
                                                 )}
                                             </Grid>
-                                            <Grid item sx={{ ml: 1 }}>
+                                            <Grid item sx={{ ml: 1, display: "flex", flexDirection: "column" }}>
                                                 <Typography variant="body2" component="span">
                                                     {a.name}
                                                 </Typography>
+                                                {a.type === "clearing" && a.dateInfo != null && (
+                                                    <Typography variant="caption" component="span">
+                                                        {a.dateInfo}
+                                                    </Typography>
+                                                )}
                                             </Grid>
                                         </Grid>
                                     </Link>
