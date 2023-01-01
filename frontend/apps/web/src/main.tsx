@@ -1,12 +1,12 @@
 import React from "react";
-import { Provider } from "react-redux";
 import * as ReactDOM from "react-dom/client";
+import { Provider } from "react-redux";
 import { RecoilRoot } from "recoil";
-import { persistor, store } from "./store";
-
+import { PersistGate } from "redux-persist/integration/react";
 import App from "./app/app";
 import Loading from "./components/style/Loading";
-import { PersistGate } from "redux-persist/integration/react";
+import "./i18n";
+import { persistor, store } from "./store";
 
 const root = ReactDOM.createRoot(document.getElementById("root") as HTMLElement);
 root.render(

@@ -7,6 +7,7 @@ import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
 import { z } from "zod";
 import { toFormikValidationSchema } from "@abrechnung/utils";
+import { useTranslation } from "react-i18next";
 
 const validationSchema = z
     .object({
@@ -21,13 +22,14 @@ const validationSchema = z
 type FormSchema = z.infer<typeof validationSchema>;
 
 export const ChangePassword: React.FC = () => {
-    useTitle("Abrechnung - Change Password");
+    const { t } = useTranslation();
+    useTitle(t("Abrechnung - Change Password"));
 
     const handleSubmit = (values: FormSchema, { setSubmitting, resetForm }: FormikHelpers<FormSchema>) => {
         api.changePassword({ oldPassword: values.password, newPassword: values.newPassword })
             .then(() => {
                 setSubmitting(false);
-                toast.success("Successfully changed password");
+                toast.success(t("Successfully changed password"));
                 resetForm();
             })
             .catch((error) => {
@@ -39,7 +41,7 @@ export const ChangePassword: React.FC = () => {
     return (
         <MobilePaper>
             <Typography component="h3" variant="h5">
-                Change Password
+                {t("Change Password")}
             </Typography>
             <Formik
                 validationSchema={toFormikValidationSchema(validationSchema)}
@@ -58,7 +60,7 @@ export const ChangePassword: React.FC = () => {
                             margin="normal"
                             type="password"
                             name="password"
-                            label="Password"
+                            label={t("Password")}
                             variant="standard"
                             value={values.password}
                             onChange={handleChange}
@@ -72,7 +74,7 @@ export const ChangePassword: React.FC = () => {
                             margin="normal"
                             type="password"
                             name="newPassword"
-                            label="New Password"
+                            label={t("New Password")}
                             variant="standard"
                             value={values.newPassword}
                             onChange={handleChange}
@@ -90,14 +92,14 @@ export const ChangePassword: React.FC = () => {
                             margin="normal"
                             type="password"
                             name="newPassword2"
-                            label="Repeat Password"
+                            label={t("Repeat Password")}
                             error={touched.newPassword2 && !!errors.newPassword2}
                             helperText={touched.newPassword2 && errors.newPassword2}
                         />
 
                         {isSubmitting && <LinearProgress />}
                         <Button type="submit" color="primary" disabled={isSubmitting}>
-                            Save
+                            {t("Save")}
                         </Button>
                     </Form>
                 )}

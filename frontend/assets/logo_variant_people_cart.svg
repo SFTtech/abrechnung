@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="50mm"
+   height="50mm"
+   viewBox="0 0 50 50"
+   version="1.1"
+   id="svg5"
+   sodipodi:docname="logo_variant_people_cart.svg"
+   inkscape:export-filename="C:\Users\denit\Documents\Uni\Flavicon.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#111111"
+     borderopacity="1"
+     inkscape:pageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="1"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="2.8284271"
+     inkscape:cx="248.90159"
+     inkscape:cy="62.402173"
+     inkscape:window-width="2540"
+     inkscape:window-height="1370"
+     inkscape:window-x="1928"
+     inkscape:window-y="60"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1"
+     inkscape:showpageshadow="2"
+     inkscape:deskcolor="#d1d1d1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-14.213544,-133.73907)">
+    <path
+       style="fill:#000000;stroke:#000000;stroke-width:0.00678164"
+       d=""
+       id="path2137"
+       transform="scale(0.26458333)" />
+    <ellipse
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none"
+       id="path57434"
+       cx="20.852022"
+       cy="158.88721"
+       rx="3.3072915"
+       ry="3.3734374" />
+    <ellipse
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none"
+       id="path57434-6"
+       cx="33.948898"
+       cy="141.49088"
+       rx="3.3072915"
+       ry="3.3734374" />
+    <ellipse
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none"
+       id="path57434-5"
+       cx="33.948982"
+       cy="176.28964"
+       rx="3.3072915"
+       ry="3.3734374" />
+    <rect
+       style="fill:none;fill-opacity:0.854902;stroke:#000000;stroke-width:1.45507;stroke-miterlimit:4;stroke-dasharray:none"
+       id="rect21573-4-3"
+       width="20.049845"
+       height="1.2823104"
+       x="70.396957"
+       y="-115.46229"
+       ry="0.5493682"
+       transform="matrix(-0.60655685,0.79504011,-0.66243113,-0.74912282,0,0)" />
+    <rect
+       style="fill:none;fill-opacity:0.854902;stroke:#000000;stroke-width:1.42846;stroke-miterlimit:4;stroke-dasharray:none"
+       id="rect21573-4-3-4"
+       width="19.63475"
+       height="1.2619712"
+       x="-145.69383"
+       y="81.348679"
+       ry="0.54065448"
+       transform="matrix(-0.61136025,-0.79135242,-0.68052022,0.73272931,0,0)" />
+    <path
+       id="rect10802"
+       style="stroke:#000000;stroke-width:0.676977"
+       d="m 38.37758,155.2646 h 22.223647 c 0.117733,0 0.25305,0.13883 0.212511,0.28927 l -3.094643,11.48558 c -0.04054,0.15047 -0.09478,0.28928 -0.212511,0.28928 H 41.472223 c -0.117733,0 -0.171974,-0.13881 -0.212512,-0.28928 l -3.094643,-11.48558 c -0.04054,-0.15044 0.09478,-0.28927 0.212512,-0.28927 z"
+       sodipodi:nodetypes="sssssssss" />
+    <rect
+       style="fill:#000000;stroke:#000000;stroke-width:0.442324"
+       id="rect12595"
+       width="11.475522"
+       height="1.1618762"
+       x="36.937626"
+       y="153.25337"
+       ry="0.22441506" />
+    <rect
+       style="fill:#000000;stroke:#000000;stroke-width:0.442324"
+       id="rect12595-2"
+       width="11.475522"
+       height="1.1618762"
+       x="50.629932"
+       y="153.25331"
+       ry="0.22441506" />
+    <rect
+       style="fill:#000000;stroke:#000000;stroke-width:0.627142"
+       id="rect12721"
+       width="0.77680063"
+       height="6.9116955"
+       x="49.133083"
+       y="147.40883"
+       ry="0.08061038" />
+  </g>
+</svg>

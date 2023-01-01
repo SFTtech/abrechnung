@@ -7,6 +7,7 @@ import { MobilePaper } from "../../components/style/mobile";
 import { useTitle } from "../../core/utils";
 import { z } from "zod";
 import { toFormikValidationSchema } from "@abrechnung/utils";
+import { useTranslation } from "react-i18next";
 
 const validationSchema = z.object({
     password: z.string({ required_error: "password is required" }),
@@ -15,13 +16,14 @@ const validationSchema = z.object({
 type FormSchema = z.infer<typeof validationSchema>;
 
 export const ChangeEmail: React.FC = () => {
-    useTitle("Abrechnung - Change E-Mail");
+    const { t } = useTranslation();
+    useTitle(t("Abrechnung - Change E-Mail"));
 
     const handleSubmit = (values: FormSchema, { setSubmitting, resetForm }: FormikHelpers<FormSchema>) => {
         api.changeEmail({ password: values.password, newEmail: values.newEmail })
             .then(() => {
                 setSubmitting(false);
-                toast.success("Requested email change, you should receive an email with a confirmation link soon");
+                toast.success(t("Requested email change, you should receive an email with a confirmation link soon"));
                 resetForm();
             })
             .catch((error) => {
@@ -33,7 +35,7 @@ export const ChangeEmail: React.FC = () => {
     return (
         <MobilePaper>
             <Typography component="h3" variant="h5">
-                Change E-Mail
+                {t("Change E-Mail")}
             </Typography>
             <Formik
                 validationSchema={toFormikValidationSchema(validationSchema)}
@@ -52,7 +54,7 @@ export const ChangeEmail: React.FC = () => {
                             value={values.password}
                             onChange={handleChange}
                             onBlur={handleBlur}
-                            label="Password"
+                            label={t("Password")}
                             error={touched.password && !!errors.password}
                             helperText={touched.password && errors.password}
                         />
@@ -66,14 +68,14 @@ export const ChangeEmail: React.FC = () => {
                             value={values.newEmail}
                             onChange={handleChange}
                             onBlur={handleBlur}
-                            label="New E-Mail"
+                            label={t("New E-Mail")}
                             error={touched.newEmail && !!errors.newEmail}
                             helperText={touched.newEmail && errors.newEmail}
                         />
 
                         {isSubmitting && <LinearProgress />}
                         <Button type="submit" color="primary" disabled={isSubmitting}>
-                            Save
+                            {t("Save")}
                         </Button>
                     </Form>
                 )}

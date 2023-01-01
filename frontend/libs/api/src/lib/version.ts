@@ -45,5 +45,5 @@ export const isRequiredVersion = (version: string, minVersion: string, maxVersio
     const min = parseSemVersion(minVersion);
     const max = parseSemVersion(maxVersion);
 
-    return compareSemVersion(v, min) >= 0 && compareSemVersion(v, max) <= 0;
+    return compareSemVersion(v, min) >= 0 && compareSemVersion(v, max) < 0;
 };

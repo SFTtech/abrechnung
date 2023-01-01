@@ -2,7 +2,7 @@
     "build": {
         "production": {
             "android": {
-                "buildType": "app-bundle"
+                "buildType": "apk"
             }
         },
         "development": {

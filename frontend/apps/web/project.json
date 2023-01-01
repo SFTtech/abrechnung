@@ -3,10 +3,18 @@
     "sourceRoot": "apps/web/src",
     "projectType": "application",
     "targets": {
+        "collect-assets": {
+            "executor": "nx:run-commands",
+            "options": {
+                "commands": ["cp -r assets/* apps/web/src/assets/", "cp assets/logo.png apps/web/src/favicon.png"],
+                "parallel": false
+            }
+        },
         "build": {
             "executor": "@nrwl/web:webpack",
             "outputs": ["{options.outputPath}"],
             "defaultConfiguration": "production",
+            "dependsOn": ["collect-assets"],
             "options": {
                 "compiler": "babel",
                 "outputPath": "dist/apps/web",
@@ -46,6 +54,7 @@
         "serve": {
             "executor": "@nrwl/web:dev-server",
             "defaultConfiguration": "development",
+            "dependsOn": ["collect-assets"],
             "options": {
                 "buildTarget": "web:build",
                 "hmr": true,
@@ -64,6 +73,7 @@
         "lint": {
             "executor": "@nrwl/linter:eslint",
             "outputs": ["{options.outputFile}"],
+            "dependsOn": ["collect-assets"],
             "options": {
                 "lintFilePatterns": ["apps/web/**/*.{ts,tsx,js,jsx}"]
             }
@@ -71,6 +81,7 @@
         "test": {
             "executor": "@nrwl/jest:jest",
             "outputs": ["coverage/apps/web"],
+            "dependsOn": ["collect-assets"],
             "options": {
                 "jestConfig": "apps/web/jest.config.ts",
                 "passWithNoTests": true
