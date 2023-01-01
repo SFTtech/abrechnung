@@ -6,7 +6,7 @@
         "collect-assets": {
             "executor": "nx:run-commands",
             "options": {
-                "commands": ["cp -r assets/* apps/mobile/assets/"],
+                "commands": ["cp -rf assets/* apps/mobile/assets/"],
                 "parallel": false
             }
         },

@@ -6,7 +6,7 @@
         "collect-assets": {
             "executor": "nx:run-commands",
             "options": {
-                "commands": ["cp -r assets/* apps/web/src/assets/", "cp assets/logo.png apps/web/src/favicon.png"],
+                "commands": ["cp -rf assets/* apps/web/src/assets/", "cp assets/logo.png apps/web/src/favicon.png"],
                 "parallel": false
             }
         },

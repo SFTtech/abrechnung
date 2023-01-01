@@ -47,8 +47,8 @@ export class HttpError implements IHttpError {
 }
 
 // accepted version range of the backend api, [min, max)
-export const MIN_BACKEND_VERSION = "0.9.0";
-export const MAX_BACKEND_VERSION = "0.10.0";
+export const MIN_BACKEND_VERSION = "0.10.0";
+export const MAX_BACKEND_VERSION = "0.11.0";
 
 export class Api {
     private baseApiUrl: string | null = null;

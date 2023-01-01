@@ -22,7 +22,7 @@
         },
         "android": {
             "adaptiveIcon": {
-                "foregroundImage": "./assets/logo.png",
+                "foregroundImage": "./assets/logo_android.png",
                 "backgroundColor": "#ffffff"
             },
             "package": "lol.sft.abrechnung"
