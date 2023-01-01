@@ -1,4 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
+import { PURGE } from "redux-persist";
 import { Api } from "@abrechnung/api";
 import { fetchAccounts } from "./accounts";
 import { fetchTransactions } from "./transactions";
@@ -24,3 +25,12 @@ export const fetchGroupDependencies = createAsyncThunk<
         },
     }
 );
+
+export const clearCache = createAsyncThunk<void, void>("clearCache", async (args, { dispatch }) => {
+    dispatch({
+        type: PURGE,
+        result: (purgeResult: any) => {
+            return;
+        },
+    });
+});

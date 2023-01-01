@@ -46,8 +46,9 @@ export class HttpError implements IHttpError {
     constructor(public statusCode: number, public message: string) {}
 }
 
+// accepted version range of the backend api, [min, max)
 export const MIN_BACKEND_VERSION = "0.9.0";
-export const MAX_BACKEND_VERSION = "0.9.0";
+export const MAX_BACKEND_VERSION = "0.10.0";
 
 export class Api {
     private baseApiUrl: string | null = null;
@@ -83,7 +84,7 @@ export class Api {
         }
         if (!isRequiredVersion(this.backendVersion, MIN_BACKEND_VERSION, MAX_BACKEND_VERSION)) {
             throw new Error(
-                `This app version is incompatible with the version your backend is running. Expected ${MIN_BACKEND_VERSION} - ${MAX_BACKEND_VERSION}, but the backend is running ${this.backendVersion}`
+                `This app version is incompatible with the version your backend is running. Expected ${MIN_BACKEND_VERSION} (inclusive) to ${MAX_BACKEND_VERSION} (exclusive), but the backend is running ${this.backendVersion}`
             );
         }
     };

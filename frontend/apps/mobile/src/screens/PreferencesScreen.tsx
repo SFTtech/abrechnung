@@ -1,11 +1,10 @@
-import { StyleSheet, View } from "react-native";
-import { Divider, List, Portal, Dialog, Checkbox, useTheme, RadioButton } from "react-native-paper";
+import { clearCache, logout } from "@abrechnung/redux";
 import * as React from "react";
-import { notify } from "../notifications";
-import { RootDrawerScreenProps } from "../navigation/types";
-import { useAppDispatch, useAppSelector, selectTheme, selectSettingsSlice, ThemeMode, themeChanged } from "../store";
-import { logout } from "@abrechnung/redux";
+import { StyleSheet, View } from "react-native";
+import { Dialog, Divider, List, Portal, RadioButton, useTheme } from "react-native-paper";
 import { api } from "../core/api";
+import { RootDrawerScreenProps } from "../navigation/types";
+import { selectSettingsSlice, selectTheme, themeChanged, ThemeMode, useAppDispatch, useAppSelector } from "../store";
 
 const themeModes: ThemeMode[] = ["system", "dark", "light"];
 
@@ -20,6 +19,14 @@ export const PreferencesScreen: React.FC<RootDrawerScreenProps<"Preferences">> =
             .unwrap()
             .catch((err: Error) => {
                 console.error("logout had error", err);
+            });
+    };
+
+    const onClearCache = () => {
+        dispatch(clearCache())
+            .unwrap()
+            .catch((err: Error) => {
+                console.error("clear cache had error", err);
             });
     };
 
@@ -51,7 +58,10 @@ export const PreferencesScreen: React.FC<RootDrawerScreenProps<"Preferences">> =
         <View>
             <List.Item title="Theme" description={prettyThemeName(themeMode)} onPress={openThemeSelect} />
             <Divider />
+            <List.Item title="Clear cache" onPress={onClearCache} titleStyle={{ color: theme.colors.error }} />
+            <Divider />
             <List.Item title="Logout" onPress={onLogout} titleStyle={{ color: theme.colors.error }} />
+            <Divider />
             <Portal>
                 <Dialog visible={themeSelectOpen} onDismiss={closeThemeSelect}>
                     <Dialog.Title>Theme</Dialog.Title>
