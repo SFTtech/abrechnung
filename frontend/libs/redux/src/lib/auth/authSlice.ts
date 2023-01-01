@@ -80,10 +80,12 @@ export const logout = createAsyncThunk<void, { api: Api }>("logout", async ({ ap
             console.error("Unexpected error occured while trying to logout.", err);
         }
     }
+    console.log("purging state");
     api.resetAuthState();
     dispatch({
         type: PURGE,
         result: (purgeResult: any) => {
+            console.log("successfully purged state", purgeResult);
             return;
         },
     });

@@ -63,8 +63,7 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                 validateOnBlur={false}
                 validateOnChange={false}
                 initialValues={{
-                    // server: "https://demo.abrechnung.sft.lol",
-                    server: "http://192.168.178.26:8080",
+                    server: "https://demo.abrechnung.sft.lol",
                     username: "",
                     password: "",
                 }}
