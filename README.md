@@ -70,5 +70,5 @@ Support us       | [![money sink](https://liberapay.com/assets/widgets/donate.sv
 
 ## License
 
-Released under the **GNU Affero General Public License** version 3 or later, see [COPYING](COPYING)
+Released under the **GNU Affero General Public License** version 3 or later, see [the authors](authors.md)
 and [LICENSE](LICENSE) for details.

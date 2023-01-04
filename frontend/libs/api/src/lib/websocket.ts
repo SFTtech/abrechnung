@@ -158,6 +158,10 @@ export class AbrechnungWebSocket {
         this.init();
     };
 
+    public waitUntilAuthenticated = async () => {
+        await this.api.waitUntilAuthenticated();
+    };
+
     private onmessage = (evt: MessageEvent) => {
         let msg;
         try {

@@ -9,6 +9,7 @@ export const subscribe = createAsyncThunk<
 >(
     "subscribe",
     async ({ subscription, websocket }) => {
+        await websocket.waitUntilAuthenticated();
         websocket.sendSubscriptionRequest(
             subscription.type,
             subscription.type === "group" ? subscription.userId : subscription.groupId

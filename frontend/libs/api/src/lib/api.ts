@@ -56,6 +56,8 @@ export class Api {
     private accessToken: string | null = null;
     private backendVersion: string | null = null;
 
+    private authenticatedResolveCallbacks: Array<() => void> = [];
+
     constructor(private connectionStatusProvider: IConnectionStatusProvider) {}
 
     public resetAuthState = () => {
@@ -63,11 +65,17 @@ export class Api {
         // this.accessToken = null; // we do not null the access token s.t. we can perform remaining requests
     };
 
+    private notifyAuthenticatedWaiters = () => {
+        for (const cb of this.authenticatedResolveCallbacks) {
+            cb();
+        }
+    };
+
     public init = async (baseApiUrl: string, sessionToken?: string) => {
         this.baseApiUrl = baseApiUrl;
 
         if (sessionToken) {
-            this.sessionToken = sessionToken;
+            this.setSessionToken(sessionToken);
         }
         await this.checkBackendVersion();
     };
@@ -89,6 +97,16 @@ export class Api {
         }
     };
 
+    public waitUntilAuthenticated = async (): Promise<void> => {
+        return new Promise<void>((resolve) => {
+            if (this.sessionToken !== null) {
+                resolve();
+            } else {
+                this.authenticatedResolveCallbacks.push(resolve);
+            }
+        });
+    };
+
     public getAccessToken = (): string | null => {
         return this.accessToken;
     };
@@ -103,6 +121,7 @@ export class Api {
 
     public setSessionToken = (token: string) => {
         this.sessionToken = token;
+        this.notifyAuthenticatedWaiters();
     };
 
     public getSessionToken = (): string | null => {
