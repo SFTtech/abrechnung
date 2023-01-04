@@ -9,7 +9,7 @@ from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
-from abrechnung.database import db_connect
+from abrechnung.database import create_db_pool
 
 
 def random_date() -> date:
@@ -28,7 +28,7 @@ async def main(
 ):
     config = Config.from_file(Path(config_path))
 
-    db_pool = await db_connect(config.get("database"))
+    db_pool = await create_db_pool(config.get("database"))
     user_service = UserService(db_pool, config)
     group_service = GroupService(db_pool, config)
     account_service = AccountService(db_pool, config)

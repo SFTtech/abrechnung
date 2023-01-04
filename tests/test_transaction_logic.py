@@ -4,12 +4,12 @@ from datetime import datetime
 from abrechnung.application.accounts import AccountService
 from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
-from tests import AsyncTestCase
+from .common import BaseTestCase
 
 
-class TransactionLogicTest(AsyncTestCase):
-    async def setUpAsync(self) -> None:
-        await super().setUpAsync()
+class TransactionLogicTest(BaseTestCase):
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
         self.group_service = GroupService(self.db_pool, config=self.test_config)
         self.account_service = AccountService(self.db_pool, config=self.test_config)
         self.transaction_service = TransactionService(

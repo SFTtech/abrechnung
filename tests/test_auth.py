@@ -6,12 +6,12 @@ from abrechnung.application.users import UserService
 from abrechnung.application.groups import GroupService
 from abrechnung.config import Config
 
-from tests import AsyncTestCase, TEST_CONFIG
+from .common import BaseTestCase, TEST_CONFIG
 
 
-class TransactionLogicTest(AsyncTestCase):
-    async def setUpAsync(self) -> None:
-        await super().setUpAsync()
+class TransactionLogicTest(BaseTestCase):
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
         self.group_service = GroupService(self.db_pool, config=self.test_config)
 
         self.user, _ = await self._create_test_user("test", "test@test.test")
@@ -28,7 +28,7 @@ class TransactionLogicTest(AsyncTestCase):
         config = deepcopy(TEST_CONFIG)
         config["registration"]["allow_guest_users"] = True
         config["registration"]["valid_email_domains"] = ["stusta.de"]
-        test_config = Config.from_dict(config)
+        test_config = Config.parse_obj(config)
         user_service = UserService(self.db_pool, config=test_config)
 
         invite_token_id = await self.group_service.create_invite(

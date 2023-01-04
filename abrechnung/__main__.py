@@ -2,8 +2,14 @@ import argparse
 import asyncio
 from pathlib import Path
 
-from abrechnung.config import Config
+from abrechnung.config import read_config
 from abrechnung.util import log_setup
+
+from abrechnung.mailer import MailerCli
+from abrechnung.http.cli import ApiCli
+from abrechnung.database.cli import DatabaseCli
+from abrechnung.admin import AdminCli
+from abrechnung.demo import DemoCli
 
 
 def main():
@@ -39,25 +45,11 @@ def main():
         subcommand_class.argparse_register(subparser)
 
     # add all the subcommands here
-    from . import mailer
-
-    add_subcommand("mailer", mailer.Mailer)
-
-    from . import http
-
-    add_subcommand("api", http.HTTPService)
-
-    from . import database
-
-    add_subcommand("db", database.CLI)
-
-    from . import admin
-
-    add_subcommand("admin", admin.Admin)
-
-    from . import demo
-
-    add_subcommand("demo", demo.Demo)
+    add_subcommand("mailer", MailerCli)
+    add_subcommand("api", ApiCli)
+    add_subcommand("db", DatabaseCli)
+    add_subcommand("admin", AdminCli)
+    add_subcommand("demo", DemoCli)
 
     args = vars(cli.parse_args())
 
@@ -69,7 +61,7 @@ def main():
     # loop.set_debug(args["debug"])
 
     config_path = args.pop("config_path")
-    config = Config.from_file(Path(config_path))
+    config = read_config(Path(config_path))
 
     try:
         subcommand_class = args.pop("subcommand_class")

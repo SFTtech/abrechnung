@@ -1,10 +1,9 @@
 import jwt
 
-from abrechnung.http.auth import token_for_user
-from tests.http_tests import BaseHTTPAPITest
+from tests.http_tests.common import HTTPTestCase
 
 
-class AuthAPITest(BaseHTTPAPITest):
+class AuthAPITest(HTTPTestCase):
     async def _login(
         self,
         username: str,
@@ -20,16 +19,16 @@ class AuthAPITest(BaseHTTPAPITest):
                 "session_name": session_name,
             },
         )
-        self.assertEqual(expected_status, resp.status)
-        return await resp.json()
+        self.assertEqual(expected_status, resp.status_code)
+        return resp.json()
 
     async def _fetch_profile(self, token: str, expected_status: int = 200):
         resp = await self.client.get(
             f"/api/v1/profile", headers={"Authorization": f"Bearer {token}"}
         )
-        self.assertEqual(expected_status, resp.status)
-        if resp.status < 400:
-            return await resp.json()
+        self.assertEqual(expected_status, resp.status_code)
+        if resp.status_code < 400:
+            return resp.json()
 
         return None
 
@@ -42,8 +41,8 @@ class AuthAPITest(BaseHTTPAPITest):
                 "password": "password",
             },
         )
-        self.assertEqual(200, resp.status)
-        ret_data = await resp.json()
+        self.assertEqual(200, resp.status_code)
+        ret_data = resp.json()
         self.assertIsNotNone(ret_data["user_id"])
 
         resp = await self.client.post(
@@ -54,7 +53,7 @@ class AuthAPITest(BaseHTTPAPITest):
                 "password": "password",
             },
         )
-        self.assertEqual(400, resp.status)
+        self.assertEqual(400, resp.status_code)
 
     async def test_login_user(self):
         user_name = "user"
@@ -73,7 +72,7 @@ class AuthAPITest(BaseHTTPAPITest):
         resp = await self.client.post(
             f"/api/v1/auth/confirm_registration", json={"token": str(token)}
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(204, resp.status_code)
 
         # now we should be able to login and get a session token
         resp = await self._login(email, "password")
@@ -104,15 +103,17 @@ class AuthAPITest(BaseHTTPAPITest):
         resp = await self.client.post(
             f"/api/v1/auth/logout", headers={"Authorization": f"Bearer {token}"}
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(204, resp.status_code)
         await self._fetch_profile(token, expected_status=401)
 
     async def test_change_password(self):
         user, password = await self._create_test_user("user", "user@email.stuff")
-        _, session_id, _ = await self.user_service.login_user(
+        _, session_id, session_token = await self.user_service.login_user(
             "user", password=password, session_name="session1"
         )
-        token = token_for_user(user.id, session_id, self.secret_key)
+        token = await self.user_service.get_access_token_from_session_token(
+            session_token
+        )
 
         headers = {"Authorization": f"Bearer {token}"}
 
@@ -122,14 +123,14 @@ class AuthAPITest(BaseHTTPAPITest):
             headers=headers,
             json={"old_password": "foobar", "new_password": "password3"},
         )
-        self.assertEqual(400, resp.status)
+        self.assertEqual(400, resp.status_code)
 
         resp = await self.client.post(
             f"/api/v1/profile/change_password",
             headers=headers,
             json={"old_password": password, "new_password": "password2"},
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(204, resp.status_code)
 
         # check that we can login with the new password
         await self._login("user", "password2")
@@ -139,10 +140,12 @@ class AuthAPITest(BaseHTTPAPITest):
         old_email = "user@stusta.de"
         new_email = "new_email@stusta.de"
         user, password = await self._create_test_user(username, old_email)
-        _, session_id, _ = await self.user_service.login_user(
+        _, session_id, session_token = await self.user_service.login_user(
             username=username, password=password, session_name="session1"
         )
-        token = token_for_user(user.id, session_id, self.secret_key)
+        token = await self.user_service.get_access_token_from_session_token(
+            session_token
+        )
 
         headers = {"Authorization": f"Bearer {token}"}
         resp = await self.client.post(
@@ -150,18 +153,18 @@ class AuthAPITest(BaseHTTPAPITest):
             headers=headers,
             json={"email": new_email, "password": password},
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(204, resp.status_code)
 
         resp = await self.client.post(
             f"/api/v1/profile/change_email",
             headers=headers,
             json={"email": new_email, "password": "asdf1234"},
         )
-        self.assertEqual(400, resp.status)
+        self.assertEqual(400, resp.status_code)
 
         resp = await self.client.get(f"/api/v1/profile", headers=headers)
-        self.assertEqual(200, resp.status)
-        profile = await resp.json()
+        self.assertEqual(200, resp.status_code)
+        profile = resp.json()
         # we still have the old email
         self.assertEqual(old_email, profile["email"])
 
@@ -174,17 +177,17 @@ class AuthAPITest(BaseHTTPAPITest):
         resp = await self.client.post(
             f"/api/v1/auth/confirm_email_change", json={"token": "foobar lol"}
         )
-        self.assertEqual(400, resp.status)
+        self.assertEqual(400, resp.status_code)
 
         resp = await self.client.post(
             f"/api/v1/auth/confirm_email_change", json={"token": str(token)}
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(204, resp.status_code)
 
         # now we have the new email
         resp = await self.client.get(f"/api/v1/profile", headers=headers)
-        self.assertEqual(200, resp.status)
-        profile = await resp.json()
+        self.assertEqual(200, resp.status_code)
+        profile = resp.json()
         # we still have the old email
         self.assertEqual(new_email, profile["email"])
 
@@ -196,13 +199,13 @@ class AuthAPITest(BaseHTTPAPITest):
             f"/api/v1/auth/recover_password",
             json={"email": "fooo@stusta.de"},
         )
-        self.assertEqual(403, resp.status)
+        self.assertEqual(403, resp.status_code)
 
         resp = await self.client.post(
             f"/api/v1/auth/recover_password",
             json={"email": user_email},
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(204, resp.status_code)
 
         # confirm the email change
         # fetch the registration token from the database
@@ -218,13 +221,13 @@ class AuthAPITest(BaseHTTPAPITest):
             f"/api/v1/auth/confirm_password_recovery",
             json={"token": "foobar", "new_password": "secret secret"},
         )
-        self.assertEqual(400, resp.status)
+        self.assertEqual(400, resp.status_code)
 
         resp = await self.client.post(
             f"/api/v1/auth/confirm_password_recovery",
             json={"token": str(token), "new_password": "new_password"},
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(204, resp.status_code)
 
         # check that we can login with the new password
         await self._login(username, "new_password")
@@ -248,7 +251,7 @@ class AuthAPITest(BaseHTTPAPITest):
             json={"session_id": session_id, "name": "new_session_name"},
             headers=headers,
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(204, resp.status_code)
 
         profile = await self._fetch_profile(token)
         self.assertEqual(1, len(profile["sessions"]))
@@ -260,5 +263,5 @@ class AuthAPITest(BaseHTTPAPITest):
             json={"session_id": session_id},
             headers=headers,
         )
-        self.assertEqual(204, resp.status)
+        self.assertEqual(204, resp.status_code)
         await self._fetch_profile(token, expected_status=401)

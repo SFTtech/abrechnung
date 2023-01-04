@@ -7,8 +7,8 @@ from aiosmtpd.controller import Controller
 
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
-from abrechnung.mailer import Mailer
-from tests import AsyncTestCase, TEST_CONFIG
+from abrechnung.mailer import MailerCli
+from .common import BaseTestCase, TEST_CONFIG
 
 
 @dataclass
@@ -38,9 +38,9 @@ class DummySMTPHandler:
         return "250 Message accepted for delivery"
 
 
-class MailerTest(AsyncTestCase):
-    async def setUpAsync(self) -> None:
-        await super().setUpAsync()
+class MailerTest(BaseTestCase):
+    async def asyncSetUp(self) -> None:
+        await super().asyncSetUp()
         self.smtp_handler = DummySMTPHandler()
         self.smtp = Controller(self.smtp_handler)
         self.smtp.start()
@@ -55,15 +55,15 @@ class MailerTest(AsyncTestCase):
                 }
             }
         )
-        self.mailer_config = Config.from_dict(config)
-        self.mailer = Mailer(config=self.mailer_config)
+        self.mailer_config = Config.parse_obj(config)
+        self.mailer = MailerCli(config=self.mailer_config)
 
         self.mailer_task = asyncio.create_task(self.mailer.run())
 
         self.user_service = UserService(db_pool=self.db_pool, config=self.mailer_config)
 
-    async def tearDownAsync(self) -> None:
-        await super().tearDownAsync()
+    async def asyncTearDown(self) -> None:
+        await super().asyncTearDown()
         self.mailer_task.cancel()
         self.smtp.stop()
 

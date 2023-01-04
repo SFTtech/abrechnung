@@ -1,13 +1,18 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-import bcrypt
+import asyncpg
 from asyncpg.pool import Pool
 from email_validator import validate_email, EmailNotValidError
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from pydantic import BaseModel
 
 from abrechnung.domain.users import User, Session
 from . import Application, NotFoundError, InvalidCommand
 from ..config import Config
+
+ALGORITHM = "HS256"
 
 
 class InvalidPassword(Exception):
@@ -18,6 +23,11 @@ class LoginFailed(Exception):
     pass
 
 
+class TokenMetadata(BaseModel):
+    user_id: int
+    session_id: int
+
+
 class UserService(Application):
     def __init__(
         self,
@@ -26,21 +36,54 @@ class UserService(Application):
     ):
         super().__init__(db_pool=db_pool, config=config)
 
-        self.enable_registration = self.cfg["registration"]["enabled"]
-        self.allow_guest_users = self.cfg["registration"]["allow_guest_users"]
-        self.valid_email_domains = self.cfg["registration"].get("valid_email_domains")
+        self.enable_registration = self.cfg.registration.enabled
+        self.allow_guest_users = self.cfg.registration.allow_guest_users
+        self.valid_email_domains = self.cfg.registration.valid_email_domains
 
-    @staticmethod
-    def _hash_password(password: str) -> str:
-        salt = bcrypt.gensalt()
-        return bcrypt.hashpw(password=password.encode("utf-8"), salt=salt).decode()
+        self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-    @staticmethod
-    def _check_password(password: str, hashed_password: str) -> bool:
-        return bcrypt.checkpw(
-            password=password.encode("utf-8"),
-            hashed_password=hashed_password.encode("utf-8"),
+    def _hash_password(self, password: str) -> str:
+        return self.pwd_context.hash(password)
+
+    def _check_password(self, password: str, hashed_password: str) -> bool:
+        return self.pwd_context.verify(password, hashed_password)
+
+    def _create_access_token(self, data: dict):
+        to_encode = data.copy()
+        expire = datetime.utcnow() + self.cfg.api.access_token_validity
+        to_encode.update({"exp": expire})
+        encoded_jwt = jwt.encode(
+            to_encode, self.cfg.api.secret_key, algorithm=ALGORITHM
         )
+        return encoded_jwt
+
+    def decode_jwt_payload(self, token: str) -> TokenMetadata:
+        try:
+            payload = jwt.decode(token, self.cfg.api.secret_key, algorithms=[ALGORITHM])
+            try:
+                return TokenMetadata.parse_obj(payload)
+            except:
+                raise PermissionError("invalid access token token")
+        except JWTError:
+            raise PermissionError
+
+    async def get_user_from_token(self, token: str) -> User:
+        token_metadata = self.decode_jwt_payload(token)
+
+        async with self.db_pool.acquire() as conn:
+            async with conn.transaction():
+                sess = await conn.fetchval(
+                    "select id from session "
+                    "where id = $1 and user_id = $2 and valid_until is null or valid_until > now()",
+                    token_metadata.session_id,
+                    token_metadata.user_id,
+                )
+                if not sess:
+                    raise PermissionError
+                user = await self._get_user(conn=conn, user_id=token_metadata.user_id)
+                if user is None:
+                    raise PermissionError
+                return user
 
     async def _verify_user_password(self, user_id: int, password: str) -> bool:
         async with self.db_pool.acquire() as conn:
@@ -55,6 +98,14 @@ class UserService(Application):
                 return False
 
             return self._check_password(password, user["hashed_password"])
+
+    async def get_access_token_from_session_token(self, session_token: str) -> str:
+        res = await self.is_session_token_valid(session_token)
+        if res is None:
+            raise PermissionError("invalid session token")
+        user_id, session_id = res
+
+        return self._create_access_token({"user_id": user_id, "session_id": session_id})
 
     async def is_session_token_valid(self, token: str) -> Optional[tuple[int, int]]:
         """returns the session id"""
@@ -79,7 +130,7 @@ class UserService(Application):
 
         If successful return the user id, a new session id and a session token
         """
-        async with self.db_pool.acquire(timeout=1) as conn:
+        async with self.db_pool.acquire() as conn:
             async with conn.transaction():
                 user = await conn.fetchrow(
                     "select id, hashed_password, pending, deleted from usr where username = $1 or email = $1",
@@ -105,7 +156,7 @@ class UserService(Application):
                     session_name,
                 )
 
-                return user["id"], session_id, session_token
+                return user["id"], session_id, str(session_token)
 
     async def logout_user(self, *, user: User, session_id: int):
         async with self.db_pool.acquire(timeout=1) as conn:
@@ -233,41 +284,45 @@ class UserService(Application):
 
                 return user_id
 
+    async def _get_user(self, conn: asyncpg.Connection, user_id: int) -> User:
+        user = await conn.fetchrow(
+            "select id, email, registered_at, username, pending, deleted, is_guest_user "
+            "from usr where id = $1",
+            user_id,
+        )
+
+        if user is None:
+            raise NotFoundError(f"User with id {user_id} does not exist")
+
+        rows = await conn.fetch(
+            "select id, name, valid_until, last_seen from session where user_id = $1",
+            user_id,
+        )
+        sessions = [
+            Session(
+                id=row["id"],
+                name=row["name"],
+                valid_until=row["valid_until"],
+                last_seen=row["last_seen"],
+            )
+            for row in rows
+        ]
+
+        return User(
+            id=user["id"],
+            email=user["email"],
+            registered_at=user["registered_at"],
+            username=user["username"],
+            pending=user["pending"],
+            deleted=user["deleted"],
+            is_guest_user=user["is_guest_user"],
+            sessions=sessions,
+        )
+
     async def get_user(self, user_id: int) -> User:
         async with self.db_pool.acquire() as conn:
-            user = await conn.fetchrow(
-                "select id, email, registered_at, username, pending, deleted, is_guest_user "
-                "from usr where id = $1",
-                user_id,
-            )
-
-            if user is None:
-                raise NotFoundError(f"User with id {user_id} does not exist")
-
-            rows = await conn.fetch(
-                "select id, name, valid_until, last_seen from session where user_id = $1",
-                user_id,
-            )
-            sessions = [
-                Session(
-                    id=row["id"],
-                    name=row["name"],
-                    valid_until=row["valid_until"],
-                    last_seen=row["last_seen"],
-                )
-                for row in rows
-            ]
-
-            return User(
-                id=user["id"],
-                email=user["email"],
-                registered_at=user["registered_at"],
-                username=user["username"],
-                pending=user["pending"],
-                deleted=user["deleted"],
-                is_guest_user=user["is_guest_user"],
-                sessions=sessions,
-            )
+            async with conn.transaction():
+                return await self._get_user(conn, user_id)
 
     async def delete_session(self, user: User, session_id: int):
         async with self.db_pool.acquire() as conn:
