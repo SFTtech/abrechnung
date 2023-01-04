@@ -1,7 +1,6 @@
-import re
 from datetime import timedelta
 from pathlib import Path
-from typing import Any, Optional, Mapping, List
+from typing import Optional, List
 
 import yaml
 from pydantic import BaseModel
@@ -35,10 +34,10 @@ class RegistrationConfig(BaseModel):
 
 
 class DatabaseConfig(BaseModel):
-    user: Optional[str] = False
-    password: Optional[str] = False
+    user: Optional[str] = None
+    password: Optional[str] = None
     dbname: str
-    host: Optional[str] = False
+    host: Optional[str] = None
     port: Optional[int] = 5432
 
 
@@ -65,7 +64,6 @@ class Config(BaseModel):
 
 
 def read_config(config_path: Path) -> Config:
-    with open(config_path) as config_file:
-        content = yaml.safe_load(config_file)
-        config = Config(**content)
-        return config
+    content = config_path.read_text("utf-8")
+    config = Config(**yaml.safe_load(content))
+    return config

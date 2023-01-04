@@ -13,7 +13,6 @@
 import datetime
 import json
 import sys
-import typing
 from pathlib import Path
 
 import pydantic
@@ -118,10 +117,10 @@ def generate_openapi_json():
 
 def _generate_config_doc_rec(field: ModelField):
     if issubclass(field.type_, pydantic.BaseModel):
-        out = {}
+        sub = {}
         for subfield in field.type_.__fields__.values():
-            out[subfield.name] = _generate_config_doc_rec(subfield)
-        return out
+            sub[subfield.name] = _generate_config_doc_rec(subfield)
+        return sub
 
     if (
         field.outer_type_ is not None

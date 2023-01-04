@@ -1,4 +1,4 @@
-import jwt
+from jose import jwt
 
 from tests.http_tests.common import HTTPTestCase
 

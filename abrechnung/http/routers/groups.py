@@ -77,10 +77,10 @@ async def list_groups(
 
 class GroupPayload(BaseModel):
     name: str
-    description: Optional[str] = None
+    description: str = ""
     currency_symbol: str
     add_user_account_on_join = False
-    terms: Optional[str] = None
+    terms: str = ""
 
 
 @router.post("/v1/groups", summary="create a group", response_model=Group)

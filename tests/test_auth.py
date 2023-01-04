@@ -1,11 +1,10 @@
+# pylint: disable=attribute-defined-outside-init
 from copy import deepcopy
 from datetime import datetime, timedelta
 
-from abrechnung.application.users import UserService
-
 from abrechnung.application.groups import GroupService
+from abrechnung.application.users import UserService
 from abrechnung.config import Config
-
 from .common import BaseTestCase, TEST_CONFIG
 
 

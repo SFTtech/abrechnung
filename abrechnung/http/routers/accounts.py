@@ -4,7 +4,7 @@ from typing import List, Optional, Dict
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 
-from abrechnung.application.accounts import AccountService
+from abrechnung.application.accounts import AccountService, RawAccount
 from abrechnung.domain.accounts import Account, ClearingShares
 from abrechnung.domain.users import User
 from abrechnung.http.auth import get_current_user
@@ -62,7 +62,7 @@ class AccountPayloadWithId(UpdateAccountPayload):
 )
 async def sync_accounts(
     group_id: int,
-    payload: List[AccountPayloadWithId],
+    payload: List[RawAccount],
     user: User = Depends(get_current_user),
     account_service: AccountService = Depends(get_account_service),
 ):

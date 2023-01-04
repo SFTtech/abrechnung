@@ -54,10 +54,10 @@ async def list_transactions(
     user: User = Depends(get_current_user),
     transaction_service: TransactionService = Depends(get_transaction_service),
 ):
-    forced_transaction_ids = transaction_ids
-    if forced_transaction_ids:
+    forced_transaction_ids = None
+    if transaction_ids:
         try:
-            forced_transaction_ids = [int(x) for x in forced_transaction_ids.split(",")]
+            forced_transaction_ids = [int(x) for x in transaction_ids.split(",")]
         except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -320,7 +320,7 @@ async def delete_file(
     user: User = Depends(get_current_user),
     transaction_service: TransactionService = Depends(get_transaction_service),
 ):
-    transaction_id, revision_id = transaction_service.delete_file(
+    transaction_id, revision_id = await transaction_service.delete_file(
         user=user,
         file_id=file_id,
     )

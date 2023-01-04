@@ -5,11 +5,11 @@ build-backend = "flit_core.buildapi"
 [project]
 name = "abrechnung"
 authors = [
-    {name = "Michael Loipführer", email = "milo@sft.lol"},
-    {name = "Jonas Jelten", email = "jj@sft.lol"},
-    {name = "Michael Enßlin", email = "mic@sft.lol"}
+    { name = "Michael Loipführer", email = "milo@sft.lol" },
+    { name = "Jonas Jelten", email = "jj@sft.lol" },
+    { name = "Michael Enßlin", email = "mic@sft.lol" }
 ]
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 dynamic = ["version", "description"]
 readme = "README.md"
 classifiers = [
@@ -30,6 +30,7 @@ dependencies = [
     "PyYAML~=6.0",
     "email-validator~=1.3",
     "apispec",
+    "schema~=0.7",
     "webargs"
 ]
 
@@ -67,6 +68,11 @@ exclude = [
     ".readthedocs.yaml",
     "config",
     "systemd",
+]
+
+[tool.pylint.MASTER]
+extension-pkg-whitelist = [
+    "pydantic"
 ]
 
 [tool.pylint.format]

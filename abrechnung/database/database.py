@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Union
 
 import asyncpg
 from asyncpg import Connection
@@ -11,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 def _make_connection_args(config: Config) -> dict:
-    args = dict()
+    args: dict[str, Union[int, str, None]] = dict()
     args["user"] = config.database.user
     args["password"] = config.database.password
     args["host"] = config.database.host

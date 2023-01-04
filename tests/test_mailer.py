@@ -1,3 +1,4 @@
+# pylint: disable=attribute-defined-outside-init
 import asyncio
 from dataclasses import dataclass
 from typing import Optional

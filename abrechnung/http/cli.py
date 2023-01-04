@@ -15,7 +15,6 @@ from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
 from abrechnung.database.database import create_db_pool
-from abrechnung.http import auth
 from abrechnung.subcommand import SubCommand
 from .middleware import ContextMiddleware
 from .routers import transactions, groups, auth, accounts, common, websocket

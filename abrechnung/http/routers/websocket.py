@@ -6,7 +6,7 @@ from typing import Optional
 
 import asyncpg
 import schema
-from fastapi import APIRouter, WebSocket, Request, status
+from fastapi import APIRouter, WebSocket, Request, status, WebSocketException
 
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
@@ -181,6 +181,8 @@ class NotificationManager:
 
     async def connect(self, websocket: WebSocket) -> int:
         await websocket.accept()
+        if self.db_pool is None:
+            raise WebSocketException(code=status.WS_1011_INTERNAL_ERROR)
         async with self.db_pool.acquire() as connection:
             # register the client connection at the db
             connection_id = await connection.fetchval(
@@ -195,6 +197,8 @@ class NotificationManager:
     async def disconnect(self, connection_id: int, websocket: WebSocket):
         del self.active_connections[connection_id]
 
+        if self.db_pool is None:
+            raise WebSocketException(code=status.WS_1011_INTERNAL_ERROR)
         async with self.db_pool.acquire() as connection:
             # deregister the client connection
             await connection.execute("call client_disconnected($1)", connection_id)

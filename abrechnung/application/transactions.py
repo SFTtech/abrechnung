@@ -280,8 +280,8 @@ class TransactionService(Application):
         currency_conversion_rate: float,
         value: float,
         tags: list[str],
-        debitor_shares: dict[int, float],
-        creditor_shares: dict[int, float],
+        debitor_shares: Optional[dict[int, float]],
+        creditor_shares: Optional[dict[int, float]],
         positions: Optional[list[TransactionPosition]] = None,
         perform_commit: bool = False,
     ) -> int:

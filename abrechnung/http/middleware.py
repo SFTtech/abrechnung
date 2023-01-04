@@ -1,3 +1,5 @@
+from typing import Union
+
 import asyncpg
 from starlette.requests import Request
 from starlette.types import ASGIApp, Scope, Receive, Send
@@ -35,7 +37,7 @@ class ContextMiddleware:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         if scope["type"] == "http":
-            req = Request(scope, receive, send)
+            req: Union[Request, WebSocket] = Request(scope, receive, send)
         elif scope["type"] == "websocket":
             req = WebSocket(scope, receive, send)
         else:

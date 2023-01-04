@@ -1,3 +1,4 @@
+# pylint: disable=attribute-defined-outside-init
 from httpx import AsyncClient
 
 from abrechnung.config import Config
