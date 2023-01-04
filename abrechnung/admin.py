@@ -5,10 +5,10 @@ from getpass import getpass
 from abrechnung import subcommand
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
-from abrechnung.database import db_connect
+from abrechnung.database.database import create_db_pool
 
 
-class Admin(subcommand.SubCommand):
+class AdminCli(subcommand.SubCommand):
     def __init__(self, config: Config, **args):  # pylint: disable=super-init-not-called
         self.config = config
         self.logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class Admin(subcommand.SubCommand):
             print("Passwords do not match!")
             return
 
-        db_pool = await db_connect(self.config["database"])
+        db_pool = await create_db_pool(self.config)
         user_service = UserService(db_pool, self.config)
         user_service.enable_registration = True
         if self.args["skip_email_check"]:

@@ -10,9 +10,10 @@ import asyncpg
 
 from . import subcommand
 from .config import Config
+from .database.database import create_db_connection
 
 
-class Mailer(subcommand.SubCommand):
+class MailerCli(subcommand.SubCommand):
     def __init__(self, config: Config, **args):  # pylint: disable=super-init-not-called
         del args  # unused
 
@@ -43,13 +44,7 @@ class Mailer(subcommand.SubCommand):
         if self.events is None:
             raise RuntimeError("something unexpected happened, self.events is None")
 
-        self.psql = await asyncpg.connect(
-            user=self.config["database"]["user"],
-            password=self.config["database"]["password"],
-            host=self.config["database"]["host"],
-            database=self.config["database"]["dbname"],
-            port=self.config["database"].get("port", 5432),
-        )
+        self.psql = await create_db_connection(self.config)
         self.psql.add_termination_listener(self.terminate_callback)
         self.psql.add_log_listener(self.log_callback)
         await self.psql.add_listener("mailer", self.notification_callback)
@@ -73,7 +68,7 @@ class Mailer(subcommand.SubCommand):
         await self.psql.close()
 
     def get_mailer_instance(self):
-        mode = self.config["email"].get("mode")
+        mode = self.config.email.mode
 
         if mode == "local":
             mail_sender_class = smtplib.LMTP
@@ -83,16 +78,16 @@ class Mailer(subcommand.SubCommand):
             mail_sender_class = smtplib.SMTP
 
         mailer = mail_sender_class(
-            host=self.config["email"]["host"],
-            port=self.config["email"]["port"],
+            host=self.config.email.host,
+            port=self.config.email.port,
         )
         if mode == "smtp-starttls":
             mailer.starttls()
 
-        if "auth" in self.config["email"]:
+        if self.config.email.auth:
             mailer.login(
-                user=self.config["email"]["auth"]["username"],
-                password=self.config["email"]["auth"]["password"],
+                user=self.config.email.auth.username,
+                password=self.config.email.auth.password,
             )
         return mailer
 
@@ -131,7 +126,7 @@ class Mailer(subcommand.SubCommand):
         # we do this to not have one long hanging open connection with the mail server
         mailer = self.get_mailer_instance()
 
-        from_addr = self.config["email"]["address"]
+        from_addr = self.config.email.address
         msg = email.message.EmailMessage()
         msg.set_content(
             "\n".join(
@@ -142,7 +137,7 @@ class Mailer(subcommand.SubCommand):
                 )
             )
         )
-        msg["Subject"] = f"[{self.config['service']['name']}] {subject}"
+        msg["Subject"] = f"[{self.config.service.name}] {subject}"
         msg["To"] = dest_address
         msg["From"] = from_addr
         msg["Date"] = email.utils.localtime()
@@ -153,7 +148,7 @@ class Mailer(subcommand.SubCommand):
         return f"Beloved {name},", ""
 
     def closing_lines(self):
-        return "", "Thoughtfully yours", "", f"    {self.config['service']['name']}"
+        return "", "Thoughtfully yours", "", f"    {self.config.service.name}"
 
     async def on_pending_registration_notification(self):
         unsent_mails = await self.psql.fetch(
@@ -172,7 +167,7 @@ class Mailer(subcommand.SubCommand):
                     "",
                     "To complete your registration, visit",
                     "",
-                    f"{self.config['service']['url']}/confirm-registration/{row['token']}",
+                    f"{self.config.service.url}/confirm-registration/{row['token']}",
                     "",
                     f"Your request will time out {row['valid_until']}.",
                     "If you do not want to create a user account, just ignore this email.",
@@ -209,7 +204,7 @@ class Mailer(subcommand.SubCommand):
                     "",
                     "To set a new one, visit",
                     "",
-                    f"{self.config['service']['url']}/confirm-password-recovery/{row['token']}",
+                    f"{self.config.service.url}/confirm-password-recovery/{row['token']}",
                     "",
                     f"Your request will time out {row['valid_until']}.",
                     "If you do not want to reset your password, just ignore this email.",
@@ -265,7 +260,7 @@ class Mailer(subcommand.SubCommand):
                     "",
                     "To confirm, visit",
                     "",
-                    f"{self.config['service']['url']}/confirm-email-change/{row['token']}",
+                    f"{self.config.service.url}/confirm-email-change/{row['token']}",
                     "",
                     f"Your request will time out {row['valid_until']}.",
                     "If you do not want to change your email, just ignore this email.",

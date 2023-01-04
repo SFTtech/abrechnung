@@ -119,7 +119,7 @@ class TransactionService(Application):
             blob_id=db_json["blob_id"],
             deleted=db_json["deleted"],
             mime_type=db_json["mime_type"],
-            host_url=self.cfg["service"]["api_url"],
+            host_url=self.cfg.service.api_url,
         )
 
     def _transaction_db_row(self, transaction: asyncpg.Record) -> Transaction:
@@ -280,8 +280,8 @@ class TransactionService(Application):
         currency_conversion_rate: float,
         value: float,
         tags: list[str],
-        debitor_shares: Optional[dict[int, float]] = None,
-        creditor_shares: Optional[dict[int, float]] = None,
+        debitor_shares: Optional[dict[int, float]],
+        creditor_shares: Optional[dict[int, float]],
         positions: Optional[list[TransactionPosition]] = None,
         perform_commit: bool = False,
     ) -> int:
@@ -495,7 +495,7 @@ class TransactionService(Application):
             raise InvalidCommand(f"File type {mime_type} is not an accepted file type")
 
         # TODO: image resizing?
-        max_file_size = self.cfg["api"]["max_uploadable_file_size"]
+        max_file_size = self.cfg.api.max_uploadable_file_size
         if len(content) / 1024 > max_file_size:
             raise InvalidCommand(f"File is too large, maximum is {max_file_size}KB")
 

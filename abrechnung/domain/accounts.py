@@ -9,6 +9,9 @@ class AccountType(Enum):
     clearing = "clearing"
 
 
+ClearingShares = Optional[dict[int, float]]
+
+
 @dataclass
 class AccountDetails:
     name: str
@@ -18,7 +21,7 @@ class AccountDetails:
     deleted: bool
 
     tags: list[str]
-    clearing_shares: Optional[dict[int, float]] = field(default=None)
+    clearing_shares: ClearingShares = field(default=None)
 
 
 @dataclass

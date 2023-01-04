@@ -419,7 +419,7 @@ class GroupService(Application):
                         user.id,
                     )
 
-    async def preview_group(self, invite_token: str) -> GroupPreview:
+    async def preview_group(self, *, invite_token: str) -> GroupPreview:
         async with self.db_pool.acquire() as conn:
             group = await conn.fetchrow(
                 "select grp.id as group_id, "
@@ -463,7 +463,7 @@ class GroupService(Application):
                     result.append(
                         GroupInvite(
                             id=invite["id"],
-                            token=invite["token"],
+                            token=str(invite["token"]) if "token" in invite else None,
                             created_by=invite["created_by"],
                             valid_until=invite["valid_until"],
                             single_use=invite["single_use"],
@@ -492,7 +492,7 @@ class GroupService(Application):
                     raise NotFoundError()
                 return GroupInvite(
                     id=row["id"],
-                    token=row["token"],
+                    token=str(row["token"]) if "token" in row else None,
                     created_by=row["created_by"],
                     valid_until=row["valid_until"],
                     single_use=row["single_use"],

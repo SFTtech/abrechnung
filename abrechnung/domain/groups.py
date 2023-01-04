@@ -18,7 +18,7 @@ class GroupMember:
 class GroupInvite:
     id: int
     created_by: int
-    token: str
+    token: Optional[str]
     single_use: bool
     join_as_editor: bool
     description: str

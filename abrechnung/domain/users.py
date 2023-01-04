@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Optional
 
 
 @dataclass
 class Session:
     id: int
     name: str
-    valid_until: datetime
+    valid_until: Optional[datetime]
     last_seen: datetime
 
 

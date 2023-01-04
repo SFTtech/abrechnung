@@ -6,8 +6,7 @@ import argparse
 import os
 import subprocess
 
-from aiohttp import web
-
+from aiohttp import web  # pylint: disable=all
 
 routes = web.RouteTableDef()
 

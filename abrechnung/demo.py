@@ -4,10 +4,10 @@ from datetime import datetime
 
 from abrechnung import subcommand
 from abrechnung.config import Config
-from abrechnung.database import db_connect
+from abrechnung.database.database import create_db_pool
 
 
-class Demo(subcommand.SubCommand):
+class DemoCli(subcommand.SubCommand):
     def __init__(self, config: Config, **args):  # pylint: disable=super-init-not-called
         self.config = config
         self.logger = logging.getLogger(__name__)
@@ -23,13 +23,13 @@ class Demo(subcommand.SubCommand):
         create_user_parser.set_defaults(command="cleanup")
 
     async def handle_cleanup_command(self):
-        if not self.config["demo"]["enabled"]:
+        if not self.config.demo.enabled:
             self.logger.error("This instance is not running in demo mode, exiting")
             return
 
-        deletion_threshold = datetime.now() - self.config["demo"]["wipe_interval"]
+        deletion_threshold = datetime.now() - self.config.demo.wipe_interval
 
-        db_pool = await db_connect(self.config["database"])
+        db_pool = await create_db_pool(self.config)
         async with db_pool.acquire() as conn:
             async with conn.transaction():
                 n_rows_groups = await conn.fetchval(

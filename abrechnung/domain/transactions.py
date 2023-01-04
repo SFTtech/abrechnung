@@ -10,6 +10,9 @@ class TransactionType(Enum):
     transfer = "transfer"
 
 
+TransactionShares = dict[int, float]
+
+
 @dataclass
 class TransactionPosition:
     id: int
@@ -17,10 +20,10 @@ class TransactionPosition:
     name: str
     price: float
     communist_shares: float
-    deleted: bool
-
     # usages map account IDs to portions of the item share pool
-    usages: dict[int, float]
+    usages: TransactionShares
+
+    deleted: bool = False
 
 
 @dataclass
@@ -35,8 +38,8 @@ class TransactionDetails:
     deleted: bool
 
     # creditor and debitor shares map account IDs to portions of the communist share pool
-    creditor_shares: dict[int, float]
-    debitor_shares: dict[int, float]
+    creditor_shares: TransactionShares
+    debitor_shares: TransactionShares
 
 
 @dataclass

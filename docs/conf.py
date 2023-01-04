@@ -6,27 +6,27 @@
 
 # -- Path setup --------------------------------------------------------------
 
-import datetime
-
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import datetime
 import json
 import sys
 from pathlib import Path
 
-import marshmallow.fields
+import pydantic
 import yaml
+from pydantic.fields import ModelField
 
 HERE = Path(__file__).parent
 sys.path[:0] = [str(HERE.parent), str(HERE / "_ext")]
 BUILD_DIR = HERE / "_build"
 
 import abrechnung
-from abrechnung.config import Config, CONFIG_SCHEMA, TimedeltaField
-from abrechnung.http import HTTPService, validation_middleware
-from abrechnung.http.openapi import setup_aiohttp_apispec
+from abrechnung.config import Config
+from abrechnung.http.cli import ApiCli
+from tests.common import TEST_CONFIG
 
 # -- Project information -----------------------------------------------------
 
@@ -107,51 +107,37 @@ def generate_openapi_json():
     """
     generate swagger OpenAPI
     """
-    config = Config({"api": {"secret_key": "foobar"}})
-    service = HTTPService(config)
-    app = service._create_api_app(  # pylint: disable=protected-access
-        db_pool=None, middlewares=[validation_middleware]
-    )  # FIXME: hack to not require db connection
+    config = Config.parse_obj(TEST_CONFIG)
+    api = ApiCli(config)
 
-    openapi = setup_aiohttp_apispec(
-        app=app,
-        title="Abrechnung OpenAPI Documentation",
-        version="v1",
-        url="/docs/swagger.json",
-        in_place=True,
-    )
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
     with open(BUILD_DIR / "openapi.json", "w+", encoding="utf-8") as f:
-        json.dump(openapi.swagger_dict(), f)
+        json.dump(api.api.openapi(), f)
 
 
-config_type_map = {
-    marshmallow.fields.String: "string",
-    marshmallow.fields.Integer: "int",
-    marshmallow.fields.Boolean: "boolean",
-    TimedeltaField: "timedelta, e.g. 1h",
-}
+def _generate_config_doc_rec(field: ModelField):
+    if issubclass(field.type_, pydantic.BaseModel):
+        sub = {}
+        for subfield in field.type_.__fields__.values():
+            sub[subfield.name] = _generate_config_doc_rec(subfield)
+        return sub
 
-
-def _generate_config_doc_rec(field):
-    if isinstance(field, marshmallow.fields.Nested):
-        out = {}
-        for section_name, next_field in field.schema.fields.items():
-            out[section_name] = _generate_config_doc_rec(next_field)
-        return out
-
-    if isinstance(field, marshmallow.fields.List):
-        verbose_type = f"<list[{config_type_map[field.inner.__class__]}]>"
+    if (
+        field.outer_type_ is not None
+        and "List" in str(field.outer_type_)
+        or "list" in str(field.outer_type_)
+    ):
+        verbose_type = f"<list[{field.type_.__name__}]>"
     else:
-        verbose_type = f"<{config_type_map[field.__class__]}>"
+        verbose_type = f"<{field.type_.__name__}>"
 
     out = f"{verbose_type}"
     extra_info = []
-    if description := field.metadata.get("description"):
-        extra_info.append(description)
+    # if description := field.metadata.get("description"):
+    #     extra_info.append(description)
 
-    if field.load_default:
-        extra_info.append(f"default={field.load_default}")
+    if field.default:
+        extra_info.append(f"default={field.default}")
 
     if field.required is not None and not field.required:
         extra_info.append("optional")
@@ -164,8 +150,8 @@ def _generate_config_doc_rec(field):
 
 def generate_config_doc_yaml():
     output = {}
-    for section_name, field in CONFIG_SCHEMA().fields.items():
-        output[section_name] = _generate_config_doc_rec(field)
+    for field in Config.__fields__.values():
+        output[field.name] = _generate_config_doc_rec(field)
 
     output_string = yaml.dump(output).replace("'", "").replace('"', "")
 
