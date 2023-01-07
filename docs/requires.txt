@@ -1,16 +1,17 @@
+# doc requirements
 sphinx-autobuild
 sphinx-rtd-theme
 sphinx-autodoc-typehints
 sphinxcontrib-openapi
-aiohttp
-aiohttp-cors
+mistune~=0.8
+
+# abrechnung requirements, needed as we are using core code e.g. for openapi docs and config docs
+fastapi
 asyncpg
-bcrypt
-pyjwt
+uvicorn[standard]
+passlib[bcrypt]
+python-jose[cryptography]
 PyYAML
-marshmallow
 schema
 email-validator
-apispec
-webargs
-mistune~=0.8
+python-multipart

@@ -591,14 +591,14 @@ export const deleteTransaction = createAsyncThunk<
 
 export const uploadFile = createAsyncThunk<
     { transaction: Transaction; attachments: TransactionAttachment[] },
-    { groupId: number; transactionId: number; filename: string; file: File; api: Api },
+    { groupId: number; transactionId: number; file: File; api: Api },
     { state: IRootState }
->("uploadFile", async ({ groupId, filename, transactionId, file, api }, { rejectWithValue }) => {
+>("uploadFile", async ({ groupId, transactionId, file, api }, { rejectWithValue }) => {
     if (!(await api.hasConnection())) {
         return rejectWithValue("no internet connection");
     }
 
-    const container = await api.uploadFile(transactionId, filename, file);
+    const container = await api.uploadFile(transactionId, file);
     return { transaction: container.transaction, attachments: container.attachments };
 });
 

@@ -451,8 +451,8 @@ export class Api {
         return backendTransactionToTransactionContainer(resp);
     };
 
-    public uploadFile = async (transactionId: number, filename: string, file: File) => {
-        const resp = await this.postFile(`/api/v1/transactions/${transactionId}/files`, filename, file);
+    public uploadFile = async (transactionId: number, file: File) => {
+        const resp = await this.postFile(`/api/v1/transactions/${transactionId}/files`, file);
         return backendTransactionToTransactionContainer(resp);
     };
 
@@ -716,10 +716,9 @@ export class Api {
         }
     };
 
-    private postFile = async (url: string, filename: string, file: File, options: RequestOptions | null = null) => {
+    private postFile = async (url: string, file: File, options: RequestOptions | null = null) => {
         console.debug("POST uploading file to", url, file);
         const formData = new FormData();
-        formData.append("filename", filename);
         formData.append("file", file);
         return await this.fetchJson(`${this.baseApiUrl}${url}`, {
             method: "POST",

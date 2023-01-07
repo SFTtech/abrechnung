@@ -149,7 +149,8 @@ export const selectSortedAccounts = memoize(
                 if (
                     a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     a.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    fromISOString(a.lastChanged).toDateString().toLowerCase().includes(searchTerm.toLowerCase())
+                    fromISOString(a.lastChanged).toDateString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (a.type === "clearing" && a.dateInfo && a.dateInfo.includes(searchTerm.toLowerCase()))
                 ) {
                     return true;
                 }

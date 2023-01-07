@@ -85,7 +85,9 @@ export const AuthenticatedLayout: React.FC = () => {
                     <ListItemLink
                         to={`/groups/${groupId}/`}
                         selected={
-                            location.pathname === `/groups/${groupId}/` || location.pathname === `/groups/${groupId}`
+                            location.pathname === `/groups/${groupId}/` ||
+                            location.pathname === `/groups/${groupId}` ||
+                            location.pathname.startsWith(`/groups/${groupId}/transactions`)
                         }
                     >
                         <ListItemIcon>

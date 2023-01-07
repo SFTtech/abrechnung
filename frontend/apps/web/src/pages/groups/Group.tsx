@@ -22,15 +22,15 @@ import {
     useAppDispatch,
     useAppSelector,
 } from "../../store";
-import { AccountDetail } from "../AccountDetail";
-import { AccountList } from "../AccountList";
-import { ClearingAccountList } from "../ClearingAccountList";
-import { TransactionList } from "../TransactionList";
+import { AccountDetail } from "../accounts/AccountDetail";
+import { PersonalAccountList } from "../accounts/PersonalAccountList";
+import { ClearingAccountList } from "../accounts/ClearingAccountList";
+import { TransactionList } from "../transactions/TransactionList";
 import GroupInvites from "./GroupInvites";
 import GroupLog from "./GroupLog";
 import GroupMemberList from "./GroupMemberList";
 import GroupSettings from "./GroupSettings";
-import Transaction from "./Transaction";
+import { TransactionDetail } from "../transactions/TransactionDetail";
 
 export const Group: React.FC = () => {
     const params = useParams();
@@ -103,7 +103,7 @@ export const Group: React.FC = () => {
                 path="accounts"
                 element={
                     <Suspense fallback={<Loading />}>
-                        <AccountList groupId={groupId} />
+                        <PersonalAccountList groupId={groupId} />
                     </Suspense>
                 }
             />
@@ -159,7 +159,7 @@ export const Group: React.FC = () => {
                 path="transactions/:id"
                 element={
                     <Suspense fallback={<Loading />}>
-                        <Transaction groupId={groupId} />
+                        <TransactionDetail groupId={groupId} />
                     </Suspense>
                 }
             />
