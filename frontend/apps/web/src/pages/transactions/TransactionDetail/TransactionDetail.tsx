@@ -10,12 +10,12 @@ import {
 import { TransactionValidator } from "@abrechnung/types";
 import { Add as AddIcon } from "@mui/icons-material";
 import { Button, Divider, Grid } from "@mui/material";
-import { MobilePaper } from "apps/web/src/components/style/mobile";
 import * as React from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { typeToFlattenedError, z } from "zod";
 import Loading from "../../../components/style/Loading";
+import { MobilePaper } from "../../../components/style/mobile";
 import { api } from "../../../core/api";
 import { useQuery, useTitle } from "../../../core/utils";
 import { selectGroupSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "../../../store";

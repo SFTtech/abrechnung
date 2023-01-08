@@ -1,34 +1,34 @@
-import { FlatList, StyleSheet, View } from "react-native";
-import { Appbar, FAB, List, Menu, Portal, RadioButton, Text, useTheme, TextInput } from "react-native-paper";
-import { useIsFocused } from "@react-navigation/native";
-import { getAccountIcon } from "../../constants/Icons";
+import { AccountSortMode } from "@abrechnung/core";
+import {
+    createAccount,
+    fetchAccounts,
+    selectAccountBalances,
+    selectCurrentUserPermissions,
+    selectGroupAccountsStatus,
+    selectGroupCurrencySymbol,
+    selectSortedAccounts,
+} from "@abrechnung/redux";
 import { Account, AccountBalance, AccountType } from "@abrechnung/types";
+import { MaterialIcons } from "@expo/vector-icons";
+import { useIsFocused } from "@react-navigation/native";
 import * as React from "react";
 import { useLayoutEffect, useState } from "react";
+import { FlatList, StyleSheet, View } from "react-native";
+import { Appbar, FAB, List, Menu, Portal, RadioButton, Text, useTheme } from "react-native-paper";
 import LoadingIndicator from "../../components/LoadingIndicator";
-import { successColor } from "../../theme";
 import Searchbar from "../../components/style/Searchbar";
-import { MaterialIcons } from "@expo/vector-icons";
+import { getAccountIcon } from "../../constants/Icons";
+import { api } from "../../core/api";
 import { GroupTabScreenProps } from "../../navigation/types";
 import {
-    selectAccountBalances,
-    selectGroupCurrencySymbol,
-    fetchAccounts,
-    selectGroupAccountsStatus,
-    createAccount,
-    selectSortedAccounts,
-    selectCurrentUserPermissions,
-} from "@abrechnung/redux";
-import {
-    useAppSelector,
     selectAccountSlice,
-    selectGroupSlice,
-    useAppDispatch,
     selectActiveGroupId,
+    selectGroupSlice,
     selectUiSlice,
+    useAppDispatch,
+    useAppSelector,
 } from "../../store";
-import { api } from "../../core/api";
-import { AccountSortMode } from "@abrechnung/core";
+import { successColor } from "../../theme";
 
 type Props = GroupTabScreenProps<"AccountList" | "ClearingAccountList">;
 

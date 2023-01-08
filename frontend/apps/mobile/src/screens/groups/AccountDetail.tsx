@@ -37,7 +37,6 @@ import {
 import { fromISOString } from "@abrechnung/utils";
 import { api } from "../../core/api";
 import { notify } from "../../notifications";
-import { MaterialIcons } from "@expo/vector-icons";
 
 type ArrayAccountsAndTransactions = Array<Transaction | Account>;
 

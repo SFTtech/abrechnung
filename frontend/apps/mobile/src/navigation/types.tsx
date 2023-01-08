@@ -6,7 +6,7 @@
 import { CompositeScreenProps, NavigatorScreenParams } from "@react-navigation/native";
 import { StackScreenProps } from "@react-navigation/stack";
 import { DrawerScreenProps } from "@react-navigation/drawer";
-import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import { MaterialTopTabScreenProps } from "@react-navigation/material-top-tabs";
 
 declare global {
     // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -60,7 +60,7 @@ export type GroupStackNavigationProp<Screen extends keyof GroupStackParamList> =
     GroupStackScreenProps<Screen>["navigation"];
 
 export type GroupTabScreenProps<Screen extends keyof GroupTabParamList> = CompositeScreenProps<
-    BottomTabScreenProps<GroupTabParamList, Screen>,
+    MaterialTopTabScreenProps<GroupTabParamList, Screen>,
     CompositeScreenProps<
         GroupStackScreenProps<keyof GroupStackParamList>,
         RootDrawerScreenProps<keyof RootDrawerParamList>

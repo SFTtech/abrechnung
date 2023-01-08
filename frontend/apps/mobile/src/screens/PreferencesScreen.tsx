@@ -1,6 +1,6 @@
 import { clearCache, logout } from "@abrechnung/redux";
 import * as React from "react";
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 import { Dialog, Divider, List, Portal, RadioButton, useTheme } from "react-native-paper";
 import { api } from "../core/api";
 import { RootDrawerScreenProps } from "../navigation/types";
@@ -80,7 +80,5 @@ export const PreferencesScreen: React.FC<RootDrawerScreenProps<"Preferences">> =
         </View>
     );
 };
-
-const styles = StyleSheet.create({});
 
 export default PreferencesScreen;

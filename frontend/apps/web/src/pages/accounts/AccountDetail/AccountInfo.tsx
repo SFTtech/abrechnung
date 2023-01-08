@@ -11,18 +11,18 @@ import {
 import { Account, AccountValidator } from "@abrechnung/types";
 import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
 import { Button, Chip, Divider, Grid, IconButton, LinearProgress, TableCell } from "@mui/material";
-import { ShareSelect } from "apps/web/src/components/ShareSelect";
-import { getAccountLink, getAccountListLink } from "apps/web/src/utils";
 import React from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { typeToFlattenedError, z } from "zod";
 import { DeleteAccountModal } from "../../../components/accounts/DeleteAccountModal";
 import { DateInput } from "../../../components/DateInput";
+import { ShareSelect } from "../../../components/ShareSelect";
 import { TagSelector } from "../../../components/TagSelector";
 import { TextInput } from "../../../components/TextInput";
 import { api } from "../../../core/api";
 import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "../../../store";
+import { getAccountLink, getAccountListLink } from "../../../utils";
 
 interface Props {
     groupId: number;
