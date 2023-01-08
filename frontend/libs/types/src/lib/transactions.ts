@@ -5,10 +5,13 @@ export type TransactionShare = { [k: number]: number };
 export type TransactionType = "purchase" | "transfer";
 
 const BaseTransactionValidator = z.object({
-    name: z.string({ required_error: "Name is required" }),
+    name: z.string({ required_error: "Name is required" }).min(1, "Name is required"),
     value: z.number({ required_error: "Value is required" }),
+    billedAt: z
+        .string({ required_error: "Billed at is required" })
+        .regex(/\d{4}-\d{2}-\d{2}/, "A valid date is required"),
     description: z.string().optional(),
-    currencySymbol: z.string({ required_error: "Currency is required" }),
+    currencySymbol: z.string({ required_error: "Currency is required" }).min(1, "Currency is required"),
     currencyConversionRate: z
         .number({ required_error: "Currency conversion rate is required" })
         .positive("Currency conversion rate must be larger than 0"),

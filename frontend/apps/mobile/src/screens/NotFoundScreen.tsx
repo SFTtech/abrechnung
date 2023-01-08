@@ -7,7 +7,7 @@ import { RootDrawerScreenProps } from "../navigation/types";
 export const NotFoundScreen: React.FC<RootDrawerScreenProps<"NotFound">> = ({ navigation }) => {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>This screen doesn't exist.</Text>
+            <Text style={styles.title}>This screen doesn&apos;t exist.</Text>
             <TouchableOpacity onPress={() => navigation.navigate("Home")} style={styles.link}>
                 <Text style={styles.linkText}>Go to home screen!</Text>
             </TouchableOpacity>

@@ -1,28 +1,27 @@
 import {
+    deleteAccount,
     discardAccountChange,
     saveAccount,
     selectAccountById,
     selectCurrentUserPermissions,
     wipAccountUpdated,
-    deleteAccount,
 } from "@abrechnung/redux";
 import { AccountValidator } from "@abrechnung/types";
 import { fromISOStringNullable, toFormikValidationSchema, toISODateStringNullable } from "@abrechnung/utils";
 import { useFocusEffect } from "@react-navigation/native";
 import { useFormik } from "formik";
 import React, { useEffect, useLayoutEffect } from "react";
-import { BackHandler, StyleSheet, View, ScrollView } from "react-native";
+import { BackHandler, ScrollView, StyleSheet, View } from "react-native";
 import {
     ActivityIndicator,
-    Portal,
-    Dialog,
-    IconButton,
     Button,
+    Dialog,
     HelperText,
+    IconButton,
+    Portal,
     ProgressBar,
     TextInput,
     useTheme,
-    Text,
 } from "react-native-paper";
 import DateTimeInput from "../../components/DateTimeInput";
 import { TagSelect } from "../../components/tag-select";

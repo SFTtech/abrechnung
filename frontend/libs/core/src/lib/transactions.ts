@@ -31,7 +31,7 @@ export const getTransactionSortFunc = (sortMode: TransactionSortMode) => {
     }
 };
 
-export const computeAccountBalancesForTransaction = (
+export const computeTransactionBalanceEffect = (
     transaction: Transaction,
     positions: TransactionPosition[]
 ): TransactionBalanceEffect => {
@@ -54,8 +54,8 @@ export const computeAccountBalancesForTransaction = (
                 } else {
                     accountBalances[Number(accountID)] = {
                         positions: totalUsages > 0 ? (position.price / totalUsages) * value : 0,
-                        commonDebitors: 0,
                         commonCreditors: 0,
+                        commonDebitors: 0,
                         total: 0,
                     };
                 }
@@ -90,8 +90,8 @@ export const computeAccountBalancesForTransaction = (
         } else {
             accountBalances[Number(accountID)] = {
                 positions: 0,
-                commonDebitors: 0,
                 commonCreditors: totalCreditorShares > 0 ? (transaction.value / totalCreditorShares) * value : 0,
+                commonDebitors: 0,
                 total: 0,
             };
         }

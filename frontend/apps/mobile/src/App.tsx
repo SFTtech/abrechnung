@@ -7,7 +7,7 @@ import { Navigation } from "./navigation";
 import { MaterialIcons } from "@expo/vector-icons";
 import { CustomDarkTheme, CustomLightTheme } from "./theme";
 import SplashScreen from "./screens/SplashScreen";
-import { NotificationProvider, notify } from "./notifications";
+import { NotificationProvider } from "./notifications";
 import {
     selectSettingsSlice,
     selectTheme,

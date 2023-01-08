@@ -11,7 +11,7 @@ interface CurrencyValueProps {
     forceColor: string;
 }
 
-const CurrencyValue = React.memo<CurrencyValueProps>(({ currencySymbol, value, forceColor }) => {
+const CurrencyValue = React.memo(({ currencySymbol, value, forceColor }: CurrencyValueProps) => {
     const theme = useTheme();
 
     const positiveColor = theme.palette.mode === "light" ? theme.palette.success.dark : theme.palette.success.light;

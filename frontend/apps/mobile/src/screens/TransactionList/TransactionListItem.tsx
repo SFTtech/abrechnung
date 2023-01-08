@@ -1,12 +1,10 @@
-import { deleteTransaction, selectTransactionById } from "@abrechnung/redux";
+import { selectTransactionById } from "@abrechnung/redux";
 import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
+import React from "react";
 import { List, Text, useTheme } from "react-native-paper";
 import { getTransactionIcon } from "../../constants/Icons";
-import { api } from "../../core/api";
-import { notify } from "../../notifications";
-import { selectTransactionSlice, useAppDispatch, useAppSelector } from "../../store";
+import { selectTransactionSlice, useAppSelector } from "../../store";
 
 interface Props {
     groupId: number;

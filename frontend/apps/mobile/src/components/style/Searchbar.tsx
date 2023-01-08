@@ -30,6 +30,7 @@ export type Props = React.ComponentPropsWithRef<typeof TextInput> & {
     /**
      * Hint text shown when the input is empty.
      */
+    value?: string;
     placeholder?: string;
     /**
      * Callback that is called when the text input's text changes.

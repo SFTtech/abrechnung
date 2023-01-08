@@ -29,9 +29,7 @@ dependencies = [
     "python-multipart~=0.0.5",
     "PyYAML~=6.0",
     "email-validator~=1.3",
-    "apispec",
     "schema~=0.7",
-    "webargs"
 ]
 
 [project.optional-dependencies]

@@ -14,7 +14,7 @@ import { fromISOStringNullable, toFormikValidationSchema, toISODateString } from
 import { useFocusEffect } from "@react-navigation/native";
 import { useFormik } from "formik";
 import * as React from "react";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { BackHandler, ScrollView, StyleSheet, View } from "react-native";
 import {
     ActivityIndicator,

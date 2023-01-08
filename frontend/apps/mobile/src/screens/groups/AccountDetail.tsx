@@ -15,7 +15,7 @@ import {
 import * as React from "react";
 import { useLayoutEffect } from "react";
 import { Transaction, AccountBalance, Account, TransactionShare } from "@abrechnung/types";
-import { clearingAccountIcon, getAccountIcon, getTransactionIcon } from "../../constants/Icons";
+import { clearingAccountIcon, getTransactionIcon } from "../../constants/Icons";
 import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
 import { successColor } from "../../theme";
 import {
@@ -37,7 +37,6 @@ import {
 import { fromISOString } from "@abrechnung/utils";
 import { api } from "../../core/api";
 import { notify } from "../../notifications";
-import { MaterialIcons } from "@expo/vector-icons";
 
 type ArrayAccountsAndTransactions = Array<Transaction | Account>;
 

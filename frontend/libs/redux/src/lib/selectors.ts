@@ -14,9 +14,9 @@ import {
     selectGroupAccountsInternal,
 } from "./accounts";
 import {
-    selectGroupPositionsInternal,
     selectGroupTransactionsInternal,
     selectTransactionBalanceEffectsInternal,
+    selectTransactionPositionMapInternal,
 } from "./transactions";
 import { IRootState } from "./types";
 
@@ -24,9 +24,9 @@ const selectAccountBalancesInternal = (args: { state: IRootState; groupId: numbe
     const s = performance.now();
     const { state, groupId } = args;
     const transactions = selectGroupTransactionsInternal({ state: state.transactions, groupId });
-    const positions = selectGroupPositionsInternal({ state: state.transactions, groupId });
+    const transactionToPositions = selectTransactionPositionMapInternal({ state: state.transactions, groupId });
     const accounts = selectGroupAccountsInternal({ state: state.accounts, groupId });
-    const res = computeAccountBalances(accounts, transactions, positions);
+    const res = computeAccountBalances(accounts, transactions, transactionToPositions);
     console.log("selectAccountBalancesInternal took " + (performance.now() - s) + " milliseconds.");
     return res;
 };

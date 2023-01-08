@@ -1,5 +1,5 @@
 import { Api } from "@abrechnung/api";
-import { computeAccountBalancesForTransaction, getTransactionSortFunc, TransactionSortMode } from "@abrechnung/core";
+import { computeTransactionBalanceEffect, getTransactionSortFunc, TransactionSortMode } from "@abrechnung/core";
 import {
     Purchase,
     Transaction,
@@ -151,6 +151,21 @@ export const selectGroupPositionsInternal = (args: {
 };
 
 export const selectGroupPositions = memoize(selectGroupPositionsInternal, { size: 5 });
+
+export const selectTransactionPositionMapInternal = (args: {
+    state: TransactionSliceState;
+    groupId: number;
+}): { [k: number]: TransactionPosition[] } => {
+    const { state, groupId } = args;
+    const transactionIds = selectGroupTransactionIdsInternal(args);
+    return transactionIds.reduce<{ [k: number]: TransactionPosition[] }>((map, transactionId) => {
+        const positions = selectTransactionPositionsInternal({ state, groupId, transactionId });
+        map[transactionId] = positions;
+        return map;
+    }, {});
+};
+
+export const selectTransactionPositionMap = memoize(selectTransactionPositionMapInternal);
 
 const selectTransactionByIdInternal = (args: {
     state: TransactionSliceState;
@@ -306,7 +321,7 @@ export const selectTransactionBalanceEffectInternal = (args: {
         return undefined;
     }
     const positions = selectTransactionPositionsInternal(args);
-    return computeAccountBalancesForTransaction(transaction, positions);
+    return computeTransactionBalanceEffect(transaction, positions);
 };
 
 export const selectTransactionBalanceEffect = memoize(selectTransactionBalanceEffectInternal);
@@ -591,14 +606,14 @@ export const deleteTransaction = createAsyncThunk<
 
 export const uploadFile = createAsyncThunk<
     { transaction: Transaction; attachments: TransactionAttachment[] },
-    { groupId: number; transactionId: number; filename: string; file: File; api: Api },
+    { groupId: number; transactionId: number; file: File; api: Api },
     { state: IRootState }
->("uploadFile", async ({ groupId, filename, transactionId, file, api }, { rejectWithValue }) => {
+>("uploadFile", async ({ groupId, transactionId, file, api }, { rejectWithValue }) => {
     if (!(await api.hasConnection())) {
         return rejectWithValue("no internet connection");
     }
 
-    const container = await api.uploadFile(transactionId, filename, file);
+    const container = await api.uploadFile(transactionId, file);
     return { transaction: container.transaction, attachments: container.attachments };
 });
 

@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import { TransactionSortMode } from "@abrechnung/core";
 import {
     createPurchase,
@@ -28,7 +29,9 @@ import {
 } from "../../store";
 import TransactionListItem from "./TransactionListItem";
 
-export const TransactionList: React.FC<GroupTabScreenProps<"TransactionList">> = ({ navigation }) => {
+type Props = GroupTabScreenProps<"TransactionList">;
+
+export const TransactionList: React.FC<Props> = ({ navigation }) => {
     const theme = useTheme();
     const dispatch = useAppDispatch();
     const groupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) })) as number; // TODO: proper typing
