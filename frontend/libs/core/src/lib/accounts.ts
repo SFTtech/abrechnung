@@ -7,6 +7,7 @@ import {
     TransactionBalanceEffect,
 } from "@abrechnung/types";
 import { fromISOString } from "@abrechnung/utils";
+import { computeTransactionBalanceEffect } from "./transactions";
 
 export type AccountSortMode = "lastChanged" | "name" | "description";
 
@@ -38,7 +39,7 @@ export const getAccountSortFunc = (sortMode: AccountSortMode, wipAtTop = false) 
 export const computeAccountBalances = (
     accounts: Account[],
     transactions: Transaction[],
-    positions: TransactionPosition[]
+    transactionToPositions: { [k: number]: TransactionPosition[] }
 ): AccountBalanceMap => {
     const s = performance.now();
     const accountBalances: AccountBalanceMap = accounts.reduce<AccountBalanceMap>((balances, account) => {
@@ -52,65 +53,26 @@ export const computeAccountBalances = (
         return balances;
     }, {});
 
-    const transactionValuesAfterPositions: Map<number, number> = new Map(
-        transactions.map((t: Transaction) => [t.id, t.value])
+    const balanceEffects = transactions.map((t) =>
+        computeTransactionBalanceEffect(t, transactionToPositions[t.id] ?? [])
     );
 
-    for (const position of positions) {
-        if (position.deleted) {
-            continue; // ignore deleted positions
-        }
-        const totalUsages =
-            position.communistShares + Object.values(position.usages).reduce((acc, curr) => acc + curr, 0);
-        Object.entries(position.usages).forEach(([accountID, value]) => {
-            const balance = accountBalances[Number(accountID)];
+    for (const balanceEffect of balanceEffects) {
+        for (const accountIdStr in balanceEffect) {
+            const accountId = Number(accountIdStr);
+            const balance = accountBalances[accountId];
             if (balance) {
-                const change = (position.price * value) / totalUsages;
-                balance.balance += -change;
-                balance.totalConsumed += change;
+                balance.balance += balanceEffect[accountId].total;
+                balance.totalConsumed += balanceEffect[accountId].commonDebitors + balanceEffect[accountId].positions;
+                balance.totalPaid += balanceEffect[accountId].commonCreditors;
                 balance.beforeClearing = balance.balance;
             }
-        });
-        const commonRemainder = totalUsages > 0 ? (position.price / totalUsages) * position.communistShares : 0;
-        const transactionValueAfterPositions = transactionValuesAfterPositions.get(position.transactionID);
-        if (transactionValueAfterPositions) {
-            transactionValuesAfterPositions.set(
-                position.transactionID,
-                transactionValueAfterPositions - position.price + commonRemainder
-            );
         }
-    }
-
-    for (const transaction of transactions) {
-        if (transaction.deleted) {
-            continue; // ignore deleted transactions
-        }
-        const totalCreditors = Object.values(transaction.creditorShares).reduce((acc, curr) => acc + curr, 0);
-        const totalDebitors = Object.values(transaction.debitorShares).reduce((acc, curr) => acc + curr, 0);
-        Object.entries(transaction.creditorShares).forEach(([accountID, value]) => {
-            const balance = accountBalances[Number(accountID)];
-            if (balance) {
-                const change = (transaction.value * value) / totalCreditors;
-                balance.balance += change;
-                balance.totalPaid += change;
-                balance.beforeClearing = balance.balance;
-            }
-        });
-        Object.entries(transaction.debitorShares).forEach(([accountID, value]) => {
-            const balance = accountBalances[Number(accountID)];
-            const transactionValueAfterPositions = transactionValuesAfterPositions.get(transaction.id);
-            if (balance && transactionValueAfterPositions) {
-                const change = (transactionValueAfterPositions * value) / totalDebitors;
-                balance.balance += -change;
-                balance.totalConsumed += change;
-                balance.beforeClearing = balance.balance;
-            }
-        });
     }
 
     // linearize the account dependency graph to properly redistribute clearing accounts
     const shareMap: Map<number, ClearingShares> = accounts.reduce((map, acc) => {
-        if (acc.type === "clearing" && acc.clearingShares != null && Object.keys(acc.clearingShares).length) {
+        if (acc.type === "clearing" && Object.keys(acc.clearingShares).length) {
             map.set(acc.id, acc.clearingShares);
         }
         return map;
@@ -122,9 +84,9 @@ export const computeAccountBalances = (
         // TODO: maybe functionalize
         for (const nextAccountIDStr of Object.keys(shares)) {
             const nextAccountID = Number(nextAccountIDStr);
-            const shares = shareMap.get(nextAccountID);
+
             const degree = inDegree.get(nextAccountID);
-            if (shares && degree) {
+            if (degree !== undefined) {
                 inDegree.set(nextAccountID, degree + 1);
             }
             const dependencies = clearingDependencies.get(nextAccountID);
@@ -135,7 +97,7 @@ export const computeAccountBalances = (
             }
         }
     });
-    const zeroDegreeAccounts: Array<number> = [...shareMap.keys()].filter(
+    const zeroDegreeAccounts: number[] = [...shareMap.keys()].filter(
         (accountID) => inDegree.get(accountID) === 0 || inDegree.get(accountID) === undefined // TODO: check whether undefined check makes sense here
     );
     const sorting = [];

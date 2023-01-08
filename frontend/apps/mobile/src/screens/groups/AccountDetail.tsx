@@ -15,7 +15,7 @@ import {
 import * as React from "react";
 import { useLayoutEffect } from "react";
 import { Transaction, AccountBalance, Account, TransactionShare } from "@abrechnung/types";
-import { clearingAccountIcon, getAccountIcon, getTransactionIcon } from "../../constants/Icons";
+import { clearingAccountIcon, getTransactionIcon } from "../../constants/Icons";
 import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
 import { successColor } from "../../theme";
 import {

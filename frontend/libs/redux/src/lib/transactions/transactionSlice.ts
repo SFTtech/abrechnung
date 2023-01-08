@@ -1,5 +1,5 @@
 import { Api } from "@abrechnung/api";
-import { computeAccountBalancesForTransaction, getTransactionSortFunc, TransactionSortMode } from "@abrechnung/core";
+import { computeTransactionBalanceEffect, getTransactionSortFunc, TransactionSortMode } from "@abrechnung/core";
 import {
     Purchase,
     Transaction,
@@ -151,6 +151,21 @@ export const selectGroupPositionsInternal = (args: {
 };
 
 export const selectGroupPositions = memoize(selectGroupPositionsInternal, { size: 5 });
+
+export const selectTransactionPositionMapInternal = (args: {
+    state: TransactionSliceState;
+    groupId: number;
+}): { [k: number]: TransactionPosition[] } => {
+    const { state, groupId } = args;
+    const transactionIds = selectGroupTransactionIdsInternal(args);
+    return transactionIds.reduce<{ [k: number]: TransactionPosition[] }>((map, transactionId) => {
+        const positions = selectTransactionPositionsInternal({ state, groupId, transactionId });
+        map[transactionId] = positions;
+        return map;
+    }, {});
+};
+
+export const selectTransactionPositionMap = memoize(selectTransactionPositionMapInternal);
 
 const selectTransactionByIdInternal = (args: {
     state: TransactionSliceState;
@@ -306,7 +321,7 @@ export const selectTransactionBalanceEffectInternal = (args: {
         return undefined;
     }
     const positions = selectTransactionPositionsInternal(args);
-    return computeAccountBalancesForTransaction(transaction, positions);
+    return computeTransactionBalanceEffect(transaction, positions);
 };
 
 export const selectTransactionBalanceEffect = memoize(selectTransactionBalanceEffectInternal);
