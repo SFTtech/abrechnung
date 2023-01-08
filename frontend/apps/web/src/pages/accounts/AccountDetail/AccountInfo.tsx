@@ -170,30 +170,34 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                         value={account.name}
                         disabled={!account.isWip}
                     />
-                    <TextInput
-                        label="Description"
-                        variant="standard"
-                        margin="dense"
-                        fullWidth
-                        name="description"
-                        error={!!validationErrors.fieldErrors.description}
-                        helperText={validationErrors.fieldErrors.description}
-                        onChange={(value) => pushChanges({ name: value })}
-                        value={account.description}
-                        disabled={!account.isWip}
-                    />
+                    {!account.isWip && account.description === "" ? null : (
+                        <TextInput
+                            label="Description"
+                            variant="standard"
+                            margin="dense"
+                            fullWidth
+                            name="description"
+                            error={!!validationErrors.fieldErrors.description}
+                            helperText={validationErrors.fieldErrors.description}
+                            onChange={(value) => pushChanges({ name: value })}
+                            value={account.description}
+                            disabled={!account.isWip}
+                        />
+                    )}
                     {account.type === "personal" && null}
                     {account.type === "clearing" && (
                         <>
-                            <TagSelector
-                                margin="dense"
-                                fullWidth
-                                label="Tags"
-                                groupId={groupId}
-                                value={account.tags || []}
-                                editable={account.isWip}
-                                onChange={(newValue) => pushChanges({ tags: newValue })}
-                            />
+                            {!account.isWip && (account.tags ?? []).length === 0 ? null : (
+                                <TagSelector
+                                    margin="dense"
+                                    fullWidth
+                                    label="Tags"
+                                    groupId={groupId}
+                                    value={account.tags || []}
+                                    editable={account.isWip}
+                                    onChange={(newValue) => pushChanges({ tags: newValue })}
+                                />
+                            )}
                             <DateInput
                                 value={account.dateInfo || ""}
                                 onChange={(value) => pushChanges({ dateInfo: value })}

@@ -119,19 +119,21 @@ export const TransactionMetadata: React.FC<Props> = ({
                     value={transaction.name}
                     disabled={!transaction.isWip}
                 />
-                <TextInput
-                    label="Description"
-                    name="description"
-                    variant="standard"
-                    margin="dense"
-                    autoFocus
-                    fullWidth
-                    error={!!validationErrors.fieldErrors.description}
-                    helperText={validationErrors.fieldErrors.description}
-                    onChange={(value) => pushChanges({ description: value })}
-                    value={transaction.description}
-                    disabled={!transaction.isWip}
-                />
+                {!transaction.isWip && transaction.description === "" ? null : (
+                    <TextInput
+                        label="Description"
+                        name="description"
+                        variant="standard"
+                        margin="dense"
+                        autoFocus
+                        fullWidth
+                        error={!!validationErrors.fieldErrors.description}
+                        helperText={validationErrors.fieldErrors.description}
+                        onChange={(value) => pushChanges({ description: value })}
+                        value={transaction.description}
+                        disabled={!transaction.isWip}
+                    />
+                )}
                 <NumericInput
                     label="Value"
                     name="value"
@@ -152,15 +154,17 @@ export const TransactionMetadata: React.FC<Props> = ({
                     helperText={validationErrors.fieldErrors.billedAt}
                     disabled={!transaction.isWip}
                 />
-                <TagSelector
-                    margin="dense"
-                    fullWidth
-                    label="Tags"
-                    groupId={groupId}
-                    value={transaction.tags || []}
-                    editable={transaction.isWip}
-                    onChange={(newValue) => pushChanges({ tags: newValue })}
-                />
+                {!transaction.isWip && transaction.tags.length === 0 ? null : (
+                    <TagSelector
+                        margin="dense"
+                        fullWidth
+                        label="Tags"
+                        groupId={groupId}
+                        value={transaction.tags || []}
+                        editable={transaction.isWip}
+                        onChange={(newValue) => pushChanges({ tags: newValue })}
+                    />
+                )}
 
                 <AccountSelect
                     margin="normal"
