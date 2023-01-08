@@ -27,7 +27,7 @@ router = APIRouter(
 
 class TransactionPayload(BaseModel):
     name: str
-    description: str
+    description: Optional[str]
     value: float
     currency_symbol: str
     currency_conversion_rate: float
