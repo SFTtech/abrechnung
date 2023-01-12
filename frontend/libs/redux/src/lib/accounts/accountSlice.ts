@@ -1,5 +1,5 @@
 import { Api } from "@abrechnung/api";
-import { Account, AccountBase, AccountType } from "@abrechnung/types";
+import { Account, AccountBase, AccountType, PersonalAccount, ClearingAccount } from "@abrechnung/types";
 import { createAsyncThunk, createSlice, PayloadAction, Draft } from "@reduxjs/toolkit";
 import { AccountSliceState, AccountState, ENABLE_OFFLINE_MODE, IRootState, StateStatus } from "../types";
 import { getGroupScopedState } from "../utils";
@@ -108,14 +108,18 @@ export const selectAccountsFilteredCount = memoize(
     }
 );
 
-export const selectGroupAccountsFilteredInternal = (args: {
+type NarrowedAccount<AccountTypeT extends AccountType> = AccountTypeT extends "personal"
+    ? PersonalAccount
+    : ClearingAccount;
+
+export const selectGroupAccountsFilteredInternal = <AccountTypeT extends AccountType>(args: {
     state: AccountSliceState;
     groupId: number;
-    type: AccountType;
-}): Account[] => {
+    type: AccountTypeT;
+}): NarrowedAccount<AccountTypeT>[] => {
     const { state, groupId, type } = args;
     const accounts = selectGroupAccountsInternal({ state, groupId });
-    return accounts.filter((acc: Account) => acc.type === type);
+    return accounts.filter((acc: Account) => acc.type === type) as NarrowedAccount<AccountTypeT>[];
 };
 
 export const selectSortedAccounts = memoize(

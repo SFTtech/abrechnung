@@ -6,7 +6,7 @@ import {
     selectTransactionByIdMap,
 } from "@abrechnung/redux";
 import { fromISOString, toISODateString } from "@abrechnung/utils";
-import { Box, Divider, Theme, Typography, useTheme } from "@mui/material";
+import { Card, Box, Divider, Theme, Typography, useTheme } from "@mui/material";
 import { PointMouseHandler, PointTooltipProps, ResponsiveLine, Serie } from "@nivo/line";
 import { DateTime } from "luxon";
 import React from "react";
@@ -22,7 +22,6 @@ interface Props {
 
 export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => {
     const theme: Theme = useTheme();
-    const balanceHistory = useAppSelector((state) => selectAccountBalanceHistory({ state, groupId, accountId }));
     const navigate = useNavigate();
 
     const currencySymbol = useAppSelector((state) =>
@@ -34,36 +33,64 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
     const accountNameMap = useAppSelector((state) =>
         selectAccountIdToNameMap({ state: selectAccountSlice(state), groupId })
     );
+    const { graphData, seriesColors, areaBaselineValue } = useAppSelector((state) => {
+        const balanceHistory = selectAccountBalanceHistory({ state, groupId, accountId });
+        const { hasNegativeEntries, hasPositiveEntries, max, min } = balanceHistory.reduce(
+            (acc, curr) => {
+                const neg = curr.balance < 0;
+                const pos = curr.balance >= 0;
+                return {
+                    hasNegativeEntries: acc.hasNegativeEntries || neg,
+                    hasPositiveEntries: acc.hasPositiveEntries || pos,
+                    max: Math.max(curr.balance, acc.max),
+                    min: Math.min(curr.balance, acc.min),
+                };
+            },
+            { hasNegativeEntries: false, hasPositiveEntries: false, max: -Infinity, min: Infinity }
+        );
 
-    const graphData: Serie[] = [
-        {
-            id: "positive",
-            data: balanceHistory.map((entry, index, arr) => {
-                const prevEntry = index > 0 ? arr[index - 1] : null;
-                const nextEntry = index < arr.length - 1 ? arr[index + 1] : null;
-                return {
+        const areaBaselineValue =
+            balanceHistory.length === 0 ? undefined : !hasNegativeEntries ? min : !hasPositiveEntries ? max : undefined;
+
+        const graphData: Serie[] = [];
+        let lastPoint = balanceHistory[0];
+        const makeSerie = (): Serie => {
+            return {
+                id: `serie-${graphData.length}`,
+                data: [],
+            };
+        };
+        let currentSeries = makeSerie();
+        for (const entry of balanceHistory) {
+            if (lastPoint === undefined) {
+                break;
+            }
+            const hasDifferentSign = Math.sign(lastPoint.balance) !== Math.sign(entry.balance);
+            currentSeries.data.push({
+                x: fromISOString(entry.date),
+                y: entry.balance,
+                changeOrigin: entry.changeOrigin,
+            });
+            if (hasDifferentSign) {
+                graphData.push(currentSeries);
+                currentSeries = makeSerie();
+                currentSeries.data.push({
                     x: fromISOString(entry.date),
-                    y:
-                        entry.balance >= 0 ||
-                        (prevEntry && prevEntry.balance >= 0) ||
-                        (nextEntry && nextEntry.balance >= 0)
-                            ? entry.balance
-                            : null,
+                    y: entry.balance,
                     changeOrigin: entry.changeOrigin,
-                };
-            }),
-        },
-        {
-            id: "negative",
-            data: balanceHistory.map((entry) => {
-                return {
-                    x: fromISOString(entry.date),
-                    y: entry.balance < 0 ? entry.balance : null,
-                    changeOrigin: entry.changeOrigin,
-                };
-            }),
-        },
-    ];
+                });
+            }
+            lastPoint = entry;
+        }
+        graphData.push(currentSeries);
+        const seriesColors: string[] = graphData.map((serie) =>
+            serie.data[0].y >= 0 ? theme.palette.success.main : theme.palette.error.main
+        );
+
+        console.log(graphData);
+
+        return { graphData, seriesColors, areaBaselineValue };
+    });
 
     const onClick: PointMouseHandler = (point, event) => {
         const changeOrigin: BalanceChangeOrigin = (point.data as any).changeOrigin;
@@ -87,16 +114,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
             );
 
         return (
-            <Box
-                sx={{
-                    backgroundColor: theme.palette.background.paper,
-                    borderColor: theme.palette.divider,
-                    borderRadius: theme.shape.borderRadius,
-                    borderWidth: "1px",
-                    borderStyle: "solid",
-                    padding: 2,
-                }}
-            >
+            <Card sx={{ padding: 2 }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <Typography variant="body1" component="span">
                         {DateTime.fromJSDate(point.data.x as Date).toISODate()}
@@ -121,23 +139,24 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
                         {icon} {transactionMap[changeOrigin.id].name}
                     </Typography>
                 )}
-            </Box>
+            </Card>
         );
     };
 
     return (
         <div style={{ width: "100%", height: "300px" }}>
             <ResponsiveLine
+                curve="stepAfter"
                 data={graphData}
                 margin={{ top: 50, right: 50, bottom: 50, left: 60 }}
                 xScale={{ type: "time", precision: "day", format: "native" }}
                 yScale={{ type: "linear", min: "auto", max: "auto" }}
-                colors={[theme.palette.success.main, theme.palette.error.main]}
+                colors={seriesColors}
+                areaBaselineValue={areaBaselineValue}
                 tooltip={renderTooltip}
                 onClick={onClick}
                 pointLabel={(p) => `${toISODateString(p.x as Date)}: ${p.y}`}
                 useMesh={true}
-                yFormat=">-.2f"
                 axisLeft={{
                     format: (value: number) => `${value.toFixed(2)} ${currencySymbol}`,
                 }}
