@@ -2,6 +2,7 @@ import {
     Account,
     AccountBalanceMap,
     Transaction,
+    ClearingAccount,
     TransactionPosition,
     ClearingShares,
     TransactionBalanceEffect,
@@ -183,7 +184,7 @@ export interface BalanceHistoryEntry {
 
 export const computeAccountBalanceHistory = (
     accountId: number,
-    clearingAccounts: Account[],
+    clearingAccounts: ClearingAccount[],
     balances: AccountBalanceMap,
     transactions: Transaction[], // sorted after last change date
     transactionBalanceEffects: { [k: number]: TransactionBalanceEffect }
@@ -198,7 +199,7 @@ export const computeAccountBalanceHistory = (
         const a = balanceEffect[accountId];
         if (a) {
             balanceChanges.push({
-                date: transaction.lastChanged,
+                date: transaction.billedAt,
                 change: a.total,
                 changeOrigin: {
                     type: "transaction",
@@ -211,7 +212,7 @@ export const computeAccountBalanceHistory = (
     for (const account of clearingAccounts) {
         if (balances[account.id]?.clearingResolution[accountId] !== undefined) {
             balanceChanges.push({
-                date: account.lastChanged,
+                date: account.dateInfo,
                 change: balances[account.id].clearingResolution[accountId],
                 changeOrigin: {
                     type: "clearing",
