@@ -128,6 +128,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                                 <MenuItem value="lastChanged">Last changed</MenuItem>
                                 <MenuItem value="name">Name</MenuItem>
                                 <MenuItem value="description">Description</MenuItem>
+                                <MenuItem value="dateInfo">Date</MenuItem>
                             </Select>
                         </FormControl>
                         <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
@@ -173,6 +174,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                     <DeleteAccountModal
                         groupId={groupId}
                         show={showDeleteModal}
+                        onAccountDeleted={onCloseDeleteModal}
                         onClose={onCloseDeleteModal}
                         accountId={accountDeleteId}
                     />

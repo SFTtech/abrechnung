@@ -10,7 +10,7 @@ import {
 import { fromISOString } from "@abrechnung/utils";
 import { computeTransactionBalanceEffect } from "./transactions";
 
-export type AccountSortMode = "lastChanged" | "name" | "description";
+export type AccountSortMode = "lastChanged" | "name" | "description" | "dateInfo";
 
 export const getAccountSortFunc = (sortMode: AccountSortMode, wipAtTop = false) => {
     const sortingLookup = {
@@ -23,17 +23,29 @@ export const getAccountSortFunc = (sortMode: AccountSortMode, wipAtTop = false) 
         }
         return sortingLookup[a1.type] - sortingLookup[a2.type];
     };
+    const lastChangeComparer = (a1: Account, a2: Account) => {
+        return fromISOString(a2.lastChanged).getTime() - fromISOString(a1.lastChanged).getTime();
+    };
     switch (sortMode) {
         case "lastChanged":
-            return (a1: Account, a2: Account) =>
-                baseComparer(a1, a2) ||
-                fromISOString(a2.lastChanged).getTime() - fromISOString(a1.lastChanged).getTime();
+            return (a1: Account, a2: Account) => baseComparer(a1, a2) || lastChangeComparer(a1, a2);
         case "name":
             return (a1: Account, a2: Account) =>
                 baseComparer(a1, a2) || a1.name.toLowerCase().localeCompare(a2.name.toLowerCase());
         case "description":
             return (a1: Account, a2: Account) =>
                 baseComparer(a1, a2) || a1.description.toLowerCase().localeCompare(a2.description.toLowerCase());
+        case "dateInfo":
+            return (a1: Account, a2: Account) =>
+                baseComparer(a1, a2) ||
+                (a1.type === "clearing" &&
+                a2.type === "clearing" &&
+                a1.dateInfo !== "" &&
+                a1.dateInfo != null &&
+                a2.dateInfo !== "" &&
+                a2.dateInfo != null
+                    ? fromISOString(a1.dateInfo).getTime() - fromISOString(a2.dateInfo).getTime()
+                    : lastChangeComparer(a1, a2));
     }
 };
 
