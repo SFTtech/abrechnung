@@ -46,6 +46,8 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, s
         <ListItem sx={{ padding: 0 }} key={account.id}>
             <ListItemLink to={getAccountLink(groupId, account.type, account.id)}>
                 <ListItemText
+                    primaryTypographyProps={{ component: "div" }}
+                    secondaryTypographyProps={{ component: "div" }}
                     primary={
                         <>
                             {account.isWip && (

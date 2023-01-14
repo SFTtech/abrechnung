@@ -16,8 +16,10 @@ import { Add, Delete } from "@mui/icons-material";
 import { MobilePaper } from "../../components/style/mobile";
 import { selectIsGuestUser, selectGroups } from "@abrechnung/redux";
 import { useAppSelector, selectGroupSlice, selectAuthSlice } from "../../store";
+import { useTitle } from "../../core/utils";
 
 export const GroupList: React.FC = () => {
+    useTitle("Abrechnung - Groups");
     const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
     const [showGroupDeletionModal, setShowGroupDeletionModal] = useState(false);
     const [groupToDelete, setGroupToDelete] = useState(null);

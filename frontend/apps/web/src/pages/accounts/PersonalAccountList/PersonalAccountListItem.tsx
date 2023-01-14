@@ -64,6 +64,8 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
         <ListItem sx={{ padding: 0 }} key={account.id}>
             <ListItemLink to={getAccountLink(groupId, account.type, account.id)}>
                 <ListItemText
+                    primaryTypographyProps={{ component: "div" }}
+                    secondaryTypographyProps={{ component: "div" }}
                     primary={
                         <div>
                             {account.isWip && (

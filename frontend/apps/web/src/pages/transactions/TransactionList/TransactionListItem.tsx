@@ -57,6 +57,8 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
                     )}
                 </ListItemAvatar>
                 <ListItemText
+                    primaryTypographyProps={{ component: "div" }}
+                    secondaryTypographyProps={{ component: "div" }}
                     primary={
                         <>
                             {transaction.isWip && (

@@ -1,36 +1,38 @@
-import React, { useState } from "react";
+import { AccountSortMode } from "@abrechnung/core";
+import {
+    createAccount,
+    selectCurrentUserId,
+    selectCurrentUserPermissions,
+    selectGroupById,
+    selectSortedAccounts,
+} from "@abrechnung/redux";
+import { Add as AddIcon, Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import {
     Alert,
     Box,
     Divider,
     Fab,
+    FormControl,
     IconButton,
     Input,
     InputAdornment,
-    List,
-    FormControl,
     InputLabel,
+    List,
+    MenuItem,
     Select,
     Theme,
-    useTheme,
-    MenuItem,
     Tooltip,
     useMediaQuery,
+    useTheme,
 } from "@mui/material";
-import { Add as AddIcon, Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
-import { PersonalAccountListItem } from "./PersonalAccountListItem";
-import { DeleteAccountModal } from "../../../components/accounts/DeleteAccountModal";
-import { selectAccountSlice, selectAuthSlice, useAppDispatch, useAppSelector } from "../../../store";
-import {
-    selectCurrentUserId,
-    selectCurrentUserPermissions,
-    selectSortedAccounts,
-    createAccount,
-} from "@abrechnung/redux";
-import { MobilePaper } from "../../../components/style/mobile";
-import { AccountSortMode } from "@abrechnung/core";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { DeleteAccountModal } from "../../../components/accounts/DeleteAccountModal";
+import { MobilePaper } from "../../../components/style/mobile";
+import { useTitle } from "../../../core/utils";
+import { selectAccountSlice, selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "../../../store";
+import { PersonalAccountListItem } from "./PersonalAccountListItem";
 
 interface Props {
     groupId: number;
@@ -39,8 +41,10 @@ interface Props {
 export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
     const theme: Theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+
     const [searchValue, setSearchValue] = useState("");
     const [sortMode, setSortMode] = useState<AccountSortMode>("name");
 
@@ -56,6 +60,8 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
 
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state, groupId }));
     const currentUserId = useAppSelector((state) => selectCurrentUserId({ state: selectAuthSlice(state) }));
+
+    useTitle(`${group.name} - Accounts`);
 
     const [accountDeleteId, setAccountDeleteId] = useState<number | null>(null);
     const showDeleteModal = accountDeleteId !== null;
@@ -132,8 +138,8 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                     {!isSmallScreen && (
                         <Box sx={{ display: "flex-item" }}>
                             <Tooltip title="Create Account">
-                                <IconButton color="primary">
-                                    <AddIcon onClick={onCreateEvent} />
+                                <IconButton color="primary" onClick={onCreateEvent}>
+                                    <AddIcon />
                                 </IconButton>
                             </Tooltip>
                         </Box>
@@ -164,8 +170,8 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                         onClose={onCloseDeleteModal}
                         accountId={accountDeleteId}
                     />
-                    <Fab color="primary" sx={{ position: "fixed", bottom: 16, right: 16 }}>
-                        <AddIcon onClick={onCreateEvent} />
+                    <Fab color="primary" sx={{ position: "fixed", bottom: 16, right: 16 }} onClick={onCreateEvent}>
+                        <AddIcon />
                     </Fab>
                 </>
             )}

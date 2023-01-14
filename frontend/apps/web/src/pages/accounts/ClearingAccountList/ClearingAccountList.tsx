@@ -1,5 +1,5 @@
 import { AccountSortMode } from "@abrechnung/core";
-import { createAccount, selectCurrentUserPermissions, selectSortedAccounts } from "@abrechnung/redux";
+import { createAccount, selectCurrentUserPermissions, selectGroupById, selectSortedAccounts } from "@abrechnung/redux";
 import { Add as AddIcon, Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import {
     Alert,
@@ -24,7 +24,8 @@ import { useNavigate } from "react-router-dom";
 import { DeleteAccountModal } from "../../../components/accounts/DeleteAccountModal";
 import { MobilePaper } from "../../../components/style/mobile";
 import { TagSelector } from "../../../components/TagSelector";
-import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../../store";
+import { useTitle } from "../../../core/utils";
+import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "../../../store";
 import { getAccountLink } from "../../../utils";
 import { ClearingAccountListItem } from "./ClearingAccountListItem";
 
@@ -37,8 +38,10 @@ const emptyList = [];
 export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
     const theme: Theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+
     const [searchValue, setSearchValue] = useState("");
     const [tagFilter, setTagFilter] = useState<string[]>(emptyList);
     const [sortMode, setSortMode] = useState<AccountSortMode>("lastChanged");
@@ -54,6 +57,8 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
             wipAtTop: true,
         })
     );
+
+    useTitle(`${group.name} - Events`);
 
     const [accountDeleteId, setAccountDeleteId] = useState<number | null>(null);
     const showDeleteModal = accountDeleteId !== null;
