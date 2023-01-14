@@ -31,7 +31,9 @@ export const DeleteAccountModal: React.FC<Props> = ({ show, onClose, groupId, ac
         dispatch(deleteAccount({ groupId, accountId, api }))
             .unwrap()
             .then(() => {
-                onAccountDeleted();
+                if (onAccountDeleted) {
+                    onAccountDeleted();
+                }
                 setShowProgress(false);
             })
             .catch((err) => {

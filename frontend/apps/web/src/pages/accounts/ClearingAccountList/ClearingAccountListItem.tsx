@@ -3,6 +3,7 @@ import {
     selectAccountById,
     selectCurrentUserPermissions,
     selectAccountIdToNameMap,
+    copyAccount,
 } from "@abrechnung/redux";
 import { ContentCopy, Delete, Edit } from "@mui/icons-material";
 import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
@@ -42,9 +43,13 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, s
         navigate(getAccountLink(groupId, account.type, account.id));
     };
 
+    const copy = () => {
+        dispatch(copyAccount({ groupId, accountId }));
+    };
+
     return (
         <ListItem sx={{ padding: 0 }} key={account.id}>
-            <ListItemLink to={getAccountLink(groupId, account.type, account.id)}>
+            <ListItemLink sx={{ paddingRight: 17 }} to={getAccountLink(groupId, account.type, account.id)}>
                 <ListItemText
                     primaryTypographyProps={{ component: "div" }}
                     secondaryTypographyProps={{ component: "div" }}
@@ -77,7 +82,7 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, s
                     <IconButton color="primary" onClick={edit}>
                         <Edit />
                     </IconButton>
-                    <IconButton color="primary">
+                    <IconButton color="primary" onClick={copy}>
                         <ContentCopy />
                     </IconButton>
                     <IconButton color="error" onClick={() => setAccountToDelete(account.id)}>

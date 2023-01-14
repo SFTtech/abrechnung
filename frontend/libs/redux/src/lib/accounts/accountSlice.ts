@@ -8,6 +8,7 @@ import { AccountSortMode, getAccountSortFunc } from "@abrechnung/core";
 import { fromISOString, toISODateString } from "@abrechnung/utils";
 import { leaveGroup } from "../groups";
 import { addEntity, removeEntity } from "../utils";
+import { number } from "zod";
 
 const initializeGroupState = (state: Draft<AccountSliceState>, groupId: number) => {
     if (state.byGroupId[groupId]) {
@@ -170,13 +171,16 @@ export const selectSortedAccounts = memoize(
 
 export const selectGroupAccountsFiltered = memoize(selectGroupAccountsFilteredInternal);
 
-export const selectAccountById = memoize(
-    (args: { state: AccountSliceState; groupId: number; accountId: number }): Account | undefined => {
-        const { state, groupId, accountId } = args;
-        const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
-        return s.wipAccounts.byId[accountId] ?? s.pendingAccounts.byId[accountId] ?? s.accounts.byId[accountId];
-    }
-);
+const selectAccountByIdInternal = (args: {
+    state: AccountSliceState;
+    groupId: number;
+    accountId: number;
+}): Account | undefined => {
+    const { state, groupId, accountId } = args;
+    const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
+    return s.wipAccounts.byId[accountId] ?? s.pendingAccounts.byId[accountId] ?? s.accounts.byId[accountId];
+};
+export const selectAccountById = memoize(selectAccountByIdInternal);
 
 export const selectWipAccountById = memoize(
     (args: { state: AccountSliceState; groupId: number; accountId: number }): Account | undefined => {
@@ -399,6 +403,29 @@ const accountSlice = createSlice({
     name: "accounts",
     initialState,
     reducers: {
+        copyAccount: (sliceState, action: PayloadAction<{ groupId: number; accountId: number }>) => {
+            const { groupId, accountId } = action.payload;
+            const state = getGroupScopedState<AccountState, AccountSliceState>(sliceState, groupId);
+            const account = selectAccountByIdInternal({ state: sliceState, groupId, accountId });
+            if (!account) {
+                return;
+            }
+            const newAccountId = sliceState.nextLocalAccountId;
+            sliceState.nextLocalAccountId = sliceState.nextLocalAccountId - 1;
+
+            const newAccount: Account = {
+                ...account,
+                name: `${account.name} - Copy`,
+                id: newAccountId,
+                lastChanged: new Date().toISOString(),
+                hasLocalChanges: true,
+                hasCommittedChanges: false,
+                isWip: true,
+            };
+
+            state.wipAccounts.ids.push(newAccountId);
+            state.wipAccounts.byId[newAccountId] = newAccount;
+        },
         advanceNextLocalAccountId: (sliceState, action: PayloadAction<void>) => {
             sliceState.nextLocalAccountId = sliceState.nextLocalAccountId - 1;
         },
@@ -547,6 +574,7 @@ const accountSlice = createSlice({
 // local reducers
 const { advanceNextLocalAccountId } = accountSlice.actions;
 
-export const { wipAccountUpdated, accountAdded, accountEditStarted, accountsUpdated } = accountSlice.actions;
+export const { wipAccountUpdated, accountAdded, accountEditStarted, accountsUpdated, copyAccount } =
+    accountSlice.actions;
 
 export const { reducer: accountReducer } = accountSlice;
