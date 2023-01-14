@@ -6,7 +6,7 @@ import {
     selectTransactionByIdMap,
 } from "@abrechnung/redux";
 import { fromISOString, toISODateString } from "@abrechnung/utils";
-import { Card, Box, Divider, Theme, Typography, useTheme } from "@mui/material";
+import { Card, Divider, Theme, Typography, useTheme } from "@mui/material";
 import { PointMouseHandler, PointTooltipProps, ResponsiveLine, Serie } from "@nivo/line";
 import { DateTime } from "luxon";
 import React from "react";
@@ -82,12 +82,12 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
             }
             lastPoint = entry;
         }
-        graphData.push(currentSeries);
+        if (balanceHistory.length > 0) {
+            graphData.push(currentSeries);
+        }
         const seriesColors: string[] = graphData.map((serie) =>
             serie.data[0].y >= 0 ? theme.palette.success.main : theme.palette.error.main
         );
-
-        console.log(graphData);
 
         return { graphData, seriesColors, areaBaselineValue };
     });
