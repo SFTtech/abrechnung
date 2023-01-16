@@ -63,24 +63,22 @@ export interface TransactionPosition {
     deleted: boolean;
 }
 
-export interface PositionValidationErrors {
-    name?: string;
-    price?: string;
-    usages?: string;
-}
-
-export function validatePosition(p: TransactionPosition): PositionValidationErrors {
-    const errors: PositionValidationErrors = {};
-
-    if (p.name === "") {
-        errors.name = "name cannot be empty";
-    }
-    if (Object.keys(p.usages).length === 0) {
-        errors.usages = "select at least one";
-    }
-
-    return errors;
-}
+export const PositionValidator = z
+    .object({
+        name: z.string({ required_error: "name is required" }).min(1, "name is required"),
+        price: z.number({ required_error: "price is required" }),
+        communistShares: z.number({ required_error: "price is required" }),
+        usages: z.record(z.number()),
+    })
+    .refine(
+        (position) => {
+            if (Object.keys(position.usages).length === 0 && position.communistShares === 0) {
+                return false;
+            }
+            return true;
+        },
+        { message: "a position must either be shared or assigned to an account" }
+    );
 
 export interface TransactionAccountBalance {
     total: number;

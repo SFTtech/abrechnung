@@ -170,6 +170,12 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
 
     const [showAdvanced, setShowAdvanced] = React.useState(false);
 
+    React.useEffect(() => {
+        if (Object.values(value).reduce((showAdvanced, value) => showAdvanced || value !== 1, false)) {
+            setShowAdvanced(true);
+        }
+    }, [value, setShowAdvanced]);
+
     const nSelectedPeople = accounts.reduce((nAccs: number, acc: Account) => {
         if (acc.type !== "personal") {
             return nAccs;

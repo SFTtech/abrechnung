@@ -31,15 +31,17 @@ export const SidebarGroupList: React.FC<Props> = ({ activeGroupId }) => {
                 <ListItem sx={{ pt: 0, pb: 0 }}>
                     <ListItemText secondary="Groups" />
                 </ListItem>
-                {groups.map((it) => (
-                    <ListItemLink
-                        key={it.id}
-                        to={`/groups/${it.id}`}
-                        selected={activeGroupId && activeGroupId === it.id}
-                    >
-                        <ListItemText primary={it.name} />
-                    </ListItemLink>
-                ))}
+                <div>
+                    {groups.map((it) => (
+                        <ListItemLink
+                            key={it.id}
+                            to={`/groups/${it.id}`}
+                            selected={activeGroupId && activeGroupId === it.id}
+                        >
+                            <ListItemText primary={it.name} />
+                        </ListItemLink>
+                    ))}
+                </div>
                 {!isGuest && (
                     <ListItem sx={{ padding: 0 }}>
                         <Grid container justifyContent="center">

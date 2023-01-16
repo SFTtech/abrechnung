@@ -5,9 +5,10 @@ import {
     selectGroupById,
     selectTransactionById,
     selectTransactionHasPositions,
+    selectTransactionPositions,
     transactionEditStarted,
 } from "@abrechnung/redux";
-import { TransactionValidator } from "@abrechnung/types";
+import { PositionValidator, TransactionValidator } from "@abrechnung/types";
 import { Add as AddIcon } from "@mui/icons-material";
 import { Button, Divider, Grid } from "@mui/material";
 import * as React from "react";
@@ -19,7 +20,7 @@ import { MobilePaper } from "../../../components/style/mobile";
 import { api } from "../../../core/api";
 import { useQuery, useTitle } from "../../../core/utils";
 import { selectGroupSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "../../../store";
-import { TransactionPositions } from "./purchase/TransactionPositions";
+import { TransactionPositions, ValidationErrors as PositionValidationErrors } from "./purchase/TransactionPositions";
 import { TransactionActions } from "./TransactionActions";
 import { TransactionMetadata } from "./TransactionMetadata";
 
@@ -28,6 +29,7 @@ interface Props {
 }
 
 const emptyErrors = { fieldErrors: {}, formErrors: [] };
+const emptyPositionErrors = {};
 
 export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
     const params = useParams();
@@ -43,6 +45,9 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
     const hasPositions = useAppSelector((state) =>
         selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId })
     );
+    const positions = useAppSelector((state) =>
+        selectTransactionPositions({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
 
     const query = useQuery();
 
@@ -50,11 +55,14 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
 
     const [validationErrors, setValidationErrors] =
         React.useState<typeToFlattenedError<z.infer<typeof TransactionValidator>>>(emptyErrors);
+    const [positionValidationErrors, setPositionValidationErrors] =
+        React.useState<PositionValidationErrors>(emptyPositionErrors);
 
     useTitle(`${group.name} - ${transaction?.name}`);
 
     React.useEffect(() => {
         setValidationErrors(emptyErrors);
+        setPositionValidationErrors(emptyPositionErrors);
     }, [transaction, setValidationErrors]);
 
     const edit = React.useCallback(() => {
@@ -103,11 +111,26 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
             return;
         }
         const validated = TransactionValidator.safeParse(transaction);
-        if (!validated.success) {
-            setValidationErrors((validated as any).error.formErrors);
+        const positionErrors = {};
+        for (const position of positions) {
+            const v = PositionValidator.safeParse(position);
+            if (!v.success) {
+                positionErrors[position.id] = (v as any).error.formErrors;
+            }
+        }
+        if (!validated.success || Object.keys(positionErrors).length > 0) {
+            if (!validated.success) {
+                setValidationErrors((validated as any).error.formErrors);
+                toast.error("Please recheck the transaction details");
+            }
+            if (Object.keys(positionErrors).length > 0) {
+                setPositionValidationErrors(positionErrors);
+                toast.error("Please recheck the purchase items");
+            }
             return;
         }
         setValidationErrors(emptyErrors);
+        setPositionValidationErrors(emptyPositionErrors);
         setShowProgress(true);
         dispatch(saveTransaction({ groupId, transactionId, api }))
             .unwrap()
@@ -121,7 +144,16 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
                 setShowProgress(false);
                 toast.error(`error while saving transaction: ${err.toString()}`);
             });
-    }, [transaction, dispatch, setShowProgress, navigate, groupId, transactionId]);
+    }, [
+        transaction,
+        positions,
+        setPositionValidationErrors,
+        dispatch,
+        setShowProgress,
+        navigate,
+        groupId,
+        transactionId,
+    ]);
 
     if (transaction === undefined) {
         if (query.get("no-redirect") === "true") {
@@ -147,14 +179,18 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
                 <TransactionMetadata groupId={groupId} transaction={transaction} validationErrors={validationErrors} />
             </MobilePaper>
 
-            {!showPositions && transaction.isWip && !hasPositions ? (
+            {transaction.type === "purchase" && !showPositions && transaction.isWip && !hasPositions ? (
                 <Grid container justifyContent="center" sx={{ marginTop: 2 }}>
                     <Button startIcon={<AddIcon />} onClick={() => setShowPositions(true)}>
                         Add Positions
                     </Button>
                 </Grid>
             ) : (showPositions && transaction.isWip) || hasPositions ? (
-                <TransactionPositions groupId={groupId} transactionId={transactionId} />
+                <TransactionPositions
+                    groupId={groupId}
+                    transactionId={transactionId}
+                    validationErrors={positionValidationErrors}
+                />
             ) : null}
         </>
     );

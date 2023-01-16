@@ -44,6 +44,7 @@ import { config } from "../../state/config";
 import { useTheme } from "@mui/material/styles";
 import { Banner } from "../../components/style/Banner";
 import Loading from "../../components/style/Loading";
+import styles from "./AuthenticatedLayout.module.css";
 
 const drawerWidth = 240;
 const AUTH_FALLBACK = "/login";
@@ -77,9 +78,8 @@ export const AuthenticatedLayout: React.FC = () => {
     };
 
     const drawer = (
-        <div style={{ height: "100%" }}>
+        <div className={styles["sidebarContainer"]}>
             <Toolbar />
-            <Divider />
             {groupId !== undefined && (
                 <List sx={{ pb: 0 }}>
                     <ListItemLink
@@ -163,16 +163,10 @@ export const AuthenticatedLayout: React.FC = () => {
             )}
             <SidebarGroupList activeGroupId={groupId} />
 
-            <Box
-                sx={{
-                    display: "flex",
-                    position: "absolute",
-                    width: "100%",
-                    justifyContent: "center",
-                    bottom: 0,
-                    padding: 1,
-                    borderTop: 1,
-                    borderColor: theme.palette.divider,
+            <div
+                className={styles["footer"]}
+                style={{
+                    borderTop: `1px solid ${theme.palette.divider}`,
                 }}
             >
                 {cfg.imprintURL && (
@@ -192,7 +186,7 @@ export const AuthenticatedLayout: React.FC = () => {
                         </Link>
                     </Tooltip>
                 )}
-            </Box>
+            </div>
         </div>
     );
 
@@ -202,8 +196,6 @@ export const AuthenticatedLayout: React.FC = () => {
             <AppBar
                 position="fixed"
                 sx={{
-                    // width: {sm: `calc(100% - ${drawerWidth}px)`},
-                    // ml: {sm: `${drawerWidth}px`},
                     zIndex: (theme) => theme.zIndex.drawer + 1,
                 }}
             >

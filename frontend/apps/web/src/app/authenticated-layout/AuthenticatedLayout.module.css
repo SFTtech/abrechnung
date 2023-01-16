@@ -1,0 +1,20 @@
+.sidebarContainer {
+    min-height: 100%;
+    margin-bottom: -25px;
+}
+
+.sidebarContainer:after {
+    content: "";
+    display: block;
+}
+
+.footer,
+.sidebarContainer:after {
+    height: 25px;
+}
+
+.footer {
+    display: flex;
+    padding: 1em;
+    justify-content: center;
+}
