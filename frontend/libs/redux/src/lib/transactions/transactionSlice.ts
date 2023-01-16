@@ -8,6 +8,7 @@ import {
     TransactionBase,
     TransactionContainer,
     TransactionPosition,
+    TransactionType,
 } from "@abrechnung/types";
 import { toISODateString } from "@abrechnung/utils";
 import { createAsyncThunk, createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
@@ -414,52 +415,16 @@ export const fetchTransaction = createAsyncThunk<
     return await api.fetchTransaction(transactionId);
 });
 
-export const createTransfer = createAsyncThunk<
-    { transaction: Transaction; isSynced: boolean },
-    { transaction: Omit<TransactionBase, "deleted" | "id" | "positions" | "attachments">; api: Api; keepWip?: boolean },
-    { state: IRootState }
->("createTransfer", async ({ transaction, api, keepWip = false }, { getState, dispatch }) => {
-    let updatedTransaction: Transaction;
-    let isSynced: boolean;
-    if (!keepWip && (await api.hasConnection())) {
-        const container = await api.createTransaction(transaction, true);
-        updatedTransaction = container.transaction;
-        isSynced = true;
-    } else if (keepWip || ENABLE_OFFLINE_MODE) {
-        // TODO: proper root state type
-        const state = getState();
-        updatedTransaction = {
-            id: state.transactions.nextLocalTransactionId,
-            ...transaction,
-            positions: [],
-            attachments: [],
-            deleted: false,
-            hasLocalChanges: true,
-            isWip: keepWip,
-            lastChanged: new Date().toISOString(),
-        };
-        isSynced = false;
-        dispatch(advanceNextLocalTransactionId());
-    } else {
-        throw new Error("no internet connection");
-    }
-    return {
-        transaction: updatedTransaction,
-        isSynced: isSynced,
-    };
-});
-
-export const createPurchase = createAsyncThunk<
+export const createTransaction = createAsyncThunk<
     { transaction: Transaction },
-    { groupId: number },
+    { groupId: number; type: TransactionType },
     { state: ITransactionRootState }
->("createPurchase", async ({ groupId }, { getState, dispatch }) => {
+>("createPurchase", async ({ groupId, type }, { getState, dispatch }) => {
     const state = getState();
     const transactionId = state.transactions.nextLocalTransactionId;
-    const transaction: Purchase = {
+    const transactionBase = {
         id: transactionId,
         groupID: groupId,
-        type: "purchase",
         name: "",
         description: "",
         value: 0,
@@ -476,6 +441,19 @@ export const createPurchase = createAsyncThunk<
         isWip: true,
         lastChanged: new Date().toISOString(),
     };
+    let transaction: Transaction;
+    if (type === "purchase") {
+        transaction = {
+            ...transactionBase,
+            type: "purchase",
+            positions: [],
+        };
+    } else {
+        transaction = {
+            ...transactionBase,
+            type: "transfer",
+        };
+    }
     dispatch(advanceNextLocalTransactionId());
     return { transaction };
 });
@@ -831,19 +809,6 @@ const transactionSlice = createSlice({
                 s.attachments.byId[attachment.id] = attachment;
             }
         });
-        builder.addCase(createTransfer.fulfilled, (state, action) => {
-            const { transaction, isSynced } = action.payload;
-            const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, transaction.groupID);
-            if (isSynced) {
-                addEntity(s.transactions, transaction);
-            } else {
-                if (transaction.isWip) {
-                    addEntity(s.wipTransactions, transaction);
-                } else {
-                    addEntity(s.pendingTransactions, transaction);
-                }
-            }
-        });
         builder.addCase(saveTransaction.fulfilled, (state, action) => {
             const { oldTransactionId, oldPositionIds, transactionContainer, isSynced } = action.payload;
             const groupId = transactionContainer.transaction.groupID;
@@ -892,7 +857,7 @@ const transactionSlice = createSlice({
             removeEntity(s.wipTransactions, transactionId);
             removePositionsForTransaction(s.wipPositions, transactionId);
         });
-        builder.addCase(createPurchase.fulfilled, (state, action) => {
+        builder.addCase(createTransaction.fulfilled, (state, action) => {
             const { transaction } = action.payload;
             const { groupId } = action.meta.arg;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);

@@ -1,15 +1,13 @@
 /* eslint-disable react/prop-types */
 import { TransactionSortMode } from "@abrechnung/core";
 import {
-    createPurchase,
-    createTransfer,
+    createTransaction,
     fetchTransactions,
     selectCurrentUserPermissions,
     selectGroupTransactionsStatus,
     selectSortedTransactions,
 } from "@abrechnung/redux";
 import { Transaction, TransactionType } from "@abrechnung/types";
-import { toISODateString } from "@abrechnung/utils";
 import { useIsFocused } from "@react-navigation/native";
 import * as React from "react";
 import { useLayoutEffect, useState } from "react";
@@ -121,50 +119,15 @@ export const TransactionList: React.FC<Props> = ({ navigation }) => {
     }, [isFocused, showSearchInput, isMenuOpen, search, sortMode, theme, navigation]);
 
     const createNewTransaction = (type: TransactionType) => {
-        if (type === "purchase") {
-            dispatch(createPurchase({ groupId }))
-                .unwrap()
-                .then(({ transaction }) => {
-                    navigation.navigate("TransactionDetail", {
-                        transactionId: transaction.id,
-                        groupId: transaction.groupID,
-                        editing: true,
-                    });
+        dispatch(createTransaction({ groupId, type }))
+            .unwrap()
+            .then(({ transaction }) => {
+                navigation.navigate("TransactionDetail", {
+                    transactionId: transaction.id,
+                    groupId: transaction.groupID,
+                    editing: true,
                 });
-        } else if (type === "transfer") {
-            dispatch(
-                createTransfer({
-                    transaction: {
-                        type: "transfer",
-                        groupID: groupId,
-                        name: "",
-                        description: "",
-                        tags: [],
-                        billedAt: toISODateString(new Date()),
-                        currencyConversionRate: 1.0,
-                        currencySymbol: "€",
-                        debitorShares: {},
-                        creditorShares: {},
-                        value: 0,
-                    },
-                    keepWip: true,
-                    api,
-                })
-            )
-                .unwrap()
-                .then(({ transaction }) => {
-                    navigation.navigate("TransactionDetail", {
-                        transactionId: transaction.id,
-                        groupId: transaction.groupID,
-                        editing: true,
-                    });
-                })
-                .catch(() => {
-                    console.log("error creating new transaction");
-                });
-        } else {
-            console.error("unknown transaction type");
-        }
+            });
     };
 
     if (transactionStatus === "loading") {

@@ -7,11 +7,12 @@ import {
     wipPositionAdded,
     wipPositionUpdated,
 } from "@abrechnung/redux";
-import { Account, TransactionPosition } from "@abrechnung/types";
+import { Account, PositionValidator, TransactionPosition } from "@abrechnung/types";
 import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import {
     Checkbox,
     FormControlLabel,
+    FormHelperText,
     Grid,
     IconButton,
     Table,
@@ -20,130 +21,16 @@ import {
     TableContainer,
     TableHead,
     TableRow,
-    TextField,
-    TextFieldProps,
     Typography,
+    useTheme,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
-import { selectAccountSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "../../../../store";
+import React, { useState } from "react";
+import { typeToFlattenedError, z } from "zod";
 import AccountSelect from "../../../../components/AccountSelect";
+import { NumericInput } from "../../../../components/NumericInput";
 import { MobilePaper } from "../../../../components/style/mobile";
-
-type ShareInputProps = {
-    value: number;
-    onChange: (newValue: number) => void;
-} & TextFieldProps;
-
-const ShareInput: React.FC<ShareInputProps> = ({ value, onChange, ...props }) => {
-    const [currValue, setValue] = useState<string>("0");
-    const [error, setError] = useState(false);
-
-    function validate(val) {
-        return !(val === null || val === undefined || val === "" || isNaN(parseFloat(val)) || parseFloat(val) < 0);
-    }
-
-    useEffect(() => {
-        setValue(String(value));
-        setError(!validate(value));
-    }, [value]);
-
-    const onSave = () => {
-        if (!error && parseFloat(currValue) !== value) {
-            onChange(parseFloat(currValue));
-        }
-    };
-
-    const onValueChange = (event) => {
-        const val = event.target.value;
-        setValue(val);
-        setError(!validate(value));
-    };
-
-    const onKeyUp = (key) => {
-        if (key.keyCode === 13) {
-            onSave();
-        }
-    };
-
-    return (
-        <TextField
-            margin="dense"
-            variant="standard"
-            style={{ width: 40 }}
-            onBlur={onSave}
-            value={currValue}
-            error={error}
-            onChange={onValueChange}
-            onKeyUp={onKeyUp}
-            {...props}
-        />
-    );
-};
-
-type WrappedTextFieldProps = {
-    value: string;
-    onChange: (newValue: string) => void;
-    initial?: string | null;
-    errorMsg?: string | null;
-    validate?: (value: string) => boolean;
-} & TextFieldProps;
-
-const WrappedTextField: React.FC<WrappedTextFieldProps> = ({
-    value,
-    onChange,
-    initial = "",
-    errorMsg = null,
-    validate = null,
-    ...props
-}) => {
-    const [currValue, setValue] = useState(initial);
-    const [error, setError] = useState(false);
-
-    useEffect(() => {
-        if (value !== "") {
-            // FIXME: when there is a rerender in between onBlur and local state settings the empty value prop overrides
-            setValue(value);
-            if (validate !== null) {
-                setError(!validate(value));
-            }
-        }
-    }, [value, validate, setValue, setError]);
-
-    const onSave = () => {
-        if (!error && value !== currValue) {
-            console.log("old value", value, "new value", currValue);
-            onChange(currValue);
-        }
-    };
-
-    const onValueChange = (event) => {
-        const val = event.target.value;
-        setValue(val);
-        if (validate !== null) {
-            setError(!validate(val));
-        }
-    };
-
-    const onKeyUp = (key) => {
-        if (key.keyCode === 13) {
-            onSave();
-        }
-    };
-
-    return (
-        <TextField
-            margin="dense"
-            variant="standard"
-            onBlur={onSave}
-            value={currValue}
-            onChange={onValueChange}
-            onKeyUp={onKeyUp}
-            error={error}
-            helperText={error && errorMsg ? errorMsg : null}
-            {...props}
-        />
-    );
-};
+import { TextInput } from "../../../../components/TextInput";
+import { selectAccountSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "../../../../store";
 
 interface PositionTableRowProps {
     position: TransactionPosition;
@@ -160,6 +47,7 @@ interface PositionTableRowProps {
     showAccountSelect: boolean;
     showAddAccount: boolean;
     deletePosition: (position: TransactionPosition) => void;
+    validationError?: PositionValidationError;
 }
 
 const PositionTableRow: React.FC<PositionTableRowProps> = ({
@@ -172,39 +60,60 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
     showAccountSelect,
     showAddAccount,
     deletePosition,
+    validationError,
 }) => {
-    const validateFloat = (value) => {
-        return !(value === null || value === undefined || value === "" || isNaN(parseFloat(value)));
-    };
+    const theme = useTheme();
+
+    const error = validationError !== undefined;
+
     return (
-        <>
-            <TableCell key={`position-${position.id}-name`}>
-                <WrappedTextField
-                    key={`position-${position.id}-name`}
+        <TableRow
+            hover
+            sx={{
+                borderColor: error ? theme.palette.error.main : undefined,
+                borderWidth: error ? 2 : undefined,
+                borderStyle: error ? "solid" : undefined,
+            }}
+        >
+            <TableCell>
+                {validationError && validationError.formErrors && (
+                    <FormHelperText sx={{ marginLeft: 0 }} error={true}>
+                        {validationError.formErrors}
+                    </FormHelperText>
+                )}
+                {validationError && validationError.fieldErrors.communistShares && (
+                    <FormHelperText sx={{ marginLeft: 0 }} error={true}>
+                        {validationError.fieldErrors.communistShares}
+                    </FormHelperText>
+                )}
+                {validationError && validationError.fieldErrors.usages && (
+                    <FormHelperText sx={{ marginLeft: 0 }} error={true}>
+                        {validationError.fieldErrors.usages}
+                    </FormHelperText>
+                )}
+                <TextInput
                     value={position.name}
-                    id={`position-${position.id}-name`}
+                    error={validationError && !!validationError.fieldErrors.name}
+                    helperText={validationError && validationError.fieldErrors.name}
                     onChange={(value) => updatePosition(position, value, position.price, position.communistShares)}
-                    validate={(value) => value !== "" && value != null}
                 />
             </TableCell>
-            <TableCell key={`position-${position.id}-communist`} align="right">
-                <WrappedTextField
-                    key={`position-${position.id}-communist`}
-                    id={`position-${position.id}-communist`}
-                    value={String(position.price)}
+            <TableCell align="right">
+                <NumericInput
+                    value={position.price}
                     style={{ width: 70 }}
-                    onChange={(value) =>
-                        updatePosition(position, position.name, parseFloat(value), position.communistShares)
-                    }
-                    validate={validateFloat}
-                    errorMsg={"float required"}
+                    error={validationError && !!validationError.fieldErrors.price}
+                    helperText={validationError && validationError.fieldErrors.price}
+                    onChange={(value) => updatePosition(position, position.name, value, position.communistShares)}
                 />
             </TableCell>
             {transactionAccounts.map((accountID) => (
                 <TableCell align="right" key={accountID}>
                     {showAdvanced ? (
-                        <ShareInput
+                        <NumericInput
+                            sx={{ maxWidth: 50 }}
                             value={position.usages[accountID] !== undefined ? position.usages[String(accountID)] : 0}
+                            error={validationError && !!validationError.fieldErrors.usages}
                             onChange={(value) => updatePositionUsage(position, accountID, value)}
                             inputProps={{ tabIndex: -1 }}
                         />
@@ -222,9 +131,11 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
             {showAddAccount && <TableCell></TableCell>}
             <TableCell align="right">
                 {showAdvanced ? (
-                    <ShareInput
+                    <NumericInput
                         value={position.communistShares}
-                        onChange={(value) => updatePosition(position, position.name, position.price, parseFloat(value))}
+                        sx={{ maxWidth: 50 }}
+                        onChange={(value) => updatePosition(position, position.name, position.price, value)}
+                        error={validationError && !!validationError.fieldErrors.communistShares}
                         inputProps={{ tabIndex: -1 }}
                     />
                 ) : (
@@ -246,23 +157,45 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
                     <Delete />
                 </IconButton>
             </TableCell>
-        </>
+        </TableRow>
     );
+};
+
+type PositionValidationError = typeToFlattenedError<z.infer<typeof PositionValidator>>;
+export type ValidationErrors = {
+    [positionId: number]: PositionValidationError;
 };
 
 interface TransactionPositionsProps {
     groupId: number;
     transactionId: number;
+    validationErrors?: ValidationErrors;
 }
 
-export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ groupId, transactionId }) => {
+export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
+    groupId,
+    transactionId,
+    validationErrors,
+}) => {
     const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
     );
-    const positions = useAppSelector((state) =>
-        selectTransactionPositionsWithEmpty({ state: selectTransactionSlice(state), groupId, transactionId })
-    );
+    const { positions, positionsHaveComplexShares } = useAppSelector((state) => {
+        const positions = selectTransactionPositionsWithEmpty({
+            state: selectTransactionSlice(state),
+            groupId,
+            transactionId,
+        });
+        const positionsHaveComplexShares = positions.reduce(
+            (hasComplex, position) =>
+                hasComplex ||
+                (position.communistShares !== 0 && position.communistShares !== 1) ||
+                Object.values(position.usages).reduce((nonOne, usage) => nonOne || (usage !== 0 && usage !== 1), false),
+            false
+        );
+        return { positions, positionsHaveComplexShares };
+    });
     const transactionBalanceEffect = useAppSelector((state) =>
         selectTransactionBalanceEffect({ state: selectTransactionSlice(state), groupId, transactionId })
     );
@@ -384,19 +317,19 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                     <TableBody>
                         {transaction.isWip
                             ? positions.map((position, idx) => (
-                                  <TableRow hover key={position.id}>
-                                      <PositionTableRow
-                                          position={position}
-                                          deletePosition={deletePosition}
-                                          transactionAccounts={transactionAccounts}
-                                          copyPosition={copyPosition}
-                                          updatePosition={updatePosition}
-                                          updatePositionUsage={updatePositionUsage}
-                                          showAdvanced={showAdvanced}
-                                          showAccountSelect={showAccountSelect}
-                                          showAddAccount={showAddAccount}
-                                      />
-                                  </TableRow>
+                                  <PositionTableRow
+                                      key={position.id}
+                                      position={position}
+                                      deletePosition={deletePosition}
+                                      transactionAccounts={transactionAccounts}
+                                      copyPosition={copyPosition}
+                                      updatePosition={updatePosition}
+                                      updatePositionUsage={updatePositionUsage}
+                                      showAdvanced={showAdvanced}
+                                      showAccountSelect={showAccountSelect}
+                                      showAddAccount={showAddAccount}
+                                      validationError={validationErrors[position.id]}
+                                  />
                               ))
                             : positions.map((position) => (
                                   <TableRow hover key={position.id}>
@@ -406,12 +339,27 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({ grou
                                       </TableCell>
                                       {positionAccounts.map((accountID) => (
                                           <TableCell align="right" key={accountID}>
-                                              {position.usages[accountID] !== undefined
-                                                  ? position.usages[String(accountID)]
-                                                  : 0}
+                                              {positionsHaveComplexShares ? (
+                                                  position.usages[accountID] !== undefined ? (
+                                                      position.usages[String(accountID)]
+                                                  ) : (
+                                                      0
+                                                  )
+                                              ) : (
+                                                  <Checkbox
+                                                      checked={(position.usages[accountID] ?? 0) !== 0}
+                                                      disabled={true}
+                                                  />
+                                              )}
                                           </TableCell>
                                       ))}
-                                      <TableCell align="right">{position.communistShares}</TableCell>
+                                      <TableCell align="right">
+                                          {positionsHaveComplexShares ? (
+                                              position.communistShares
+                                          ) : (
+                                              <Checkbox checked={position.communistShares !== 0} disabled={true} />
+                                          )}
+                                      </TableCell>
                                   </TableRow>
                               ))}
                         <TableRow hover>

@@ -2,12 +2,10 @@ import { configureStore } from "@reduxjs/toolkit";
 import { TransactionSliceState } from "../types";
 
 import {
-    createPurchase,
-    createTransfer,
+    createTransaction,
     wipTransactionUpdated,
     wipPositionAdded,
     wipPositionUpdated,
-    positionDeleted,
     transactionReducer,
     initializeGroupState,
     selectTransactionById,
@@ -33,7 +31,7 @@ const setupStore = () => {
 describe("transactionSlice", () => {
     it("creating purchases works", async () => {
         const store = setupStore();
-        const { transaction } = await store.dispatch(createPurchase({ groupId: 1 })).unwrap();
+        const { transaction } = await store.dispatch(createTransaction({ groupId: 1, type: "purchase" })).unwrap();
         expect(transaction.name).toBe("");
         expect(transaction.isWip).toBe(true);
         expect(transaction.hasLocalChanges).toBe(true);

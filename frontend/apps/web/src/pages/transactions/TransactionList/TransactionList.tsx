@@ -1,6 +1,6 @@
 import { TransactionSortMode } from "@abrechnung/core";
 import {
-    createPurchase,
+    createTransaction,
     selectCurrentUserPermissions,
     selectGroupById,
     selectSortedTransactions,
@@ -32,7 +32,6 @@ import { useNavigate } from "react-router-dom";
 import { PurchaseIcon, TransferIcon } from "../../../components/style/AbrechnungIcons";
 import { MobilePaper } from "../../../components/style/mobile";
 import { TagSelector } from "../../../components/TagSelector";
-import TransferCreateModal from "../TransactionDetail/transfer/TransferCreateModal";
 import { useTitle } from "../../../core/utils";
 import { selectGroupSlice, useAppDispatch, useAppSelector } from "../../../store";
 import { TransactionListItem } from "./TransactionListItem";
@@ -54,7 +53,6 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
     const [speedDialOpen, setSpeedDialOpen] = useState(false);
     const toggleSpeedDial = () => setSpeedDialOpen((currValue) => !currValue);
 
-    const [showTransferCreateDialog, setShowTransferCreateDialog] = useState(false);
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
 
     const [searchValue, setSearchValue] = useState("");
@@ -69,15 +67,18 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
     useTitle(`${group.name} - Transactions`);
 
     const onCreatePurchase = () => {
-        dispatch(createPurchase({ groupId }))
+        dispatch(createTransaction({ groupId, type: "purchase" }))
             .unwrap()
             .then(({ transaction }) => {
                 navigate(`/groups/${groupId}/transactions/${transaction.id}?no-redirect=true`);
             });
     };
-
-    const openTransferCreateDialog = () => {
-        setShowTransferCreateDialog(true);
+    const onCreateTransfer = () => {
+        dispatch(createTransaction({ groupId, type: "transfer" }))
+            .unwrap()
+            .then(({ transaction }) => {
+                navigate(`/groups/${groupId}/transactions/${transaction.id}?no-redirect=true`);
+            });
     };
 
     const handleChangeTagFilter = (newTags: string[]) => setTagFilter(newTags);
@@ -156,7 +157,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                                 </IconButton>
                             </Tooltip>
                             <Tooltip title="Create Transfer">
-                                <IconButton color="primary" onClick={openTransferCreateDialog}>
+                                <IconButton color="primary" onClick={onCreateTransfer}>
                                     <TransferIcon />
                                 </IconButton>
                             </Tooltip>
@@ -177,15 +178,6 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                         ))
                     )}
                 </List>
-                <TransferCreateModal
-                    groupId={groupId}
-                    show={showTransferCreateDialog}
-                    onClose={(evt, reason) => {
-                        if (reason !== "backdropClick") {
-                            setShowTransferCreateDialog(false);
-                        }
-                    }}
-                />
             </MobilePaper>
             {permissions.canWrite && (
                 <SpeedDial
@@ -207,7 +199,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                         icon={<TransferIcon />}
                         tooltipTitle="Transfer"
                         tooltipOpen
-                        onClick={openTransferCreateDialog}
+                        onClick={onCreateTransfer}
                     />
                 </SpeedDial>
             )}

@@ -1,17 +1,8 @@
+import { selectAccountBalances, selectAccountById, selectGroupCurrencySymbol } from "@abrechnung/redux";
+import { TableCell } from "@mui/material";
 import React from "react";
-import { Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
-import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
-import { ClearingAccountIcon, PersonalAccountIcon } from "../style/AbrechnungIcons";
-import { useTheme } from "@mui/material/styles";
-import { useAppSelector, selectAccountSlice, selectGroupSlice } from "../../store";
-import {
-    selectAccountBalances,
-    selectAccountById,
-    selectGroupAccounts,
-    selectGroupCurrencySymbol,
-} from "@abrechnung/redux";
-import { getAccountLink } from "../../utils";
+import { selectAccountSlice, selectGroupSlice, useAppSelector } from "../../store";
+import { ShareSelect } from "../ShareSelect";
 
 interface Props {
     groupId: number;
@@ -19,100 +10,37 @@ interface Props {
 }
 
 export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) => {
-    const theme = useTheme();
-
     const account = useAppSelector((state) =>
         selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
-    );
-    const referencedAccounts = useAppSelector((state) =>
-        selectGroupAccounts({ state: selectAccountSlice(state), groupId })
     );
     const currencySymbol = useAppSelector((state) =>
         selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
     );
     const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
-
-    const [showAdvanced, setShowAdvanced] = useState(false);
-
-    useEffect(() => {
-        if (account.type !== "clearing") {
-            return;
-        }
-        for (const share of Object.values(account.clearingShares)) {
-            if (share !== 1) {
-                setShowAdvanced(true);
-                break;
-            }
-        }
-    }, [account]);
-
-    const clearingShareValue = (accountId) => {
-        if (account.type !== "clearing") {
-            return 0;
-        }
-        return account.clearingShares[accountId] ?? 0;
-    };
+    if (account.type !== "clearing") {
+        throw new Error("expected a clearing account to render ClearingAccountDetail, but got a personal account");
+    }
 
     return (
-        <TableContainer>
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableCell>Account</TableCell>
-                        {showAdvanced && <TableCell>Shares</TableCell>}
-                        <TableCell width="100px" align="right">
-                            Shared
-                        </TableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {referencedAccounts
-                        .filter((a) => balances[account.id]?.clearingResolution[a.id] !== undefined)
-                        .map((a) => (
-                            <TableRow hover key={a.id}>
-                                <TableCell sx={{ padding: "0 16px" }}>
-                                    {/*TODO: proper link*/}
-                                    <Link
-                                        style={{
-                                            color: theme.palette.text.primary,
-                                            textDecoration: "none",
-                                            display: "block",
-                                            height: "100%",
-                                            width: "100%",
-                                            padding: "16px 0",
-                                        }}
-                                        to={getAccountLink(groupId, a.type, a.id)}
-                                    >
-                                        <Grid container direction="row" alignItems="center">
-                                            <Grid item>
-                                                {a.type === "personal" ? (
-                                                    <PersonalAccountIcon />
-                                                ) : (
-                                                    <ClearingAccountIcon />
-                                                )}
-                                            </Grid>
-                                            <Grid item sx={{ ml: 1, display: "flex", flexDirection: "column" }}>
-                                                <Typography variant="body2" component="span">
-                                                    {a.name}
-                                                </Typography>
-                                                {a.type === "clearing" && a.dateInfo != null && (
-                                                    <Typography variant="caption" component="span">
-                                                        {a.dateInfo}
-                                                    </Typography>
-                                                )}
-                                            </Grid>
-                                        </Grid>
-                                    </Link>
-                                </TableCell>
-                                {showAdvanced && <TableCell width="50px">{clearingShareValue(a.id)}</TableCell>}
-                                <TableCell width="100px" align="right">
-                                    {balances[account.id]?.clearingResolution[a.id]?.toFixed(2)} {currencySymbol}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                </TableBody>
-            </Table>
-        </TableContainer>
+        <ShareSelect
+            groupId={groupId}
+            label="Participated"
+            value={account.clearingShares}
+            additionalShareInfoHeader={
+                <TableCell width="100px" align="right">
+                    Shared
+                </TableCell>
+            }
+            excludeAccounts={[account.id]}
+            renderAdditionalShareInfo={({ account: participatingAccount }) => (
+                <TableCell width="100px" align="right">
+                    {(balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0).toFixed(2)}{" "}
+                    {currencySymbol}
+                </TableCell>
+            )}
+            onChange={(value) => undefined}
+            editable={false}
+        />
     );
 };
 
