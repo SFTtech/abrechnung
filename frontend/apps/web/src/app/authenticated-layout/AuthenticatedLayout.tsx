@@ -79,89 +79,90 @@ export const AuthenticatedLayout: React.FC = () => {
 
     const drawer = (
         <div className={styles["sidebarContainer"]}>
-            <Toolbar />
-            {groupId !== undefined && (
-                <List sx={{ pb: 0 }}>
-                    <ListItemLink
-                        to={`/groups/${groupId}/`}
-                        selected={
-                            location.pathname === `/groups/${groupId}/` ||
-                            location.pathname === `/groups/${groupId}` ||
-                            location.pathname.startsWith(`/groups/${groupId}/transactions`)
-                        }
-                    >
-                        <ListItemIcon>
-                            <Paid />
-                        </ListItemIcon>
-                        <ListItemText primary="Transactions" />
-                    </ListItemLink>
-                    <ListItemLink
-                        to={`/groups/${groupId}/events`}
-                        selected={location.pathname.startsWith(`/groups/${groupId}/events`)}
-                    >
-                        <ListItemIcon>
-                            <EventIcon />
-                        </ListItemIcon>
-                        <ListItemText primary="Events" />
-                    </ListItemLink>
-                    <ListItemLink
-                        to={`/groups/${groupId}/balances`}
-                        selected={location.pathname.startsWith(`/groups/${groupId}/balances`)}
-                    >
-                        <ListItemIcon>
-                            <BarChart />
-                        </ListItemIcon>
-                        <ListItemText primary="Balances" />
-                    </ListItemLink>
-                    <ListItemLink
-                        to={`/groups/${groupId}/accounts`}
-                        selected={location.pathname.startsWith(`/groups/${groupId}/accounts`)}
-                    >
-                        <ListItemIcon>
-                            <AccountBalance />
-                        </ListItemIcon>
-                        <ListItemText primary="Accounts" />
-                    </ListItemLink>
-                    <ListItemLink
-                        to={`/groups/${groupId}/detail`}
-                        selected={location.pathname.startsWith(`/groups/${groupId}/detail`)}
-                    >
-                        <ListItemIcon>
-                            <AdminPanelSettings />
-                        </ListItemIcon>
-                        <ListItemText primary="Group Settings" />
-                    </ListItemLink>
-                    <ListItemLink
-                        to={`/groups/${groupId}/members`}
-                        selected={location.pathname.startsWith(`/groups/${groupId}/members`)}
-                    >
-                        <ListItemIcon>
-                            <People />
-                        </ListItemIcon>
-                        <ListItemText primary="Group Members" />
-                    </ListItemLink>
-                    <ListItemLink
-                        to={`/groups/${groupId}/invites`}
-                        selected={location.pathname.startsWith(`/groups/${groupId}/invites`)}
-                    >
-                        <ListItemIcon>
-                            <Mail />
-                        </ListItemIcon>
-                        <ListItemText primary="Group Invites" />
-                    </ListItemLink>
-                    <ListItemLink
-                        to={`/groups/${groupId}/log`}
-                        selected={location.pathname.startsWith(`/groups/${groupId}/log`)}
-                    >
-                        <ListItemIcon>
-                            <Message />
-                        </ListItemIcon>
-                        <ListItemText primary="Group Log" />
-                    </ListItemLink>
-                    <Divider />
-                </List>
-            )}
-            <SidebarGroupList activeGroupId={groupId} />
+            <div className={styles["sidebarScrollContainer"]}>
+                {groupId !== undefined && (
+                    <List sx={{ pb: 0 }}>
+                        <ListItemLink
+                            to={`/groups/${groupId}/`}
+                            selected={
+                                location.pathname === `/groups/${groupId}/` ||
+                                location.pathname === `/groups/${groupId}` ||
+                                location.pathname.startsWith(`/groups/${groupId}/transactions`)
+                            }
+                        >
+                            <ListItemIcon>
+                                <Paid />
+                            </ListItemIcon>
+                            <ListItemText primary="Transactions" />
+                        </ListItemLink>
+                        <ListItemLink
+                            to={`/groups/${groupId}/events`}
+                            selected={location.pathname.startsWith(`/groups/${groupId}/events`)}
+                        >
+                            <ListItemIcon>
+                                <EventIcon />
+                            </ListItemIcon>
+                            <ListItemText primary="Events" />
+                        </ListItemLink>
+                        <ListItemLink
+                            to={`/groups/${groupId}/balances`}
+                            selected={location.pathname.startsWith(`/groups/${groupId}/balances`)}
+                        >
+                            <ListItemIcon>
+                                <BarChart />
+                            </ListItemIcon>
+                            <ListItemText primary="Balances" />
+                        </ListItemLink>
+                        <ListItemLink
+                            to={`/groups/${groupId}/accounts`}
+                            selected={location.pathname.startsWith(`/groups/${groupId}/accounts`)}
+                        >
+                            <ListItemIcon>
+                                <AccountBalance />
+                            </ListItemIcon>
+                            <ListItemText primary="Accounts" />
+                        </ListItemLink>
+                        <ListItemLink
+                            to={`/groups/${groupId}/detail`}
+                            selected={location.pathname.startsWith(`/groups/${groupId}/detail`)}
+                        >
+                            <ListItemIcon>
+                                <AdminPanelSettings />
+                            </ListItemIcon>
+                            <ListItemText primary="Group Settings" />
+                        </ListItemLink>
+                        <ListItemLink
+                            to={`/groups/${groupId}/members`}
+                            selected={location.pathname.startsWith(`/groups/${groupId}/members`)}
+                        >
+                            <ListItemIcon>
+                                <People />
+                            </ListItemIcon>
+                            <ListItemText primary="Group Members" />
+                        </ListItemLink>
+                        <ListItemLink
+                            to={`/groups/${groupId}/invites`}
+                            selected={location.pathname.startsWith(`/groups/${groupId}/invites`)}
+                        >
+                            <ListItemIcon>
+                                <Mail />
+                            </ListItemIcon>
+                            <ListItemText primary="Group Invites" />
+                        </ListItemLink>
+                        <ListItemLink
+                            to={`/groups/${groupId}/log`}
+                            selected={location.pathname.startsWith(`/groups/${groupId}/log`)}
+                        >
+                            <ListItemIcon>
+                                <Message />
+                            </ListItemIcon>
+                            <ListItemText primary="Group Log" />
+                        </ListItemLink>
+                        <Divider />
+                    </List>
+                )}
+                <SidebarGroupList activeGroupId={groupId} />
+            </div>
 
             <div
                 className={styles["footer"]}
@@ -210,7 +211,9 @@ export const AuthenticatedLayout: React.FC = () => {
                         <MenuIcon />
                     </IconButton>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        Abrechnung
+                        <RouterLink to="/" style={{ textDecoration: "none", color: "inherit" }}>
+                            Abrechnung
+                        </RouterLink>
                     </Typography>
                     <div>
                         <IconButton
@@ -276,7 +279,9 @@ export const AuthenticatedLayout: React.FC = () => {
                         "& .MuiDrawer-paper": {
                             boxSizing: "border-box",
                             width: drawerWidth,
+                            overflowY: "hidden",
                         },
+                        overflowY: "hidden",
                     }}
                 >
                     {drawer}
