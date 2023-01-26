@@ -23,7 +23,9 @@ export const UnauthenticatedLayout: React.FC = () => {
             >
                 <Toolbar>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        Abrechnung
+                        <RouterLink to="/" style={{ textDecoration: "none", color: "inherit" }}>
+                            Abrechnung
+                        </RouterLink>
                     </Typography>
                     <Button component={RouterLink} color="inherit" to="/login">
                         Login

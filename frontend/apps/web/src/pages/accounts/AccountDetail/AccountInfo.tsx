@@ -58,6 +58,10 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
 
     const accountTypeLabel = account.type === "clearing" ? "event" : "account";
 
+    const navigateBack = () => {
+        navigate(-1);
+    };
+
     const edit = () => {
         if (!account.isWip) {
             dispatch(accountEditStarted({ groupId, accountId }));
@@ -120,11 +124,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
         <>
             <Grid container justifyContent="space-between">
                 <Grid item sx={{ display: "flex", alignItems: "center" }}>
-                    <IconButton
-                        sx={{ display: { xs: "none", md: "inline-flex" } }}
-                        component={RouterLink}
-                        to={getAccountListLink(groupId, account.type)}
-                    >
+                    <IconButton sx={{ display: { xs: "none", md: "inline-flex" } }} onClick={navigateBack}>
                         <ChevronLeft />
                     </IconButton>
                     <Chip color="primary" label={accountTypeLabel} />

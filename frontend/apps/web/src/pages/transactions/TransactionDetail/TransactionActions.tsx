@@ -12,7 +12,7 @@ import {
     LinearProgress,
 } from "@mui/material";
 import React, { useState } from "react";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { selectTransactionSlice, useAppSelector } from "../../../store";
 
 interface Props {
@@ -34,6 +34,7 @@ export const TransactionActions: React.FC<Props> = ({
     onAbortEdit,
     showProgress = false,
 }) => {
+    const navigate = useNavigate();
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
 
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
@@ -44,15 +45,15 @@ export const TransactionActions: React.FC<Props> = ({
 
     const transactionTypeLabel = transaction.type === "purchase" ? "purchase" : "transfer";
 
+    const navigateBack = () => {
+        navigate(-1);
+    };
+
     return (
         <>
             <Grid container justifyContent="space-between">
                 <Grid item sx={{ display: "flex", alignItems: "center" }}>
-                    <IconButton
-                        sx={{ display: { xs: "none", md: "inline-flex" } }}
-                        component={RouterLink}
-                        to={`/groups/${groupId}/`}
-                    >
+                    <IconButton sx={{ display: { xs: "none", md: "inline-flex" } }} onClick={navigateBack}>
                         <ChevronLeft />
                     </IconButton>
                     <Chip color="primary" label={transactionTypeLabel} />
