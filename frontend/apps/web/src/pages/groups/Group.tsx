@@ -12,7 +12,7 @@ import React, { Suspense } from "react";
 import { batch } from "react-redux";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import Balances from "../../components/accounts/Balances";
+import Balances from "../accounts/Balances";
 import Loading from "../../components/style/Loading";
 import { api, ws } from "../../core/api";
 import {
@@ -26,6 +26,7 @@ import { AccountDetail } from "../accounts/AccountDetail";
 import { PersonalAccountList } from "../accounts/PersonalAccountList";
 import { ClearingAccountList } from "../accounts/ClearingAccountList";
 import { TransactionList } from "../transactions/TransactionList";
+import { SettlementPlanDisplay } from "../accounts/SettlementPlanDisplay";
 import GroupInvites from "./GroupInvites";
 import GroupLog from "./GroupLog";
 import GroupMemberList from "./GroupMemberList";
@@ -144,6 +145,14 @@ export const Group: React.FC = () => {
                 element={
                     <Suspense fallback={<Loading />}>
                         <Balances groupId={groupId} />
+                    </Suspense>
+                }
+            />
+            <Route
+                path="settlement-plan"
+                element={
+                    <Suspense fallback={<Loading />}>
+                        <SettlementPlanDisplay groupId={group.id} />
                     </Suspense>
                 }
             />

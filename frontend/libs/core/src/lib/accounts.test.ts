@@ -1,5 +1,5 @@
 import { Purchase, Account, AccountBalanceMap } from "@abrechnung/types";
-import { computeAccountBalances } from "./accounts";
+import { computeAccountBalances, computeGroupSettlement } from "./accounts";
 
 const purchaseTemplate = {
     groupID: 0,
@@ -346,5 +346,122 @@ describe("computeAccountBalances", () => {
             totalPaid: 0,
             clearingResolution: {},
         });
+    });
+});
+
+describe("computeGroupSettlement", () => {
+    it("should solve a simple 3 way inequality", () => {
+        const balances: AccountBalanceMap = {
+            1: {
+                balance: 50,
+                beforeClearing: 50,
+                totalConsumed: 0,
+                totalPaid: 50,
+                clearingResolution: {},
+            },
+            2: {
+                balance: -25,
+                beforeClearing: -25,
+                totalConsumed: 25,
+                totalPaid: 0,
+                clearingResolution: {},
+            },
+            3: {
+                balance: -25,
+                beforeClearing: -25,
+                totalConsumed: 25,
+                totalPaid: 0,
+                clearingResolution: {},
+            },
+        };
+
+        const settlement = computeGroupSettlement(balances);
+        expect(settlement.length).toBe(2);
+        expect(settlement).toContainEqual({ creditorId: 2, debitorId: 1, paymentAmount: 25 });
+        expect(settlement).toContainEqual({ creditorId: 3, debitorId: 1, paymentAmount: 25 });
+    });
+    it("should solve a more complex group balance with matching one to one payments", () => {
+        const balances: AccountBalanceMap = {
+            1: {
+                balance: 100,
+                beforeClearing: 100,
+                totalConsumed: 0,
+                totalPaid: 100,
+                clearingResolution: {},
+            },
+            2: {
+                balance: -50,
+                beforeClearing: -50,
+                totalConsumed: 50,
+                totalPaid: 0,
+                clearingResolution: {},
+            },
+            3: {
+                balance: -30,
+                beforeClearing: -30,
+                totalConsumed: 30,
+                totalPaid: 0,
+                clearingResolution: {},
+            },
+            4: {
+                balance: -80,
+                beforeClearing: -80,
+                totalConsumed: 80,
+                totalPaid: 0,
+                clearingResolution: {},
+            },
+            5: {
+                balance: 50,
+                beforeClearing: 50,
+                totalConsumed: 0,
+                totalPaid: 50,
+                clearingResolution: {},
+            },
+            6: {
+                balance: -45,
+                beforeClearing: -45,
+                totalConsumed: 45,
+                totalPaid: 0,
+                clearingResolution: {},
+            },
+            7: {
+                balance: 65,
+                beforeClearing: 65,
+                totalConsumed: 0,
+                totalPaid: 65,
+                clearingResolution: {},
+            },
+            8: {
+                balance: -10,
+                beforeClearing: -10,
+                totalConsumed: 10,
+                totalPaid: 0,
+                clearingResolution: {},
+            },
+            9: {
+                balance: -60,
+                beforeClearing: -60,
+                totalConsumed: 60,
+                totalPaid: 0,
+                clearingResolution: {},
+            },
+            10: {
+                balance: 60,
+                beforeClearing: 60,
+                totalConsumed: 0,
+                totalPaid: 60,
+                clearingResolution: {},
+            },
+        };
+
+        const settlement = computeGroupSettlement(balances);
+        expect(settlement.length).toBe(7);
+        expect(settlement).toContainEqual({ creditorId: 9, debitorId: 10, paymentAmount: 60 });
+        expect(settlement).toContainEqual({ creditorId: 2, debitorId: 5, paymentAmount: 50 });
+        expect(settlement).toContainEqual({ creditorId: 4, debitorId: 1, paymentAmount: 80 });
+        expect(settlement).toContainEqual({ creditorId: 6, debitorId: 7, paymentAmount: 45 });
+        expect(settlement).toContainEqual({ creditorId: 3, debitorId: 7, paymentAmount: 20 });
+        expect(settlement).toContainEqual({ creditorId: 3, debitorId: 1, paymentAmount: 10 });
+        expect(settlement).toContainEqual({ creditorId: 8, debitorId: 1, paymentAmount: 10 });
     });
 });
