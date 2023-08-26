@@ -24,6 +24,7 @@ from typing import Optional, Sequence
 DISTS = (
     "debian:bullseye",
     "debian:bookworm",
+    "debian:trixie",
     "debian:sid",
     "ubuntu:jammy",  # 22.04
 )

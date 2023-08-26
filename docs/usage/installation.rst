@@ -8,7 +8,7 @@ Installation
 
 .. _abrechnung-installation-debian:
 
-Debian Buster, Bullseye, Bookworm and Sid
+Debian Bullseye, Bookworm, Trixie and Sid
 -----------------------------------------
 This is the recommended installation method as it also installs the prebuilt abrechnung web app.
 
@@ -25,7 +25,7 @@ as well as static web assets in ``/usr/share/abrechnung_web`` are installed.
 
 The only remaining work to be done is to setup the database and customize the configuration (see :ref:`abrechnung-config`).
 
-Ubuntu Focal, Hirsute and Impish
+Ubuntu Jammy
 --------------------------------
 
 Follow the installation instructions for :ref:`Debian <abrechnung-installation-debian>`, just make sure to choose the correct
