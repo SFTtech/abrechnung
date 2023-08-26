@@ -1164,7 +1164,6 @@ class TransactionService(Application):
     async def sync_transactions(
         self, *, user: User, group_id: int, transactions: list[RawTransaction]
     ) -> dict[int, int]:
-
         all_transactions_in_same_group = all(
             [a.group_id == group_id for a in transactions]
         )
