@@ -298,6 +298,12 @@ async def upload_file(
             detail=f"Cannot read uploaded file: {e}",
         )
 
+    if file.filename is None or file.content_type is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"File is missing filename or content type",
+        )
+
     await transaction_service.upload_file(
         user=user,
         transaction_id=transaction_id,
