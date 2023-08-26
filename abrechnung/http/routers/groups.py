@@ -79,7 +79,7 @@ class GroupPayload(BaseModel):
     name: str
     description: str = ""
     currency_symbol: str
-    add_user_account_on_join = False
+    add_user_account_on_join: bool = False
     terms: str = ""
 
 
