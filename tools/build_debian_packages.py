@@ -57,7 +57,7 @@ class Builder(object):
 
         if self._failed:
             print("not building %s due to earlier failure" % (dist,))
-            raise Exception("failed")
+            raise RuntimeError("failed")
 
         try:
             self._inner_build(dist, skip_tests)

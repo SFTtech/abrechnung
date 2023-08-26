@@ -15,10 +15,6 @@ import json
 import sys
 from pathlib import Path
 
-import pydantic
-import yaml
-from pydantic.fields import FieldInfo
-
 HERE = Path(__file__).parent
 sys.path[:0] = [str(HERE.parent), str(HERE / "_ext")]
 BUILD_DIR = HERE / "_build"
