@@ -55,7 +55,7 @@ export const Login: React.FC = () => {
                 setSubmitting(false);
             })
             .catch((err) => {
-                toast.error(err);
+                toast.error(err.message);
                 setSubmitting(false);
             });
     };
