@@ -115,5 +115,4 @@ def generate_openapi_json():
         json.dump(api.api.openapi(), f)
 
 
-
 generate_openapi_json()
