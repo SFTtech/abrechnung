@@ -87,9 +87,6 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
 
     return (
         <MobilePaper>
-            <Button component={RouterLink} to={`/groups/${group.id}/settlement-plan`}>
-                Settle up
-            </Button>
             <TabContext value={selectedTab}>
                 <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                     <TabList onChange={(event, idx) => setSelectedTab(idx)} centered>
@@ -206,6 +203,12 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                     <BalanceTable groupId={groupId} />
                 </TabPanel>
             </TabContext>
+            <Divider />
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
+                <Button component={RouterLink} to={`/groups/${group.id}/settlement-plan`}>
+                    Settle up
+                </Button>
+            </Box>
         </MobilePaper>
     );
 };

@@ -9,6 +9,7 @@ import {
     TransactionContainer,
     TransactionPosition,
     TransactionType,
+    TransactionTypeMap,
 } from "@abrechnung/types";
 import { toISODateString } from "@abrechnung/utils";
 import { createAsyncThunk, createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
@@ -417,9 +418,26 @@ export const fetchTransaction = createAsyncThunk<
 
 export const createTransaction = createAsyncThunk<
     { transaction: Transaction },
-    { groupId: number; type: TransactionType },
+    {
+        groupId: number;
+        type: TransactionType;
+        data?: Partial<
+            Omit<
+                Transaction,
+                | "id"
+                | "type"
+                | "positions"
+                | "groupId"
+                | "hasLocalChanges"
+                | "isWip"
+                | "lastChanged"
+                | "deleted"
+                | "attachments"
+            >
+        >;
+    },
     { state: ITransactionRootState }
->("createPurchase", async ({ groupId, type }, { getState, dispatch }) => {
+>("createPurchase", async ({ groupId, type, data }, { getState, dispatch }) => {
     const state = getState();
     const transactionId = state.transactions.nextLocalTransactionId;
     const transactionBase = {
@@ -440,6 +458,7 @@ export const createTransaction = createAsyncThunk<
         hasLocalChanges: true,
         isWip: true,
         lastChanged: new Date().toISOString(),
+        ...data,
     };
     let transaction: Transaction;
     if (type === "purchase") {

@@ -248,7 +248,8 @@ export const computeAccountBalanceHistory = (
     return accumulatedBalanceChanges;
 };
 
-export type SettlementPlan = Array<{ creditorId: number; debitorId: number; paymentAmount: number }>;
+export type SettlementPlanItem = { creditorId: number; debitorId: number; paymentAmount: number };
+export type SettlementPlan = Array<SettlementPlanItem>;
 type SimplifiedBalances = Array<[number, number]>; // map of account ids to balances
 
 const balanceSortCompareFn = (a: [number, number], b: [number, number]) => {
@@ -322,5 +323,5 @@ export const computeGroupSettlement = (balances: AccountBalanceMap): SettlementP
         }
     }
 
-    return result;
+    return result.filter((planItem) => Math.round((planItem.paymentAmount + Number.EPSILON) * 100) / 100 !== 0);
 };
