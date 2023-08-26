@@ -12,7 +12,7 @@ import {
     LinearProgress,
 } from "@mui/material";
 import React, { useState } from "react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { selectTransactionSlice, useAppSelector } from "../../../store";
 
 interface Props {

@@ -137,7 +137,10 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
             .then(({ oldTransactionId, transactionContainer }) => {
                 setShowProgress(false);
                 if (oldTransactionId !== transactionContainer.transaction.id) {
-                    navigate(`/groups/${groupId}/transactions/${transactionContainer.transaction.id}?no-redirect=true`);
+                    navigate(
+                        `/groups/${groupId}/transactions/${transactionContainer.transaction.id}?no-redirect=true`,
+                        { replace: true }
+                    );
                 }
             })
             .catch((err) => {

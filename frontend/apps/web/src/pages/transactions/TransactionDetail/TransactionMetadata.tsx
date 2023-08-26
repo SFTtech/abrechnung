@@ -125,7 +125,6 @@ export const TransactionMetadata: React.FC<Props> = ({
                         name="description"
                         variant="standard"
                         margin="dense"
-                        autoFocus
                         fullWidth
                         error={!!validationErrors.fieldErrors.description}
                         helperText={validationErrors.fieldErrors.description}
@@ -139,7 +138,6 @@ export const TransactionMetadata: React.FC<Props> = ({
                     name="value"
                     variant="standard"
                     margin="dense"
-                    autoFocus
                     fullWidth
                     error={!!validationErrors.fieldErrors.value}
                     helperText={validationErrors.fieldErrors.value}

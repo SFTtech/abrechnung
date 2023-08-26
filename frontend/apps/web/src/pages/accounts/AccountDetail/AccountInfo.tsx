@@ -87,7 +87,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
             .then(({ oldAccountId, account }) => {
                 setShowProgress(false);
                 if (oldAccountId !== account.id) {
-                    navigate(getAccountLink(groupId, "clearing", account.id) + "?no-redirect=true");
+                    navigate(getAccountLink(groupId, "clearing", account.id) + "?no-redirect=true", { replace: true });
                 }
             })
             .catch((err) => {
