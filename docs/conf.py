@@ -17,7 +17,7 @@ from pathlib import Path
 
 import pydantic
 import yaml
-from pydantic.fields import ModelField
+from pydantic.fields import FieldInfo
 
 HERE = Path(__file__).parent
 sys.path[:0] = [str(HERE.parent), str(HERE / "_ext")]
@@ -115,50 +115,5 @@ def generate_openapi_json():
         json.dump(api.api.openapi(), f)
 
 
-def _generate_config_doc_rec(field: ModelField):
-    if issubclass(field.type_, pydantic.BaseModel):
-        sub = {}
-        for subfield in field.type_.__fields__.values():
-            sub[subfield.name] = _generate_config_doc_rec(subfield)
-        return sub
-
-    if (
-        field.outer_type_ is not None
-        and "List" in str(field.outer_type_)
-        or "list" in str(field.outer_type_)
-    ):
-        verbose_type = f"<list[{field.type_.__name__}]>"
-    else:
-        verbose_type = f"<{field.type_.__name__}>"
-
-    out = f"{verbose_type}"
-    extra_info = []
-    # if description := field.metadata.get("description"):
-    #     extra_info.append(description)
-
-    if field.default:
-        extra_info.append(f"default={field.default}")
-
-    if field.required is not None and not field.required:
-        extra_info.append("optional")
-
-    if not extra_info:
-        return out
-
-    return f"{out} # {'; '.join(extra_info)}"
-
-
-def generate_config_doc_yaml():
-    output = {}
-    for field in Config.__fields__.values():
-        output[field.name] = _generate_config_doc_rec(field)
-
-    output_string = yaml.dump(output).replace("'", "").replace('"', "")
-
-    BUILD_DIR.mkdir(parents=True, exist_ok=True)
-    with open(BUILD_DIR / "config_schema.yaml", "w+", encoding="utf-8") as f:
-        f.write(output_string)
-
 
 generate_openapi_json()
-generate_config_doc_yaml()
