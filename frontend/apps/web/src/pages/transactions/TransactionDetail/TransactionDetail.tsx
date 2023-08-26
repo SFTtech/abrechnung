@@ -15,11 +15,11 @@ import * as React from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { typeToFlattenedError, z } from "zod";
-import Loading from "../../../components/style/Loading";
-import { MobilePaper } from "../../../components/style/mobile";
-import { api } from "../../../core/api";
-import { useQuery, useTitle } from "../../../core/utils";
-import { selectGroupSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "../../../store";
+import Loading from "@/components/style/Loading";
+import { MobilePaper } from "@/components/style/mobile";
+import { api } from "@/core/api";
+import { useQuery, useTitle } from "@/core/utils";
+import { selectGroupSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
 import { TransactionPositions, ValidationErrors as PositionValidationErrors } from "./purchase/TransactionPositions";
 import { TransactionActions } from "./TransactionActions";
 import { TransactionMetadata } from "./TransactionMetadata";
@@ -137,7 +137,10 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
             .then(({ oldTransactionId, transactionContainer }) => {
                 setShowProgress(false);
                 if (oldTransactionId !== transactionContainer.transaction.id) {
-                    navigate(`/groups/${groupId}/transactions/${transactionContainer.transaction.id}?no-redirect=true`);
+                    navigate(
+                        `/groups/${groupId}/transactions/${transactionContainer.transaction.id}?no-redirect=true`,
+                        { replace: true }
+                    );
                 }
             })
             .catch((err) => {

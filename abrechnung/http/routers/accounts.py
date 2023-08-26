@@ -40,7 +40,7 @@ class BaseAccountPayload(BaseModel):
     date_info: Optional[date] = None
     tags: Optional[List[str]] = None
     owning_user_id: Optional[int] = None
-    clearing_shares: ClearingShares
+    clearing_shares: ClearingShares = None
 
 
 class CreateAccountPayload(BaseAccountPayload):

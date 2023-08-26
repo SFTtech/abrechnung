@@ -131,6 +131,11 @@ interface TransactionMetadata {
 export type Purchase = PurchaseBase & TransactionMetadata;
 export type Transfer = TransferBase & TransactionMetadata;
 
+export type TransactionTypeMap = {
+    purchase: Purchase;
+    transfer: Transfer;
+};
+
 export type Transaction = Purchase | Transfer;
 
 /**

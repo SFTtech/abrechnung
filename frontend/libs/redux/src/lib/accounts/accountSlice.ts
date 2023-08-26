@@ -209,6 +209,19 @@ export const selectClearingAccountsInvolvingAccounts = memoize(
     }
 );
 
+export const selectAccountIdToAccountMapInternal = (args: {
+    state: AccountSliceState;
+    groupId: number;
+}): { [k: number]: Account } => {
+    const accounts = selectGroupAccountsInternal(args);
+    return accounts.reduce<{ [k: number]: Account }>((map, account) => {
+        map[account.id] = account;
+        return map;
+    }, {});
+};
+
+export const selectAccountIdToAccountMap = memoize(selectAccountIdToAccountMapInternal);
+
 export const selectAccountIdToNameMapInternal = (args: {
     state: AccountSliceState;
     groupId: number;

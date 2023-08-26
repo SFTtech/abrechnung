@@ -75,7 +75,7 @@ export interface AccountBalance {
     beforeClearing: number;
     totalConsumed: number;
     totalPaid: number;
-    clearingResolution: { [k: number]: number }; // TODO: make plain old object
+    clearingResolution: { [k: number]: number };
 }
 
 export type AccountBalanceMap = { [k: number]: AccountBalance };

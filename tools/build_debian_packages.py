@@ -24,6 +24,7 @@ from typing import Optional, Sequence
 DISTS = (
     "debian:bullseye",
     "debian:bookworm",
+    "debian:trixie",
     "debian:sid",
     "ubuntu:jammy",  # 22.04
 )
@@ -56,7 +57,7 @@ class Builder(object):
 
         if self._failed:
             print("not building %s due to earlier failure" % (dist,))
-            raise Exception("failed")
+            raise RuntimeError("failed")
 
         try:
             self._inner_build(dist, skip_tests)

@@ -183,7 +183,10 @@ class TransactionLogicTest(BaseTestCase):
         self.assertEqual(file_id, transaction.committed_files[0].id)
         self.assertIsNotNone(transaction.committed_files[0].blob_id)
 
-        (mime_type, _,) = await self.transaction_service.read_file_contents(
+        (
+            mime_type,
+            _,
+        ) = await self.transaction_service.read_file_contents(
             user=self.user,
             file_id=file_id,
             blob_id=transaction.committed_files[0].blob_id,

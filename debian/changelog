@@ -1,14 +1,20 @@
+abrechnung (0.11.0) stable; urgency=medium
+
+  * Abrechnung release 0.11.0
+
+ -- Michael Loipführer <milo@sft.lol>  Sun, 26 Aug 2023 20:00:00 +0200
+
 abrechnung (0.10.1) stable; urgency=medium
 
   * Abrechnung release 0.10.1
 
- -- Michael Loipführer <milo@sft.lol>  Sun, 1 Jan 2022 18:00:00 +0100
+ -- Michael Loipführer <milo@sft.lol>  Sun, 1 Jan 2023 18:00:00 +0100
 
 abrechnung (0.10.0) stable; urgency=medium
 
   * Abrechnung release 0.10.0
 
- -- Michael Loipführer <milo@sft.lol>  Sun, 1 Jan 2022 15:00:00 +0100
+ -- Michael Loipführer <milo@sft.lol>  Sun, 1 Jan 2023 15:00:00 +0100
 
 abrechnung (0.9.0) stable; urgency=medium
 

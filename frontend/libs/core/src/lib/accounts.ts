@@ -247,3 +247,81 @@ export const computeAccountBalanceHistory = (
 
     return accumulatedBalanceChanges;
 };
+
+export type SettlementPlanItem = { creditorId: number; debitorId: number; paymentAmount: number };
+export type SettlementPlan = Array<SettlementPlanItem>;
+type SimplifiedBalances = Array<[number, number]>; // map of account ids to balances
+
+const balanceSortCompareFn = (a: [number, number], b: [number, number]) => {
+    return Math.abs(a[1]) - Math.abs(b[1]);
+};
+
+// assumes a sorted balance list
+const extractOneToOneSettlements = (
+    creditors: SimplifiedBalances,
+    debitors: SimplifiedBalances,
+    result: SettlementPlan
+): void => {
+    // all input parameters are also output parameters
+    let credI = 0;
+    let debI = 0;
+    while (credI < creditors.length && debI < debitors.length) {
+        const [creditor, creditorBalance] = creditors[credI];
+        const [debitor, debitorBalance] = debitors[debI];
+        if (Math.abs(creditorBalance) === Math.abs(debitorBalance)) {
+            creditors.splice(credI, 1);
+            debitors.splice(debI, 1);
+            result.push({ creditorId: debitor, debitorId: creditor, paymentAmount: creditorBalance });
+            continue;
+        } else if (debI == debitors.length - 1) {
+            credI++;
+        } else if (credI == creditors.length - 1) {
+            debI++;
+        } else if (Math.abs(creditorBalance) < Math.abs(debitorBalance)) {
+            credI++;
+        } else {
+            debI++;
+        }
+    }
+};
+
+export const computeGroupSettlement = (balances: AccountBalanceMap): SettlementPlan => {
+    const b: SimplifiedBalances = Object.entries(balances).map(([accountId, balance]) => {
+        return [Number(accountId), balance.balance];
+    }, {});
+    const creditors = b.filter(([, balance]) => balance > 0);
+    const debitors = b.filter(([, balance]) => balance < 0);
+
+    const result: SettlementPlan = [];
+    while (creditors.length > 0 && debitors.length > 0) {
+        creditors.sort(balanceSortCompareFn);
+        debitors.sort(balanceSortCompareFn);
+        extractOneToOneSettlements(creditors, debitors, result);
+        const nextDebitor = debitors.pop();
+        const nextCreditor = creditors.pop();
+        if (nextDebitor == undefined || nextCreditor == undefined) {
+            break;
+        }
+        const [debitor, debitorBalance] = nextDebitor;
+        const [creditor, creditorBalance] = nextCreditor;
+
+        let amount;
+        if (Math.abs(debitorBalance) > Math.abs(creditorBalance)) {
+            amount = Math.abs(creditorBalance);
+        } else {
+            amount = Math.abs(debitorBalance);
+        }
+        result.push({ creditorId: debitor, debitorId: creditor, paymentAmount: amount });
+        const newDebitorBalance = debitorBalance + amount;
+        if (newDebitorBalance < 0) {
+            debitors.push([debitor, newDebitorBalance]);
+        }
+
+        const newCreditorBalance = creditorBalance - amount;
+        if (newCreditorBalance > 0) {
+            creditors.push([creditor, newCreditorBalance]);
+        }
+    }
+
+    return result.filter((planItem) => Math.round((planItem.paymentAmount + Number.EPSILON) * 100) / 100 !== 0);
+};

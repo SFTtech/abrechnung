@@ -2,7 +2,9 @@ import {
     BalanceHistoryEntry,
     computeAccountBalanceHistory,
     computeAccountBalances,
+    computeGroupSettlement,
     getTransactionSortFunc,
+    SettlementPlan,
     TransactionSortMode,
 } from "@abrechnung/core";
 import { AccountBalanceMap, Transaction } from "@abrechnung/types";
@@ -139,3 +141,9 @@ export const selectSortedTransactions = memoize(
     },
     { size: 5 }
 );
+
+export const selectSettlementPlan = memoize((args: { state: IRootState; groupId: number }): SettlementPlan => {
+    const { state, groupId } = args;
+    const balances = selectAccountBalancesInternal({ state, groupId });
+    return computeGroupSettlement(balances);
+});

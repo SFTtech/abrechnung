@@ -121,10 +121,3 @@ Possible config options are
      "imprintURL": "<string, optional>",
      "sourceCodeURL": "https://github.com/SFTtech/abrechnung"
    }
-
-
-All Configuration Options
--------------------------
-
-.. literalinclude :: ../_build/config_schema.yaml
-   :language: yaml

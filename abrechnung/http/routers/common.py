@@ -16,7 +16,7 @@ class VersionResponse(BaseModel):
     patch_version: int
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "version": "1.3.2",
                 "major_version": 1,

@@ -4,6 +4,7 @@ import {
     Alert,
     AlertTitle,
     Box,
+    Button,
     Divider,
     List,
     ListItemText,
@@ -14,10 +15,10 @@ import {
 } from "@mui/material";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import { useTheme } from "@mui/material/styles";
-import { useNavigate } from "react-router-dom";
-import BalanceTable from "./BalanceTable";
-import { MobilePaper } from "../style/mobile";
-import ListItemLink from "../style/ListItemLink";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
+import BalanceTable from "../../components/accounts/BalanceTable";
+import { MobilePaper } from "../../components/style/mobile";
+import ListItemLink from "../../components/style/ListItemLink";
 import { useTitle } from "../../core/utils";
 import { selectGroupAccountsFiltered, selectGroupById, selectAccountBalances } from "@abrechnung/redux";
 import { useAppSelector, selectAccountSlice, selectGroupSlice } from "../../store";
@@ -202,6 +203,12 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                     <BalanceTable groupId={groupId} />
                 </TabPanel>
             </TabContext>
+            <Divider />
+            <Box sx={{ display: "flex", justifyContent: "center" }}>
+                <Button component={RouterLink} to={`/groups/${group.id}/settlement-plan`}>
+                    Settle up
+                </Button>
+            </Box>
         </MobilePaper>
     );
 };

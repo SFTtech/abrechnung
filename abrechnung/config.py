@@ -13,23 +13,23 @@ class ServiceConfig(BaseModel):
 
 
 class DemoConfig(BaseModel):
-    enabled = False
-    wipe_interval = timedelta(hours=1)
+    enabled: bool = False
+    wipe_interval: timedelta = timedelta(hours=1)
 
 
 class ApiConfig(BaseModel):
     secret_key: str
     host: str
     port: int
-    id = "default"
-    max_uploadable_file_size = 1024
-    enable_cors = True
-    access_token_validity = timedelta(hours=1)
+    id: str = "default"
+    max_uploadable_file_size: int = 1024
+    enable_cors: bool = True
+    access_token_validity: timedelta = timedelta(hours=1)
 
 
 class RegistrationConfig(BaseModel):
-    enabled = False
-    allow_guest_users = False
+    enabled: bool = False
+    allow_guest_users: bool = False
     valid_email_domains: Optional[List[str]] = None
 
 
@@ -49,7 +49,7 @@ class EmailConfig(BaseModel):
     address: str
     host: str
     port: int
-    mode = "smtp"  # oneof "local" "smtp-ssl" "smtp-starttls" "smtp"
+    mode: str = "smtp"  # oneof "local" "smtp-ssl" "smtp-starttls" "smtp"
     auth: Optional[AuthConfig] = None
 
 
@@ -59,8 +59,8 @@ class Config(BaseModel):
     database: DatabaseConfig
     email: EmailConfig
     # in case all params are optional this is needed to make the whole section optional
-    demo = DemoConfig()
-    registration = RegistrationConfig()
+    demo: DemoConfig = DemoConfig()
+    registration: RegistrationConfig = RegistrationConfig()
 
 
 def read_config(config_path: Path) -> Config:
