@@ -179,7 +179,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                             name="description"
                             error={!!validationErrors.fieldErrors.description}
                             helperText={validationErrors.fieldErrors.description}
-                            onChange={(value) => pushChanges({ name: value })}
+                            onChange={(value) => pushChanges({ description: value })}
                             value={account.description}
                             disabled={!account.isWip}
                         />
