@@ -73,10 +73,10 @@ class GroupAPITest(HTTPAPITest):
     async def test_delete_group(self):
         user2, user2_password = await self._create_test_user("user2", "user2@test.com")
         _, session_id, session_token = await self.user_service.login_user(
-            "user2", password=user2_password, session_name="foobar"
+            username="user2", password=user2_password, session_name="foobar"
         )
         user2_token = await self.user_service.get_access_token_from_session_token(
-            session_token
+            session_token=session_token
         )
         group_id = await self.group_service.create_group(
             user=self.test_user,
@@ -441,10 +441,10 @@ class GroupAPITest(HTTPAPITest):
 
         user2, password = await self._create_test_user("user", "email2@email.stuff")
         _, session_id, session_token = await self.user_service.login_user(
-            "user", password=password, session_name="session1"
+            username="user", password=password, session_name="session1"
         )
         jwt_token = await self.user_service.get_access_token_from_session_token(
-            session_token
+            session_token=session_token
         )
         resp = await self.client.post(
             "/api/v1/groups/preview",

@@ -10,7 +10,7 @@ import asyncpg
 
 from . import subcommand
 from .config import Config
-from .database.database import create_db_connection
+from abrechnung.framework.database import create_db_pool
 
 
 class MailerCli(subcommand.SubCommand):
@@ -44,7 +44,8 @@ class MailerCli(subcommand.SubCommand):
         if self.events is None:
             raise RuntimeError("something unexpected happened, self.events is None")
 
-        self.psql = await create_db_connection(self.config)
+        db_pool = await create_db_pool(self.config.database, n_connections=1)
+        self.psql = await db_pool.acquire()
         self.psql.add_termination_listener(self.terminate_callback)
         self.psql.add_log_listener(self.log_callback)
         await self.psql.add_listener("mailer", self.notification_callback)
@@ -66,6 +67,7 @@ class MailerCli(subcommand.SubCommand):
 
         await self.psql.remove_listener("mailer", self.notification_callback)
         await self.psql.close()
+        await db_pool.close()
 
     def get_mailer_instance(self):
         mode = self.config.email.mode

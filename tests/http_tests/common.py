@@ -33,7 +33,7 @@ class HTTPAPITest(HTTPTestCase):
             "user1", "user1@email.stuff"
         )
         _, session_id, _ = await self.user_service.login_user(
-            "user1", password=password, session_name="session1"
+            username="user1", password=password, session_name="session1"
         )
         _, _, self.session_token = await self.user_service.login_user(
             username=self.test_user.username, password=password, session_name="foobar"

@@ -71,55 +71,6 @@ create table if not exists pending_email_change (
     mail_next_attempt timestamptz          default now()
 );
 
--- notify the mailer service on inserts or updates in the above tables
-create or replace function pending_registration_updated() returns trigger as
-$$
-begin
-    perform pg_notify('mailer', 'pending_registration');
-
-    return null;
-end;
-$$ language plpgsql;
-
-drop trigger if exists pending_registration_trig on pending_registration;
-create trigger pending_registration_trig
-    after insert or update
-    on pending_registration
-    for each row
-execute function pending_registration_updated();
-
-create or replace function pending_password_recovery_updated() returns trigger as
-$$
-begin
-    perform pg_notify('mailer', 'pending_password_recovery');
-
-    return null;
-end;
-$$ language plpgsql;
-
-drop trigger if exists pending_password_recovery_trig on pending_password_recovery;
-create trigger pending_password_recovery_trig
-    after insert or update
-    on pending_password_recovery
-    for each row
-execute function pending_password_recovery_updated();
-
-create or replace function pending_email_change_updated() returns trigger as
-$$
-begin
-    perform pg_notify('mailer', 'pending_email_change');
-
-    return null;
-end;
-$$ language plpgsql;
-
-drop trigger if exists pending_email_change_trig on pending_email_change;
-create trigger pending_email_change_trig
-    after insert or update
-    on pending_email_change
-    for each row
-execute function pending_email_change_updated();
-
 -- tracking of login sessions
 -- authtokens authenticate users directly
 -- sessions can persist indefinitely and are typically bound to a certain client/device
@@ -295,54 +246,6 @@ create table if not exists account (
     type     text    not null references account_type (name)
 );
 
-create or replace function check_committed_accounts(
-    revision_id bigint,
-    account_id integer,
-    started timestamptz,
-    committed timestamptz
-) returns boolean as
-$$
-begin
-    if committed is null then return true; end if;
-
-    perform
-    from
-        account_revision ar
-    where
-        ar.account_id = check_committed_accounts.account_id
-        and ar.id != check_committed_accounts.revision_id
-        and ar.committed between check_committed_accounts.started and check_committed_accounts.committed;
-
-    if found then raise 'another change was committed earlier, committing is not possible due to conflicts'; end if;
-
-    return true;
-end
-$$ language plpgsql;
-
-create or replace function check_account_revisions_change_per_user(
-    account_id integer,
-    user_id integer,
-    committed timestamptz
-) returns boolean as
-$$
-<<locals>> declare
-begin
-    if committed is not null then return true; end if;
-
-    perform
-    from
-        account_revision ar
-    where
-        ar.account_id = check_account_revisions_change_per_user.account_id
-        and ar.user_id = check_account_revisions_change_per_user.user_id
-        and ar.committed is null;
-
-    if found then raise 'users can only have one pending change per account'; end if;
-
-    return true;
-end
-$$ language plpgsql;
-
 create table if not exists account_revision (
     id         bigserial primary key,
 
@@ -352,10 +255,7 @@ create table if not exists account_revision (
     account_id integer references account (id) on delete cascade,
 
     started    timestamptz not null default now(),
-    committed  timestamptz          default null,
-
-    check (check_committed_accounts(id, account_id, started, committed)),
-    check (check_account_revisions_change_per_user(account_id, user_id, committed))
+    committed  timestamptz          default null
 );
 
 create table if not exists account_history (
@@ -371,26 +271,6 @@ create table if not exists account_history (
     -- deleted can only be true if no other valid item references the account id.
     deleted     bool    not null default false
 );
-
-create or replace view latest_account as
-    select distinct on (account.id, gm.user_id)
-        account.id                                as id,
-        account.type                              as type,
-        account.group_id                          as group_id,
-        first_value(history.revision_id) over wnd as revision_id,
-        first_value(history.deleted) over wnd     as deleted,
-        first_value(history.name) over wnd        as name,
-        first_value(history.description) over wnd as description,
-        first_value(history.priority) over wnd    as priority,
-        gm.user_id                                as user_id
-    from
-        account_history history
-        join account on account.id = history.id
-        join account_revision r on r.id = history.revision_id
-        join group_membership gm on account.group_id = gm.group_id
-    where
-        ((r.committed is null and r.user_id = gm.user_id) or
-         r.committed is not null) window wnd as ( partition by account.id, gm.user_id order by r.committed desc nulls first );
 
 -- a regular 'purchase' transaction, where multiple people purchased
 -- things, and one person paid the balance.
@@ -446,132 +326,6 @@ create table if not exists transaction (
     type     text references transaction_type (name) not null
 );
 
--- every data and history entry in a group references a change as a foreign key.
--- entries that have just been added, but not yet committed, reference a change
--- where the committed timestamp is null;
--- these uncommitted changes are only visible if a user explicitly requests
--- to see them.
--- uncommitted changes are created when users start to change a group,
--- and receive a 'committed' timestamp when the user clicks 'commit'.
--- changes that have been committed can no longer be modified.
-create or replace function check_committed_transactions(
-    revision_id bigint,
-    transaction_id integer,
-    started timestamptz,
-    committed timestamptz
-) returns boolean as
-$$
-<<locals>> declare
-    n_creditor_shares   integer;
-    n_debitor_shares    integer;
-    transaction_type    text;
-    transaction_deleted boolean;
-begin
-    if committed is null then return true; end if;
-
-    perform
-    from
-        transaction_revision tr
-    where
-        tr.transaction_id = check_committed_transactions.transaction_id
-        and tr.id != check_committed_transactions.revision_id
-        and tr.committed between check_committed_transactions.started and check_committed_transactions.committed;
-
-    if found then raise 'another change was committed earlier, committing is not possible due to conflicts'; end if;
-
-    select
-        t.type,
-        th.deleted
-    into locals.transaction_type, locals.transaction_deleted
-    from
-        transaction_history th
-        join transaction t on t.id = th.id
-    where
-        th.revision_id = check_committed_transactions.revision_id;
-
-    select
-        count(cs.account_id)
-    into locals.n_creditor_shares
-    from
-        creditor_share cs
-    where
-        cs.transaction_id = check_committed_transactions.transaction_id
-        and cs.revision_id = check_committed_transactions.revision_id;
-
-    select
-        count(ds.account_id)
-    into locals.n_debitor_shares
-    from
-        debitor_share ds
-    where
-        ds.transaction_id = check_committed_transactions.transaction_id
-        and ds.revision_id = check_committed_transactions.revision_id;
-
-    -- check that the number of shares fits the transaction type and that deleted transactions have 0 shares.
-    if locals.transaction_deleted then
-        if locals.n_creditor_shares = 0 and locals.n_debitor_shares = 0 then
-            return true;
-        else
-            raise 'deleted transaction cannot have any associated creditor or debitor shares';
-        end if;
-    end if;
-
-    if locals.transaction_type = 'transfer' then
-        if locals.n_creditor_shares != 1 then
-            raise '"transfer"  type transactions must have exactly one creditor share % %', locals.n_creditor_shares, locals.n_debitor_shares;
-        end if;
-
-        if locals.n_debitor_shares != 1 then
-            raise '"transfer"  type transactions must have exactly one debitor share';
-        end if;
-    end if;
-
-    if locals.transaction_type = 'purchase' then
-        if locals.n_creditor_shares != 1 then
-            raise '"purchase" type transactions must have exactly one creditor share';
-        end if;
-        if locals.n_debitor_shares < 1 then
-            raise '"purchase" type transactions must have at least one debitor share';
-        end if;
-    end if;
-
-    if locals.transaction_type = 'mimo' then
-        if locals.n_creditor_shares < 1 then
-            raise '"mimo" type transactions must have at least one creditor share';
-        end if;
-        if locals.n_debitor_shares < 1 then
-            raise '"mimo" type transactions must have at least one debitor share';
-        end if;
-    end if;
-
-    return true;
-end
-$$ language plpgsql;
-
-create or replace function check_transaction_revisions_change_per_user(
-    transaction_id integer,
-    user_id integer,
-    committed timestamptz
-) returns boolean as
-$$
-<<locals>> declare
-begin
-    if committed is not null then return true; end if;
-
-    perform
-    from
-        transaction_revision tr
-    where
-            tr.transaction_id = check_transaction_revisions_change_per_user.transaction_id
-        and tr.user_id = check_transaction_revisions_change_per_user.user_id
-        and tr.committed is null;
-
-    if found then raise 'users can only have one pending change per transaction'; end if;
-
-    return true;
-end
-$$ language plpgsql;
-
 create table if not exists transaction_revision (
     id             bigserial primary key,
 
@@ -580,10 +334,7 @@ create table if not exists transaction_revision (
     transaction_id integer     not null references transaction (id) on delete cascade,
 
     started        timestamptz not null default now(),
-    committed      timestamptz          default null,
-
-    check (check_committed_transactions(id, transaction_id, started, committed)),
-    check (check_transaction_revisions_change_per_user(transaction_id, user_id, committed))
+    committed      timestamptz          default null
 );
 
 create table if not exists transaction_history (
@@ -596,7 +347,7 @@ create table if not exists transaction_history (
     -- calculating group account balances.
     currency_conversion_rate double precision not null,
     -- total value of the transaction, in the transaction currency
-    value                    double precision not null check ( value > 0 ),
+    value                    double precision not null,
 
     billed_at                date             not null,
 
@@ -606,50 +357,6 @@ create table if not exists transaction_history (
     deleted                  bool             not null default false
 );
 
--- a share that a transaction's creditor has in the transaction value
--- see the transaction_type documentation on what this means for the particular
--- transaction types.
--- transactions can only be evaluated if the sum of their creditor shares is > 0.
-create or replace function check_creditor_shares(
-    transaction_id integer,
-    revision_id bigint,
-    account_id integer
-) returns boolean as
-$$
-<<locals>> declare
-    is_valid boolean;
-begin
-    with relevant_entries as (
-        select *
-        from
-            creditor_share cs
-        where
-            cs.transaction_id = check_creditor_shares.transaction_id
-            and cs.revision_id = check_creditor_shares.revision_id
-            and cs.account_id != check_creditor_shares.account_id
-                             )
-    select
-        not (t.type in ('purchase', 'transfer') and cs_counts.share_count >= 1)
-    into locals.is_valid
-    from
-        transaction t
-        join (
-            select
-                cs.transaction_id,
-                cs.revision_id,
-                count(*) as share_count
-            from
-                relevant_entries cs
-            group by cs.transaction_id, cs.revision_id
-             ) cs_counts on cs_counts.transaction_id = t.id;
-
-    if not locals.is_valid then
-        raise '"purchase" and "transfer" type transactions can only have one creditor share';
-    end if;
-
-    return locals.is_valid;
-end
-$$ language plpgsql;
 
 create table if not exists creditor_share (
     transaction_id integer references transaction (id) on delete cascade,
@@ -660,53 +367,9 @@ create table if not exists creditor_share (
 
     primary key (transaction_id, revision_id, account_id),
 
-    shares         double precision not null default 1.0 check ( shares > 0 ),
-
-    constraint creditor_share_account_count check (check_creditor_shares(transaction_id, revision_id, account_id))
+    shares         double precision not null default 1.0
 );
 
--- a share that a transaction's debitor has in the transaction value
--- see the transaction_type documentation on what this means for the particular
--- transaction types.
--- transactions can only be evaluated if the sum of their debitor shares is > 0.
-create or replace function check_debitor_shares(
-    transaction_id integer,
-    revision_id bigint,
-    account_id integer
-) returns boolean as
-$$
-<<locals>> declare
-    is_valid boolean;
-begin
-    with relevant_entries as (
-        select *
-        from
-            debitor_share cs
-        where
-            cs.transaction_id = check_debitor_shares.transaction_id
-            and cs.revision_id = check_debitor_shares.revision_id
-            and cs.account_id != check_debitor_shares.account_id
-                             )
-    select
-        not (t.type in ('transfer') and cs_counts.share_count >= 1)
-    into locals.is_valid
-    from
-        transaction t
-        join (
-            select
-                cs.transaction_id,
-                cs.revision_id,
-                count(*) as share_count
-            from
-                relevant_entries cs
-            group by cs.transaction_id, cs.revision_id
-             ) cs_counts on cs_counts.transaction_id = t.id;
-
-    if not locals.is_valid then raise '"transfer" type transactions can only have one debitor share'; end if;
-
-    return locals.is_valid;
-end
-$$ language plpgsql;
 
 create table if not exists debitor_share (
     transaction_id integer references transaction (id) on delete cascade,
@@ -717,171 +380,5 @@ create table if not exists debitor_share (
 
     primary key (transaction_id, revision_id, account_id),
 
-    shares         double precision not null default 1.0 check ( shares > 0 ),
-
-    check (check_debitor_shares(transaction_id, revision_id, account_id))
+    shares         double precision not null default 1.0
 );
-
-create or replace view creditor_shares_as_json as
-    select
-        cs.revision_id    as revision_id,
-        cs.transaction_id as transaction_id,
-        sum(cs.shares)    as n_shares,
-        json_agg(cs)      as shares
-    from
-        creditor_share cs
-    group by
-        cs.revision_id, cs.transaction_id;
-
-
-create or replace view debitor_shares_as_json as
-    select
-        ds.revision_id    as revision_id,
-        ds.transaction_id as transaction_id,
-        sum(ds.shares)    as n_shares,
-        json_agg(ds)      as shares
-    from
-        debitor_share ds
-    group by
-        ds.revision_id, ds.transaction_id;
-
-create or replace view pending_transaction_history as
-    select distinct on (transaction.id, gm.user_id)
-        transaction.id                   as id,
-        transaction.type                 as type,
-        transaction.group_id             as group_id,
-        history.revision_id              as revision_id,
-        r.started                        as revision_started,
-        r.committed                      as revision_committed,
-        history.deleted                  as deleted,
-        history.description              as description,
-        history.value                    as value,
-        history.billed_at                as billed_at,
-        r.user_id                        as last_changed_by,
-        history.currency_symbol          as currency_symbol,
-        history.currency_conversion_rate as currency_conversion_rate,
-        gm.user_id                       as user_id
-    from
-        transaction_history history
-        join transaction on transaction.id = history.id
-        join transaction_revision r on r.id = history.revision_id
-        join group_membership gm on transaction.group_id = gm.group_id and gm.user_id = r.user_id
-    where
-        r.committed is null;
-
-create or replace view pending_transaction_revisions as
-    select
-        history.id                       as id,
-        history.type                     as type,
-        history.group_id                 as group_id,
-        history.revision_id              as revision_id,
-        history.revision_started         as revision_started,
-        history.revision_committed       as revision_committed,
-        history.deleted                  as deleted,
-        history.description              as description,
-        history.value                    as value,
-        history.billed_at                as billed_at,
-        history.last_changed_by          as last_changed_by,
-        history.currency_symbol          as currency_symbol,
-        history.currency_conversion_rate as currency_conversion_rate,
-        cs.n_shares                      as n_creditor_shares,
-        ds.n_shares                      as n_debitor_shares,
-        coalesce(cs.shares, '[]'::json)  as creditor_shares,
-        coalesce(ds.shares, '[]'::json)  as debitor_shares,
-        history.user_id                  as user_id
-    from
-        pending_transaction_history history
-        left join creditor_shares_as_json cs on cs.revision_id = history.revision_id and cs.transaction_id = history.id
-        left join debitor_shares_as_json ds on ds.revision_id = history.revision_id and ds.transaction_id = history.id;
-
-create or replace view committed_transaction_history as
-    select distinct on (transaction.id)
-        transaction.id                                         as id,
-        transaction.type                                       as type,
-        transaction.group_id                                   as group_id,
-        first_value(history.revision_id) over wnd              as revision_id,
-        first_value(r.started) over wnd                        as revision_started,
-        first_value(r.committed) over wnd                      as revision_committed,
-        first_value(history.deleted) over wnd                  as deleted,
-        first_value(history.description) over wnd              as description,
-        first_value(history.billed_at) over wnd                as billed_at,
-        first_value(history.value) over wnd                    as value,
-        first_value(r.user_id) over wnd                        as last_changed_by,
-        first_value(history.currency_symbol) over wnd          as currency_symbol,
-        first_value(history.currency_conversion_rate) over wnd as currency_conversion_rate
-    from
-        transaction_history history
-        join transaction on transaction.id = history.id
-        join transaction_revision r on r.id = history.revision_id
-    where
-        r.committed is not null window wnd as ( partition by transaction.id order by r.committed desc );
-
-create or replace view committed_transaction_state as
-    select
-        history.id                       as id,
-        history.type                     as type,
-        history.group_id                 as group_id,
-        history.revision_id              as revision_id,
-        history.revision_started         as revision_started,
-        history.revision_committed       as revision_committed,
-        history.deleted                  as deleted,
-        history.description              as description,
-        history.value                    as value,
-        history.billed_at                as billed_at,
-        history.last_changed_by          as last_changed_by,
-        history.currency_symbol          as currency_symbol,
-        history.currency_conversion_rate as currency_conversion_rate,
-        cs.n_shares                      as n_creditor_shares,
-        ds.n_shares                      as n_debitor_shares,
-        coalesce(cs.shares, '[]'::json)  as creditor_shares,
-        coalesce(ds.shares, '[]'::json)  as debitor_shares
-    from
-        committed_transaction_history history
-        left join creditor_shares_as_json cs on cs.revision_id = history.revision_id and cs.transaction_id = history.id
-        left join debitor_shares_as_json ds on ds.revision_id = history.revision_id and ds.transaction_id = history.id;
-
-create or replace view current_transaction_state as
-    select
-        transaction.id        as id,
-        transaction.type      as type,
-        transaction.group_id  as group_id,
-        curr_state_json.state as current_state,
-        pending_json.state    as pending_changes
-    from
-        transaction
-        left join (
-            select id, json_agg(curr_state) as state from committed_transaction_state curr_state group by id
-                  ) curr_state_json on curr_state_json.id = transaction.id
-        left join (
-            select id, json_agg(pending) as state from pending_transaction_revisions pending group by id
-                  ) pending_json on pending_json.id = transaction.id;
-
-create or replace view account_balance as
-    select
-        a.id                                                               as account_id,
-        a.group_id                                                         as group_id,
-        coalesce(cb.creditor_balance, 0) + coalesce(db.debitor_balance, 0) as balance
-    from
-        account a
-        left join (
-            select
-                cs.account_id                                               as account_id,
-                sum(cs.shares / coalesce(t.n_creditor_shares, 1) * t.value) as creditor_balance
-            from
-                committed_transaction_state t
-                join creditor_share cs on t.revision_id = cs.revision_id and t.id = cs.transaction_id
-            where
-                t.deleted = false
-            group by cs.account_id
-                  ) cb on a.id = cb.account_id
-        left join (
-            select
-                ds.account_id                                               as account_id,
-                -sum(ds.shares / coalesce(t.n_debitor_shares, 1) * t.value) as debitor_balance
-            from
-                committed_transaction_state t
-                join debitor_share ds on t.revision_id = ds.revision_id and t.id = ds.transaction_id
-            where
-                t.deleted = false
-            group by ds.account_id
-                  ) db on a.id = db.account_id;

@@ -109,7 +109,7 @@ class AuthAPITest(HTTPTestCase):
     async def test_change_password(self):
         user, password = await self._create_test_user("user", "user@email.stuff")
         _, session_id, session_token = await self.user_service.login_user(
-            "user", password=password, session_name="session1"
+            username="user", password=password, session_name="session1"
         )
         token = await self.user_service.get_access_token_from_session_token(
             session_token

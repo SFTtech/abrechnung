@@ -1,4 +1,4 @@
-# pylint: disable=attribute-defined-outside-init
+# pylint: disable=attribute-defined-outside-init,missing-kwoa
 from copy import deepcopy
 from datetime import datetime, timedelta
 
