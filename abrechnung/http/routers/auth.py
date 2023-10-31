@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
 
-from abrechnung.application import InvalidCommand
+from abrechnung.core.errors import InvalidCommand
 from abrechnung.application.users import InvalidPassword
 from abrechnung.application.users import UserService
 from abrechnung.config import Config

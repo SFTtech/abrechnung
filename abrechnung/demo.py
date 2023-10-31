@@ -4,7 +4,7 @@ from datetime import datetime
 
 from abrechnung import subcommand
 from abrechnung.config import Config
-from abrechnung.database.database import create_db_pool
+from abrechnung.framework.database import create_db_pool
 
 
 class DemoCli(subcommand.SubCommand):
@@ -29,7 +29,7 @@ class DemoCli(subcommand.SubCommand):
 
         deletion_threshold = datetime.now() - self.config.demo.wipe_interval
 
-        db_pool = await create_db_pool(self.config)
+        db_pool = await create_db_pool(self.config.database)
         async with db_pool.acquire() as conn:
             async with conn.transaction():
                 n_rows_groups = await conn.fetchval(

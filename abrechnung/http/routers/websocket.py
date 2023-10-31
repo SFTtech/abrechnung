@@ -10,7 +10,6 @@ from fastapi import APIRouter, WebSocket, Request, status, WebSocketException
 
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
-from abrechnung.database.database import create_db_connection
 from abrechnung.http.utils import encode_json
 
 router = APIRouter(
@@ -83,7 +82,7 @@ class NotificationManager:
 
     async def initialize(self, db_pool: asyncpg.Pool):
         self.db_pool = db_pool
-        self.connection = await create_db_connection(self.config)
+        self.connection = await self.db_pool.acquire()
         await self.connection.set_type_codec(
             "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
         )

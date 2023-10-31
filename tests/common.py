@@ -1,4 +1,4 @@
-# pylint: disable=attribute-defined-outside-init
+# pylint: disable=attribute-defined-outside-init,missing-kwoa
 import asyncio
 import logging
 import os
@@ -9,7 +9,7 @@ from asyncpg.pool import Pool
 
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
-from abrechnung.database import revisions
+from abrechnung.database.migrations import reset_schema, apply_revisions
 from abrechnung.domain.users import User
 
 lock = asyncio.Lock()
@@ -61,8 +61,8 @@ async def get_test_db() -> Pool:
         max_size=5,
     )
 
-    await revisions.reset_schema(pool)
-    await revisions.apply_revisions(pool)
+    await reset_schema(pool)
+    await apply_revisions(pool)
 
     return pool
 

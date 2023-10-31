@@ -3,14 +3,15 @@
 import argparse
 import os
 
-from abrechnung.database.revisions import SchemaRevision, REVISION_DIR
+from abrechnung.database.migrations import REVISION_PATH
+from abrechnung.framework.database import SchemaRevision
 
 
 def main(name: str):
-    revisions = SchemaRevision.revisions_from_dir(REVISION_DIR)
+    revisions = SchemaRevision.revisions_from_dir(REVISION_PATH)
     filename = f"{str(len(revisions) + 1).zfill(4)}_{name}.sql"
     new_revision_version = os.urandom(4).hex()
-    file_path = REVISION_DIR / filename
+    file_path = REVISION_PATH / filename
     with file_path.open("w+") as f:
         f.write(
             f"-- revision: {new_revision_version}\n"

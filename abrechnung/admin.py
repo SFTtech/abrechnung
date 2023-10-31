@@ -5,7 +5,7 @@ from getpass import getpass
 from abrechnung import subcommand
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
-from abrechnung.database.database import create_db_pool
+from abrechnung.framework.database import create_db_pool
 
 
 class AdminCli(subcommand.SubCommand):
@@ -36,13 +36,15 @@ class AdminCli(subcommand.SubCommand):
             print("Passwords do not match!")
             return
 
-        db_pool = await create_db_pool(self.config)
+        db_pool = await create_db_pool(self.config.database)
         user_service = UserService(db_pool, self.config)
         user_service.enable_registration = True
         if self.args["skip_email_check"]:
             user_service.valid_email_domains = None
-        await user_service.register_user(
-            username=self.args["name"], email=self.args["email"], password=password
+        await user_service.register_user(  # pylint: disable=missing-kwoa
+            username=self.args["name"],
+            email=self.args["email"],
+            password=password,
         )
 
     async def run(self):

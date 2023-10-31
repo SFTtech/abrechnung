@@ -1,16 +1,11 @@
-import contextlib
 import logging
-import os
-import shutil
-import tempfile
 
 from asyncpg.pool import Pool
 
 from abrechnung import subcommand
-from abrechnung import util
 from abrechnung.config import Config
-from . import revisions
-from .database import create_db_pool
+from abrechnung.framework.database import create_db_pool, psql_attach
+from .migrations import reset_schema, apply_revisions
 
 logger = logging.getLogger(__name__)
 
@@ -45,67 +40,19 @@ class DatabaseCli(subcommand.SubCommand):
                     ")"
                 )
 
-    async def _attach(self):
-        with contextlib.ExitStack() as exitstack:
-            env = dict(os.environ)
-            env["PGDATABASE"] = self.config.database.dbname
-
-            if self.config.database.user is None:
-                if self.config.database.host is not None:
-                    raise ValueError("database user is None, but host is set")
-                if self.config.database.password is not None:
-                    raise ValueError("database user is None, " "but password is set")
-            else:
-
-                def escape_colon(str):
-                    return str.replace("\\", "\\\\").replace(":", "\\:")
-
-                passfile = exitstack.enter_context(tempfile.NamedTemporaryFile("w"))
-                os.chmod(passfile.name, 0o600)
-
-                passfile.write(
-                    ":".join(
-                        [
-                            escape_colon(self.config.database.host),
-                            "*",
-                            escape_colon(self.config.database.dbname),
-                            escape_colon(self.config.database.user),
-                            escape_colon(self.config.database.password),
-                        ]
-                    )
-                )
-                passfile.write("\n")
-                passfile.flush()
-
-                env["PGHOST"] = self.config.database.host
-                env["PGUSER"] = self.config.database.user
-                env["PGPASSFILE"] = passfile.name
-
-            command = ["psql", "--variable", "ON_ERROR_STOP=1"]
-            if shutil.which("pgcli") is not None:
-                # if pgcli is installed, use that instead!
-                command = ["pgcli"]
-
-            cwd = os.path.join(os.path.dirname(__file__), "revisions")
-            ret = await util.run_as_fg_process(command, env=env, cwd=cwd)
-
-            if ret != 0:
-                print(util.format_error("psql failed"))
-            return ret
-
     async def run(self):
         """
         CLI entry point
         """
         if self.action == "attach":
-            return await self._attach()
+            return await psql_attach(self.config.database)
 
-        db_pool = await create_db_pool(self.config)
+        db_pool = await create_db_pool(self.config.database)
         if self.action == "migrate":
-            await revisions.apply_revisions(db_pool=db_pool)
+            await apply_revisions(db_pool=db_pool)
         elif self.action == "rebuild":
-            await revisions.reset_schema(db_pool=db_pool)
-            await revisions.apply_revisions(db_pool=db_pool)
+            await reset_schema(db_pool=db_pool)
+            await apply_revisions(db_pool=db_pool)
         elif self.action == "clean":
             await self._clean(db_pool=db_pool)
 

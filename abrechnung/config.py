@@ -5,6 +5,8 @@ from typing import Optional, List
 import yaml
 from pydantic import BaseModel
 
+from abrechnung.framework.database import DatabaseConfig
+
 
 class ServiceConfig(BaseModel):
     url: str
@@ -31,14 +33,6 @@ class RegistrationConfig(BaseModel):
     enabled: bool = False
     allow_guest_users: bool = False
     valid_email_domains: Optional[List[str]] = None
-
-
-class DatabaseConfig(BaseModel):
-    user: Optional[str] = None
-    password: Optional[str] = None
-    dbname: str
-    host: Optional[str] = None
-    port: Optional[int] = 5432
 
 
 class EmailConfig(BaseModel):

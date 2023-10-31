@@ -1,4 +1,4 @@
-# pylint: disable=attribute-defined-outside-init
+# pylint: disable=attribute-defined-outside-init,missing-kwoa
 import asyncio
 from dataclasses import dataclass
 from typing import Optional
@@ -70,7 +70,9 @@ class MailerTest(BaseTestCase):
 
     async def test_registration_mail_delivery(self):
         user_email = "user@email.com"
-        await self.user_service.register_user("user1", user_email, "password")
+        await self.user_service.register_user(
+            username="user1", email=user_email, password="password"
+        )
         await asyncio.sleep(0.5)
 
         mail: smtp.Envelope = self.smtp_handler.mail_queue.get_nowait()

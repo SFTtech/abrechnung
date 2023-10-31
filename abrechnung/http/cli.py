@@ -8,13 +8,13 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from abrechnung import __version__
-from abrechnung.application import NotFoundError, InvalidCommand
 from abrechnung.application.accounts import AccountService
 from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
-from abrechnung.database.database import create_db_pool
+from abrechnung.core.errors import NotFoundError, InvalidCommand
+from abrechnung.framework.database import create_db_pool
 from abrechnung.subcommand import SubCommand
 from .middleware import ContextMiddleware
 from .routers import transactions, groups, auth, accounts, common, websocket
@@ -104,7 +104,7 @@ class ApiCli(SubCommand):
         return self._format_error_message(exc.status_code, exc.detail)
 
     async def _setup(self):
-        self.db_pool = await create_db_pool(self.cfg)
+        self.db_pool = await create_db_pool(self.cfg.database)
         self.user_service = UserService(db_pool=self.db_pool, config=self.cfg)
         self.transaction_service = TransactionService(
             db_pool=self.db_pool, config=self.cfg

@@ -5,14 +5,18 @@ from typing import Optional, Union
 
 import asyncpg
 
-from abrechnung.application import (
-    Application,
-    NotFoundError,
+from abrechnung.application.common import _get_or_create_tag_ids
+from abrechnung.core.auth import (
     check_group_permissions,
-    InvalidCommand,
     create_group_log,
 )
-from abrechnung.application.common import _get_or_create_tag_ids
+from abrechnung.core.errors import (
+    NotFoundError,
+    InvalidCommand,
+)
+from abrechnung.core.service import (
+    Service,
+)
 from abrechnung.domain.transactions import (
     Transaction,
     TransactionDetails,
@@ -21,6 +25,8 @@ from abrechnung.domain.transactions import (
     TransactionType,
 )
 from abrechnung.domain.users import User
+from abrechnung.framework.database import Connection
+from abrechnung.framework.decorators import with_db_transaction
 
 
 @dataclass
@@ -42,7 +48,7 @@ class RawTransaction:
     positions: list[TransactionPosition]
 
 
-class TransactionService(Application):
+class TransactionService(Service):
     @staticmethod
     async def _check_transaction_permissions(
         conn: asyncpg.Connection,
@@ -186,66 +192,68 @@ class TransactionService(Application):
             pending_files=pending_files,
         )
 
+    @with_db_transaction
     async def list_transactions(
         self,
         *,
+        conn: Connection,
         user: User,
         group_id: int,
         min_last_changed: Optional[datetime] = None,
         additional_transactions: Optional[list[int]] = None,
     ) -> list[Transaction]:
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                await check_group_permissions(conn=conn, group_id=group_id, user=user)
+        await check_group_permissions(conn=conn, group_id=group_id, user=user)
 
-                if min_last_changed:
-                    # if a minimum last changed value is specified we must also return all transactions the current
-                    # user has pending changes with to properly sync state across different devices of the user
-                    cur = conn.cursor(
-                        "select transaction_id, group_id, type, last_changed, is_wip, "
-                        "   committed_details, pending_details, "
-                        "   committed_positions, pending_positions, committed_files, pending_files "
-                        "from full_transaction_state_valid_at($1) "
-                        "where group_id = $2 "
-                        "   and (last_changed >= $3 or (($4::int[]) is not null and transaction_id = any($4::int[])))",
-                        user.id,
-                        group_id,
-                        min_last_changed,
-                        additional_transactions,
-                    )
-                else:
-                    cur = conn.cursor(
-                        "select transaction_id, group_id, type, last_changed, is_wip, "
-                        "   committed_details, pending_details, "
-                        "   committed_positions, pending_positions, committed_files, pending_files "
-                        "from full_transaction_state_valid_at($1) "
-                        "where group_id = $2",
-                        user.id,
-                        group_id,
-                    )
-
-                result = []
-                async for transaction in cur:
-                    result.append(self._transaction_db_row(transaction))
-
-                return result
-
-    async def get_transaction(self, *, user: User, transaction_id: int) -> Transaction:
-        async with self.db_pool.acquire() as conn:
-            group_id = await self._check_transaction_permissions(
-                conn=conn, user=user, transaction_id=transaction_id
-            )
-            transaction = await conn.fetchrow(
+        if min_last_changed:
+            # if a minimum last changed value is specified we must also return all transactions the current
+            # user has pending changes with to properly sync state across different devices of the user
+            cur = conn.cursor(
                 "select transaction_id, group_id, type, last_changed, is_wip, "
                 "   committed_details, pending_details, "
                 "   committed_positions, pending_positions, committed_files, pending_files "
                 "from full_transaction_state_valid_at($1) "
-                "where group_id = $2 and transaction_id = $3",
+                "where group_id = $2 "
+                "   and (last_changed >= $3 or (($4::int[]) is not null and transaction_id = any($4::int[])))",
                 user.id,
                 group_id,
-                transaction_id,
+                min_last_changed,
+                additional_transactions,
             )
-            return self._transaction_db_row(transaction)
+        else:
+            cur = conn.cursor(
+                "select transaction_id, group_id, type, last_changed, is_wip, "
+                "   committed_details, pending_details, "
+                "   committed_positions, pending_positions, committed_files, pending_files "
+                "from full_transaction_state_valid_at($1) "
+                "where group_id = $2",
+                user.id,
+                group_id,
+            )
+
+        result = []
+        async for transaction in cur:
+            result.append(self._transaction_db_row(transaction))
+
+        return result
+
+    @with_db_transaction
+    async def get_transaction(
+        self, *, conn: Connection, user: User, transaction_id: int
+    ) -> Transaction:
+        group_id = await self._check_transaction_permissions(
+            conn=conn, user=user, transaction_id=transaction_id
+        )
+        transaction = await conn.fetchrow(
+            "select transaction_id, group_id, type, last_changed, is_wip, "
+            "   committed_details, pending_details, "
+            "   committed_positions, pending_positions, committed_files, pending_files "
+            "from full_transaction_state_valid_at($1) "
+            "where group_id = $2 and transaction_id = $3",
+            user.id,
+            group_id,
+            transaction_id,
+        )
+        return self._transaction_db_row(transaction)
 
     async def _add_tags_to_revision(
         self,
@@ -355,9 +363,11 @@ class TransactionService(Application):
 
         return transaction_id
 
+    @with_db_transaction
     async def create_transaction(
         self,
         *,
+        conn: Connection,
         user: User,
         group_id: int,
         type: str,
@@ -373,25 +383,23 @@ class TransactionService(Application):
         positions: Optional[list[TransactionPosition]] = None,
         perform_commit: bool = False,
     ) -> int:
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                return await self._create_transaction(
-                    conn=conn,
-                    user=user,
-                    group_id=group_id,
-                    type=type,
-                    name=name,
-                    description=description,
-                    billed_at=billed_at,
-                    currency_symbol=currency_symbol,
-                    currency_conversion_rate=currency_conversion_rate,
-                    tags=tags,
-                    value=value,
-                    debitor_shares=debitor_shares,
-                    creditor_shares=creditor_shares,
-                    positions=positions,
-                    perform_commit=perform_commit,
-                )
+        return await self._create_transaction(
+            conn=conn,
+            user=user,
+            group_id=group_id,
+            type=type,
+            name=name,
+            description=description,
+            billed_at=billed_at,
+            currency_symbol=currency_symbol,
+            currency_conversion_rate=currency_conversion_rate,
+            tags=tags,
+            value=value,
+            debitor_shares=debitor_shares,
+            creditor_shares=creditor_shares,
+            positions=positions,
+            perform_commit=perform_commit,
+        )
 
     @staticmethod
     async def _put_transaction_debitor_shares(
@@ -449,39 +457,39 @@ class TransactionService(Application):
                 value,
             )
 
-    async def commit_transaction(self, *, user: User, transaction_id: int) -> None:
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                group_id = await self._check_transaction_permissions(
-                    conn=conn, user=user, transaction_id=transaction_id
-                )
-                revision_id = await conn.fetchval(
-                    "select id from transaction_revision "
-                    "where transaction_id = $1 and user_id = $2 and committed is null",
-                    transaction_id,
-                    user.id,
-                )
-                if revision_id is None:
-                    raise InvalidCommand(
-                        f"Cannot commit a transaction without pending changes"
-                    )
+    @with_db_transaction
+    async def commit_transaction(
+        self, *, conn: Connection, user: User, transaction_id: int
+    ) -> None:
+        group_id = await self._check_transaction_permissions(
+            conn=conn, user=user, transaction_id=transaction_id
+        )
+        revision_id = await conn.fetchval(
+            "select id from transaction_revision "
+            "where transaction_id = $1 and user_id = $2 and committed is null",
+            transaction_id,
+            user.id,
+        )
+        if revision_id is None:
+            raise InvalidCommand(f"Cannot commit a transaction without pending changes")
 
-                await conn.execute(
-                    "update transaction_revision "
-                    "set committed = now() where id = $1",
-                    revision_id,
-                )
-                await create_group_log(
-                    conn=conn,
-                    group_id=group_id,
-                    user=user,
-                    type="transaction-committed",
-                    message=f"updated transaction with id {transaction_id}",
-                )
+        await conn.execute(
+            "update transaction_revision " "set committed = now() where id = $1",
+            revision_id,
+        )
+        await create_group_log(
+            conn=conn,
+            group_id=group_id,
+            user=user,
+            type="transaction-committed",
+            message=f"updated transaction with id {transaction_id}",
+        )
 
+    @with_db_transaction
     async def upload_file(
         self,
         *,
+        conn: Connection,
         user: User,
         transaction_id: int,
         filename: str,
@@ -502,117 +510,116 @@ class TransactionService(Application):
         if "." in filename:
             raise InvalidCommand(f"Dots '.' are not allowed in file names")
 
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                await self._check_transaction_permissions(
-                    conn=conn,
-                    user=user,
-                    transaction_id=transaction_id,
-                    can_write=True,
-                )
-                revision_id = await self._get_or_create_revision(
-                    conn=conn, user=user, transaction_id=transaction_id
-                )
+        await self._check_transaction_permissions(
+            conn=conn,
+            user=user,
+            transaction_id=transaction_id,
+            can_write=True,
+        )
+        revision_id = await self._get_or_create_revision(
+            conn=conn, user=user, transaction_id=transaction_id
+        )
 
-                blob_id = await conn.fetchval(
-                    "insert into blob (content, mime_type) values ($1, $2) returning id",
-                    content,
-                    mime_type,
-                )
-                file_id = await conn.fetchval(
-                    "insert into file (transaction_id) values ($1) returning id",
-                    transaction_id,
-                )
-                await conn.execute(
-                    "insert into file_history (id, revision_id, filename, blob_id) values ($1, $2, $3, $4)",
-                    file_id,
-                    revision_id,
-                    filename,
-                    blob_id,
-                )
-                return file_id
+        blob_id = await conn.fetchval(
+            "insert into blob (content, mime_type) values ($1, $2) returning id",
+            content,
+            mime_type,
+        )
+        file_id = await conn.fetchval(
+            "insert into file (transaction_id) values ($1) returning id",
+            transaction_id,
+        )
+        await conn.execute(
+            "insert into file_history (id, revision_id, filename, blob_id) values ($1, $2, $3, $4)",
+            file_id,
+            revision_id,
+            filename,
+            blob_id,
+        )
+        return file_id
 
-    async def delete_file(self, *, user: User, file_id: int) -> tuple[int, int]:
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                perms = await conn.fetchrow(
-                    "select t.id as transaction_id "
-                    "from group_membership gm "
-                    "   join transaction t on gm.group_id = t.group_id and gm.user_id = $1 "
-                    "   join file f on t.id = f.transaction_id "
-                    "where f.id = $2 and gm.can_write",
-                    user.id,
-                    file_id,
-                )
-                if not perms:
-                    raise InvalidCommand("File not found")
+    @with_db_transaction
+    async def delete_file(
+        self, *, conn: Connection, user: User, file_id: int
+    ) -> tuple[int, int]:
+        perms = await conn.fetchrow(
+            "select t.id as transaction_id "
+            "from group_membership gm "
+            "   join transaction t on gm.group_id = t.group_id and gm.user_id = $1 "
+            "   join file f on t.id = f.transaction_id "
+            "where f.id = $2 and gm.can_write",
+            user.id,
+            file_id,
+        )
+        if not perms:
+            raise InvalidCommand("File not found")
 
-                transaction_id = perms["transaction_id"]
-                committed_state = await conn.fetchrow(
-                    "select filename, deleted from committed_file_state_valid_at() where file_id = $1",
-                    file_id,
-                )
-                if committed_state is not None and committed_state["deleted"]:
-                    raise InvalidCommand("Cannot delete file as it is already deleted")
+        transaction_id = perms["transaction_id"]
+        committed_state = await conn.fetchrow(
+            "select filename, deleted from committed_file_state_valid_at() where file_id = $1",
+            file_id,
+        )
+        if committed_state is not None and committed_state["deleted"]:
+            raise InvalidCommand("Cannot delete file as it is already deleted")
 
-                if committed_state is None:
-                    # file is only attached to a pending change, fully delete it right away, blob will be cleaned up
-                    pending_state = await conn.fetchrow(
-                        "select revision_id from aggregated_pending_file_history "
-                        "where file_id = $1 and changed_by = $2",
-                        file_id,
-                        user.id,
-                    )
-                    if pending_state is None:
-                        raise InvalidCommand("Unknown error occurred")
-
-                    revision_id = pending_state["revision_id"]
-
-                    await conn.execute(
-                        "update file_history fh set deleted = true, blob_id = null where id = $1 and revision_id = $2",
-                        file_id,
-                        revision_id,
-                    )
-                    return transaction_id, pending_state["revision_id"]
-
-                revision_id = await self._get_or_create_revision(
-                    conn=conn, user=user, transaction_id=transaction_id
-                )
-
-                await conn.execute(
-                    "insert into file_history(id, revision_id, filename, blob_id, deleted) "
-                    "values ($1, $2, $3, null, true)",
-                    file_id,
-                    revision_id,
-                    committed_state["filename"],
-                )
-                return transaction_id, revision_id
-
-    async def read_file_contents(
-        self, user: User, file_id: int, blob_id: int
-    ) -> tuple[str, bytes]:
-        async with self.db_pool.acquire() as conn:
-            perms = await conn.fetchrow(
-                "select f.id "
-                "from group_membership gm "
-                "   join transaction t on gm.group_id = t.group_id and gm.user_id = $1 "
-                "   join file f on t.id = f.transaction_id and f.id = $2"
-                "   join file_history fh on f.id = fh.id "
-                "where fh.blob_id = $3",
-                user.id,
+        if committed_state is None:
+            # file is only attached to a pending change, fully delete it right away, blob will be cleaned up
+            pending_state = await conn.fetchrow(
+                "select revision_id from aggregated_pending_file_history "
+                "where file_id = $1 and changed_by = $2",
                 file_id,
-                blob_id,
+                user.id,
             )
-            if not perms:
-                raise InvalidCommand("File not found")
+            if pending_state is None:
+                raise InvalidCommand("Unknown error occurred")
 
-            blob = await conn.fetchrow(
-                "select content, mime_type from blob where id = $1", blob_id
+            revision_id = pending_state["revision_id"]
+
+            await conn.execute(
+                "update file_history fh set deleted = true, blob_id = null where id = $1 and revision_id = $2",
+                file_id,
+                revision_id,
             )
-            if not blob:
-                raise InvalidCommand("File not found")
+            return transaction_id, pending_state["revision_id"]
 
-            return blob["mime_type"], blob["content"]
+        revision_id = await self._get_or_create_revision(
+            conn=conn, user=user, transaction_id=transaction_id
+        )
+
+        await conn.execute(
+            "insert into file_history(id, revision_id, filename, blob_id, deleted) "
+            "values ($1, $2, $3, null, true)",
+            file_id,
+            revision_id,
+            committed_state["filename"],
+        )
+        return transaction_id, revision_id
+
+    @with_db_transaction
+    async def read_file_contents(
+        self, *, conn: Connection, user: User, file_id: int, blob_id: int
+    ) -> tuple[str, bytes]:
+        perms = await conn.fetchrow(
+            "select f.id "
+            "from group_membership gm "
+            "   join transaction t on gm.group_id = t.group_id and gm.user_id = $1 "
+            "   join file f on t.id = f.transaction_id and f.id = $2"
+            "   join file_history fh on f.id = fh.id "
+            "where fh.blob_id = $3",
+            user.id,
+            file_id,
+            blob_id,
+        )
+        if not perms:
+            raise InvalidCommand("File not found")
+
+        blob = await conn.fetchrow(
+            "select content, mime_type from blob where id = $1", blob_id
+        )
+        if not blob:
+            raise InvalidCommand("File not found")
+
+        return blob["mime_type"], blob["content"]
 
     @staticmethod
     async def _put_position_usages(
@@ -827,9 +834,11 @@ class TransactionService(Application):
                 revision_id,
             )
 
+    @with_db_transaction
     async def update_transaction(
         self,
         *,
+        conn: Connection,
         user: User,
         transaction_id: int,
         value: float,
@@ -844,196 +853,197 @@ class TransactionService(Application):
         positions: Optional[list[TransactionPosition]] = None,
         perform_commit: bool = False,
     ):
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                await self._update_transaction(
-                    conn=conn,
-                    user=user,
-                    transaction_id=transaction_id,
-                    value=value,
-                    name=name,
-                    description=description,
-                    billed_at=billed_at,
-                    currency_symbol=currency_symbol,
-                    currency_conversion_rate=currency_conversion_rate,
-                    tags=tags,
-                    debitor_shares=debitor_shares,
-                    creditor_shares=creditor_shares,
-                    positions=positions,
-                    perform_commit=perform_commit,
-                )
+        await self._update_transaction(
+            conn=conn,
+            user=user,
+            transaction_id=transaction_id,
+            value=value,
+            name=name,
+            description=description,
+            billed_at=billed_at,
+            currency_symbol=currency_symbol,
+            currency_conversion_rate=currency_conversion_rate,
+            tags=tags,
+            debitor_shares=debitor_shares,
+            creditor_shares=creditor_shares,
+            positions=positions,
+            perform_commit=perform_commit,
+        )
 
+    @with_db_transaction
     async def update_transaction_positions(
         self,
         *,
+        conn: Connection,
         user: User,
         transaction_id: int,
         positions: list[TransactionPosition],
         perform_commit: bool = False,
     ):
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                group_id = await self._check_transaction_permissions(
-                    conn=conn,
-                    user=user,
-                    transaction_id=transaction_id,
-                    can_write=True,
-                    transaction_type=TransactionType.purchase.value,
+        group_id = await self._check_transaction_permissions(
+            conn=conn,
+            user=user,
+            transaction_id=transaction_id,
+            can_write=True,
+            transaction_type=TransactionType.purchase.value,
+        )
+        revision_id = await self._get_or_create_revision(
+            conn=conn, user=user, transaction_id=transaction_id
+        )
+
+        for position in positions:
+            await self._process_position_update(
+                conn=conn,
+                transaction_id=transaction_id,
+                group_id=group_id,
+                revision_id=revision_id,
+                position=position,
+            )
+
+        if perform_commit:
+            await conn.execute(
+                "update transaction_revision set committed = now() where id = $1",
+                revision_id,
+            )
+
+    @with_db_transaction
+    async def create_transaction_change(
+        self, *, conn: Connection, user: User, transaction_id: int
+    ):
+        await self._check_transaction_permissions(
+            conn=conn,
+            user=user,
+            transaction_id=transaction_id,
+            can_write=True,
+        )
+        await self._get_or_create_revision(
+            conn=conn, user=user, transaction_id=transaction_id
+        )
+
+    @with_db_transaction
+    async def discard_transaction_changes(
+        self, *, conn: Connection, user: User, transaction_id: int
+    ):
+        await self._check_transaction_permissions(
+            conn=conn,
+            user=user,
+            transaction_id=transaction_id,
+            can_write=True,
+        )
+
+        revision_id = await conn.fetchval(
+            "select id "
+            "from transaction_revision tr where tr.user_id = $1 and tr.transaction_id = $2 "
+            "   and tr.committed is null",
+            user.id,
+            transaction_id,
+        )
+        if revision_id is None:
+            raise InvalidCommand(
+                f"No changes to discard for transaction {transaction_id}"
+            )
+
+        last_committed_revision = await conn.fetchval(
+            "select id "
+            "from transaction_revision tr where tr.transaction_id = $1 and tr.committed is not null",
+            transaction_id,
+        )
+        if (
+            last_committed_revision is None
+        ):  # we have a newly created transaction - disallow discarding changes
+            raise InvalidCommand(
+                f"Cannot discard transaction changes without any committed changes"
+            )
+        else:
+            await conn.execute(
+                "delete from transaction_revision tr " "where tr.id = $1",
+                revision_id,
+            )
+
+    @with_db_transaction
+    async def delete_transaction(
+        self, *, conn: Connection, user: User, transaction_id: int
+    ):
+        group_id = await self._check_transaction_permissions(
+            conn=conn,
+            user=user,
+            transaction_id=transaction_id,
+            can_write=True,
+        )
+
+        row = await conn.fetchrow(
+            "select name, description, revision_id, deleted "
+            "from committed_transaction_state_valid_at() "
+            "where transaction_id = $1",
+            transaction_id,
+        )
+        if row is not None and row["deleted"]:
+            raise InvalidCommand(
+                f"Cannot delete transaction {transaction_id} as it already is deleted"
+            )
+
+        await create_group_log(
+            conn=conn,
+            group_id=group_id,
+            user=user,
+            type="transaction-deleted",
+            message=f"deleted transaction with id {transaction_id}",
+        )
+
+        if (
+            row is None
+        ):  # the transaction has no committed changes, we can only delete it if we created it
+            revision_id = await conn.fetchval(
+                "select id from transaction_revision tr "
+                "where tr.user_id = $1 and tr.transaction_id = $2 and tr.committed is null",
+                user.id,
+                transaction_id,
+            )
+            if revision_id is None:
+                raise InvalidCommand(
+                    f"Cannot delete uncommitted transaction {transaction_id} of another user"
                 )
-                revision_id = await self._get_or_create_revision(
-                    conn=conn, user=user, transaction_id=transaction_id
+
+            # here we assume there has already been a transaction_history entry, if not something weird has
+            # happened
+            t_id = await conn.fetchval(
+                "update transaction_history th set deleted = true "
+                "where th.id = $1 and th.revision_id = $2 returning id",
+                transaction_id,
+                revision_id,
+            )
+            if t_id is None:
+                raise InvalidCommand(
+                    f"something weird has happened deleting uncommitted transaction "
+                    f"{transaction_id}, please consult your local IT admin"
                 )
 
-                for position in positions:
-                    await self._process_position_update(
-                        conn=conn,
-                        transaction_id=transaction_id,
-                        group_id=group_id,
-                        revision_id=revision_id,
-                        position=position,
-                    )
+            # now commit this change
+            await conn.execute(
+                "update transaction_revision tr set committed = now() "
+                "where tr.user_id = $1 and tr.transaction_id = $2 and tr.committed is null",
+                user.id,
+                transaction_id,
+            )
+            return
 
-                if perform_commit:
-                    await conn.execute(
-                        "update transaction_revision set committed = now() where id = $1",
-                        revision_id,
-                    )
+        else:  # we have at least one committed change for this transaction
+            revision_id = await self._get_or_create_pending_transaction_change(
+                conn=conn, user=user, transaction_id=transaction_id
+            )
 
-    async def create_transaction_change(self, *, user: User, transaction_id: int):
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                await self._check_transaction_permissions(
-                    conn=conn,
-                    user=user,
-                    transaction_id=transaction_id,
-                    can_write=True,
-                )
-                await self._get_or_create_revision(
-                    conn=conn, user=user, transaction_id=transaction_id
-                )
+            await conn.execute(
+                "update transaction_history th set deleted = true "
+                "where th.id = $1 and th.revision_id = $2",
+                transaction_id,
+                revision_id,
+            )
 
-    async def discard_transaction_changes(self, *, user: User, transaction_id: int):
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                await self._check_transaction_permissions(
-                    conn=conn,
-                    user=user,
-                    transaction_id=transaction_id,
-                    can_write=True,
-                )
-
-                revision_id = await conn.fetchval(
-                    "select id "
-                    "from transaction_revision tr where tr.user_id = $1 and tr.transaction_id = $2 "
-                    "   and tr.committed is null",
-                    user.id,
-                    transaction_id,
-                )
-                if revision_id is None:
-                    raise InvalidCommand(
-                        f"No changes to discard for transaction {transaction_id}"
-                    )
-
-                last_committed_revision = await conn.fetchval(
-                    "select id "
-                    "from transaction_revision tr where tr.transaction_id = $1 and tr.committed is not null",
-                    transaction_id,
-                )
-                if (
-                    last_committed_revision is None
-                ):  # we have a newly created transaction - disallow discarding changes
-                    raise InvalidCommand(
-                        f"Cannot discard transaction changes without any committed changes"
-                    )
-                else:
-                    await conn.execute(
-                        "delete from transaction_revision tr " "where tr.id = $1",
-                        revision_id,
-                    )
-
-    async def delete_transaction(self, *, user: User, transaction_id: int):
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                group_id = await self._check_transaction_permissions(
-                    conn=conn,
-                    user=user,
-                    transaction_id=transaction_id,
-                    can_write=True,
-                )
-
-                row = await conn.fetchrow(
-                    "select name, description, revision_id, deleted "
-                    "from committed_transaction_state_valid_at() "
-                    "where transaction_id = $1",
-                    transaction_id,
-                )
-                if row is not None and row["deleted"]:
-                    raise InvalidCommand(
-                        f"Cannot delete transaction {transaction_id} as it already is deleted"
-                    )
-
-                await create_group_log(
-                    conn=conn,
-                    group_id=group_id,
-                    user=user,
-                    type="transaction-deleted",
-                    message=f"deleted transaction with id {transaction_id}",
-                )
-
-                if (
-                    row is None
-                ):  # the transaction has no committed changes, we can only delete it if we created it
-                    revision_id = await conn.fetchval(
-                        "select id from transaction_revision tr "
-                        "where tr.user_id = $1 and tr.transaction_id = $2 and tr.committed is null",
-                        user.id,
-                        transaction_id,
-                    )
-                    if revision_id is None:
-                        raise InvalidCommand(
-                            f"Cannot delete uncommitted transaction {transaction_id} of another user"
-                        )
-
-                    # here we assume there has already been a transaction_history entry, if not something weird has
-                    # happened
-                    t_id = await conn.fetchval(
-                        "update transaction_history th set deleted = true "
-                        "where th.id = $1 and th.revision_id = $2 returning id",
-                        transaction_id,
-                        revision_id,
-                    )
-                    if t_id is None:
-                        raise InvalidCommand(
-                            f"something weird has happened deleting uncommitted transaction "
-                            f"{transaction_id}, please consult your local IT admin"
-                        )
-
-                    # now commit this change
-                    await conn.execute(
-                        "update transaction_revision tr set committed = now() "
-                        "where tr.user_id = $1 and tr.transaction_id = $2 and tr.committed is null",
-                        user.id,
-                        transaction_id,
-                    )
-                    return
-
-                else:  # we have at least one committed change for this transaction
-                    revision_id = await self._get_or_create_pending_transaction_change(
-                        conn=conn, user=user, transaction_id=transaction_id
-                    )
-
-                    await conn.execute(
-                        "update transaction_history th set deleted = true "
-                        "where th.id = $1 and th.revision_id = $2",
-                        transaction_id,
-                        revision_id,
-                    )
-
-                    await conn.execute(
-                        "update transaction_revision tr set committed = NOW() "
-                        "where tr.id = $1",
-                        revision_id,
-                    )
+            await conn.execute(
+                "update transaction_revision tr set committed = NOW() "
+                "where tr.id = $1",
+                revision_id,
+            )
 
     async def _get_or_create_revision(
         self, conn: asyncpg.Connection, user: User, transaction_id: int
@@ -1161,8 +1171,14 @@ class TransactionService(Application):
 
         return transaction.id, new_transaction_id
 
+    @with_db_transaction
     async def sync_transactions(
-        self, *, user: User, group_id: int, transactions: list[RawTransaction]
+        self,
+        *,
+        conn: Connection,
+        user: User,
+        group_id: int,
+        transactions: list[RawTransaction],
     ) -> dict[int, int]:
         all_transactions_in_same_group = all(
             [a.group_id == group_id for a in transactions]
@@ -1170,21 +1186,19 @@ class TransactionService(Application):
         if not all_transactions_in_same_group:
             raise InvalidCommand("all accounts must belong to the same group")
 
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                can_write, _ = await check_group_permissions(
-                    conn=conn, group_id=group_id, user=user, can_write=True
-                )
+        can_write, _ = await check_group_permissions(
+            conn=conn, group_id=group_id, user=user, can_write=True
+        )
 
-                if not can_write:
-                    raise PermissionError("need write access to group")
+        if not can_write:
+            raise PermissionError("need write access to group")
 
-                new_transaction_id_map: dict[int, int] = {}
+        new_transaction_id_map: dict[int, int] = {}
 
-                for transaction in transactions:
-                    old_acc_id, new_acc_id = await self.sync_transaction(
-                        conn=conn, user=user, transaction=transaction
-                    )
-                    new_transaction_id_map[old_acc_id] = new_acc_id
+        for transaction in transactions:
+            old_acc_id, new_acc_id = await self.sync_transaction(
+                conn=conn, user=user, transaction=transaction
+            )
+            new_transaction_id_map[old_acc_id] = new_acc_id
 
-                return new_transaction_id_map
+        return new_transaction_id_map

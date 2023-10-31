@@ -5,16 +5,22 @@ from typing import Optional, Union
 
 import asyncpg
 
-from abrechnung.domain.accounts import Account, AccountType, AccountDetails
-from . import (
-    Application,
-    NotFoundError,
+from abrechnung.core.auth import (
     check_group_permissions,
-    InvalidCommand,
     create_group_log,
 )
+from abrechnung.core.errors import (
+    NotFoundError,
+    InvalidCommand,
+)
+from abrechnung.core.service import (
+    Service,
+)
+from abrechnung.domain.accounts import Account, AccountType, AccountDetails
+from abrechnung.domain.users import User
+from abrechnung.framework.database import Connection
+from abrechnung.framework.decorators import with_db_transaction, with_db_connection
 from .common import _get_or_create_tag_ids
-from ..domain.users import User
 
 
 @dataclass
@@ -31,7 +37,7 @@ class RawAccount:
     clearing_shares: Optional[dict[int, float]] = field(default=None)
 
 
-class AccountService(Application):
+class AccountService(Service):
     @staticmethod
     async def _get_or_create_revision(
         conn: asyncpg.Connection, user: User, account_id: int
@@ -221,39 +227,42 @@ class AccountService(Application):
             pending_details=pending_details,
         )
 
-    async def list_accounts(self, *, user: User, group_id: int) -> list[Account]:
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                await check_group_permissions(conn=conn, group_id=group_id, user=user)
-                cur = conn.cursor(
-                    "select account_id, group_id, type, last_changed, is_wip, "
-                    "   committed_details, pending_details "
-                    "from full_account_state_valid_at($1) "
-                    "where group_id = $2",
-                    user.id,
-                    group_id,
-                )
+    @with_db_transaction
+    async def list_accounts(
+        self, *, conn: Connection, user: User, group_id: int
+    ) -> list[Account]:
+        await check_group_permissions(conn=conn, group_id=group_id, user=user)
+        cur = conn.cursor(
+            "select account_id, group_id, type, last_changed, is_wip, "
+            "   committed_details, pending_details "
+            "from full_account_state_valid_at($1) "
+            "where group_id = $2",
+            user.id,
+            group_id,
+        )
 
-                result = []
-                async for account in cur:
-                    result.append(self._account_db_row(account))
+        result = []
+        async for account in cur:
+            result.append(self._account_db_row(account))
 
-                return result
+        return result
 
-    async def get_account(self, *, user: User, account_id: int) -> Account:
-        async with self.db_pool.acquire() as conn:
-            await self._check_account_permissions(
-                conn=conn, user=user, account_id=account_id
-            )
-            account = await conn.fetchrow(
-                "select account_id, group_id, type, last_changed, is_wip, "
-                "   committed_details, pending_details "
-                "from full_account_state_valid_at($1) "
-                "where account_id = $2",
-                user.id,
-                account_id,
-            )
-            return self._account_db_row(account)
+    @with_db_connection
+    async def get_account(
+        self, *, conn: Connection, user: User, account_id: int
+    ) -> Account:
+        await self._check_account_permissions(
+            conn=conn, user=user, account_id=account_id
+        )
+        account = await conn.fetchrow(
+            "select account_id, group_id, type, last_changed, is_wip, "
+            "   committed_details, pending_details "
+            "from full_account_state_valid_at($1) "
+            "where account_id = $2",
+            user.id,
+            account_id,
+        )
+        return self._account_db_row(account)
 
     async def _add_tags_to_revision(
         self,
@@ -353,9 +362,11 @@ class AccountService(Application):
         )
         return account_id
 
+    @with_db_transaction
     async def create_account(
         self,
         *,
+        conn: Connection,
         user: User,
         group_id: int,
         type: str,
@@ -366,20 +377,18 @@ class AccountService(Application):
         date_info: Optional[date] = None,
         clearing_shares: Optional[dict[int, float]] = None,
     ) -> int:
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                return await self._create_account(
-                    conn=conn,
-                    user=user,
-                    group_id=group_id,
-                    type=type,
-                    name=name,
-                    tags=tags,
-                    description=description,
-                    owning_user_id=owning_user_id,
-                    date_info=date_info,
-                    clearing_shares=clearing_shares,
-                )
+        return await self._create_account(
+            conn=conn,
+            user=user,
+            group_id=group_id,
+            type=type,
+            name=name,
+            tags=tags,
+            description=description,
+            owning_user_id=owning_user_id,
+            date_info=date_info,
+            clearing_shares=clearing_shares,
+        )
 
     async def _update_account(
         self,
@@ -469,8 +478,11 @@ class AccountService(Application):
             revision_id,
         )
 
+    @with_db_transaction
     async def update_account(
         self,
+        *,
+        conn: Connection,
         user: User,
         account_id: int,
         name: str,
@@ -480,153 +492,152 @@ class AccountService(Application):
         date_info: Optional[date] = None,
         clearing_shares: Optional[dict[int, float]] = None,
     ):
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                return await self._update_account(
-                    conn=conn,
-                    user=user,
-                    account_id=account_id,
-                    name=name,
-                    description=description,
-                    tags=tags,
-                    owning_user_id=owning_user_id,
-                    date_info=date_info,
-                    clearing_shares=clearing_shares,
-                )
+        return await self._update_account(
+            conn=conn,
+            user=user,
+            account_id=account_id,
+            name=name,
+            description=description,
+            tags=tags,
+            owning_user_id=owning_user_id,
+            date_info=date_info,
+            clearing_shares=clearing_shares,
+        )
 
+    @with_db_transaction
     async def delete_account(
         self,
+        *,
+        conn: Connection,
         user: User,
         account_id: int,
     ):
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                group_id, _ = await self._check_account_permissions(
-                    conn=conn, user=user, account_id=account_id, can_write=True
-                )
-                row = await conn.fetchrow(
-                    "select id from account where id = $1",
-                    account_id,
-                )
-                if row is None:
-                    raise InvalidCommand(f"Account does not exist")
+        group_id, _ = await self._check_account_permissions(
+            conn=conn, user=user, account_id=account_id, can_write=True
+        )
+        row = await conn.fetchrow(
+            "select id from account where id = $1",
+            account_id,
+        )
+        if row is None:
+            raise InvalidCommand(f"Account does not exist")
 
-                # TODO: FIXME move this check into the database
+        # TODO: FIXME move this check into the database
 
-                has_committed_shares = await conn.fetchval(
-                    "select 1 "
-                    "from committed_transaction_state_valid_at() t "
-                    "where not deleted and $1 = any(involved_accounts)",
-                    account_id,
-                )
-                has_pending_shares = await conn.fetchval(
-                    "select 1 "
-                    "from aggregated_pending_transaction_history t "
-                    "where $1 = any(t.involved_accounts)",
-                    account_id,
-                )
+        has_committed_shares = await conn.fetchval(
+            "select 1 "
+            "from committed_transaction_state_valid_at() t "
+            "where not deleted and $1 = any(involved_accounts)",
+            account_id,
+        )
+        has_pending_shares = await conn.fetchval(
+            "select 1 "
+            "from aggregated_pending_transaction_history t "
+            "where $1 = any(t.involved_accounts)",
+            account_id,
+        )
 
-                has_committed_clearing_shares = await conn.fetchval(
-                    "select 1 "
-                    "from committed_account_state_valid_at() a "
-                    "where not deleted and $1 = any(involved_accounts)",
-                    account_id,
-                )
-                has_pending_clearing_shares = await conn.fetchval(
-                    "select 1 "
-                    "from aggregated_pending_account_history a "
-                    "where $1 = any(a.involved_accounts)",
-                    account_id,
-                )
+        has_committed_clearing_shares = await conn.fetchval(
+            "select 1 "
+            "from committed_account_state_valid_at() a "
+            "where not deleted and $1 = any(involved_accounts)",
+            account_id,
+        )
+        has_pending_clearing_shares = await conn.fetchval(
+            "select 1 "
+            "from aggregated_pending_account_history a "
+            "where $1 = any(a.involved_accounts)",
+            account_id,
+        )
 
-                has_committed_usages = await conn.fetchval(
-                    "select 1 "
-                    "from committed_transaction_position_state_valid_at() p "
-                    "join transaction t on t.id = p.transaction_id "
-                    "where not p.deleted and $1 = any(p.involved_accounts)",
-                    account_id,
-                )
+        has_committed_usages = await conn.fetchval(
+            "select 1 "
+            "from committed_transaction_position_state_valid_at() p "
+            "join transaction t on t.id = p.transaction_id "
+            "where not p.deleted and $1 = any(p.involved_accounts)",
+            account_id,
+        )
 
-                has_pending_usages = await conn.fetchval(
-                    "select 1 "
-                    "from aggregated_pending_transaction_position_history p "
-                    "join transaction t on t.id = p.transaction_id "
-                    "where $1 = any(p.involved_accounts)",
-                    account_id,
-                )
+        has_pending_usages = await conn.fetchval(
+            "select 1 "
+            "from aggregated_pending_transaction_position_history p "
+            "join transaction t on t.id = p.transaction_id "
+            "where $1 = any(p.involved_accounts)",
+            account_id,
+        )
 
-                if (
-                    has_committed_shares
-                    or has_pending_shares
-                    or has_committed_usages
-                    or has_pending_usages
-                ):
-                    raise InvalidCommand(
-                        f"Cannot delete an account that is references by a transaction"
-                    )
+        if (
+            has_committed_shares
+            or has_pending_shares
+            or has_committed_usages
+            or has_pending_usages
+        ):
+            raise InvalidCommand(
+                f"Cannot delete an account that is references by a transaction"
+            )
 
-                if has_committed_clearing_shares or has_pending_clearing_shares:
-                    raise InvalidCommand(
-                        f"Cannot delete an account that is references by a clearing account"
-                    )
+        if has_committed_clearing_shares or has_pending_clearing_shares:
+            raise InvalidCommand(
+                f"Cannot delete an account that is references by a clearing account"
+            )
 
-                row = await conn.fetchrow(
-                    "select name, revision_id, deleted "
-                    "from committed_account_state_valid_at() "
-                    "where account_id = $1",
-                    account_id,
-                )
-                if row is None:
-                    raise InvalidCommand(
-                        f"Cannot delete an account without any committed changes"
-                    )
+        row = await conn.fetchrow(
+            "select name, revision_id, deleted "
+            "from committed_account_state_valid_at() "
+            "where account_id = $1",
+            account_id,
+        )
+        if row is None:
+            raise InvalidCommand(
+                f"Cannot delete an account without any committed changes"
+            )
 
-                if row["deleted"]:
-                    raise InvalidCommand(f"Cannot delete an already deleted account")
+        if row["deleted"]:
+            raise InvalidCommand(f"Cannot delete an already deleted account")
 
-                has_committed_clearing_shares = await conn.fetchval(
-                    "select 1 "
-                    "from committed_account_state_valid_at() p "
-                    "where not p.deleted and $1 = any(p.involved_accounts)",
-                    account_id,
-                )
+        has_committed_clearing_shares = await conn.fetchval(
+            "select 1 "
+            "from committed_account_state_valid_at() p "
+            "where not p.deleted and $1 = any(p.involved_accounts)",
+            account_id,
+        )
 
-                has_pending_clearing_shares = await conn.fetchval(
-                    "select 1 "
-                    "from aggregated_pending_account_history p "
-                    "where $1 = any(p.involved_accounts)",
-                    account_id,
-                )
-                if has_committed_clearing_shares or has_pending_clearing_shares:
-                    raise InvalidCommand(
-                        f"Cannot delete an account that is references by another clearing account"
-                    )
+        has_pending_clearing_shares = await conn.fetchval(
+            "select 1 "
+            "from aggregated_pending_account_history p "
+            "where $1 = any(p.involved_accounts)",
+            account_id,
+        )
+        if has_committed_clearing_shares or has_pending_clearing_shares:
+            raise InvalidCommand(
+                f"Cannot delete an account that is references by another clearing account"
+            )
 
-                now = datetime.now(tz=timezone.utc)
-                revision_id = await conn.fetchval(
-                    "insert into account_revision (user_id, account_id, started, committed) "
-                    "values ($1, $2, $3, $4) returning id",
-                    user.id,
-                    account_id,
-                    now,
-                    now,
-                )
-                await conn.execute(
-                    "insert into account_history (id, revision_id, name, description, owning_user_id, date_info, deleted) "
-                    "select $1, $2, name, description, owning_user_id, date_info, true "
-                    "from account_history ah where ah.id = $1 and ah.revision_id = $3 ",
-                    account_id,
-                    revision_id,
-                    row["revision_id"],
-                )
+        now = datetime.now(tz=timezone.utc)
+        revision_id = await conn.fetchval(
+            "insert into account_revision (user_id, account_id, started, committed) "
+            "values ($1, $2, $3, $4) returning id",
+            user.id,
+            account_id,
+            now,
+            now,
+        )
+        await conn.execute(
+            "insert into account_history (id, revision_id, name, description, owning_user_id, date_info, deleted) "
+            "select $1, $2, name, description, owning_user_id, date_info, true "
+            "from account_history ah where ah.id = $1 and ah.revision_id = $3 ",
+            account_id,
+            revision_id,
+            row["revision_id"],
+        )
 
-                await create_group_log(
-                    conn=conn,
-                    group_id=group_id,
-                    user=user,
-                    type="account-deleted",
-                    message=f"deleted account account {row['name']}",
-                )
+        await create_group_log(
+            conn=conn,
+            group_id=group_id,
+            user=user,
+            type="account-deleted",
+            message=f"deleted account account {row['name']}",
+        )
 
     async def sync_account(
         self, *, conn: asyncpg.Connection, user: User, account: RawAccount
@@ -661,51 +672,48 @@ class AccountService(Application):
         )
         return account.id, new_acc_id
 
+    @with_db_transaction
     async def sync_accounts(
-        self, *, user: User, group_id: int, accounts: list[RawAccount]
+        self, *, conn: Connection, user: User, group_id: int, accounts: list[RawAccount]
     ) -> dict[int, int]:
         all_accounts_in_same_group = all([a.group_id == group_id for a in accounts])
         if not all_accounts_in_same_group:
             raise InvalidCommand("all accounts must belong to the same group")
 
-        async with self.db_pool.acquire() as conn:
-            async with conn.transaction():
-                can_write, _ = await check_group_permissions(
-                    conn=conn, group_id=group_id, user=user, can_write=True
-                )
+        can_write, _ = await check_group_permissions(
+            conn=conn, group_id=group_id, user=user, can_write=True
+        )
 
-                if not can_write:
-                    raise PermissionError("need write access to group")
+        if not can_write:
+            raise PermissionError("need write access to group")
 
-                new_account_id_map: dict[int, int] = {}
+        new_account_id_map: dict[int, int] = {}
 
-                for account in filter(
-                    lambda acc: acc.type == AccountType.personal, accounts
+        for account in filter(lambda acc: acc.type == AccountType.personal, accounts):
+            old_acc_id, new_acc_id = await self.sync_account(
+                conn=conn, user=user, account=account
+            )
+            new_account_id_map[old_acc_id] = new_acc_id
+
+        clearing_accounts = list(
+            filter(lambda acc: acc.type == AccountType.clearing, accounts)
+        )
+        # TODO: improve this very inefficient implementation
+        # first step: use a dict instead of a list
+        while len(clearing_accounts) > 0:
+            for account in clearing_accounts[:]:  # copy as we remove items
+                if account.clearing_shares:
+                    account.clearing_shares = {
+                        new_account_id_map.get(k, k): v
+                        for k, v in account.clearing_shares.items()
+                    }
+                if account.clearing_shares and all(
+                    [x > 0 for x in account.clearing_shares.keys()]
                 ):
                     old_acc_id, new_acc_id = await self.sync_account(
                         conn=conn, user=user, account=account
                     )
                     new_account_id_map[old_acc_id] = new_acc_id
+                    clearing_accounts.remove(account)
 
-                clearing_accounts = list(
-                    filter(lambda acc: acc.type == AccountType.clearing, accounts)
-                )
-                # TODO: improve this very inefficient implementation
-                # first step: use a dict instead of a list
-                while len(clearing_accounts) > 0:
-                    for account in clearing_accounts[:]:  # copy as we remove items
-                        if account.clearing_shares:
-                            account.clearing_shares = {
-                                new_account_id_map.get(k, k): v
-                                for k, v in account.clearing_shares.items()
-                            }
-                        if account.clearing_shares and all(
-                            [x > 0 for x in account.clearing_shares.keys()]
-                        ):
-                            old_acc_id, new_acc_id = await self.sync_account(
-                                conn=conn, user=user, account=account
-                            )
-                            new_account_id_map[old_acc_id] = new_acc_id
-                            clearing_accounts.remove(account)
-
-                return new_account_id_map
+        return new_account_id_map

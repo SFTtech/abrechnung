@@ -1,3 +1,4 @@
+# pylint: disable=missing-kwoa
 import argparse
 import asyncio
 import random
@@ -9,7 +10,7 @@ from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.config import read_config
-from abrechnung.database.database import create_db_pool
+from abrechnung.framework.database import create_db_pool
 
 
 def random_date() -> date:
@@ -28,7 +29,7 @@ async def main(
 ):
     config = read_config(Path(config_path))
 
-    db_pool = await create_db_pool(config)
+    db_pool = await create_db_pool(config.database)
     user_service = UserService(db_pool, config)
     group_service = GroupService(db_pool, config)
     account_service = AccountService(db_pool, config)
