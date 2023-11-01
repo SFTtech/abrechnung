@@ -1,18 +1,17 @@
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
+from pydantic import BaseModel
 
-@dataclass
-class Session:
+
+class Session(BaseModel):
     id: int
     name: str
     valid_until: Optional[datetime]
     last_seen: datetime
 
 
-@dataclass
-class User:
+class User(BaseModel):
     id: int
     username: str
     email: str

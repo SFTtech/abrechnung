@@ -24,11 +24,10 @@ class TransactionLogicTest(BaseTestCase):
         )
 
     async def test_register_guest_user(self):
-        config = deepcopy(TEST_CONFIG)
-        config["registration"]["allow_guest_users"] = True
-        config["registration"]["valid_email_domains"] = ["stusta.de"]
-        test_config = Config.parse_obj(config)
-        user_service = UserService(self.db_pool, config=test_config)
+        config = TEST_CONFIG.model_copy(deep=True)
+        config.registration.allow_guest_users = True
+        config.registration.valid_email_domains = ["stusta.de"]
+        user_service = UserService(self.db_pool, config=config)
 
         invite_token_id = await self.group_service.create_invite(
             user=self.user,

@@ -4,6 +4,7 @@ from datetime import date, datetime
 from typing import Optional, Union
 
 import asyncpg
+from pydantic import BaseModel
 
 from abrechnung.application.common import _get_or_create_tag_ids
 from abrechnung.core.auth import (
@@ -19,7 +20,6 @@ from abrechnung.core.service import (
 )
 from abrechnung.domain.transactions import (
     Transaction,
-    TransactionDetails,
     TransactionPosition,
     FileAttachment,
     TransactionType,
@@ -29,8 +29,7 @@ from abrechnung.framework.database import Connection
 from abrechnung.framework.decorators import with_db_transaction
 
 
-@dataclass
-class RawTransaction:
+class RawTransaction(BaseModel):
     id: int
     group_id: int
     type: str
@@ -84,114 +83,6 @@ class TransactionService(Service):
 
         return result["group_id"]
 
-    @staticmethod
-    def _transaction_detail_from_db_json(db_json: dict) -> TransactionDetails:
-        return TransactionDetails(
-            name=db_json["name"],
-            description=db_json["description"],
-            value=db_json["value"],
-            currency_symbol=db_json["currency_symbol"],
-            currency_conversion_rate=db_json["currency_conversion_rate"],
-            deleted=db_json["deleted"],
-            billed_at=date.fromisoformat(db_json["billed_at"]),
-            tags=db_json["tags"],
-            creditor_shares={
-                cred["account_id"]: cred["shares"]
-                for cred in db_json["creditor_shares"]
-            },
-            debitor_shares={
-                deb["account_id"]: deb["shares"] for deb in db_json["debitor_shares"]
-            },
-        )
-
-    @staticmethod
-    def _transaction_position_from_db_row_json(db_json: dict) -> TransactionPosition:
-        return TransactionPosition(
-            id=db_json["item_id"],
-            name=db_json["name"],
-            price=db_json["price"],
-            communist_shares=db_json["communist_shares"],
-            deleted=db_json["deleted"],
-            usages={
-                usage["account_id"]: usage["share_amount"]
-                for usage in db_json["usages"]
-            },
-        )
-
-    def _file_attachment_from_db_row_json(self, db_json: dict) -> FileAttachment:
-        return FileAttachment(
-            id=db_json["file_id"],
-            filename=db_json["filename"],
-            blob_id=db_json["blob_id"],
-            deleted=db_json["deleted"],
-            mime_type=db_json["mime_type"],
-            host_url=self.cfg.service.api_url,
-        )
-
-    def _transaction_db_row(self, transaction: asyncpg.Record) -> Transaction:
-        committed_details = (
-            self._transaction_detail_from_db_json(
-                json.loads(transaction["committed_details"])[0]
-            )
-            if transaction["committed_details"]
-            else None
-        )
-        pending_details = (
-            self._transaction_detail_from_db_json(
-                json.loads(transaction["pending_details"])[0]
-            )
-            if transaction["pending_details"]
-            else None
-        )
-        committed_positions = (
-            [
-                self._transaction_position_from_db_row_json(position)
-                for position in json.loads(transaction["committed_positions"])
-            ]
-            if transaction["committed_positions"]
-            else None
-        )
-
-        pending_positions = (
-            [
-                self._transaction_position_from_db_row_json(position)
-                for position in json.loads(transaction["pending_positions"])
-            ]
-            if transaction["pending_positions"]
-            else None
-        )
-
-        committed_files = (
-            [
-                self._file_attachment_from_db_row_json(file)
-                for file in json.loads(transaction["committed_files"])
-            ]
-            if transaction["committed_files"]
-            else None
-        )
-        pending_files = (
-            [
-                self._file_attachment_from_db_row_json(file)
-                for file in json.loads(transaction["pending_files"])
-            ]
-            if transaction["pending_files"]
-            else None
-        )
-
-        return Transaction(
-            id=transaction["transaction_id"],
-            group_id=transaction["group_id"],
-            type=transaction["type"],
-            is_wip=transaction["is_wip"],
-            last_changed=transaction["last_changed"],
-            committed_details=committed_details,
-            pending_details=pending_details,
-            committed_positions=committed_positions,
-            pending_positions=pending_positions,
-            committed_files=committed_files,
-            pending_files=pending_files,
-        )
-
     @with_db_transaction
     async def list_transactions(
         self,
@@ -207,21 +98,23 @@ class TransactionService(Service):
         if min_last_changed:
             # if a minimum last changed value is specified we must also return all transactions the current
             # user has pending changes with to properly sync state across different devices of the user
-            cur = conn.cursor(
-                "select transaction_id, group_id, type, last_changed, is_wip, "
+            transactions = await conn.fetch_many(
+                Transaction,
+                "select id, group_id, type, last_changed, is_wip, "
                 "   committed_details, pending_details, "
                 "   committed_positions, pending_positions, committed_files, pending_files "
                 "from full_transaction_state_valid_at($1) "
                 "where group_id = $2 "
-                "   and (last_changed >= $3 or (($4::int[]) is not null and transaction_id = any($4::int[])))",
+                "   and (last_changed >= $3 or (($4::int[]) is not null and id = any($4::int[])))",
                 user.id,
                 group_id,
                 min_last_changed,
                 additional_transactions,
             )
         else:
-            cur = conn.cursor(
-                "select transaction_id, group_id, type, last_changed, is_wip, "
+            transactions = await conn.fetch_many(
+                Transaction,
+                "select id, group_id, type, last_changed, is_wip, "
                 "   committed_details, pending_details, "
                 "   committed_positions, pending_positions, committed_files, pending_files "
                 "from full_transaction_state_valid_at($1) "
@@ -229,12 +122,14 @@ class TransactionService(Service):
                 user.id,
                 group_id,
             )
-
-        result = []
-        async for transaction in cur:
-            result.append(self._transaction_db_row(transaction))
-
-        return result
+        for transaction in transactions:
+            if transaction.pending_files:
+                for pending_file in transaction.pending_files:
+                    pending_file.host_url = self.cfg.service.api_url
+            if transaction.committed_files:
+                for committed_file in transaction.committed_files:
+                    committed_file.host_url = self.cfg.service.api_url
+        return transactions
 
     @with_db_transaction
     async def get_transaction(
@@ -243,17 +138,24 @@ class TransactionService(Service):
         group_id = await self._check_transaction_permissions(
             conn=conn, user=user, transaction_id=transaction_id
         )
-        transaction = await conn.fetchrow(
-            "select transaction_id, group_id, type, last_changed, is_wip, "
+        transaction = await conn.fetch_one(
+            Transaction,
+            "select id, group_id, type, last_changed, is_wip, "
             "   committed_details, pending_details, "
             "   committed_positions, pending_positions, committed_files, pending_files "
             "from full_transaction_state_valid_at($1) "
-            "where group_id = $2 and transaction_id = $3",
+            "where group_id = $2 and id = $3",
             user.id,
             group_id,
             transaction_id,
         )
-        return self._transaction_db_row(transaction)
+        if transaction.pending_files:
+            for pending_file in transaction.pending_files:
+                pending_file.host_url = self.cfg.service.api_url
+        if transaction.committed_files:
+            for committed_file in transaction.committed_files:
+                committed_file.host_url = self.cfg.service.api_url
+        return transaction
 
     async def _add_tags_to_revision(
         self,
@@ -556,7 +458,7 @@ class TransactionService(Service):
 
         transaction_id = perms["transaction_id"]
         committed_state = await conn.fetchrow(
-            "select filename, deleted from committed_file_state_valid_at() where file_id = $1",
+            "select filename, deleted from committed_file_state_valid_at() where id = $1",
             file_id,
         )
         if committed_state is not None and committed_state["deleted"]:
@@ -566,7 +468,7 @@ class TransactionService(Service):
             # file is only attached to a pending change, fully delete it right away, blob will be cleaned up
             pending_state = await conn.fetchrow(
                 "select revision_id from aggregated_pending_file_history "
-                "where file_id = $1 and changed_by = $2",
+                "where id = $1 and changed_by = $2",
                 file_id,
                 user.id,
             )

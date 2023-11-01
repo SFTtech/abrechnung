@@ -1,4 +1,3 @@
-import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, date
 from typing import Optional, Union
@@ -16,7 +15,7 @@ from abrechnung.core.errors import (
 from abrechnung.core.service import (
     Service,
 )
-from abrechnung.domain.accounts import Account, AccountType, AccountDetails
+from abrechnung.domain.accounts import Account, AccountType
 from abrechnung.domain.users import User
 from abrechnung.framework.database import Connection
 from abrechnung.framework.decorators import with_db_transaction, with_db_connection
@@ -186,66 +185,20 @@ class AccountService(Service):
 
         return group_id, revision_id
 
-    @staticmethod
-    def _account_detail_from_db_json(db_json: dict) -> AccountDetails:
-        return AccountDetails(
-            name=db_json["name"],
-            description=db_json["description"],
-            deleted=db_json["deleted"],
-            owning_user_id=db_json["owning_user_id"],
-            date_info=date.fromisoformat(db_json["date_info"])
-            if db_json["date_info"] is not None
-            else None,
-            tags=db_json["tags"],
-            clearing_shares={
-                cred["share_account_id"]: cred["shares"]
-                for cred in db_json["clearing_shares"]
-            },
-        )
-
-    def _account_db_row(self, account: asyncpg.Record) -> Account:
-        committed_details = (
-            self._account_detail_from_db_json(
-                json.loads(account["committed_details"])[0]
-            )
-            if account["committed_details"]
-            else None
-        )
-        pending_details = (
-            self._account_detail_from_db_json(json.loads(account["pending_details"])[0])
-            if account["pending_details"]
-            else None
-        )
-
-        return Account(
-            id=account["account_id"],
-            group_id=account["group_id"],
-            type=account["type"],
-            is_wip=account["is_wip"],
-            last_changed=account["last_changed"],
-            committed_details=committed_details,
-            pending_details=pending_details,
-        )
-
     @with_db_transaction
     async def list_accounts(
         self, *, conn: Connection, user: User, group_id: int
     ) -> list[Account]:
         await check_group_permissions(conn=conn, group_id=group_id, user=user)
-        cur = conn.cursor(
-            "select account_id, group_id, type, last_changed, is_wip, "
+        return await conn.fetch_many(
+            Account,
+            "select id, group_id, type, last_changed, is_wip, "
             "   committed_details, pending_details "
             "from full_account_state_valid_at($1) "
             "where group_id = $2",
             user.id,
             group_id,
         )
-
-        result = []
-        async for account in cur:
-            result.append(self._account_db_row(account))
-
-        return result
 
     @with_db_connection
     async def get_account(
@@ -254,15 +207,15 @@ class AccountService(Service):
         await self._check_account_permissions(
             conn=conn, user=user, account_id=account_id
         )
-        account = await conn.fetchrow(
-            "select account_id, group_id, type, last_changed, is_wip, "
+        return await conn.fetch_one(
+            Account,
+            "select id, group_id, type, last_changed, is_wip, "
             "   committed_details, pending_details "
             "from full_account_state_valid_at($1) "
-            "where account_id = $2",
+            "where id = $2",
             user.id,
             account_id,
         )
-        return self._account_db_row(account)
 
     async def _add_tags_to_revision(
         self,

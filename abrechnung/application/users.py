@@ -87,10 +87,7 @@ class UserService(Service):
         )
         if not sess:
             raise PermissionError
-        user = await self._get_user(conn=conn, user_id=token_metadata.user_id)
-        if user is None:
-            raise PermissionError
-        return user
+        return await self._get_user(conn=conn, user_id=token_metadata.user_id)
 
     async def _verify_user_password(self, user_id: int, password: str) -> bool:
         async with self.db_pool.acquire() as conn:
@@ -283,9 +280,12 @@ class UserService(Service):
 
         return user_id
 
-    async def _get_user(self, conn: asyncpg.Connection, user_id: int) -> User:
-        user = await conn.fetchrow(
-            "select id, email, registered_at, username, pending, deleted, is_guest_user "
+    @staticmethod
+    async def _get_user(conn: Connection, user_id: int) -> User:
+        user = await conn.fetch_one(
+            User,
+            "select id, email, registered_at, username, pending, deleted, is_guest_user, "
+            "   json_build_array() as sessions "
             "from usr where id = $1",
             user_id,
         )
@@ -293,30 +293,13 @@ class UserService(Service):
         if user is None:
             raise NotFoundError(f"User with id {user_id} does not exist")
 
-        rows = await conn.fetch(
+        sessions = await conn.fetch_many(
+            Session,
             "select id, name, valid_until, last_seen from session where user_id = $1",
             user_id,
         )
-        sessions = [
-            Session(
-                id=row["id"],
-                name=row["name"],
-                valid_until=row["valid_until"],
-                last_seen=row["last_seen"],
-            )
-            for row in rows
-        ]
-
-        return User(
-            id=user["id"],
-            email=user["email"],
-            registered_at=user["registered_at"],
-            username=user["username"],
-            pending=user["pending"],
-            deleted=user["deleted"],
-            is_guest_user=user["is_guest_user"],
-            sessions=sessions,
-        )
+        user.sessions = sessions
+        return user
 
     @with_db_transaction
     async def get_user(self, *, conn: Connection, user_id: int) -> User:
@@ -366,7 +349,7 @@ class UserService(Service):
     ):
         try:
             valid = validate_email(email)
-            email = valid.email
+            email = valid.normalized
         except EmailNotValidError as e:
             raise InvalidCommand(str(e))
 

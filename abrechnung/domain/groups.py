@@ -1,10 +1,10 @@
-from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
 
+from pydantic import BaseModel
 
-@dataclass
-class GroupMember:
+
+class GroupMember(BaseModel):
     user_id: int
     username: str
     is_owner: bool
@@ -14,8 +14,7 @@ class GroupMember:
     invited_by: Optional[int]
 
 
-@dataclass
-class GroupInvite:
+class GroupInvite(BaseModel):
     id: int
     created_by: int
     token: Optional[str]
@@ -25,8 +24,7 @@ class GroupInvite:
     valid_until: datetime
 
 
-@dataclass
-class Group:
+class Group(BaseModel):
     id: int
     name: str
     description: str
@@ -37,8 +35,7 @@ class Group:
     created_by: int
 
 
-@dataclass
-class GroupLog:
+class GroupLog(BaseModel):
     id: int
     user_id: int
     logged_at: datetime
@@ -47,8 +44,7 @@ class GroupLog:
     affected: Optional[int]
 
 
-@dataclass
-class GroupPreview:
+class GroupPreview(BaseModel):
     id: int
     name: str
     description: str

@@ -288,20 +288,20 @@ create or replace function full_account_state_valid_at(
     seen_by_user integer, valid_at timestamp with time zone DEFAULT now()
 )
     returns TABLE (
-        account_id        integer,
+        id        integer,
         type              text,
         group_id          integer,
         last_changed      timestamptz,
         is_wip            boolean,
-        committed_details jsonb,
-        pending_details   jsonb
+        committed_details json,
+        pending_details   json
     )
     stable
     language sql
 as
 $$
 select
-    a.id                                                                   as account_id,
+    a.id,
     a.type,
     a.group_id,
     greatest(committed_details.last_changed, pending_details.last_changed) as last_changed,
@@ -313,30 +313,26 @@ select
                    ar.account_id = a.id
                and ar.user_id = full_account_state_valid_at.seen_by_user
                and ar.committed is null)                                   as is_wip,
-    committed_details.json_state                                           as committed_details,
-    pending_details.json_state                                             as pending_details
+    committed_details.json_state as committed_details,
+    pending_details.json_state as pending_details
 from
     account a
     left join (
         select
             casa.account_id,
-            jsonb_agg(casa)        as json_state,
-            max(casa.last_changed) as last_changed
+            row_to_json(casa)        as json_state,
+            casa.last_changed
         from
             committed_account_state_valid_at(full_account_state_valid_at.valid_at) casa
-        group by casa.account_id
-              ) committed_details on a.id = committed_details.account_id
+    ) committed_details on a.id = committed_details.account_id
     left join (
         select
             apah.account_id,
-            jsonb_agg(apah)        as json_state,
-            max(apah.last_changed) as last_changed
+            row_to_json(apah)        as json_state,
+            apah.last_changed
         from
             aggregated_pending_account_history apah
-        where
-                apah.changed_by = full_account_state_valid_at.seen_by_user
-        group by apah.account_id
-              ) pending_details on a.id = pending_details.account_id
+    ) pending_details on a.id = pending_details.account_id
 where
     committed_details.json_state is not null
     or pending_details.json_state is not null
@@ -346,7 +342,7 @@ create or replace function committed_file_state_valid_at(
     valid_at timestamp with time zone DEFAULT now()
 )
     returns TABLE (
-        file_id            integer,
+        id            integer,
         revision_id        bigint,
         transaction_id     integer,
         changed_by         integer,
@@ -362,8 +358,8 @@ create or replace function committed_file_state_valid_at(
     language sql
 as
 $$
-select distinct on (file_id)
-    file_id,
+select distinct on (id)
+    id,
     revision_id,
     transaction_id,
     user_id as changed_by,
@@ -380,14 +376,14 @@ where
         revision_committed <= committed_file_state_valid_at.valid_at
     and filename is not null
 order by
-    file_id, revision_committed desc
+    id, revision_committed desc
 $$;
 
 create or replace function committed_transaction_position_state_valid_at(
     valid_at timestamp with time zone DEFAULT now()
 )
     returns TABLE (
-        item_id            integer,
+        id            integer,
         revision_id        bigint,
         transaction_id     integer,
         changed_by         integer,
@@ -399,7 +395,7 @@ create or replace function committed_transaction_position_state_valid_at(
         communist_shares   double precision,
         deleted            boolean,
         n_usages           integer,
-        usages             jsonb,
+        usages             json,
         involved_accounts  integer[]
     )
     stable
@@ -407,7 +403,7 @@ create or replace function committed_transaction_position_state_valid_at(
 as
 $$
 select distinct on (acph.item_id)
-    acph.item_id,
+    acph.item_id as id,
     acph.revision_id,
     acph.transaction_id,
     acph.user_id as changed_by,
@@ -450,9 +446,9 @@ create or replace function committed_transaction_state_valid_at(
         billed_at                date,
         deleted                  boolean,
         n_creditor_shares        integer,
-        creditor_shares          jsonb,
+        creditor_shares          json,
         n_debitor_shares         integer,
-        debitor_shares           jsonb,
+        debitor_shares           json,
         involved_accounts        integer[],
         tags                     varchar(255)[]
     )
@@ -494,24 +490,24 @@ create or replace function full_transaction_state_valid_at(
     seen_by_user integer, valid_at timestamp with time zone DEFAULT now()
 )
     returns TABLE (
-        transaction_id      integer,
+        id                  integer,
         type                text,
         group_id            integer,
         last_changed        timestamp with time zone,
         is_wip              boolean,
-        committed_details   jsonb,
-        pending_details     jsonb,
-        committed_positions jsonb,
-        pending_positions   jsonb,
-        committed_files     jsonb,
-        pending_files       jsonb
+        committed_details   json,
+        pending_details     json,
+        committed_positions json,
+        pending_positions   json,
+        committed_files     json,
+        pending_files       json
     )
     stable
     language sql
 as
 $$
 select
-    t.id                                                                                               as transaction_id,
+    t.id,
     t.type,
     t.group_id,
     greatest(committed_details.last_changed, committed_positions.last_changed, committed_files.last_changed,
@@ -535,63 +531,61 @@ from
     left join (
         select
             ctsa.transaction_id,
-            jsonb_agg(ctsa)        as json_state,
-            max(ctsa.last_changed) as last_changed
+            row_to_json(ctsa)        as json_state,
+            ctsa.last_changed
         from
             committed_transaction_state_valid_at(full_transaction_state_valid_at.valid_at) ctsa
-        group by ctsa.transaction_id
-              ) committed_details on t.id = committed_details.transaction_id
+    ) committed_details on t.id = committed_details.transaction_id
     left join (
         select
             apth.transaction_id,
-            jsonb_agg(apth)        as json_state,
-            max(apth.last_changed) as last_changed
+            row_to_json(apth)        as json_state,
+            apth.last_changed
         from
             aggregated_pending_transaction_history apth
         where
-                apth.changed_by = full_transaction_state_valid_at.seen_by_user
-        group by apth.transaction_id
-              ) pending_details on t.id = pending_details.transaction_id
+            apth.changed_by = full_transaction_state_valid_at.seen_by_user
+    ) pending_details on t.id = pending_details.transaction_id
     left join (
         select
             ctpsa.transaction_id,
-            jsonb_agg(ctpsa)        as json_state,
+            json_agg(ctpsa)        as json_state,
             max(ctpsa.last_changed) as last_changed
         from
             committed_transaction_position_state_valid_at(full_transaction_state_valid_at.valid_at) ctpsa
         group by ctpsa.transaction_id
-              ) committed_positions on t.id = committed_positions.transaction_id
+    ) committed_positions on t.id = committed_positions.transaction_id
     left join (
         select
             aptph.transaction_id,
-            jsonb_agg(aptph)        as json_state,
+            json_agg(aptph)        as json_state,
             max(aptph.last_changed) as last_changed
         from
             aggregated_pending_transaction_position_history aptph
         where
-                aptph.changed_by = full_transaction_state_valid_at.seen_by_user
+            aptph.changed_by = full_transaction_state_valid_at.seen_by_user
         group by aptph.transaction_id
-              ) pending_positions on t.id = pending_positions.transaction_id
+    ) pending_positions on t.id = pending_positions.transaction_id
     left join (
         select
             cfsva.transaction_id,
-            jsonb_agg(cfsva)        as json_state,
+            json_agg(cfsva)        as json_state,
             max(cfsva.last_changed) as last_changed
         from
             committed_file_state_valid_at(full_transaction_state_valid_at.valid_at) cfsva
         group by cfsva.transaction_id
-              ) committed_files on t.id = committed_files.transaction_id
+    ) committed_files on t.id = committed_files.transaction_id
     left join (
         select
             apfh.transaction_id,
-            jsonb_agg(apfh)        as json_state,
+            json_agg(apfh)        as json_state,
             max(apfh.last_changed) as last_changed
         from
             aggregated_pending_file_history apfh
         where
-                apfh.changed_by = full_transaction_state_valid_at.seen_by_user
+             apfh.changed_by = full_transaction_state_valid_at.seen_by_user
         group by apfh.transaction_id
-              ) pending_files on t.id = pending_files.transaction_id
+    ) pending_files on t.id = pending_files.transaction_id
 where
     committed_details.json_state is not null
     or pending_details.json_state is not null

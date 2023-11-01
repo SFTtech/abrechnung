@@ -3,17 +3,18 @@ from datetime import datetime, date
 from enum import Enum
 from typing import Optional
 
+from pydantic import BaseModel
+
 
 class AccountType(Enum):
     personal = "personal"
     clearing = "clearing"
 
 
-ClearingShares = Optional[dict[int, float]]
+ClearingShares = dict[int, float] | None
 
 
-@dataclass
-class AccountDetails:
+class AccountDetails(BaseModel):
     name: str
     description: str
     owning_user_id: Optional[int]
@@ -21,11 +22,10 @@ class AccountDetails:
     deleted: bool
 
     tags: list[str]
-    clearing_shares: ClearingShares = field(default=None)
+    clearing_shares: ClearingShares = None
 
 
-@dataclass
-class Account:
+class Account(BaseModel):
     id: int
     group_id: int
     type: str

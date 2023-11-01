@@ -4,7 +4,7 @@ create view clearing_account_shares_as_json(revision_id, account_id, n_shares, i
         cas.account_id,
         sum(cas.shares)                 AS n_shares,
         array_agg(cas.share_account_id) AS involved_accounts,
-        jsonb_agg(cas.*)                AS shares
+        json_object_agg(cas.share_account_id, cas.shares) AS shares
     FROM
         clearing_account_share cas
     GROUP BY
@@ -16,7 +16,7 @@ create view creditor_shares_as_json(revision_id, transaction_id, n_shares, invol
         cs.transaction_id,
         sum(cs.shares)           AS n_shares,
         array_agg(cs.account_id) AS involved_accounts,
-        jsonb_agg(cs.*)          AS shares
+        json_object_agg(cs.account_id, cs.shares) AS shares
     FROM
         creditor_share cs
     GROUP BY
@@ -28,7 +28,7 @@ create view debitor_shares_as_json(revision_id, transaction_id, n_shares, involv
         ds.transaction_id,
         sum(ds.shares)           AS n_shares,
         array_agg(ds.account_id) AS involved_accounts,
-        jsonb_agg(ds.*)          AS shares
+        json_object_agg(ds.account_id, ds.shares) AS shares
     FROM
         debitor_share ds
     GROUP BY
@@ -40,7 +40,7 @@ create view purchase_item_usages_as_json(revision_id, item_id, n_usages, involve
         piu.item_id,
         sum(piu.share_amount)     AS n_usages,
         array_agg(piu.account_id) AS involved_accounts,
-        jsonb_agg(piu.*)          AS usages
+        json_object_agg(piu.account_id, piu.share_amount) AS usages
     FROM
         purchase_item_usage piu
     GROUP BY
@@ -79,15 +79,15 @@ create or replace view aggregated_committed_account_history as
         sub.started                                          as revision_started,
         sub.committed                                        as revision_committed,
         sub.last_changed                                     as last_changed,
-                first_value(sub.description) over outer_window       as description,
-                first_value(sub.name) over outer_window              as name,
-                first_value(sub.owning_user_id) over outer_window    as owning_user_id,
-                first_value(sub.date_info) over outer_window         as date_info,
-                first_value(sub.deleted) over outer_window           as deleted,
-                first_value(sub.n_clearing_shares) over outer_window as n_clearing_shares,
-                first_value(sub.clearing_shares) over outer_window   as clearing_shares,
-                first_value(sub.involved_accounts) over outer_window as involved_accounts,
-                first_value(sub.tags) over outer_window              as tags
+        first_value(sub.description) over outer_window       as description,
+        first_value(sub.name) over outer_window              as name,
+        first_value(sub.owning_user_id) over outer_window    as owning_user_id,
+        first_value(sub.date_info) over outer_window         as date_info,
+        first_value(sub.deleted) over outer_window           as deleted,
+        first_value(sub.n_clearing_shares) over outer_window as n_clearing_shares,
+        first_value(sub.clearing_shares) over outer_window   as clearing_shares,
+        first_value(sub.involved_accounts) over outer_window as involved_accounts,
+        first_value(sub.tags) over outer_window              as tags
     from
         (
             select
@@ -106,7 +106,7 @@ create or replace view aggregated_committed_account_history as
                 ah.date_info,
                 ah.deleted,
                 coalesce(cas.n_shares, 0)                        as n_clearing_shares,
-                coalesce(cas.shares, '[]'::jsonb)                as clearing_shares,
+                coalesce(cas.shares, json_build_object())                as clearing_shares,
                 coalesce(cas.involved_accounts, array []::int[]) as involved_accounts,
                 coalesce(t.tag_names, array []::varchar(255)[])  as tags
             from
@@ -137,7 +137,7 @@ create or replace function committed_account_state_valid_at(
         date_info          date,
         deleted            bool,
         n_clearing_shares  int,
-        clearing_shares    jsonb,
+        clearing_shares    json,
         involved_accounts  int[],
         tags               varchar(255)[]
     )
@@ -188,7 +188,7 @@ create or replace view aggregated_pending_account_history as
         ah.date_info,
         ah.deleted,
         coalesce(cas.n_shares, 0)                        as n_clearing_shares,
-        coalesce(cas.shares, '[]'::jsonb)                as clearing_shares,
+        coalesce(cas.shares, json_build_object())                as clearing_shares,
         coalesce(cas.involved_accounts, array []::int[]) as involved_accounts,
         coalesce(t.tag_names, array []::varchar(255)[])  as tags
     from
@@ -207,13 +207,13 @@ create or replace view aggregated_pending_transaction_position_history as
         tr.user_id                                           AS changed_by,
         tr.started                                           AS revision_started,
         tr.last_changed                                      AS last_changed,
-        pi.id                                                AS item_id,
+        pi.id,
         pih.name,
         pih.price,
         pih.communist_shares,
         pih.deleted,
         coalesce(piu.n_usages, 0::double precision)          AS n_usages,
-        coalesce(piu.usages, '[]'::jsonb)                    AS usages,
+        coalesce(piu.usages, json_build_object())                    AS usages,
         coalesce(piu.involved_accounts, array []::integer[]) AS involved_accounts
     FROM
         transaction_revision tr
@@ -240,9 +240,9 @@ create or replace view aggregated_pending_transaction_history as
         th.billed_at,
         th.deleted,
         coalesce(csaj.n_shares, 0::double precision)          AS n_creditor_shares,
-        coalesce(csaj.shares, '[]'::jsonb)                    AS creditor_shares,
+        coalesce(csaj.shares, json_build_object())                    AS creditor_shares,
         coalesce(dsaj.n_shares, 0::double precision)          AS n_debitor_shares,
-        coalesce(dsaj.shares, '[]'::jsonb)                    AS debitor_shares,
+        coalesce(dsaj.shares, json_build_object())                    AS debitor_shares,
         coalesce(dsaj.involved_accounts, ARRAY []::integer[]) AS involved_accounts,
         coalesce(tt.tag_names, array []::varchar(255)[])      as tags
     FROM
@@ -262,7 +262,7 @@ create or replace view aggregated_pending_file_history as
         tr.user_id      AS changed_by,
         tr.started      AS revision_started,
         tr.last_changed AS last_changed,
-        f.id            AS file_id,
+        f.id,
         fh.filename,
         blob.mime_type,
         fh.blob_id,
@@ -284,13 +284,13 @@ create or replace view aggregated_committed_transaction_position_history as
         sub.started                                          AS revision_started,
         sub.committed                                        AS revision_committed,
         sub.last_changed                                     AS last_changed,
-                first_value(sub.name) OVER outer_window              AS name,
-                first_value(sub.price) OVER outer_window             AS price,
-                first_value(sub.communist_shares) OVER outer_window  AS communist_shares,
-                first_value(sub.deleted) OVER outer_window           AS deleted,
-                first_value(sub.n_usages) OVER outer_window          AS n_usages,
-                first_value(sub.usages) OVER outer_window            AS usages,
-                first_value(sub.involved_accounts) OVER outer_window AS involved_accounts
+        first_value(sub.name) OVER outer_window              AS name,
+        first_value(sub.price) OVER outer_window             AS price,
+        first_value(sub.communist_shares) OVER outer_window  AS communist_shares,
+        first_value(sub.deleted) OVER outer_window           AS deleted,
+        first_value(sub.n_usages) OVER outer_window          AS n_usages,
+        first_value(sub.usages) OVER outer_window            AS usages,
+        first_value(sub.involved_accounts) OVER outer_window AS involved_accounts
     FROM
         (
             SELECT
@@ -301,13 +301,13 @@ create or replace view aggregated_committed_transaction_position_history as
                 tr.committed,
                 tr.last_changed,
                 pi.id                                                AS item_id,
-                        count(pi.id) OVER wnd                                AS id_partition,
+                count(pi.id) OVER wnd                                AS id_partition,
                 pih.name,
                 pih.price,
                 pih.communist_shares,
                 pih.deleted,
                 COALESCE(piu.n_usages, 0::double precision)          AS n_usages,
-                COALESCE(piu.usages, '[]'::jsonb)                    AS usages,
+                COALESCE(piu.usages, json_build_object())                    AS usages,
                 COALESCE(piu.involved_accounts, ARRAY []::integer[]) AS involved_accounts
             FROM
                 transaction_revision tr
@@ -328,19 +328,19 @@ create or replace view aggregated_committed_transaction_history as
         sub.committed                                               AS revision_committed,
         sub.last_changed                                            AS last_changed,
         sub.type,
-                first_value(sub.value) OVER outer_window                    AS value,
-                first_value(sub.name) OVER outer_window                     AS name,
-                first_value(sub.description) OVER outer_window              AS description,
-                first_value(sub.currency_symbol) OVER outer_window          AS currency_symbol,
-                first_value(sub.currency_conversion_rate) OVER outer_window AS currency_conversion_rate,
-                first_value(sub.billed_at) OVER outer_window                AS billed_at,
-                first_value(sub.deleted) OVER outer_window                  AS deleted,
-                first_value(sub.n_creditor_shares) OVER outer_window        AS n_creditor_shares,
-                first_value(sub.creditor_shares) OVER outer_window          AS creditor_shares,
-                first_value(sub.n_debitor_shares) OVER outer_window         AS n_debitor_shares,
-                first_value(sub.debitor_shares) OVER outer_window           AS debitor_shares,
-                first_value(sub.involved_accounts) OVER outer_window        AS involved_accounts,
-                first_value(sub.tags) over outer_window                     as tags
+        first_value(sub.value) OVER outer_window                    AS value,
+        first_value(sub.name) OVER outer_window                     AS name,
+        first_value(sub.description) OVER outer_window              AS description,
+        first_value(sub.currency_symbol) OVER outer_window          AS currency_symbol,
+        first_value(sub.currency_conversion_rate) OVER outer_window AS currency_conversion_rate,
+        first_value(sub.billed_at) OVER outer_window                AS billed_at,
+        first_value(sub.deleted) OVER outer_window                  AS deleted,
+        first_value(sub.n_creditor_shares) OVER outer_window        AS n_creditor_shares,
+        first_value(sub.creditor_shares) OVER outer_window          AS creditor_shares,
+        first_value(sub.n_debitor_shares) OVER outer_window         AS n_debitor_shares,
+        first_value(sub.debitor_shares) OVER outer_window           AS debitor_shares,
+        first_value(sub.involved_accounts) OVER outer_window        AS involved_accounts,
+        first_value(sub.tags) over outer_window                     as tags
     FROM
         (
             SELECT
@@ -361,9 +361,9 @@ create or replace view aggregated_committed_transaction_history as
                 th.billed_at,
                 th.deleted,
                 COALESCE(csaj.n_shares, 0::double precision)          AS n_creditor_shares,
-                COALESCE(csaj.shares, '[]'::jsonb)                    AS creditor_shares,
+                COALESCE(csaj.shares, json_build_object())                    AS creditor_shares,
                 COALESCE(dsaj.n_shares, 0::double precision)          AS n_debitor_shares,
-                COALESCE(dsaj.shares, '[]'::jsonb)                    AS debitor_shares,
+                COALESCE(dsaj.shares, json_build_object())                    AS debitor_shares,
                     coalesce(csaj.involved_accounts, array[]::int[]) || coalesce(dsaj.involved_accounts, array[]::int[]) as involved_accounts,
                 coalesce(tt.tag_names, array []::varchar(255)[])      as tags
             FROM
@@ -381,15 +381,15 @@ create or replace view aggregated_committed_file_history as
     SELECT
         sub.revision_id,
         sub.transaction_id,
-        sub.file_id,
+        sub.id,
         sub.user_id,
         sub.started                                  AS revision_started,
         sub.committed                                AS revision_committed,
         sub.last_changed                             AS last_changed,
-                first_value(sub.filename) OVER outer_window  AS filename,
-                first_value(sub.mime_type) OVER outer_window AS mime_type,
-                first_value(sub.blob_id) OVER outer_window   AS blob_id,
-                first_value(sub.deleted) OVER outer_window   AS deleted
+        first_value(sub.filename) OVER outer_window  AS filename,
+        first_value(sub.mime_type) OVER outer_window AS mime_type,
+        first_value(sub.blob_id) OVER outer_window   AS blob_id,
+        first_value(sub.deleted) OVER outer_window   AS deleted
     FROM
         (
             SELECT
@@ -399,8 +399,8 @@ create or replace view aggregated_committed_file_history as
                 tr.started,
                 tr.committed,
                 tr.last_changed,
-                f.id                 AS file_id,
-                        count(f.id) OVER wnd AS id_partition,
+                f.id,
+                count(f.id) OVER wnd AS id_partition,
                 fh.filename,
                 blob.mime_type,
                 fh.blob_id,
@@ -412,4 +412,4 @@ create or replace view aggregated_committed_file_history as
                 LEFT JOIN blob ON blob.id = fh.blob_id
             WHERE
                 tr.committed IS NOT NULL WINDOW wnd AS (PARTITION BY f.id ORDER BY tr.committed)
-        ) sub WINDOW outer_window AS (PARTITION BY sub.file_id, sub.id_partition ORDER BY sub.revision_id);
+        ) sub WINDOW outer_window AS (PARTITION BY sub.id, sub.id_partition ORDER BY sub.revision_id);

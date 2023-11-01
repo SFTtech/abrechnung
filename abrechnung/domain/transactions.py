@@ -1,7 +1,8 @@
-from dataclasses import dataclass, field
 from datetime import datetime, date
 from enum import Enum
 from typing import Optional
+
+from pydantic import BaseModel
 
 
 class TransactionType(Enum):
@@ -13,8 +14,7 @@ class TransactionType(Enum):
 TransactionShares = dict[int, float]
 
 
-@dataclass
-class TransactionPosition:
+class TransactionPosition(BaseModel):
     id: int
 
     name: str
@@ -26,10 +26,9 @@ class TransactionPosition:
     deleted: bool = False
 
 
-@dataclass
-class TransactionDetails:
+class TransactionDetails(BaseModel):
     name: str
-    description: Optional[str]
+    description: str | None
     value: float
     currency_symbol: str
     currency_conversion_rate: float
@@ -42,28 +41,26 @@ class TransactionDetails:
     debitor_shares: TransactionShares
 
 
-@dataclass
-class FileAttachment:
+class FileAttachment(BaseModel):
     id: int
     filename: str
-    blob_id: Optional[int]
-    mime_type: Optional[str]
-    host_url: str
+    blob_id: int | None
+    mime_type: str | None
+    host_url: str | None = None
     deleted: bool
 
 
-@dataclass
-class Transaction:
+class Transaction(BaseModel):
     id: int
     group_id: int
     type: str
     is_wip: bool
     last_changed: datetime
-    committed_details: Optional[TransactionDetails]
-    pending_details: Optional[TransactionDetails]
+    committed_details: TransactionDetails | None
+    pending_details: TransactionDetails | None
 
-    committed_positions: Optional[list[TransactionPosition]] = field(default=None)
-    pending_positions: Optional[list[TransactionPosition]] = field(default=None)
+    committed_positions: list[TransactionPosition] | None = None
+    pending_positions: list[TransactionPosition] | None = None
 
-    committed_files: Optional[list[FileAttachment]] = field(default=None)
-    pending_files: Optional[list[FileAttachment]] = field(default=None)
+    committed_files: list[FileAttachment] | None = None
+    pending_files: list[FileAttachment] | None = None

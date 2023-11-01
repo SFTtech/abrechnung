@@ -46,22 +46,15 @@ class MailerTest(BaseTestCase):
         self.smtp = Controller(self.smtp_handler)
         self.smtp.start()
 
-        config = TEST_CONFIG.copy()
-        config.update(
-            {
-                "email": {
-                    "host": self.smtp.hostname,
-                    "port": self.smtp.port,
-                    "address": "abrechnung@stusta.de",
-                }
-            }
-        )
-        self.mailer_config = Config.parse_obj(config)
-        self.mailer = MailerCli(config=self.mailer_config)
+        config = TEST_CONFIG.model_copy(deep=True)
+        config.email.host = self.smtp.hostname
+        config.email.port = self.smtp.port
+        config.email.address = "abrechnung@stusta.de"
+        self.mailer = MailerCli(config=config)
 
         self.mailer_task = asyncio.create_task(self.mailer.run())
 
-        self.user_service = UserService(db_pool=self.db_pool, config=self.mailer_config)
+        self.user_service = UserService(db_pool=self.db_pool, config=config)
 
     async def asyncTearDown(self) -> None:
         await super().asyncTearDown()
