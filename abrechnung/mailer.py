@@ -8,15 +8,12 @@ from typing import Optional
 
 import asyncpg
 
-from . import subcommand
 from .config import Config
 from abrechnung.framework.database import create_db_pool
 
 
-class MailerCli(subcommand.SubCommand):
-    def __init__(self, config: Config, **args):  # pylint: disable=super-init-not-called
-        del args  # unused
-
+class Mailer:
+    def __init__(self, config: Config):
         self.config = config
         self.events: Optional[asyncio.Queue] = None
         self.psql = None

@@ -7,8 +7,7 @@ from aiosmtpd import smtp
 from aiosmtpd.controller import Controller
 
 from abrechnung.application.users import UserService
-from abrechnung.config import Config
-from abrechnung.mailer import MailerCli
+from abrechnung.mailer import Mailer
 from .common import BaseTestCase, TEST_CONFIG
 
 
@@ -50,7 +49,7 @@ class MailerTest(BaseTestCase):
         config.email.host = self.smtp.hostname
         config.email.port = self.smtp.port
         config.email.address = "abrechnung@stusta.de"
-        self.mailer = MailerCli(config=config)
+        self.mailer = Mailer(config=config)
 
         self.mailer_task = asyncio.create_task(self.mailer.run())
 

@@ -15,14 +15,13 @@ from abrechnung.application.users import UserService
 from abrechnung.config import Config
 from abrechnung.core.errors import NotFoundError, InvalidCommand
 from abrechnung.framework.database import create_db_pool
-from abrechnung.subcommand import SubCommand
 from .middleware import ContextMiddleware
 from .routers import transactions, groups, auth, accounts, common, websocket
 from .routers.websocket import NotificationManager
 
 
-class ApiCli(SubCommand):
-    def __init__(self, config: Config, **kwargs):
+class Api:
+    def __init__(self, config: Config):
         self.cfg = config
 
         self.logger = logging.getLogger(__name__)

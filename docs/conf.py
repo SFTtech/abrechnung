@@ -15,13 +15,14 @@ import json
 import sys
 from pathlib import Path
 
+from abrechnung.http.api import Api
+
 HERE = Path(__file__).parent
 sys.path[:0] = [str(HERE.parent), str(HERE / "_ext")]
 BUILD_DIR = HERE / "_build"
 
 import abrechnung
 from abrechnung.config import Config
-from abrechnung.http.cli import ApiCli
 from tests.common import TEST_CONFIG
 
 # -- Project information -----------------------------------------------------
@@ -103,8 +104,8 @@ def generate_openapi_json():
     """
     generate swagger OpenAPI
     """
-    config = Config.parse_obj(TEST_CONFIG)
-    api = ApiCli(config)
+    config = Config.model_validate(TEST_CONFIG)
+    api = Api(config)
 
     BUILD_DIR.mkdir(parents=True, exist_ok=True)
     with open(BUILD_DIR / "openapi.json", "w+", encoding="utf-8") as f:
