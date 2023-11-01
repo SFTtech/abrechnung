@@ -95,7 +95,8 @@ class NotificationManager:
         await self._unregister_forwarder(
             self.connection, forwarder_id=self.config.api.id
         )
-        await self.connection.close()
+        if self.connection:
+            await self.connection.close()
 
     async def _on_psql_notification(
         self, connection: asyncpg.Connection, pid: int, channel: str, payload: str

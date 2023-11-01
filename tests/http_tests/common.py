@@ -1,16 +1,15 @@
 # pylint: disable=attribute-defined-outside-init
 from httpx import AsyncClient
 
-from abrechnung.config import Config
-from abrechnung.http.cli import ApiCli
+from abrechnung.http.api import Api
 from tests.common import BaseTestCase, TEST_CONFIG
 
 
 class HTTPTestCase(BaseTestCase):
     async def asyncSetUp(self) -> None:
         await super().asyncSetUp()
-        self.test_config = Config.parse_obj(TEST_CONFIG)
-        self.http_service = ApiCli(config=self.test_config)
+        self.test_config = TEST_CONFIG
+        self.http_service = Api(config=self.test_config)
         await self.http_service._setup()
 
         self.client = AsyncClient(

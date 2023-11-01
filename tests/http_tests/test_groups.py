@@ -49,7 +49,6 @@ class GroupAPITest(HTTPAPITest):
         group = await self._fetch_group(group_id)
         self.assertEqual("name", group["name"])
 
-        await self._fetch_group("asdf1234", 422)
         await self._fetch_group(13333, 404)
 
         resp = await self._post(

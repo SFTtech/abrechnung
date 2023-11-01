@@ -10,27 +10,25 @@ authors = [
     { name = "Michael Enßlin", email = "mic@sft.lol" }
 ]
 license = { file = "LICENSE" }
-dynamic = ["version", "description"]
-readme = "README.md"
+dynamic = ["version", "readme"]
 classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     "Development Status :: 5 - Production/Stable",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "typer~=0.9.0",
-    "fastapi~=0.102",
-    "pydantic[email]~=2.3.0",
-    "uvicorn[standard]~=0.20",
+    "fastapi~=0.103",
+    "pydantic[email]~=2.4",
+    "uvicorn[standard]~=0.22",
     "python-jose[cryptography]~=3.3",
-    "asyncpg~=0.27",
+    "asyncpg~=0.28",
     "passlib[bcrypt]~=1.7",
     "websockets~=10.4",
-    "python-multipart~=0.0.5",
+    "python-multipart~=0.0.6",
     "PyYAML~=6.0",
-    "schema~=0.7",
 ]
 
 [project.optional-dependencies]
@@ -45,7 +43,7 @@ dev = [
     "black",
     "mypy~=1.5",
     "types-PyYAML~=6.0",
-    "pylint~=2.17",
+    "pylint~=3.0",
 ]
 docs = [
     "sphinx",
@@ -58,17 +56,15 @@ Source = "https://github.com/SFTtech/abrechung"
 Documentation = "https://abrechnung.readthedocs.io"
 
 [project.scripts]
-abrechnung = "abrechnung.__main__:main"
+abrechnung = "abrechnung.cli.main:main"
 
-[tool.flit.sdist]
-exclude = [
-    "frontend/",
-    "tools/",
-    ".github",
-    ".readthedocs.yaml",
-    "config",
-    "systemd",
-]
+[tool.setuptools.packages.find]
+namespaces = false
+exclude = ["tests*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "abrechnung.__version__"}
+readme = {file = ["README.md"]}
 
 [tool.pylint.MASTER]
 extension-pkg-whitelist = [
@@ -83,7 +79,8 @@ disable = [
     "C",
     "R",
     "fixme",
-    "logging-fstring-interpolation"
+    "logging-fstring-interpolation",
+    "broad-exception-caught"
 ]
 
 [tool.black]
@@ -95,7 +92,11 @@ profile = "black"
 
 [tool.mypy]
 ignore_missing_imports = true
+check_untyped_defs = true
 pretty = true
+plugins = [
+    "pydantic.mypy"
+]
 
 [tool.coverage.run]
 source = [

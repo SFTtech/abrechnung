@@ -21,9 +21,16 @@ class Mail:
     rcpt_options: Optional[str]
 
 
+def decode(val: str | bytes | None) -> str:
+    assert val is not None
+    if isinstance(val, bytes):
+        return val.decode("utf-8")
+    return val
+
+
 class DummySMTPHandler:
     def __init__(self):
-        self.mail_queue = asyncio.Queue()
+        self.mail_queue: asyncio.Queue[smtp.Envelope] = asyncio.Queue()
 
     async def handle_RCPT(
         self, server, session, envelope: smtp.Envelope, address: str, rcpt_options
@@ -71,7 +78,7 @@ class MailerTest(BaseTestCase):
         self.assertIsNotNone(mail)
         self.assertIn(user_email, mail.rcpt_tos)
         self.assertIn(
-            "[Test Abrechnung] Confirm user account", mail.content.decode("utf-8")
+            "[Test Abrechnung] Confirm user account", decode(mail.content)
         )
 
     async def test_email_change_mail_delivery(self):
@@ -89,8 +96,8 @@ class MailerTest(BaseTestCase):
         self.assertIsNotNone(mail2)
         self.assertTrue(user_email in mail1.rcpt_tos or mail2.rcpt_tos)
         self.assertTrue(new_email in mail1.rcpt_tos or mail2.rcpt_tos)
-        self.assertIn("[Test Abrechnung] Change email", mail1.content.decode("utf-8"))
-        self.assertIn("[Test Abrechnung] Change email", mail2.content.decode("utf-8"))
+        self.assertIn("[Test Abrechnung] Change email", decode(mail1.content))
+        self.assertIn("[Test Abrechnung] Change email", decode(mail2.content))
 
     async def test_password_reset_mail_delivery(self):
         user_email = "user@email.com"
@@ -98,7 +105,7 @@ class MailerTest(BaseTestCase):
         await self.user_service.request_password_recovery(email=user_email)
 
         await asyncio.sleep(0.5)
-        mail: smtp.Envelope = self.smtp_handler.mail_queue.get_nowait()
-        self.assertIsNotNone(mail)
+        mail: smtp.Envelope | None = self.smtp_handler.mail_queue.get_nowait()
+        assert mail is not None
         self.assertIn(user_email, mail.rcpt_tos)
-        self.assertIn("[Test Abrechnung] Reset password", mail.content.decode("utf-8"))
+        self.assertIn("[Test Abrechnung] Reset password", decode(mail.content))

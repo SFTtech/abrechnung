@@ -10,7 +10,7 @@ class AuthAPITest(HTTPTestCase):
         password: str,
         session_name: str = "dummy session",
         expected_status: int = 200,
-    ):
+    ) -> dict:
         resp = await self.client.post(
             f"/api/v1/auth/login",
             json={
@@ -22,7 +22,7 @@ class AuthAPITest(HTTPTestCase):
         self.assertEqual(expected_status, resp.status_code)
         return resp.json()
 
-    async def _fetch_profile(self, token: str, expected_status: int = 200):
+    async def _fetch_profile(self, token: str, expected_status: int = 200) -> dict | None:
         resp = await self.client.get(
             f"/api/v1/profile", headers={"Authorization": f"Bearer {token}"}
         )
@@ -75,16 +75,17 @@ class AuthAPITest(HTTPTestCase):
         self.assertEqual(204, resp.status_code)
 
         # now we should be able to login and get a session token
-        resp = await self._login(email, "password")
-        self.assertIsNotNone(resp["user_id"])
-        self.assertIsNotNone(resp["access_token"])
-        self.assertIsNotNone(resp["session_token"])
+        login_resp = await self._login(email, "password")
+        self.assertIsNotNone(login_resp["user_id"])
+        self.assertIsNotNone(login_resp["access_token"])
+        self.assertIsNotNone(login_resp["session_token"])
 
-        resp = await self._login("user", "password")
+        login_resp = await self._login("user", "password")
 
-        token = resp["access_token"]
+        token = login_resp["access_token"]
         # now check that we can actually fetch our profile with the token
         ret_data = await self._fetch_profile(token)
+        assert ret_data is not None
         self.assertEqual(user_id, ret_data["id"])
         self.assertEqual(user_name, ret_data["username"])
         self.assertEqual(email, ret_data["email"])
@@ -237,11 +238,12 @@ class AuthAPITest(HTTPTestCase):
         username = "user1"
         user_id, password = await self._create_test_user(username, user_email)
 
-        resp = await self._login(username, password, session_name="session1")
-        token = resp["access_token"]
+        login_resp = await self._login(username, password, session_name="session1")
+        token = login_resp["access_token"]
         headers = {"Authorization": f"Bearer {token}"}
 
         profile = await self._fetch_profile(token)
+        assert profile is not None
         self.assertEqual(1, len(profile["sessions"]))
         self.assertEqual("session1", profile["sessions"][0]["name"])
         session_id = profile["sessions"][0]["id"]
@@ -254,6 +256,7 @@ class AuthAPITest(HTTPTestCase):
         self.assertEqual(204, resp.status_code)
 
         profile = await self._fetch_profile(token)
+        assert profile is not None
         self.assertEqual(1, len(profile["sessions"]))
         self.assertEqual("new_session_name", profile["sessions"][0]["name"])
         session_id = profile["sessions"][0]["id"]

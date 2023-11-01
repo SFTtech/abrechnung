@@ -30,7 +30,7 @@ eslint:
 
 .PHONY: mypy
 mypy:
-	mypy --ignore-missing-imports .
+	mypy .
 
 .PHONY: package
 package:
