@@ -1,9 +1,9 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { AuthSliceState } from "../types";
-import { Session, User } from "@abrechnung/types";
 import { Api } from "@abrechnung/api";
-import memoize from "proxy-memoize";
+import { Session, User } from "@abrechnung/types";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { memoize } from "proxy-memoize";
 import { PURGE } from "redux-persist";
+import { AuthSliceState } from "../types";
 
 const initialState: AuthSliceState = {
     baseUrl: undefined,

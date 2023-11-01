@@ -1,7 +1,6 @@
-import * as React from "react";
-import { TextField } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
 import { DateTime } from "luxon";
+import * as React from "react";
 import { DisabledTextField } from "./style/DisabledTextField";
 
 interface Props {
@@ -34,19 +33,18 @@ export const DateInput: React.FC<Props> = ({ value, onChange, helperText, error,
     return (
         <DatePicker
             label="Date"
-            inputFormat="yyyy-MM-dd"
+            format="yyyy-MM-dd"
             value={DateTime.fromISO(value)}
             onChange={handleChange}
-            renderInput={(params) => (
-                <TextField
-                    variant="standard"
-                    margin="normal"
-                    fullWidth
-                    {...params}
-                    helperText={helperText}
-                    error={error}
-                />
-            )}
+            slotProps={{
+                textField: {
+                    variant: "standard",
+                    margin: "normal",
+                    fullWidth: true,
+                    helperText,
+                    error,
+                },
+            }}
         />
     );
 };

@@ -9,7 +9,7 @@ import {
 } from "@abrechnung/core";
 import { AccountBalanceMap, Transaction } from "@abrechnung/types";
 import { fromISOString } from "@abrechnung/utils";
-import memoize from "proxy-memoize";
+import { memoize } from "proxy-memoize";
 import {
     selectAccountIdToNameMapInternal,
     selectGroupAccountsFilteredInternal,

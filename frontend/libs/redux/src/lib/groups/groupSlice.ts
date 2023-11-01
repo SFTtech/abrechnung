@@ -1,11 +1,11 @@
-import { createSlice, createAsyncThunk, Draft } from "@reduxjs/toolkit";
-import { GroupInfo, GroupSliceState, IRootState, StateStatus } from "../types";
-import { Group, GroupMember, GroupInvite, GroupLogEntry, GroupBase, GroupPermissions } from "@abrechnung/types";
 import { Api } from "@abrechnung/api";
-import memoize from "proxy-memoize";
+import { Group, GroupBase, GroupInvite, GroupLogEntry, GroupMember, GroupPermissions } from "@abrechnung/types";
+import { lambdaComparator } from "@abrechnung/utils";
+import { Draft, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { memoize } from "proxy-memoize";
+import { GroupInfo, GroupSliceState, IRootState, StateStatus } from "../types";
 import { addEntity, getGroupScopedState, removeEntity } from "../utils";
 import { leaveGroup } from "./actions";
-import { lambdaComparator } from "@abrechnung/utils";
 
 const initialState: GroupSliceState = {
     groups: {

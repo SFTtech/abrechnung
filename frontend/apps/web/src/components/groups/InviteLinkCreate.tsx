@@ -1,8 +1,4 @@
-import { Form, Formik } from "formik";
-import React from "react";
-import { toast } from "react-toastify";
-import { api } from "../../core/api";
-import { DateTime } from "luxon";
+import { Group } from "@abrechnung/types";
 import {
     Button,
     Checkbox,
@@ -15,7 +11,11 @@ import {
     TextField,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers";
-import { Group } from "@abrechnung/types";
+import { Form, Formik } from "formik";
+import { DateTime } from "luxon";
+import React from "react";
+import { toast } from "react-toastify";
+import { api } from "../../core/api";
 
 interface Props {
     group: Group;
@@ -73,18 +73,17 @@ export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
                                 onBlur={handleBlur}
                             />
                             <DateTimePicker
-                                inputFormat="yyyy-MM-dd HH:mm"
+                                format="yyyy-MM-dd HH:mm"
                                 value={values.validUntil}
                                 onChange={(val) => setFieldValue("validUntil", val, true)}
-                                renderInput={(props) => (
-                                    <TextField
-                                        name="validUntil"
-                                        sx={{ marginTop: 2 }}
-                                        variant="standard"
-                                        fullWidth
-                                        {...props}
-                                    />
-                                )}
+                                slotProps={{
+                                    textField: {
+                                        name: "validUntil",
+                                        sx: { marginTop: 2 },
+                                        variant: "standard",
+                                        fullWidth: true,
+                                    },
+                                }}
                             />
                             <FormControlLabel
                                 sx={{ mt: 2 }}

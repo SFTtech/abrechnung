@@ -9,11 +9,10 @@ import {
     TransactionContainer,
     TransactionPosition,
     TransactionType,
-    TransactionTypeMap,
 } from "@abrechnung/types";
 import { toISODateString } from "@abrechnung/utils";
 import { createAsyncThunk, createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
-import memoize from "proxy-memoize";
+import { memoize } from "proxy-memoize";
 import { leaveGroup } from "../groups";
 import {
     ENABLE_OFFLINE_MODE,

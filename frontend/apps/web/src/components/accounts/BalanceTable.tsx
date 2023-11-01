@@ -1,8 +1,8 @@
-import React from "react";
+import { selectAccountBalances, selectGroupAccountsFiltered, selectGroupById } from "@abrechnung/redux";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import React from "react";
+import { selectAccountSlice, selectGroupSlice, useAppSelector } from "../../store";
 import { renderCurrency } from "../style/datagrid/renderCurrency";
-import { selectGroupAccountsFiltered, selectGroupById, selectAccountBalances } from "@abrechnung/redux";
-import { useAppSelector, selectAccountSlice, selectGroupSlice } from "../../store";
 
 interface Props {
     groupId: number;
@@ -51,10 +51,10 @@ export const BalanceTable: React.FC<Props> = ({ groupId }) => {
                 sx={{ border: 0 }}
                 rows={tableData}
                 columns={columns as any} // TODO: fixme and figure out proper typing
-                disableSelectionOnClick
+                disableRowSelectionOnClick
                 autoHeight
-                components={{
-                    Toolbar: GridToolbar,
+                slots={{
+                    toolbar: GridToolbar,
                 }}
             />
         </div>

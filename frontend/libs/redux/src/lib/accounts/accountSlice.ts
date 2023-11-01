@@ -1,14 +1,12 @@
 import { Api } from "@abrechnung/api";
-import { Account, AccountBase, AccountType, PersonalAccount, ClearingAccount } from "@abrechnung/types";
-import { createAsyncThunk, createSlice, PayloadAction, Draft } from "@reduxjs/toolkit";
-import { AccountSliceState, AccountState, ENABLE_OFFLINE_MODE, IRootState, StateStatus } from "../types";
-import { getGroupScopedState } from "../utils";
-import memoize from "proxy-memoize";
 import { AccountSortMode, getAccountSortFunc } from "@abrechnung/core";
+import { Account, AccountBase, AccountType, ClearingAccount, PersonalAccount } from "@abrechnung/types";
 import { fromISOString, toISODateString } from "@abrechnung/utils";
+import { Draft, PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { memoize } from "proxy-memoize";
 import { leaveGroup } from "../groups";
-import { addEntity, removeEntity } from "../utils";
-import { number } from "zod";
+import { AccountSliceState, AccountState, ENABLE_OFFLINE_MODE, IRootState, StateStatus } from "../types";
+import { addEntity, getGroupScopedState, removeEntity } from "../utils";
 
 const initializeGroupState = (state: Draft<AccountSliceState>, groupId: number) => {
     if (state.byGroupId[groupId]) {

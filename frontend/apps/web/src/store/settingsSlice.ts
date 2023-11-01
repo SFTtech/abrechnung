@@ -1,6 +1,6 @@
-import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import memoize from "proxy-memoize";
 import { PaletteMode } from "@mui/material";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { memoize } from "proxy-memoize";
 
 export type ThemeMode = "browser" | PaletteMode;
 
