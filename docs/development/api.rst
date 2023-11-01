@@ -6,7 +6,7 @@ API
 
 .. only:: builder_html
 
-  Download the json formatted openapi spec :download:`here <../_build/openapi.json>`.
+  Download the json formatted openapi spec :download:`here <../../api/openapi.json>`.
 
-.. openapi:: ../_build/openapi.json
+.. openapi:: ../../api/openapi.json
   :group:

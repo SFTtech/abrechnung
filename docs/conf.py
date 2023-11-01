@@ -11,19 +11,14 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import datetime
-import json
 import sys
 from pathlib import Path
-
-from abrechnung.http.api import Api
 
 HERE = Path(__file__).parent
 sys.path[:0] = [str(HERE.parent), str(HERE / "_ext")]
 BUILD_DIR = HERE / "_build"
 
 import abrechnung
-from abrechnung.config import Config
-from tests.common import TEST_CONFIG
 
 # -- Project information -----------------------------------------------------
 
@@ -98,18 +93,3 @@ html_context = dict(
 # so a file named "default.css" will overwrite the builtin "default.css".
 # html_static_path = ["_static"]
 html_show_sphinx = False
-
-
-def generate_openapi_json():
-    """
-    generate swagger OpenAPI
-    """
-    config = Config.model_validate(TEST_CONFIG)
-    api = Api(config)
-
-    BUILD_DIR.mkdir(parents=True, exist_ok=True)
-    with open(BUILD_DIR / "openapi.json", "w+", encoding="utf-8") as f:
-        json.dump(api.api.openapi(), f)
-
-
-generate_openapi_json()
