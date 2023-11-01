@@ -53,3 +53,5 @@ web-build/
 
 
 apps/mobile-e2e/artifacts
+
+.nx/cache

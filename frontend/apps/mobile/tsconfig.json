@@ -11,7 +11,7 @@
         "strict": true,
         "target": "ESNext"
     },
-    "files": ["../../node_modules/@nrwl/expo/typings/svg.d.ts"],
+    "files": ["../../node_modules/@nx/expo/typings/svg.d.ts"],
     "include": [],
     "references": [
         {

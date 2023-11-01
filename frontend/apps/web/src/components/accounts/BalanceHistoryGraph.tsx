@@ -86,7 +86,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
             graphData.push(currentSeries);
         }
         const seriesColors: string[] = graphData.map((serie) =>
-            serie.data[0].y >= 0 ? theme.palette.success.main : theme.palette.error.main
+            Number(serie.data[0].y) >= 0 ? theme.palette.success.main : theme.palette.error.main
         );
 
         return { graphData, seriesColors, areaBaselineValue };
