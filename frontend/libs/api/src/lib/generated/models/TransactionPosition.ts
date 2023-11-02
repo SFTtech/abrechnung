@@ -9,6 +9,6 @@ export type TransactionPosition = {
     price: number;
     communist_shares: number;
     usages: Record<string, number>;
-    deleted?: boolean;
+    deleted: boolean;
 };
 

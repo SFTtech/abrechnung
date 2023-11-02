@@ -1,20 +1,6 @@
-import { Transaction, TransactionBase, TransactionContainer, TransactionPosition } from "@abrechnung/types";
-import deepmerge from "deepmerge";
 import { Client } from "./generated";
-import {
-    BackendTransaction,
-    backendTransactionToTransaction as backendTransactionToTransactionContainer,
-    toBackendPosition,
-} from "./transactions";
 import { IConnectionStatusProvider, IHttpError } from "./types";
 import { isRequiredVersion } from "./version";
-
-type RequestOptions = {
-    withAuth?: boolean;
-    useJson?: boolean;
-    skipVersionCheck?: boolean;
-    headers?: Record<string, string>;
-} & Omit<RequestInit, "headers">;
 
 export class HttpError implements IHttpError {
     constructor(
@@ -114,122 +100,8 @@ export class Api {
         return this.connectionStatusProvider.hasConnection();
     };
 
-    public fetchTransactions = async (
-        groupId: number,
-        minLastChanged?: Date,
-        additionalTransactions?: number[]
-    ): Promise<TransactionContainer[]> => {
-        let url = `/api/v1/groups/${groupId}/transactions`;
-        if (minLastChanged) {
-            url += "?min_last_changed=" + encodeURIComponent(minLastChanged.toISOString());
-            if (additionalTransactions && additionalTransactions.length > 0) {
-                url += "&transaction_ids=" + additionalTransactions.join(",");
-            }
-        }
-        const transactions = await this.makeGet(url);
-        return transactions.map((t: BackendTransaction) => backendTransactionToTransactionContainer(t));
-    };
-
-    public fetchTransaction = async (transactionId: number): Promise<TransactionContainer> => {
-        const transaction = await this.makeGet(`/api/v1/transactions/${transactionId}`);
-        return backendTransactionToTransactionContainer(transaction);
-    };
-
-    public createTransaction = async (
-        transaction: Omit<TransactionBase, "id" | "deleted" | "positions" | "attachments">,
-        performCommit = false
-    ): Promise<TransactionContainer> => {
-        const resp = await this.makePost(`/api/v1/groups/${transaction.groupID}/transactions`, {
-            name: transaction.name,
-            description: transaction.description,
-            value: transaction.value,
-            type: transaction.type,
-            tags: transaction.tags,
-            billed_at: transaction.billedAt,
-            currency_symbol: transaction.currencySymbol,
-            currency_conversion_rate: transaction.currencyConversionRate,
-            creditor_shares: transaction.creditorShares,
-            debitor_shares: transaction.debitorShares,
-            perform_commit: performCommit,
-        });
-        return backendTransactionToTransactionContainer(resp);
-    };
-
-    public updateTransactionPositions = async (
-        transactionId: number,
-        positions: TransactionPosition[],
-        performCommit = true
-    ) => {
-        const payload = {
-            perform_commit: performCommit,
-            positions: toBackendPosition(positions),
-        };
-        return await this.makePost(`/api/v1/transactions/${transactionId}/positions`, payload);
-    };
-
-    public pushTransactionChanges = async (
-        transaction: Transaction,
-        positions: TransactionPosition[],
-        performCommit = true
-    ): Promise<TransactionContainer> => {
-        if (transaction.id < 0) {
-            const updatedTransaction = await this.makePost(`/api/v1/groups/${transaction.groupID}/transactions`, {
-                name: transaction.name,
-                description: transaction.description,
-                value: transaction.value,
-                type: transaction.type,
-                billed_at: transaction.billedAt,
-                currency_symbol: transaction.currencySymbol,
-                currency_conversion_rate: transaction.currencyConversionRate,
-                tags: transaction.tags,
-                creditor_shares: transaction.creditorShares,
-                debitor_shares: transaction.debitorShares,
-                positions: transaction.type === "purchase" ? toBackendPosition(positions) : null,
-                perform_commit: performCommit,
-            });
-            return backendTransactionToTransactionContainer(updatedTransaction);
-        } else {
-            const updatedTransaction = await this.makePost(`/api/v1/transactions/${transaction.id}`, {
-                name: transaction.name,
-                description: transaction.description,
-                value: transaction.value,
-                billed_at: transaction.billedAt,
-                currency_symbol: transaction.currencySymbol,
-                currency_conversion_rate: transaction.currencyConversionRate,
-                tags: transaction.tags,
-                creditor_shares: transaction.creditorShares,
-                debitor_shares: transaction.debitorShares,
-                positions: transaction.type === "purchase" ? toBackendPosition(positions) : null,
-                perform_commit: performCommit,
-            });
-            return backendTransactionToTransactionContainer(updatedTransaction);
-        }
-    };
-
-    public pushTransactionPositionChanges = async (
-        transactionId: number,
-        positions: TransactionPosition[],
-        performCommit = true
-    ): Promise<TransactionContainer> => {
-        const payload = {
-            perform_commit: performCommit,
-            positions: toBackendPosition(positions),
-        };
-        const resp = await this.makePost(`/api/v1/transactions/${transactionId}/positions`, payload);
-        return backendTransactionToTransactionContainer(resp);
-    };
-
-    public uploadFile = async (transactionId: number, file: File) => {
-        const resp = await this.postFile(`/api/v1/transactions/${transactionId}/files`, file);
-        return backendTransactionToTransactionContainer(resp);
-    };
-
     public fetchFile = async (fileId: number, blobId: number): Promise<string> => {
-        const headers = await this.makeAuthHeader();
-        const resp = await fetch(`${this.baseApiUrl}/api/v1/files/${fileId}/${blobId}`, {
-            headers: headers,
-            method: "GET",
-        });
+        const resp = await this.client.transactions.getFileContents({ fileId, blobId });
         if (!resp.ok) {
             const body = await resp.text();
             try {
@@ -251,30 +123,6 @@ export class Api {
         }
     };
 
-    public deleteFile = async (fileId: number) => {
-        return await this.makeDelete(`/api/v1/files/${fileId}`);
-    };
-
-    public commitTransaction = async (transactionId: number): Promise<TransactionContainer> => {
-        const resp = await this.makePost(`/api/v1/transactions/${transactionId}/commit`);
-        return backendTransactionToTransactionContainer(resp);
-    };
-
-    public createTransactionChange = async (transactionId: number): Promise<TransactionContainer> => {
-        const resp = await this.makePost(`/api/v1/transactions/${transactionId}/new_change`);
-        return backendTransactionToTransactionContainer(resp);
-    };
-
-    public discardTransactionChange = async (transactionId: number): Promise<TransactionContainer> => {
-        const resp = await this.makePost(`/api/v1/transactions/${transactionId}/discard`);
-        return backendTransactionToTransactionContainer(resp);
-    };
-
-    public deleteTransaction = async (transactionId: number): Promise<TransactionContainer> => {
-        const resp = await this.makeDelete(`/api/v1/transactions/${transactionId}`);
-        return backendTransactionToTransactionContainer(resp);
-    };
-
     public getToken = (): string => {
         if (this.accessToken == null) {
             throw new Error("no access token present");
@@ -290,98 +138,5 @@ export class Api {
         const parsedToken = JSON.parse(atob(this.accessToken.split(".")[1]));
         const { user_id: userID } = parsedToken;
         return { userID };
-    };
-
-    private makeAuthHeader = async () => {
-        const token = this.getToken();
-
-        return {
-            Authorization: `Bearer ${token}`,
-        };
-    };
-
-    private fetchJson = async (url: string, options: RequestOptions) => {
-        console.debug("Request to", url, "options", options);
-        let headers: Record<string, string> = {};
-        if (!options.skipVersionCheck) {
-            await this.checkBackendVersion();
-        }
-        if (options.withAuth) {
-            const authHeaders = await this.makeAuthHeader();
-            headers = {
-                ...authHeaders,
-            };
-        }
-        if (options.useJson ?? true) {
-            headers["Content-Type"] = "application/json";
-        }
-        const resp = await fetch(url, {
-            headers: options.headers ? deepmerge(options.headers, headers) : headers,
-            ...options,
-        });
-        if (!resp.ok) {
-            const body = await resp.text();
-            try {
-                const error = JSON.parse(body);
-                console.warn(`Error ${error.code} on ${options.method} to ${url}: ${error.msg}`);
-                throw new HttpError(resp.status, error.msg);
-            } catch (e) {
-                if (e instanceof HttpError) {
-                    throw e;
-                }
-                console.warn(`Error on ${options.method} to ${url}: ${body}`);
-                throw new HttpError(resp.status, `Error on ${options.method} to ${url}: ${body}`);
-            }
-        }
-        try {
-            if (resp.status === 204) {
-                return {};
-            }
-            return resp.json();
-        } catch {
-            console.warn(`Error on ${options.method} to ${url}: invalid json`);
-            throw new HttpError(resp.status, `Error on ${options.method} to ${url}: invalid json`);
-        }
-    };
-
-    private postFile = async (url: string, file: File, options: RequestOptions | null = null) => {
-        console.debug("POST uploading file to", url, file);
-        const formData = new FormData();
-        formData.append("file", file);
-        return await this.fetchJson(`${this.baseApiUrl}${url}`, {
-            method: "POST",
-            body: formData,
-            withAuth: true,
-            ...options,
-            useJson: false,
-        });
-    };
-
-    private makePost = async (url: string, data: object | null = null, options: RequestOptions | null = null) => {
-        console.debug("POST to", url, "with data", data);
-        return await this.fetchJson(`${this.baseApiUrl}${url}`, {
-            method: "POST",
-            body: data == null ? undefined : JSON.stringify(data),
-            withAuth: true,
-            ...options,
-        });
-    };
-
-    private makeGet = async (url: string, options: RequestOptions | null = null) => {
-        return await this.fetchJson(`${this.baseApiUrl}${url}`, {
-            method: "GET",
-            withAuth: true,
-            ...options,
-        });
-    };
-
-    private makeDelete = async (url: string, data: object | null = null, options: RequestOptions | null = null) => {
-        console.debug("DELETE to", url, "with data", data);
-        return await this.fetchJson(`${this.baseApiUrl}${url}`, {
-            method: "DELETE",
-            body: JSON.stringify(data),
-            withAuth: true,
-            ...options,
-        });
     };
 }

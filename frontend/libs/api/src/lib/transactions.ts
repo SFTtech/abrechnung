@@ -1,55 +1,10 @@
+import { Transaction, TransactionAttachment, TransactionContainer, TransactionPosition } from "@abrechnung/types";
 import {
-    TransactionContainer,
-    TransactionAttachment,
-    TransactionPosition,
-    TransactionShare,
-    TransactionType,
-} from "@abrechnung/types";
-
-export interface BackendTransactionDetails {
-    billed_at: string;
-    currency_symbol: string;
-    currency_conversion_rate: number;
-    value: number;
-    debitor_shares: TransactionShare;
-    creditor_shares: TransactionShare;
-    name: string;
-    description: string;
-    tags: string[];
-    deleted: boolean;
-}
-
-export interface BackendPosition {
-    id: number;
-    name: string;
-    price: number;
-    communist_shares: number;
-    usages: { [k: number]: number };
-    deleted: boolean;
-}
-
-export interface BackendTransactionAttachment {
-    id: number;
-    filename: string;
-    blob_id: number;
-    deleted: boolean;
-    url: string;
-}
-
-export interface BackendTransaction {
-    id: number;
-    group_id: number;
-    version: number;
-    is_wip: boolean;
-    type: TransactionType;
-    last_changed: string;
-    committed_details: BackendTransactionDetails | null;
-    pending_details: BackendTransactionDetails | null;
-    pending_positions?: Array<BackendPosition>;
-    committed_positions?: Array<BackendPosition>;
-    pending_files: Array<BackendTransactionAttachment>;
-    committed_files: Array<BackendTransactionAttachment>;
-}
+    FileAttachment as BackendFileAttachment,
+    TransactionPosition as BackendPosition,
+    Transaction as BackendTransaction,
+    TransactionDetails as BackendTransactionDetails,
+} from "./generated";
 
 export const backendPositionToPosition = (transactionID: number, position: BackendPosition): TransactionPosition => {
     return {
@@ -65,15 +20,15 @@ export const backendPositionToPosition = (transactionID: number, position: Backe
 
 export const backendAttachmentToAttachment = (
     transactionID: number,
-    a: BackendTransactionAttachment
+    a: BackendFileAttachment
 ): TransactionAttachment => {
     return {
         id: a.id,
         transactionID: transactionID,
-        blobID: a.blob_id,
+        blobID: a.blob_id as number,
         filename: a.filename,
         deleted: a.deleted,
-        url: a.url,
+        url: a.host_url as string,
     };
 };
 
@@ -133,18 +88,36 @@ export const backendTransactionToTransaction = (transaction: BackendTransaction)
         (transaction.pending_details ?? transaction.committed_details) as BackendTransactionDetails
     );
 
-    return {
-        transaction: {
+    let t: Transaction;
+    if (transaction.type === "transfer") {
+        t = {
             id: transaction.id,
             groupID: transaction.group_id,
-            type: transaction.type,
+            type: "transfer",
+            isWip: transaction.is_wip,
+            lastChanged: transaction.last_changed,
+            hasLocalChanges: false,
+            ...mappedDetails,
+            attachments: mergedFiles.map((f) => f.id),
+        };
+    } else if (transaction.type === "purchase") {
+        t = {
+            id: transaction.id,
+            groupID: transaction.group_id,
+            type: "purchase",
             isWip: transaction.is_wip,
             lastChanged: transaction.last_changed,
             hasLocalChanges: false,
             ...mappedDetails,
             positions: mergedPositions.map((p) => p.id),
             attachments: mergedFiles.map((f) => f.id),
-        },
+        };
+    } else {
+        throw new Error("cannot deal with mimo type transactions");
+    }
+
+    return {
+        transaction: t,
         positions: mergedPositions,
         attachments: mergedFiles,
     };

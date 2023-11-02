@@ -1,5 +1,9 @@
-import { Api } from "@abrechnung/api";
-import { computeTransactionBalanceEffect, getTransactionSortFunc, TransactionSortMode } from "@abrechnung/core";
+import {
+    Api,
+    TransactionPosition as BackendTransactionPosition,
+    backendTransactionToTransaction,
+} from "@abrechnung/api";
+import { TransactionSortMode, computeTransactionBalanceEffect, getTransactionSortFunc } from "@abrechnung/core";
 import {
     Purchase,
     Transaction,
@@ -11,7 +15,7 @@ import {
     TransactionType,
 } from "@abrechnung/types";
 import { toISODateString } from "@abrechnung/utils";
-import { createAsyncThunk, createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
+import { Draft, PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { memoize } from "proxy-memoize";
 import { leaveGroup } from "../groups";
 import {
@@ -22,7 +26,7 @@ import {
     TransactionSliceState,
     TransactionState,
 } from "../types";
-import { addEntity, EntityState, getGroupScopedState, removeEntity } from "../utils";
+import { EntityState, addEntity, getGroupScopedState, removeEntity } from "../utils";
 
 export const initializeGroupState = (state: Draft<TransactionSliceState>, groupId: number) => {
     if (state.byGroupId[groupId]) {
@@ -387,7 +391,8 @@ export const fetchTransactions = createAsyncThunk<
 >(
     "fetchTransactions",
     async ({ groupId, api }) => {
-        return await api.fetchTransactions(groupId);
+        const transactions = await api.client.transactions.listTransactions({ groupId });
+        return transactions.map((t) => backendTransactionToTransaction(t));
     },
     {
         condition: ({ groupId, fetchAnyway = false }, { getState }): boolean => {
@@ -412,7 +417,7 @@ export const fetchTransaction = createAsyncThunk<
     { transactionId: number; api: Api },
     { state: IRootState }
 >("fetchTransaction", async ({ transactionId, api }) => {
-    return await api.fetchTransaction(transactionId);
+    return backendTransactionToTransaction(await api.client.transactions.getTransaction({ transactionId }));
 });
 
 export const createTransaction = createAsyncThunk<
@@ -499,30 +504,67 @@ export const saveTransaction = createAsyncThunk<
 
     // TODO: include pendingPositionChanges for offline mode
     let wipPositionIds: number[] = [];
-    let wipPositions: TransactionPosition[] = [];
+    let wipPositions: BackendTransactionPosition[] = [];
     if (wipTransaction.type === "purchase") {
         wipPositionIds = wipTransaction.positions.filter((positionId) => s.wipPositions.byId[positionId] !== undefined);
-        wipPositions = wipPositionIds.map((positionId) => s.wipPositions.byId[positionId]);
+        wipPositions = wipPositionIds.map((positionId) => {
+            const p = s.wipPositions.byId[positionId];
+            return {
+                id: p.id,
+                communist_shares: p.communistShares,
+                deleted: p.deleted,
+                name: p.name,
+                price: p.price,
+                usages: p.usages,
+            };
+        });
     }
 
     let updatedTransactionContainer: TransactionContainer;
     let isSynced: boolean;
     if (await api.hasConnection()) {
-        updatedTransactionContainer = await api.pushTransactionChanges(wipTransaction, wipPositions, true);
+        if (wipTransaction.id < 0) {
+            updatedTransactionContainer = backendTransactionToTransaction(
+                await api.client.transactions.createTransaction({
+                    groupId,
+                    requestBody: {
+                        name: wipTransaction.name,
+                        description: wipTransaction.description,
+                        debitor_shares: wipTransaction.debitorShares,
+                        tags: wipTransaction.tags,
+                        type: wipTransaction.type,
+                        value: wipTransaction.value,
+                        creditor_shares: wipTransaction.creditorShares,
+                        currency_conversion_rate: wipTransaction.currencyConversionRate,
+                        currency_symbol: wipTransaction.currencySymbol,
+                        billed_at: wipTransaction.billedAt,
+                        positions: wipPositions,
+                        perform_commit: true,
+                    },
+                })
+            );
+        } else {
+            updatedTransactionContainer = backendTransactionToTransaction(
+                await api.client.transactions.updateTransaction({
+                    transactionId: wipTransaction.id,
+                    requestBody: {
+                        name: wipTransaction.name,
+                        description: wipTransaction.description,
+                        debitor_shares: wipTransaction.debitorShares,
+                        tags: wipTransaction.tags,
+                        value: wipTransaction.value,
+                        creditor_shares: wipTransaction.creditorShares,
+                        currency_conversion_rate: wipTransaction.currencyConversionRate,
+                        currency_symbol: wipTransaction.currencySymbol,
+                        billed_at: wipTransaction.billedAt,
+                        positions: wipPositions,
+                        perform_commit: true,
+                    },
+                })
+            );
+        }
         isSynced = true;
     } else if (ENABLE_OFFLINE_MODE) {
-        // TODO: IMPLEMENT properly
-        updatedTransactionContainer = {
-            transaction: {
-                ...wipTransaction,
-                hasLocalChanges: true,
-                isWip: false,
-                lastChanged: new Date().toISOString(),
-            },
-            positions: [...wipPositions],
-            attachments: [],
-        };
-        isSynced = false;
         throw new Error("not implemented fully");
     } else {
         throw new Error("no internet connection");
@@ -544,16 +586,6 @@ export const discardTransactionChange = createAsyncThunk<
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state.transactions, groupId);
     const wipTransaction = s.wipTransactions.byId[transactionId];
     if (!wipTransaction) {
-        const transaction = s.transactions.byId[transactionId];
-        if (transaction && transaction.isWip) {
-            if (await api.hasConnection()) {
-                const resp = await api.discardTransactionChange(transactionId);
-                return { transaction: resp, deletedTransaction: false };
-            } else {
-                return rejectWithValue("cannot discard server side changes without an internet connection");
-            }
-        }
-
         return {
             transaction: undefined,
             deletedTransaction: false,
@@ -579,7 +611,9 @@ export const deleteTransaction = createAsyncThunk<
     const transaction = s.transactions.byId[transactionId];
     if (transaction) {
         if (await api.hasConnection()) {
-            const container = await api.deleteTransaction(transactionId);
+            const container = backendTransactionToTransaction(
+                await api.client.transactions.deleteTransaction({ transactionId })
+            );
             return { transaction: container.transaction, isSynced: true };
         } else if (ENABLE_OFFLINE_MODE) {
             return {
@@ -608,8 +642,9 @@ export const uploadFile = createAsyncThunk<
     if (!(await api.hasConnection())) {
         return rejectWithValue("no internet connection");
     }
-
-    const container = await api.uploadFile(transactionId, file);
+    const container = backendTransactionToTransaction(
+        await api.client.transactions.uploadFile({ transactionId, formData: { file } })
+    );
     return { transaction: container.transaction, attachments: container.attachments };
 });
 

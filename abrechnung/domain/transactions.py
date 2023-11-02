@@ -23,12 +23,12 @@ class TransactionPosition(BaseModel):
     # usages map account IDs to portions of the item share pool
     usages: TransactionShares
 
-    deleted: bool = False
+    deleted: bool
 
 
 class TransactionDetails(BaseModel):
     name: str
-    description: str | None
+    description: str
     value: float
     currency_symbol: str
     currency_conversion_rate: float

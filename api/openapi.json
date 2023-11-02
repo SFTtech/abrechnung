@@ -3864,14 +3864,7 @@
             "title": "Name"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
             "title": "Description"
           },
           "value": {
@@ -3959,8 +3952,7 @@
           },
           "deleted": {
             "type": "boolean",
-            "title": "Deleted",
-            "default": false
+            "title": "Deleted"
           }
         },
         "type": "object",
@@ -3969,7 +3961,8 @@
           "name",
           "price",
           "communist_shares",
-          "usages"
+          "usages",
+          "deleted"
         ],
         "title": "TransactionPosition"
       },

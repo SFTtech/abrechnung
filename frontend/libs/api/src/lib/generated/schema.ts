@@ -270,7 +270,7 @@ export namespace components.schemas {
   /** TransactionDetails */
   export const TransactionDetails = z.object({
     name: z.string(),
-    description: z.union([z.string(), z.null()]),
+    description: z.string(),
     value: z.number(),
     currency_symbol: z.string(),
     currency_conversion_rate: z.number(),
@@ -287,7 +287,7 @@ export namespace components.schemas {
     price: z.number(),
     communist_shares: z.number(),
     usages: z.record(z.number()),
-    deleted: z.boolean().optional(),
+    deleted: z.boolean(),
   });
   /**
    * TransactionType 

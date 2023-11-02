@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from "react";
-import { api } from "../../../core/api";
-import { toast } from "react-toastify";
-import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
-import { AddCircle, ChevronLeft, ChevronRight, Delete } from "@mui/icons-material";
-import ImageUploadDialog from "./ImageUploadDialog";
-import { Transition } from "react-transition-group";
-import placeholderImg from "./PlaceholderImage.svg";
-import { useAppSelector, selectTransactionSlice } from "../../../store";
 import { selectTransactionAttachments, selectTransactionIsWip } from "@abrechnung/redux";
+import { AddCircle, ChevronLeft, ChevronRight, Delete } from "@mui/icons-material";
+import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import { Transition } from "react-transition-group";
+import { api } from "../../../core/api";
+import { selectTransactionSlice, useAppSelector } from "../../../store";
+import ImageUploadDialog from "./ImageUploadDialog";
+import placeholderImg from "./PlaceholderImage.svg";
 
 const duration = 200;
 
@@ -94,7 +94,8 @@ export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
         if (active < files.length) {
             // sanity check, should not be needed
             // TODO: implement
-            api.deleteFile(files[active].id)
+            api.client.transactions
+                .deleteFile({ fileId: files[active].id })
                 .then((t) => {
                     // updateTransactionInState(t, setTransactions);
                     setShowImage(false);
