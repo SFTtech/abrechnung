@@ -2534,8 +2534,7 @@
             "title": "Group Id"
           },
           "type": {
-            "type": "string",
-            "title": "Type"
+            "$ref": "#/components/schemas/AccountType"
           },
           "is_wip": {
             "type": "boolean",
@@ -2648,6 +2647,14 @@
           "tags"
         ],
         "title": "AccountDetails"
+      },
+      "AccountType": {
+        "type": "string",
+        "enum": [
+          "personal",
+          "clearing"
+        ],
+        "title": "AccountType"
       },
       "Body_get_token": {
         "properties": {
@@ -3656,8 +3663,7 @@
             "title": "Group Id"
           },
           "type": {
-            "type": "string",
-            "title": "Type"
+            "$ref": "#/components/schemas/TransactionType"
           },
           "is_wip": {
             "type": "boolean",
@@ -3966,6 +3972,15 @@
           "usages"
         ],
         "title": "TransactionPosition"
+      },
+      "TransactionType": {
+        "type": "string",
+        "enum": [
+          "mimo",
+          "purchase",
+          "transfer"
+        ],
+        "title": "TransactionType"
       },
       "TransactionUpdatePayload": {
         "properties": {

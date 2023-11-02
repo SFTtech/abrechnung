@@ -8,3 +8,4 @@ export type LoginPayload = {
     password: string;
     session_name: string;
 };
+

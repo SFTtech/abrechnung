@@ -6,3 +6,4 @@
 export type GroupMessage = {
     message: string;
 };
+

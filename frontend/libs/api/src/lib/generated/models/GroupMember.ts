@@ -10,5 +10,6 @@ export type GroupMember = {
     can_write: boolean;
     description: string;
     joined_at: string;
-    invited_by: number | null;
+    invited_by: (number | null);
 };
+

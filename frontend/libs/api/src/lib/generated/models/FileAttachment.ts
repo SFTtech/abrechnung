@@ -6,8 +6,9 @@
 export type FileAttachment = {
     id: number;
     filename: string;
-    blob_id: number | null;
-    mime_type: string | null;
-    host_url?: string | null;
+    blob_id: (number | null);
+    mime_type: (string | null);
+    host_url?: (string | null);
     deleted: boolean;
 };
+

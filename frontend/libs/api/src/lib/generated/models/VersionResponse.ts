@@ -9,3 +9,4 @@ export type VersionResponse = {
     minor_version: number;
     patch_version: number;
 };
+

@@ -3,8 +3,4 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type ConfirmPasswordRecoveryPayload = {
-    token: string;
-    new_password: string;
-};
-
+export type TransactionType = 'mimo' | 'purchase' | 'transfer';

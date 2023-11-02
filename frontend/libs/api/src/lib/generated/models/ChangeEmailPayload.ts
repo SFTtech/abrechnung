@@ -7,3 +7,4 @@ export type ChangeEmailPayload = {
     email: string;
     password: string;
 };
+

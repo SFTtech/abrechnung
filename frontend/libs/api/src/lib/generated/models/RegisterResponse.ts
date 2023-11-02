@@ -6,3 +6,4 @@
 export type RegisterResponse = {
     user_id: number;
 };
+

@@ -1,26 +1,5 @@
-import { Account, AccountType, ClearingShares } from "@abrechnung/types";
-
-export interface BackendAccountDetails {
-    name: string;
-    description: string;
-    priority: number;
-    owning_user_id: number | null;
-    date_info: string | null;
-    tags: string[];
-    clearing_shares: ClearingShares;
-    deleted: boolean;
-}
-
-export interface BackendAccount {
-    id: number;
-    group_id: number;
-    type: AccountType;
-    last_changed: string;
-    is_wip: boolean;
-    version: number;
-    committed_details: BackendAccountDetails | null;
-    pending_details: BackendAccountDetails | null;
-}
+import { Account, ClearingShares } from "@abrechnung/types";
+import { Account as BackendAccount, AccountDetails as BackendAccountDetails } from "./generated";
 
 const personalDetailsToFields = (details: BackendAccountDetails) => {
     return {
@@ -33,11 +12,11 @@ const personalDetailsToFields = (details: BackendAccountDetails) => {
 
 const clearingDetailsToFields = (details: BackendAccountDetails) => {
     return {
-        clearingShares: details.clearing_shares,
+        clearingShares: details.clearing_shares as ClearingShares,
         deleted: details.deleted,
         description: details.description,
         tags: details.tags,
-        dateInfo: details.date_info,
+        dateInfo: details.date_info as string,
         name: details.name,
     };
 };
@@ -53,7 +32,7 @@ export function backendAccountToAccount(acc: BackendAccount): Account {
         return {
             id: acc.id,
             groupID: acc.group_id,
-            type: acc.type,
+            type: "personal",
             isWip: acc.is_wip,
             hasLocalChanges: false,
             ...personalDetailsToFields(backendDetails),
@@ -63,7 +42,7 @@ export function backendAccountToAccount(acc: BackendAccount): Account {
         return {
             id: acc.id,
             groupID: acc.group_id,
-            type: acc.type,
+            type: "clearing",
             isWip: acc.is_wip,
             hasLocalChanges: false,
             ...clearingDetailsToFields(backendDetails),

@@ -5,7 +5,7 @@
 
 export type TransactionDetails = {
     name: string;
-    description: string | null;
+    description: (string | null);
     value: number;
     currency_symbol: string;
     currency_conversion_rate: number;
@@ -15,3 +15,4 @@ export type TransactionDetails = {
     creditor_shares: Record<string, number>;
     debitor_shares: Record<string, number>;
 };
+

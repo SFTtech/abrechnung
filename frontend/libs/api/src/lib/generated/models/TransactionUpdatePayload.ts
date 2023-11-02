@@ -3,11 +3,11 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { TransactionPosition } from "./TransactionPosition";
+import type { TransactionPosition } from './TransactionPosition';
 
 export type TransactionUpdatePayload = {
     name: string;
-    description: string | null;
+    description: (string | null);
     value: number;
     currency_symbol: string;
     currency_conversion_rate: number;
@@ -15,7 +15,8 @@ export type TransactionUpdatePayload = {
     tags: Array<string>;
     creditor_shares: Record<string, number>;
     debitor_shares: Record<string, number>;
-    positions?: Array<TransactionPosition> | null;
+    positions?: (Array<TransactionPosition> | null);
     deleted?: boolean;
     perform_commit?: boolean;
 };
+

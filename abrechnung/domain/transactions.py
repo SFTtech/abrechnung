@@ -53,7 +53,7 @@ class FileAttachment(BaseModel):
 class Transaction(BaseModel):
     id: int
     group_id: int
-    type: str
+    type: TransactionType
     is_wip: bool
     last_changed: datetime
     committed_details: TransactionDetails | None

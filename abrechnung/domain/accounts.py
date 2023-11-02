@@ -28,7 +28,7 @@ class AccountDetails(BaseModel):
 class Account(BaseModel):
     id: int
     group_id: int
-    type: str
+    type: AccountType
     is_wip: bool
     last_changed: datetime
     committed_details: Optional[AccountDetails]

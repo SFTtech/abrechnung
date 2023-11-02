@@ -6,3 +6,4 @@
 export type RecoverPasswordPayload = {
     email: string;
 };
+

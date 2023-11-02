@@ -6,3 +6,4 @@
 export type DeleteSessionPayload = {
     session_id: number;
 };
+

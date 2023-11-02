@@ -1,4 +1,4 @@
-import { Api } from "@abrechnung/api";
+import { Api, backendAccountToAccount } from "@abrechnung/api";
 import { AccountSortMode, getAccountSortFunc } from "@abrechnung/core";
 import { Account, AccountBase, AccountType, ClearingAccount, PersonalAccount } from "@abrechnung/types";
 import { fromISOString, toISODateString } from "@abrechnung/utils";
@@ -241,7 +241,8 @@ export const fetchAccounts = createAsyncThunk<
 >(
     "fetchAccounts",
     async ({ groupId, api }) => {
-        return await api.fetchAccounts(groupId);
+        const backendAccounts = await api.client.accounts.listAccounts({ groupId });
+        return backendAccounts.map((a) => backendAccountToAccount(a));
     },
     {
         condition: ({ groupId, fetchAnyway = false }, { getState }): boolean => {
@@ -261,7 +262,7 @@ export const fetchAccounts = createAsyncThunk<
 export const fetchAccount = createAsyncThunk<Account, { accountId: number; api: Api }, { state: IRootState }>(
     "fetchAccount",
     async ({ accountId, api }) => {
-        return await api.fetchAccount(accountId);
+        return backendAccountToAccount(await api.client.accounts.getAccount({ accountId }));
     }
 );
 
@@ -283,7 +284,15 @@ export const saveAccount = createAsyncThunk<
     let updatedAccount: Account;
     let isSynced: boolean;
     if (await api.hasConnection()) {
-        updatedAccount = await api.pushAccountChanges(wipAccount);
+        if (wipAccount.id < 0) {
+            updatedAccount = backendAccountToAccount(
+                await api.client.accounts.createAccount({ groupId, requestBody: wipAccount })
+            );
+        } else {
+            updatedAccount = backendAccountToAccount(
+                await api.client.accounts.updateAccount({ accountId: wipAccount.id, requestBody: wipAccount })
+            );
+        }
         isSynced = true;
     } else if (ENABLE_OFFLINE_MODE) {
         // TODO: IMPLEMENT properly
@@ -358,7 +367,7 @@ export const deleteAccount = createAsyncThunk<
     const account = s.accounts.byId[accountId];
     if (account) {
         if (await api.hasConnection()) {
-            const updatedAccount = await api.deleteAccount(accountId);
+            const updatedAccount = backendAccountToAccount(await api.client.accounts.deleteAccount({ accountId }));
             return { account: updatedAccount, isSynced: true };
         } else if (ENABLE_OFFLINE_MODE) {
             return {
@@ -388,16 +397,6 @@ export const discardAccountChange = createAsyncThunk<
     const s = getGroupScopedState<AccountState, AccountSliceState>(state.accounts, groupId);
     const wipAccount = s.wipAccounts.byId[accountId];
     if (!wipAccount) {
-        const account = s.accounts.byId[accountId];
-        if (account && account.isWip) {
-            if (await api.hasConnection()) {
-                const resp = await api.discardAccountChange(accountId);
-                return { account: resp, deletedAccount: false };
-            } else {
-                return rejectWithValue("cannot discard server side changes without an internet connection");
-            }
-        }
-
         return {
             account: undefined,
             deletedAccount: false,

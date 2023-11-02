@@ -3,14 +3,16 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { AccountDetails } from "./AccountDetails";
+import type { AccountDetails } from './AccountDetails';
+import type { AccountType } from './AccountType';
 
 export type Account = {
     id: number;
     group_id: number;
-    type: string;
+    type: AccountType;
     is_wip: boolean;
     last_changed: string;
-    committed_details: AccountDetails | null;
-    pending_details: AccountDetails | null;
+    committed_details: (AccountDetails | null);
+    pending_details: (AccountDetails | null);
 };
+

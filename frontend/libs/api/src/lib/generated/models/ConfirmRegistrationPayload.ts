@@ -6,3 +6,4 @@
 export type ConfirmRegistrationPayload = {
     token: string;
 };
+

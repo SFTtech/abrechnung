@@ -1,15 +1,5 @@
-import {
-    Account,
-    AccountBase,
-    ClearingAccountBase,
-    PersonalAccountBase,
-    Transaction,
-    TransactionBase,
-    TransactionContainer,
-    TransactionPosition,
-} from "@abrechnung/types";
+import { Transaction, TransactionBase, TransactionContainer, TransactionPosition } from "@abrechnung/types";
 import deepmerge from "deepmerge";
-import { BackendAccount, backendAccountToAccount } from "./accounts";
 import { Client } from "./generated";
 import {
     BackendTransaction,
@@ -122,81 +112,6 @@ export class Api {
 
     public hasConnection = () => {
         return this.connectionStatusProvider.hasConnection();
-    };
-
-    public fetchAccounts = async (groupID: number): Promise<Account[]> => {
-        const accounts = await this.makeGet(`/api/v1/groups/${groupID}/accounts`);
-        return accounts.map((acc: BackendAccount) => backendAccountToAccount(acc));
-    };
-
-    public fetchAccount = async (accountID: number): Promise<Account> => {
-        const account = await this.makeGet(`/api/v1/accounts/${accountID}`);
-        return backendAccountToAccount(account);
-    };
-
-    public createAccount = async (account: Omit<AccountBase, "id" | "deleted">): Promise<Account> => {
-        // TODO: figure out why typescript does not like this
-        const updatedAccount = await this.makePost(`/api/v1/groups/${account.groupID}/accounts`, {
-            type: account.type,
-            name: account.name,
-            description: account.description,
-            owning_user_id: account.type === "personal" ? (account as PersonalAccountBase).owningUserID : null,
-            clearing_shares: account.type === "clearing" ? (account as ClearingAccountBase).clearingShares : null,
-            tags: account.type === "clearing" ? (account as ClearingAccountBase).tags : null,
-            date_info: account.type === "clearing" ? (account as ClearingAccountBase).dateInfo : null,
-        });
-        return backendAccountToAccount(updatedAccount);
-    };
-
-    public updateAccountDetails = async <T extends AccountBase>(account: T): Promise<Account> => {
-        const updatedAccount = await this.makePost(`/api/v1/accounts/${account.id}`, {
-            name: account.name,
-            description: account.description,
-            owning_user_id: account.type === "personal" ? account.owningUserID : null,
-            clearing_shares: account.type === "clearing" ? account.clearingShares : null,
-            tags: account.type === "clearing" ? account.tags : null,
-            date_info: account.type === "clearing" ? account.dateInfo : null,
-        });
-        return backendAccountToAccount(updatedAccount);
-    };
-
-    public pushAccountChanges = async <T extends AccountBase>(account: T): Promise<Account> => {
-        if (account.id < 0) {
-            const updatedAccount = await this.makePost(`/api/v1/groups/${account.groupID}/accounts`, {
-                type: account.type,
-                name: account.name,
-                description: account.description,
-                owning_user_id: account.type === "personal" ? account.owningUserID : null,
-                clearing_shares: account.type === "clearing" ? account.clearingShares : null,
-                tags: account.type === "clearing" ? account.tags : null,
-                date_info: account.type === "clearing" ? account.dateInfo : null,
-            });
-            return backendAccountToAccount(updatedAccount);
-        } else {
-            const updatedAccount = await this.makePost(`/api/v1/accounts/${account.id}`, {
-                name: account.name,
-                description: account.description,
-                owning_user_id: account.type === "personal" ? account.owningUserID : null,
-                clearing_shares: account.type === "clearing" ? account.clearingShares : null,
-                tags: account.type === "clearing" ? account.tags : null,
-                date_info: account.type === "clearing" ? account.dateInfo : null,
-            });
-            return backendAccountToAccount(updatedAccount);
-        }
-    };
-
-    public syncAccountsBatch = async (groupId: number, accounts: Account[]): Promise<{ [k: number]: number }[]> => {
-        return await this.makePost(`/api/v1/groups/${groupId}/accounts/sync`, accounts);
-    };
-
-    public discardAccountChange = async (accountId: number): Promise<Account> => {
-        const resp = await this.makePost(`/api/v1/accounts/${accountId}/discard`);
-        return backendAccountToAccount(resp);
-    };
-
-    public deleteAccount = async (accountId: number): Promise<Account> => {
-        const resp = await this.makeDelete(`/api/v1/accounts/${accountId}`);
-        return backendAccountToAccount(resp);
     };
 
     public fetchTransactions = async (

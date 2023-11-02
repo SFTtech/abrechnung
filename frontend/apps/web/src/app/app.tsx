@@ -10,7 +10,7 @@ import { CssBaseline, PaletteMode, ThemeProvider, createTheme, useMediaQuery } f
 import { StyledEngineProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
-import { useEffect, useMemo } from "react";
+import * as React from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import Loading from "../components/style/Loading";
@@ -29,7 +29,7 @@ export default function App() {
 
     const useDarkMode: PaletteMode = themeMode === "browser" ? (darkModeSystem ? "dark" : "light") : themeMode;
 
-    const theme = useMemo(
+    const theme = React.useMemo(
         () =>
             createTheme({
                 palette: {
@@ -39,7 +39,7 @@ export default function App() {
         [useDarkMode]
     );
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (accessToken !== undefined) {
             api.init(accessToken).then(() => {
                 console.log("dispatching fetch groups");
@@ -48,7 +48,7 @@ export default function App() {
         }
     }, [accessToken, dispatch]);
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (!isAuthenticated || userId === undefined) {
             return () => {
                 return;

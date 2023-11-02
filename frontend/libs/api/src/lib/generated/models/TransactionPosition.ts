@@ -11,3 +11,4 @@ export type TransactionPosition = {
     usages: Record<string, number>;
     deleted?: boolean;
 };
+

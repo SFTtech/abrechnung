@@ -3,14 +3,14 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { TransactionPosition } from "./TransactionPosition";
+import type { TransactionPosition } from './TransactionPosition';
 
 export type RawTransaction = {
     id: number;
     group_id: number;
     type: string;
     name: string;
-    description: string | null;
+    description: (string | null);
     value: number;
     currency_symbol: string;
     currency_conversion_rate: number;
@@ -21,3 +21,4 @@ export type RawTransaction = {
     tags: Array<string>;
     positions: Array<TransactionPosition>;
 };
+

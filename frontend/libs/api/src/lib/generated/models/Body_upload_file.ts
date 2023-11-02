@@ -6,3 +6,4 @@
 export type Body_upload_file = {
     file: Blob;
 };
+

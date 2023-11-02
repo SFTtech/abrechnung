@@ -3,7 +3,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { Session } from "./Session";
+import type { Session } from './Session';
 
 export type User = {
     id: number;
@@ -15,3 +15,4 @@ export type User = {
     sessions: Array<Session>;
     is_guest_user: boolean;
 };
+

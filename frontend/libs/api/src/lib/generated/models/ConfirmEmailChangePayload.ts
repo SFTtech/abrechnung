@@ -6,3 +6,4 @@
 export type ConfirmEmailChangePayload = {
     token: string;
 };
+

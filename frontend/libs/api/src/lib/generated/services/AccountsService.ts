@@ -2,15 +2,16 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { Account } from "../models/Account";
-import type { CreateAccountPayload } from "../models/CreateAccountPayload";
-import type { RawAccount } from "../models/RawAccount";
-import type { UpdateAccountPayload } from "../models/UpdateAccountPayload";
+import type { Account } from '../models/Account';
+import type { CreateAccountPayload } from '../models/CreateAccountPayload';
+import type { RawAccount } from '../models/RawAccount';
+import type { UpdateAccountPayload } from '../models/UpdateAccountPayload';
 
-import type { CancelablePromise } from "../core/CancelablePromise";
-import type { BaseHttpRequest } from "../core/BaseHttpRequest";
+import type { CancelablePromise } from '../core/CancelablePromise';
+import type { BaseHttpRequest } from '../core/BaseHttpRequest';
 
 export class AccountsService {
+
     constructor(public readonly httpRequest: BaseHttpRequest) {}
 
     /**
@@ -18,12 +19,16 @@ export class AccountsService {
      * @returns Account Successful Response
      * @throws ApiError
      */
-    public listAccounts({ groupId }: { groupId: number }): CancelablePromise<Array<Account>> {
+    public listAccounts({
+        groupId,
+    }: {
+        groupId: number,
+    }): CancelablePromise<Array<Account>> {
         return this.httpRequest.request({
-            method: "GET",
-            url: "/api/v1/groups/{group_id}/accounts",
+            method: 'GET',
+            url: '/api/v1/groups/{group_id}/accounts',
             path: {
-                group_id: groupId,
+                'group_id': groupId,
             },
             errors: {
                 401: `unauthorized`,
@@ -43,17 +48,17 @@ export class AccountsService {
         groupId,
         requestBody,
     }: {
-        groupId: number;
-        requestBody: CreateAccountPayload;
+        groupId: number,
+        requestBody: CreateAccountPayload,
     }): CancelablePromise<Account> {
         return this.httpRequest.request({
-            method: "POST",
-            url: "/api/v1/groups/{group_id}/accounts",
+            method: 'POST',
+            url: '/api/v1/groups/{group_id}/accounts',
             path: {
-                group_id: groupId,
+                'group_id': groupId,
             },
             body: requestBody,
-            mediaType: "application/json",
+            mediaType: 'application/json',
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,
@@ -72,17 +77,17 @@ export class AccountsService {
         groupId,
         requestBody,
     }: {
-        groupId: number;
-        requestBody: Array<RawAccount>;
+        groupId: number,
+        requestBody: Array<RawAccount>,
     }): CancelablePromise<Record<string, number>> {
         return this.httpRequest.request({
-            method: "POST",
-            url: "/api/v1/groups/{group_id}/accounts/sync",
+            method: 'POST',
+            url: '/api/v1/groups/{group_id}/accounts/sync',
             path: {
-                group_id: groupId,
+                'group_id': groupId,
             },
             body: requestBody,
-            mediaType: "application/json",
+            mediaType: 'application/json',
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,
@@ -97,12 +102,16 @@ export class AccountsService {
      * @returns any Successful Response
      * @throws ApiError
      */
-    public getAccount({ accountId }: { accountId: number }): CancelablePromise<any> {
+    public getAccount({
+        accountId,
+    }: {
+        accountId: number,
+    }): CancelablePromise<any> {
         return this.httpRequest.request({
-            method: "GET",
-            url: "/api/v1/accounts/{account_id}",
+            method: 'GET',
+            url: '/api/v1/accounts/{account_id}',
             path: {
-                account_id: accountId,
+                'account_id': accountId,
             },
             errors: {
                 401: `unauthorized`,
@@ -122,17 +131,17 @@ export class AccountsService {
         accountId,
         requestBody,
     }: {
-        accountId: number;
-        requestBody: UpdateAccountPayload;
+        accountId: number,
+        requestBody: UpdateAccountPayload,
     }): CancelablePromise<any> {
         return this.httpRequest.request({
-            method: "POST",
-            url: "/api/v1/accounts/{account_id}",
+            method: 'POST',
+            url: '/api/v1/accounts/{account_id}',
             path: {
-                account_id: accountId,
+                'account_id': accountId,
             },
             body: requestBody,
-            mediaType: "application/json",
+            mediaType: 'application/json',
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,
@@ -147,12 +156,16 @@ export class AccountsService {
      * @returns Account Successful Response
      * @throws ApiError
      */
-    public deleteAccount({ accountId }: { accountId: number }): CancelablePromise<Account> {
+    public deleteAccount({
+        accountId,
+    }: {
+        accountId: number,
+    }): CancelablePromise<Account> {
         return this.httpRequest.request({
-            method: "DELETE",
-            url: "/api/v1/accounts/{account_id}",
+            method: 'DELETE',
+            url: '/api/v1/accounts/{account_id}',
             path: {
-                account_id: accountId,
+                'account_id': accountId,
             },
             errors: {
                 401: `unauthorized`,
@@ -162,4 +175,5 @@ export class AccountsService {
             },
         });
     }
+
 }

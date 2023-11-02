@@ -6,9 +6,10 @@
 export type CreateAccountPayload = {
     name: string;
     description: string;
-    date_info?: string | null;
-    tags?: Array<string> | null;
-    owning_user_id?: number | null;
-    clearing_shares?: Record<string, number> | null;
+    date_info?: (string | null);
+    tags?: (Array<string> | null);
+    owning_user_id?: (number | null);
+    clearing_shares?: (Record<string, number> | null);
     type: string;
 };
+

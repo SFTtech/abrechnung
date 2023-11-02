@@ -6,3 +6,4 @@
 export type PreviewGroupPayload = {
     invite_token: string;
 };
+

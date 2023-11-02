@@ -9,5 +9,6 @@ export type GroupLog = {
     logged_at: string;
     type: string;
     message: string;
-    affected: number | null;
+    affected: (number | null);
 };
+

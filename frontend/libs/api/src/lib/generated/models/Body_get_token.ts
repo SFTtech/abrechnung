@@ -4,10 +4,11 @@
 /* eslint-disable */
 
 export type Body_get_token = {
-    grant_type?: string | null;
+    grant_type?: (string | null);
     username: string;
     password: string;
     scope?: string;
-    client_id?: string | null;
-    client_secret?: string | null;
+    client_id?: (string | null);
+    client_secret?: (string | null);
 };
+
