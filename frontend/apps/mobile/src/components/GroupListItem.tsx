@@ -1,9 +1,9 @@
+import { useApi } from "@/core/ApiProvider";
 import { selectGroupById } from "@abrechnung/redux";
+import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import { List } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native";
 import { changeActiveGroup, selectGroupSlice, useAppDispatch, useAppSelector } from "../store";
-import { api } from "../core/api";
 
 interface Props {
     groupId: number;
@@ -12,6 +12,7 @@ interface Props {
 export const GroupListItem: React.FC<Props> = ({ groupId }) => {
     const navigation = useNavigation();
     const dispatch = useAppDispatch();
+    const { api } = useApi();
     const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
 
     if (group === undefined) {

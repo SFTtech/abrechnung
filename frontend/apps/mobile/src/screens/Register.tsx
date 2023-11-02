@@ -1,14 +1,14 @@
-import React from "react";
-import { StyleSheet, View, TouchableOpacity } from "react-native";
-import { Appbar, Button, HelperText, Text, TextInput, useTheme, ProgressBar } from "react-native-paper";
-import { RootDrawerScreenProps } from "../navigation/types";
-import { Formik, FormikHelpers } from "formik";
-import { z } from "zod";
-import { api } from "../core/api";
-import { selectAuthSlice, useAppSelector } from "../store";
+import { useApi } from "@/core/ApiProvider";
+import { RootDrawerScreenProps } from "@/navigation/types";
+import { notify } from "@/notifications";
+import { selectAuthSlice, useAppSelector } from "@/store";
 import { selectIsAuthenticated } from "@abrechnung/redux";
-import { notify } from "../notifications";
 import { toFormikValidationSchema } from "@abrechnung/utils";
+import { Formik, FormikHelpers } from "formik";
+import React from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Appbar, Button, HelperText, ProgressBar, Text, TextInput, useTheme } from "react-native-paper";
+import { z } from "zod";
 
 const validationSchema = z.object({
     server: z.string({ required_error: "server is required" }).url({ message: "invalid server url" }),
@@ -23,6 +23,7 @@ type FormErrors = Partial<Record<keyof FormSchema, string>>;
 export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigation }) => {
     const theme = useTheme();
     const loggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
+    const { initApi } = useApi();
 
     React.useEffect(() => {
         if (loggedIn) {
@@ -31,9 +32,10 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
     }, [loggedIn, navigation]);
 
     const handleSubmit = (values: FormSchema, { setSubmitting }: FormikHelpers<FormSchema>) => {
-        api.baseApiUrl = values.server;
-        api.register(values.username, values.email, values.password)
-            .then((res) => {
+        const { api: newApi } = initApi(values.server);
+        newApi.client.auth
+            .register({ requestBody: { username: values.username, email: values.email, password: values.password } })
+            .then(() => {
                 notify({ text: `Registered successfully, please confirm your email before logging in...` });
                 setSubmitting(false);
                 navigation.navigate("Login");
@@ -149,7 +151,7 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                         )}
 
                         {isSubmitting ? <ProgressBar indeterminate={true} /> : null}
-                        <Button mode="contained" disabled={isSubmitting} onPress={handleSubmit}>
+                        <Button mode="contained" disabled={isSubmitting} onPress={() => handleSubmit}>
                             Register
                         </Button>
 

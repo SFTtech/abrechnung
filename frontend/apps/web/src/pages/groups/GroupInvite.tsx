@@ -1,11 +1,11 @@
+import Loading from "@/components/style/Loading";
+import { MobilePaper } from "@/components/style/mobile";
+import { api } from "@/core/api";
+import { useTitle } from "@/core/utils";
+import { GroupPreview } from "@abrechnung/api";
+import { Alert, Button, Grid, List, ListItem, ListItemText, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import Loading from "../../components/style/Loading";
-import { api } from "../../core/api";
-import { List, Button, Grid, ListItem, ListItemText, Typography, Alert } from "@mui/material";
-import { MobilePaper } from "../../components/style/mobile";
-import { useTitle } from "../../core/utils";
-import { GroupPreview } from "@abrechnung/types";
 
 export const GroupInvite: React.FC = () => {
     const [group, setGroup] = useState<GroupPreview | null>(null);
@@ -17,7 +17,8 @@ export const GroupInvite: React.FC = () => {
     useTitle("Abrechnung - Join Group");
 
     useEffect(() => {
-        api.fetchGroupPreview(inviteToken)
+        api.client.groups
+            .previewGroup({ requestBody: { invite_token: inviteToken } })
             .then((res) => {
                 setGroup(res);
                 setError(null);
@@ -29,7 +30,8 @@ export const GroupInvite: React.FC = () => {
     }, [setGroup, setError, inviteToken]);
 
     const join = () => {
-        api.joinGroup(inviteToken)
+        api.client.groups
+            .joinGroup({ requestBody: { invite_token: inviteToken } })
             .then((value) => {
                 setError(null);
                 navigate("/");
@@ -58,18 +60,18 @@ export const GroupInvite: React.FC = () => {
                             <ListItemText primary="Description" secondary={group.description} />
                         </ListItem>
                         <ListItem>
-                            <ListItemText primary="Created At" secondary={group.createdAt} />
+                            <ListItemText primary="Created At" secondary={group.created_at} />
                         </ListItem>
                         <ListItem>
-                            <ListItemText primary="Invitation Description" secondary={group.inviteDescription} />
+                            <ListItemText primary="Invitation Description" secondary={group.invite_description} />
                         </ListItem>
                         <ListItem>
-                            <ListItemText primary="Invitation Valid Until" secondary={group.inviteValidUntil} />
+                            <ListItemText primary="Invitation Valid Until" secondary={group.invite_valid_until} />
                         </ListItem>
                         <ListItem>
                             <ListItemText
                                 primary="Invitation Single Use"
-                                secondary={group.inviteSingleUse ? "yes" : "no"}
+                                secondary={group.invite_single_use ? "yes" : "no"}
                             />
                         </ListItem>
                     </List>

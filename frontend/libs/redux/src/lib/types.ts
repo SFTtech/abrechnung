@@ -1,14 +1,5 @@
-import {
-    User,
-    Account,
-    Group,
-    GroupMember,
-    Transaction,
-    TransactionAttachment,
-    TransactionPosition,
-    GroupInvite,
-    GroupLogEntry,
-} from "@abrechnung/types";
+import { Group, GroupInvite, GroupLog, GroupMember, User } from "@abrechnung/api";
+import { Account, Transaction, TransactionAttachment, TransactionPosition } from "@abrechnung/types";
 
 export const ENABLE_OFFLINE_MODE = false;
 
@@ -53,7 +44,7 @@ export type AbrechnungInstanceAwareState = {
 
 export interface AuthState {
     baseUrl: string | undefined;
-    sessionToken: string | undefined;
+    accessToken: string | undefined;
     profile: User | undefined;
 }
 
@@ -71,7 +62,7 @@ export interface GroupInfo {
     };
     groupInvitesStatus: StateStatus;
     groupLog: {
-        byId: { [k: number]: GroupLogEntry };
+        byId: { [k: number]: GroupLog };
         ids: number[];
     };
     groupLogStatus: StateStatus;

@@ -2,7 +2,7 @@ from typing import Union
 
 import asyncpg
 from starlette.requests import Request
-from starlette.types import ASGIApp, Scope, Receive, Send
+from starlette.types import ASGIApp, Receive, Scope, Send
 from starlette.websockets import WebSocket
 
 from abrechnung.application.accounts import AccountService

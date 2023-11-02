@@ -70,8 +70,8 @@ export const selectCurrentUserPermissions = memoize(
             return undefined;
         }
         return {
-            isOwner: member.isOwner,
-            canWrite: member.canWrite,
+            isOwner: member.is_owner,
+            canWrite: member.can_write,
         };
     }
 );

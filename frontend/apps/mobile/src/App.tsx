@@ -1,72 +1,89 @@
-import React from "react";
-import { StatusBar } from "expo-status-bar";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import { Provider as PaperProvider } from "react-native-paper";
-import useColorScheme from "./hooks/useColorScheme";
-import { Navigation } from "./navigation";
-import { MaterialIcons } from "@expo/vector-icons";
-import { CustomDarkTheme, CustomLightTheme } from "./theme";
-import SplashScreen from "./screens/SplashScreen";
-import { NotificationProvider } from "./notifications";
-import {
-    selectSettingsSlice,
-    selectTheme,
-    useAppSelector,
-    selectAuthSlice,
-    useAppDispatch,
-    setGlobalInfo,
-} from "./store";
+import { AbrechnungWebSocket, Api } from "@abrechnung/api";
 import {
     AbrechnungUpdateProvider,
-    selectSessionToken,
     fetchGroups,
+    selectAccessToken,
     selectBaseUrl,
     selectCurrentUserId,
     subscribe,
     unsubscribe,
 } from "@abrechnung/redux";
-import { api, websocket } from "./core/api";
+import { MaterialIcons } from "@expo/vector-icons";
+import { StatusBar } from "expo-status-bar";
+import React from "react";
+import { Provider as PaperProvider } from "react-native-paper";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { ApiProvider } from "./core/ApiProvider";
+import { createApi } from "./core/api";
+import useColorScheme from "./hooks/useColorScheme";
+import { Navigation } from "./navigation";
+import { NotificationProvider } from "./notifications";
+import SplashScreen from "./screens/SplashScreen";
+import {
+    selectAuthSlice,
+    selectSettingsSlice,
+    selectTheme,
+    setGlobalInfo,
+    useAppDispatch,
+    useAppSelector,
+} from "./store";
+import { CustomDarkTheme, CustomLightTheme } from "./theme";
 
 export const App: React.FC = () => {
     const colorScheme = useColorScheme();
     const dispatch = useAppDispatch();
+    const [api, setApi] = React.useState<{ api: Api; websocket: AbrechnungWebSocket } | undefined>(undefined);
 
-    const sessionToken = useAppSelector((state) => selectSessionToken({ state: selectAuthSlice(state) }));
+    const accessToken = useAppSelector((state) => selectAccessToken({ state: selectAuthSlice(state) }));
     const baseUrl = useAppSelector((state) => selectBaseUrl({ state: selectAuthSlice(state) }));
-    const isAuthenticated = sessionToken !== undefined;
+    const isAuthenticated = accessToken !== undefined;
     const userId = useAppSelector((state) => selectCurrentUserId({ state: selectAuthSlice(state) }));
     const groupStoreStatus = useAppSelector((state) => state.groups.status);
     const themeMode = useAppSelector((state) => selectTheme({ state: selectSettingsSlice(state) }));
     const useDarkTheme = themeMode === "system" ? colorScheme === "dark" : themeMode === "dark";
     const theme = useDarkTheme ? CustomDarkTheme : CustomLightTheme;
 
+    const initApi = React.useCallback(
+        (baseUrl: string) => {
+            const newApi = createApi(baseUrl);
+            setApi(newApi);
+            return newApi;
+        },
+        [setApi]
+    );
+
     React.useEffect(() => {
-        if (sessionToken !== undefined && baseUrl !== undefined) {
-            console.log("initializing api with session token", sessionToken, "and api url:", baseUrl);
-            api.init(baseUrl, sessionToken)
+        if (baseUrl !== undefined) {
+            const { api, websocket } = createApi(baseUrl);
+            console.log("initializing api with session token", accessToken, "and api url:", baseUrl);
+            api.init(accessToken)
                 .then(() => {
-                    websocket.setUrl(`${baseUrl.replace("http://", "ws://").replace("https://", "ws://")}/api/v1/ws`);
-                    dispatch(fetchGroups({ api }));
+                    dispatch(fetchGroups({ api: api })).then(() => {
+                        setApi({ api, websocket });
+                    });
                 })
                 .catch((err) => {
                     dispatch(setGlobalInfo({ text: err.toString(), category: "error" }));
                 });
         }
-    }, [sessionToken, baseUrl, dispatch]);
+    }, [accessToken, baseUrl, dispatch]);
 
     React.useEffect(() => {
+        if (!api) {
+            return;
+        }
         if (!isAuthenticated || userId === undefined) {
             return () => {
                 return;
             };
         }
 
-        dispatch(subscribe({ subscription: { type: "group", userId }, websocket }));
+        dispatch(subscribe({ subscription: { type: "group", userId }, websocket: api.websocket }));
 
         return () => {
-            dispatch(unsubscribe({ subscription: { type: "group", userId }, websocket }));
+            dispatch(unsubscribe({ subscription: { type: "group", userId }, websocket: api.websocket }));
         };
-    }, [dispatch, isAuthenticated, userId]);
+    }, [api, dispatch, isAuthenticated, userId]);
 
     return (
         <PaperProvider
@@ -76,19 +93,25 @@ export const App: React.FC = () => {
             }}
         >
             <SafeAreaProvider>
-                <AbrechnungUpdateProvider api={api} websocket={websocket}>
-                    <>
-                        <React.Suspense fallback={<SplashScreen />}>
-                            {isAuthenticated && groupStoreStatus !== "initialized" ? (
-                                <SplashScreen />
-                            ) : (
-                                <Navigation theme={theme} />
-                            )}
-                        </React.Suspense>
-                        <NotificationProvider />
-                        <StatusBar />
-                    </>
-                </AbrechnungUpdateProvider>
+                {api === undefined ? (
+                    <SplashScreen />
+                ) : (
+                    <ApiProvider api={api.api} websocket={api.websocket} initApi={initApi}>
+                        <AbrechnungUpdateProvider api={api.api} websocket={api.websocket}>
+                            <>
+                                <React.Suspense fallback={<SplashScreen />}>
+                                    {isAuthenticated && groupStoreStatus !== "initialized" ? (
+                                        <SplashScreen />
+                                    ) : (
+                                        <Navigation theme={theme} />
+                                    )}
+                                </React.Suspense>
+                                <NotificationProvider />
+                                <StatusBar />
+                            </>
+                        </AbrechnungUpdateProvider>
+                    </ApiProvider>
+                )}
             </SafeAreaProvider>
         </PaperProvider>
     );

@@ -1,7 +1,5 @@
-import React, { useState } from "react";
-import { api } from "../../core/api";
-import { DateTime } from "luxon";
-import { toast } from "react-toastify";
+import { selectProfile } from "@abrechnung/redux";
+import { Check, Close, Delete, Edit } from "@mui/icons-material";
 import {
     Button,
     Dialog,
@@ -17,12 +15,14 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import { Check, Close, Delete, Edit } from "@mui/icons-material";
-import { MobilePaper } from "../../components/style/mobile";
-import { useTitle } from "../../core/utils";
-import { selectProfile } from "@abrechnung/redux";
-import { useAppSelector, selectAuthSlice } from "../../store";
+import { DateTime } from "luxon";
+import React, { useState } from "react";
+import { toast } from "react-toastify";
 import Loading from "../../components/style/Loading";
+import { MobilePaper } from "../../components/style/mobile";
+import { api } from "../../core/api";
+import { useTitle } from "../../core/utils";
+import { selectAuthSlice, useAppSelector } from "../../store";
 
 export const SessionList: React.FC = () => {
     // TODO: fix editing functions
@@ -59,9 +59,11 @@ export const SessionList: React.FC = () => {
 
     const performRename = (id) => {
         if (editedSessions[id] !== undefined) {
-            api.renameSession(id, editedSessions[id]).catch((err) => {
-                toast.error(err);
-            });
+            api.client.auth
+                .renameSession({ requestBody: { session_id: id, name: editedSessions[id] } })
+                .catch((err) => {
+                    toast.error(err);
+                });
             stopEditSession(id);
         }
     };
@@ -72,7 +74,7 @@ export const SessionList: React.FC = () => {
 
     const confirmDeleteSession = () => {
         if (sessionToDelete.toDelete !== null) {
-            api.deleteSession(sessionToDelete.toDelete).catch((err) => {
+            api.client.auth.deleteSession({ requestBody: { session_id: sessionToDelete.toDelete } }).catch((err) => {
                 toast.error(err);
             });
             setSessionToDelete({ show: false, toDelete: null });
@@ -130,14 +132,14 @@ export const SessionList: React.FC = () => {
                                             <>
                                                 <span>
                                                     Valid until{" "}
-                                                    {DateTime.fromISO(session.validUntil).toLocaleString(
+                                                    {DateTime.fromISO(session.valid_until).toLocaleString(
                                                         DateTime.DATETIME_FULL
                                                     ) && "indefinitely"}
                                                     ,{" "}
                                                 </span>
                                                 <span>
                                                     Last seen on{" "}
-                                                    {DateTime.fromISO(session.lastSeen).toLocaleString(
+                                                    {DateTime.fromISO(session.last_seen).toLocaleString(
                                                         DateTime.DATETIME_FULL
                                                     )}
                                                 </span>
@@ -164,9 +166,9 @@ export const SessionList: React.FC = () => {
                 <DialogContent>
                     <DialogContentText>
                         {sessionToDelete.toDelete !== null
-                            ? `Are you sure you want to delete session ${
-                                  profile?.sessions.find((session) => session.id === sessionToDelete.toDelete)?.name
-                              }`
+                            ? `Are you sure you want to delete session ${profile?.sessions.find(
+                                  (session) => session.id === sessionToDelete.toDelete
+                              )?.name}`
                             : null}
                     </DialogContentText>
                 </DialogContent>

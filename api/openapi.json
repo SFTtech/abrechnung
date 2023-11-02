@@ -3,7 +3,8 @@
   "info": {
     "title": "Abrechnung REST-ish API",
     "license": {
-      "name": "AGPL-3.0"
+      "name": "AGPL-3.0",
+      "identifier": "AGPL-3.0"
     },
     "version": "0.10.1"
   },
@@ -14,7 +15,7 @@
           "transactions"
         ],
         "summary": "list all transactions in a group",
-        "operationId": "list_transactions_api_v1_groups__group_id__transactions_get",
+        "operationId": "list_transactions",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -74,7 +75,7 @@
                   "items": {
                     "$ref": "#/components/schemas/Transaction"
                   },
-                  "title": "Response List Transactions Api V1 Groups  Group Id  Transactions Get"
+                  "title": "Response List Transactions"
                 }
               }
             }
@@ -105,7 +106,7 @@
           "transactions"
         ],
         "summary": "create a new transaction",
-        "operationId": "create_transaction_api_v1_groups__group_id__transactions_post",
+        "operationId": "create_transaction",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -171,7 +172,7 @@
           "transactions"
         ],
         "summary": "sync a batch of transactions",
-        "operationId": "sync_transactions_api_v1_groups__group_id__transactions_sync_post",
+        "operationId": "sync_transactions",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -212,7 +213,7 @@
                   "additionalProperties": {
                     "type": "integer"
                   },
-                  "title": "Response Sync Transactions Api V1 Groups  Group Id  Transactions Sync Post"
+                  "title": "Response Sync Transactions"
                 }
               }
             }
@@ -245,7 +246,7 @@
           "transactions"
         ],
         "summary": "get transaction details",
-        "operationId": "get_transaction_api_v1_transactions__transaction_id__get",
+        "operationId": "get_transaction",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -299,7 +300,7 @@
           "transactions"
         ],
         "summary": "update transaction details",
-        "operationId": "update_transaction_api_v1_transactions__transaction_id__post",
+        "operationId": "update_transaction",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -363,7 +364,7 @@
           "transactions"
         ],
         "summary": "delete a transaction",
-        "operationId": "delete_transaction_api_v1_transactions__transaction_id__delete",
+        "operationId": "delete_transaction",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -419,7 +420,7 @@
           "transactions"
         ],
         "summary": "update transaction positions",
-        "operationId": "update_transaction_positions_api_v1_transactions__transaction_id__positions_post",
+        "operationId": "update_transaction_positions",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -485,7 +486,7 @@
           "transactions"
         ],
         "summary": "commit currently pending transaction changes",
-        "operationId": "commit_transaction_api_v1_transactions__transaction_id__commit_post",
+        "operationId": "commit_transaction",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -541,7 +542,7 @@
           "transactions"
         ],
         "summary": "create a new pending transaction revision",
-        "operationId": "create_transaction_change_api_v1_transactions__transaction_id__new_change_post",
+        "operationId": "create_transaction_change",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -597,7 +598,7 @@
           "transactions"
         ],
         "summary": "discard currently pending transaction changes",
-        "operationId": "discard_transaction_change_api_v1_transactions__transaction_id__discard_post",
+        "operationId": "discard_transaction_change",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -653,7 +654,7 @@
           "transactions"
         ],
         "summary": "upload a file as a transaction attachment",
-        "operationId": "upload_file_api_v1_transactions__transaction_id__files_post",
+        "operationId": "upload_file",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -675,7 +676,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_upload_file_api_v1_transactions__transaction_id__files_post"
+                "$ref": "#/components/schemas/Body_upload_file"
               }
             }
           }
@@ -719,7 +720,7 @@
           "transactions"
         ],
         "summary": "delete a transaction attachment",
-        "operationId": "delete_file_api_v1_files__file_id__delete",
+        "operationId": "delete_file",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -775,7 +776,7 @@
           "transactions"
         ],
         "summary": "fetch the (binary) contents of a transaction attachment",
-        "operationId": "get_file_contents_api_v1_files__file_id___blob_id__get",
+        "operationId": "get_file_contents",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -838,7 +839,7 @@
           "groups"
         ],
         "summary": "preview a group before joining using an invite token",
-        "operationId": "preview_group_api_v1_groups_preview_post",
+        "operationId": "preview_group",
         "requestBody": {
           "content": {
             "application/json": {
@@ -888,7 +889,7 @@
           "groups"
         ],
         "summary": "join a group using an invite token",
-        "operationId": "join_group_api_v1_groups_join_post",
+        "operationId": "join_group",
         "requestBody": {
           "content": {
             "application/json": {
@@ -943,7 +944,7 @@
           "groups"
         ],
         "summary": "list the current users groups",
-        "operationId": "list_groups_api_v1_groups_get",
+        "operationId": "list_groups",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -954,7 +955,7 @@
                     "$ref": "#/components/schemas/Group"
                   },
                   "type": "array",
-                  "title": "Response List Groups Api V1 Groups Get"
+                  "title": "Response List Groups"
                 }
               }
             }
@@ -980,7 +981,7 @@
           "groups"
         ],
         "summary": "create a group",
-        "operationId": "create_group_api_v1_groups_post",
+        "operationId": "create_group",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1035,7 +1036,7 @@
           "groups"
         ],
         "summary": "fetch group details",
-        "operationId": "get_group_api_v1_groups__group_id__get",
+        "operationId": "get_group",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1089,7 +1090,7 @@
           "groups"
         ],
         "summary": "update group details",
-        "operationId": "update_group_api_v1_groups__group_id__post",
+        "operationId": "update_group",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1153,7 +1154,7 @@
           "groups"
         ],
         "summary": "delete a group",
-        "operationId": "delete_group_api_v1_groups__group_id__delete",
+        "operationId": "delete_group",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1202,7 +1203,7 @@
           "groups"
         ],
         "summary": "leave a group",
-        "operationId": "leave_group_api_v1_groups__group_id__leave_post",
+        "operationId": "leave_group",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1251,7 +1252,7 @@
           "groups"
         ],
         "summary": "list all members of a group",
-        "operationId": "list_members_api_v1_groups__group_id__members_get",
+        "operationId": "list_members",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1278,7 +1279,7 @@
                   "items": {
                     "$ref": "#/components/schemas/GroupMember"
                   },
-                  "title": "Response List Members Api V1 Groups  Group Id  Members Get"
+                  "title": "Response List Members"
                 }
               }
             }
@@ -1309,7 +1310,7 @@
           "groups"
         ],
         "summary": "update the permissions of a group member",
-        "operationId": "update_member_permissions_api_v1_groups__group_id__members_post",
+        "operationId": "update_member_permissions",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1375,7 +1376,7 @@
           "groups"
         ],
         "summary": "fetch the group log",
-        "operationId": "list_log_api_v1_groups__group_id__logs_get",
+        "operationId": "list_log",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1402,7 +1403,7 @@
                   "items": {
                     "$ref": "#/components/schemas/GroupLog"
                   },
-                  "title": "Response List Log Api V1 Groups  Group Id  Logs Get"
+                  "title": "Response List Log"
                 }
               }
             }
@@ -1435,7 +1436,7 @@
           "groups"
         ],
         "summary": "post a message to the group log",
-        "operationId": "send_group_message_api_v1_groups__group_id__send_message_post",
+        "operationId": "send_group_message",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1494,7 +1495,7 @@
           "groups"
         ],
         "summary": "list all invite links of a group",
-        "operationId": "list_invites_api_v1_groups__group_id__invites_get",
+        "operationId": "list_invites",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1521,7 +1522,7 @@
                   "items": {
                     "$ref": "#/components/schemas/GroupInvite"
                   },
-                  "title": "Response List Invites Api V1 Groups  Group Id  Invites Get"
+                  "title": "Response List Invites"
                 }
               }
             }
@@ -1552,7 +1553,7 @@
           "groups"
         ],
         "summary": "create a new group invite link",
-        "operationId": "create_invite_api_v1_groups__group_id__invites_post",
+        "operationId": "create_invite",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1618,7 +1619,7 @@
           "groups"
         ],
         "summary": "delete a group invite link",
-        "operationId": "delete_invite_api_v1_groups__group_id__invites__invite_id__delete",
+        "operationId": "delete_invite",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -1676,12 +1677,12 @@
           "auth"
         ],
         "summary": "login with username and password",
-        "operationId": "token_api_v1_auth_token_post",
+        "operationId": "get_token",
         "requestBody": {
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "$ref": "#/components/schemas/Body_token_api_v1_auth_token_post"
+                "$ref": "#/components/schemas/Body_get_token"
               }
             }
           },
@@ -1717,7 +1718,7 @@
           "auth"
         ],
         "summary": "login with username and password",
-        "operationId": "login_api_v1_auth_login_post",
+        "operationId": "login",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1758,7 +1759,7 @@
           "auth"
         ],
         "summary": "sign out of the current session",
-        "operationId": "logout_api_v1_auth_logout_post",
+        "operationId": "logout",
         "responses": {
           "204": {
             "description": "Successful Response"
@@ -1771,52 +1772,13 @@
         ]
       }
     },
-    "/api/v1/auth/fetch_access_token": {
-      "post": {
-        "tags": [
-          "auth"
-        ],
-        "summary": "get a short lived access token ussing a session token",
-        "operationId": "fetch_access_token_api_v1_auth_fetch_access_token_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/FetchAccessTokenPayload"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/auth/register": {
       "post": {
         "tags": [
           "auth"
         ],
         "summary": "register a new user",
-        "operationId": "register_api_v1_auth_register_post",
+        "operationId": "register",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1832,7 +1794,9 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "$ref": "#/components/schemas/RegisterResponse"
+                }
               }
             }
           },
@@ -1855,7 +1819,7 @@
           "auth"
         ],
         "summary": "confirm a pending registration",
-        "operationId": "confirm_registration_api_v1_auth_confirm_registration_post",
+        "operationId": "confirm_registration",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1889,7 +1853,7 @@
           "auth"
         ],
         "summary": "fetch user profile information",
-        "operationId": "profile_api_v1_profile_get",
+        "operationId": "get_profile",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -1915,7 +1879,7 @@
           "auth"
         ],
         "summary": "change password",
-        "operationId": "change_password_api_v1_profile_change_password_post",
+        "operationId": "change_password",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1954,7 +1918,7 @@
           "auth"
         ],
         "summary": "change email",
-        "operationId": "change_email_api_v1_profile_change_email_post",
+        "operationId": "change_email",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1993,7 +1957,7 @@
           "auth"
         ],
         "summary": "confirm a pending email change",
-        "operationId": "confirm_email_change_api_v1_auth_confirm_email_change_post",
+        "operationId": "confirm_email_change",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2027,7 +1991,7 @@
           "auth"
         ],
         "summary": "recover password",
-        "operationId": "recover_password_api_v1_auth_recover_password_post",
+        "operationId": "recover_password",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2061,7 +2025,7 @@
           "auth"
         ],
         "summary": "confirm a pending password recovery",
-        "operationId": "confirm_password_recovery_api_v1_auth_confirm_password_recovery_post",
+        "operationId": "confirm_password_recovery",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2095,7 +2059,7 @@
           "auth"
         ],
         "summary": "delete a given user session",
-        "operationId": "delete_session_api_v1_auth_delete_session_post",
+        "operationId": "delete_session",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2134,7 +2098,7 @@
           "auth"
         ],
         "summary": "rename a given user session",
-        "operationId": "rename_session_api_v1_auth_rename_session_post",
+        "operationId": "rename_session",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2173,7 +2137,7 @@
           "accounts"
         ],
         "summary": "list all accounts in a group",
-        "operationId": "list_accounts_api_v1_groups__group_id__accounts_get",
+        "operationId": "list_accounts",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -2200,7 +2164,7 @@
                   "items": {
                     "$ref": "#/components/schemas/Account"
                   },
-                  "title": "Response List Accounts Api V1 Groups  Group Id  Accounts Get"
+                  "title": "Response List Accounts"
                 }
               }
             }
@@ -2231,7 +2195,7 @@
           "accounts"
         ],
         "summary": "create a new group account",
-        "operationId": "create_account_api_v1_groups__group_id__accounts_post",
+        "operationId": "create_account",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -2297,7 +2261,7 @@
           "accounts"
         ],
         "summary": "update a collection of accounts",
-        "operationId": "sync_accounts_api_v1_groups__group_id__accounts_sync_post",
+        "operationId": "sync_accounts",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -2338,7 +2302,7 @@
                   "additionalProperties": {
                     "type": "integer"
                   },
-                  "title": "Response Sync Accounts Api V1 Groups  Group Id  Accounts Sync Post"
+                  "title": "Response Sync Accounts"
                 }
               }
             }
@@ -2371,7 +2335,7 @@
           "accounts"
         ],
         "summary": "fetch a group account",
-        "operationId": "get_account_api_v1_accounts__account_id__get",
+        "operationId": "get_account",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -2423,7 +2387,7 @@
           "accounts"
         ],
         "summary": "update an account",
-        "operationId": "update_account_api_v1_accounts__account_id__post",
+        "operationId": "update_account",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -2485,7 +2449,7 @@
           "accounts"
         ],
         "summary": "delete an account",
-        "operationId": "delete_account_api_v1_accounts__account_id__delete",
+        "operationId": "delete_account",
         "security": [
           {
             "OAuth2PasswordBearer": []
@@ -2540,8 +2504,8 @@
         "tags": [
           "common"
         ],
-        "summary": "Version",
-        "operationId": "version_api_version_get",
+        "summary": "Get Version",
+        "operationId": "get_version",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2681,12 +2645,11 @@
           "owning_user_id",
           "date_info",
           "deleted",
-          "tags",
-          "clearing_shares"
+          "tags"
         ],
         "title": "AccountDetails"
       },
-      "Body_token_api_v1_auth_token_post": {
+      "Body_get_token": {
         "properties": {
           "grant_type": {
             "anyOf": [
@@ -2741,9 +2704,9 @@
           "username",
           "password"
         ],
-        "title": "Body_token_api_v1_auth_token_post"
+        "title": "Body_get_token"
       },
-      "Body_upload_file_api_v1_transactions__transaction_id__files_post": {
+      "Body_upload_file": {
         "properties": {
           "file": {
             "type": "string",
@@ -2755,7 +2718,7 @@
         "required": [
           "file"
         ],
-        "title": "Body_upload_file_api_v1_transactions__transaction_id__files_post"
+        "title": "Body_upload_file"
       },
       "ChangeEmailPayload": {
         "properties": {
@@ -2954,19 +2917,6 @@
         ],
         "title": "DeleteSessionPayload"
       },
-      "FetchAccessTokenPayload": {
-        "properties": {
-          "token": {
-            "type": "string",
-            "title": "Token"
-          }
-        },
-        "type": "object",
-        "required": [
-          "token"
-        ],
-        "title": "FetchAccessTokenPayload"
-      },
       "FileAttachment": {
         "properties": {
           "id": {
@@ -3021,7 +2971,6 @@
           "filename",
           "blob_id",
           "mime_type",
-          "host_url",
           "deleted"
         ],
         "title": "FileAttachment"
@@ -3537,7 +3486,7 @@
           },
           "positions": {
             "items": {
-              "$ref": "#/components/schemas/TransactionPosition-Input"
+              "$ref": "#/components/schemas/TransactionPosition"
             },
             "type": "array",
             "title": "Positions"
@@ -3610,6 +3559,19 @@
         ],
         "title": "RegisterPayload"
       },
+      "RegisterResponse": {
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "title": "User Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "RegisterResponse"
+      },
       "RenameSessionPayload": {
         "properties": {
           "session_id": {
@@ -3674,17 +3636,12 @@
           "access_token": {
             "type": "string",
             "title": "Access Token"
-          },
-          "session_token": {
-            "type": "string",
-            "title": "Session Token"
           }
         },
         "type": "object",
         "required": [
           "user_id",
-          "access_token",
-          "session_token"
+          "access_token"
         ],
         "title": "Token"
       },
@@ -3735,7 +3692,7 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/TransactionPosition-Output"
+                  "$ref": "#/components/schemas/TransactionPosition"
                 },
                 "type": "array"
               },
@@ -3749,7 +3706,7 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/TransactionPosition-Output"
+                  "$ref": "#/components/schemas/TransactionPosition"
                 },
                 "type": "array"
               },
@@ -3796,11 +3753,7 @@
           "is_wip",
           "last_changed",
           "committed_details",
-          "pending_details",
-          "committed_positions",
-          "pending_positions",
-          "committed_files",
-          "pending_files"
+          "pending_details"
         ],
         "title": "Transaction"
       },
@@ -3863,7 +3816,7 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/TransactionPosition-Input"
+                  "$ref": "#/components/schemas/TransactionPosition"
                 },
                 "type": "array"
               },
@@ -3973,7 +3926,7 @@
         ],
         "title": "TransactionDetails"
       },
-      "TransactionPosition-Input": {
+      "TransactionPosition": {
         "properties": {
           "id": {
             "type": "integer",
@@ -4011,48 +3964,6 @@
           "price",
           "communist_shares",
           "usages"
-        ],
-        "title": "TransactionPosition"
-      },
-      "TransactionPosition-Output": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "price": {
-            "type": "number",
-            "title": "Price"
-          },
-          "communist_shares": {
-            "type": "number",
-            "title": "Communist Shares"
-          },
-          "usages": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Usages"
-          },
-          "deleted": {
-            "type": "boolean",
-            "title": "Deleted",
-            "default": false
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "name",
-          "price",
-          "communist_shares",
-          "usages",
-          "deleted"
         ],
         "title": "TransactionPosition"
       },
@@ -4115,7 +4026,7 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/TransactionPosition-Input"
+                  "$ref": "#/components/schemas/TransactionPosition"
                 },
                 "type": "array"
               },
@@ -4251,7 +4162,7 @@
         "properties": {
           "positions": {
             "items": {
-              "$ref": "#/components/schemas/TransactionPosition-Input"
+              "$ref": "#/components/schemas/TransactionPosition"
             },
             "type": "array",
             "title": "Positions"

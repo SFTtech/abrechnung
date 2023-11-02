@@ -31,17 +31,17 @@ export const BalanceTable: React.FC<Props> = ({ groupId }) => {
         {
             field: "totalConsumed",
             headerName: "Received / Consumed",
-            renderCell: renderCurrency(group.currencySymbol, "red"),
+            renderCell: renderCurrency(group.currency_symbol, "red"),
         },
         {
             field: "totalPaid",
             headerName: "Paid",
-            renderCell: renderCurrency(group.currencySymbol, "green"),
+            renderCell: renderCurrency(group.currency_symbol, "green"),
         },
         {
             field: "balance",
             headerName: "Balance",
-            renderCell: renderCurrency(group.currencySymbol),
+            renderCell: renderCurrency(group.currency_symbol),
         },
     ];
 

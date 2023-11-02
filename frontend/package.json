@@ -140,6 +140,8 @@
         "metro-babel-register": "0.80.0",
         "metro-resolver": "0.80.0",
         "nx": "17.0.2",
+        "openapi-typescript-codegen": "^0.25.0",
+        "openapi-zod": "^0.2.7",
         "prettier": "^3.0.3",
         "react-refresh": "^0.10.0",
         "ts-jest": "29.1.1",

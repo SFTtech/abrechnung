@@ -7,21 +7,13 @@ import asyncpg
 from pydantic import BaseModel
 
 from abrechnung.application.common import _get_or_create_tag_ids
-from abrechnung.core.auth import (
-    check_group_permissions,
-    create_group_log,
-)
-from abrechnung.core.errors import (
-    NotFoundError,
-    InvalidCommand,
-)
-from abrechnung.core.service import (
-    Service,
-)
+from abrechnung.core.auth import check_group_permissions, create_group_log
+from abrechnung.core.errors import InvalidCommand, NotFoundError
+from abrechnung.core.service import Service
 from abrechnung.domain.transactions import (
+    FileAttachment,
     Transaction,
     TransactionPosition,
-    FileAttachment,
     TransactionType,
 )
 from abrechnung.domain.users import User
@@ -71,15 +63,9 @@ class TransactionService(Service):
             raise PermissionError(f"user does not have write permissions")
 
         if transaction_type:
-            type_check = (
-                [transaction_type]
-                if isinstance(transaction_type, str)
-                else transaction_type
-            )
+            type_check = [transaction_type] if isinstance(transaction_type, str) else transaction_type
             if result["type"] not in type_check:
-                raise InvalidCommand(
-                    f"Transaction type {result['type']} does not match the expected type {type_check}"
-                )
+                raise InvalidCommand(f"Transaction type {result['type']} does not match the expected type {type_check}")
 
         return result["group_id"]
 
@@ -132,12 +118,8 @@ class TransactionService(Service):
         return transactions
 
     @with_db_transaction
-    async def get_transaction(
-        self, *, conn: Connection, user: User, transaction_id: int
-    ) -> Transaction:
-        group_id = await self._check_transaction_permissions(
-            conn=conn, user=user, transaction_id=transaction_id
-        )
+    async def get_transaction(self, *, conn: Connection, user: User, transaction_id: int) -> Transaction:
+        group_id = await self._check_transaction_permissions(conn=conn, user=user, transaction_id=transaction_id)
         transaction = await conn.fetch_one(
             Transaction,
             "select id, group_id, type, last_changed, is_wip, "
@@ -169,8 +151,7 @@ class TransactionService(Service):
             return
         for tag_id in tag_ids:
             await conn.execute(
-                "insert into transaction_to_tag (transaction_id, revision_id, tag_id) "
-                "values ($1, $2, $3)",
+                "insert into transaction_to_tag (transaction_id, revision_id, tag_id) " "values ($1, $2, $3)",
                 transaction_id,
                 revision_id,
                 tag_id,
@@ -202,8 +183,7 @@ class TransactionService(Service):
             type,
         )
         revision_id = await conn.fetchval(
-            "insert into transaction_revision (user_id, transaction_id) "
-            "values ($1, $2) returning id",
+            "insert into transaction_revision (user_id, transaction_id) " "values ($1, $2) returning id",
             user.id,
             transaction_id,
         )
@@ -318,13 +298,10 @@ class TransactionService(Service):
             list(debitor_shares.keys()),
         )
         if len(debitor_shares.keys()) != n_accounts:
-            raise InvalidCommand(
-                "one of the accounts referenced by a debitor share does not exist in this group"
-            )
+            raise InvalidCommand("one of the accounts referenced by a debitor share does not exist in this group")
         for account_id, value in debitor_shares.items():
             await conn.execute(
-                "insert into debitor_share(transaction_id, revision_id, account_id, shares) "
-                "values ($1, $2, $3, $4)",
+                "insert into debitor_share(transaction_id, revision_id, account_id, shares) " "values ($1, $2, $3, $4)",
                 transaction_id,
                 revision_id,
                 account_id,
@@ -346,9 +323,7 @@ class TransactionService(Service):
             list(creditor_shares.keys()),
         )
         if len(creditor_shares.keys()) != n_accounts:
-            raise InvalidCommand(
-                "one of the accounts referenced by a creditor share does not exist in this group"
-            )
+            raise InvalidCommand("one of the accounts referenced by a creditor share does not exist in this group")
         for account_id, value in creditor_shares.items():
             await conn.execute(
                 "insert into creditor_share(transaction_id, revision_id, account_id, shares) "
@@ -360,15 +335,10 @@ class TransactionService(Service):
             )
 
     @with_db_transaction
-    async def commit_transaction(
-        self, *, conn: Connection, user: User, transaction_id: int
-    ) -> None:
-        group_id = await self._check_transaction_permissions(
-            conn=conn, user=user, transaction_id=transaction_id
-        )
+    async def commit_transaction(self, *, conn: Connection, user: User, transaction_id: int) -> None:
+        group_id = await self._check_transaction_permissions(conn=conn, user=user, transaction_id=transaction_id)
         revision_id = await conn.fetchval(
-            "select id from transaction_revision "
-            "where transaction_id = $1 and user_id = $2 and committed is null",
+            "select id from transaction_revision " "where transaction_id = $1 and user_id = $2 and committed is null",
             transaction_id,
             user.id,
         )
@@ -418,9 +388,7 @@ class TransactionService(Service):
             transaction_id=transaction_id,
             can_write=True,
         )
-        revision_id = await self._get_or_create_revision(
-            conn=conn, user=user, transaction_id=transaction_id
-        )
+        revision_id = await self._get_or_create_revision(conn=conn, user=user, transaction_id=transaction_id)
 
         blob_id = await conn.fetchval(
             "insert into blob (content, mime_type) values ($1, $2) returning id",
@@ -441,9 +409,7 @@ class TransactionService(Service):
         return file_id
 
     @with_db_transaction
-    async def delete_file(
-        self, *, conn: Connection, user: User, file_id: int
-    ) -> tuple[int, int]:
+    async def delete_file(self, *, conn: Connection, user: User, file_id: int) -> tuple[int, int]:
         perms = await conn.fetchrow(
             "select t.id as transaction_id "
             "from group_membership gm "
@@ -467,8 +433,7 @@ class TransactionService(Service):
         if committed_state is None:
             # file is only attached to a pending change, fully delete it right away, blob will be cleaned up
             pending_state = await conn.fetchrow(
-                "select revision_id from aggregated_pending_file_history "
-                "where id = $1 and changed_by = $2",
+                "select revision_id from aggregated_pending_file_history " "where id = $1 and changed_by = $2",
                 file_id,
                 user.id,
             )
@@ -484,13 +449,10 @@ class TransactionService(Service):
             )
             return transaction_id, pending_state["revision_id"]
 
-        revision_id = await self._get_or_create_revision(
-            conn=conn, user=user, transaction_id=transaction_id
-        )
+        revision_id = await self._get_or_create_revision(conn=conn, user=user, transaction_id=transaction_id)
 
         await conn.execute(
-            "insert into file_history(id, revision_id, filename, blob_id, deleted) "
-            "values ($1, $2, $3, null, true)",
+            "insert into file_history(id, revision_id, filename, blob_id, deleted) " "values ($1, $2, $3, null, true)",
             file_id,
             revision_id,
             committed_state["filename"],
@@ -515,9 +477,7 @@ class TransactionService(Service):
         if not perms:
             raise InvalidCommand("File not found")
 
-        blob = await conn.fetchrow(
-            "select content, mime_type from blob where id = $1", blob_id
-        )
+        blob = await conn.fetchrow("select content, mime_type from blob where id = $1", blob_id)
         if not blob:
             raise InvalidCommand("File not found")
 
@@ -538,9 +498,7 @@ class TransactionService(Service):
             list(usages.keys()),
         )
         if len(usages.keys()) != n_accounts:
-            raise InvalidCommand(
-                "one of the accounts referenced by a position usage does not exist in this group"
-            )
+            raise InvalidCommand("one of the accounts referenced by a position usage does not exist in this group")
         for account_id, value in usages.items():
             await conn.execute(
                 "insert into purchase_item_usage(item_id, revision_id, account_id, share_amount) "
@@ -660,13 +618,9 @@ class TransactionService(Service):
             user=user,
             transaction_id=transaction_id,
             can_write=True,
-            transaction_type=TransactionType.purchase.value
-            if positions is not None
-            else None,
+            transaction_type=TransactionType.purchase.value if positions is not None else None,
         )
-        revision_id = await self._get_or_create_revision(
-            conn=conn, user=user, transaction_id=transaction_id
-        )
+        revision_id = await self._get_or_create_revision(conn=conn, user=user, transaction_id=transaction_id)
         await conn.execute(
             "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, "
             "   value, billed_at, name, description)"
@@ -789,9 +743,7 @@ class TransactionService(Service):
             can_write=True,
             transaction_type=TransactionType.purchase.value,
         )
-        revision_id = await self._get_or_create_revision(
-            conn=conn, user=user, transaction_id=transaction_id
-        )
+        revision_id = await self._get_or_create_revision(conn=conn, user=user, transaction_id=transaction_id)
 
         for position in positions:
             await self._process_position_update(
@@ -809,23 +761,17 @@ class TransactionService(Service):
             )
 
     @with_db_transaction
-    async def create_transaction_change(
-        self, *, conn: Connection, user: User, transaction_id: int
-    ):
+    async def create_transaction_change(self, *, conn: Connection, user: User, transaction_id: int):
         await self._check_transaction_permissions(
             conn=conn,
             user=user,
             transaction_id=transaction_id,
             can_write=True,
         )
-        await self._get_or_create_revision(
-            conn=conn, user=user, transaction_id=transaction_id
-        )
+        await self._get_or_create_revision(conn=conn, user=user, transaction_id=transaction_id)
 
     @with_db_transaction
-    async def discard_transaction_changes(
-        self, *, conn: Connection, user: User, transaction_id: int
-    ):
+    async def discard_transaction_changes(self, *, conn: Connection, user: User, transaction_id: int):
         await self._check_transaction_permissions(
             conn=conn,
             user=user,
@@ -841,21 +787,14 @@ class TransactionService(Service):
             transaction_id,
         )
         if revision_id is None:
-            raise InvalidCommand(
-                f"No changes to discard for transaction {transaction_id}"
-            )
+            raise InvalidCommand(f"No changes to discard for transaction {transaction_id}")
 
         last_committed_revision = await conn.fetchval(
-            "select id "
-            "from transaction_revision tr where tr.transaction_id = $1 and tr.committed is not null",
+            "select id " "from transaction_revision tr where tr.transaction_id = $1 and tr.committed is not null",
             transaction_id,
         )
-        if (
-            last_committed_revision is None
-        ):  # we have a newly created transaction - disallow discarding changes
-            raise InvalidCommand(
-                f"Cannot discard transaction changes without any committed changes"
-            )
+        if last_committed_revision is None:  # we have a newly created transaction - disallow discarding changes
+            raise InvalidCommand(f"Cannot discard transaction changes without any committed changes")
         else:
             await conn.execute(
                 "delete from transaction_revision tr " "where tr.id = $1",
@@ -863,9 +802,7 @@ class TransactionService(Service):
             )
 
     @with_db_transaction
-    async def delete_transaction(
-        self, *, conn: Connection, user: User, transaction_id: int
-    ):
+    async def delete_transaction(self, *, conn: Connection, user: User, transaction_id: int):
         group_id = await self._check_transaction_permissions(
             conn=conn,
             user=user,
@@ -880,9 +817,7 @@ class TransactionService(Service):
             transaction_id,
         )
         if row is not None and row["deleted"]:
-            raise InvalidCommand(
-                f"Cannot delete transaction {transaction_id} as it already is deleted"
-            )
+            raise InvalidCommand(f"Cannot delete transaction {transaction_id} as it already is deleted")
 
         await create_group_log(
             conn=conn,
@@ -892,9 +827,7 @@ class TransactionService(Service):
             message=f"deleted transaction with id {transaction_id}",
         )
 
-        if (
-            row is None
-        ):  # the transaction has no committed changes, we can only delete it if we created it
+        if row is None:  # the transaction has no committed changes, we can only delete it if we created it
             revision_id = await conn.fetchval(
                 "select id from transaction_revision tr "
                 "where tr.user_id = $1 and tr.transaction_id = $2 and tr.committed is null",
@@ -902,9 +835,7 @@ class TransactionService(Service):
                 transaction_id,
             )
             if revision_id is None:
-                raise InvalidCommand(
-                    f"Cannot delete uncommitted transaction {transaction_id} of another user"
-                )
+                raise InvalidCommand(f"Cannot delete uncommitted transaction {transaction_id} of another user")
 
             # here we assume there has already been a transaction_history entry, if not something weird has
             # happened
@@ -935,21 +866,17 @@ class TransactionService(Service):
             )
 
             await conn.execute(
-                "update transaction_history th set deleted = true "
-                "where th.id = $1 and th.revision_id = $2",
+                "update transaction_history th set deleted = true " "where th.id = $1 and th.revision_id = $2",
                 transaction_id,
                 revision_id,
             )
 
             await conn.execute(
-                "update transaction_revision tr set committed = NOW() "
-                "where tr.id = $1",
+                "update transaction_revision tr set committed = NOW() " "where tr.id = $1",
                 revision_id,
             )
 
-    async def _get_or_create_revision(
-        self, conn: asyncpg.Connection, user: User, transaction_id: int
-    ) -> int:
+    async def _get_or_create_revision(self, conn: asyncpg.Connection, user: User, transaction_id: int) -> int:
         """return the revision id, assumes we are already in a transaction"""
         revision_id = await conn.fetchval(
             "select id "
@@ -972,9 +899,7 @@ class TransactionService(Service):
     async def _get_or_create_pending_transaction_change(
         self, conn: asyncpg.Connection, user: User, transaction_id: int
     ) -> int:
-        revision_id = await self._get_or_create_revision(
-            conn=conn, user=user, transaction_id=transaction_id
-        )
+        revision_id = await self._get_or_create_revision(conn=conn, user=user, transaction_id=transaction_id)
 
         t = await conn.fetchval(
             "select id from transaction_history th where revision_id = $1 and id = $2",
@@ -995,9 +920,7 @@ class TransactionService(Service):
         )
 
         if last_committed_revision is None:
-            raise InvalidCommand(
-                f"Cannot edit transaction {transaction_id} as it has no committed changes."
-            )
+            raise InvalidCommand(f"Cannot edit transaction {transaction_id} as it has no committed changes.")
 
         # copy all existing transaction data into a new history entry
         await conn.execute(
@@ -1082,15 +1005,11 @@ class TransactionService(Service):
         group_id: int,
         transactions: list[RawTransaction],
     ) -> dict[int, int]:
-        all_transactions_in_same_group = all(
-            [a.group_id == group_id for a in transactions]
-        )
+        all_transactions_in_same_group = all([a.group_id == group_id for a in transactions])
         if not all_transactions_in_same_group:
             raise InvalidCommand("all accounts must belong to the same group")
 
-        can_write, _ = await check_group_permissions(
-            conn=conn, group_id=group_id, user=user, can_write=True
-        )
+        can_write, _ = await check_group_permissions(conn=conn, group_id=group_id, user=user, can_write=True)
 
         if not can_write:
             raise PermissionError("need write access to group")
@@ -1098,9 +1017,7 @@ class TransactionService(Service):
         new_transaction_id_map: dict[int, int] = {}
 
         for transaction in transactions:
-            old_acc_id, new_acc_id = await self.sync_transaction(
-                conn=conn, user=user, transaction=transaction
-            )
+            old_acc_id, new_acc_id = await self.sync_transaction(conn=conn, user=user, transaction=transaction)
             new_transaction_id_map[old_acc_id] = new_acc_id
 
         return new_transaction_id_map

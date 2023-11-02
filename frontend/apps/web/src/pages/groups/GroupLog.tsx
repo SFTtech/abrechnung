@@ -1,7 +1,12 @@
-import React, { useEffect, useState } from "react";
-import { api } from "../../core/api";
-import { toast } from "react-toastify";
-import { DateTime } from "luxon";
+import {
+    fetchGroupLog,
+    selectGroupById,
+    selectGroupLogStatus,
+    selectGroupLogs,
+    selectGroupMembers,
+    subscribe,
+    unsubscribe,
+} from "@abrechnung/redux";
 import {
     Button,
     Divider,
@@ -13,20 +18,14 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import { MobilePaper } from "../../components/style/mobile";
+import { DateTime } from "luxon";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import { Loading } from "../../components/style/Loading";
+import { MobilePaper } from "../../components/style/mobile";
+import { api, ws } from "../../core/api";
 import { useTitle } from "../../core/utils";
-import { ws } from "../../core/api";
 import { selectGroupSlice, useAppDispatch, useAppSelector } from "../../store";
-import {
-    fetchGroupLog,
-    selectGroupById,
-    selectGroupLogs,
-    selectGroupLogStatus,
-    selectGroupMembers,
-    subscribe,
-    unsubscribe,
-} from "@abrechnung/redux";
 
 interface Props {
     groupId: number;
@@ -55,7 +54,8 @@ export const GroupLog: React.FC<Props> = ({ groupId }) => {
     }, [dispatch, groupId]);
 
     const sendMessage = () => {
-        api.sendGroupMessage(groupId, message)
+        api.client.groups
+            .sendGroupMessage({ groupId, requestBody: { message } })
             .then((result) => {
                 console.log("sent message");
                 setMessage("");
@@ -67,7 +67,7 @@ export const GroupLog: React.FC<Props> = ({ groupId }) => {
     };
 
     const getMemberUsername = (member_id) => {
-        const member = members.find((member) => member.userID === member_id);
+        const member = members.find((member) => member.user_id === member_id);
         if (member === undefined) {
             return "unknown";
         }
@@ -122,8 +122,8 @@ export const GroupLog: React.FC<Props> = ({ groupId }) => {
                         <ListItem key={logEntry.id}>
                             <ListItemText
                                 primary={`${logEntry.type} - ${logEntry.message}`}
-                                secondary={`by ${getMemberUsername(logEntry.userID)}
-                            on ${DateTime.fromISO(logEntry.loggedAt).toLocaleString(DateTime.DATETIME_FULL)}`}
+                                secondary={`by ${getMemberUsername(logEntry.user_id)}
+                            on ${DateTime.fromISO(logEntry.logged_at).toLocaleString(DateTime.DATETIME_FULL)}`}
                             />
                         </ListItem>
                     ))

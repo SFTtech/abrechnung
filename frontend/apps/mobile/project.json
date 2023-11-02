@@ -1,129 +1,93 @@
 {
-  "name": "mobile",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/mobile/src",
-  "projectType": "application",
-  "targets": {
-    "collect-assets": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "cp -rf assets/* apps/mobile/assets/"
-        ],
-        "parallel": false
-      }
+    "name": "mobile",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "apps/mobile/src",
+    "projectType": "application",
+    "targets": {
+        "collect-assets": {
+            "executor": "nx:run-commands",
+            "options": {
+                "commands": ["cp -rf assets/* apps/mobile/assets/"],
+                "parallel": false
+            }
+        },
+        "start": {
+            "executor": "@nx/expo:start",
+            "options": {
+                "port": 8081
+            },
+            "dependsOn": ["ensure-symlink", "sync-deps"]
+        },
+        "serve": {
+            "executor": "nx:run-commands",
+            "options": {
+                "command": "nx start mobile"
+            },
+            "dependsOn": ["collect-assets"]
+        },
+        "run-ios": {
+            "executor": "@nx/expo:run",
+            "options": {
+                "platform": "ios"
+            },
+            "dependsOn": ["ensure-symlink", "sync-deps"]
+        },
+        "run-android": {
+            "executor": "@nx/expo:run",
+            "options": {
+                "platform": "android"
+            },
+            "dependsOn": ["ensure-symlink", "sync-deps"]
+        },
+        "build": {
+            "executor": "@nx/expo:build",
+            "options": {},
+            "dependsOn": ["collect-assets"]
+        },
+        "build-list": {
+            "executor": "@nx/expo:build-list",
+            "options": {},
+            "dependsOn": ["collect-assets"]
+        },
+        "download": {
+            "executor": "@nx/expo:download",
+            "options": {
+                "output": "apps/mobile/dist"
+            },
+            "dependsOn": ["collect-assets"]
+        },
+        "sync-deps": {
+            "executor": "@nx/expo:sync-deps",
+            "options": {},
+            "dependsOn": ["collect-assets"]
+        },
+        "ensure-symlink": {
+            "executor": "@nx/expo:ensure-symlink",
+            "options": {},
+            "dependsOn": ["collect-assets"]
+        },
+        "prebuild": {
+            "executor": "@nx/expo:prebuild",
+            "options": {},
+            "dependsOn": ["ensure-symlink", "sync-deps"]
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint",
+            "outputs": ["{options.outputFile}"],
+            "options": {
+                "lintFilePatterns": ["apps/mobile/**/*.{ts,tsx,js,jsx}"]
+            },
+            "dependsOn": ["collect-assets"]
+        },
+        "test": {
+            "executor": "@nx/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/apps/mobile"],
+            "options": {
+                "jestConfig": "apps/mobile/jest.config.ts",
+                "passWithNoTests": true
+            },
+            "dependsOn": ["collect-assets"]
+        }
     },
-    "start": {
-      "executor": "@nx/expo:start",
-      "options": {
-        "port": 8081
-      },
-      "dependsOn": [
-        "ensure-symlink",
-        "sync-deps"
-      ]
-    },
-    "serve": {
-      "executor": "nx:run-commands",
-      "options": {
-        "command": "nx start mobile"
-      },
-      "dependsOn": [
-        "collect-assets"
-      ]
-    },
-    "run-ios": {
-      "executor": "@nx/expo:run",
-      "options": {
-        "platform": "ios"
-      },
-      "dependsOn": [
-        "ensure-symlink",
-        "sync-deps"
-      ]
-    },
-    "run-android": {
-      "executor": "@nx/expo:run",
-      "options": {
-        "platform": "android"
-      },
-      "dependsOn": [
-        "ensure-symlink",
-        "sync-deps"
-      ]
-    },
-    "build": {
-      "executor": "@nx/expo:build",
-      "options": {},
-      "dependsOn": [
-        "collect-assets"
-      ]
-    },
-    "build-list": {
-      "executor": "@nx/expo:build-list",
-      "options": {},
-      "dependsOn": [
-        "collect-assets"
-      ]
-    },
-    "download": {
-      "executor": "@nx/expo:download",
-      "options": {
-        "output": "apps/mobile/dist"
-      },
-      "dependsOn": [
-        "collect-assets"
-      ]
-    },
-    "sync-deps": {
-      "executor": "@nx/expo:sync-deps",
-      "options": {},
-      "dependsOn": [
-        "collect-assets"
-      ]
-    },
-    "ensure-symlink": {
-      "executor": "@nx/expo:ensure-symlink",
-      "options": {},
-      "dependsOn": [
-        "collect-assets"
-      ]
-    },
-    "prebuild": {
-      "executor": "@nx/expo:prebuild",
-      "options": {},
-      "dependsOn": [
-        "ensure-symlink",
-        "sync-deps"
-      ]
-    },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
-      "options": {
-        "lintFilePatterns": [
-          "apps/mobile/**/*.{ts,tsx,js,jsx}"
-        ]
-      },
-      "dependsOn": [
-        "collect-assets"
-      ]
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": [
-        "{workspaceRoot}/coverage/apps/mobile"
-      ],
-      "options": {
-        "jestConfig": "apps/mobile/jest.config.ts",
-        "passWithNoTests": true
-      },
-      "dependsOn": [
-        "collect-assets"
-      ]
-    }
-  },
-  "tags": []
+    "tags": []
 }

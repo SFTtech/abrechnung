@@ -1,28 +1,29 @@
+import { useApi } from "@/core/ApiProvider";
+import { components } from "@abrechnung/api";
 import { createGroup } from "@abrechnung/redux";
-import { GroupValidator } from "@abrechnung/types";
 import { toFormikValidationSchema } from "@abrechnung/utils";
 import { useFormik } from "formik";
 import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Button, Checkbox, HelperText, ProgressBar, TextInput, useTheme } from "react-native-paper";
 import { CurrencySelect } from "../components/CurrencySelect";
-import { api } from "../core/api";
 import { GroupStackScreenProps } from "../navigation/types";
 import { useAppDispatch } from "../store";
 
 export const AddGroup: React.FC<GroupStackScreenProps<"AddGroup">> = ({ navigation }) => {
     const theme = useTheme();
     const dispatch = useAppDispatch();
+    const { api } = useApi();
 
     const formik = useFormik({
         initialValues: {
             name: "",
             description: "",
-            currencySymbol: "€",
+            currency_symbol: "€",
             terms: "",
-            addUserAccountOnJoin: false,
+            add_user_account_on_join: false,
         },
-        validationSchema: toFormikValidationSchema(GroupValidator),
+        validationSchema: toFormikValidationSchema(components.schemas.GroupPayload),
         onSubmit: (values, { setSubmitting }) => {
             setSubmitting(true);
             dispatch(createGroup({ api, group: values }))
@@ -51,7 +52,7 @@ export const AddGroup: React.FC<GroupStackScreenProps<"AddGroup">> = ({ navigati
                         <Button onPress={cancel} textColor={theme.colors.error}>
                             Cancel
                         </Button>
-                        <Button onPress={formik.handleSubmit}>Save</Button>
+                        <Button onPress={() => formik.handleSubmit}>Save</Button>
                     </>
                 );
             },
@@ -94,18 +95,20 @@ export const AddGroup: React.FC<GroupStackScreenProps<"AddGroup">> = ({ navigati
             ) : null}
             <CurrencySelect
                 label="Currency"
-                value={formik.values.currencySymbol}
-                onChange={(val) => formik.setFieldValue("currencySymbol", val)}
+                value={formik.values.currency_symbol}
+                onChange={(val) => formik.setFieldValue("currency_symbol", val)}
                 // error={formik.touched.description && !!formik.errors.currencySymbol}
             />
-            {formik.touched.currencySymbol && !!formik.errors.description ? (
-                <HelperText type="error">{formik.errors.currencySymbol}</HelperText>
+            {formik.touched.currency_symbol && !!formik.errors.description ? (
+                <HelperText type="error">{formik.errors.currency_symbol}</HelperText>
             ) : null}
             <Checkbox.Item
                 label="Add user accounts on join"
-                status={formik.values.addUserAccountOnJoin ? "checked" : "unchecked"}
+                status={formik.values.add_user_account_on_join ? "checked" : "unchecked"}
                 style={styles.input}
-                onPress={() => formik.setFieldValue("addUserAccountOnJoin", !formik.values.addUserAccountOnJoin)}
+                onPress={() =>
+                    formik.setFieldValue("add_user_account_on_join", !formik.values.add_user_account_on_join)
+                }
             />
         </View>
     );

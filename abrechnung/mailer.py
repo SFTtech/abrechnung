@@ -8,8 +8,9 @@ from typing import Optional, Type
 
 import asyncpg
 
+from abrechnung.framework.database import Connection, create_db_pool
+
 from .config import Config
-from abrechnung.framework.database import create_db_pool, Connection
 
 
 class Mailer:

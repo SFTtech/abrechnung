@@ -1,12 +1,21 @@
+import DateTimeInput from "@/components/DateTimeInput";
+import { NumericInput } from "@/components/NumericInput";
+import PositionListItem from "@/components/PositionListItem";
+import { TagSelect } from "@/components/tag-select";
+import TransactionShareInput from "@/components/transaction-shares/TransactionShareInput";
+import { useApi } from "@/core/ApiProvider";
+import { GroupStackScreenProps } from "@/navigation/types";
+import { notify } from "@/notifications";
+import { selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
 import {
+    deleteTransaction,
     discardTransactionChange,
     saveTransaction,
     selectCurrentUserPermissions,
     selectTransactionById,
-    selectTransactionPositions,
     selectTransactionPositionTotal,
+    selectTransactionPositions,
     wipPositionAdded,
-    deleteTransaction,
     wipTransactionUpdated,
 } from "@abrechnung/redux";
 import { TransactionPosition, TransactionValidator } from "@abrechnung/types";
@@ -32,19 +41,11 @@ import {
     TextInput,
     useTheme,
 } from "react-native-paper";
-import DateTimeInput from "../../components/DateTimeInput";
-import { NumericInput } from "../../components/NumericInput";
-import PositionListItem from "../../components/PositionListItem";
-import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
-import { api } from "../../core/api";
-import { GroupStackScreenProps } from "../../navigation/types";
-import { TagSelect } from "../../components/tag-select";
-import { notify } from "../../notifications";
-import { selectTransactionSlice, useAppDispatch, useAppSelector } from "../../store";
 
 export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetail">> = ({ route, navigation }) => {
     const theme = useTheme();
     const dispatch = useAppDispatch();
+    const { api } = useApi();
     const { groupId, transactionId, editing } = route.params;
 
     const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
@@ -65,7 +66,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
             dispatch(discardTransactionChange({ groupId, transactionId: transaction.id, api }));
         }
         return;
-    }, [dispatch, editing, transaction, groupId]);
+    }, [api, dispatch, editing, transaction, groupId]);
 
     const onDeleteTransaction = React.useCallback(() => {
         dispatch(deleteTransaction({ api, groupId, transactionId }))
@@ -76,7 +77,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
             .catch((err) => {
                 notify({ text: `Error while deleting transaction: ${err.toString()}` });
             });
-    }, [groupId, transactionId, dispatch, navigation]);
+    }, [api, groupId, transactionId, dispatch, navigation]);
 
     const closeConfirmDeleteModal = () => setConfirmDeleteModalOpen(false);
     const openConfirmDeleteModal = () => setConfirmDeleteModalOpen(true);

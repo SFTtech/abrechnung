@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from abrechnung import __version__, MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION
+from abrechnung import MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION, __version__
 
 router = APIRouter(
     prefix="/api",
@@ -26,8 +26,8 @@ class VersionResponse(BaseModel):
         }
 
 
-@router.get("/version", response_model=VersionResponse)
-async def version():
+@router.get("/version", response_model=VersionResponse, operation_id="get_version")
+async def get_version():
     return {
         "version": __version__,
         "major_version": MAJOR_VERSION,

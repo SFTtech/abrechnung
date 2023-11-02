@@ -1,22 +1,23 @@
 import React, { useState } from "react";
-import { Chip, Portal, Text, useTheme } from "react-native-paper";
 import { TouchableHighlight, View } from "react-native";
+import { Chip, Portal, Text, useTheme } from "react-native-paper";
 import { TagSelectDialog } from "./TagSelectDialog";
 
 interface Props {
     groupId: number;
     label: string;
     value: string[];
+    disabled: boolean;
     onChange: (newValue: string[]) => void;
 }
 
-export const TagSelect: React.FC<Props> = ({ groupId, label, value, onChange }) => {
+export const TagSelect: React.FC<Props> = ({ groupId, label, value, onChange, disabled }) => {
     const theme = useTheme();
     const [showDialog, setShowDialog] = useState(false);
 
     return (
         <>
-            <TouchableHighlight onPress={() => setShowDialog(true)}>
+            <TouchableHighlight onPress={() => setShowDialog(true)} disabled={disabled}>
                 <View
                     style={{
                         borderTopRightRadius: theme.roundness,

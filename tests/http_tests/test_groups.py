@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from tests.http_tests.common import HTTPAPITest
 
@@ -71,11 +71,8 @@ class GroupAPITest(HTTPAPITest):
 
     async def test_delete_group(self):
         user2, user2_password = await self._create_test_user("user2", "user2@test.com")
-        _, session_id, session_token = await self.user_service.login_user(
+        _, session_id, user2_token = await self.user_service.login_user(
             username="user2", password=user2_password, session_name="foobar"
-        )
-        user2_token = await self.user_service.get_access_token_from_session_token(
-            session_token=session_token
         )
         group_id = await self.group_service.create_group(
             user=self.test_user,
@@ -87,8 +84,7 @@ class GroupAPITest(HTTPAPITest):
         )
         async with self.db_pool.acquire() as conn:
             await conn.execute(
-                "insert into group_membership (user_id, group_id, is_owner, can_write) "
-                "values ($1, $2, true, true)",
+                "insert into group_membership (user_id, group_id, is_owner, can_write) " "values ($1, $2, true, true)",
                 user2.id,
                 group_id,
             )
@@ -284,9 +280,7 @@ class GroupAPITest(HTTPAPITest):
 
         members = await self._fetch_members(group_id)
         self.assertEqual(2, len(members))
-        self.assertEqual(
-            {self.test_user.id, user2.id}, set([m["user_id"] for m in members])
-        )
+        self.assertEqual({self.test_user.id, user2.id}, set([m["user_id"] for m in members]))
 
         resp = await self._post(
             f"/api/v1/groups/{group_id}/members",
@@ -296,12 +290,8 @@ class GroupAPITest(HTTPAPITest):
 
         members = await self._fetch_members(group_id)
         self.assertEqual(2, len(members))
-        self.assertTrue(
-            list(filter(lambda x: x["user_id"] == user2.id, members))[0]["can_write"]
-        )
-        self.assertFalse(
-            list(filter(lambda x: x["user_id"] == user2.id, members))[0]["is_owner"]
-        )
+        self.assertTrue(list(filter(lambda x: x["user_id"] == user2.id, members))[0]["can_write"])
+        self.assertFalse(list(filter(lambda x: x["user_id"] == user2.id, members))[0]["is_owner"])
 
         resp = await self._post(
             f"/api/v1/groups/{group_id}/members",
@@ -311,12 +301,8 @@ class GroupAPITest(HTTPAPITest):
 
         members = await self._fetch_members(group_id)
         self.assertEqual(2, len(members))
-        self.assertTrue(
-            list(filter(lambda x: x["user_id"] == user2.id, members))[0]["can_write"]
-        )
-        self.assertTrue(
-            list(filter(lambda x: x["user_id"] == user2.id, members))[0]["is_owner"]
-        )
+        self.assertTrue(list(filter(lambda x: x["user_id"] == user2.id, members))[0]["can_write"])
+        self.assertTrue(list(filter(lambda x: x["user_id"] == user2.id, members))[0]["is_owner"])
 
     async def test_get_account(self):
         group_id = await self.group_service.create_group(
@@ -409,9 +395,7 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual(1, len(invites))
 
         # we hardcode assume the invite id is 0 to check if the id counting works as expected
-        resp = await self._delete(
-            f"/api/v1/groups/{group_id}/invites/{invites[0]['id']}"
-        )
+        resp = await self._delete(f"/api/v1/groups/{group_id}/invites/{invites[0]['id']}")
         self.assertEqual(204, resp.status_code)
 
         resp = await self._get(f"/api/v1/groups/{group_id}/invites")
@@ -439,11 +423,8 @@ class GroupAPITest(HTTPAPITest):
         self.assertIsNotNone(invite_token)
 
         user2, password = await self._create_test_user("user", "email2@email.stuff")
-        _, session_id, session_token = await self.user_service.login_user(
+        _, session_id, jwt_token = await self.user_service.login_user(
             username="user", password=password, session_name="session1"
-        )
-        jwt_token = await self.user_service.get_access_token_from_session_token(
-            session_token=session_token
         )
         resp = await self.client.post(
             "/api/v1/groups/preview",
@@ -494,9 +475,7 @@ class GroupAPITest(HTTPAPITest):
             add_user_account_on_join=False,
         )
 
-        resp = await self._post(
-            f"/api/v1/groups/{group_id}/send_message", json={"message": "test message"}
-        )
+        resp = await self._post(f"/api/v1/groups/{group_id}/send_message", json={"message": "test message"})
         self.assertEqual(204, resp.status_code)
 
         resp = await self._get(f"/api/v1/groups/{group_id}/logs")

@@ -1,6 +1,7 @@
-from .errors import NotFoundError
-from abrechnung.framework.database import Connection
 from abrechnung.domain.users import User
+from abrechnung.framework.database import Connection
+
+from .errors import NotFoundError
 
 
 async def check_group_permissions(
@@ -36,8 +37,7 @@ async def create_group_log(
     affected_user_id: int | None = None,
 ):
     await conn.execute(
-        "insert into group_log (group_id, user_id, type, message, affected) "
-        "values ($1, $2, $3, $4, $5)",
+        "insert into group_log (group_id, user_id, type, message, affected) " "values ($1, $2, $3, $4, $5)",
         group_id,
         user.id,
         type,

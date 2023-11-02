@@ -2,7 +2,7 @@
 import argparse
 import asyncio
 import random
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from abrechnung.application.accounts import AccountService

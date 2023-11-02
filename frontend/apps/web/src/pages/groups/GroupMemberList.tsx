@@ -1,8 +1,12 @@
-import React, { useState } from "react";
-import { Form, Formik } from "formik";
-import { toast } from "react-toastify";
-import { api } from "../../core/api";
-import { DateTime } from "luxon";
+import { GroupMember } from "@abrechnung/api";
+import {
+    selectCurrentUserId,
+    selectCurrentUserPermissions,
+    selectGroupById,
+    selectGroupMembers,
+    updateGroupMemberPrivileges,
+} from "@abrechnung/redux";
+import { Edit } from "@mui/icons-material";
 import {
     Button,
     Checkbox,
@@ -19,18 +23,14 @@ import {
     ListItemSecondaryAction,
     ListItemText,
 } from "@mui/material";
-import { Edit } from "@mui/icons-material";
+import { Form, Formik } from "formik";
+import { DateTime } from "luxon";
+import React, { useState } from "react";
+import { toast } from "react-toastify";
 import { MobilePaper } from "../../components/style/mobile";
+import { api } from "../../core/api";
 import { useTitle } from "../../core/utils";
-import {
-    selectCurrentUserId,
-    selectCurrentUserPermissions,
-    selectGroupById,
-    selectGroupMembers,
-    updateGroupMemberPrivileges,
-} from "@abrechnung/redux";
-import { useAppSelector, selectGroupSlice, selectAuthSlice, useAppDispatch } from "../../store";
-import { GroupMember } from "@abrechnung/types";
+import { selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "../../store";
 
 interface Props {
     groupId: number;
@@ -69,7 +69,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
     };
 
     const getMemberUsername = (member_id) => {
-        const member = members.find((member) => member.userID === member_id);
+        const member = members.find((member) => member.user_id === member_id);
         if (member === undefined) {
             return "unknown";
         }
@@ -81,7 +81,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
     };
 
     const openEditMemberModal = (userID) => {
-        const user = members.find((member) => member.userID === userID);
+        const user = members.find((member) => member.user_id === userID);
         // TODO: maybe deal with disappearing users in the list
         setMemberToEdit(user);
     };
@@ -100,7 +100,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
                                 primary={
                                     <>
                                         <span style={{ marginRight: 5 }}>{member.username}</span>
-                                        {member.isOwner ? (
+                                        {member.is_owner ? (
                                             <Chip
                                                 size="small"
                                                 sx={{ mr: 1 }}
@@ -109,7 +109,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
                                                 label="owner"
                                                 variant="outlined"
                                             />
-                                        ) : member.canWrite ? (
+                                        ) : member.can_write ? (
                                             <Chip
                                                 size="small"
                                                 sx={{ mr: 1 }}
@@ -119,7 +119,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
                                                 variant="outlined"
                                             />
                                         ) : null}
-                                        {member.userID === currentUserId ? (
+                                        {member.user_id === currentUserId ? (
                                             <Chip
                                                 size="small"
                                                 sx={{ mr: 1 }}
@@ -134,22 +134,22 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
                                 }
                                 secondary={
                                     <>
-                                        {member.invitedBy && (
+                                        {member.invited_by && (
                                             <small className="text-muted">
-                                                invited by {getMemberUsername(member.invitedBy)}
+                                                invited by {getMemberUsername(member.invited_by)}
                                                 {", "}
                                             </small>
                                         )}
                                         <small className="text-muted">
                                             joined{" "}
-                                            {DateTime.fromISO(member.joinedAt).toLocaleString(DateTime.DATETIME_FULL)}
+                                            {DateTime.fromISO(member.joined_at).toLocaleString(DateTime.DATETIME_FULL)}
                                         </small>
                                     </>
                                 }
                             />
                             {permissions.isOwner || permissions.canWrite ? (
                                 <ListItemSecondaryAction>
-                                    <IconButton onClick={() => openEditMemberModal(member.userID)}>
+                                    <IconButton onClick={() => openEditMemberModal(member.user_id)}>
                                         <Edit />
                                     </IconButton>
                                 </ListItemSecondaryAction>
@@ -165,9 +165,9 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
                 <DialogContent>
                     <Formik
                         initialValues={{
-                            userId: memberToEdit?.userID ?? -1,
-                            isOwner: memberToEdit?.isOwner ?? false,
-                            canWrite: memberToEdit?.canWrite ?? false,
+                            userId: memberToEdit?.user_id ?? -1,
+                            isOwner: memberToEdit?.is_owner ?? false,
+                            canWrite: memberToEdit?.can_write ?? false,
                         }}
                         onSubmit={handleEditMemberSubmit}
                         enableReinitialize={true}

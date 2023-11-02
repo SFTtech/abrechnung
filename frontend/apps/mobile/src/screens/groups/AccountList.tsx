@@ -1,3 +1,17 @@
+import LoadingIndicator from "@/components/LoadingIndicator";
+import Searchbar from "@/components/style/Searchbar";
+import { getAccountIcon } from "@/constants/Icons";
+import { useApi } from "@/core/ApiProvider";
+import { GroupTabScreenProps } from "@/navigation/types";
+import {
+    selectAccountSlice,
+    selectActiveGroupId,
+    selectGroupSlice,
+    selectUiSlice,
+    useAppDispatch,
+    useAppSelector,
+} from "@/store";
+import { successColor } from "@/theme";
 import { AccountSortMode } from "@abrechnung/core";
 import {
     createAccount,
@@ -15,26 +29,13 @@ import * as React from "react";
 import { useLayoutEffect, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { Appbar, FAB, List, Menu, Portal, RadioButton, Text, useTheme } from "react-native-paper";
-import LoadingIndicator from "../../components/LoadingIndicator";
-import Searchbar from "../../components/style/Searchbar";
-import { getAccountIcon } from "../../constants/Icons";
-import { api } from "../../core/api";
-import { GroupTabScreenProps } from "../../navigation/types";
-import {
-    selectAccountSlice,
-    selectActiveGroupId,
-    selectGroupSlice,
-    selectUiSlice,
-    useAppDispatch,
-    useAppSelector,
-} from "../../store";
-import { successColor } from "../../theme";
 
 type Props = GroupTabScreenProps<"AccountList" | "ClearingAccountList">;
 
 export const AccountList: React.FC<Props> = ({ route, navigation }) => {
     const theme = useTheme();
     const dispatch = useAppDispatch();
+    const { api } = useApi();
     const accountType: AccountType = route.name === "AccountList" ? "personal" : "clearing";
 
     const groupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) })) as number; // TODO: proper typing

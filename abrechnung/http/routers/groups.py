@@ -7,9 +7,9 @@ from pydantic import BaseModel
 from abrechnung.application.groups import GroupService
 from abrechnung.domain.groups import (
     Group,
-    GroupMember,
-    GroupLog,
     GroupInvite,
+    GroupLog,
+    GroupMember,
     GroupPreview,
 )
 from abrechnung.domain.users import User
@@ -35,6 +35,7 @@ class PreviewGroupPayload(BaseModel):
     r"/v1/groups/preview",
     summary="preview a group before joining using an invite token",
     response_model=GroupPreview,
+    operation_id="preview_group",
 )
 async def preview_group(
     payload: PreviewGroupPayload,
@@ -48,9 +49,7 @@ async def preview_group(
 
 
 @router.post(
-    r"/v1/groups/join",
-    summary="join a group using an invite token",
-    response_model=Group,
+    r"/v1/groups/join", summary="join a group using an invite token", response_model=Group, operation_id="join_group"
 )
 async def join_group(
     payload: PreviewGroupPayload,
@@ -66,7 +65,7 @@ async def join_group(
 
 
 @router.get(
-    "/v1/groups", summary="list the current users groups", response_model=List[Group]
+    "/v1/groups", summary="list the current users groups", response_model=List[Group], operation_id="list_groups"
 )
 async def list_groups(
     user: User = Depends(get_current_user),
@@ -83,7 +82,7 @@ class GroupPayload(BaseModel):
     terms: str = ""
 
 
-@router.post("/v1/groups", summary="create a group", response_model=Group)
+@router.post("/v1/groups", summary="create a group", response_model=Group, operation_id="create_group")
 async def create_group(
     payload: GroupPayload,
     user: User = Depends(get_current_user),
@@ -101,9 +100,7 @@ async def create_group(
     return await group_service.get_group(user=user, group_id=group_id)
 
 
-@router.get(
-    r"/v1/groups/{group_id}", summary="fetch group details", response_model=Group
-)
+@router.get(r"/v1/groups/{group_id}", summary="fetch group details", response_model=Group, operation_id="get_group")
 async def get_group(
     group_id: int,
     user: User = Depends(get_current_user),
@@ -113,7 +110,7 @@ async def get_group(
 
 
 @router.post(
-    r"/v1/groups/{group_id}", summary="update group details", response_model=Group
+    r"/v1/groups/{group_id}", summary="update group details", response_model=Group, operation_id="update_group"
 )
 async def update_group(
     group_id: int,
@@ -138,6 +135,7 @@ async def update_group(
     r"/v1/groups/{group_id}",
     summary="delete a group",
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="delete_group",
 )
 async def delete_group(
     group_id: int,
@@ -151,6 +149,7 @@ async def delete_group(
     r"/v1/groups/{group_id}/leave",
     summary="leave a group",
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="leave_group",
 )
 async def leave_group(
     group_id: int,
@@ -164,6 +163,7 @@ async def leave_group(
     r"/v1/groups/{group_id}/members",
     summary="list all members of a group",
     response_model=List[GroupMember],
+    operation_id="list_members",
 )
 async def list_members(
     group_id: int,
@@ -177,9 +177,7 @@ async def list_members(
 
 
 @router.get(
-    r"/v1/groups/{group_id}/logs",
-    summary="fetch the group log",
-    response_model=List[GroupLog],
+    r"/v1/groups/{group_id}/logs", summary="fetch the group log", response_model=List[GroupLog], operation_id="list_log"
 )
 async def list_log(
     group_id: int,
@@ -197,6 +195,7 @@ class GroupMessage(BaseModel):
     r"/v1/groups/{group_id}/send_message",
     summary="post a message to the group log",
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="send_group_message",
 )
 async def send_group_message(
     group_id: int,
@@ -221,6 +220,7 @@ class UpdateGroupMemberPayload(BaseModel):
     r"/v1/groups/{group_id}/members",
     summary="update the permissions of a group member",
     response_model=GroupMember,
+    operation_id="update_member_permissions",
 )
 async def update_member_permissions(
     payload: UpdateGroupMemberPayload,
@@ -236,15 +236,14 @@ async def update_member_permissions(
         is_owner=payload.is_owner,
     )
 
-    return await group_service.get_member(
-        user=user, group_id=group_id, member_id=payload.user_id
-    )
+    return await group_service.get_member(user=user, group_id=group_id, member_id=payload.user_id)
 
 
 @router.get(
     r"/v1/groups/{group_id}/invites",
     summary="list all invite links of a group",
     response_model=List[GroupInvite],
+    operation_id="list_invites",
 )
 async def list_invites(
     group_id: int,
@@ -268,6 +267,7 @@ class CreateInvitePayload(BaseModel):
     r"/v1/groups/{group_id}/invites",
     summary="create a new group invite link",
     response_model=GroupInvite,
+    operation_id="create_invite",
 )
 async def create_invite(
     group_id: int,
@@ -287,15 +287,14 @@ async def create_invite(
         valid_until=valid_until,
         join_as_editor=payload.join_as_editor,
     )
-    return await group_service.get_invite(
-        user=user, group_id=group_id, invite_id=invite_id
-    )
+    return await group_service.get_invite(user=user, group_id=group_id, invite_id=invite_id)
 
 
 @router.delete(
     r"/v1/groups/{group_id}/invites/{invite_id}",
     summary="delete a group invite link",
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="delete_invite",
 )
 async def delete_invite(
     group_id: int,

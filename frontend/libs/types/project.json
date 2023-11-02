@@ -1,46 +1,36 @@
 {
-  "name": "types",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/types/src",
-  "projectType": "library",
-  "targets": {
-    "build": {
-      "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
-      "options": {
-        "outputPath": "dist/libs/types",
-        "tsConfig": "libs/types/tsconfig.lib.json",
-        "packageJson": "libs/types/package.json",
-        "main": "libs/types/src/index.ts",
-        "assets": [
-          "libs/types/*.md"
-        ],
-        "updateBuildableProjectDepsInPackageJson": true
-      }
+    "name": "types",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "libs/types/src",
+    "projectType": "library",
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/libs/types",
+                "tsConfig": "libs/types/tsconfig.lib.json",
+                "packageJson": "libs/types/package.json",
+                "main": "libs/types/src/index.ts",
+                "assets": ["libs/types/*.md"],
+                "updateBuildableProjectDepsInPackageJson": true
+            }
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint",
+            "outputs": ["{options.outputFile}"],
+            "options": {
+                "lintFilePatterns": ["libs/types/**/*.ts"]
+            }
+        },
+        "test": {
+            "executor": "@nx/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/libs/types"],
+            "options": {
+                "jestConfig": "libs/types/jest.config.ts",
+                "passWithNoTests": true
+            }
+        }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
-      "options": {
-        "lintFilePatterns": [
-          "libs/types/**/*.ts"
-        ]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": [
-        "{workspaceRoot}/coverage/libs/types"
-      ],
-      "options": {
-        "jestConfig": "libs/types/jest.config.ts",
-        "passWithNoTests": true
-      }
-    }
-  },
-  "tags": []
+    "tags": []
 }

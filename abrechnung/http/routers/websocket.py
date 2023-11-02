@@ -6,7 +6,7 @@ from typing import Optional
 
 import asyncpg
 import schema
-from fastapi import APIRouter, WebSocket, Request, status, WebSocketException
+from fastapi import APIRouter, Request, WebSocket, WebSocketException, status
 
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
@@ -83,24 +83,16 @@ class NotificationManager:
     async def initialize(self, db_pool: asyncpg.Pool):
         self.db_pool = db_pool
         self.connection = await self.db_pool.acquire()
-        await self.connection.set_type_codec(
-            "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
-        )
-        await self.connection.set_type_codec(
-            "jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
-        )
+        await self.connection.set_type_codec("json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
+        await self.connection.set_type_codec("jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
         await self._register_forwarder(self.connection, forwarder_id=self.config.api.id)
 
     async def teardown(self):
-        await self._unregister_forwarder(
-            self.connection, forwarder_id=self.config.api.id
-        )
+        await self._unregister_forwarder(self.connection, forwarder_id=self.config.api.id)
         if self.connection:
             await self.connection.close()
 
-    async def _on_psql_notification(
-        self, connection: asyncpg.Connection, pid: int, channel: str, payload: str
-    ):
+    async def _on_psql_notification(self, connection: asyncpg.Connection, pid: int, channel: str, payload: str):
         """
         this is called by psql to deliver a notify.
 
@@ -122,9 +114,7 @@ class NotificationManager:
         """
         # del connection, pid  # unused
 
-        self.logger.debug(
-            f"Received psql notification on channel {channel} with payload {payload}"
-        )
+        self.logger.debug(f"Received psql notification on channel {channel} with payload {payload}")
 
         if channel != self.channel_name:
             raise Exception(
@@ -146,33 +136,21 @@ class NotificationManager:
             except KeyError:
                 pass  # websocket
             except asyncio.QueueFull:
-                self.logger.warning(
-                    f"[{connection_id}] tx queue full, skipping notification"
-                )
+                self.logger.warning(f"[{connection_id}] tx queue full, skipping notification")
 
-    async def _register_forwarder(
-        self, connection: asyncpg.Connection, forwarder_id: str
-    ):
+    async def _register_forwarder(self, connection: asyncpg.Connection, forwarder_id: str):
         # register at db
-        self.channel_id = await connection.fetchval(
-            "select channel_id from forwarder_boot($1)", forwarder_id
-        )
+        self.channel_id = await connection.fetchval("select channel_id from forwarder_boot($1)", forwarder_id)
 
-        self.logger.info(
-            f"Registered forwarder {forwarder_id}: DB gave us channel_id {self.channel_id!r}"
-        )
+        self.logger.info(f"Registered forwarder {forwarder_id}: DB gave us channel_id {self.channel_id!r}")
         self.channel_name = f"channel{self.channel_id}"
 
         # one channel for NOTIFY to this db-client
         await connection.add_listener(self.channel_name, self._on_psql_notification)
 
-        self.logger.info(
-            f"Listening on postgresql triggers on channel '{self.channel_name}'"
-        )
+        self.logger.info(f"Listening on postgresql triggers on channel '{self.channel_name}'")
 
-    async def _unregister_forwarder(
-        self, connection: asyncpg.Connection, forwarder_id: str
-    ):
+    async def _unregister_forwarder(self, connection: asyncpg.Connection, forwarder_id: str):
         # deregister at db
         await connection.remove_listener(self.channel_name, self._on_psql_notification)
 
@@ -185,9 +163,7 @@ class NotificationManager:
             raise WebSocketException(code=status.WS_1011_INTERNAL_ERROR)
         async with self.db_pool.acquire() as connection:
             # register the client connection at the db
-            connection_id = await connection.fetchval(
-                "select connection_id from client_connected($1)", self.channel_id
-            )
+            connection_id = await connection.fetchval("select connection_id from client_connected($1)", self.channel_id)
             self.logger.debug(f"Websocket client connected with id {connection_id}")
 
         self.active_connections[connection_id] = websocket
@@ -229,21 +205,15 @@ async def websocket_endpoint(
             CLIENT_SCHEMA.validate(msg)
             try:
                 async with db_pool.acquire() as connection:
-                    response = await ws_message(
-                        connection, connection_id, msg, user_service
-                    )
+                    response = await ws_message(connection, connection_id, msg, user_service)
             except (
                 asyncpg.DataError,
                 schema.SchemaError,
             ) as exc:
-                response = make_error_msg(
-                    code=status.HTTP_400_BAD_REQUEST, msg=str(exc)
-                )
+                response = make_error_msg(code=status.HTTP_400_BAD_REQUEST, msg=str(exc))
             except Exception as exc:
                 traceback.print_exc()
-                response = make_error_msg(
-                    code=status.HTTP_500_INTERNAL_SERVER_ERROR, msg=str(exc)
-                )
+                response = make_error_msg(code=status.HTTP_500_INTERNAL_SERVER_ERROR, msg=str(exc))
 
             serialized_response = json.dumps(response, default=encode_json)
             await ws.send_text(serialized_response)

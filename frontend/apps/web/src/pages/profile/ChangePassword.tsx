@@ -1,13 +1,13 @@
-import React from "react";
-import { Form, Formik, FormikHelpers, FormikProps } from "formik";
-import { api } from "../../core/api";
-import { toast } from "react-toastify";
-import { Button, LinearProgress, TextField, Typography } from "@mui/material";
-import { MobilePaper } from "../../components/style/mobile";
-import { useTitle } from "../../core/utils";
-import { z } from "zod";
 import { toFormikValidationSchema } from "@abrechnung/utils";
+import { Button, LinearProgress, TextField, Typography } from "@mui/material";
+import { Form, Formik, FormikHelpers, FormikProps } from "formik";
+import React from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
+import { z } from "zod";
+import { MobilePaper } from "../../components/style/mobile";
+import { api } from "../../core/api";
+import { useTitle } from "../../core/utils";
 
 const validationSchema = z
     .object({
@@ -26,7 +26,8 @@ export const ChangePassword: React.FC = () => {
     useTitle(t("Abrechnung - Change Password"));
 
     const handleSubmit = (values: FormSchema, { setSubmitting, resetForm }: FormikHelpers<FormSchema>) => {
-        api.changePassword({ oldPassword: values.password, newPassword: values.newPassword })
+        api.client.auth
+            .changePassword({ requestBody: { old_password: values.password, new_password: values.newPassword } })
             .then(() => {
                 setSubmitting(false);
                 toast.success(t("Successfully changed password"));

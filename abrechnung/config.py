@@ -1,6 +1,6 @@
 from datetime import timedelta
 from pathlib import Path
-from typing import Optional, List
+from typing import List, Optional
 
 import yaml
 from pydantic import BaseModel
@@ -26,7 +26,6 @@ class ApiConfig(BaseModel):
     id: str = "default"
     max_uploadable_file_size: int = 1024
     enable_cors: bool = True
-    access_token_validity: timedelta = timedelta(hours=1)
 
 
 class RegistrationConfig(BaseModel):

@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 
 from abrechnung.application.groups import GroupService
 from abrechnung.application.users import UserService
-from .common import BaseTestCase, TEST_CONFIG
+
+from .common import TEST_CONFIG, BaseTestCase
 
 
 class TransactionLogicTest(BaseTestCase):
@@ -36,9 +37,7 @@ class TransactionLogicTest(BaseTestCase):
             valid_until=datetime.now() + timedelta(hours=1),
         )
         self.assertIsNotNone(invite_token_id)
-        invites = await self.group_service.list_invites(
-            user=self.user, group_id=self.group_id
-        )
+        invites = await self.group_service.list_invites(user=self.user, group_id=self.group_id)
         self.assertEqual(1, len(invites))
         invite_token = invites[0].token
 

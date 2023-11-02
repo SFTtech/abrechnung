@@ -1,18 +1,21 @@
-import React from "react";
-import { RootDrawerScreenProps } from "../navigation/types";
-import { useAppSelector, selectGroupSlice, useAppDispatch } from "../store";
+import { useApi } from "@/core/ApiProvider";
 import { fetchGroups, selectGroupIds } from "@abrechnung/redux";
+import React from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
-import { api } from "../core/api";
+import { FAB } from "react-native-paper";
 import { GroupListItem } from "../components/GroupListItem";
 import LoadingIndicator from "../components/LoadingIndicator";
-import { FAB } from "react-native-paper";
+import { RootDrawerScreenProps } from "../navigation/types";
+import { selectGroupSlice, useAppDispatch, useAppSelector } from "../store";
 
 export const GroupList: React.FC<RootDrawerScreenProps<"GroupList">> = ({ navigation, route }) => {
     const dispatch = useAppDispatch();
     const [refreshing, setRefreshing] = React.useState<boolean>(false);
     const groupStatus = useAppSelector((state) => state.groups.status);
     const groupIds = useAppSelector((state) => selectGroupIds({ state: selectGroupSlice(state) }));
+
+    const { api } = useApi();
+
     const onRefresh = () => {
         console.debug("refreshing groups");
         setRefreshing(true);

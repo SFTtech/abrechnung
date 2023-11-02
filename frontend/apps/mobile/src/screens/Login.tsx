@@ -1,16 +1,16 @@
+import { useApi } from "@/core/ApiProvider";
+import { login } from "@abrechnung/redux";
+import { toFormikValidationSchema } from "@abrechnung/utils";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { SerializedError } from "@reduxjs/toolkit";
+import { Formik, FormikHelpers } from "formik";
 import React, { useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { RootDrawerScreenProps } from "../navigation/types";
 import { Appbar, Button, HelperText, ProgressBar, Text, TextInput, useTheme } from "react-native-paper";
-import { notify } from "../notifications";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useAppDispatch } from "../store";
-import { Formik, FormikHelpers } from "formik";
-import { login } from "@abrechnung/redux";
-import { api, websocket } from "../core/api";
 import { z } from "zod";
-import { SerializedError } from "@reduxjs/toolkit";
-import { toFormikValidationSchema } from "@abrechnung/utils";
+import { RootDrawerScreenProps } from "../navigation/types";
+import { notify } from "../notifications";
+import { useAppDispatch } from "../store";
 
 const validationSchema = z.object({
     server: z.string({ required_error: "server is required" }).url({ message: "invalid server url" }),
@@ -22,6 +22,7 @@ type FormSchema = z.infer<typeof validationSchema>;
 export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigation }) => {
     const theme = useTheme();
     const dispatch = useAppDispatch();
+    const { initApi } = useApi();
 
     const [showPassword, setShowPassword] = useState(false);
 
@@ -30,18 +31,17 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
     };
 
     const handleSubmit = (values: FormSchema, { setSubmitting }: FormikHelpers<FormSchema>) => {
+        const { api } = initApi(values.server);
         dispatch(
             login({
                 username: values.username,
                 password: values.password,
                 sessionName: "Abrechnung Mobile",
-                apiUrl: values.server,
                 api,
             })
         )
             .unwrap()
             .then(() => {
-                websocket.setUrl(`${values.server.replace("http://", "ws://").replace("https://", "ws://")}/api/v1/ws`);
                 setSubmitting(false);
             })
             .catch((err: SerializedError) => {
@@ -129,7 +129,7 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                         )}
 
                         {isSubmitting ? <ProgressBar indeterminate={true} /> : null}
-                        <Button mode="contained" style={styles.submit} onPress={handleSubmit}>
+                        <Button mode="contained" style={styles.submit} onPress={() => handleSubmit}>
                             Login
                         </Button>
 

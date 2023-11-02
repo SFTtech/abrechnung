@@ -13,10 +13,11 @@ from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
-from abrechnung.core.errors import NotFoundError, InvalidCommand
+from abrechnung.core.errors import InvalidCommand, NotFoundError
 from abrechnung.framework.database import create_db_pool
+
 from .middleware import ContextMiddleware
-from .routers import transactions, groups, auth, accounts, common, websocket
+from .routers import accounts, auth, common, groups, transactions, websocket
 from .routers.websocket import NotificationManager
 
 
@@ -29,7 +30,7 @@ class Api:
         self.api = FastAPI(
             title="Abrechnung REST-ish API",
             version=__version__,
-            license_info={"name": "AGPL-3.0"},
+            license_info={"identifier": "AGPL-3.0", "name": "AGPL-3.0"},
             docs_url="/api/docs",
             redoc_url=None,
         )
@@ -49,25 +50,15 @@ class Api:
         )
 
         self.api.add_exception_handler(NotFoundError, self._not_found_exception_handler)
-        self.api.add_exception_handler(
-            PermissionError, self._permission_error_exception_handler
-        )
-        self.api.add_exception_handler(
-            asyncpg.DataError, self._bad_request_exception_handler
-        )
-        self.api.add_exception_handler(
-            asyncpg.RaiseError, self._bad_request_exception_handler
-        )
+        self.api.add_exception_handler(PermissionError, self._permission_error_exception_handler)
+        self.api.add_exception_handler(asyncpg.DataError, self._bad_request_exception_handler)
+        self.api.add_exception_handler(asyncpg.RaiseError, self._bad_request_exception_handler)
         self.api.add_exception_handler(
             asyncpg.IntegrityConstraintViolationError,
             self._bad_request_exception_handler,
         )
-        self.api.add_exception_handler(
-            InvalidCommand, self._bad_request_exception_handler
-        )
-        self.api.add_exception_handler(
-            StarletteHTTPException, self._http_exception_handler
-        )
+        self.api.add_exception_handler(InvalidCommand, self._bad_request_exception_handler)
+        self.api.add_exception_handler(StarletteHTTPException, self._http_exception_handler)
 
         self.uvicorn_config = uvicorn.Config(
             self.api,
@@ -89,25 +80,19 @@ class Api:
     async def _not_found_exception_handler(self, request: Request, exc: NotFoundError):
         return self._format_error_message(status.HTTP_404_NOT_FOUND, str(exc))
 
-    async def _permission_error_exception_handler(
-        self, request: Request, exc: PermissionError
-    ):
+    async def _permission_error_exception_handler(self, request: Request, exc: PermissionError):
         return self._format_error_message(status.HTTP_403_FORBIDDEN, str(exc))
 
     async def _bad_request_exception_handler(self, request: Request, exc):
         return self._format_error_message(status.HTTP_400_BAD_REQUEST, str(exc))
 
-    async def _http_exception_handler(
-        self, request: Request, exc: StarletteHTTPException
-    ):
+    async def _http_exception_handler(self, request: Request, exc: StarletteHTTPException):
         return self._format_error_message(exc.status_code, exc.detail)
 
     async def _setup(self):
         self.db_pool = await create_db_pool(self.cfg.database)
         self.user_service = UserService(db_pool=self.db_pool, config=self.cfg)
-        self.transaction_service = TransactionService(
-            db_pool=self.db_pool, config=self.cfg
-        )
+        self.transaction_service = TransactionService(db_pool=self.db_pool, config=self.cfg)
         self.account_service = AccountService(db_pool=self.db_pool, config=self.cfg)
         self.group_service = GroupService(db_pool=self.db_pool, config=self.cfg)
         self.notification_manager = NotificationManager(config=self.cfg)

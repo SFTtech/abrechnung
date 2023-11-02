@@ -1,4 +1,4 @@
-import { Group } from "@abrechnung/types";
+import { Group } from "@abrechnung/api";
 import {
     Button,
     Checkbox,
@@ -28,7 +28,16 @@ interface Props {
 
 export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
     const handleSubmit = (values, { setSubmitting }) => {
-        api.createGroupInvite(group.id, values.description, values.validUntil, values.singleUse, values.joinAsEditor)
+        api.client.groups
+            .createInvite({
+                groupId: group.id,
+                requestBody: {
+                    description: values.description,
+                    valid_until: values.validUntil,
+                    single_use: values.singleUse,
+                    join_as_editor: values.joinAsEditor,
+                },
+            })
             .then((result) => {
                 toast.success("Successfully created invite token");
                 setSubmitting(false);

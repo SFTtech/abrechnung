@@ -3,20 +3,15 @@ from typing import Optional
 
 import asyncpg
 from asyncpg.pool import Pool
-from email_validator import validate_email, EmailNotValidError
+from email_validator import EmailNotValidError, validate_email
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
 from abrechnung.config import Config
-from abrechnung.core.errors import (
-    NotFoundError,
-    InvalidCommand,
-)
-from abrechnung.core.service import (
-    Service,
-)
-from abrechnung.domain.users import User, Session
+from abrechnung.core.errors import InvalidCommand, NotFoundError
+from abrechnung.core.service import Service
+from abrechnung.domain.users import Session, User
 from abrechnung.framework.database import Connection
 from abrechnung.framework.decorators import with_db_transaction
 
@@ -56,20 +51,19 @@ class UserService(Service):
     def _check_password(self, password: str, hashed_password: str) -> bool:
         return self.pwd_context.verify(password, hashed_password)
 
-    def _create_access_token(self, data: dict):
-        to_encode = data.copy()
-        expire = datetime.utcnow() + self.cfg.api.access_token_validity
-        to_encode.update({"exp": expire})
-        encoded_jwt = jwt.encode(
-            to_encode, self.cfg.api.secret_key, algorithm=ALGORITHM
-        )
+    def _create_access_token(self, user_id: int, session_id: int):
+        data = {
+            "user_id": user_id,
+            "session_id": session_id,
+        }
+        encoded_jwt = jwt.encode(data, self.cfg.api.secret_key, algorithm=ALGORITHM)
         return encoded_jwt
 
     def decode_jwt_payload(self, token: str) -> TokenMetadata:
         try:
             payload = jwt.decode(token, self.cfg.api.secret_key, algorithms=[ALGORITHM])
             try:
-                return TokenMetadata.parse_obj(payload)
+                return TokenMetadata.model_validate(payload)
             except:
                 raise PermissionError("invalid access token token")
         except JWTError:
@@ -80,8 +74,7 @@ class UserService(Service):
         token_metadata = self.decode_jwt_payload(token)
 
         sess = await conn.fetchval(
-            "select id from session "
-            "where id = $1 and user_id = $2 and valid_until is null or valid_until > now()",
+            "select id from session " "where id = $1 and user_id = $2 and valid_until is null or valid_until > now()",
             token_metadata.session_id,
             token_metadata.user_id,
         )
@@ -103,27 +96,15 @@ class UserService(Service):
 
             return self._check_password(password, user["hashed_password"])
 
-    async def get_access_token_from_session_token(self, session_token: str) -> str:
-        res = await self.is_session_token_valid(token=session_token)
-        if res is None:
-            raise PermissionError("invalid session token")
-        user_id, session_id = res
-
-        return self._create_access_token({"user_id": user_id, "session_id": session_id})
-
     @with_db_transaction
-    async def is_session_token_valid(
-        self, *, conn: Connection, token: str
-    ) -> Optional[tuple[int, int]]:
+    async def is_session_token_valid(self, *, conn: Connection, token: str) -> Optional[tuple[int, int]]:
         """returns the session id"""
         row = await conn.fetchrow(
             "select user_id, id from session where token = $1 and valid_until is null or valid_until > now()",
             token,
         )
         if row:
-            await conn.execute(
-                "update session set last_seen = now() where token = $1", token
-            )
+            await conn.execute("update session set last_seen = now() where token = $1", token)
 
         return row
 
@@ -152,13 +133,14 @@ class UserService(Service):
         if user["pending"]:
             raise InvalidCommand(f"You need to confirm your email before logging in")
 
-        session_token, session_id = await conn.fetchrow(
-            "insert into session (user_id, name) values ($1, $2) returning token, id",
+        session_id = await conn.fetchval(
+            "insert into session (user_id, name) values ($1, $2) returning id",
             user["id"],
             session_name,
         )
+        access_token = self._create_access_token(user_id=user["id"], session_id=session_id)
 
-        return user["id"], session_id, str(session_token)
+        return user["id"], session_id, access_token
 
     @with_db_transaction
     async def logout_user(self, *, conn: Connection, user: User, session_id: int):
@@ -171,13 +153,10 @@ class UserService(Service):
             raise InvalidCommand(f"Already logged out")
 
     @with_db_transaction
-    async def demo_register_user(
-        self, *, conn: Connection, username: str, email: str, password: str
-    ) -> int:
+    async def demo_register_user(self, *, conn: Connection, username: str, email: str, password: str) -> int:
         hashed_password = self._hash_password(password)
         user_id = await conn.fetchval(
-            "insert into usr (username, email, hashed_password, pending) "
-            "values ($1, $2, $3, false) returning id",
+            "insert into usr (username, email, hashed_password, pending) " "values ($1, $2, $3, false) returning id",
             username,
             email,
             hashed_password,
@@ -215,6 +194,7 @@ class UserService(Service):
         email: str,
         password: str,
         invite_token: Optional[str] = None,
+        requires_email_confirmation=True,
     ) -> int:
         """Register a new user, returning the newly created user id and creating a pending registration entry"""
         if not self.enable_registration:
@@ -227,8 +207,7 @@ class UserService(Service):
 
         if invite_token is not None and self.allow_guest_users and not has_valid_email:
             invite = await conn.fetchval(
-                "select id "
-                "from group_invite where token = $1 and valid_until > now()",
+                "select id " "from group_invite where token = $1 and valid_until > now()",
                 invite_token,
             )
             if invite is None:
@@ -238,24 +217,23 @@ class UserService(Service):
                 self._validate_email_domain(email)
         elif not has_valid_email:
             raise PermissionError(
-                f"Only users with emails out of the following domains are "
-                f"allowed: {self.valid_email_domains}"
+                f"Only users with emails out of the following domains are " f"allowed: {self.valid_email_domains}"
             )
 
         hashed_password = self._hash_password(password)
         user_id = await conn.fetchval(
-            "insert into usr (username, email, hashed_password, is_guest_user) values ($1, $2, $3, $4) returning id",
+            "insert into usr (username, email, hashed_password, is_guest_user, pending) values ($1, $2, $3, $4, $5) returning id",
             username,
             email,
             hashed_password,
             is_guest_user,
+            requires_email_confirmation,
         )
         if user_id is None:
             raise InvalidCommand(f"Registering new user failed")
 
-        await conn.execute(
-            "insert into pending_registration (user_id) values ($1)", user_id
-        )
+        if requires_email_confirmation:
+            await conn.execute("insert into pending_registration (user_id) values ($1)", user_id)
 
         return user_id
 
@@ -273,9 +251,7 @@ class UserService(Service):
         if valid_until is None or valid_until < datetime.now(tz=timezone.utc):
             raise PermissionError(f"Invalid registration token")
 
-        await conn.execute(
-            "delete from pending_registration where user_id = $1", user_id
-        )
+        await conn.execute("delete from pending_registration where user_id = $1", user_id)
         await conn.execute("update usr set pending = false where id = $1", user_id)
 
         return user_id
@@ -316,9 +292,7 @@ class UserService(Service):
             raise NotFoundError(f"no such session found with id {session_id}")
 
     @with_db_transaction
-    async def rename_session(
-        self, *, conn: Connection, user: User, session_id: int, name: str
-    ):
+    async def rename_session(self, *, conn: Connection, user: User, session_id: int, name: str):
         sess_id = await conn.fetchval(
             "update session set name = $3 where id = $1 and user_id = $2 returning id",
             session_id,
@@ -329,9 +303,7 @@ class UserService(Service):
             raise NotFoundError(f"no such session found with id {session_id}")
 
     @with_db_transaction
-    async def change_password(
-        self, *, conn: Connection, user: User, old_password: str, new_password: str
-    ):
+    async def change_password(self, *, conn: Connection, user: User, old_password: str, new_password: str):
         valid_pw = await self._verify_user_password(user.id, old_password)
         if not valid_pw:
             raise InvalidPassword
@@ -344,9 +316,7 @@ class UserService(Service):
         )
 
     @with_db_transaction
-    async def request_email_change(
-        self, *, conn: Connection, user: User, password: str, email: str
-    ):
+    async def request_email_change(self, *, conn: Connection, user: User, password: str, email: str):
         try:
             valid = validate_email(email)
             email = valid.normalized
@@ -374,12 +344,8 @@ class UserService(Service):
         if valid_until is None or valid_until < datetime.now(tz=timezone.utc):
             raise PermissionError
 
-        await conn.execute(
-            "delete from pending_email_change where user_id = $1", user_id
-        )
-        await conn.execute(
-            "update usr set email = $2 where id = $1", user_id, row["new_email"]
-        )
+        await conn.execute("delete from pending_email_change where user_id = $1", user_id)
+        await conn.execute("update usr set email = $2 where id = $1", user_id, row["new_email"])
 
         return user_id
 
@@ -395,9 +361,7 @@ class UserService(Service):
         )
 
     @with_db_transaction
-    async def confirm_password_recovery(
-        self, *, conn: Connection, token: str, new_password: str
-    ) -> int:
+    async def confirm_password_recovery(self, *, conn: Connection, token: str, new_password: str) -> int:
         row = await conn.fetchrow(
             "select user_id, valid_until from pending_password_recovery where token = $1",
             token,
@@ -407,9 +371,7 @@ class UserService(Service):
         if valid_until is None or valid_until < datetime.now(tz=timezone.utc):
             raise PermissionError
 
-        await conn.execute(
-            "delete from pending_password_recovery where user_id = $1", user_id
-        )
+        await conn.execute("delete from pending_password_recovery where user_id = $1", user_id)
         hashed_password = self._hash_password(password=new_password)
         await conn.execute(
             "update usr set hashed_password = $2 where id = $1",

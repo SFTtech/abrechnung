@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-from yaml import safe_load, dump
-import sys
-from os import execvp, execlp, getenv, makedirs
 import subprocess
+import sys
+from os import execlp, execvp, getenv, makedirs
+
+from yaml import dump, safe_load
 
 
 def to_bool(data: str):
@@ -44,13 +45,9 @@ config["api"]["host"] = "0.0.0.0"
 config["api"]["port"] = int(getenv("ABRECHNUNG_PORT", "8080"))
 config["api"]["id"] = getenv("ABRECHNUNG_ID", "default")
 
-config["registration"]["allow_guest_users"] = to_bool(
-    getenv("REGISTRATION_ALLOW_GUEST_USERS", "false")
-)
+config["registration"]["allow_guest_users"] = to_bool(getenv("REGISTRATION_ALLOW_GUEST_USERS", "false"))
 config["registration"]["enabled"] = to_bool(getenv("REGISTRATION_ENABLED", "false"))
-config["registration"]["valid_email_domains"] = getenv(
-    "REGISTRATION_VALID_EMAIL_DOMAINS", "false"
-).split(",")
+config["registration"]["valid_email_domains"] = getenv("REGISTRATION_VALID_EMAIL_DOMAINS", "false").split(",")
 
 config["email"]["address"] = getenv("ABRECHNUNG_EMAIL", "")
 config["email"]["host"] = getenv("SMTP_HOST", "localhost")

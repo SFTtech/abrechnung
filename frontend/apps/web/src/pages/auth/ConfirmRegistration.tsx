@@ -1,9 +1,9 @@
+import { Alert, Button, Container, Link, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import Loading from "../../components/style/Loading";
-import { api } from "../../core/api";
-import { Alert, Button, Container, Link, Typography } from "@mui/material";
 import { MobilePaper } from "../../components/style/mobile";
+import { api } from "../../core/api";
 import { useTitle } from "../../core/utils";
 
 export const ConfirmRegistration: React.FC = () => {
@@ -16,7 +16,8 @@ export const ConfirmRegistration: React.FC = () => {
     const confirmEmail = (e) => {
         e.preventDefault();
         setStatus("loading");
-        api.confirmRegistration(token)
+        api.client.auth
+            .confirmRegistration({ requestBody: { token } })
             .then((value) => {
                 setError(null);
                 setStatus("success");

@@ -7,12 +7,13 @@ from typing import Annotated
 import typer
 
 from abrechnung.config import read_config
+from abrechnung.http.api import Api
 from abrechnung.mailer import Mailer
 from abrechnung.util import log_setup
+
 from .admin import admin_cli
 from .database import database_cli
 from .demo import demo_cli
-from abrechnung.http.api import Api
 
 cli = typer.Typer()
 

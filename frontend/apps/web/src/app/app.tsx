@@ -1,32 +1,30 @@
-import React, { useEffect, useMemo } from "react";
-import { ToastContainer } from "react-toastify";
-import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
-
-import Loading from "../components/style/Loading";
-import { createTheme, CssBaseline, PaletteMode, ThemeProvider, useMediaQuery } from "@mui/material";
-import { StyledEngineProvider } from "@mui/material/styles";
-import { LocalizationProvider } from "@mui/x-date-pickers";
-
-import "react-toastify/dist/ReactToastify.css";
-import { api, baseURL, ws } from "../core/api";
-import { useAppDispatch, useAppSelector, selectAuthSlice, selectTheme, selectSettingsSlice } from "../store";
 import {
     AbrechnungUpdateProvider,
     fetchGroups,
-    selectSessionToken,
+    selectAccessToken,
+    selectCurrentUserId,
     subscribe,
     unsubscribe,
-    selectCurrentUserId,
 } from "@abrechnung/redux";
+import { CssBaseline, PaletteMode, ThemeProvider, createTheme, useMediaQuery } from "@mui/material";
+import { StyledEngineProvider } from "@mui/material/styles";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
+import { useEffect, useMemo } from "react";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import Loading from "../components/style/Loading";
+import { api, ws } from "../core/api";
+import { selectAuthSlice, selectSettingsSlice, selectTheme, useAppDispatch, useAppSelector } from "../store";
 import { Router } from "./Router";
 
 export default function App() {
     const darkModeSystem = useMediaQuery("(prefers-color-scheme: dark)");
     const dispatch = useAppDispatch();
     const groupStoreStatus = useAppSelector((state) => state.groups.status);
-    const sessionToken = useAppSelector((state) => selectSessionToken({ state: selectAuthSlice(state) }));
+    const accessToken = useAppSelector((state) => selectAccessToken({ state: selectAuthSlice(state) }));
     const themeMode = useAppSelector((state) => selectTheme({ state: selectSettingsSlice(state) }));
-    const isAuthenticated = sessionToken !== undefined;
+    const isAuthenticated = accessToken !== undefined;
     const userId = useAppSelector((state) => selectCurrentUserId({ state: selectAuthSlice(state) }));
 
     const useDarkMode: PaletteMode = themeMode === "browser" ? (darkModeSystem ? "dark" : "light") : themeMode;
@@ -42,13 +40,13 @@ export default function App() {
     );
 
     useEffect(() => {
-        if (sessionToken !== undefined) {
-            api.init(baseURL, sessionToken).then(() => {
+        if (accessToken !== undefined) {
+            api.init(accessToken).then(() => {
                 console.log("dispatching fetch groups");
                 dispatch(fetchGroups({ api }));
             });
         }
-    }, [sessionToken, dispatch]);
+    }, [accessToken, dispatch]);
 
     useEffect(() => {
         if (!isAuthenticated || userId === undefined) {

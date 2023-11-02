@@ -1,39 +1,23 @@
-import { backendUserToUser, validateJWTToken } from "./auth";
-import deepmerge from "deepmerge";
 import {
     Account,
     AccountBase,
-    Group,
-    GroupInvite,
-    GroupMember,
-    GroupLogEntry,
-    TransactionPosition,
-    Transaction,
-    TransactionContainer,
-    TransactionBase,
-    GroupBase,
-    PersonalAccountBase,
     ClearingAccountBase,
+    PersonalAccountBase,
+    Transaction,
+    TransactionBase,
+    TransactionContainer,
+    TransactionPosition,
 } from "@abrechnung/types";
+import deepmerge from "deepmerge";
 import { BackendAccount, backendAccountToAccount } from "./accounts";
+import { Client } from "./generated";
 import {
     BackendTransaction,
     backendTransactionToTransaction as backendTransactionToTransactionContainer,
     toBackendPosition,
 } from "./transactions";
-import {
-    BackendGroup,
-    BackendGroupMember,
-    backendGroupToGroup,
-    backendInviteToInvite,
-    backendMemberToMember,
-    backendLogEntryToLogEntry,
-    BackendGroupInvite,
-    BackendGroupLogEntry,
-    backendGroupPreviewToPreview,
-} from "./groups";
 import { IConnectionStatusProvider, IHttpError } from "./types";
-import { isRequiredVersion, SemVersion } from "./version";
+import { isRequiredVersion } from "./version";
 
 type RequestOptions = {
     withAuth?: boolean;
@@ -43,7 +27,10 @@ type RequestOptions = {
 } & Omit<RequestInit, "headers">;
 
 export class HttpError implements IHttpError {
-    constructor(public statusCode: number, public message: string) {}
+    constructor(
+        public statusCode: number,
+        public message: string
+    ) {}
 }
 
 // accepted version range of the backend api, [min, max)
@@ -51,18 +38,28 @@ export const MIN_BACKEND_VERSION = "0.10.0";
 export const MAX_BACKEND_VERSION = "0.11.0";
 
 export class Api {
-    private baseApiUrl: string | null = null;
-    private sessionToken: string | null = null;
-    private accessToken: string | null = null;
-    private backendVersion: string | null = null;
+    private baseApiUrl: string;
+    private accessToken?: string;
+    private backendVersion?: string;
+
+    public client: Client;
 
     private authenticatedResolveCallbacks: Array<() => void> = [];
 
-    constructor(private connectionStatusProvider: IConnectionStatusProvider) {}
+    constructor(
+        private connectionStatusProvider: IConnectionStatusProvider,
+        baseApiUrl: string
+    ) {
+        this.baseApiUrl = baseApiUrl;
+        this.client = this.makeClient();
+    }
+
+    private makeClient = () => {
+        return new Client({ BASE: this.baseApiUrl, TOKEN: this.accessToken });
+    };
 
     public resetAuthState = () => {
-        this.sessionToken = null;
-        // this.accessToken = null; // we do not null the access token s.t. we can perform remaining requests
+        this.accessToken = undefined;
     };
 
     private notifyAuthenticatedWaiters = () => {
@@ -71,19 +68,17 @@ export class Api {
         }
     };
 
-    public init = async (baseApiUrl: string, sessionToken?: string) => {
-        this.baseApiUrl = baseApiUrl;
-
-        if (sessionToken) {
-            this.setSessionToken(sessionToken);
+    public init = async (accessToken?: string) => {
+        if (accessToken) {
+            this.setAccessToken(accessToken);
         }
         await this.checkBackendVersion();
     };
 
     private checkBackendVersion = async () => {
-        if (this.backendVersion === null) {
+        if (this.backendVersion === undefined) {
             try {
-                const version = await this.getVersion();
+                const version = await this.client.common.getVersion();
                 this.backendVersion = version.version;
             } catch {
                 // TODO: what to do here, should we propagate this error?
@@ -99,7 +94,7 @@ export class Api {
 
     public waitUntilAuthenticated = async (): Promise<void> => {
         return new Promise<void>((resolve) => {
-            if (this.sessionToken !== null) {
+            if (this.accessToken !== null) {
                 resolve();
             } else {
                 this.authenticatedResolveCallbacks.push(resolve);
@@ -107,168 +102,26 @@ export class Api {
         });
     };
 
-    public getAccessToken = (): string | null => {
+    public getAccessToken = (): string | undefined => {
         return this.accessToken;
+    };
+
+    public setAccessToken = (token: string) => {
+        this.accessToken = token;
+        this.client = this.makeClient();
+        this.notifyAuthenticatedWaiters();
     };
 
     public setBaseApiUrl = (url: string) => {
         this.baseApiUrl = url;
     };
 
-    public getBaseApiUrl = (): string | null => {
+    public getBaseApiUrl = (): string => {
         return this.baseApiUrl;
-    };
-
-    public setSessionToken = (token: string) => {
-        this.sessionToken = token;
-        this.notifyAuthenticatedWaiters();
-    };
-
-    public getSessionToken = (): string | null => {
-        return this.sessionToken;
     };
 
     public hasConnection = () => {
         return this.connectionStatusProvider.hasConnection();
-    };
-
-    public updateAccessToken = async (): Promise<string | null> => {
-        if (this.sessionToken === null) {
-            return null;
-        }
-        const resp = await fetch(`${this.baseApiUrl}/api/v1/auth/fetch_access_token`, {
-            method: "POST",
-            body: JSON.stringify({ token: this.sessionToken }),
-            headers: {
-                "Content-Type": "application/json",
-            },
-        });
-        if (!resp.ok) {
-            const body = await resp.text();
-            console.log("error on fetching new access token", body);
-            return null;
-        }
-        // TODO: error handling
-        const jsonResp = await resp.json();
-        this.accessToken = jsonResp.access_token;
-        return jsonResp.access_token;
-    };
-
-    public getVersion = async (): Promise<SemVersion> => {
-        const resp = await this.makeGet("/api/version", { withAuth: false, skipVersionCheck: true });
-        return {
-            version: resp.version,
-            major: Number(resp.major_version),
-            minor: Number(resp.minor_version),
-            patch: Number(resp.patch_version),
-        };
-    };
-
-    public fetchGroups = async (): Promise<Group[]> => {
-        const groups = await this.makeGet("/api/v1/groups");
-        return groups.map((group: BackendGroup) => backendGroupToGroup(group));
-    };
-
-    public fetchGroup = async (groupID: number): Promise<Group> => {
-        const group = await this.makeGet(`/api/v1/groups/${groupID}`);
-        return backendGroupToGroup(group);
-    };
-
-    public fetchGroupPreview = async (token: string) => {
-        const resp = await this.makePost(`/api/v1/groups/preview`, {
-            invite_token: token,
-        });
-        return backendGroupPreviewToPreview(resp);
-    };
-
-    public createGroup = async (group: Omit<GroupBase, "id">): Promise<Group> => {
-        const resp = await this.makePost("/api/v1/groups", {
-            name: group.name,
-            description: group.description,
-            currency_symbol: group.currencySymbol,
-            terms: group.terms,
-            add_user_account_on_join: group.addUserAccountOnJoin,
-        });
-        return backendGroupToGroup(resp);
-    };
-
-    public updateGroupMetadata = async (group: GroupBase): Promise<Group> => {
-        const resp = await this.makePost(`/api/v1/groups/${group.id}`, {
-            name: group.name,
-            description: group.description,
-            currency_symbol: group.currencySymbol,
-            terms: group.terms,
-            add_user_account_on_join: group.addUserAccountOnJoin,
-        });
-        return backendGroupToGroup(resp);
-    };
-
-    public leaveGroup = async (groupID: number) => {
-        return await this.makePost(`/api/v1/groups/${groupID}/leave`);
-    };
-
-    public deleteGroup = async (groupID: number) => {
-        return await this.makeDelete(`/api/v1/groups/${groupID}`);
-    };
-
-    public joinGroup = async (token: string) => {
-        return await this.makePost(`/api/v1/groups/join`, {
-            invite_token: token,
-        });
-    };
-
-    public fetchGroupMembers = async (groupID: number): Promise<GroupMember[]> => {
-        const members = await this.makeGet(`/api/v1/groups/${groupID}/members`);
-        return members.map((member: BackendGroupMember) => backendMemberToMember(member));
-    };
-
-    public updateGroupMemberPrivileges = async (args: {
-        groupId: number;
-        userId: number;
-        isOwner: boolean;
-        canWrite: boolean;
-    }) => {
-        const member = await this.makePost(`/api/v1/groups/${args.groupId}/members`, {
-            user_id: args.userId,
-            is_owner: args.isOwner,
-            can_write: args.canWrite,
-        });
-        return backendMemberToMember(member);
-    };
-
-    public fetchGroupLog = async (groupID: number): Promise<GroupLogEntry[]> => {
-        const log = await this.makeGet(`/api/v1/groups/${groupID}/logs`);
-        return log.map((l: BackendGroupLogEntry) => backendLogEntryToLogEntry(l));
-    };
-
-    public sendGroupMessage = async (groupID: number, message: string) => {
-        return await this.makePost(`/api/v1/groups/${groupID}/send_message`, {
-            message: message,
-        });
-    };
-
-    public fetchGroupInvites = async (groupID: number): Promise<GroupInvite[]> => {
-        const log = await this.makeGet(`/api/v1/groups/${groupID}/invites`);
-        return log.map((i: BackendGroupInvite) => backendInviteToInvite(i));
-    };
-
-    public createGroupInvite = async (
-        groupID: number,
-        description: string,
-        validUntil: string,
-        singleUse: boolean,
-        joinAsEditor: boolean
-    ) => {
-        return await this.makePost(`/api/v1/groups/${groupID}/invites`, {
-            description: description,
-            valid_until: validUntil,
-            single_use: singleUse,
-            join_as_editor: joinAsEditor,
-        });
-    };
-
-    public deleteGroupInvite = async (groupID: number, inviteID: number) => {
-        return await this.makeDelete(`/api/v1/groups/${groupID}/invites/${inviteID}`);
     };
 
     public fetchAccounts = async (groupID: number): Promise<Account[]> => {
@@ -507,150 +360,12 @@ export class Api {
         return backendTransactionToTransactionContainer(resp);
     };
 
-    public login = async (
-        username: string,
-        password: string,
-        sessionName: string
-    ): Promise<{ sessionToken: string; accessToken: string; baseUrl: string }> => {
-        const resp = await this.makePost(
-            "/api/v1/auth/login",
-            { username: username, password: password, session_name: sessionName },
-            { withAuth: false }
-        );
-
-        this.accessToken = resp.access_token;
-        this.sessionToken = resp.session_token;
-
-        return {
-            accessToken: resp.access_token,
-            sessionToken: resp.session_token,
-            baseUrl: this.baseApiUrl as string,
-        };
-    };
-
-    public logout = async () => {
-        const resp = await this.makePost("/api/v1/auth/logout");
-        this.resetAuthState();
-        return resp;
-    };
-
-    public register = async (username: string, email: string, password: string, inviteToken?: string) => {
-        return await this.makePost(
-            "/api/v1/auth/register",
-            {
-                username: username,
-                email: email,
-                password: password,
-                invite_token: inviteToken,
-            },
-            { withAuth: false }
-        );
-    };
-
-    public fetchProfile = async () => {
-        const resp = await this.makeGet("/api/v1/profile");
-        return backendUserToUser(resp);
-    };
-
-    public deleteSession = async (sessionID: string) => {
-        return await this.makePost("/api/v1/auth/delete_session", {
-            session_id: sessionID,
-        });
-    };
-
-    public renameSession = async (sessionID: string, name: string) => {
-        return await this.makePost("/api/v1/auth/rename_session", {
-            session_id: sessionID,
-            name: name,
-        });
-    };
-
-    public requestPasswordRecovery = async (email: string) => {
-        return await this.makePost("/api/v1/auth/recover_password", { email: email }, { withAuth: false });
-    };
-
-    public confirmPasswordRecovery = async ({ token, newPassword }: { token: string; newPassword: string }) => {
-        return await this.makePost(
-            "/api/v1/auth/confirm_password_recovery",
-            {
-                token: token,
-                new_password: newPassword,
-            },
-            { withAuth: false }
-        );
-    };
-
-    public changeEmail = async ({ password, newEmail }: { password: string; newEmail: string }) => {
-        return await this.makePost("/api/v1/profile/change_email", {
-            password: password,
-            email: newEmail,
-        });
-    };
-
-    public changePassword = async ({ oldPassword, newPassword }: { oldPassword: string; newPassword: string }) => {
-        return await this.makePost("/api/v1/profile/change_password", {
-            old_password: oldPassword,
-            new_password: newPassword,
-        });
-    };
-
-    public confirmRegistration = async (token: string) => {
-        return await this.makePost(
-            "/api/v1/auth/confirm_registration",
-            {
-                token: token,
-            },
-            {
-                withAuth: false,
-            }
-        );
-    };
-
-    public confirmEmailChange = async (token: string) => {
-        return await this.makePost(
-            "/api/v1/auth/confirm_email_change",
-            {
-                token: token,
-            },
-            {
-                withAuth: false,
-            }
-        );
-    };
-
-    public confirmPasswordReset = async (token: string) => {
-        return await this.makePost(
-            "/api/v1/auth/confirm_password_reset",
-            {
-                token: token,
-            },
-            {
-                withAuth: false,
-            }
-        );
-    };
-
-    public getToken = async (): Promise<string> => {
-        if (this.sessionToken === null && this.accessToken !== null && validateJWTToken(this.accessToken)) {
-            return this.accessToken;
-        }
-
-        if (this.sessionToken === null) {
-            throw new Error("no session token present");
-        }
-
-        if (this.accessToken === null || !validateJWTToken(this.accessToken)) {
-            this.accessToken = await this.updateAccessToken();
-            console.log("fetched new access token", this.accessToken);
-            if (this.accessToken !== null) {
-                return this.accessToken;
-            }
+    public getToken = (): string => {
+        if (this.accessToken == null) {
             throw new Error("no access token present");
         }
-        if (this.accessToken !== null) {
-            return this.accessToken;
-        }
-        throw new Error("no access token present");
+
+        return this.accessToken;
     };
 
     public getTokenJSON = (): { userID: number } | null => {
@@ -663,10 +378,8 @@ export class Api {
     };
 
     private makeAuthHeader = async () => {
-        // TODO: find out currently valid abrechnung instance
-        const token = await this.getToken();
+        const token = this.getToken();
 
-        // TODO: check result
         return {
             Authorization: `Bearer ${token}`,
         };

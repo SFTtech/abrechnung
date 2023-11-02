@@ -8,10 +8,16 @@ import asyncpg
 from asyncpg.pool import Pool
 
 from abrechnung.application.users import UserService
-from abrechnung.config import Config, EmailConfig, ApiConfig, RegistrationConfig, ServiceConfig
-from abrechnung.database.migrations import reset_schema, apply_revisions
+from abrechnung.config import (
+    ApiConfig,
+    Config,
+    EmailConfig,
+    RegistrationConfig,
+    ServiceConfig,
+)
+from abrechnung.database.migrations import apply_revisions, reset_schema
 from abrechnung.domain.users import User
-from abrechnung.framework.database import create_db_pool, DatabaseConfig
+from abrechnung.framework.database import DatabaseConfig, create_db_pool
 
 lock = asyncio.Lock()
 

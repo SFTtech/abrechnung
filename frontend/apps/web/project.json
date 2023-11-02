@@ -1,117 +1,93 @@
 {
-  "name": "web",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/web/src",
-  "projectType": "application",
-  "targets": {
-    "collect-assets": {
-      "executor": "nx:run-commands",
-      "options": {
-        "commands": [
-          "cp -rf assets/* apps/web/src/assets/",
-          "cp assets/logo.png apps/web/src/favicon.png"
-        ],
-        "parallel": false
-      }
-    },
-    "build": {
-      "executor": "@nx/webpack:webpack",
-      "outputs": [
-        "{options.outputPath}"
-      ],
-      "defaultConfiguration": "production",
-      "dependsOn": [
-        "collect-assets"
-      ],
-      "options": {
-        "compiler": "babel",
-        "outputPath": "dist/apps/web",
-        "index": "apps/web/src/index.html",
-        "baseHref": "/",
-        "main": "apps/web/src/main.tsx",
-        "polyfills": "apps/web/src/polyfills.ts",
-        "tsConfig": "apps/web/tsconfig.app.json",
-        "assets": [
-          "apps/web/src/favicon.png",
-          "apps/web/src/assets"
-        ],
-        "styles": [
-          "apps/web/src/styles.css"
-        ],
-        "scripts": [],
-        "webpackConfig": "@nx/react/plugins/webpack"
-      },
-      "configurations": {
-        "development": {
-          "extractLicenses": false,
-          "optimization": false,
-          "sourceMap": true,
-          "vendorChunk": true
-        },
-        "production": {
-          "fileReplacements": [
-            {
-              "replace": "apps/web/src/environments/environment.ts",
-              "with": "apps/web/src/environments/environment.prod.ts"
+    "name": "web",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "apps/web/src",
+    "projectType": "application",
+    "targets": {
+        "collect-assets": {
+            "executor": "nx:run-commands",
+            "options": {
+                "commands": ["cp -rf assets/* apps/web/src/assets/", "cp assets/logo.png apps/web/src/favicon.png"],
+                "parallel": false
             }
-          ],
-          "optimization": true,
-          "outputHashing": "all",
-          "sourceMap": false,
-          "namedChunks": false,
-          "extractLicenses": true,
-          "vendorChunk": false
-        }
-      }
-    },
-    "serve": {
-      "executor": "@nx/webpack:dev-server",
-      "defaultConfiguration": "development",
-      "dependsOn": [
-        "collect-assets"
-      ],
-      "options": {
-        "buildTarget": "web:build",
-        "hmr": true,
-        "host": "0.0.0.0"
-      },
-      "configurations": {
-        "development": {
-          "buildTarget": "web:build:development"
         },
-        "production": {
-          "buildTarget": "web:build:production",
-          "hmr": false
+        "build": {
+            "executor": "@nx/webpack:webpack",
+            "outputs": ["{options.outputPath}"],
+            "defaultConfiguration": "production",
+            "dependsOn": ["collect-assets"],
+            "options": {
+                "compiler": "babel",
+                "outputPath": "dist/apps/web",
+                "index": "apps/web/src/index.html",
+                "baseHref": "/",
+                "main": "apps/web/src/main.tsx",
+                "polyfills": "apps/web/src/polyfills.ts",
+                "tsConfig": "apps/web/tsconfig.app.json",
+                "assets": ["apps/web/src/favicon.png", "apps/web/src/assets"],
+                "styles": ["apps/web/src/styles.css"],
+                "scripts": [],
+                "webpackConfig": "@nx/react/plugins/webpack"
+            },
+            "configurations": {
+                "development": {
+                    "extractLicenses": false,
+                    "optimization": false,
+                    "sourceMap": true,
+                    "vendorChunk": true
+                },
+                "production": {
+                    "fileReplacements": [
+                        {
+                            "replace": "apps/web/src/environments/environment.ts",
+                            "with": "apps/web/src/environments/environment.prod.ts"
+                        }
+                    ],
+                    "optimization": true,
+                    "outputHashing": "all",
+                    "sourceMap": false,
+                    "namedChunks": false,
+                    "extractLicenses": true,
+                    "vendorChunk": false
+                }
+            }
+        },
+        "serve": {
+            "executor": "@nx/webpack:dev-server",
+            "defaultConfiguration": "development",
+            "dependsOn": ["collect-assets"],
+            "options": {
+                "buildTarget": "web:build",
+                "hmr": true,
+                "host": "0.0.0.0"
+            },
+            "configurations": {
+                "development": {
+                    "buildTarget": "web:build:development"
+                },
+                "production": {
+                    "buildTarget": "web:build:production",
+                    "hmr": false
+                }
+            }
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint",
+            "outputs": ["{options.outputFile}"],
+            "dependsOn": ["collect-assets"],
+            "options": {
+                "lintFilePatterns": ["apps/web/**/*.{ts,tsx,js,jsx}"]
+            }
+        },
+        "test": {
+            "executor": "@nx/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/apps/web"],
+            "dependsOn": ["collect-assets"],
+            "options": {
+                "jestConfig": "apps/web/jest.config.ts",
+                "passWithNoTests": true
+            }
         }
-      }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
-      "dependsOn": [
-        "collect-assets"
-      ],
-      "options": {
-        "lintFilePatterns": [
-          "apps/web/**/*.{ts,tsx,js,jsx}"
-        ]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": [
-        "{workspaceRoot}/coverage/apps/web"
-      ],
-      "dependsOn": [
-        "collect-assets"
-      ],
-      "options": {
-        "jestConfig": "apps/web/jest.config.ts",
-        "passWithNoTests": true
-      }
-    }
-  },
-  "tags": []
+    "tags": []
 }

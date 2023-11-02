@@ -1,5 +1,5 @@
 from datetime import date
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
@@ -25,6 +25,7 @@ router = APIRouter(
     r"/v1/groups/{group_id}/accounts",
     summary="list all accounts in a group",
     response_model=List[Account],
+    operation_id="list_accounts",
 )
 async def list_accounts(
     group_id: int,
@@ -59,6 +60,7 @@ class AccountPayloadWithId(UpdateAccountPayload):
     r"/v1/groups/{group_id}/accounts/sync",
     summary="update a collection of accounts",
     response_model=Dict[int, int],
+    operation_id="sync_accounts",
 )
 async def sync_accounts(
     group_id: int,
@@ -77,6 +79,7 @@ async def sync_accounts(
     r"/v1/groups/{group_id}/accounts",
     summary="create a new group account",
     response_model=Account,
+    operation_id="create_account",
 )
 async def create_account(
     group_id: int,
@@ -99,7 +102,7 @@ async def create_account(
     return await account_service.get_account(user=user, account_id=account_id)
 
 
-@router.get(r"/v1/accounts/{account_id}", summary="fetch a group account")
+@router.get(r"/v1/accounts/{account_id}", summary="fetch a group account", operation_id="get_account")
 async def get_account(
     account_id: int,
     user: User = Depends(get_current_user),
@@ -108,7 +111,7 @@ async def get_account(
     return await account_service.get_account(user=user, account_id=account_id)
 
 
-@router.post(r"/v1/accounts/{account_id}", summary="update an account")
+@router.post(r"/v1/accounts/{account_id}", summary="update an account", operation_id="update_account")
 async def update_account(
     account_id: int,
     payload: UpdateAccountPayload,
@@ -130,7 +133,7 @@ async def update_account(
 
 
 @router.delete(
-    r"/v1/accounts/{account_id}", summary="delete an account", response_model=Account
+    r"/v1/accounts/{account_id}", summary="delete an account", response_model=Account, operation_id="delete_account"
 )
 async def delete_account(
     account_id: int,

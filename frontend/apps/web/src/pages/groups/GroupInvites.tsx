@@ -1,8 +1,16 @@
-import React, { useEffect, useState } from "react";
-import InviteLinkCreate from "../../components/groups/InviteLinkCreate";
-import { toast } from "react-toastify";
-import { api } from "../../core/api";
-import { DateTime } from "luxon";
+import {
+    deleteGroupInvite,
+    fetchGroupInvites,
+    selectCurrentUserPermissions,
+    selectGroupById,
+    selectGroupInviteStatus,
+    selectGroupInvites,
+    selectGroupMembers,
+    selectIsGuestUser,
+    subscribe,
+    unsubscribe,
+} from "@abrechnung/redux";
+import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import {
     Alert,
     Grid,
@@ -13,24 +21,15 @@ import {
     ListItemText,
     Typography,
 } from "@mui/material";
-import { Add, ContentCopy, Delete } from "@mui/icons-material";
-import { MobilePaper } from "../../components/style/mobile";
-import { useTitle } from "../../core/utils";
-import { ws } from "../../core/api";
-import { useAppSelector, useAppDispatch, selectGroupSlice, selectAuthSlice } from "../../store";
-import {
-    selectGroupById,
-    selectCurrentUserPermissions,
-    selectGroupMembers,
-    selectGroupInvites,
-    selectIsGuestUser,
-    selectGroupInviteStatus,
-    fetchGroupInvites,
-    deleteGroupInvite,
-    subscribe,
-    unsubscribe,
-} from "@abrechnung/redux";
+import { DateTime } from "luxon";
+import React, { useEffect, useState } from "react";
+import { toast } from "react-toastify";
+import InviteLinkCreate from "../../components/groups/InviteLinkCreate";
 import Loading from "../../components/style/Loading";
+import { MobilePaper } from "../../components/style/mobile";
+import { api, ws } from "../../core/api";
+import { useTitle } from "../../core/utils";
+import { selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "../../store";
 
 interface Props {
     groupId: number;
@@ -68,7 +67,7 @@ export const GroupInvites: React.FC<Props> = ({ groupId }) => {
     };
 
     const getMemberUsername = (memberID) => {
-        const member = members.find((member) => member.userID === memberID);
+        const member = members.find((member) => member.user_id === memberID);
         if (member === undefined) {
             return "unknown";
         }
@@ -123,11 +122,13 @@ export const GroupInvites: React.FC<Props> = ({ groupId }) => {
                                     }
                                     secondary={
                                         <>
-                                            {invite.description}, created by {getMemberUsername(invite.createdBy)},
+                                            {invite.description}, created by {getMemberUsername(invite.created_by)},
                                             valid until{" "}
-                                            {DateTime.fromISO(invite.validUntil).toLocaleString(DateTime.DATETIME_FULL)}
-                                            {invite.singleUse && ", single use"}
-                                            {invite.joinAsEditor && ", join as editor"}
+                                            {DateTime.fromISO(invite.valid_until).toLocaleString(
+                                                DateTime.DATETIME_FULL
+                                            )}
+                                            {invite.single_use && ", single use"}
+                                            {invite.join_as_editor && ", join as editor"}
                                         </>
                                     }
                                 />

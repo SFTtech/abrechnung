@@ -1,45 +1,45 @@
 {
-  "name": "api",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/api/src",
-  "projectType": "library",
-  "targets": {
-    "build": {
-      "executor": "@nx/js:tsc",
-      "outputs": [
-        "{options.outputPath}"
-      ],
-      "options": {
-        "outputPath": "dist/libs/api",
-        "main": "libs/api/src/index.ts",
-        "tsConfig": "libs/api/tsconfig.lib.json",
-        "assets": [
-          "libs/api/*.md"
-        ],
-        "updateBuildableProjectDepsInPackageJson": true
-      }
+    "name": "api",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "libs/api/src",
+    "projectType": "library",
+    "targets": {
+        "generate-openapi": {
+            "executor": "nx:run-commands",
+            "options": {
+                "commands": [
+                    "npx openapi-zod ../../../api/openapi.json --output src/lib/generated/schema.ts",
+                    "npx openapi-typescript-codegen --input ../../../api/openapi.json --output src/lib/generated --useUnionTypes --name Client --useOptions"
+                ],
+                "cwd": "libs/api"
+            }
+        },
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/libs/api",
+                "main": "libs/api/src/index.ts",
+                "tsConfig": "libs/api/tsconfig.lib.json",
+                "assets": ["libs/api/*.md"],
+                "updateBuildableProjectDepsInPackageJson": true
+            }
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint",
+            "outputs": ["{options.outputFile}"],
+            "options": {
+                "lintFilePatterns": ["libs/api/**/*.ts"]
+            }
+        },
+        "test": {
+            "executor": "@nx/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/libs/api"],
+            "options": {
+                "jestConfig": "libs/api/jest.config.ts",
+                "passWithNoTests": true
+            }
+        }
     },
-    "lint": {
-      "executor": "@nx/eslint:lint",
-      "outputs": [
-        "{options.outputFile}"
-      ],
-      "options": {
-        "lintFilePatterns": [
-          "libs/api/**/*.ts"
-        ]
-      }
-    },
-    "test": {
-      "executor": "@nx/jest:jest",
-      "outputs": [
-        "{workspaceRoot}/coverage/libs/api"
-      ],
-      "options": {
-        "jestConfig": "libs/api/jest.config.ts",
-        "passWithNoTests": true
-      }
-    }
-  },
-  "tags": []
+    "tags": []
 }

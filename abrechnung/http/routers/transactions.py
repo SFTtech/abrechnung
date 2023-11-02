@@ -1,14 +1,14 @@
 from datetime import date, datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, status, Depends, HTTPException, UploadFile, Response
+from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile, status
 from pydantic import BaseModel
 
-from abrechnung.application.transactions import TransactionService, RawTransaction
+from abrechnung.application.transactions import RawTransaction, TransactionService
 from abrechnung.domain.transactions import (
-    TransactionShares,
-    TransactionPosition,
     Transaction,
+    TransactionPosition,
+    TransactionShares,
 )
 from abrechnung.domain.users import User
 from abrechnung.http.auth import get_current_user
@@ -46,6 +46,7 @@ class UpdateTransactionPayload(TransactionPayload):
     "/v1/groups/{group_id}/transactions",
     summary="list all transactions in a group",
     response_model=list[Transaction],
+    operation_id="list_transactions",
 )
 async def list_transactions(
     group_id: int,
@@ -76,6 +77,7 @@ async def list_transactions(
     "/v1/groups/{group_id}/transactions/sync",
     summary="sync a batch of transactions",
     response_model=dict[int, int],
+    operation_id="sync_transactions",
 )
 async def sync_transactions(
     group_id: int,
@@ -83,9 +85,7 @@ async def sync_transactions(
     user: User = Depends(get_current_user),
     transaction_service: TransactionService = Depends(get_transaction_service),
 ):
-    return await transaction_service.sync_transactions(
-        user=user, group_id=group_id, transactions=payload
-    )
+    return await transaction_service.sync_transactions(user=user, group_id=group_id, transactions=payload)
 
 
 class TransactionCreatePayload(TransactionPayload):
@@ -97,6 +97,7 @@ class TransactionCreatePayload(TransactionPayload):
     "/v1/groups/{group_id}/transactions",
     summary="create a new transaction",
     response_model=Transaction,
+    operation_id="create_transaction",
 )
 async def create_transaction(
     group_id: int,
@@ -121,24 +122,21 @@ async def create_transaction(
         perform_commit=payload.perform_commit,
     )
 
-    return await transaction_service.get_transaction(
-        user=user, transaction_id=transaction_id
-    )
+    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
 
 
 @router.get(
     "/v1/transactions/{transaction_id}",
     summary="get transaction details",
     response_model=Transaction,
+    operation_id="get_transaction",
 )
 async def get_transaction(
     transaction_id: int,
     user: User = Depends(get_current_user),
     transaction_service: TransactionService = Depends(get_transaction_service),
 ):
-    return await transaction_service.get_transaction(
-        user=user, transaction_id=transaction_id
-    )
+    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
 
 
 class TransactionUpdatePayload(UpdateTransactionPayload):
@@ -149,6 +147,7 @@ class TransactionUpdatePayload(UpdateTransactionPayload):
     "/v1/transactions/{transaction_id}",
     summary="update transaction details",
     response_model=Transaction,
+    operation_id="update_transaction",
 )
 async def update_transaction(
     transaction_id: int,
@@ -171,9 +170,7 @@ async def update_transaction(
         positions=payload.positions,
         perform_commit=payload.perform_commit,
     )
-    return await transaction_service.get_transaction(
-        user=user, transaction_id=transaction_id
-    )
+    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
 
 
 class UpdatePositionsPayload(BaseModel):
@@ -185,6 +182,7 @@ class UpdatePositionsPayload(BaseModel):
     "/v1/transactions/{transaction_id}/positions",
     summary="update transaction positions",
     response_model=Transaction,
+    operation_id="update_transaction_positions",
 )
 async def update_transaction_positions(
     transaction_id: int,
@@ -198,15 +196,14 @@ async def update_transaction_positions(
         positions=payload.positions,
         perform_commit=payload.perform_commit,
     )
-    return await transaction_service.get_transaction(
-        user=user, transaction_id=transaction_id
-    )
+    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
 
 
 @router.post(
     "/v1/transactions/{transaction_id}/commit",
     summary="commit currently pending transaction changes",
     response_model=Transaction,
+    operation_id="commit_transaction",
 )
 async def commit_transaction(
     transaction_id: int,
@@ -217,15 +214,14 @@ async def commit_transaction(
         user=user,
         transaction_id=transaction_id,
     )
-    return await transaction_service.get_transaction(
-        user=user, transaction_id=transaction_id
-    )
+    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
 
 
 @router.delete(
     "/v1/transactions/{transaction_id}",
     summary="delete a transaction",
     response_model=Transaction,
+    operation_id="delete_transaction",
 )
 async def delete_transaction(
     transaction_id: int,
@@ -236,15 +232,14 @@ async def delete_transaction(
         user=user,
         transaction_id=transaction_id,
     )
-    return await transaction_service.get_transaction(
-        user=user, transaction_id=transaction_id
-    )
+    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
 
 
 @router.post(
     "/v1/transactions/{transaction_id}/new_change",
     summary="create a new pending transaction revision",
     response_model=Transaction,
+    operation_id="create_transaction_change",
 )
 async def create_transaction_change(
     transaction_id: int,
@@ -255,15 +250,14 @@ async def create_transaction_change(
         user=user,
         transaction_id=transaction_id,
     )
-    return await transaction_service.get_transaction(
-        user=user, transaction_id=transaction_id
-    )
+    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
 
 
 @router.post(
     "/v1/transactions/{transaction_id}/discard",
     summary="discard currently pending transaction changes",
     response_model=Transaction,
+    operation_id="discard_transaction_change",
 )
 async def discard_transaction_change(
     transaction_id: int,
@@ -274,15 +268,14 @@ async def discard_transaction_change(
         user=user,
         transaction_id=transaction_id,
     )
-    return await transaction_service.get_transaction(
-        user=user, transaction_id=transaction_id
-    )
+    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
 
 
 @router.post(
     "/v1/transactions/{transaction_id}/files",
     summary="upload a file as a transaction attachment",
     response_model=Transaction,
+    operation_id="upload_file",
 )
 async def upload_file(
     transaction_id: int,
@@ -311,15 +304,14 @@ async def upload_file(
         mime_type=file.content_type,
         content=content,
     )
-    return await transaction_service.get_transaction(
-        user=user, transaction_id=transaction_id
-    )
+    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
 
 
 @router.delete(
     r"/v1/files/{file_id}",
     summary="delete a transaction attachment",
     response_model=Transaction,
+    operation_id="delete_file",
 )
 async def delete_file(
     file_id: int,
@@ -330,14 +322,13 @@ async def delete_file(
         user=user,
         file_id=file_id,
     )
-    return await transaction_service.get_transaction(
-        user=user, transaction_id=transaction_id
-    )
+    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
 
 
 @router.get(
     "/v1/files/{file_id}/{blob_id}",
     summary="fetch the (binary) contents of a transaction attachment",
+    operation_id="get_file_contents",
 )
 async def get_file_contents(
     file_id: int,

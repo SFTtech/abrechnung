@@ -23,9 +23,7 @@ class TransactionAPITest(HTTPAPITest):
             description=f"account {name} description",
         )
 
-    async def _fetch_transaction(
-        self, transaction_id: int, expected_status: int = 200
-    ) -> dict:
+    async def _fetch_transaction(self, transaction_id: int, expected_status: int = 200) -> dict:
         resp = await self._get(f"/api/v1/transactions/{transaction_id}")
         self.assertEqual(expected_status, resp.status_code)
         ret_data = resp.json()
@@ -65,27 +63,19 @@ class TransactionAPITest(HTTPAPITest):
         ret_data = resp.json()
         return ret_data
 
-    async def _commit_transaction(
-        self, transaction_id: int, expected_status: int = 200
-    ) -> None:
+    async def _commit_transaction(self, transaction_id: int, expected_status: int = 200) -> None:
         resp = await self._post(f"/api/v1/transactions/{transaction_id}/commit")
         self.assertEqual(expected_status, resp.status_code)
 
-    async def _create_change(
-        self, transaction_id: int, expected_status: int = 200
-    ) -> None:
+    async def _create_change(self, transaction_id: int, expected_status: int = 200) -> None:
         resp = await self._post(f"/api/v1/transactions/{transaction_id}/new_change")
         self.assertEqual(expected_status, resp.status_code)
 
-    async def _delete_transaction(
-        self, transaction_id: int, expected_status: int = 200
-    ) -> None:
+    async def _delete_transaction(self, transaction_id: int, expected_status: int = 200) -> None:
         resp = await self._delete(f"/api/v1/transactions/{transaction_id}")
         self.assertEqual(expected_status, resp.status_code)
 
-    async def _discard_transaction_change(
-        self, transaction_id: int, expected_status: int = 200
-    ) -> None:
+    async def _discard_transaction_change(self, transaction_id: int, expected_status: int = 200) -> None:
         resp = await self._post(f"/api/v1/transactions/{transaction_id}/discard")
         self.assertEqual(expected_status, resp.status_code)
 
@@ -176,18 +166,14 @@ class TransactionAPITest(HTTPAPITest):
         )
 
         # check that the list endpoint without parameters returns all objects
-        await self.transaction_service.commit_transaction(
-            user=self.test_user, transaction_id=transaction3_id
-        )
+        await self.transaction_service.commit_transaction(user=self.test_user, transaction_id=transaction3_id)
         resp = await self._get(f"/api/v1/groups/{group_id}/transactions")
         self.assertEqual(200, resp.status_code)
         ret_data = resp.json()
         self.assertEqual(3, len(ret_data))
 
         # TODO: test this aspect more thoroughly
-        resp = await self._get(
-            f"/api/v1/groups/{group_id}/transactions?min_last_changed={datetime.now().isoformat()}"
-        )
+        resp = await self._get(f"/api/v1/groups/{group_id}/transactions?min_last_changed={datetime.now().isoformat()}")
         self.assertEqual(200, resp.status_code)
         ret_data = resp.json()
         self.assertEqual(0, len(ret_data))

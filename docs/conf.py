@@ -24,9 +24,7 @@ import abrechnung
 
 project = "abrechnung"
 author = "Michael Loipführer, Jonas Jelten, Michael Enßlin"
-copyright = (  # pylint: disable=redefined-builtin
-    f"{datetime.datetime.now():%Y}, {author}"
-)
+copyright = f"{datetime.datetime.now():%Y}, {author}"  # pylint: disable=redefined-builtin
 
 version = abrechnung.__version__.replace(".dirty", "")
 release = version

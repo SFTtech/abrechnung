@@ -1,11 +1,11 @@
-import React from "react";
-import { Alert, List, ListItem, ListItemText, Typography } from "@mui/material";
-import { MobilePaper } from "../../components/style/mobile";
-import { useTitle } from "../../core/utils";
-import { DateTime } from "luxon";
+import Loading from "@/components/style/Loading";
+import { MobilePaper } from "@/components/style/mobile";
+import { useTitle } from "@/core/utils";
+import { selectAuthSlice, useAppSelector } from "@/store";
 import { selectProfile } from "@abrechnung/redux";
-import { useAppSelector, selectAuthSlice } from "../../store";
-import Loading from "../../components/style/Loading";
+import { Alert, List, ListItem, ListItemText, Typography } from "@mui/material";
+import { DateTime } from "luxon";
+import React from "react";
 
 export const Profile: React.FC = () => {
     const profile = useAppSelector((state) => selectProfile({ state: selectAuthSlice(state) }));
@@ -20,7 +20,7 @@ export const Profile: React.FC = () => {
                 <Loading />
             ) : (
                 <>
-                    {profile.isGuestUser && (
+                    {profile.is_guest_user && (
                         <Alert severity="info">
                             You are a guest user on this Abrechnung and therefore not permitted to create new groups or
                             group invites.
@@ -36,7 +36,7 @@ export const Profile: React.FC = () => {
                         <ListItem>
                             <ListItemText
                                 primary="Registered"
-                                secondary={DateTime.fromISO(profile.registeredAt).toLocaleString(
+                                secondary={DateTime.fromISO(profile.registered_at).toLocaleString(
                                     DateTime.DATETIME_FULL
                                 )}
                             />

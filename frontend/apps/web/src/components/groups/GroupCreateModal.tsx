@@ -1,7 +1,4 @@
-import React, { ReactNode } from "react";
-import { toast } from "react-toastify";
-import { Form, Formik, FormikProps } from "formik";
-import { api } from "../../core/api";
+import { createGroup } from "@abrechnung/redux";
 import {
     Button,
     Checkbox,
@@ -13,9 +10,12 @@ import {
     LinearProgress,
     TextField,
 } from "@mui/material";
+import { Form, Formik, FormikProps } from "formik";
+import React, { ReactNode } from "react";
+import { toast } from "react-toastify";
 import * as yup from "yup";
+import { api } from "../../core/api";
 import { useAppDispatch } from "../../store";
-import { createGroup } from "@abrechnung/redux";
 
 interface FormValues {
     name: string;
@@ -46,9 +46,9 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
                 group: {
                     name: values.name,
                     description: values.description,
-                    currencySymbol: "€",
+                    currency_symbol: "€",
                     terms: "",
-                    addUserAccountOnJoin: values.addUserAccountOnJoin,
+                    add_user_account_on_join: values.addUserAccountOnJoin,
                 },
             })
         )
