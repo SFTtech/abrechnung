@@ -3,6 +3,8 @@ import {
     Alert,
     Box,
     Button,
+    FormControlLabel,
+    Checkbox,
     Dialog,
     DialogActions,
     DialogContent,
@@ -15,6 +17,7 @@ import React, { useState } from "react";
 import { api } from "../../../core/api";
 import { useAppDispatch } from "../../../store";
 import placeholderImg from "./PlaceholderImage.svg";
+import imageCompression from 'browser-image-compression';
 
 interface Props {
     groupId: number;
@@ -29,7 +32,7 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
         currentFile: undefined,
         previewImage: undefined,
         progress: 0,
-
+        compress: true,
         message: "",
         isError: false,
     });
@@ -46,6 +49,7 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
             progress: 0,
             message: "",
         });
+        console.log("checked: ", fileState.compress);
         setFilename(strippedFilename);
     };
 
@@ -57,36 +61,93 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
         }
     };
 
+    const dispatchUpload = (file) => {
+        dispatch(uploadFile({ groupId, transactionId, file: file, api }))
+    .unwrap()
+    .then((t) => {
+        setFileState({
+            currentFile: undefined,
+            previewImage: undefined,
+            progress: 0,
+            compress: fileState.compress,
+            message: "",
+            isError: false,
+        });
+        onClose();
+    })
+    .catch((err) => {
+        console.log("error on uploading file", err);
+        setFileState({
+            ...fileState,
+            progress: 0,
+            message: `Could not upload the image! ${err.message}`,
+            currentFile: undefined,
+            isError: true,
+        });
+    });
+    }
+
+    const updateCompressionProgress = (progress) => {
+        setFileState({
+            ...fileState,
+            progress: progress,
+            message: `compressing...`,
+            isError: false,
+        });
+    }
+
     const upload = () => {
         setFileState({
             ...fileState,
             progress: 0,
         });
 
-        const properlyNamedFile = new File([fileState.currentFile], filename, { type: fileState.currentFile.type });
+            var properlyNamedFile = new File([fileState.currentFile], filename, { type: fileState.currentFile.type });
 
-        dispatch(uploadFile({ groupId, transactionId, file: properlyNamedFile, api }))
-            .unwrap()
-            .then((t) => {
-                setFileState({
-                    currentFile: undefined,
-                    previewImage: undefined,
-                    progress: 0,
+            var compressed;
 
-                    message: "",
-                    isError: false,
-                });
-                onClose();
-            })
-            .catch((err) => {
-                console.log("error on uploading file", err);
-                setFileState({
-                    ...fileState,
-                    progress: 0,
-                    message: `Could not upload the image! ${err.message}`,
-                    currentFile: undefined,
-                    isError: true,
-                });
+            if (fileState.compress) {
+                const options = {
+                    maxSizeMB: 1,
+                    useWebWorker: true,
+                    onProgress: updateCompressionProgress
+                }
+
+                imageCompression(properlyNamedFile, options)
+                    .then(function (compressedFile) {
+                        console.log('compressedFile instanceof Blob', compressedFile instanceof Blob); // true
+                        console.log(`compressedFile size ${compressedFile.size / 1024 / 1024} MB`); // smaller than maxSizeMB
+                        setFileState({
+                            ...fileState,
+                            progress: 0,
+                            message: `uploading...`,
+                            isError: false,
+                        });
+
+                        dispatchUpload(compressedFile); // write your own logic
+                    })
+                    .catch(function (error) {
+                        console.log(error.message);
+                        setFileState({
+                        ...fileState,
+                        progress: 0,
+                        message: `Failed to compress! ${error.message}`,
+                        isError: true,
+                    });
+                        return
+                    });
+
+            } else {
+                dispatchUpload(properlyNamedFile)
+            }
+
+
+    };
+
+    const toggleCompress = () => {
+        setFileState({
+            ...fileState,
+            compress: !fileState.compress,
             });
     };
 
@@ -128,9 +189,11 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
                 )}
 
                 {fileState.isError && fileState.message && <Alert severity="error">{fileState.message}</Alert>}
+                {!fileState.isError && fileState.message && <Alert severity="info">{fileState.message}</Alert>}
             </DialogContent>
 
             <DialogActions>
+
                 <label htmlFor="btn-upload">
                     <input
                         id="btn-upload"
@@ -143,6 +206,7 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
                     <Button component="span">Choose Image</Button>
                 </label>
 
+                <FormControlLabel control={<Checkbox checked={fileState.compress} onChange={toggleCompress}/>} label="compress" />
                 <Button color="primary" component="span" disabled={!fileState.currentFile} onClick={upload}>
                     Upload
                 </Button>
