@@ -9,26 +9,21 @@ import {
 } from "@abrechnung/core";
 import { AccountBalanceMap, Transaction } from "@abrechnung/types";
 import { fromISOString } from "@abrechnung/utils";
-import { memoize } from "proxy-memoize";
+import memoize from "proxy-memoize";
+import { selectClearingAccountsInternal, selectGroupAccountsInternal } from "./accounts";
 import {
-    selectAccountIdToNameMapInternal,
-    selectGroupAccountsFilteredInternal,
-    selectGroupAccountsInternal,
-} from "./accounts";
-import {
-    selectGroupTransactionsInternal,
+    selectGroupTransactionsWithoutWipInternal,
+    selectGroupTransactionsWithWipInternal,
     selectTransactionBalanceEffectsInternal,
-    selectTransactionPositionMapInternal,
 } from "./transactions";
 import { IRootState } from "./types";
 
 const selectAccountBalancesInternal = (args: { state: IRootState; groupId: number }): AccountBalanceMap => {
     const s = performance.now();
     const { state, groupId } = args;
-    const transactions = selectGroupTransactionsInternal({ state: state.transactions, groupId });
-    const transactionToPositions = selectTransactionPositionMapInternal({ state: state.transactions, groupId });
+    const transactions = selectGroupTransactionsWithoutWipInternal({ state: state.transactions, groupId });
     const accounts = selectGroupAccountsInternal({ state: state.accounts, groupId });
-    const res = computeAccountBalances(accounts, transactions, transactionToPositions);
+    const res = computeAccountBalances(accounts, transactions);
     console.log("selectAccountBalancesInternal took " + (performance.now() - s) + " milliseconds.");
     return res;
 };
@@ -38,11 +33,10 @@ export const selectAccountBalances = memoize(selectAccountBalancesInternal, { si
 export const selectAccountBalanceHistory = memoize(
     (args: { state: IRootState; groupId: number; accountId: number }): BalanceHistoryEntry[] => {
         const { state, groupId, accountId } = args;
-        const transactions = selectGroupTransactionsInternal({ state: state.transactions, groupId });
-        const clearingAccounts = selectGroupAccountsFilteredInternal({
+        const transactions = selectGroupTransactionsWithoutWipInternal({ state: state.transactions, groupId });
+        const clearingAccounts = selectClearingAccountsInternal({
             state: state.accounts,
             groupId,
-            type: "clearing",
         });
         const balances = selectAccountBalancesInternal({ state, groupId });
         const balanceEffects = selectTransactionBalanceEffectsInternal({ state: state.transactions, groupId });
@@ -78,11 +72,10 @@ export const selectCurrentUserPermissions = memoize(
 
 export const selectTagsInGroup = memoize((args: { state: IRootState; groupId: number }): string[] => {
     const { state, groupId } = args;
-    const transactions = selectGroupTransactionsInternal({ state: state.transactions, groupId });
-    const clearingAccounts = selectGroupAccountsFilteredInternal({
+    const transactions = selectGroupTransactionsWithWipInternal({ state: state.transactions, groupId });
+    const clearingAccounts = selectClearingAccountsInternal({
         state: state.accounts,
         groupId,
-        type: "clearing",
     });
 
     const transactionTags = transactions.map((t) => t.tags).flat();
@@ -100,11 +93,11 @@ export const selectSortedTransactions = memoize(
         searchTerm?: string;
         tags?: string[];
     }): Transaction[] => {
-        const s = performance.now();
         const { state, groupId, sortMode, searchTerm, tags = [] } = args;
+        // const s = getGroupScopedState<AccountState, AccountSliceState>(state.accounts, groupId);
+        const s = state.accounts.byGroupId[groupId];
         const balanceEffects = selectTransactionBalanceEffectsInternal({ state: state.transactions, groupId });
-        const transactions = selectGroupTransactionsInternal({ state: state.transactions, groupId });
-        const accountMap = selectAccountIdToNameMapInternal({ state: state.accounts, groupId });
+        const transactions = selectGroupTransactionsWithWipInternal({ state: state.transactions, groupId });
         const compareFunction = getTransactionSortFunc(sortMode);
         // TODO: this has optimization potential
         const filterFn = (t: Transaction): boolean => {
@@ -120,24 +113,22 @@ export const selectSortedTransactions = memoize(
                 if (
                     (t.description || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
                     t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    fromISOString(t.billedAt).toDateString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    fromISOString(t.lastChanged).toDateString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    fromISOString(t.billed_at).toDateString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    fromISOString(t.last_changed).toDateString().toLowerCase().includes(searchTerm.toLowerCase()) ||
                     String(t.value).includes(searchTerm.toLowerCase())
                 ) {
                     return true;
                 }
-
                 return Object.keys(balanceEffects[t.id]).reduce((acc: boolean, curr: string): boolean => {
-                    return acc || accountMap[Number(curr)].toLowerCase().includes(searchTerm.toLowerCase());
+                    const account = s.accounts.byId[Number(curr)];
+                    return acc || account.name.toLowerCase().includes(searchTerm.toLowerCase());
                 }, false);
             }
 
             return true;
         };
 
-        const res = transactions.filter(filterFn).sort(compareFunction);
-        console.log("selectSortedTransactions took " + (performance.now() - s) + " milliseconds.");
-        return res;
+        return transactions.filter(filterFn).sort(compareFunction);
     },
     { size: 5 }
 );

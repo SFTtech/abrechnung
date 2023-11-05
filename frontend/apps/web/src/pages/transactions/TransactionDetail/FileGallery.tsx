@@ -1,10 +1,10 @@
-import { selectTransactionAttachments, selectTransactionIsWip } from "@abrechnung/redux";
+import { api } from "@/core/api";
+import { selectTransactionById } from "@abrechnung/redux";
 import { AddCircle, ChevronLeft, ChevronRight, Delete } from "@mui/icons-material";
 import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Transition } from "react-transition-group";
-import { api } from "../../../core/api";
 import { selectTransactionSlice, useAppSelector } from "../../../store";
 import ImageUploadDialog from "./ImageUploadDialog";
 import placeholderImg from "./PlaceholderImage.svg";
@@ -28,12 +28,13 @@ interface Props {
 }
 
 export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
-    const attachments = useAppSelector((state) =>
-        selectTransactionAttachments({ state: selectTransactionSlice(state), groupId, transactionId })
+    // TODO: reimplement
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
     );
-    const isWip = useAppSelector((state) =>
-        selectTransactionIsWip({ state: selectTransactionSlice(state), groupId, transactionId })
-    );
+    // const attachments = useAppSelector((state) =>
+    //     selectTransactionAttachments({ state: selectTransactionSlice(state), groupId, transactionId })
+    // );
     const [files, setFiles] = useState([]); // map of file id to object
     const [active, setActive] = useState(0);
 
@@ -41,6 +42,7 @@ export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
     const [showImage, setShowImage] = useState(false);
 
     useEffect(() => {
+        const attachments = [];
         const newFileIDs = new Set(attachments.map((file) => file.id));
         const filteredFiles = files.reduce((map, file) => {
             map[file.id] = file;
@@ -72,7 +74,7 @@ export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
             .catch((err) => {
                 toast.error(`Error loading file: ${err}`);
             });
-    }, [attachments]); // TODO: do not add files as dependencies, we'd get an infinite loop then
+    }, [transaction]); // TODO: do not add files as dependencies, we'd get an infinite loop then
 
     const toNextImage = () => {
         if (active < files.length - 1) {
@@ -91,19 +93,20 @@ export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
     };
 
     const deleteSelectedFile = () => {
-        if (active < files.length) {
-            // sanity check, should not be needed
-            // TODO: implement
-            api.client.transactions
-                .deleteFile({ fileId: files[active].id })
-                .then((t) => {
-                    // updateTransactionInState(t, setTransactions);
-                    setShowImage(false);
-                })
-                .catch((err) => {
-                    toast.error(`Error deleting file: ${err}`);
-                });
-        }
+        // TODO: reimplement
+        // if (active < files.length) {
+        //     // sanity check, should not be needed
+        //     // TODO: implement
+        //     api.client.transactions
+        //         .deleteFile({ fileId: files[active].id })
+        //         .then((t) => {
+        //             // updateTransactionInState(t, setTransactions);
+        //             setShowImage(false);
+        //         })
+        //         .catch((err) => {
+        //             toast.error(`Error deleting file: ${err}`);
+        //         });
+        // }
     };
 
     return (
@@ -155,7 +158,7 @@ export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
                         <ChevronRight />
                     </IconButton>
                 )}
-                {isWip && (
+                {transaction.is_wip && (
                     <>
                         <IconButton
                             color="primary"
@@ -225,7 +228,7 @@ export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
                         )}
                     </Grid>
                 </DialogContent>
-                {isWip && (
+                {transaction.is_wip && (
                     <DialogActions>
                         <Button startIcon={<Delete />} onClick={deleteSelectedFile} variant="outlined" color="error">
                             Delete

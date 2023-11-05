@@ -1,4 +1,4 @@
-import { AccountType } from "@abrechnung/types";
+import { AccountType } from "@abrechnung/api";
 
 export const getAccountListLink = (groupId: number, type: AccountType): string => {
     return `/groups/${groupId}/${type === "clearing" ? "events" : "accounts"}`;

@@ -2,12 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { Body_upload_file } from '../models/Body_upload_file';
-import type { RawTransaction } from '../models/RawTransaction';
+import type { NewTransaction } from '../models/NewTransaction';
 import type { Transaction } from '../models/Transaction';
-import type { TransactionCreatePayload } from '../models/TransactionCreatePayload';
-import type { TransactionUpdatePayload } from '../models/TransactionUpdatePayload';
 import type { UpdatePositionsPayload } from '../models/UpdatePositionsPayload';
+import type { UpdateTransaction } from '../models/UpdateTransaction';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -59,40 +57,11 @@ export class TransactionsService {
         requestBody,
     }: {
         groupId: number,
-        requestBody: TransactionCreatePayload,
+        requestBody: NewTransaction,
     }): CancelablePromise<Transaction> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/v1/groups/{group_id}/transactions',
-            path: {
-                'group_id': groupId,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-            errors: {
-                401: `unauthorized`,
-                403: `forbidden`,
-                404: `Not found`,
-                422: `Validation Error`,
-            },
-        });
-    }
-
-    /**
-     * sync a batch of transactions
-     * @returns number Successful Response
-     * @throws ApiError
-     */
-    public syncTransactions({
-        groupId,
-        requestBody,
-    }: {
-        groupId: number,
-        requestBody: Array<RawTransaction>,
-    }): CancelablePromise<Record<string, number>> {
-        return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups/{group_id}/transactions/sync',
             path: {
                 'group_id': groupId,
             },
@@ -142,7 +111,7 @@ export class TransactionsService {
         requestBody,
     }: {
         transactionId: number,
-        requestBody: TransactionUpdatePayload,
+        requestBody: UpdateTransaction,
     }): CancelablePromise<Transaction> {
         return this.httpRequest.request({
             method: 'POST',
@@ -206,135 +175,6 @@ export class TransactionsService {
             },
             body: requestBody,
             mediaType: 'application/json',
-            errors: {
-                401: `unauthorized`,
-                403: `forbidden`,
-                404: `Not found`,
-                422: `Validation Error`,
-            },
-        });
-    }
-
-    /**
-     * commit currently pending transaction changes
-     * @returns Transaction Successful Response
-     * @throws ApiError
-     */
-    public commitTransaction({
-        transactionId,
-    }: {
-        transactionId: number,
-    }): CancelablePromise<Transaction> {
-        return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/transactions/{transaction_id}/commit',
-            path: {
-                'transaction_id': transactionId,
-            },
-            errors: {
-                401: `unauthorized`,
-                403: `forbidden`,
-                404: `Not found`,
-                422: `Validation Error`,
-            },
-        });
-    }
-
-    /**
-     * create a new pending transaction revision
-     * @returns Transaction Successful Response
-     * @throws ApiError
-     */
-    public createTransactionChange({
-        transactionId,
-    }: {
-        transactionId: number,
-    }): CancelablePromise<Transaction> {
-        return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/transactions/{transaction_id}/new_change',
-            path: {
-                'transaction_id': transactionId,
-            },
-            errors: {
-                401: `unauthorized`,
-                403: `forbidden`,
-                404: `Not found`,
-                422: `Validation Error`,
-            },
-        });
-    }
-
-    /**
-     * discard currently pending transaction changes
-     * @returns Transaction Successful Response
-     * @throws ApiError
-     */
-    public discardTransactionChange({
-        transactionId,
-    }: {
-        transactionId: number,
-    }): CancelablePromise<Transaction> {
-        return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/transactions/{transaction_id}/discard',
-            path: {
-                'transaction_id': transactionId,
-            },
-            errors: {
-                401: `unauthorized`,
-                403: `forbidden`,
-                404: `Not found`,
-                422: `Validation Error`,
-            },
-        });
-    }
-
-    /**
-     * upload a file as a transaction attachment
-     * @returns Transaction Successful Response
-     * @throws ApiError
-     */
-    public uploadFile({
-        transactionId,
-        formData,
-    }: {
-        transactionId: number,
-        formData: Body_upload_file,
-    }): CancelablePromise<Transaction> {
-        return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/transactions/{transaction_id}/files',
-            path: {
-                'transaction_id': transactionId,
-            },
-            formData: formData,
-            mediaType: 'multipart/form-data',
-            errors: {
-                401: `unauthorized`,
-                403: `forbidden`,
-                404: `Not found`,
-                422: `Validation Error`,
-            },
-        });
-    }
-
-    /**
-     * delete a transaction attachment
-     * @returns Transaction Successful Response
-     * @throws ApiError
-     */
-    public deleteFile({
-        fileId,
-    }: {
-        fileId: number,
-    }): CancelablePromise<Transaction> {
-        return this.httpRequest.request({
-            method: 'DELETE',
-            url: '/api/v1/files/{file_id}',
-            path: {
-                'file_id': fileId,
-            },
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,

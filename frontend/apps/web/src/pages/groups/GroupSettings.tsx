@@ -28,7 +28,7 @@ const validationSchema = yup.object({
     name: yup.string().required("group name is required"),
     description: yup.string(),
     terms: yup.string(),
-    currencySymbol: yup.string(),
+    currency_symbol: yup.string(),
     addUserAccountOnJoin: yup.boolean(),
 });
 
@@ -63,7 +63,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                     id: group.id,
                     name: values.name,
                     description: values.description,
-                    currency_symbol: values.currencySymbol,
+                    currency_symbol: values.currency_symbol,
                     terms: values.terms,
                     add_user_account_on_join: values.addUserAccountOnJoin,
                 },
@@ -105,7 +105,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                     name: group.name,
                     description: group.description,
                     terms: group.terms,
-                    currencySymbol: group.currency_symbol,
+                    currency_symbol: group.currency_symbol,
                     addUserAccountOnJoin: group.add_user_account_on_join,
                 }}
                 onSubmit={handleSubmit}
@@ -146,12 +146,12 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                             required
                             fullWidth
                             type="text"
-                            name="currencySymbol"
+                            name="currency_symbol"
                             label="Currency"
                             disabled={!permissions.canWrite || !isEditing}
                             onBlur={handleBlur}
                             onChange={handleChange}
-                            value={values.currencySymbol}
+                            value={values.currency_symbol}
                         />
                         <DisabledTextField
                             variant="standard"

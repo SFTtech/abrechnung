@@ -1,6 +1,5 @@
 import { Api, Session, User } from "@abrechnung/api";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { memoize } from "proxy-memoize";
 import { PURGE } from "redux-persist";
 import { AuthSliceState } from "../types";
 
@@ -12,46 +11,46 @@ const initialState: AuthSliceState = {
 };
 
 // selectors
-export const selectAccessToken = memoize((args: { state: AuthSliceState }): string | undefined => {
+export const selectAccessToken = (args: { state: AuthSliceState }): string | undefined => {
     const { state } = args;
     return state.accessToken;
-});
+};
 
-export const selectBaseUrl = memoize((args: { state: AuthSliceState }): string | undefined => {
+export const selectBaseUrl = (args: { state: AuthSliceState }): string | undefined => {
     const { state } = args;
     return state.baseUrl;
-});
+};
 
-export const selectIsAuthenticated = memoize((args: { state: AuthSliceState }): boolean => {
+export const selectIsAuthenticated = (args: { state: AuthSliceState }): boolean => {
     const { state } = args;
     return state.accessToken !== undefined && state.baseUrl !== undefined;
-});
+};
 
-export const selectProfile = memoize((args: { state: AuthSliceState }): User | undefined => {
+export const selectProfile = (args: { state: AuthSliceState }): User | undefined => {
     const { state } = args;
     return state.profile;
-});
+};
 
-export const selectCurrentUserId = memoize((args: { state: AuthSliceState }): number | undefined => {
+export const selectCurrentUserId = (args: { state: AuthSliceState }): number | undefined => {
     const { state } = args;
     return state.profile?.id;
-});
+};
 
-export const selectIsGuestUser = memoize((args: { state: AuthSliceState }): boolean | undefined => {
+export const selectIsGuestUser = (args: { state: AuthSliceState }): boolean | undefined => {
     const { state } = args;
     if (state.profile === undefined) {
         return undefined;
     }
     return state.profile.is_guest_user;
-});
+};
 
-export const selectLoginSessions = memoize((args: { state: AuthSliceState }): Session[] => {
+export const selectLoginSessions = (args: { state: AuthSliceState }): Session[] => {
     const { state } = args;
     if (state.profile === undefined) {
         return [];
     }
     return state.profile.sessions;
-});
+};
 
 // async thunks
 export const fetchProfile = createAsyncThunk<User, { api: Api }>("fetchProfile", async ({ api }) => {

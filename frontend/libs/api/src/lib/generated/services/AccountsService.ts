@@ -2,10 +2,9 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { Account } from '../models/Account';
-import type { CreateAccountPayload } from '../models/CreateAccountPayload';
-import type { RawAccount } from '../models/RawAccount';
-import type { UpdateAccountPayload } from '../models/UpdateAccountPayload';
+import type { ClearingAccount } from '../models/ClearingAccount';
+import type { NewAccount } from '../models/NewAccount';
+import type { PersonalAccount } from '../models/PersonalAccount';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -16,14 +15,14 @@ export class AccountsService {
 
     /**
      * list all accounts in a group
-     * @returns Account Successful Response
+     * @returns any Successful Response
      * @throws ApiError
      */
     public listAccounts({
         groupId,
     }: {
         groupId: number,
-    }): CancelablePromise<Array<Account>> {
+    }): CancelablePromise<Array<(ClearingAccount | PersonalAccount)>> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/api/v1/groups/{group_id}/accounts',
@@ -41,7 +40,7 @@ export class AccountsService {
 
     /**
      * create a new group account
-     * @returns Account Successful Response
+     * @returns any Successful Response
      * @throws ApiError
      */
     public createAccount({
@@ -49,40 +48,11 @@ export class AccountsService {
         requestBody,
     }: {
         groupId: number,
-        requestBody: CreateAccountPayload,
-    }): CancelablePromise<Account> {
+        requestBody: NewAccount,
+    }): CancelablePromise<(ClearingAccount | PersonalAccount)> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/v1/groups/{group_id}/accounts',
-            path: {
-                'group_id': groupId,
-            },
-            body: requestBody,
-            mediaType: 'application/json',
-            errors: {
-                401: `unauthorized`,
-                403: `forbidden`,
-                404: `Not found`,
-                422: `Validation Error`,
-            },
-        });
-    }
-
-    /**
-     * update a collection of accounts
-     * @returns number Successful Response
-     * @throws ApiError
-     */
-    public syncAccounts({
-        groupId,
-        requestBody,
-    }: {
-        groupId: number,
-        requestBody: Array<RawAccount>,
-    }): CancelablePromise<Record<string, number>> {
-        return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups/{group_id}/accounts/sync',
             path: {
                 'group_id': groupId,
             },
@@ -106,7 +76,7 @@ export class AccountsService {
         accountId,
     }: {
         accountId: number,
-    }): CancelablePromise<any> {
+    }): CancelablePromise<(ClearingAccount | PersonalAccount)> {
         return this.httpRequest.request({
             method: 'GET',
             url: '/api/v1/accounts/{account_id}',
@@ -132,8 +102,8 @@ export class AccountsService {
         requestBody,
     }: {
         accountId: number,
-        requestBody: UpdateAccountPayload,
-    }): CancelablePromise<any> {
+        requestBody: NewAccount,
+    }): CancelablePromise<(ClearingAccount | PersonalAccount)> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/v1/accounts/{account_id}',
@@ -153,14 +123,14 @@ export class AccountsService {
 
     /**
      * delete an account
-     * @returns Account Successful Response
+     * @returns any Successful Response
      * @throws ApiError
      */
     public deleteAccount({
         accountId,
     }: {
         accountId: number,
-    }): CancelablePromise<Account> {
+    }): CancelablePromise<(ClearingAccount | PersonalAccount)> {
         return this.httpRequest.request({
             method: 'DELETE',
             url: '/api/v1/accounts/{account_id}',

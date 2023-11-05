@@ -30,7 +30,7 @@ export const TransactionList: React.FC<Props> = ({ navigation }) => {
 
     const groupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) })) as number; // TODO: proper typing
     const [search, setSearch] = useState<string>("");
-    const [sortMode, setSortMode] = useState<TransactionSortMode>("lastChanged");
+    const [sortMode, setSortMode] = useState<TransactionSortMode>("last_changed");
     const transactions = useAppSelector((state) =>
         selectSortedTransactions({ state: state, groupId, searchTerm: search, sortMode })
     );
@@ -103,8 +103,8 @@ export const TransactionList: React.FC<Props> = ({ navigation }) => {
                                 value={sortMode}
                                 onValueChange={(value) => setSortMode(value as TransactionSortMode)}
                             >
-                                <RadioButton.Item position="trailing" label="Last changed" value="lastChanged" />
-                                <RadioButton.Item position="trailing" label="Billed at" value="billedAt" />
+                                <RadioButton.Item position="trailing" label="Last changed" value="last_changed" />
+                                <RadioButton.Item position="trailing" label="Billed at" value="billed_at" />
                                 <RadioButton.Item position="trailing" label="Name" value="name" />
                             </RadioButton.Group>
                         </Menu>

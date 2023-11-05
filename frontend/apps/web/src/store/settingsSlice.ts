@@ -1,6 +1,5 @@
 import { PaletteMode } from "@mui/material";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { memoize } from "proxy-memoize";
 
 export type ThemeMode = "browser" | PaletteMode;
 
@@ -13,10 +12,10 @@ const initialState: SettingsSliceState = {
 };
 
 // selectors
-export const selectTheme = memoize((args: { state: SettingsSliceState }): ThemeMode => {
+export const selectTheme = (args: { state: SettingsSliceState }): ThemeMode => {
     const { state } = args;
     return state.theme;
-});
+};
 
 const settingsSlice = createSlice({
     name: "settings",

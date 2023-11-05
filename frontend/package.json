@@ -57,7 +57,7 @@
         "i18next-http-backend": "^2.3.1",
         "luxon": "^3.4.3",
         "multer": "^1.4.5-lts.1",
-        "proxy-memoize": "^2.0.4",
+        "proxy-memoize": "^1.2.0",
         "react": "18.2.0",
         "react-dom": "18.2.0",
         "react-i18next": "^13.3.1",

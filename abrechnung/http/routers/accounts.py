@@ -1,11 +1,11 @@
 from datetime import date
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 
-from abrechnung.application.accounts import AccountService, RawAccount
-from abrechnung.domain.accounts import Account, ClearingShares
+from abrechnung.application.accounts import AccountService
+from abrechnung.domain.accounts import Account, ClearingShares, NewAccount
 from abrechnung.domain.users import User
 from abrechnung.http.auth import get_current_user
 from abrechnung.http.dependencies import get_account_service
@@ -44,37 +44,6 @@ class BaseAccountPayload(BaseModel):
     clearing_shares: ClearingShares = None
 
 
-class CreateAccountPayload(BaseAccountPayload):
-    type: str
-
-
-class UpdateAccountPayload(BaseAccountPayload):
-    deleted: bool = False
-
-
-class AccountPayloadWithId(UpdateAccountPayload):
-    id: int
-
-
-@router.post(
-    r"/v1/groups/{group_id}/accounts/sync",
-    summary="update a collection of accounts",
-    response_model=Dict[int, int],
-    operation_id="sync_accounts",
-)
-async def sync_accounts(
-    group_id: int,
-    payload: List[RawAccount],
-    user: User = Depends(get_current_user),
-    account_service: AccountService = Depends(get_account_service),
-):
-    return await account_service.sync_accounts(
-        user=user,
-        group_id=group_id,
-        accounts=payload,
-    )
-
-
 @router.post(
     r"/v1/groups/{group_id}/accounts",
     summary="create a new group account",
@@ -83,26 +52,22 @@ async def sync_accounts(
 )
 async def create_account(
     group_id: int,
-    payload: CreateAccountPayload,
+    payload: NewAccount,
     user: User = Depends(get_current_user),
     account_service: AccountService = Depends(get_account_service),
 ):
     account_id = await account_service.create_account(
         user=user,
         group_id=group_id,
-        name=payload.name,
-        description=payload.description,
-        type=payload.type,
-        date_info=payload.date_info,
-        tags=payload.tags,
-        owning_user_id=payload.owning_user_id,
-        clearing_shares=payload.clearing_shares,
+        account=payload,
     )
 
     return await account_service.get_account(user=user, account_id=account_id)
 
 
-@router.get(r"/v1/accounts/{account_id}", summary="fetch a group account", operation_id="get_account")
+@router.get(
+    r"/v1/accounts/{account_id}", summary="fetch a group account", response_model=Account, operation_id="get_account"
+)
 async def get_account(
     account_id: int,
     user: User = Depends(get_current_user),
@@ -111,22 +76,19 @@ async def get_account(
     return await account_service.get_account(user=user, account_id=account_id)
 
 
-@router.post(r"/v1/accounts/{account_id}", summary="update an account", operation_id="update_account")
+@router.post(
+    r"/v1/accounts/{account_id}", summary="update an account", response_model=Account, operation_id="update_account"
+)
 async def update_account(
     account_id: int,
-    payload: UpdateAccountPayload,
+    payload: NewAccount,
     user: User = Depends(get_current_user),
     account_service: AccountService = Depends(get_account_service),
 ):
     await account_service.update_account(
         user=user,
         account_id=account_id,
-        name=payload.name,
-        description=payload.description,
-        date_info=payload.date_info,
-        tags=payload.tags,
-        owning_user_id=payload.owning_user_id,
-        clearing_shares=payload.clearing_shares,
+        account=payload,
     )
 
     return await account_service.get_account(user=user, account_id=account_id)

@@ -1,3 +1,11 @@
+import { DateInput } from "@/components/DateInput";
+import { ShareSelect } from "@/components/ShareSelect";
+import { TagSelector } from "@/components/TagSelector";
+import { TextInput } from "@/components/TextInput";
+import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
+import { api } from "@/core/api";
+import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { getAccountLink, getAccountListLink } from "@/utils";
 import {
     accountEditStarted,
     discardAccountChange,
@@ -15,14 +23,6 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { typeToFlattenedError, z } from "zod";
-import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
-import { DateInput } from "@/components/DateInput";
-import { ShareSelect } from "@/components/ShareSelect";
-import { TagSelector } from "@/components/TagSelector";
-import { TextInput } from "@/components/TextInput";
-import { api } from "@/core/api";
-import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
-import { getAccountLink, getAccountListLink } from "@/utils";
 
 interface Props {
     groupId: number;
@@ -63,13 +63,13 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
     };
 
     const edit = () => {
-        if (!account.isWip) {
+        if (!account.is_wip) {
             dispatch(accountEditStarted({ groupId, accountId }));
         }
     };
 
     const save = React.useCallback(() => {
-        if (!account || !account.isWip) {
+        if (!account || !account.is_wip) {
             toast.error("Cannot save as there are not changes made");
             return;
         }
@@ -87,7 +87,9 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
             .then(({ oldAccountId, account }) => {
                 setShowProgress(false);
                 if (oldAccountId !== account.id) {
-                    navigate(getAccountLink(groupId, "clearing", account.id) + "?no-redirect=true", { replace: true });
+                    navigate(getAccountLink(groupId, account.type, account.id) + "?no-redirect=true", {
+                        replace: true,
+                    });
                 }
             })
             .catch((err) => {
@@ -101,23 +103,14 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
     };
 
     const abortEdit = () => {
-        if (!account.isWip) {
+        if (!account.is_wip) {
             toast.error("Cannot cancel editing as there are not changes made");
             return;
         }
         setShowProgress(true);
-        dispatch(discardAccountChange({ groupId, accountId, api }))
-            .unwrap()
-            .then(({ deletedAccount }) => {
-                setShowProgress(false);
-                if (deletedAccount) {
-                    navigate(`/groups/${groupId}/${account.type === "clearing" ? "events" : "accounts"}`);
-                }
-            })
-            .catch((err) => {
-                setShowProgress(false);
-                toast.error(`error while cancelling edit: ${err.toString()}`);
-            });
+        dispatch(discardAccountChange({ groupId, accountId }));
+        setShowProgress(false);
+        navigate(`/groups/${groupId}/${account.type === "clearing" ? "events" : "accounts"}`);
     };
 
     return (
@@ -132,7 +125,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                 <Grid item>
                     {permissions.canWrite && (
                         <>
-                            {account.isWip ? (
+                            {account.is_wip ? (
                                 <>
                                     <Button color="primary" onClick={save}>
                                         Save
@@ -168,9 +161,9 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                         helperText={validationErrors.fieldErrors.name}
                         onChange={(value) => pushChanges({ name: value })}
                         value={account.name}
-                        disabled={!account.isWip}
+                        disabled={!account.is_wip}
                     />
-                    {!account.isWip && account.description === "" ? null : (
+                    {!account.is_wip && account.description === "" ? null : (
                         <TextInput
                             label="Description"
                             variant="standard"
@@ -181,46 +174,46 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                             helperText={validationErrors.fieldErrors.description}
                             onChange={(value) => pushChanges({ description: value })}
                             value={account.description}
-                            disabled={!account.isWip}
+                            disabled={!account.is_wip}
                         />
                     )}
                     {account.type === "personal" && null}
                     {account.type === "clearing" && (
                         <>
-                            {!account.isWip && (account.tags ?? []).length === 0 ? null : (
+                            {!account.is_wip && (account.tags ?? []).length === 0 ? null : (
                                 <TagSelector
                                     margin="dense"
                                     fullWidth
                                     label="Tags"
                                     groupId={groupId}
                                     value={account.tags || []}
-                                    editable={account.isWip}
+                                    editable={account.is_wip}
                                     onChange={(newValue) => pushChanges({ tags: newValue })}
                                 />
                             )}
                             <DateInput
-                                value={account.dateInfo || ""}
-                                onChange={(value) => pushChanges({ dateInfo: value })}
-                                error={!!validationErrors.fieldErrors.dateInfo}
-                                helperText={validationErrors.fieldErrors.dateInfo}
-                                disabled={!account.isWip}
+                                value={account.date_info || ""}
+                                onChange={(value) => pushChanges({ date_info: value })}
+                                error={!!validationErrors.fieldErrors.date_info}
+                                helperText={validationErrors.fieldErrors.date_info}
+                                disabled={!account.is_wip}
                             />
                         </>
                     )}
                 </Grid>
-                {account.type === "clearing" && account.isWip ? (
+                {account.type === "clearing" && account.is_wip ? (
                     <Grid item xs={12}>
                         <ShareSelect
                             groupId={groupId}
                             label="Participated"
-                            value={account.clearingShares}
+                            value={account.clearing_shares}
                             additionalShareInfoHeader={
                                 <TableCell width="100px" align="right">
                                     Shared
                                 </TableCell>
                             }
-                            error={!!validationErrors.fieldErrors.clearingShares}
-                            helperText={validationErrors.fieldErrors.clearingShares}
+                            error={!!validationErrors.fieldErrors.clearing_shares}
+                            helperText={validationErrors.fieldErrors.clearing_shares}
                             excludeAccounts={[account.id]}
                             renderAdditionalShareInfo={({ account: participatingAccount }) => (
                                 <TableCell width="100px" align="right">
@@ -230,8 +223,8 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                                     {currencySymbol}
                                 </TableCell>
                             )}
-                            onChange={(value) => pushChanges({ clearingShares: value })}
-                            editable={account.isWip}
+                            onChange={(value) => pushChanges({ clearing_shares: value })}
+                            editable={account.is_wip}
                         />
                     </Grid>
                 ) : null}

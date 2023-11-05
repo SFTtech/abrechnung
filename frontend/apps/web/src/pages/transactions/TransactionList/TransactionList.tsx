@@ -29,9 +29,9 @@ import {
 import { useTheme } from "@mui/material/styles";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { TagSelector } from "../../../components/TagSelector";
 import { PurchaseIcon, TransferIcon } from "../../../components/style/AbrechnungIcons";
 import { MobilePaper } from "../../../components/style/mobile";
-import { TagSelector } from "../../../components/TagSelector";
 import { useTitle } from "../../../core/utils";
 import { selectGroupSlice, useAppDispatch, useAppSelector } from "../../../store";
 import { TransactionListItem } from "./TransactionListItem";
@@ -58,7 +58,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
     const [searchValue, setSearchValue] = useState("");
     const [tagFilter, setTagFilter] = useState<string[]>(emptyList);
 
-    const [sortMode, setSortMode] = useState<TransactionSortMode>("lastChanged");
+    const [sortMode, setSortMode] = useState<TransactionSortMode>("last_changed");
 
     const transactions = useAppSelector((state) =>
         selectSortedTransactions({ state, groupId, searchTerm: searchValue, sortMode, tags: tagFilter })
@@ -128,10 +128,10 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                                 onChange={(evt) => setSortMode(evt.target.value as TransactionSortMode)}
                                 value={sortMode}
                             >
-                                <MenuItem value="lastChanged">Last changed</MenuItem>
+                                <MenuItem value="last_changed">Last changed</MenuItem>
                                 <MenuItem value="description">Description</MenuItem>
                                 <MenuItem value="value">Value</MenuItem>
-                                <MenuItem value="billedAt">Date</MenuItem>
+                                <MenuItem value="billed_at">Date</MenuItem>
                             </Select>
                         </FormControl>
                         <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>

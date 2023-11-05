@@ -122,7 +122,7 @@ class GroupService(Service):
             AccountType.personal.value,
         )
         revision_id = await conn.fetchval(
-            "insert into account_revision (user_id, account_id, committed) values ($1, $2, now()) returning id",
+            "insert into account_revision (user_id, account_id) values ($1, $2) returning id",
             user.id,
             account_id,
         )

@@ -4,8 +4,7 @@ from datetime import date, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
-from abrechnung.config import Config
-from abrechnung.http.cli import ApiCli
+from abrechnung.http.api import Api
 from tests.common import TEST_CONFIG, BaseTestCase
 
 
@@ -18,8 +17,8 @@ class WebsocketAPITest(BaseTestCase):
         except (AttributeError, RuntimeError):  # AttributeError->py36
             self.loop = asyncio.get_event_loop_policy().get_event_loop()
 
-        self.test_config = Config.parse_obj(TEST_CONFIG)
-        self.http_service = ApiCli(config=self.test_config)
+        self.test_config = TEST_CONFIG
+        self.http_service = Api(config=self.test_config)
         await self.http_service._setup()
 
         self.client = TestClient(self.http_service.api)

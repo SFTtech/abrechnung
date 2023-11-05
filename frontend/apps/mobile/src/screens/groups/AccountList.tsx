@@ -19,7 +19,7 @@ import {
     selectAccountBalances,
     selectCurrentUserPermissions,
     selectGroupAccountsStatus,
-    selectGroupCurrencySymbol,
+    selectGroupcurrency_symbol,
     selectSortedAccounts,
 } from "@abrechnung/redux";
 import { Account, AccountBalance, AccountType } from "@abrechnung/types";
@@ -52,8 +52,8 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
     );
     const accountBalances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
-    const currencySymbol = useAppSelector((state) =>
-        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
+    const currency_symbol = useAppSelector((state) =>
+        selectGroupcurrency_symbol({ state: selectGroupSlice(state), groupId })
     );
     const accountStatus = useAppSelector((state) =>
         selectGroupAccountsStatus({ state: selectAccountSlice(state), groupId })
@@ -117,7 +117,7 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
                             >
                                 <RadioButton.Item position="trailing" label="Name" value="name" />
                                 <RadioButton.Item position="trailing" label="Description" value="description" />
-                                <RadioButton.Item position="trailing" label="Last changed" value="lastChanged" />
+                                <RadioButton.Item position="trailing" label="Last changed" value="last_changed" />
                             </RadioButton.Group>
                         </Menu>
                     </>
@@ -174,7 +174,7 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
                             />
                         ) : null}
                         <Text style={{ color: textColor }}>
-                            {balance.balance.toFixed(2)} {currencySymbol}
+                            {balance.balance.toFixed(2)} {currency_symbol}
                         </Text>
                     </>
                 )}

@@ -13,7 +13,7 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) =
     const account = useAppSelector((state) =>
         selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
     );
-    const currencySymbol = useAppSelector((state) =>
+    const currency_symbol = useAppSelector((state) =>
         selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
     );
     const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
@@ -25,7 +25,7 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) =
         <ShareSelect
             groupId={groupId}
             label="Participated"
-            value={account.clearingShares}
+            value={account.clearing_shares}
             additionalShareInfoHeader={
                 <TableCell width="100px" align="right">
                     Shared
@@ -35,7 +35,7 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) =
             renderAdditionalShareInfo={({ account: participatingAccount }) => (
                 <TableCell width="100px" align="right">
                     {(balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0).toFixed(2)}{" "}
-                    {currencySymbol}
+                    {currency_symbol}
                 </TableCell>
             )}
             onChange={(value) => undefined}

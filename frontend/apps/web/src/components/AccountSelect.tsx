@@ -1,11 +1,11 @@
-import React from "react";
-import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
-import { DisabledTextField } from "./style/DisabledTextField";
-import { styled } from "@mui/material/styles";
-import { Account } from "@abrechnung/types";
-import { useAppSelector, selectAccountSlice } from "../store";
 import { selectGroupAccounts } from "@abrechnung/redux";
+import { Account } from "@abrechnung/types";
+import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
+import { styled } from "@mui/material/styles";
+import React from "react";
+import { selectAccountSlice, useAppSelector } from "../store";
 import { getAccountIcon } from "./style/AbrechnungIcons";
+import { DisabledTextField } from "./style/DisabledTextField";
 
 const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
     minWidth: 200,
@@ -59,9 +59,9 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
                         <Typography variant="body2" component="span">
                             {account.name}
                         </Typography>
-                        {account.type === "clearing" && account.dateInfo != null && (
+                        {account.type === "clearing" && account.date_info != null && (
                             <Typography variant="caption" component="span">
-                                {account.dateInfo}
+                                {account.date_info}
                             </Typography>
                         )}
                     </Box>

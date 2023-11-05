@@ -68,7 +68,7 @@ create or replace view account_tags (account_id, revision_id, tag_names) as
     group by
         att.account_id, att.revision_id;
 
-create or replace view aggregated_committed_account_history as
+create or replace view aggregated_account_history as
     (
     select
         sub.revision_id,
@@ -76,9 +76,7 @@ create or replace view aggregated_committed_account_history as
         sub.user_id,
         sub.group_id,
         sub.type,
-        sub.started                                          as revision_started,
-        sub.committed                                        as revision_committed,
-        sub.last_changed                                     as last_changed,
+        sub.created_at,
         first_value(sub.description) over outer_window       as description,
         first_value(sub.name) over outer_window              as name,
         first_value(sub.owning_user_id) over outer_window    as owning_user_id,
@@ -94,12 +92,10 @@ create or replace view aggregated_committed_account_history as
                 ar.id                                            as revision_id,
                 ar.account_id,
                 ar.user_id,
-                ar.started,
-                ar.committed,
-                ar.last_changed,
+                ar.created_at,
                 a.group_id,
                 a.type,
-                        count(a.id) over wnd                             as id_partition,
+                count(a.id) over wnd                             as id_partition,
                 ah.name,
                 ah.description,
                 ah.owning_user_id,
@@ -115,175 +111,16 @@ create or replace view aggregated_committed_account_history as
                 left join account_history ah on ah.id = a.id and ar.id = ah.revision_id
                 left join clearing_account_shares_as_json cas on a.id = cas.account_id and ar.id = cas.revision_id
                 left join account_tags t on a.id = t.account_id and ar.id = t.revision_id
-            where
-                ar.committed is not null window wnd as (partition by a.id order by committed asc)
+            window wnd as (partition by a.id order by created_at asc)
         ) as sub window outer_window as (partition by sub.account_id, sub.id_partition order by sub.revision_id) );
 
-create or replace function committed_account_state_valid_at(
-    valid_at timestamptz = now()
-)
-    returns table (
-        account_id         int,
-        revision_id        bigint,
-        type               text,
-        changed_by         int,
-        group_id           int,
-        revision_started   timestamptz,
-        revision_committed timestamptz,
-        last_changed       timestamptz,
-        name               text,
-        description        text,
-        owning_user_id     int,
-        date_info          date,
-        deleted            bool,
-        n_clearing_shares  int,
-        clearing_shares    json,
-        involved_accounts  int[],
-        tags               varchar(255)[]
-    )
-as
-$$
-select distinct on (acah.account_id)
-    acah.account_id,
-    acah.revision_id,
-    acah.type,
-    acah.user_id,
-    acah.group_id,
-    acah.revision_started,
-    acah.revision_committed,
-    acah.last_changed,
-    acah.name,
-    acah.description,
-    acah.owning_user_id,
-    acah.date_info,
-    acah.deleted,
-    acah.n_clearing_shares,
-    acah.clearing_shares,
-    acah.involved_accounts,
-    acah.tags
-from
-    aggregated_committed_account_history acah
-where
-        acah.revision_committed <= committed_account_state_valid_at.valid_at
-order by
-    acah.account_id, acah.revision_committed desc
-$$ language sql
-    security invoker
-    stable;
-
-
-create or replace view aggregated_pending_account_history as
-    (
-    select
-        ar.account_id,
-        ar.id                                            as revision_id,
-        ar.user_id                                       as changed_by,
-        ar.started                                       as revision_started,
-        ar.last_changed                                  as last_changed,
-        a.group_id,
-        a.type,
-        ah.name,
-        ah.description,
-        ah.owning_user_id,
-        ah.date_info,
-        ah.deleted,
-        coalesce(cas.n_shares, 0)                        as n_clearing_shares,
-        coalesce(cas.shares, json_build_object())                as clearing_shares,
-        coalesce(cas.involved_accounts, array []::int[]) as involved_accounts,
-        coalesce(t.tag_names, array []::varchar(255)[])  as tags
-    from
-        account_revision ar
-        join account a on ar.account_id = a.id
-        join account_history ah on a.id = ah.id and ar.id = ah.revision_id
-        left join clearing_account_shares_as_json cas on a.id = cas.account_id and ar.id = cas.revision_id
-        left join account_tags t on a.id = t.account_id and ar.id = t.revision_id
-    where
-        ar.committed is null );
-
-create or replace view aggregated_pending_transaction_position_history as
-    SELECT
-        tr.id                                                AS revision_id,
-        tr.transaction_id,
-        tr.user_id                                           AS changed_by,
-        tr.started                                           AS revision_started,
-        tr.last_changed                                      AS last_changed,
-        pi.id,
-        pih.name,
-        pih.price,
-        pih.communist_shares,
-        pih.deleted,
-        coalesce(piu.n_usages, 0::double precision)          AS n_usages,
-        coalesce(piu.usages, json_build_object())                    AS usages,
-        coalesce(piu.involved_accounts, array []::integer[]) AS involved_accounts
-    FROM
-        transaction_revision tr
-        JOIN purchase_item pi ON tr.transaction_id = pi.transaction_id
-        JOIN purchase_item_history pih ON pih.id = pi.id AND tr.id = pih.revision_id
-        LEFT JOIN purchase_item_usages_as_json piu ON pi.id = piu.item_id AND tr.id = piu.revision_id
-    WHERE
-        tr.committed IS NULL;
-
-create or replace view aggregated_pending_transaction_history as
-    SELECT
-        tr.id                                                 AS revision_id,
-        tr.transaction_id,
-        tr.user_id                                            AS changed_by,
-        tr.started                                            AS revision_started,
-        tr.last_changed                                       AS last_changed,
-        t.group_id,
-        t.type,
-        th.value,
-        th.currency_symbol,
-        th.currency_conversion_rate,
-        th.name,
-        th.description,
-        th.billed_at,
-        th.deleted,
-        coalesce(csaj.n_shares, 0::double precision)          AS n_creditor_shares,
-        coalesce(csaj.shares, json_build_object())                    AS creditor_shares,
-        coalesce(dsaj.n_shares, 0::double precision)          AS n_debitor_shares,
-        coalesce(dsaj.shares, json_build_object())                    AS debitor_shares,
-        coalesce(dsaj.involved_accounts, ARRAY []::integer[]) AS involved_accounts,
-        coalesce(tt.tag_names, array []::varchar(255)[])      as tags
-    FROM
-        transaction_revision tr
-        JOIN transaction t ON tr.transaction_id = t.id
-        JOIN transaction_history th ON t.id = th.id AND tr.id = th.revision_id
-        LEFT JOIN creditor_shares_as_json csaj ON t.id = csaj.transaction_id AND tr.id = csaj.revision_id
-        LEFT JOIN debitor_shares_as_json dsaj ON t.id = dsaj.transaction_id AND tr.id = dsaj.revision_id
-        left join transaction_tags tt on tt.transaction_id = t.id and tt.revision_id = tr.id
-    WHERE
-        tr.committed IS NULL;
-
-create or replace view aggregated_pending_file_history as
-    SELECT
-        tr.id           AS revision_id,
-        tr.transaction_id,
-        tr.user_id      AS changed_by,
-        tr.started      AS revision_started,
-        tr.last_changed AS last_changed,
-        f.id,
-        fh.filename,
-        blob.mime_type,
-        fh.blob_id,
-        fh.deleted
-    FROM
-        transaction_revision tr
-        JOIN file f ON tr.transaction_id = f.transaction_id
-        JOIN file_history fh ON fh.id = f.id AND tr.id = fh.revision_id
-        LEFT JOIN blob ON blob.id = fh.blob_id
-    WHERE
-        tr.committed IS NULL;
-
-create or replace view aggregated_committed_transaction_position_history as
+create or replace view aggregated_transaction_position_history as
     SELECT
         sub.revision_id,
         sub.transaction_id,
         sub.item_id,
         sub.user_id,
-        sub.started                                          AS revision_started,
-        sub.committed                                        AS revision_committed,
-        sub.last_changed                                     AS last_changed,
+        sub.created_at,
         first_value(sub.name) OVER outer_window              AS name,
         first_value(sub.price) OVER outer_window             AS price,
         first_value(sub.communist_shares) OVER outer_window  AS communist_shares,
@@ -297,9 +134,7 @@ create or replace view aggregated_committed_transaction_position_history as
                 tr.id                                                AS revision_id,
                 tr.transaction_id,
                 tr.user_id,
-                tr.started,
-                tr.committed,
-                tr.last_changed,
+                tr.created_at,
                 pi.id                                                AS item_id,
                 count(pi.id) OVER wnd                                AS id_partition,
                 pih.name,
@@ -314,19 +149,16 @@ create or replace view aggregated_committed_transaction_position_history as
                 JOIN purchase_item pi ON tr.transaction_id = pi.transaction_id
                 LEFT JOIN purchase_item_history pih ON pih.id = pi.id AND tr.id = pih.revision_id
                 LEFT JOIN purchase_item_usages_as_json piu ON pi.id = piu.item_id AND tr.id = piu.revision_id
-            WHERE
-                tr.committed IS NOT NULL WINDOW wnd AS (PARTITION BY pi.id ORDER BY tr.committed)
+            WINDOW wnd AS (PARTITION BY pi.id ORDER BY tr.created_at)
         ) sub WINDOW outer_window AS (PARTITION BY sub.item_id, sub.id_partition ORDER BY sub.revision_id);
 
-create or replace view aggregated_committed_transaction_history as
+create or replace view aggregated_transaction_history as
     SELECT
         sub.revision_id,
         sub.transaction_id,
         sub.user_id,
         sub.group_id,
-        sub.started                                                 AS revision_started,
-        sub.committed                                               AS revision_committed,
-        sub.last_changed                                            AS last_changed,
+        sub.created_at,
         sub.type,
         first_value(sub.value) OVER outer_window                    AS value,
         first_value(sub.name) OVER outer_window                     AS name,
@@ -347,12 +179,10 @@ create or replace view aggregated_committed_transaction_history as
                 tr.id                                                 AS revision_id,
                 tr.transaction_id,
                 tr.user_id,
-                tr.started,
-                tr.committed,
-                tr.last_changed,
+                tr.created_at,
                 t.group_id,
                 t.type,
-                        count(th.id) OVER wnd                                 AS id_partition,
+                count(th.id) OVER wnd                                 AS id_partition,
                 th.value,
                 th.currency_symbol,
                 th.currency_conversion_rate,
@@ -360,11 +190,11 @@ create or replace view aggregated_committed_transaction_history as
                 th.description,
                 th.billed_at,
                 th.deleted,
-                COALESCE(csaj.n_shares, 0::double precision)          AS n_creditor_shares,
-                COALESCE(csaj.shares, json_build_object())                    AS creditor_shares,
-                COALESCE(dsaj.n_shares, 0::double precision)          AS n_debitor_shares,
-                COALESCE(dsaj.shares, json_build_object())                    AS debitor_shares,
-                    coalesce(csaj.involved_accounts, array[]::int[]) || coalesce(dsaj.involved_accounts, array[]::int[]) as involved_accounts,
+                coalesce(csaj.n_shares, 0::double precision)          AS n_creditor_shares,
+                coalesce(csaj.shares, json_build_object())                    AS creditor_shares,
+                coalesce(dsaj.n_shares, 0::double precision)          AS n_debitor_shares,
+                coalesce(dsaj.shares, json_build_object())                    AS debitor_shares,
+                coalesce(csaj.involved_accounts, array[]::int[]) || coalesce(dsaj.involved_accounts, array[]::int[]) as involved_accounts,
                 coalesce(tt.tag_names, array []::varchar(255)[])      as tags
             FROM
                 transaction_revision tr
@@ -373,19 +203,16 @@ create or replace view aggregated_committed_transaction_history as
                 LEFT JOIN creditor_shares_as_json csaj ON t.id = csaj.transaction_id AND tr.id = csaj.revision_id
                 LEFT JOIN debitor_shares_as_json dsaj ON t.id = dsaj.transaction_id AND tr.id = dsaj.revision_id
                 left join transaction_tags tt on tt.transaction_id = t.id and tt.revision_id = tr.id
-            WHERE
-                tr.committed IS NOT NULL WINDOW wnd AS (PARTITION BY tr.transaction_id ORDER BY tr.committed)
+            WINDOW wnd AS (PARTITION BY tr.transaction_id ORDER BY tr.created_at)
         ) sub WINDOW outer_window AS (PARTITION BY sub.transaction_id, sub.id_partition ORDER BY sub.revision_id);
 
-create or replace view aggregated_committed_file_history as
+create or replace view aggregated_file_history as
     SELECT
         sub.revision_id,
         sub.transaction_id,
         sub.id,
         sub.user_id,
-        sub.started                                  AS revision_started,
-        sub.committed                                AS revision_committed,
-        sub.last_changed                             AS last_changed,
+        sub.created_at,
         first_value(sub.filename) OVER outer_window  AS filename,
         first_value(sub.mime_type) OVER outer_window AS mime_type,
         first_value(sub.blob_id) OVER outer_window   AS blob_id,
@@ -396,9 +223,7 @@ create or replace view aggregated_committed_file_history as
                 tr.id                AS revision_id,
                 tr.transaction_id,
                 tr.user_id,
-                tr.started,
-                tr.committed,
-                tr.last_changed,
+                tr.created_at,
                 f.id,
                 count(f.id) OVER wnd AS id_partition,
                 fh.filename,
@@ -410,6 +235,5 @@ create or replace view aggregated_committed_file_history as
                 JOIN file f ON tr.transaction_id = f.transaction_id
                 LEFT JOIN file_history fh ON fh.id = f.id AND tr.id = fh.revision_id
                 LEFT JOIN blob ON blob.id = fh.blob_id
-            WHERE
-                tr.committed IS NOT NULL WINDOW wnd AS (PARTITION BY f.id ORDER BY tr.committed)
+            WINDOW wnd AS (PARTITION BY f.id ORDER BY tr.created_at)
         ) sub WINDOW outer_window AS (PARTITION BY sub.id, sub.id_partition ORDER BY sub.revision_id);

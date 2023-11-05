@@ -3,13 +3,16 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type CreateAccountPayload = {
+import type { AccountType } from './AccountType';
+
+export type NewAccount = {
+    type: AccountType;
     name: string;
-    description: string;
-    date_info?: (string | null);
-    tags?: (Array<string> | null);
+    description?: string;
     owning_user_id?: (number | null);
+    date_info?: (string | null);
+    deleted?: boolean;
+    tags?: Array<string>;
     clearing_shares?: (Record<string, number> | null);
-    type: string;
 };
 

@@ -97,7 +97,7 @@ export const AddGroup: React.FC<GroupStackScreenProps<"AddGroup">> = ({ navigati
                 label="Currency"
                 value={formik.values.currency_symbol}
                 onChange={(val) => formik.setFieldValue("currency_symbol", val)}
-                // error={formik.touched.description && !!formik.errors.currencySymbol}
+                // error={formik.touched.description && !!formik.errors.currency_symbol}
             />
             {formik.touched.currency_symbol && !!formik.errors.description ? (
                 <HelperText type="error">{formik.errors.currency_symbol}</HelperText>

@@ -7,26 +7,6 @@
 import { z } from 'zod';
 
 export namespace components.schemas {
-  /** Account */
-  export const Account = z.object({
-    id: z.number().int(),
-    group_id: z.number().int(),
-    type: components["schemas"]["AccountType"],
-    is_wip: z.boolean(),
-    last_changed: z.string(),
-    committed_details: z.union([components["schemas"]["AccountDetails"], z.null()]),
-    pending_details: z.union([components["schemas"]["AccountDetails"], z.null()]),
-  });
-  /** AccountDetails */
-  export const AccountDetails = z.object({
-    name: z.string(),
-    description: z.string(),
-    owning_user_id: z.union([z.number().int(), z.null()]),
-    date_info: z.union([z.string(), z.null()]),
-    deleted: z.boolean(),
-    tags: z.array(z.string()),
-    clearing_shares: z.union([z.record(z.number()), z.null()]).optional(),
-  });
   /**
    * AccountType 
    * @enum {string}
@@ -41,10 +21,6 @@ export namespace components.schemas {
     client_id: z.union([z.string(), z.null()]).optional(),
     client_secret: z.union([z.string(), z.null()]).optional(),
   });
-  /** Body_upload_file */
-  export const Body_upload_file = z.object({
-    file: z.string(),
-  });
   /** ChangeEmailPayload */
   export const ChangeEmailPayload = z.object({
     email: z.string(),
@@ -54,6 +30,19 @@ export namespace components.schemas {
   export const ChangePasswordPayload = z.object({
     new_password: z.string(),
     old_password: z.string(),
+  });
+  /** ClearingAccount */
+  export const ClearingAccount = z.object({
+    id: z.number().int(),
+    group_id: z.number().int(),
+    type: z.literal("clearing"),
+    name: z.string(),
+    description: z.string(),
+    date_info: z.string(),
+    tags: z.array(z.string()),
+    clearing_shares: z.union([z.record(z.number()), z.null()]),
+    last_changed: z.string(),
+    deleted: z.boolean(),
   });
   /** ConfirmEmailChangePayload */
   export const ConfirmEmailChangePayload = z.object({
@@ -67,16 +56,6 @@ export namespace components.schemas {
   /** ConfirmRegistrationPayload */
   export const ConfirmRegistrationPayload = z.object({
     token: z.string(),
-  });
-  /** CreateAccountPayload */
-  export const CreateAccountPayload = z.object({
-    name: z.string(),
-    description: z.string(),
-    date_info: z.union([z.string(), z.null()]).optional(),
-    tags: z.union([z.array(z.string()), z.null()]).optional(),
-    owning_user_id: z.union([z.number().int(), z.null()]).optional(),
-    clearing_shares: z.union([z.record(z.number()), z.null()]).optional(),
-    type: z.string(),
   });
   /** CreateInvitePayload */
   export const CreateInvitePayload = z.object({
@@ -172,39 +151,59 @@ export namespace components.schemas {
     password: z.string(),
     session_name: z.string(),
   });
-  /** PreviewGroupPayload */
-  export const PreviewGroupPayload = z.object({
-    invite_token: z.string(),
-  });
-  /** RawAccount */
-  export const RawAccount = z.object({
-    id: z.number().int(),
-    group_id: z.number().int(),
+  /** NewAccount */
+  export const NewAccount = z.object({
+    type: components["schemas"]["AccountType"],
     name: z.string(),
-    description: z.string(),
-    owning_user_id: z.union([z.number().int(), z.null()]),
-    date_info: z.union([z.string(), z.null()]),
-    deleted: z.boolean(),
-    tags: z.array(z.string()),
-    type: z.union([z.string(), z.null()]).optional(),
+    description: z.string().optional(),
+    owning_user_id: z.union([z.number().int(), z.null()]).optional(),
+    date_info: z.union([z.string(), z.null()]).optional(),
+    deleted: z.boolean().optional(),
+    tags: z.array(z.string()).optional(),
     clearing_shares: z.union([z.record(z.number()), z.null()]).optional(),
   });
-  /** RawTransaction */
-  export const RawTransaction = z.object({
-    id: z.number().int(),
-    group_id: z.number().int(),
-    type: z.string(),
+  /** NewFile */
+  export const NewFile = z.object({
+    filename: z.string(),
+    mime_type: z.string(),
+    content: z.string(),
+  });
+  /** NewTransaction */
+  export const NewTransaction = z.object({
+    type: components["schemas"]["TransactionType"],
     name: z.string(),
-    description: z.union([z.string(), z.null()]),
+    description: z.string(),
     value: z.number(),
     currency_symbol: z.string(),
     currency_conversion_rate: z.number(),
     billed_at: z.string(),
-    deleted: z.boolean(),
+    tags: z.array(z.string()).optional(),
     creditor_shares: z.record(z.number()),
     debitor_shares: z.record(z.number()),
-    tags: z.array(z.string()),
-    positions: z.array(components["schemas"]["TransactionPosition"]),
+    new_files: z.array(components["schemas"]["NewFile"]).optional(),
+    new_positions: z.array(components["schemas"]["NewTransactionPosition"]).optional(),
+  });
+  /** NewTransactionPosition */
+  export const NewTransactionPosition = z.object({
+    name: z.string(),
+    price: z.number(),
+    communist_shares: z.number(),
+    usages: z.record(z.number()),
+  });
+  /** PersonalAccount */
+  export const PersonalAccount = z.object({
+    id: z.number().int(),
+    group_id: z.number().int(),
+    type: z.literal("personal"),
+    name: z.string(),
+    description: z.string(),
+    owning_user_id: z.union([z.number().int(), z.null()]),
+    deleted: z.boolean(),
+    last_changed: z.string(),
+  });
+  /** PreviewGroupPayload */
+  export const PreviewGroupPayload = z.object({
+    invite_token: z.string(),
   });
   /** RecoverPasswordPayload */
   export const RecoverPasswordPayload = z.object({
@@ -243,32 +242,6 @@ export namespace components.schemas {
     id: z.number().int(),
     group_id: z.number().int(),
     type: components["schemas"]["TransactionType"],
-    is_wip: z.boolean(),
-    last_changed: z.string(),
-    committed_details: z.union([components["schemas"]["TransactionDetails"], z.null()]),
-    pending_details: z.union([components["schemas"]["TransactionDetails"], z.null()]),
-    committed_positions: z.union([z.array(components["schemas"]["TransactionPosition"]), z.null()]).optional(),
-    pending_positions: z.union([z.array(components["schemas"]["TransactionPosition"]), z.null()]).optional(),
-    committed_files: z.union([z.array(components["schemas"]["FileAttachment"]), z.null()]).optional(),
-    pending_files: z.union([z.array(components["schemas"]["FileAttachment"]), z.null()]).optional(),
-  });
-  /** TransactionCreatePayload */
-  export const TransactionCreatePayload = z.object({
-    name: z.string(),
-    description: z.union([z.string(), z.null()]),
-    value: z.number(),
-    currency_symbol: z.string(),
-    currency_conversion_rate: z.number(),
-    billed_at: z.string(),
-    tags: z.array(z.string()),
-    creditor_shares: z.record(z.number()),
-    debitor_shares: z.record(z.number()),
-    positions: z.union([z.array(components["schemas"]["TransactionPosition"]), z.null()]).optional(),
-    type: z.string(),
-    perform_commit: z.boolean().optional(),
-  });
-  /** TransactionDetails */
-  export const TransactionDetails = z.object({
     name: z.string(),
     description: z.string(),
     value: z.number(),
@@ -279,14 +252,17 @@ export namespace components.schemas {
     deleted: z.boolean(),
     creditor_shares: z.record(z.number()),
     debitor_shares: z.record(z.number()),
+    last_changed: z.string(),
+    positions: z.array(components["schemas"]["TransactionPosition"]),
+    files: z.array(components["schemas"]["FileAttachment"]),
   });
   /** TransactionPosition */
   export const TransactionPosition = z.object({
-    id: z.number().int(),
     name: z.string(),
     price: z.number(),
     communist_shares: z.number(),
     usages: z.record(z.number()),
+    id: z.number().int(),
     deleted: z.boolean(),
   });
   /**
@@ -294,30 +270,13 @@ export namespace components.schemas {
    * @enum {string}
    */
   export const TransactionType = z.enum(["mimo", "purchase", "transfer"]);
-  /** TransactionUpdatePayload */
-  export const TransactionUpdatePayload = z.object({
-    name: z.string(),
-    description: z.union([z.string(), z.null()]),
-    value: z.number(),
-    currency_symbol: z.string(),
-    currency_conversion_rate: z.number(),
-    billed_at: z.string(),
-    tags: z.array(z.string()),
-    creditor_shares: z.record(z.number()),
-    debitor_shares: z.record(z.number()),
-    positions: z.union([z.array(components["schemas"]["TransactionPosition"]), z.null()]).optional(),
-    deleted: z.boolean().optional(),
-    perform_commit: z.boolean().optional(),
-  });
-  /** UpdateAccountPayload */
-  export const UpdateAccountPayload = z.object({
-    name: z.string(),
-    description: z.string(),
-    date_info: z.union([z.string(), z.null()]).optional(),
-    tags: z.union([z.array(z.string()), z.null()]).optional(),
-    owning_user_id: z.union([z.number().int(), z.null()]).optional(),
-    clearing_shares: z.union([z.record(z.number()), z.null()]).optional(),
-    deleted: z.boolean().optional(),
+  /** UpdateFile */
+  export const UpdateFile = z.object({
+    id: z.number().int(),
+    filename: z.string(),
+    mime_type: z.union([z.string(), z.null()]),
+    content: z.union([z.string(), z.null()]),
+    deleted: z.boolean(),
   });
   /** UpdateGroupMemberPayload */
   export const UpdateGroupMemberPayload = z.object({
@@ -328,7 +287,23 @@ export namespace components.schemas {
   /** UpdatePositionsPayload */
   export const UpdatePositionsPayload = z.object({
     positions: z.array(components["schemas"]["TransactionPosition"]),
-    perform_commit: z.boolean().optional(),
+  });
+  /** UpdateTransaction */
+  export const UpdateTransaction = z.object({
+    type: components["schemas"]["TransactionType"],
+    name: z.string(),
+    description: z.string(),
+    value: z.number(),
+    currency_symbol: z.string(),
+    currency_conversion_rate: z.number(),
+    billed_at: z.string(),
+    tags: z.array(z.string()).optional(),
+    creditor_shares: z.record(z.number()),
+    debitor_shares: z.record(z.number()),
+    new_files: z.array(components["schemas"]["NewFile"]).optional(),
+    new_positions: z.array(components["schemas"]["NewTransactionPosition"]).optional(),
+    changed_files: z.array(components["schemas"]["UpdateFile"]).optional(),
+    changed_positions: z.array(components["schemas"]["TransactionPosition"]).optional(),
   });
   /** User */
   export const User = z.object({
@@ -407,7 +382,7 @@ export const operations = {
     },
     requestBody: {
       content: {
-        "application/json": components["schemas"]["TransactionCreatePayload"],
+        "application/json": components["schemas"]["NewTransaction"],
       },
     },
     responses: {
@@ -415,39 +390,6 @@ export const operations = {
       200: {
         content: {
           "application/json": components["schemas"]["Transaction"],
-        },
-      },
-      /** @description unauthorized */
-      401: z.never(),
-      /** @description forbidden */
-      403: z.never(),
-      /** @description Not found */
-      404: z.never(),
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"],
-        },
-      },
-    },
-  },
-  sync_transactions: {
-    /** sync a batch of transactions */
-    parameters: {
-      path: z.object({
-        group_id: z.number().int(),
-      }),
-    },
-    requestBody: {
-      content: {
-        "application/json": z.array(components["schemas"]["RawTransaction"]),
-      },
-    },
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": z.record(z.number().int()),
         },
       },
       /** @description unauthorized */
@@ -501,7 +443,7 @@ export const operations = {
     },
     requestBody: {
       content: {
-        "application/json": components["schemas"]["TransactionUpdatePayload"],
+        "application/json": components["schemas"]["UpdateTransaction"],
       },
     },
     responses: {
@@ -564,151 +506,6 @@ export const operations = {
       content: {
         "application/json": components["schemas"]["UpdatePositionsPayload"],
       },
-    },
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Transaction"],
-        },
-      },
-      /** @description unauthorized */
-      401: z.never(),
-      /** @description forbidden */
-      403: z.never(),
-      /** @description Not found */
-      404: z.never(),
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"],
-        },
-      },
-    },
-  },
-  commit_transaction: {
-    /** commit currently pending transaction changes */
-    parameters: {
-      path: z.object({
-        transaction_id: z.number().int(),
-      }),
-    },
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Transaction"],
-        },
-      },
-      /** @description unauthorized */
-      401: z.never(),
-      /** @description forbidden */
-      403: z.never(),
-      /** @description Not found */
-      404: z.never(),
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"],
-        },
-      },
-    },
-  },
-  create_transaction_change: {
-    /** create a new pending transaction revision */
-    parameters: {
-      path: z.object({
-        transaction_id: z.number().int(),
-      }),
-    },
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Transaction"],
-        },
-      },
-      /** @description unauthorized */
-      401: z.never(),
-      /** @description forbidden */
-      403: z.never(),
-      /** @description Not found */
-      404: z.never(),
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"],
-        },
-      },
-    },
-  },
-  discard_transaction_change: {
-    /** discard currently pending transaction changes */
-    parameters: {
-      path: z.object({
-        transaction_id: z.number().int(),
-      }),
-    },
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Transaction"],
-        },
-      },
-      /** @description unauthorized */
-      401: z.never(),
-      /** @description forbidden */
-      403: z.never(),
-      /** @description Not found */
-      404: z.never(),
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"],
-        },
-      },
-    },
-  },
-  upload_file: {
-    /** upload a file as a transaction attachment */
-    parameters: {
-      path: z.object({
-        transaction_id: z.number().int(),
-      }),
-    },
-    requestBody: {
-      content: {
-        "multipart/form-data": components["schemas"]["Body_upload_file"],
-      },
-    },
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": components["schemas"]["Transaction"],
-        },
-      },
-      /** @description unauthorized */
-      401: z.never(),
-      /** @description forbidden */
-      403: z.never(),
-      /** @description Not found */
-      404: z.never(),
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"],
-        },
-      },
-    },
-  },
-  delete_file: {
-    /** delete a transaction attachment */
-    parameters: {
-      path: z.object({
-        file_id: z.number().int(),
-      }),
     },
     responses: {
       /** @description Successful Response */
@@ -1413,7 +1210,7 @@ export const operations = {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": z.array(components["schemas"]["Account"]),
+          "application/json": z.array(z.union([components["schemas"]["ClearingAccount"], components["schemas"]["PersonalAccount"]])),
         },
       },
       /** @description unauthorized */
@@ -1439,47 +1236,14 @@ export const operations = {
     },
     requestBody: {
       content: {
-        "application/json": components["schemas"]["CreateAccountPayload"],
+        "application/json": components["schemas"]["NewAccount"],
       },
     },
     responses: {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["Account"],
-        },
-      },
-      /** @description unauthorized */
-      401: z.never(),
-      /** @description forbidden */
-      403: z.never(),
-      /** @description Not found */
-      404: z.never(),
-      /** @description Validation Error */
-      422: {
-        content: {
-          "application/json": components["schemas"]["HTTPValidationError"],
-        },
-      },
-    },
-  },
-  sync_accounts: {
-    /** update a collection of accounts */
-    parameters: {
-      path: z.object({
-        group_id: z.number().int(),
-      }),
-    },
-    requestBody: {
-      content: {
-        "application/json": z.array(components["schemas"]["RawAccount"]),
-      },
-    },
-    responses: {
-      /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": z.record(z.number().int()),
+          "application/json": z.union([components["schemas"]["ClearingAccount"], components["schemas"]["PersonalAccount"]]),
         },
       },
       /** @description unauthorized */
@@ -1507,7 +1271,7 @@ export const operations = {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": z.record(z.any()),
+          "application/json": z.union([components["schemas"]["ClearingAccount"], components["schemas"]["PersonalAccount"]]),
         },
       },
       /** @description unauthorized */
@@ -1533,14 +1297,14 @@ export const operations = {
     },
     requestBody: {
       content: {
-        "application/json": components["schemas"]["UpdateAccountPayload"],
+        "application/json": components["schemas"]["NewAccount"],
       },
     },
     responses: {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": z.record(z.any()),
+          "application/json": z.union([components["schemas"]["ClearingAccount"], components["schemas"]["PersonalAccount"]]),
         },
       },
       /** @description unauthorized */
@@ -1568,7 +1332,7 @@ export const operations = {
       /** @description Successful Response */
       200: {
         content: {
-          "application/json": components["schemas"]["Account"],
+          "application/json": z.union([components["schemas"]["ClearingAccount"], components["schemas"]["PersonalAccount"]]),
         },
       },
       /** @description unauthorized */
@@ -1605,10 +1369,6 @@ export const paths = {
     /** create a new transaction */
     post: operations["create_transaction"],
   },
-  "/api/v1/groups/{group_id}/transactions/sync": {
-    /** sync a batch of transactions */
-    post: operations["sync_transactions"],
-  },
   "/api/v1/transactions/{transaction_id}": {
     /** get transaction details */
     get: operations["get_transaction"],
@@ -1620,26 +1380,6 @@ export const paths = {
   "/api/v1/transactions/{transaction_id}/positions": {
     /** update transaction positions */
     post: operations["update_transaction_positions"],
-  },
-  "/api/v1/transactions/{transaction_id}/commit": {
-    /** commit currently pending transaction changes */
-    post: operations["commit_transaction"],
-  },
-  "/api/v1/transactions/{transaction_id}/new_change": {
-    /** create a new pending transaction revision */
-    post: operations["create_transaction_change"],
-  },
-  "/api/v1/transactions/{transaction_id}/discard": {
-    /** discard currently pending transaction changes */
-    post: operations["discard_transaction_change"],
-  },
-  "/api/v1/transactions/{transaction_id}/files": {
-    /** upload a file as a transaction attachment */
-    post: operations["upload_file"],
-  },
-  "/api/v1/files/{file_id}": {
-    /** delete a transaction attachment */
-    delete: operations["delete_file"],
   },
   "/api/v1/files/{file_id}/{blob_id}": {
     /** fetch the (binary) contents of a transaction attachment */
@@ -1752,10 +1492,6 @@ export const paths = {
     get: operations["list_accounts"],
     /** create a new group account */
     post: operations["create_account"],
-  },
-  "/api/v1/groups/{group_id}/accounts/sync": {
-    /** update a collection of accounts */
-    post: operations["sync_accounts"],
   },
   "/api/v1/accounts/{account_id}": {
     /** fetch a group account */

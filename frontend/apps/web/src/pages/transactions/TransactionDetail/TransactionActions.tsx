@@ -61,7 +61,7 @@ export const TransactionActions: React.FC<Props> = ({
                 <Grid item>
                     {permissions.canWrite && (
                         <>
-                            {transaction.isWip ? (
+                            {transaction.is_wip ? (
                                 <>
                                     <Button color="primary" onClick={onCommitEdit}>
                                         Save

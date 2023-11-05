@@ -1,5 +1,6 @@
 import { MobilePaper } from "@/components/style/mobile";
 import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { SettlementPlanItem } from "@abrechnung/core";
 import {
     createTransaction,
     selectAccountIdToAccountMap,
@@ -8,7 +9,6 @@ import {
 } from "@abrechnung/redux";
 import { Button, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
 import * as React from "react";
-import { SettlementPlanItem } from "@abrechnung/core";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
@@ -19,7 +19,7 @@ export const SettlementPlanDisplay: React.FC<Props> = ({ groupId }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const settlementPlan = useAppSelector((state) => selectSettlementPlan({ state, groupId }));
-    const currencySymbol = useAppSelector((state) =>
+    const currency_symbol = useAppSelector((state) =>
         selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
     );
     const accountMap = useAppSelector((state) =>
@@ -34,8 +34,8 @@ export const SettlementPlanDisplay: React.FC<Props> = ({ groupId }) => {
                 data: {
                     name: "Settlement",
                     value: planItem.paymentAmount,
-                    creditorShares: { [planItem.creditorId]: 1 },
-                    debitorShares: { [planItem.debitorId]: 1 },
+                    creditor_shares: { [planItem.creditorId]: 1 },
+                    debitor_shares: { [planItem.debitorId]: 1 },
                 },
             })
         )
@@ -56,7 +56,7 @@ export const SettlementPlanDisplay: React.FC<Props> = ({ groupId }) => {
                                 <span>
                                     {accountMap[planItem.creditorId].name} pays {accountMap[planItem.debitorId].name}{" "}
                                     {planItem.paymentAmount.toFixed(2)}
-                                    {currencySymbol}
+                                    {currency_symbol}
                                 </span>
                             }
                         />

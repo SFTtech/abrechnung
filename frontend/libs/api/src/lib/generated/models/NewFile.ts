@@ -3,7 +3,9 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type Body_upload_file = {
-    file: Blob;
+export type NewFile = {
+    filename: string;
+    mime_type: string;
+    content: string;
 };
 

@@ -111,12 +111,12 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                       type: transaction.type,
                       name: transaction.name,
                       value: transaction.value,
-                      currencySymbol: transaction.currencySymbol,
+                      currency_symbol: transaction.currency_symbol,
                       currencyConversionRate: transaction.currencyConversionRate,
                       description: transaction.description ?? "",
-                      creditorShares: transaction.creditorShares,
-                      debitorShares: transaction.debitorShares,
-                      billedAt: transaction.billedAt,
+                      creditor_shares: transaction.creditor_shares,
+                      debitor_shares: transaction.debitor_shares,
+                      billed_at: transaction.billed_at,
                       tags: transaction.tags,
                   },
         validationSchema: toFormikValidationSchema(TransactionValidator),
@@ -218,7 +218,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                     name: "",
                     price: 0,
                     usages: {},
-                    communistShares: 0,
+                    communist_shares: 0,
                 },
             })
         );
@@ -269,17 +269,17 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
             )}
             <DateTimeInput
                 label="Billed At"
-                value={fromISOStringNullable(formik.values.billedAt)}
+                value={fromISOStringNullable(formik.values.billed_at)}
                 editable={editing}
                 style={inputStyles}
                 onChange={(val) => {
-                    formik.setFieldValue("billedAt", toISODateString(val));
+                    formik.setFieldValue("billed_at", toISODateString(val));
                     onUpdate();
                 }}
-                error={formik.touched.billedAt && !!formik.errors.billedAt}
+                error={formik.touched.billed_at && !!formik.errors.billed_at}
             />
-            {formik.touched.billedAt && !!formik.errors.billedAt && (
-                <HelperText type="error">{formik.errors.billedAt}</HelperText>
+            {formik.touched.billed_at && !!formik.errors.billed_at && (
+                <HelperText type="error">{formik.errors.billed_at}</HelperText>
             )}
             <NumericInput
                 label="Value"
@@ -289,7 +289,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 onChange={(val) => formik.setFieldValue("value", val)}
                 onBlur={onUpdate}
                 style={inputStyles}
-                right={<TextInput.Affix text={formik.values.currencySymbol} />}
+                right={<TextInput.Affix text={formik.values.currency_symbol} />}
                 error={formik.touched.value && !!formik.errors.value}
             />
             {formik.touched.value && !!formik.errors.value && (
@@ -357,27 +357,27 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 title="Paid by"
                 groupId={groupId}
                 disabled={!editing}
-                value={formik.values.creditorShares ?? {}}
-                onChange={(val) => formik.setFieldValue("creditorShares", val)}
+                value={formik.values.creditor_shares ?? {}}
+                onChange={(val) => formik.setFieldValue("creditor_shares", val)}
                 enableAdvanced={false}
                 multiSelect={false}
-                error={formik.touched.creditorShares && !!formik.errors.creditorShares}
+                error={formik.touched.creditor_shares && !!formik.errors.creditor_shares}
             />
-            {formik.touched.creditorShares && !!formik.errors.creditorShares && (
-                <HelperText type="error">{formik.errors.creditorShares}</HelperText>
+            {formik.touched.creditor_shares && !!formik.errors.creditor_shares && (
+                <HelperText type="error">{formik.errors.creditor_shares}</HelperText>
             )}
             <TransactionShareInput
                 title="For"
                 disabled={!editing}
                 groupId={groupId}
-                value={formik.values.debitorShares ?? {}}
-                onChange={(val) => formik.setFieldValue("debitorShares", val)}
+                value={formik.values.debitor_shares ?? {}}
+                onChange={(val) => formik.setFieldValue("debitor_shares", val)}
                 enableAdvanced={transaction.type === "purchase"}
                 multiSelect={transaction.type === "purchase"}
-                error={formik.touched.debitorShares && !!formik.errors.debitorShares}
+                error={formik.touched.debitor_shares && !!formik.errors.debitor_shares}
             />
-            {formik.touched.debitorShares && !!formik.errors.debitorShares && (
-                <HelperText type="error">{formik.errors.debitorShares}</HelperText>
+            {formik.touched.debitor_shares && !!formik.errors.debitor_shares && (
+                <HelperText type="error">{formik.errors.debitor_shares}</HelperText>
             )}
 
             {positions.length > 0 && (
@@ -389,7 +389,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                             <PositionListItem
                                 key={position.id}
                                 groupId={groupId}
-                                currencySymbol={transaction.currencySymbol}
+                                currency_symbol={transaction.currency_symbol}
                                 position={position}
                                 editing={editing}
                             />
@@ -399,7 +399,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                             title="Total"
                             right={(props) => (
                                 <Text>
-                                    {positionTotal.toFixed(2)} {transaction.currencySymbol}
+                                    {positionTotal.toFixed(2)} {transaction.currency_symbol}
                                 </Text>
                             )}
                         />
@@ -408,7 +408,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                             right={(props) => (
                                 <Text>
                                     {((formik.values?.value ?? 0) - positionTotal).toFixed(2)}{" "}
-                                    {transaction.currencySymbol}
+                                    {transaction.currency_symbol}
                                 </Text>
                             )}
                         />

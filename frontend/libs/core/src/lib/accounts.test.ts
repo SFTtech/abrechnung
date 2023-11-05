@@ -1,12 +1,12 @@
-import { Purchase, Account, AccountBalanceMap } from "@abrechnung/types";
+import { Account, AccountBalanceMap, Purchase } from "@abrechnung/types";
 import { computeAccountBalances, computeGroupSettlement } from "./accounts";
 
 const purchaseTemplate = {
     groupID: 0,
     type: "purchase" as const,
-    billedAt: "2022-10-10",
+    billed_at: "2022-10-10",
     currencyConversionRate: 1.0,
-    currencySymbol: "€",
+    currency_symbol: "€",
     name: "foobar",
     description: "",
     deleted: false,
@@ -14,7 +14,7 @@ const purchaseTemplate = {
     tags: [],
     positions: [],
     hasLocalChanges: false,
-    lastChanged: new Date().toISOString(),
+    last_changed: new Date().toISOString(),
     isWip: false,
 };
 
@@ -24,7 +24,7 @@ const accountTemplate = {
     description: "",
     deleted: false,
     hasLocalChanges: false,
-    lastChanged: new Date().toISOString(),
+    last_changed: new Date().toISOString(),
     isWip: false,
 };
 
@@ -47,8 +47,8 @@ describe("computeAccountBalances", () => {
             ...purchaseTemplate,
             id: 0,
             value: 100,
-            creditorShares: { 1: 1 },
-            debitorShares: { 1: 1, 2: 2, 3: 1 },
+            creditor_shares: { 1: 1 },
+            debitor_shares: { 1: 1, 2: 2, 3: 1 },
         };
 
         const accounts: Account[] = [
@@ -99,8 +99,8 @@ describe("computeAccountBalances", () => {
             ...purchaseTemplate,
             id: 0,
             value: 100,
-            creditorShares: { 1: 1 },
-            debitorShares: { 1: 1, 2: 1, 4: 2 },
+            creditor_shares: { 1: 1 },
+            debitor_shares: { 1: 1, 2: 1, 4: 2 },
         };
 
         const accounts: Account[] = [
@@ -166,22 +166,22 @@ describe("computeAccountBalances", () => {
                 ...purchaseTemplate,
                 id: 0,
                 value: 100,
-                creditorShares: { 1: 1 },
-                debitorShares: { 1: 1, 2: 1, 4: 2 },
+                creditor_shares: { 1: 1 },
+                debitor_shares: { 1: 1, 2: 1, 4: 2 },
             },
             {
                 ...purchaseTemplate,
                 id: 1,
                 value: 100,
-                creditorShares: { 3: 1 },
-                debitorShares: { 6: 1 },
+                creditor_shares: { 3: 1 },
+                debitor_shares: { 6: 1 },
             },
             {
                 ...purchaseTemplate,
                 id: 2,
                 value: 100,
-                creditorShares: { 2: 1 },
-                debitorShares: { 5: 1, 7: 1 },
+                creditor_shares: { 2: 1 },
+                debitor_shares: { 5: 1, 7: 1 },
             },
         ];
 
@@ -300,8 +300,8 @@ describe("computeAccountBalances", () => {
                 ...purchaseTemplate,
                 id: 0,
                 value: 100,
-                creditorShares: { 1: 1 },
-                debitorShares: { 3: 1 },
+                creditor_shares: { 1: 1 },
+                debitor_shares: { 3: 1 },
             },
         ];
         const accounts: Account[] = [

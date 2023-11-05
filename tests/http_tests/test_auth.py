@@ -70,7 +70,6 @@ class AuthAPITest(HTTPTestCase):
         login_resp = await self._login(email, "password")
         self.assertIsNotNone(login_resp["user_id"])
         self.assertIsNotNone(login_resp["access_token"])
-        self.assertIsNotNone(login_resp["session_token"])
 
         login_resp = await self._login("user", "password")
 

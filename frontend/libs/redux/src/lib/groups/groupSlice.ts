@@ -2,7 +2,7 @@ import { Api, Group, GroupInvite, GroupLog, GroupMember, GroupPayload } from "@a
 import { GroupPermissions } from "@abrechnung/types";
 import { lambdaComparator } from "@abrechnung/utils";
 import { Draft, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { memoize } from "proxy-memoize";
+import memoize from "proxy-memoize";
 import { GroupInfo, GroupSliceState, IRootState, StateStatus } from "../types";
 import { addEntity, getGroupScopedState, removeEntity } from "../utils";
 import { leaveGroup } from "./actions";

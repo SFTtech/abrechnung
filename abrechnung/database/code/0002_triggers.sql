@@ -354,60 +354,6 @@ create trigger purchase_item_usage_trig
     for each row
 execute function purchase_item_usage_updated();
 
-create or replace function update_last_changed() returns trigger as
-$$
-begin
-    NEW.last_changed = now();
-    return NEW;
-end;
-$$ language plpgsql;
-
-create or replace function update_related_transaction_last_changed() returns trigger as
-$$
-begin
-    update transaction_revision set last_changed = now() where id = NEW.revision_id;
-    return null;
-end;
-$$ language plpgsql;
-
-create or replace function update_related_account_last_changed() returns trigger as
-$$
-begin
-    update account_revision set last_changed = now() where id = NEW.revision_id;
-    return null;
-end;
-$$ language plpgsql;
-
-create trigger account_revision_last_change_update_trig
-    after insert or update
-    on account_revision
-    for each row
-execute function update_last_changed();
-
-create trigger transaction_revision_last_change_update_trig
-    after insert or update
-    on transaction_revision
-    for each row
-execute function update_last_changed();
-
-create trigger transaction_history_last_changed_update_trig
-    after insert or update
-    on transaction_history
-    for each row
-execute function update_related_transaction_last_changed();
-
-create trigger purchase_item_last_changed_update_trig
-    after insert or update
-    on purchase_item_history
-    for each row
-execute function update_related_transaction_last_changed();
-
-create trigger account_last_changed_update_trig
-    after insert or update
-    on account_history
-    for each row
-execute function update_related_account_last_changed();
-
 create or replace function transaction_revision_updated() returns trigger as
 $$
 <<locals>> declare
@@ -422,16 +368,12 @@ begin
         transaction t
     where t.id = (case when NEW is null then OLD.transaction_id else NEW.transaction_id end);
 
-    -- A deletion should only be able to occur for uncommitted revisions
     if NEW is null then
         call notify_user('transaction', OLD.user_id, locals.group_id::bigint,
-                         json_build_object('element_id', locals.group_id, 'transaction_id', locals.transaction_id, 'revision_started', OLD.started, 'revision_version', OLD.version, 'revision_committed', OLD.committed, 'deleted', true));
-    elseif NEW.committed is null then
-        call notify_user('transaction', NEW.user_id, locals.group_id::bigint,
-                         json_build_object('element_id', locals.group_id, 'transaction_id', locals.transaction_id, 'revision_started', NEW.started, 'revision_version', NEW.version, 'revision_committed', NEW.committed, 'deleted', false));
+                         json_build_object('element_id', locals.group_id, 'transaction_id', locals.transaction_id, 'deleted', true));
     else
         call notify_group('transaction', locals.group_id, locals.group_id::bigint,
-                          json_build_object('element_id', locals.group_id, 'transaction_id', locals.transaction_id, 'revision_started', NEW.started, 'revision_version', NEW.version, 'revision_committed', NEW.committed, 'deleted', false));
+                          json_build_object('element_id', locals.group_id, 'transaction_id', locals.transaction_id, 'deleted', false));
     end if;
 
     return null;
@@ -492,13 +434,10 @@ begin
     -- A deletion should only be able to occur for uncommitted revisions
     if NEW is null then
         call notify_user('account', OLD.user_id, locals.group_id::bigint,
-                         json_build_object('element_id', locals.group_id, 'account_id', locals.account_id, 'revision_started', OLD.started, 'revision_version', OLD.version, 'revision_committed', OLD.committed, 'deleted', true));
-    elseif NEW.committed is null then
-        call notify_user('account', NEW.user_id, locals.group_id::bigint,
-                         json_build_object('element_id', locals.group_id, 'account_id', locals.account_id, 'revision_started', NEW.started, 'revision_version', NEW.version, 'revision_committed', NEW.committed, 'deleted', false));
+                         json_build_object('element_id', locals.group_id, 'account_id', locals.account_id, 'deleted', true));
     else
         call notify_group('account', locals.group_id, locals.group_id::bigint,
-                          json_build_object('element_id', locals.group_id, 'account_id', locals.account_id, 'revision_started', NEW.started, 'revision_version', NEW.version, 'revision_committed', NEW.committed, 'deleted', false));
+                          json_build_object('element_id', locals.group_id, 'account_id', locals.account_id, 'deleted', false));
     end if;
 
     return null;

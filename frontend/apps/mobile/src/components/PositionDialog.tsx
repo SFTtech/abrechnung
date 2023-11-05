@@ -1,3 +1,7 @@
+import { selectSortedAccounts, wipPositionUpdated } from "@abrechnung/redux";
+import { PositionValidationErrors, TransactionPosition, ValidationError, validatePosition } from "@abrechnung/types";
+import React, { useCallback, useEffect, useState } from "react";
+import { ScrollView, StyleSheet } from "react-native";
 import {
     ActivityIndicator,
     Button,
@@ -10,13 +14,9 @@ import {
     TextInput,
     useTheme,
 } from "react-native-paper";
-import React, { useEffect, useState, useCallback } from "react";
-import { ScrollView, StyleSheet } from "react-native";
-import { PositionValidationErrors, TransactionPosition, validatePosition, ValidationError } from "@abrechnung/types";
-import { useAppSelector, selectAccountSlice, useAppDispatch } from "../store";
-import { wipPositionUpdated, selectSortedAccounts } from "@abrechnung/redux";
-import { NumericInput } from "./NumericInput";
 import { notify } from "../notifications";
+import { selectAccountSlice, useAppDispatch, useAppSelector } from "../store";
+import { NumericInput } from "./NumericInput";
 import { KeyboardAvoidingDialog } from "./style/KeyboardAvoidingDialog";
 
 interface Props {
@@ -24,7 +24,7 @@ interface Props {
     position: TransactionPosition;
     editing: boolean;
     showDialog: boolean;
-    currencySymbol: string;
+    currency_symbol: string;
     onHideDialog: () => void;
 }
 
@@ -32,14 +32,14 @@ interface localEditingState {
     name: string;
     price: number;
     usages: { [k: number]: number };
-    communistShares: number;
+    communist_shares: number;
 }
 
 const initialEditingState: localEditingState = {
     name: "",
     price: 0,
     usages: {},
-    communistShares: 0,
+    communist_shares: 0,
 };
 
 export const PositionDialog: React.FC<Props> = ({
@@ -48,7 +48,7 @@ export const PositionDialog: React.FC<Props> = ({
     editing,
     showDialog,
     onHideDialog,
-    currencySymbol,
+    currency_symbol,
 }) => {
     const dispatch = useAppDispatch();
     const theme = useTheme();
@@ -91,7 +91,7 @@ export const PositionDialog: React.FC<Props> = ({
             setLocalEditingState({
                 name: position.name,
                 price: position.price,
-                communistShares: position.communistShares,
+                communist_shares: position.communist_shares,
                 usages: position.usages,
             });
         }
@@ -111,7 +111,7 @@ export const PositionDialog: React.FC<Props> = ({
         const newPosition: TransactionPosition = {
             ...position,
             ...localEditingState,
-            communistShares: localEditingState.communistShares,
+            communist_shares: localEditingState.communist_shares,
             price: localEditingState.price,
         };
         // TODO: perform input validation
@@ -157,7 +157,7 @@ export const PositionDialog: React.FC<Props> = ({
             setLocalEditingState((prevState) => {
                 return {
                     ...prevState,
-                    communistShares: prevState.communistShares > 0 ? 0 : 1,
+                    communist_shares: prevState.communist_shares > 0 ? 0 : 1,
                 };
             });
         }
@@ -199,7 +199,7 @@ export const PositionDialog: React.FC<Props> = ({
                             keyboardType="numeric"
                             onChange={onChangePrice}
                             style={inputStyles}
-                            right={<TextInput.Affix text={currencySymbol} />}
+                            right={<TextInput.Affix text={currency_symbol} />}
                             error={errors.price !== undefined}
                         />
                         {errors.price !== undefined && <HelperText type="error">{errors.price}</HelperText>}
@@ -208,7 +208,7 @@ export const PositionDialog: React.FC<Props> = ({
                             title="Communist Shares"
                             right={(props) => (
                                 <Checkbox.Android
-                                    status={localEditingState.communistShares > 0 ? "checked" : "unchecked"}
+                                    status={localEditingState.communist_shares > 0 ? "checked" : "unchecked"}
                                     disabled={!editing}
                                 />
                             )}

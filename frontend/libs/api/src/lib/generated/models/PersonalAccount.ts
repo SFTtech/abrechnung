@@ -3,13 +3,14 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type AccountDetails = {
+export type PersonalAccount = {
+    id: number;
+    group_id: number;
+    type: "personal";
     name: string;
     description: string;
     owning_user_id: (number | null);
-    date_info: (string | null);
     deleted: boolean;
-    tags: Array<string>;
-    clearing_shares?: (Record<string, number> | null);
+    last_changed: string;
 };
 

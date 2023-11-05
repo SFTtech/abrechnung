@@ -3,13 +3,13 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { FileAttachment } from './FileAttachment';
+import type { NewFile } from './NewFile';
+import type { NewTransactionPosition } from './NewTransactionPosition';
 import type { TransactionPosition } from './TransactionPosition';
 import type { TransactionType } from './TransactionType';
+import type { UpdateFile } from './UpdateFile';
 
-export type Transaction = {
-    id: number;
-    group_id: number;
+export type UpdateTransaction = {
     type: TransactionType;
     name: string;
     description: string;
@@ -17,12 +17,12 @@ export type Transaction = {
     currency_symbol: string;
     currency_conversion_rate: number;
     billed_at: string;
-    tags: Array<string>;
-    deleted: boolean;
+    tags?: Array<string>;
     creditor_shares: Record<string, number>;
     debitor_shares: Record<string, number>;
-    last_changed: string;
-    positions: Array<TransactionPosition>;
-    files: Array<FileAttachment>;
+    new_files?: Array<NewFile>;
+    new_positions?: Array<NewTransactionPosition>;
+    changed_files?: Array<UpdateFile>;
+    changed_positions?: Array<TransactionPosition>;
 };
 

@@ -30,7 +30,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId })
             description={(props) => (
                 <>
                     {transaction.description && <Text>{transaction.description}</Text>}
-                    <Text>{transaction.billedAt}</Text>
+                    <Text>{transaction.billed_at}</Text>
                 </>
             )}
             left={(props) => <List.Icon {...props} icon={getTransactionIcon(transaction.type)} />}
@@ -46,7 +46,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId })
                     ) : null}
                     <Text>
                         {transaction.value.toFixed(2)}
-                        {transaction.currencySymbol}
+                        {transaction.currency_symbol}
                     </Text>
                 </>
             )}

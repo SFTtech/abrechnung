@@ -3,12 +3,10 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type TransactionPosition = {
+export type NewTransactionPosition = {
     name: string;
     price: number;
     communist_shares: number;
     usages: Record<string, number>;
-    id: number;
-    deleted: boolean;
 };
 

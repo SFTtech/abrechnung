@@ -1,44 +1,40 @@
+import { AccountSelect } from "@/components/AccountSelect";
+import { DateInput } from "@/components/DateInput";
+import { NumericInput } from "@/components/NumericInput";
+import { ShareSelect } from "@/components/ShareSelect";
+import { TagSelector } from "@/components/TagSelector";
+import { TextInput } from "@/components/TextInput";
+import { selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
 import {
     selectTransactionBalanceEffect,
-    selectTransactionHasAttachments,
+    selectTransactionById,
     selectTransactionHasPositions,
     wipTransactionUpdated,
 } from "@abrechnung/redux";
 import { Transaction, TransactionShare, TransactionValidator } from "@abrechnung/types";
-import { Grid, TableCell } from "@mui/material";
+import { Grid, InputAdornment, TableCell } from "@mui/material";
 import * as React from "react";
 import { typeToFlattenedError, z } from "zod";
-import { AccountSelect } from "../../../components/AccountSelect";
-import { DateInput } from "../../../components/DateInput";
-import { NumericInput } from "../../../components/NumericInput";
-import { ShareSelect } from "../../../components/ShareSelect";
-import { TagSelector } from "../../../components/TagSelector";
-import { TextInput } from "../../../components/TextInput";
-import { selectTransactionSlice, useAppDispatch, useAppSelector } from "../../../store";
 import { FileGallery } from "./FileGallery";
 
 interface Props {
     groupId: number;
-    transaction: Transaction;
+    transactionId: number;
     validationErrors: typeToFlattenedError<z.infer<typeof TransactionValidator>>;
     showPositions?: boolean | undefined;
 }
 
 export const TransactionMetadata: React.FC<Props> = ({
     groupId,
-    transaction,
+    transactionId,
     validationErrors,
     showPositions = false,
 }) => {
     const dispatch = useAppDispatch();
-    const transactionId = transaction.id;
-    const hasAttachments = useAppSelector((state) =>
-        selectTransactionHasAttachments({
-            state: selectTransactionSlice(state),
-            groupId,
-            transactionId: transaction.id,
-        })
+    const transaction = useAppSelector((state) =>
+        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
     );
+    const hasAttachments = transaction.file_ids.length !== 0;
     const hasPositions = useAppSelector((state) =>
         selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId })
     );
@@ -51,11 +47,11 @@ export const TransactionMetadata: React.FC<Props> = ({
             showPositions || hasPositions ? (
                 <>
                     <TableCell align="right">
-                        {(balanceEffect[account.id]?.positions ?? 0).toFixed(2)} {transaction.currencySymbol}
+                        {(balanceEffect[account.id]?.positions ?? 0).toFixed(2)} {transaction.currency_symbol}
                     </TableCell>
                     <TableCell></TableCell>
                     <TableCell align="right">
-                        {(balanceEffect[account.id]?.commonDebitors ?? 0).toFixed(2)} {transaction.currencySymbol}
+                        {(balanceEffect[account.id]?.commonDebitors ?? 0).toFixed(2)} {transaction.currency_symbol}
                     </TableCell>
                     <TableCell></TableCell>
                     <TableCell width="100px" align="right">
@@ -63,7 +59,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                             (balanceEffect[account.id]?.commonDebitors ?? 0) +
                             (balanceEffect[account.id]?.positions ?? 0)
                         ).toFixed(2)}{" "}
-                        {transaction.currencySymbol}
+                        {transaction.currency_symbol}
                     </TableCell>
                 </>
             ) : (
@@ -71,7 +67,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                     {(
                         (balanceEffect[account.id]?.commonDebitors ?? 0) + (balanceEffect[account.id]?.positions ?? 0)
                     ).toFixed(2)}{" "}
-                    {transaction.currencySymbol}
+                    {transaction.currency_symbol}
                 </TableCell>
             ),
         [showPositions, hasPositions, transaction, balanceEffect]
@@ -89,23 +85,26 @@ export const TransactionMetadata: React.FC<Props> = ({
             newValue: Partial<
                 Pick<
                     Transaction,
-                    "name" | "description" | "billedAt" | "value" | "creditorShares" | "debitorShares" | "tags"
+                    "name" | "description" | "billed_at" | "value" | "creditor_shares" | "debitor_shares" | "tags"
                 >
             >
         ) => {
+            if (!transaction.is_wip) {
+                return;
+            }
             dispatch(wipTransactionUpdated({ ...transaction, ...newValue }));
         },
         [dispatch, transaction]
     );
 
-    const updateDebitorShares = React.useCallback(
-        (shares: TransactionShare) => pushChanges({ debitorShares: shares }),
+    const updatedebitor_shares = React.useCallback(
+        (shares: TransactionShare) => pushChanges({ debitor_shares: shares }),
         [pushChanges]
     );
 
     return (
         <Grid container>
-            <Grid item xs={transaction.isWip || hasAttachments ? 6 : 12}>
+            <Grid item xs={transaction.is_wip || hasAttachments ? 6 : 12}>
                 <TextInput
                     label="Name"
                     name="name"
@@ -117,9 +116,9 @@ export const TransactionMetadata: React.FC<Props> = ({
                     helperText={validationErrors.fieldErrors.name}
                     onChange={(value) => pushChanges({ name: value })}
                     value={transaction.name}
-                    disabled={!transaction.isWip}
+                    disabled={!transaction.is_wip}
                 />
-                {!transaction.isWip && transaction.description === "" ? null : (
+                {!transaction.is_wip && transaction.description === "" ? null : (
                     <TextInput
                         label="Description"
                         name="description"
@@ -130,7 +129,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                         helperText={validationErrors.fieldErrors.description}
                         onChange={(value) => pushChanges({ description: value })}
                         value={transaction.description}
-                        disabled={!transaction.isWip}
+                        disabled={!transaction.is_wip}
                     />
                 )}
                 <NumericInput
@@ -143,23 +142,26 @@ export const TransactionMetadata: React.FC<Props> = ({
                     helperText={validationErrors.fieldErrors.value}
                     onChange={(value) => pushChanges({ value })}
                     value={transaction.value}
-                    disabled={!transaction.isWip}
+                    disabled={!transaction.is_wip}
+                    InputProps={{
+                        endAdornment: <InputAdornment position="end">{transaction.currency_symbol}</InputAdornment>,
+                    }}
                 />
                 <DateInput
-                    value={transaction.billedAt || ""}
-                    onChange={(value) => pushChanges({ billedAt: value })}
-                    error={!!validationErrors.fieldErrors.billedAt}
-                    helperText={validationErrors.fieldErrors.billedAt}
-                    disabled={!transaction.isWip}
+                    value={transaction.billed_at || ""}
+                    onChange={(value) => pushChanges({ billed_at: value })}
+                    error={!!validationErrors.fieldErrors.billed_at}
+                    helperText={validationErrors.fieldErrors.billed_at}
+                    disabled={!transaction.is_wip}
                 />
-                {!transaction.isWip && transaction.tags.length === 0 ? null : (
+                {!transaction.is_wip && transaction.tags.length === 0 ? null : (
                     <TagSelector
                         margin="dense"
                         fullWidth
                         label="Tags"
                         groupId={groupId}
                         value={transaction.tags || []}
-                        editable={transaction.isWip}
+                        editable={transaction.is_wip}
                         onChange={(newValue) => pushChanges({ tags: newValue })}
                     />
                 )}
@@ -169,15 +171,15 @@ export const TransactionMetadata: React.FC<Props> = ({
                     groupId={groupId}
                     label={transaction.type === "transfer" ? "From" : "Paid by"}
                     value={
-                        Object.keys(transaction.creditorShares).length === 0
+                        Object.keys(transaction.creditor_shares).length === 0
                             ? null
-                            : Number(Object.keys(transaction.creditorShares)[0])
+                            : Number(Object.keys(transaction.creditor_shares)[0])
                     }
-                    onChange={(newValue) => pushChanges({ creditorShares: { [newValue.id]: 1.0 } })}
+                    onChange={(newValue) => pushChanges({ creditor_shares: { [newValue.id]: 1.0 } })}
                     noDisabledStyling={true}
-                    disabled={!transaction.isWip}
-                    error={!!validationErrors.fieldErrors.creditorShares}
-                    helperText={validationErrors.fieldErrors.creditorShares}
+                    disabled={!transaction.is_wip}
+                    error={!!validationErrors.fieldErrors.creditor_shares}
+                    helperText={validationErrors.fieldErrors.creditor_shares}
                 />
 
                 {transaction.type === "transfer" && (
@@ -186,20 +188,20 @@ export const TransactionMetadata: React.FC<Props> = ({
                         groupId={groupId}
                         label={"To"}
                         value={
-                            Object.keys(transaction.debitorShares).length === 0
+                            Object.keys(transaction.debitor_shares).length === 0
                                 ? null
-                                : Number(Object.keys(transaction.debitorShares)[0])
+                                : Number(Object.keys(transaction.debitor_shares)[0])
                         }
-                        onChange={(newValue) => pushChanges({ debitorShares: { [newValue.id]: 1.0 } })}
+                        onChange={(newValue) => pushChanges({ debitor_shares: { [newValue.id]: 1.0 } })}
                         noDisabledStyling={true}
-                        disabled={!transaction.isWip}
-                        error={!!validationErrors.fieldErrors.debitorShares}
-                        helperText={validationErrors.fieldErrors.debitorShares}
+                        disabled={!transaction.is_wip}
+                        error={!!validationErrors.fieldErrors.debitor_shares}
+                        helperText={validationErrors.fieldErrors.debitor_shares}
                     />
                 )}
             </Grid>
 
-            {(transaction.isWip || hasAttachments) && (
+            {(transaction.is_wip || hasAttachments) && (
                 <Grid item xs={6}>
                     <FileGallery groupId={groupId} transactionId={transactionId} />
                 </Grid>
@@ -209,10 +211,10 @@ export const TransactionMetadata: React.FC<Props> = ({
                     <ShareSelect
                         groupId={groupId}
                         label="For whom"
-                        value={transaction.debitorShares}
-                        error={!!validationErrors.fieldErrors.debitorShares}
-                        helperText={validationErrors.fieldErrors.debitorShares}
-                        onChange={updateDebitorShares}
+                        value={transaction.debitor_shares}
+                        error={!!validationErrors.fieldErrors.debitor_shares}
+                        helperText={validationErrors.fieldErrors.debitor_shares}
+                        onChange={updatedebitor_shares}
                         shouldDisplayAccount={shouldDisplayAccount}
                         additionalShareInfoHeader={
                             showPositions || hasPositions ? (
@@ -240,7 +242,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                             )
                         }
                         renderAdditionalShareInfo={renderShareInfo}
-                        editable={transaction.isWip}
+                        editable={transaction.is_wip}
                     />
                 </Grid>
             )}

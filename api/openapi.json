@@ -128,7 +128,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TransactionCreatePayload"
+                "$ref": "#/components/schemas/NewTransaction"
               }
             }
           }
@@ -140,80 +140,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Transaction"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "unauthorized"
-          },
-          "403": {
-            "description": "forbidden"
-          },
-          "404": {
-            "description": "Not found"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/groups/{group_id}/transactions/sync": {
-      "post": {
-        "tags": [
-          "transactions"
-        ],
-        "summary": "sync a batch of transactions",
-        "operationId": "sync_transactions",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "group_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Group Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/RawTransaction"
-                },
-                "title": "Payload"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "integer"
-                  },
-                  "title": "Response Sync Transactions"
                 }
               }
             }
@@ -322,7 +248,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TransactionUpdatePayload"
+                "$ref": "#/components/schemas/UpdateTransaction"
               }
             }
           }
@@ -447,296 +373,6 @@
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Transaction"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "unauthorized"
-          },
-          "403": {
-            "description": "forbidden"
-          },
-          "404": {
-            "description": "Not found"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/transactions/{transaction_id}/commit": {
-      "post": {
-        "tags": [
-          "transactions"
-        ],
-        "summary": "commit currently pending transaction changes",
-        "operationId": "commit_transaction",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Transaction Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Transaction"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "unauthorized"
-          },
-          "403": {
-            "description": "forbidden"
-          },
-          "404": {
-            "description": "Not found"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/transactions/{transaction_id}/new_change": {
-      "post": {
-        "tags": [
-          "transactions"
-        ],
-        "summary": "create a new pending transaction revision",
-        "operationId": "create_transaction_change",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Transaction Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Transaction"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "unauthorized"
-          },
-          "403": {
-            "description": "forbidden"
-          },
-          "404": {
-            "description": "Not found"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/transactions/{transaction_id}/discard": {
-      "post": {
-        "tags": [
-          "transactions"
-        ],
-        "summary": "discard currently pending transaction changes",
-        "operationId": "discard_transaction_change",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Transaction Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Transaction"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "unauthorized"
-          },
-          "403": {
-            "description": "forbidden"
-          },
-          "404": {
-            "description": "Not found"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/transactions/{transaction_id}/files": {
-      "post": {
-        "tags": [
-          "transactions"
-        ],
-        "summary": "upload a file as a transaction attachment",
-        "operationId": "upload_file",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "transaction_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Transaction Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "$ref": "#/components/schemas/Body_upload_file"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Transaction"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "unauthorized"
-          },
-          "403": {
-            "description": "forbidden"
-          },
-          "404": {
-            "description": "Not found"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/files/{file_id}": {
-      "delete": {
-        "tags": [
-          "transactions"
-        ],
-        "summary": "delete a transaction attachment",
-        "operationId": "delete_file",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "file_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "File Id"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2162,7 +1798,14 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Account"
+                    "anyOf": [
+                      {
+                        "$ref": "#/components/schemas/ClearingAccount"
+                      },
+                      {
+                        "$ref": "#/components/schemas/PersonalAccount"
+                      }
+                    ]
                   },
                   "title": "Response List Accounts"
                 }
@@ -2217,7 +1860,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateAccountPayload"
+                "$ref": "#/components/schemas/NewAccount"
               }
             }
           }
@@ -2228,81 +1871,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Account"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "unauthorized"
-          },
-          "403": {
-            "description": "forbidden"
-          },
-          "404": {
-            "description": "Not found"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/groups/{group_id}/accounts/sync": {
-      "post": {
-        "tags": [
-          "accounts"
-        ],
-        "summary": "update a collection of accounts",
-        "operationId": "sync_accounts",
-        "security": [
-          {
-            "OAuth2PasswordBearer": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "group_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Group Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/RawAccount"
-                },
-                "title": "Payload"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "integer"
-                  },
-                  "title": "Response Sync Accounts"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ClearingAccount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PersonalAccount"
+                    }
+                  ],
+                  "title": "Response Create Account"
                 }
               }
             }
@@ -2357,7 +1934,17 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ClearingAccount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PersonalAccount"
+                    }
+                  ],
+                  "title": "Response Get Account"
+                }
               }
             }
           },
@@ -2409,7 +1996,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateAccountPayload"
+                "$ref": "#/components/schemas/NewAccount"
               }
             }
           }
@@ -2419,7 +2006,17 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {}
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ClearingAccount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PersonalAccount"
+                    }
+                  ],
+                  "title": "Response Update Account"
+                }
               }
             }
           },
@@ -2472,7 +2069,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Account"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ClearingAccount"
+                    },
+                    {
+                      "$ref": "#/components/schemas/PersonalAccount"
+                    }
+                  ],
+                  "title": "Response Delete Account"
                 }
               }
             }
@@ -2523,131 +2128,6 @@
   },
   "components": {
     "schemas": {
-      "Account": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "group_id": {
-            "type": "integer",
-            "title": "Group Id"
-          },
-          "type": {
-            "$ref": "#/components/schemas/AccountType"
-          },
-          "is_wip": {
-            "type": "boolean",
-            "title": "Is Wip"
-          },
-          "last_changed": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Last Changed"
-          },
-          "committed_details": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/AccountDetails"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "pending_details": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/AccountDetails"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "group_id",
-          "type",
-          "is_wip",
-          "last_changed",
-          "committed_details",
-          "pending_details"
-        ],
-        "title": "Account"
-      },
-      "AccountDetails": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "description": {
-            "type": "string",
-            "title": "Description"
-          },
-          "owning_user_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Owning User Id"
-          },
-          "date_info": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Date Info"
-          },
-          "deleted": {
-            "type": "boolean",
-            "title": "Deleted"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Tags"
-          },
-          "clearing_shares": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "number"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Clearing Shares"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "description",
-          "owning_user_id",
-          "date_info",
-          "deleted",
-          "tags"
-        ],
-        "title": "AccountDetails"
-      },
       "AccountType": {
         "type": "string",
         "enum": [
@@ -2713,20 +2193,6 @@
         ],
         "title": "Body_get_token"
       },
-      "Body_upload_file": {
-        "properties": {
-          "file": {
-            "type": "string",
-            "format": "binary",
-            "title": "File"
-          }
-        },
-        "type": "object",
-        "required": [
-          "file"
-        ],
-        "title": "Body_upload_file"
-      },
       "ChangeEmailPayload": {
         "properties": {
           "email": {
@@ -2763,6 +2229,79 @@
           "old_password"
         ],
         "title": "ChangePasswordPayload"
+      },
+      "ClearingAccount": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "group_id": {
+            "type": "integer",
+            "title": "Group Id"
+          },
+          "type": {
+            "const": "clearing",
+            "title": "Type"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "date_info": {
+            "type": "string",
+            "format": "date",
+            "title": "Date Info"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "clearing_shares": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clearing Shares"
+          },
+          "last_changed": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Changed"
+          },
+          "deleted": {
+            "type": "boolean",
+            "title": "Deleted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "group_id",
+          "type",
+          "name",
+          "description",
+          "date_info",
+          "tags",
+          "clearing_shares",
+          "last_changed",
+          "deleted"
+        ],
+        "title": "ClearingAccount"
       },
       "ConfirmEmailChangePayload": {
         "properties": {
@@ -2807,80 +2346,6 @@
           "token"
         ],
         "title": "ConfirmRegistrationPayload"
-      },
-      "CreateAccountPayload": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "description": {
-            "type": "string",
-            "title": "Description"
-          },
-          "date_info": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Date Info"
-          },
-          "tags": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tags"
-          },
-          "owning_user_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Owning User Id"
-          },
-          "clearing_shares": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "number"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Clearing Shares"
-          },
-          "type": {
-            "type": "string",
-            "title": "Type"
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "description",
-          "type"
-        ],
-        "title": "CreateAccountPayload"
       },
       "CreateInvitePayload": {
         "properties": {
@@ -3316,28 +2781,10 @@
         ],
         "title": "LoginPayload"
       },
-      "PreviewGroupPayload": {
+      "NewAccount": {
         "properties": {
-          "invite_token": {
-            "type": "string",
-            "title": "Invite Token"
-          }
-        },
-        "type": "object",
-        "required": [
-          "invite_token"
-        ],
-        "title": "PreviewGroupPayload"
-      },
-      "RawAccount": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "group_id": {
-            "type": "integer",
-            "title": "Group Id"
+          "type": {
+            "$ref": "#/components/schemas/AccountType"
           },
           "name": {
             "type": "string",
@@ -3345,7 +2792,8 @@
           },
           "description": {
             "type": "string",
-            "title": "Description"
+            "title": "Description",
+            "default": ""
           },
           "owning_user_id": {
             "anyOf": [
@@ -3372,25 +2820,16 @@
           },
           "deleted": {
             "type": "boolean",
-            "title": "Deleted"
+            "title": "Deleted",
+            "default": false
           },
           "tags": {
             "items": {
               "type": "string"
             },
             "type": "array",
-            "title": "Tags"
-          },
-          "type": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Type"
+            "title": "Tags",
+            "default": []
           },
           "clearing_shares": {
             "anyOf": [
@@ -3409,44 +2848,45 @@
         },
         "type": "object",
         "required": [
-          "id",
-          "group_id",
-          "name",
-          "description",
-          "owning_user_id",
-          "date_info",
-          "deleted",
-          "tags"
+          "type",
+          "name"
         ],
-        "title": "RawAccount"
+        "title": "NewAccount"
       },
-      "RawTransaction": {
+      "NewFile": {
         "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "group_id": {
-            "type": "integer",
-            "title": "Group Id"
-          },
-          "type": {
+          "filename": {
             "type": "string",
-            "title": "Type"
+            "title": "Filename"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "filename",
+          "mime_type",
+          "content"
+        ],
+        "title": "NewFile"
+      },
+      "NewTransaction": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/TransactionType"
           },
           "name": {
             "type": "string",
             "title": "Name"
           },
           "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "type": "string",
             "title": "Description"
           },
           "value": {
@@ -3466,9 +2906,13 @@
             "format": "date",
             "title": "Billed At"
           },
-          "deleted": {
-            "type": "boolean",
-            "title": "Deleted"
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "default": []
           },
           "creditor_shares": {
             "additionalProperties": {
@@ -3484,19 +2928,109 @@
             "type": "object",
             "title": "Debitor Shares"
           },
-          "tags": {
+          "new_files": {
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/NewFile"
             },
             "type": "array",
-            "title": "Tags"
+            "title": "New Files",
+            "default": []
           },
-          "positions": {
+          "new_positions": {
             "items": {
-              "$ref": "#/components/schemas/TransactionPosition"
+              "$ref": "#/components/schemas/NewTransactionPosition"
             },
             "type": "array",
-            "title": "Positions"
+            "title": "New Positions",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "name",
+          "description",
+          "value",
+          "currency_symbol",
+          "currency_conversion_rate",
+          "billed_at",
+          "creditor_shares",
+          "debitor_shares"
+        ],
+        "title": "NewTransaction"
+      },
+      "NewTransactionPosition": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "price": {
+            "type": "number",
+            "title": "Price"
+          },
+          "communist_shares": {
+            "type": "number",
+            "title": "Communist Shares"
+          },
+          "usages": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Usages"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "price",
+          "communist_shares",
+          "usages"
+        ],
+        "title": "NewTransactionPosition"
+      },
+      "PersonalAccount": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "group_id": {
+            "type": "integer",
+            "title": "Group Id"
+          },
+          "type": {
+            "const": "personal",
+            "title": "Type"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "owning_user_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owning User Id"
+          },
+          "deleted": {
+            "type": "boolean",
+            "title": "Deleted"
+          },
+          "last_changed": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Changed"
           }
         },
         "type": "object",
@@ -3506,17 +3040,24 @@
           "type",
           "name",
           "description",
-          "value",
-          "currency_symbol",
-          "currency_conversion_rate",
-          "billed_at",
+          "owning_user_id",
           "deleted",
-          "creditor_shares",
-          "debitor_shares",
-          "tags",
-          "positions"
+          "last_changed"
         ],
-        "title": "RawTransaction"
+        "title": "PersonalAccount"
+      },
+      "PreviewGroupPayload": {
+        "properties": {
+          "invite_token": {
+            "type": "string",
+            "title": "Invite Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "invite_token"
+        ],
+        "title": "PreviewGroupPayload"
       },
       "RecoverPasswordPayload": {
         "properties": {
@@ -3665,200 +3206,6 @@
           "type": {
             "$ref": "#/components/schemas/TransactionType"
           },
-          "is_wip": {
-            "type": "boolean",
-            "title": "Is Wip"
-          },
-          "last_changed": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Last Changed"
-          },
-          "committed_details": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/TransactionDetails"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "pending_details": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/TransactionDetails"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "committed_positions": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/TransactionPosition"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Committed Positions"
-          },
-          "pending_positions": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/TransactionPosition"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Pending Positions"
-          },
-          "committed_files": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/FileAttachment"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Committed Files"
-          },
-          "pending_files": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/FileAttachment"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Pending Files"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "group_id",
-          "type",
-          "is_wip",
-          "last_changed",
-          "committed_details",
-          "pending_details"
-        ],
-        "title": "Transaction"
-      },
-      "TransactionCreatePayload": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "value": {
-            "type": "number",
-            "title": "Value"
-          },
-          "currency_symbol": {
-            "type": "string",
-            "title": "Currency Symbol"
-          },
-          "currency_conversion_rate": {
-            "type": "number",
-            "title": "Currency Conversion Rate"
-          },
-          "billed_at": {
-            "type": "string",
-            "format": "date",
-            "title": "Billed At"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Tags"
-          },
-          "creditor_shares": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Creditor Shares"
-          },
-          "debitor_shares": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Debitor Shares"
-          },
-          "positions": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/TransactionPosition"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Positions"
-          },
-          "type": {
-            "type": "string",
-            "title": "Type"
-          },
-          "perform_commit": {
-            "type": "boolean",
-            "title": "Perform Commit",
-            "default": false
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "description",
-          "value",
-          "currency_symbol",
-          "currency_conversion_rate",
-          "billed_at",
-          "tags",
-          "creditor_shares",
-          "debitor_shares",
-          "type"
-        ],
-        "title": "TransactionCreatePayload"
-      },
-      "TransactionDetails": {
-        "properties": {
           "name": {
             "type": "string",
             "title": "Name"
@@ -3908,10 +3255,32 @@
             },
             "type": "object",
             "title": "Debitor Shares"
+          },
+          "last_changed": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Changed"
+          },
+          "positions": {
+            "items": {
+              "$ref": "#/components/schemas/TransactionPosition"
+            },
+            "type": "array",
+            "title": "Positions"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/FileAttachment"
+            },
+            "type": "array",
+            "title": "Files"
           }
         },
         "type": "object",
         "required": [
+          "id",
+          "group_id",
+          "type",
           "name",
           "description",
           "value",
@@ -3921,16 +3290,15 @@
           "tags",
           "deleted",
           "creditor_shares",
-          "debitor_shares"
+          "debitor_shares",
+          "last_changed",
+          "positions",
+          "files"
         ],
-        "title": "TransactionDetails"
+        "title": "Transaction"
       },
       "TransactionPosition": {
         "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
           "name": {
             "type": "string",
             "title": "Name"
@@ -3950,6 +3318,10 @@
             "type": "object",
             "title": "Usages"
           },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
           "deleted": {
             "type": "boolean",
             "title": "Deleted"
@@ -3957,11 +3329,11 @@
         },
         "type": "object",
         "required": [
-          "id",
           "name",
           "price",
           "communist_shares",
           "usages",
+          "id",
           "deleted"
         ],
         "title": "TransactionPosition"
@@ -3975,13 +3347,17 @@
         ],
         "title": "TransactionType"
       },
-      "TransactionUpdatePayload": {
+      "UpdateFile": {
         "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
+          "id": {
+            "type": "integer",
+            "title": "Id"
           },
-          "description": {
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "mime_type": {
             "anyOf": [
               {
                 "type": "string"
@@ -3990,158 +3366,33 @@
                 "type": "null"
               }
             ],
-            "title": "Description"
+            "title": "Mime Type"
           },
-          "value": {
-            "type": "number",
-            "title": "Value"
-          },
-          "currency_symbol": {
-            "type": "string",
-            "title": "Currency Symbol"
-          },
-          "currency_conversion_rate": {
-            "type": "number",
-            "title": "Currency Conversion Rate"
-          },
-          "billed_at": {
-            "type": "string",
-            "format": "date",
-            "title": "Billed At"
-          },
-          "tags": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Tags"
-          },
-          "creditor_shares": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Creditor Shares"
-          },
-          "debitor_shares": {
-            "additionalProperties": {
-              "type": "number"
-            },
-            "type": "object",
-            "title": "Debitor Shares"
-          },
-          "positions": {
+          "content": {
             "anyOf": [
               {
-                "items": {
-                  "$ref": "#/components/schemas/TransactionPosition"
-                },
-                "type": "array"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Positions"
+            "title": "Content"
           },
           "deleted": {
             "type": "boolean",
-            "title": "Deleted",
-            "default": false
-          },
-          "perform_commit": {
-            "type": "boolean",
-            "title": "Perform Commit",
-            "default": false
+            "title": "Deleted"
           }
         },
         "type": "object",
         "required": [
-          "name",
-          "description",
-          "value",
-          "currency_symbol",
-          "currency_conversion_rate",
-          "billed_at",
-          "tags",
-          "creditor_shares",
-          "debitor_shares"
+          "id",
+          "filename",
+          "mime_type",
+          "content",
+          "deleted"
         ],
-        "title": "TransactionUpdatePayload"
-      },
-      "UpdateAccountPayload": {
-        "properties": {
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "description": {
-            "type": "string",
-            "title": "Description"
-          },
-          "date_info": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Date Info"
-          },
-          "tags": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tags"
-          },
-          "owning_user_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Owning User Id"
-          },
-          "clearing_shares": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "number"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Clearing Shares"
-          },
-          "deleted": {
-            "type": "boolean",
-            "title": "Deleted",
-            "default": false
-          }
-        },
-        "type": "object",
-        "required": [
-          "name",
-          "description"
-        ],
-        "title": "UpdateAccountPayload"
+        "title": "UpdateFile"
       },
       "UpdateGroupMemberPayload": {
         "properties": {
@@ -4174,11 +3425,6 @@
             },
             "type": "array",
             "title": "Positions"
-          },
-          "perform_commit": {
-            "type": "boolean",
-            "title": "Perform Commit",
-            "default": false
           }
         },
         "type": "object",
@@ -4186,6 +3432,105 @@
           "positions"
         ],
         "title": "UpdatePositionsPayload"
+      },
+      "UpdateTransaction": {
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/TransactionType"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "currency_symbol": {
+            "type": "string",
+            "title": "Currency Symbol"
+          },
+          "currency_conversion_rate": {
+            "type": "number",
+            "title": "Currency Conversion Rate"
+          },
+          "billed_at": {
+            "type": "string",
+            "format": "date",
+            "title": "Billed At"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags",
+            "default": []
+          },
+          "creditor_shares": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Creditor Shares"
+          },
+          "debitor_shares": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Debitor Shares"
+          },
+          "new_files": {
+            "items": {
+              "$ref": "#/components/schemas/NewFile"
+            },
+            "type": "array",
+            "title": "New Files",
+            "default": []
+          },
+          "new_positions": {
+            "items": {
+              "$ref": "#/components/schemas/NewTransactionPosition"
+            },
+            "type": "array",
+            "title": "New Positions",
+            "default": []
+          },
+          "changed_files": {
+            "items": {
+              "$ref": "#/components/schemas/UpdateFile"
+            },
+            "type": "array",
+            "title": "Changed Files",
+            "default": []
+          },
+          "changed_positions": {
+            "items": {
+              "$ref": "#/components/schemas/TransactionPosition"
+            },
+            "type": "array",
+            "title": "Changed Positions",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "name",
+          "description",
+          "value",
+          "currency_symbol",
+          "currency_conversion_rate",
+          "billed_at",
+          "creditor_shares",
+          "debitor_shares"
+        ],
+        "title": "UpdateTransaction"
       },
       "User": {
         "properties": {

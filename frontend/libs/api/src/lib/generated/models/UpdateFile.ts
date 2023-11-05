@@ -3,12 +3,11 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type TransactionPosition = {
-    name: string;
-    price: number;
-    communist_shares: number;
-    usages: Record<string, number>;
+export type UpdateFile = {
     id: number;
+    filename: string;
+    mime_type: (string | null);
+    content: (string | null);
     deleted: boolean;
 };
 

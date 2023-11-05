@@ -10,7 +10,7 @@ import {
     selectAccountById,
     selectClearingAccountsInvolvingAccounts,
     selectCurrentUserPermissions,
-    selectGroupCurrencySymbol,
+    selectGroupcurrency_symbol,
     selectTransactionsInvolvingAccount,
 } from "@abrechnung/redux";
 import { Account, AccountBalance, Transaction, TransactionShare } from "@abrechnung/types";
@@ -55,10 +55,10 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
 
     const combinedList: ArrayAccountsAndTransactions = (transactions as ArrayAccountsAndTransactions)
         .concat(clearingAccounts)
-        .sort((f1, f2) => fromISOString(f2.lastChanged).getTime() - fromISOString(f1.lastChanged).getTime());
+        .sort((f1, f2) => fromISOString(f2.last_changed).getTime() - fromISOString(f1.last_changed).getTime());
 
-    const currencySymbol = useAppSelector((state) =>
-        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
+    const currency_symbol = useAppSelector((state) =>
+        selectGroupcurrency_symbol({ state: selectGroupSlice(state), groupId })
     );
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
 
@@ -106,12 +106,12 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
         <List.Item
             key={`transaction-${transaction.id}`}
             title={transaction.name}
-            description={transaction.billedAt}
+            description={transaction.billed_at}
             left={(props) => <List.Icon {...props} icon={getTransactionIcon(transaction.type)} />}
             right={(props) => (
                 <Text>
                     {transaction.value.toFixed(2)}
-                    {transaction.currencySymbol}
+                    {transaction.currency_symbol}
                 </Text>
             )}
             onPress={() =>
@@ -133,7 +133,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
             right={(props) => (
                 <Text>
                     {accountBalances[account.id]?.clearingResolution[accountId]?.toFixed(2)}
-                    {currencySymbol}
+                    {currency_symbol}
                 </Text>
             )}
             onPress={() =>
@@ -214,7 +214,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                 title="Balance"
                 right={(props) => (
                     <Text style={{ color: textColor }}>
-                        {balance.balance.toFixed(2)} {currencySymbol}
+                        {balance.balance.toFixed(2)} {currency_symbol}
                     </Text>
                 )}
             />

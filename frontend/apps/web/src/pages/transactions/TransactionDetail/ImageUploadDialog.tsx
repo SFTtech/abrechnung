@@ -1,4 +1,3 @@
-import { uploadFile } from "@abrechnung/redux";
 import {
     Alert,
     Box,
@@ -12,7 +11,6 @@ import {
     Typography,
 } from "@mui/material";
 import React, { useState } from "react";
-import { api } from "../../../core/api";
 import { useAppDispatch } from "../../../store";
 import placeholderImg from "./PlaceholderImage.svg";
 
@@ -65,29 +63,30 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
 
         const properlyNamedFile = new File([fileState.currentFile], filename, { type: fileState.currentFile.type });
 
-        dispatch(uploadFile({ groupId, transactionId, file: properlyNamedFile, api }))
-            .unwrap()
-            .then((t) => {
-                setFileState({
-                    currentFile: undefined,
-                    previewImage: undefined,
-                    progress: 0,
+        // TODO: reimplement file upload
+        // dispatch(uploadFile({ groupId, transactionId, file: properlyNamedFile, api }))
+        //     .unwrap()
+        //     .then((t) => {
+        //         setFileState({
+        //             currentFile: undefined,
+        //             previewImage: undefined,
+        //             progress: 0,
 
-                    message: "",
-                    isError: false,
-                });
-                onClose();
-            })
-            .catch((err) => {
-                console.log("error on uploading file", err);
-                setFileState({
-                    ...fileState,
-                    progress: 0,
-                    message: `Could not upload the image! ${err.message}`,
-                    currentFile: undefined,
-                    isError: true,
-                });
-            });
+        //             message: "",
+        //             isError: false,
+        //         });
+        //         onClose();
+        //     })
+        //     .catch((err) => {
+        //         console.log("error on uploading file", err);
+        //         setFileState({
+        //             ...fileState,
+        //             progress: 0,
+        //             message: `Could not upload the image! ${err.message}`,
+        //             currentFile: undefined,
+        //             isError: true,
+        //         });
+        //     });
     };
 
     return (

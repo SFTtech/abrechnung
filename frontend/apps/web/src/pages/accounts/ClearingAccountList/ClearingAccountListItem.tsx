@@ -1,18 +1,18 @@
+import { ListItemLink } from "@/components/style/ListItemLink";
+import { selectAccountSlice, useAppDispatch, useAppSelector } from "@/store";
+import { getAccountLink } from "@/utils";
 import {
     accountEditStarted,
-    selectAccountById,
-    selectCurrentUserPermissions,
-    selectAccountIdToNameMap,
     copyAccount,
+    selectAccountById,
+    selectAccountIdToAccountMap,
+    selectCurrentUserPermissions,
 } from "@abrechnung/redux";
 import { ContentCopy, Delete, Edit } from "@mui/icons-material";
 import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ListItemLink } from "../../../components/style/ListItemLink";
-import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../../store";
-import { getAccountLink } from "../../../utils";
 
 interface Props {
     groupId: number;
@@ -25,7 +25,9 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, s
     const navigate = useNavigate();
 
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
-    const accounts = useAppSelector((state) => selectAccountIdToNameMap({ state: selectAccountSlice(state), groupId }));
+    const accounts = useAppSelector((state) =>
+        selectAccountIdToAccountMap({ state: selectAccountSlice(state), groupId })
+    );
     const account = useAppSelector((state) =>
         selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
     );
@@ -34,10 +36,10 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, s
         return null;
     }
 
-    const participatorNames = Object.keys(account.clearingShares).map((accountId) => accounts[Number(accountId)]);
+    const participatorNames = Object.keys(account.clearing_shares).map((accountId) => accounts[Number(accountId)].name);
 
     const edit = () => {
-        if (!account.isWip) {
+        if (!account.is_wip) {
             dispatch(accountEditStarted({ groupId, accountId }));
         }
         navigate(getAccountLink(groupId, account.type, account.id));
@@ -55,7 +57,7 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, s
                     secondaryTypographyProps={{ component: "div" }}
                     primary={
                         <>
-                            {account.isWip && (
+                            {account.is_wip && (
                                 <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 1 }} />
                             )}
                             <Typography variant="body1" component="span">
@@ -69,7 +71,8 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, s
                                 {participatorNames.join(", ")}
                             </Typography>
                             <br />
-                            {account.dateInfo && DateTime.fromISO(account.dateInfo).toLocaleString(DateTime.DATE_FULL)}
+                            {account.date_info &&
+                                DateTime.fromISO(account.date_info).toLocaleString(DateTime.DATE_FULL)}
                             {account.tags.map((t) => (
                                 <Chip key={t} sx={{ ml: 1 }} variant="outlined" size="small" color="info" label={t} />
                             ))}

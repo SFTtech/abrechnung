@@ -4,6 +4,7 @@ import { Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import {
     Box,
     Checkbox,
+    Chip,
     Divider,
     FormControlLabel,
     Grid,
@@ -16,18 +17,18 @@ import {
     TableHead,
     TableRow,
     TextField,
-    Chip,
     Theme,
     Typography,
     useMediaQuery,
     useTheme,
 } from "@mui/material";
-import { Link } from "react-router-dom";
+import memoize from "proxy-memoize";
 import * as React from "react";
-import { selectAccountSlice, useAppSelector } from "../store";
+import { Link } from "react-router-dom";
+import { RootState, selectAccountSlice, useAppSelector } from "../store";
+import { getAccountLink } from "../utils";
 import { NumericInput } from "./NumericInput";
 import { getAccountIcon } from "./style/AbrechnungIcons";
-import { getAccountLink } from "../utils";
 
 interface RowProps {
     account: Account;
@@ -70,7 +71,7 @@ const ShareSelectRow: React.FC<RowProps> = ({
                         height: "100%",
                         width: "100%",
                     }}
-                    to={getAccountLink(account.groupID, account.type, account.id)}
+                    to={getAccountLink(account.group_id, account.type, account.id)}
                 >
                     <Grid container direction="row" alignItems="center">
                         <Grid item>{getAccountIcon(account.type)}</Grid>
@@ -78,9 +79,9 @@ const ShareSelectRow: React.FC<RowProps> = ({
                             <Typography variant="body2" component="span">
                                 {account.name}
                             </Typography>
-                            {account.type === "clearing" && account.dateInfo != null && (
+                            {account.type === "clearing" && account.date_info != null && (
                                 <Typography variant="caption" component="span">
-                                    {account.dateInfo}
+                                    {account.date_info}
                                 </Typography>
                             )}
                         </Grid>
@@ -142,31 +143,36 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
         return value[accountId] !== undefined;
     };
 
-    const accounts = useAppSelector((state) => {
-        const accounts = selectGroupAccounts({
-            state: selectAccountSlice(state),
-            groupId,
-        });
-        return accounts.filter((a) => {
-            if (excludeAccounts && excludeAccounts.includes(a.id)) {
-                return false;
-            }
-            if (!isAccountShown(a.id)) {
-                return false;
-            }
-            if (searchValue && searchValue !== "") {
-                if (
-                    a.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-                    a.description.toLowerCase().includes(searchValue.toLowerCase()) ||
-                    (a.type === "clearing" && a.dateInfo && a.dateInfo.includes(searchValue.toLowerCase()))
-                ) {
-                    return true;
+    const selector = React.useCallback(
+        memoize((state: RootState) => {
+            const accounts = selectGroupAccounts({
+                state: selectAccountSlice(state),
+                groupId,
+            });
+            return accounts.filter((a) => {
+                if (excludeAccounts && excludeAccounts.includes(a.id)) {
+                    return false;
                 }
-                return false;
-            }
-            return true;
-        });
-    });
+                if (!isAccountShown(a.id)) {
+                    return false;
+                }
+                if (searchValue && searchValue !== "") {
+                    if (
+                        a.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+                        a.description.toLowerCase().includes(searchValue.toLowerCase()) ||
+                        (a.type === "clearing" && a.date_info && a.date_info.includes(searchValue.toLowerCase()))
+                    ) {
+                        return true;
+                    }
+                    return false;
+                }
+                return true;
+            });
+        }),
+        [groupId]
+    );
+
+    const accounts = useAppSelector(selector);
 
     const [showAdvanced, setShowAdvanced] = React.useState(false);
 

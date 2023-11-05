@@ -1,4 +1,4 @@
-import { selectAccountIdToNameMap, selectTransactionById } from "@abrechnung/redux";
+import { selectAccountIdToAccountMap, selectTransactionById } from "@abrechnung/redux";
 import { HelpOutline } from "@mui/icons-material";
 import { Chip, Divider, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
@@ -14,7 +14,9 @@ interface Props {
 }
 
 export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, style }) => {
-    const accounts = useAppSelector((state) => selectAccountIdToNameMap({ state: selectAccountSlice(state), groupId }));
+    const accounts = useAppSelector((state) =>
+        selectAccountIdToAccountMap({ state: selectAccountSlice(state), groupId })
+    );
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
     );
@@ -31,11 +33,11 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
         return null;
     }
 
-    const creditorNames = Object.keys(transaction.creditorShares)
-        .map((accountId) => accounts[Number(accountId)])
+    const creditorNames = Object.keys(transaction.creditor_shares)
+        .map((accountId) => accounts[Number(accountId)].name)
         .join(", ");
-    const debitorNames = Object.keys(transaction.debitorShares)
-        .map((accountId) => accounts[Number(accountId)])
+    const debitorNames = Object.keys(transaction.debitor_shares)
+        .map((accountId) => accounts[Number(accountId)].name)
         .join(", ");
 
     return (
@@ -61,7 +63,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
                     secondaryTypographyProps={{ component: "div" }}
                     primary={
                         <>
-                            {transaction.isWip && (
+                            {transaction.is_wip && (
                                 <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 1 }} />
                             )}
                             <Typography variant="body1" component="span">
@@ -75,7 +77,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
                                 by {creditorNames}, for {debitorNames}
                             </Typography>
                             <br />
-                            {DateTime.fromISO(transaction.billedAt).toLocaleString(DateTime.DATE_FULL)}
+                            {DateTime.fromISO(transaction.billed_at).toLocaleString(DateTime.DATE_FULL)}
                             {transaction.tags.map((t) => (
                                 <Chip key={t} sx={{ ml: 1 }} variant="outlined" size="small" color="info" label={t} />
                             ))}
@@ -84,11 +86,11 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
                 />
                 <ListItemText>
                     <Typography align="right" variant="body2">
-                        {transaction.value.toFixed(2)} {transaction.currencySymbol}
+                        {transaction.value.toFixed(2)} {transaction.currency_symbol}
                         <br />
                         <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
                             last changed:{" "}
-                            {DateTime.fromISO(transaction.lastChanged).toLocaleString(DateTime.DATETIME_FULL)}
+                            {DateTime.fromISO(transaction.last_changed).toLocaleString(DateTime.DATETIME_FULL)}
                         </Typography>
                     </Typography>
                 </ListItemText>

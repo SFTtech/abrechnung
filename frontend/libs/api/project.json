@@ -9,8 +9,11 @@
             "options": {
                 "commands": [
                     "npx openapi-zod ../../../api/openapi.json --output src/lib/generated/schema.ts",
-                    "npx openapi-typescript-codegen --input ../../../api/openapi.json --output src/lib/generated --useUnionTypes --name Client --useOptions"
+                    "npx openapi-typescript-codegen --input ../../../api/openapi.json --output src/lib/generated --useUnionTypes --name Client --useOptions",
+                    "sed -i 's/type: any/type: \"personal\"/' src/lib/generated/models/PersonalAccount.ts",
+                    "sed -i 's/type: any/type: \"clearing\"/' src/lib/generated/models/ClearingAccount.ts"
                 ],
+                "parallel": false,
                 "cwd": "libs/api"
             }
         },

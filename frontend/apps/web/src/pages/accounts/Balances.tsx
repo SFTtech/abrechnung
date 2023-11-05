@@ -1,4 +1,14 @@
-import { selectAccountBalances, selectGroupAccountsFiltered, selectGroupById } from "@abrechnung/redux";
+import BalanceTable from "@/components/accounts/BalanceTable";
+import ListItemLink from "@/components/style/ListItemLink";
+import { MobilePaper } from "@/components/style/mobile";
+import { useTitle } from "@/core/utils";
+import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
+import {
+    selectAccountBalances,
+    selectClearingAccounts,
+    selectGroupById,
+    selectPersonalAccounts,
+} from "@abrechnung/redux";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import {
     Alert,
@@ -17,11 +27,6 @@ import { useTheme } from "@mui/material/styles";
 import React, { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import BalanceTable from "../../components/accounts/BalanceTable";
-import ListItemLink from "../../components/style/ListItemLink";
-import { MobilePaper } from "../../components/style/mobile";
-import { useTitle } from "../../core/utils";
-import { selectAccountSlice, selectGroupSlice, useAppSelector } from "../../store";
 
 interface Props {
     groupId: number;
@@ -34,10 +39,10 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
 
     const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
     const personalAccounts = useAppSelector((state) =>
-        selectGroupAccountsFiltered({ state: selectAccountSlice(state), groupId, type: "personal" })
+        selectPersonalAccounts({ state: selectAccountSlice(state), groupId })
     );
     const clearingAccounts = useAppSelector((state) =>
-        selectGroupAccountsFiltered({ state: selectAccountSlice(state), groupId, type: "clearing" })
+        selectClearingAccounts({ state: selectAccountSlice(state), groupId })
     );
     const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
 

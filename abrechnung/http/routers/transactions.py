@@ -1,14 +1,15 @@
-from datetime import date, datetime
-from typing import List, Optional
+from datetime import datetime
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Response, UploadFile, status
 from pydantic import BaseModel
 
-from abrechnung.application.transactions import RawTransaction, TransactionService
+from abrechnung.application.transactions import TransactionService
 from abrechnung.domain.transactions import (
     Transaction,
     TransactionPosition,
-    TransactionShares,
+    NewTransaction,
+    UpdateTransaction,
 )
 from abrechnung.domain.users import User
 from abrechnung.http.auth import get_current_user
@@ -23,23 +24,6 @@ router = APIRouter(
         status.HTTP_404_NOT_FOUND: {"description": "Not found"},
     },
 )
-
-
-class TransactionPayload(BaseModel):
-    name: str
-    description: Optional[str]
-    value: float
-    currency_symbol: str
-    currency_conversion_rate: float
-    billed_at: date
-    tags: List[str]
-    creditor_shares: TransactionShares
-    debitor_shares: TransactionShares
-    positions: Optional[List[TransactionPosition]] = None
-
-
-class UpdateTransactionPayload(TransactionPayload):
-    deleted: bool = False
 
 
 @router.get(
@@ -74,26 +58,6 @@ async def list_transactions(
 
 
 @router.post(
-    "/v1/groups/{group_id}/transactions/sync",
-    summary="sync a batch of transactions",
-    response_model=dict[int, int],
-    operation_id="sync_transactions",
-)
-async def sync_transactions(
-    group_id: int,
-    payload: list[RawTransaction],
-    user: User = Depends(get_current_user),
-    transaction_service: TransactionService = Depends(get_transaction_service),
-):
-    return await transaction_service.sync_transactions(user=user, group_id=group_id, transactions=payload)
-
-
-class TransactionCreatePayload(TransactionPayload):
-    type: str
-    perform_commit: bool = False
-
-
-@router.post(
     "/v1/groups/{group_id}/transactions",
     summary="create a new transaction",
     response_model=Transaction,
@@ -101,25 +65,14 @@ class TransactionCreatePayload(TransactionPayload):
 )
 async def create_transaction(
     group_id: int,
-    payload: TransactionCreatePayload,
+    payload: NewTransaction,
     user: User = Depends(get_current_user),
     transaction_service: TransactionService = Depends(get_transaction_service),
 ):
     transaction_id = await transaction_service.create_transaction(
         user=user,
         group_id=group_id,
-        name=payload.name,
-        description=payload.description,
-        type=payload.type,
-        currency_symbol=payload.currency_symbol,
-        currency_conversion_rate=payload.currency_conversion_rate,
-        billed_at=payload.billed_at,
-        tags=payload.tags,
-        value=payload.value,
-        creditor_shares=payload.creditor_shares,
-        debitor_shares=payload.debitor_shares,
-        positions=payload.positions,
-        perform_commit=payload.perform_commit,
+        transaction=payload,
     )
 
     return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
@@ -139,10 +92,6 @@ async def get_transaction(
     return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
 
 
-class TransactionUpdatePayload(UpdateTransactionPayload):
-    perform_commit: bool = False
-
-
 @router.post(
     "/v1/transactions/{transaction_id}",
     summary="update transaction details",
@@ -151,31 +100,20 @@ class TransactionUpdatePayload(UpdateTransactionPayload):
 )
 async def update_transaction(
     transaction_id: int,
-    payload: TransactionUpdatePayload,
+    payload: UpdateTransaction,
     user: User = Depends(get_current_user),
     transaction_service: TransactionService = Depends(get_transaction_service),
 ):
     await transaction_service.update_transaction(
         user=user,
         transaction_id=transaction_id,
-        value=payload.value,
-        name=payload.name,
-        description=payload.description,
-        currency_symbol=payload.currency_symbol,
-        currency_conversion_rate=payload.currency_conversion_rate,
-        billed_at=payload.billed_at,
-        tags=payload.tags,
-        creditor_shares=payload.creditor_shares,
-        debitor_shares=payload.debitor_shares,
-        positions=payload.positions,
-        perform_commit=payload.perform_commit,
+        transaction=payload,
     )
     return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
 
 
 class UpdatePositionsPayload(BaseModel):
     positions: list[TransactionPosition]
-    perform_commit: bool = False
 
 
 @router.post(
@@ -194,25 +132,6 @@ async def update_transaction_positions(
         user=user,
         transaction_id=transaction_id,
         positions=payload.positions,
-        perform_commit=payload.perform_commit,
-    )
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
-
-
-@router.post(
-    "/v1/transactions/{transaction_id}/commit",
-    summary="commit currently pending transaction changes",
-    response_model=Transaction,
-    operation_id="commit_transaction",
-)
-async def commit_transaction(
-    transaction_id: int,
-    user: User = Depends(get_current_user),
-    transaction_service: TransactionService = Depends(get_transaction_service),
-):
-    await transaction_service.commit_transaction(
-        user=user,
-        transaction_id=transaction_id,
     )
     return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
 
@@ -231,96 +150,6 @@ async def delete_transaction(
     await transaction_service.delete_transaction(
         user=user,
         transaction_id=transaction_id,
-    )
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
-
-
-@router.post(
-    "/v1/transactions/{transaction_id}/new_change",
-    summary="create a new pending transaction revision",
-    response_model=Transaction,
-    operation_id="create_transaction_change",
-)
-async def create_transaction_change(
-    transaction_id: int,
-    user: User = Depends(get_current_user),
-    transaction_service: TransactionService = Depends(get_transaction_service),
-):
-    await transaction_service.create_transaction_change(
-        user=user,
-        transaction_id=transaction_id,
-    )
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
-
-
-@router.post(
-    "/v1/transactions/{transaction_id}/discard",
-    summary="discard currently pending transaction changes",
-    response_model=Transaction,
-    operation_id="discard_transaction_change",
-)
-async def discard_transaction_change(
-    transaction_id: int,
-    user: User = Depends(get_current_user),
-    transaction_service: TransactionService = Depends(get_transaction_service),
-):
-    await transaction_service.discard_transaction_changes(
-        user=user,
-        transaction_id=transaction_id,
-    )
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
-
-
-@router.post(
-    "/v1/transactions/{transaction_id}/files",
-    summary="upload a file as a transaction attachment",
-    response_model=Transaction,
-    operation_id="upload_file",
-)
-async def upload_file(
-    transaction_id: int,
-    file: UploadFile,
-    user: User = Depends(get_current_user),
-    transaction_service: TransactionService = Depends(get_transaction_service),
-):
-    try:
-        content = await file.read()
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot read uploaded file: {e}",
-        )
-
-    if file.filename is None or file.content_type is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File is missing filename or content type",
-        )
-
-    await transaction_service.upload_file(
-        user=user,
-        transaction_id=transaction_id,
-        filename=file.filename,
-        mime_type=file.content_type,
-        content=content,
-    )
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
-
-
-@router.delete(
-    r"/v1/files/{file_id}",
-    summary="delete a transaction attachment",
-    response_model=Transaction,
-    operation_id="delete_file",
-)
-async def delete_file(
-    file_id: int,
-    user: User = Depends(get_current_user),
-    transaction_service: TransactionService = Depends(get_transaction_service),
-):
-    transaction_id, revision_id = await transaction_service.delete_file(
-        user=user,
-        file_id=file_id,
     )
     return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
 

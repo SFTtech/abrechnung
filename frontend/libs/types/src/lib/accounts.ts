@@ -1,48 +1,14 @@
+import { ClearingAccount as BackendClearingAccount, PersonalAccount as BackendPersonalAccount } from "@abrechnung/api";
 import { z } from "zod";
 
-export type ClearingShares = { [k: number]: number };
+export type ClearingShares = Record<string, number>;
 
-export type AccountType = "personal" | "clearing";
+export type BackendAccount = BackendClearingAccount | BackendPersonalAccount;
 
-interface CommonAccountMetadata {
-    // static fields which never change through the lifetime of an account
-    id: number;
-    groupID: number;
-    type: AccountType;
+export type ClearingAccount = BackendClearingAccount & { is_wip: boolean };
+export type PersonalAccount = BackendPersonalAccount & { is_wip: boolean };
 
-    // fields that can change and are part of an account
-    name: string;
-    description: string;
-    deleted: boolean;
-}
-
-interface AccountMetadata {
-    // fields that can change and are computed
-    hasLocalChanges: boolean;
-    lastChanged: string; // ISO encoded
-    isWip: boolean;
-
-    // soon to be deprecated fields
-    hasCommittedChanges?: boolean;
-}
-
-export interface PersonalAccountBase extends CommonAccountMetadata {
-    type: "personal";
-    owningUserID: number | null;
-}
-
-export type PersonalAccount = PersonalAccountBase & AccountMetadata;
-
-export interface ClearingAccountBase extends CommonAccountMetadata {
-    type: "clearing";
-    clearingShares: ClearingShares;
-    dateInfo: string;
-    tags: string[];
-}
-export type ClearingAccount = ClearingAccountBase & AccountMetadata;
-
-export type AccountBase = PersonalAccountBase | ClearingAccountBase;
-export type Account = ClearingAccount | PersonalAccount;
+export type Account = BackendAccount & { is_wip: boolean };
 
 const BaseAccountValidator = z.object({
     name: z.string({ required_error: "Name is required" }),
@@ -51,15 +17,15 @@ const BaseAccountValidator = z.object({
 
 export const PersonalAccountValidator = z
     .object({
-        owningUserID: z.number().nullable(),
+        owning_user_id: z.number().nullable(),
     })
     .merge(BaseAccountValidator)
     .passthrough();
 
 export const ClearingAccountValidator = z
     .object({
-        dateInfo: z.string(),
-        clearingShares: z.record(z.number()).refine((shares) => Object.keys(shares).length > 0, "select at least one"),
+        date_info: z.string(),
+        clearing_shares: z.record(z.number()).refine((shares) => Object.keys(shares).length > 0, "select at least one"),
         tags: z.array(z.string()),
     })
     .merge(BaseAccountValidator)

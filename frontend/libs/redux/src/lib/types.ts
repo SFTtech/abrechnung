@@ -1,5 +1,5 @@
 import { Group, GroupInvite, GroupLog, GroupMember, User } from "@abrechnung/api";
-import { Account, Transaction, TransactionAttachment, TransactionPosition } from "@abrechnung/types";
+import { Account, Transaction } from "@abrechnung/types";
 
 export const ENABLE_OFFLINE_MODE = false;
 
@@ -87,10 +87,6 @@ export interface AccountState {
         byId: { [k: number]: Account };
         ids: number[];
     };
-    pendingAccounts: {
-        byId: { [k: number]: Account };
-        ids: number[];
-    };
     status: StateStatus;
 }
 
@@ -106,26 +102,6 @@ export interface TransactionState {
     };
     wipTransactions: {
         byId: { [k: number]: Transaction };
-        ids: number[];
-    };
-    pendingTransactions: {
-        byId: { [k: number]: Transaction };
-        ids: number[];
-    };
-    positions: {
-        byId: { [k: number]: TransactionPosition };
-        ids: number[];
-    };
-    wipPositions: {
-        byId: { [k: number]: TransactionPosition };
-        ids: number[];
-    };
-    pendingPositions: {
-        byId: { [k: number]: TransactionPosition };
-        ids: number[];
-    };
-    attachments: {
-        byId: { [k: number]: TransactionAttachment };
         ids: number[];
     };
     status: StateStatus;

@@ -1,7 +1,9 @@
+import { balanceColor } from "@/core/utils";
+import { selectAccountSlice, selectGroupSlice, selectTransactionSlice, useAppSelector } from "@/store";
 import { BalanceChangeOrigin } from "@abrechnung/core";
 import {
     selectAccountBalanceHistory,
-    selectAccountIdToNameMap,
+    selectAccountIdToAccountMap,
     selectGroupCurrencySymbol,
     selectTransactionByIdMap,
 } from "@abrechnung/redux";
@@ -11,8 +13,6 @@ import { PointMouseHandler, PointTooltipProps, ResponsiveLine, Serie } from "@ni
 import { DateTime } from "luxon";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { balanceColor } from "../../core/utils";
-import { selectAccountSlice, selectGroupSlice, selectTransactionSlice, useAppSelector } from "../../store";
 import { ClearingAccountIcon, PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 
 interface Props {
@@ -24,14 +24,14 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
     const theme: Theme = useTheme();
     const navigate = useNavigate();
 
-    const currencySymbol = useAppSelector((state) =>
+    const currency_symbol = useAppSelector((state) =>
         selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
     );
     const transactionMap = useAppSelector((state) =>
         selectTransactionByIdMap({ state: selectTransactionSlice(state), groupId })
     );
-    const accountNameMap = useAppSelector((state) =>
-        selectAccountIdToNameMap({ state: selectAccountSlice(state), groupId })
+    const accounts = useAppSelector((state) =>
+        selectAccountIdToAccountMap({ state: selectAccountSlice(state), groupId })
     );
     const { graphData, seriesColors, areaBaselineValue } = useAppSelector((state) => {
         const balanceHistory = selectAccountBalanceHistory({ state, groupId, accountId });
@@ -126,13 +126,13 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
                             ml: 2,
                         }}
                     >
-                        {(point.data.y as number).toFixed(2)} {currencySymbol}
+                        {(point.data.y as number).toFixed(2)} {currency_symbol}
                     </Typography>
                 </div>
                 <Divider />
                 {changeOrigin.type === "clearing" ? (
                     <Typography variant="body1">
-                        {icon} {accountNameMap[changeOrigin.id]}
+                        {icon} {accounts[changeOrigin.id].name}
                     </Typography>
                 ) : (
                     <Typography variant="body1">
@@ -158,7 +158,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
                 pointLabel={(p) => `${toISODateString(p.x as Date)}: ${p.y}`}
                 useMesh={true}
                 axisLeft={{
-                    format: (value: number) => `${value.toFixed(2)} ${currencySymbol}`,
+                    format: (value: number) => `${value.toFixed(2)} ${currency_symbol}`,
                 }}
                 axisBottom={{
                     tickValues: 4,

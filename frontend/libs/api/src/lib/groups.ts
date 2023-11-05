@@ -1,4 +1,4 @@
-import { Group, GroupMember, GroupInvite, GroupLogEntry, GroupPreview } from "@abrechnung/types";
+import { Group, GroupInvite, GroupLogEntry, GroupMember, GroupPreview } from "@abrechnung/types";
 
 export interface BackendGroup {
     id: number;
@@ -19,7 +19,7 @@ export const backendGroupToGroup = (group: BackendGroup): Group => {
         terms: group.terms,
         createdAt: group.created_at,
         createdBy: group.created_by,
-        currencySymbol: group.currency_symbol,
+        currency_symbol: group.currency_symbol,
         addUserAccountOnJoin: group.add_user_account_on_join,
     };
 };
@@ -42,7 +42,7 @@ export const backendGroupPreviewToPreview = (preview: BackendGroupPreview): Grou
         id: preview.id,
         name: preview.name,
         description: preview.description,
-        currencySymbol: preview.currency_symbol,
+        currency_symbol: preview.currency_symbol,
         terms: preview.terms,
         createdAt: preview.created_at,
         createdBy: preview.created_by,

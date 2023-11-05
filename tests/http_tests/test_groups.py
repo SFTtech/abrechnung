@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
+from abrechnung.domain.accounts import NewAccount, AccountType
+from abrechnung.domain.transactions import NewTransaction, TransactionType
 from tests.http_tests.common import HTTPAPITest
 
 
@@ -84,7 +86,7 @@ class GroupAPITest(HTTPAPITest):
         )
         async with self.db_pool.acquire() as conn:
             await conn.execute(
-                "insert into group_membership (user_id, group_id, is_owner, can_write) " "values ($1, $2, true, true)",
+                "insert into group_membership (user_id, group_id, is_owner, can_write) values ($1, $2, true, true)",
                 user2.id,
                 group_id,
             )
@@ -92,31 +94,37 @@ class GroupAPITest(HTTPAPITest):
         account1_id = await self.account_service.create_account(
             user=self.test_user,
             group_id=group_id,
-            type="personal",
-            name="account1",
-            description="",
+            account=NewAccount(
+                type=AccountType.personal,
+                name="account1",
+                description="",
+            ),
         )
         account2_id = await self.account_service.create_account(
             user=self.test_user,
             group_id=group_id,
-            type="personal",
-            name="account2",
-            description="",
+            account=NewAccount(
+                type=AccountType.personal,
+                name="account2",
+                description="",
+            ),
         )
 
-        transaction_id = await self.transaction_service.create_transaction(
+        await self.transaction_service.create_transaction(
             user=self.test_user,
             group_id=group_id,
-            type="purchase",
-            name="asdf",
-            description="asdf",
-            billed_at=datetime.now(tz=timezone.utc),
-            currency_symbol="€",
-            currency_conversion_rate=1.0,
-            tags=[],
-            value=20.0,
-            debitor_shares={account1_id: 1.0},
-            creditor_shares={account2_id: 1.0},
+            transaction=NewTransaction(
+                type=TransactionType.purchase,
+                name="asdf",
+                description="asdf",
+                billed_at=datetime.now().date(),
+                currency_symbol="€",
+                currency_conversion_rate=1.0,
+                tags=[],
+                value=20.0,
+                debitor_shares={account1_id: 1.0},
+                creditor_shares={account2_id: 1.0},
+            ),
         )
 
         resp = await self._delete(f"/api/v1/groups/{group_id}")
@@ -198,13 +206,16 @@ class GroupAPITest(HTTPAPITest):
         account_id = await self.account_service.create_account(
             user=self.test_user,
             group_id=group_id,
-            type="personal",
-            name="name",
-            description="description",
+            account=NewAccount(
+                type=AccountType.personal,
+                name="name",
+                description="description",
+            ),
         )
         resp = await self._post(
             f"/api/v1/accounts/{account_id}",
             json={
+                "type": "personal",
                 "name": "new_name",
                 "description": "description",
             },
@@ -212,20 +223,21 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual(200, resp.status_code)
 
         a = await self._fetch_account(account_id)
-        self.assertEqual("new_name", a["committed_details"]["name"])
-        self.assertEqual("description", a["committed_details"]["description"])
+        self.assertEqual("new_name", a["name"])
+        self.assertEqual("description", a["description"])
 
         resp = await self._post(
             f"/api/v1/accounts/{account_id}",
             json={
+                "type": "personal",
                 "name": "new_name2",
                 "description": "description1",
             },
         )
         self.assertEqual(200, resp.status_code)
         a = await self._fetch_account(account_id)
-        self.assertEqual("new_name2", a["committed_details"]["name"])
-        self.assertEqual("description1", a["committed_details"]["description"])
+        self.assertEqual("new_name2", a["name"])
+        self.assertEqual("description1", a["description"])
 
     async def test_list_accounts(self):
         group_id = await self.group_service.create_group(
@@ -239,16 +251,20 @@ class GroupAPITest(HTTPAPITest):
         account1_id = await self.account_service.create_account(
             user=self.test_user,
             group_id=group_id,
-            type="personal",
-            name="account1",
-            description="description",
+            account=NewAccount(
+                type=AccountType.personal,
+                name="account1",
+                description="description",
+            ),
         )
         account2_id = await self.account_service.create_account(
             user=self.test_user,
             group_id=group_id,
-            type="personal",
-            name="account2",
-            description="description",
+            account=NewAccount(
+                type=AccountType.personal,
+                name="account2",
+                description="description",
+            ),
         )
         resp = await self._get(f"/api/v1/groups/{group_id}/accounts")
         self.assertEqual(200, resp.status_code)
@@ -316,58 +332,20 @@ class GroupAPITest(HTTPAPITest):
         account_id = await self.account_service.create_account(
             user=self.test_user,
             group_id=group_id,
-            type="personal",
-            name="account1",
-            description="description",
+            account=NewAccount(
+                type=AccountType.personal,
+                name="account1",
+                description="description",
+            ),
         )
         ret_data = await self._fetch_account(account_id)
-        self.assertEqual("account1", ret_data["committed_details"]["name"])
+        self.assertEqual("account1", ret_data["name"])
 
         resp = await self._get(f"/api/v1/accounts/asdf1234")
         self.assertEqual(422, resp.status_code)
 
         resp = await self._get(f"/api/v1/accounts/13232")
         self.assertEqual(404, resp.status_code)
-
-    async def test_clearing_accounts(self):
-        group_id = await self.group_service.create_group(
-            user=self.test_user,
-            name="name",
-            description="description",
-            currency_symbol="€",
-            terms="terms",
-            add_user_account_on_join=False,
-        )
-        resp = await self._post(
-            f"/api/v1/groups/{group_id}/accounts",
-            json={
-                "name": "claering name",
-                "description": "description",
-                "type": "clearing",
-                "date_info": datetime.now().date().isoformat(),
-            },
-        )
-        self.assertEqual(200, resp.status_code)
-        ret_data = resp.json()
-        self.assertIsNotNone(ret_data["id"])
-        account_id = ret_data["id"]
-
-        base_account_id = await self.account_service.create_account(
-            user=self.test_user,
-            group_id=group_id,
-            type="personal",
-            name="account1",
-            description="description",
-        )
-        await self._post(
-            f"/api/v1/accounts/{account_id}",
-            json={
-                "name": "account1",
-                "description": "description",
-                "clearing_shares": {base_account_id: 2.0},
-                "date_info": datetime.now().date().isoformat(),
-            },
-        )
 
     async def test_invites(self):
         group_id = await self.group_service.create_group(

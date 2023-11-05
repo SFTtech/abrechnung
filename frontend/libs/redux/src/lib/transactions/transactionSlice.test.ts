@@ -3,13 +3,13 @@ import { TransactionSliceState } from "../types";
 
 import {
     createTransaction,
-    wipTransactionUpdated,
-    wipPositionAdded,
-    wipPositionUpdated,
-    transactionReducer,
     initializeGroupState,
     selectTransactionById,
     selectTransactionPositions,
+    transactionReducer,
+    wipPositionAdded,
+    wipPositionUpdated,
+    wipTransactionUpdated,
 } from "./transactionSlice";
 
 const setupStore = () => {
@@ -43,8 +43,8 @@ describe("transactionSlice", () => {
                     ...transaction,
                     name: "funny things",
                     value: 10,
-                    debitorShares: { 1: 1 },
-                    creditorShares: { 2: 1 },
+                    debitor_shares: { 1: 1 },
+                    creditor_shares: { 2: 1 },
                 })
             );
             const t = selectTransactionById({
@@ -70,7 +70,7 @@ describe("transactionSlice", () => {
                     position: {
                         name: "",
                         price: 0,
-                        communistShares: 0,
+                        communist_shares: 0,
                         usages: {},
                     },
                 })
@@ -96,7 +96,7 @@ describe("transactionSlice", () => {
                         name: "Pizza",
                         transactionID: transaction.id,
                         price: 10,
-                        communistShares: 2,
+                        communist_shares: 2,
                         usages: { 1: 1 },
                         deleted: false,
                     },
@@ -110,7 +110,7 @@ describe("transactionSlice", () => {
             expect(positions).toHaveLength(1);
             expect(positions[0].name).toBe("Pizza");
             expect(positions[0].price).toBe(10);
-            expect(positions[0].communistShares).toBe(2);
+            expect(positions[0].communist_shares).toBe(2);
         }
     });
 

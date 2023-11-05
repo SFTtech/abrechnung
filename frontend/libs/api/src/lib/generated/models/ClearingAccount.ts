@@ -3,16 +3,16 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type RawAccount = {
+export type ClearingAccount = {
     id: number;
     group_id: number;
+    type: "clearing";
     name: string;
     description: string;
-    owning_user_id: (number | null);
-    date_info: (string | null);
-    deleted: boolean;
+    date_info: string;
     tags: Array<string>;
-    type?: (string | null);
-    clearing_shares?: (Record<string, number> | null);
+    clearing_shares: (Record<string, number> | null);
+    last_changed: string;
+    deleted: boolean;
 };
 
