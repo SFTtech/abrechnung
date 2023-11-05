@@ -11,7 +11,10 @@
                     "npx openapi-zod ../../../api/openapi.json --output src/lib/generated/schema.ts",
                     "npx openapi-typescript-codegen --input ../../../api/openapi.json --output src/lib/generated --useUnionTypes --name Client --useOptions",
                     "sed -i 's/type: any/type: \"personal\"/' src/lib/generated/models/PersonalAccount.ts",
-                    "sed -i 's/type: any/type: \"clearing\"/' src/lib/generated/models/ClearingAccount.ts"
+                    "sed -i 's/type: any/type: \"clearing\"/' src/lib/generated/models/ClearingAccount.ts",
+                    "echo \"/* eslint-disable */\\n$(cat src/lib/generated/schema.ts)\" > src/lib/generated/schema.ts",
+                    "echo \"/* tslint:disable */\\n$(cat src/lib/generated/schema.ts)\" > src/lib/generated/schema.ts",
+                    "echo \"/* istanbul ignore file */\\n$(cat src/lib/generated/schema.ts)\" > src/lib/generated/schema.ts"
                 ],
                 "parallel": false,
                 "cwd": "libs/api"

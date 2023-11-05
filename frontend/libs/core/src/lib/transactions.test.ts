@@ -1,10 +1,4 @@
-import {
-    Purchase,
-    TransactionBalanceEffect,
-    TransactionPosition,
-    TransactionShare,
-    TransactionType,
-} from "@abrechnung/types";
+import { Transaction, TransactionBalanceEffect, TransactionShare, TransactionType } from "@abrechnung/types";
 import { computeTransactionBalanceEffect } from "./transactions";
 
 const generateTransaction = <T extends TransactionType>(
@@ -13,10 +7,10 @@ const generateTransaction = <T extends TransactionType>(
     value: number,
     creditor_shares: TransactionShare,
     debitor_shares: TransactionShare
-): any => {
-    const t = {
+): Transaction => {
+    return {
         id: id,
-        groupID: 0,
+        group_id: 0,
         billed_at: "2022-01-01",
         deleted: false,
         type: type,
@@ -27,20 +21,20 @@ const generateTransaction = <T extends TransactionType>(
         description: "",
         tags: [],
         currency_symbol: "€",
-        currencyConversionRate: 1.0,
-        attachments: [],
+        currency_conversion_rate: 1.0,
+        files: {},
+        file_ids: [],
+        position_ids: [],
+        positions: {},
+        is_wip: false,
+        last_changed: "2022-01-01T12:00:00",
     };
-    if (type === "purchase") {
-        return { ...t, positions: [] };
-    } else {
-        return t;
-    }
 };
 
 describe("computeAccountBalancesForTransaction", () => {
     it("should compute the balance correctly for a transaction without positions", () => {
         const t = generateTransaction(0, "purchase", 100, { 1: 1 }, { 1: 1, 2: 1, 3: 2 });
-        const effect = computeTransactionBalanceEffect(t, []);
+        const effect = computeTransactionBalanceEffect(t);
         const expectedEffect: TransactionBalanceEffect = {
             1: {
                 commonCreditors: 100,
@@ -65,28 +59,30 @@ describe("computeAccountBalancesForTransaction", () => {
     });
 
     it("should compute the balance correctly for a transaction with positions", () => {
-        const t = generateTransaction(0, "purchase", 100, { 1: 1 }, { 1: 1, 2: 2 }) as Purchase;
-        t.positions = [1, 2];
-        const positions: TransactionPosition[] = [
-            {
+        const t = generateTransaction(0, "purchase", 100, { 1: 1 }, { 1: 1, 2: 2 });
+        t.position_ids = [1, 2];
+        t.positions = {
+            1: {
                 id: 1,
-                transactionID: 0,
                 price: 20,
                 name: "item1",
                 communist_shares: 0,
                 usages: { 3: 1, 1: 1 },
                 deleted: false,
+                is_changed: false,
+                only_local: false,
             },
-            {
+            2: {
                 id: 2,
-                transactionID: 0,
                 price: 40,
                 name: "item2",
                 communist_shares: 1,
                 usages: { 2: 1 },
                 deleted: false,
+                is_changed: false,
+                only_local: false,
             },
-        ];
+        };
 
         const expectedEffect: TransactionBalanceEffect = {
             1: {
@@ -109,7 +105,7 @@ describe("computeAccountBalancesForTransaction", () => {
             },
         };
 
-        const effect = computeTransactionBalanceEffect(t, positions);
+        const effect = computeTransactionBalanceEffect(t);
         expect(effect).toStrictEqual(expectedEffect);
     });
 });

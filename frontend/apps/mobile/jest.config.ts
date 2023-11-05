@@ -1,4 +1,5 @@
-module.exports = {
+/* eslint-disable */
+export default {
     displayName: "mobile",
     resolver: "@nx/jest/plugins/resolver",
     preset: "jest-expo",
@@ -10,10 +11,8 @@ module.exports = {
     moduleNameMapper: {
         ".svg": "@nx/expo/plugins/jest/svg-mock",
     },
-    transform: {
-        "\\.(js|ts|tsx)$": require.resolve("react-native/jest/preprocessor.js"),
-        "^.+\\.(bmp|gif|jpg|jpeg|mp4|png|psd|svg|webp|ttf)$": require.resolve(
-            "react-native/jest/assetFileTransformer.js"
-        ),
-    },
+    // transform: {
+    //     "\\.(js|ts|tsx)$": "react-native/jest/preprocessor.js",
+    //     "^.+\\.(bmp|gif|jpg|jpeg|mp4|png|psd|svg|webp|ttf)$": "react-native/jest/assetFileTransformer.js",
+    // },
 };

@@ -134,7 +134,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Build web app
-        run: npx nx affected:test --all
+        run: npx nx run-many --target test
   
   lint-frontend:
     runs-on: ubuntu-latest
@@ -152,4 +152,4 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Build web app
-        run: npx nx affected:lint --all
+        run: npx nx run-many --target lint
