@@ -13,6 +13,6 @@ export type NewAccount = {
     date_info?: (string | null);
     deleted?: boolean;
     tags?: Array<string>;
-    clearing_shares?: (Record<string, number> | null);
+    clearing_shares?: Record<string, number>;
 };
 

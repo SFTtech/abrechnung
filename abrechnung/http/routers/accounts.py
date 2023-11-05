@@ -35,15 +35,6 @@ async def list_accounts(
     return await account_service.list_accounts(user=user, group_id=group_id)
 
 
-class BaseAccountPayload(BaseModel):
-    name: str
-    description: str
-    date_info: Optional[date] = None
-    tags: Optional[List[str]] = None
-    owning_user_id: Optional[int] = None
-    clearing_shares: ClearingShares = None
-
-
 @router.post(
     r"/v1/groups/{group_id}/accounts",
     summary="create a new group account",

@@ -11,7 +11,7 @@ export type ClearingAccount = {
     description: string;
     date_info: string;
     tags: Array<string>;
-    clearing_shares: (Record<string, number> | null);
+    clearing_shares: Record<string, number>;
     last_changed: string;
     deleted: boolean;
 };

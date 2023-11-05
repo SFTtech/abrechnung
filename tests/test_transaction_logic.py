@@ -6,7 +6,7 @@ from pathlib import Path
 from abrechnung.application.accounts import AccountService
 from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
-from abrechnung.domain.accounts import NewAccount, AccountType, Account
+from abrechnung.domain.accounts import NewAccount, AccountType, ClearingAccount
 from abrechnung.domain.transactions import (
     NewTransaction,
     TransactionType,
@@ -76,7 +76,7 @@ class TransactionLogicTest(BaseTestCase):
             ),
         )
 
-        account: Account = await self.account_service.get_account(user=self.user, account_id=account_id)
+        account: ClearingAccount = await self.account_service.get_account(user=self.user, account_id=account_id)
         self.assertEqual(account_id, account.id)
         self.assertEqual(2.0, account.clearing_shares[basic_account_id2])
         self.assertEqual(1.0, account.clearing_shares[basic_account_id1])
@@ -198,13 +198,9 @@ class TransactionLogicTest(BaseTestCase):
                 value=33,
                 debitor_shares={account1_id: 1.0},
                 creditor_shares={account2_id: 1.0},
-                changed_files=[
-                    UpdateFile(id=file_id, filename="test file", mime_type="image/jpeg", deleted=True, content=None)
-                ],
+                changed_files=[UpdateFile(id=file_id, filename="test file", deleted=True)],
             ),
         )
-        transaction: Transaction = await self.transaction_service.get_transaction(
-            user=self.user, transaction_id=transaction_id
-        )
+        transaction = await self.transaction_service.get_transaction(user=self.user, transaction_id=transaction_id)
         self.assertEqual(1, len(transaction.files))
         self.assertTrue(transaction.files[0].deleted)

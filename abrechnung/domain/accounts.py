@@ -11,7 +11,7 @@ class AccountType(Enum):
     clearing = "clearing"
 
 
-ClearingShares = dict[int, float] | None
+ClearingShares = dict[int, float]
 
 
 class NewAccount(BaseModel):
@@ -23,7 +23,7 @@ class NewAccount(BaseModel):
     deleted: bool = False
 
     tags: list[str] = []
-    clearing_shares: ClearingShares = None
+    clearing_shares: ClearingShares = {}
 
 
 class ClearingAccount(BaseModel):

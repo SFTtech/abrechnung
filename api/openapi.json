@@ -2260,17 +2260,10 @@
             "title": "Tags"
           },
           "clearing_shares": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "number"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
             "title": "Clearing Shares"
           },
           "last_changed": {
@@ -2827,18 +2820,12 @@
             "default": []
           },
           "clearing_shares": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "type": "number"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Clearing Shares"
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Clearing Shares",
+            "default": {}
           }
         },
         "type": "object",

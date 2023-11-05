@@ -40,7 +40,7 @@ export namespace components.schemas {
     description: z.string(),
     date_info: z.string(),
     tags: z.array(z.string()),
-    clearing_shares: z.union([z.record(z.number()), z.null()]),
+    clearing_shares: z.record(z.number()),
     last_changed: z.string(),
     deleted: z.boolean(),
   });
@@ -160,7 +160,7 @@ export namespace components.schemas {
     date_info: z.union([z.string(), z.null()]).optional(),
     deleted: z.boolean().optional(),
     tags: z.array(z.string()).optional(),
-    clearing_shares: z.union([z.record(z.number()), z.null()]).optional(),
+    clearing_shares: z.record(z.number()).optional(),
   });
   /** NewFile */
   export const NewFile = z.object({

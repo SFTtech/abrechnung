@@ -1,3 +1,5 @@
+# pylint: disable=missing-kwoa
+
 from datetime import date, datetime
 
 from abrechnung.application.accounts import AccountService
@@ -18,7 +20,7 @@ from .common import BaseTestCase
 class TransactionAPITest(BaseTestCase):
     async def asyncSetUp(self) -> None:
         await super().asyncSetUp()
-        self.test_user, password = await self._create_test_user("user1", "user1@email.stuff")
+        self.test_user, _ = await self._create_test_user("user1", "user1@email.stuff")
         self.transaction_service = TransactionService(db_pool=self.db_pool, config=self.test_config)
         self.account_service = AccountService(db_pool=self.db_pool, config=self.test_config)
         self.group_service = GroupService(db_pool=self.db_pool, config=self.test_config)
@@ -198,7 +200,7 @@ class TransactionAPITest(BaseTestCase):
                 debitor_shares={account1_id: 1.0},
             ),
         )
-        t: Transaction = await self.transaction_service.get_transaction(
+        t = await self.transaction_service.get_transaction(
             user=self.test_user, transaction_id=transaction_id
         )
         self.assertEqual(100.0, t.value)
@@ -374,7 +376,7 @@ class TransactionAPITest(BaseTestCase):
             ),
         )
 
-        t: Transaction = await self._fetch_transaction(transaction_id)
+        t = await self._fetch_transaction(transaction_id)
         self.assertIsNotNone(t.positions)
         self.assertEqual(1, len(t.positions))
         self.assertIn(account2_id, t.positions[0].usages)

@@ -536,14 +536,14 @@ class TransactionService(Service):
                     position=position,
                 )
 
-        for attachment in transaction.new_files:
+        for new_attachment in transaction.new_files:
             await self._add_file_to_revision(
-                conn=conn, revision_id=revision_id, transaction_id=transaction_id, attachment=attachment
+                conn=conn, revision_id=revision_id, transaction_id=transaction_id, attachment=new_attachment
             )
 
-        for attachment in transaction.changed_files:
+        for updated_attachment in transaction.changed_files:
             await self._update_file_in_revision(
-                conn=conn, revision_id=revision_id, transaction_id=transaction_id, attachment=attachment
+                conn=conn, revision_id=revision_id, transaction_id=transaction_id, attachment=updated_attachment
             )
         await self._commit_revision(conn=conn, revision_id=revision_id)
 
