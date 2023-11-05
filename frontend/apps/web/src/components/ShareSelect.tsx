@@ -132,19 +132,19 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
 
     const [searchValue, setSearchValue] = React.useState("");
 
-    const isAccountShown = (accountId: number) => {
-        if (editable) {
-            return true;
-        }
-        if (shouldDisplayAccount) {
-            return shouldDisplayAccount(accountId);
-        }
-
-        return value[accountId] !== undefined;
-    };
-
     const selector = React.useCallback(
         memoize((state: RootState) => {
+            const isAccountShown = (accountId: number) => {
+                if (editable) {
+                    return true;
+                }
+                if (shouldDisplayAccount) {
+                    return shouldDisplayAccount(accountId);
+                }
+
+                return value[accountId] !== undefined;
+            };
+
             const accounts = selectGroupAccounts({
                 state: selectAccountSlice(state),
                 groupId,
@@ -169,7 +169,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                 return true;
             });
         }),
-        [groupId]
+        [groupId, editable, shouldDisplayAccount]
     );
 
     const accounts = useAppSelector(selector);
@@ -284,19 +284,17 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {accounts
-                            .filter((account) => isAccountShown(account.id))
-                            .map((account) => (
-                                <ShareSelectRow
-                                    key={account.id}
-                                    editable={editable}
-                                    account={account}
-                                    onChange={handleAccountShareChange}
-                                    shareValue={value[account.id]}
-                                    showAdvanced={showAdvanced}
-                                    renderAdditionalShareInfo={renderAdditionalShareInfo}
-                                />
-                            ))}
+                        {accounts.map((account) => (
+                            <ShareSelectRow
+                                key={account.id}
+                                editable={editable}
+                                account={account}
+                                onChange={handleAccountShareChange}
+                                shareValue={value[account.id]}
+                                showAdvanced={showAdvanced}
+                                renderAdditionalShareInfo={renderAdditionalShareInfo}
+                            />
+                        ))}
                     </TableBody>
                 </Table>
             </TableContainer>

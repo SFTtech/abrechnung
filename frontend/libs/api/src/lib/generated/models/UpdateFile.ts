@@ -6,8 +6,6 @@
 export type UpdateFile = {
     id: number;
     filename: string;
-    mime_type: (string | null);
-    content: (string | null);
     deleted: boolean;
 };
 

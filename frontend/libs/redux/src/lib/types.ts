@@ -108,7 +108,11 @@ export interface TransactionState {
 }
 
 export type TransactionSliceState = AbrechnungInstanceAwareState &
-    GroupScopedState<TransactionState> & { nextLocalTransactionId: number; nextLocalPositionId: number };
+    GroupScopedState<TransactionState> & {
+        nextLocalTransactionId: number;
+        nextLocalPositionId: number;
+        nextLocalFileId: number;
+    };
 
 export interface ITransactionRootState {
     transactions: TransactionSliceState;

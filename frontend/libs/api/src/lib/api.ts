@@ -101,7 +101,12 @@ export class Api {
     };
 
     public fetchFile = async (fileId: number, blobId: number): Promise<string> => {
-        const resp = await this.client.transactions.getFileContents({ fileId, blobId });
+        const resp = await fetch(`${this.baseApiUrl}/api/v1/files/${fileId}/${blobId}`, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${this.accessToken}`,
+            },
+        });
         if (!resp.ok) {
             const body = await resp.text();
             try {

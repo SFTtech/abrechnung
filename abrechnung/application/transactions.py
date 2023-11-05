@@ -150,8 +150,9 @@ class TransactionService(Service):
         )
         return file_id
 
+    @staticmethod
     async def _update_file_in_revision(
-        self, *, conn: Connection, revision_id: int, transaction_id: int, attachment: UpdateFile
+        *, conn: Connection, revision_id: int, transaction_id: int, attachment: UpdateFile
     ) -> int:
 
         if "." in attachment.filename:
@@ -164,17 +165,6 @@ class TransactionService(Service):
         )
         if blob_id is None:
             raise NotFoundError("Transaction attachment does not exist")
-
-        if attachment.content is not None and attachment.mime_type is not None:
-            content = base64.b64decode(attachment.content)
-            max_file_size = self.cfg.api.max_uploadable_file_size
-            if len(content) / 1024 > max_file_size:
-                raise InvalidCommand(f"File is too large, maximum is {max_file_size}KB")
-            blob_id = await conn.fetchval(
-                "insert into blob (content, mime_type) values ($1, $2) returning id",
-                content,
-                attachment.mime_type,
-            )
 
         await conn.execute(
             "insert into file_history (id, revision_id, filename, blob_id, deleted) values ($1, $2, $3, $4, $5)",

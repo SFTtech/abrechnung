@@ -440,12 +440,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
+            "description": "Successful Response"
           },
           "401": {
             "description": "unauthorized"
@@ -3357,28 +3352,6 @@
             "type": "string",
             "title": "Filename"
           },
-          "mime_type": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Mime Type"
-          },
-          "content": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Content"
-          },
           "deleted": {
             "type": "boolean",
             "title": "Deleted"
@@ -3388,8 +3361,6 @@
         "required": [
           "id",
           "filename",
-          "mime_type",
-          "content",
           "deleted"
         ],
         "title": "UpdateFile"

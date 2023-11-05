@@ -8,6 +8,7 @@ import { selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store"
 import {
     selectTransactionBalanceEffect,
     selectTransactionById,
+    selectTransactionHasFiles,
     selectTransactionHasPositions,
     wipTransactionUpdated,
 } from "@abrechnung/redux";
@@ -34,7 +35,9 @@ export const TransactionMetadata: React.FC<Props> = ({
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
     );
-    const hasAttachments = transaction.file_ids.length !== 0;
+    const hasAttachments = useAppSelector((state) =>
+        selectTransactionHasFiles({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
     const hasPositions = useAppSelector((state) =>
         selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId })
     );

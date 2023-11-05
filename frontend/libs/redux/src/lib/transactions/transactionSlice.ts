@@ -2,10 +2,18 @@ import {
     Api,
     Transaction as BackendTransaction,
     TransactionPosition as BackendTransactionPosition,
+    NewFile,
     NewTransactionPosition,
+    UpdateFile,
 } from "@abrechnung/api";
 import { TransactionSortMode, computeTransactionBalanceEffect, getTransactionSortFunc } from "@abrechnung/core";
-import { Transaction, TransactionBalanceEffect, TransactionPosition, TransactionType } from "@abrechnung/types";
+import {
+    FileAttachment,
+    Transaction,
+    TransactionBalanceEffect,
+    TransactionPosition,
+    TransactionType,
+} from "@abrechnung/types";
 import { toISODateString } from "@abrechnung/utils";
 import { Draft, PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import memoize from "proxy-memoize";
@@ -126,6 +134,42 @@ export const selectTransactionHasPositions = memoize(
         }
         return transaction.position_ids.reduce<boolean>((acc, id) => {
             return acc || !transaction.positions[id].deleted;
+        }, false);
+    }
+);
+
+export const selectTransactionFiles = memoize(
+    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): FileAttachment[] => {
+        const { state, groupId, transactionId } = args;
+        const transaction = selectTransactionByIdInternal({ state, groupId, transactionId });
+        if (!transaction) {
+            return [];
+        }
+        return transaction.file_ids
+            .filter((id) => {
+                const file = transaction.files[id];
+                if (file.type !== "new" && file.deleted) {
+                    return false;
+                }
+                return true;
+            })
+            .map((id) => transaction.files[id]);
+    }
+);
+
+export const selectTransactionHasFiles = memoize(
+    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): boolean => {
+        const { state, groupId, transactionId } = args;
+        const transaction = selectTransactionByIdInternal({ state, groupId, transactionId });
+        if (!transaction) {
+            return false;
+        }
+        return transaction.file_ids.reduce<boolean>((acc, id) => {
+            const file = transaction.files[id];
+            if (file.type === "new") {
+                return true;
+            }
+            return acc || !file.deleted;
         }, false);
     }
 );
@@ -319,6 +363,23 @@ export const saveTransaction = createAsyncThunk<
             deleted: p.deleted,
         }));
 
+    const newFiles: NewFile[] = (Object.values(wipTransaction.files).filter((f) => f.type === "new") as NewFile[]).map(
+        (f) => ({
+            filename: f.filename,
+            // strip away the metadata from the base64 string
+            content: f.content.includes(",") ? f.content.split(",")[1] : f.content,
+            mime_type: f.mime_type,
+        })
+    );
+    console.log("newFIles", newFiles);
+    const changedFiles: UpdateFile[] = (
+        Object.values(wipTransaction.files).filter((f) => f.type === "updated") as UpdateFile[]
+    ).map((f) => ({
+        id: f.id,
+        filename: f.filename,
+        deleted: f.deleted,
+    }));
+
     // remove keys we don't want to send to the backend
     const { position_ids, positions, ...body } = wipTransaction;
 
@@ -328,6 +389,7 @@ export const saveTransaction = createAsyncThunk<
             requestBody: {
                 ...body,
                 new_positions: newPositions,
+                new_files: newFiles,
             },
         });
     } else {
@@ -337,6 +399,8 @@ export const saveTransaction = createAsyncThunk<
                 ...body,
                 new_positions: newPositions,
                 changed_positions: changedPositions,
+                new_files: newFiles,
+                changed_files: changedFiles,
             },
         });
     }
@@ -370,8 +434,9 @@ export const deleteTransaction = createAsyncThunk<
 
 const initialState: TransactionSliceState = {
     byGroupId: {},
-    nextLocalPositionId: -1,
     nextLocalTransactionId: -1,
+    nextLocalPositionId: -1,
+    nextLocalFileId: -1,
     activeInstanceId: 0,
 };
 
@@ -432,6 +497,9 @@ const transactionSlice = createSlice({
         advanceNextLocalPositionId: (state, action: PayloadAction<void>) => {
             state.nextLocalPositionId = state.nextLocalPositionId - 1;
         },
+        advanceNextLocalFileId: (state, action: PayloadAction<void>) => {
+            state.nextLocalFileId = state.nextLocalFileId - 1;
+        },
         transactionEditStarted: (state, action: PayloadAction<{ groupId: number; transactionId: number }>) => {
             const { groupId, transactionId } = action.payload;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
@@ -439,6 +507,72 @@ const transactionSlice = createSlice({
                 return;
             }
             moveTransactionToWip(s, transactionId);
+        },
+        wipFileAdded: (state, action: PayloadAction<{ groupId: number; transactionId: number; file: NewFile }>) => {
+            const { groupId, transactionId, file } = action.payload;
+            const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+            const wipTransaction = moveTransactionToWip(s, transactionId);
+            if (!wipTransaction) {
+                return;
+            }
+            const fileId = state.nextLocalFileId;
+            wipTransaction.file_ids.push(fileId);
+            wipTransaction.files[fileId] = {
+                id: fileId,
+                type: "new",
+                ...file,
+            };
+
+            state.nextLocalFileId -= 1;
+        },
+        wipFileUpdated: (
+            state,
+            action: PayloadAction<{ groupId: number; transactionId: number; file: Omit<UpdateFile, "deleted"> }>
+        ) => {
+            const { groupId, transactionId, file } = action.payload;
+            const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+            const wipTransaction = moveTransactionToWip(s, transactionId);
+            if (!wipTransaction) {
+                return;
+            }
+            const wipFile = wipTransaction.files[file.id];
+            if (!wipFile) {
+                return;
+            }
+            if (wipFile.type === "new") {
+                wipTransaction.files[file.id] = {
+                    ...wipFile,
+                    ...file,
+                };
+            } else {
+                wipTransaction.files[file.id] = {
+                    ...wipFile,
+                    type: "updated",
+                    ...file,
+                };
+            }
+        },
+        wipFileDeleted: (state, action: PayloadAction<{ groupId: number; transactionId: number; fileId: number }>) => {
+            const { groupId, transactionId, fileId } = action.payload;
+            const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+            const wipTransaction = moveTransactionToWip(s, transactionId);
+            if (!wipTransaction) {
+                return;
+            }
+            const wipFile = wipTransaction.files[fileId];
+            if (!wipFile) {
+                return;
+            }
+            if (wipFile.type === "new") {
+                wipTransaction.file_ids = wipTransaction.file_ids.filter((id) => id !== fileId);
+                delete wipTransaction.files[fileId];
+            } else {
+                wipTransaction.files[fileId] = {
+                    ...wipFile,
+                    type: "updated",
+                    deleted: true,
+                };
+            }
         },
         wipTransactionUpdated: (
             state,
@@ -619,6 +753,9 @@ const { advanceNextLocalTransactionId } = transactionSlice.actions;
 export const {
     transactionEditStarted,
     wipTransactionUpdated,
+    wipFileAdded,
+    wipFileDeleted,
+    wipFileUpdated,
     wipPositionUpdated,
     wipPositionAdded,
     positionDeleted,

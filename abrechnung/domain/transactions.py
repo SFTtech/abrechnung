@@ -14,12 +14,14 @@ class TransactionType(Enum):
 
 TransactionShares = dict[int, float]
 
+
 class NewTransactionPosition(BaseModel):
     name: str
     price: float
     communist_shares: float
     # usages map account IDs to portions of the item share pool
     usages: TransactionShares
+
 
 class TransactionPosition(NewTransactionPosition):
     id: int
@@ -34,6 +36,7 @@ class FileAttachment(BaseModel):
     host_url: str | None = None
     deleted: bool
 
+
 class NewFile(BaseModel):
     filename: str
     mime_type: str
@@ -47,20 +50,11 @@ class NewFile(BaseModel):
             raise ValueError(f"File type {v} is not an accepted file type")
         return v
 
+
 class UpdateFile(BaseModel):
     id: int
     filename: str
-    mime_type: str | None
-    # base64 encoded file content
-    content: str | None
     deleted: bool
-
-    @field_validator("mime_type")
-    @classmethod
-    def check_mime_type_is_allowed(cls, v: str) -> str:
-        if v not in ALLOWED_FILETYPES:
-            raise ValueError(f"File type {v} is not an accepted file type")
-        return v
 
 
 class NewTransaction(BaseModel):

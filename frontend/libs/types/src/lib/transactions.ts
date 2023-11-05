@@ -82,9 +82,11 @@ export type TransactionPosition = BackendTransactionPosition & {
     only_local: boolean;
 };
 
+export type UpdatedFileAttachment = { blob_id: number | null; mime_type: string | null } & UpdateFile;
+
 export type FileAttachment =
     | (BackendFileAttachment & { type: "backend" })
-    | ({ type: "updated" } & UpdateFile)
+    | ({ type: "updated" } & UpdatedFileAttachment)
     | ({ type: "new"; id: number } & NewFile);
 
 export type Transaction = Omit<BackendTransaction, "positions" | "files" | "is_wip"> & {

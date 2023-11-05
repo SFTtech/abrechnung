@@ -158,6 +158,7 @@ async def delete_transaction(
     "/v1/files/{file_id}/{blob_id}",
     summary="fetch the (binary) contents of a transaction attachment",
     operation_id="get_file_contents",
+    response_class=Response,
 )
 async def get_file_contents(
     file_id: int,

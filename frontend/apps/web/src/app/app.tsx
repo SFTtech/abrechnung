@@ -22,6 +22,7 @@ export default function App() {
     const darkModeSystem = useMediaQuery("(prefers-color-scheme: dark)");
     const dispatch = useAppDispatch();
     const groupStoreStatus = useAppSelector((state) => state.groups.status);
+    const [apiInitialized, setApiInitialized] = React.useState(false);
     const accessToken = useAppSelector((state) => selectAccessToken({ state: selectAuthSlice(state) }));
     const themeMode = useAppSelector((state) => selectTheme({ state: selectSettingsSlice(state) }));
     const isAuthenticated = accessToken !== undefined;
@@ -41,10 +42,13 @@ export default function App() {
 
     React.useEffect(() => {
         if (accessToken !== undefined) {
+            // TODO: in case of backend version mismatch we have to catch the error here
             api.init(accessToken).then(() => {
-                console.log("dispatching fetch groups");
+                setApiInitialized(true);
                 dispatch(fetchGroups({ api }));
             });
+        } else {
+            setApiInitialized(true);
         }
     }, [accessToken, dispatch]);
 
@@ -78,7 +82,7 @@ export default function App() {
                         draggable
                         pauseOnHover
                     />
-                    {isAuthenticated && groupStoreStatus !== "initialized" ? (
+                    {(isAuthenticated && groupStoreStatus !== "initialized") || !apiInitialized ? (
                         <Loading />
                     ) : (
                         <AbrechnungUpdateProvider api={api} websocket={ws}>

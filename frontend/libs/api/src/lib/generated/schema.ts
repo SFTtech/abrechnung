@@ -274,8 +274,6 @@ export namespace components.schemas {
   export const UpdateFile = z.object({
     id: z.number().int(),
     filename: z.string(),
-    mime_type: z.union([z.string(), z.null()]),
-    content: z.union([z.string(), z.null()]),
     deleted: z.boolean(),
   });
   /** UpdateGroupMemberPayload */
@@ -538,11 +536,7 @@ export const operations = {
     },
     responses: {
       /** @description Successful Response */
-      200: {
-        content: {
-          "application/json": z.record(z.any()),
-        },
-      },
+      200: z.never(),
       /** @description unauthorized */
       401: z.never(),
       /** @description forbidden */

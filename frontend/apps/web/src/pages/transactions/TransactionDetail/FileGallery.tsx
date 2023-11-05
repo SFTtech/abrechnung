@@ -1,12 +1,15 @@
+import Loading from "@/components/style/Loading";
 import { api } from "@/core/api";
-import { selectTransactionById } from "@abrechnung/redux";
+import { selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
+import { FileAttachment as BackendFileAttachment, NewFile } from "@abrechnung/api";
+import { selectTransactionById, selectTransactionFiles, wipFileDeleted } from "@abrechnung/redux";
+import { FileAttachment, UpdatedFileAttachment } from "@abrechnung/types";
 import { AddCircle, ChevronLeft, ChevronRight, Delete } from "@mui/icons-material";
 import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Transition } from "react-transition-group";
-import { selectTransactionSlice, useAppSelector } from "../../../store";
-import ImageUploadDialog from "./ImageUploadDialog";
+import { ImageUploadDialog } from "./ImageUploadDialog";
 import placeholderImg from "./PlaceholderImage.svg";
 
 const duration = 200;
@@ -22,62 +25,110 @@ const transitionStyles = {
     exited: { opacity: 0, display: "none" },
 };
 
-interface Props {
+interface ImageDisplayProps {
+    isActive: boolean;
+    objectUrl?: string;
+    file: FileAttachment;
+    onShowImage: () => void;
+}
+
+const ImageDisplay: React.FC<ImageDisplayProps> = ({ file, isActive, onShowImage, objectUrl }) => {
+    if (file.type === "backend") {
+        return (
+            <Transition in={isActive} timeout={duration}>
+                {(state) =>
+                    objectUrl === undefined ? (
+                        <Loading />
+                    ) : (
+                        <img
+                            height="100%"
+                            style={{
+                                ...defaultStyle,
+                                ...transitionStyles[state],
+                            }}
+                            onClick={onShowImage}
+                            src={objectUrl}
+                            srcSet={objectUrl}
+                            alt={file.filename.split(".")[0]}
+                            loading="lazy"
+                        />
+                    )
+                }
+            </Transition>
+        );
+    }
+    if (file.type === "new") {
+        return (
+            <Transition in={isActive} timeout={duration}>
+                {(state) => (
+                    <img
+                        height="100%"
+                        style={{
+                            ...defaultStyle,
+                            ...transitionStyles[state],
+                        }}
+                        onClick={onShowImage}
+                        src={file.content}
+                        alt={file.filename.split(".")[0]}
+                        loading="lazy"
+                    />
+                )}
+            </Transition>
+        );
+    }
+
+    return null;
+};
+
+export interface FileGalleryProps {
     groupId: number;
     transactionId: number;
 }
 
-export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
-    // TODO: reimplement
+export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transactionId }) => {
+    const dispatch = useAppDispatch();
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
     );
-    // const attachments = useAppSelector((state) =>
-    //     selectTransactionAttachments({ state: selectTransactionSlice(state), groupId, transactionId })
-    // );
-    const [files, setFiles] = useState([]); // map of file id to object
+    const attachments = useAppSelector((state) =>
+        selectTransactionFiles({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    // map of file id to blob object url
+    const [objectUrls, setObjectUrls] = useState<Record<number, string>>({});
     const [active, setActive] = useState(0);
 
     const [showUploadDialog, setShowUploadDialog] = useState(false);
     const [showImage, setShowImage] = useState(false);
 
     useEffect(() => {
-        const attachments = [];
-        const newFileIDs = new Set(attachments.map((file) => file.id));
-        const filteredFiles = files.reduce((map, file) => {
-            map[file.id] = file;
-            return map;
-        }, {});
-        for (const loadedFile of files) {
-            if (!newFileIDs.has(loadedFile.id)) {
-                URL.revokeObjectURL(loadedFile.objectUrl); // clean up memory
-                delete filteredFiles[loadedFile.id];
-            }
-        }
-        setFiles(Object.values(filteredFiles)); // TODO: maybe include placeholders
-        setActive((oldActive) => Math.max(0, Math.min(oldActive, attachments.length - 1)));
-
-        const newFiles = attachments.filter((file) => filteredFiles[file.id] === undefined);
+        const backendAttachments = attachments.filter((a) => a.type !== "new") as (
+            | BackendFileAttachment
+            | UpdatedFileAttachment
+        )[];
         Promise.all(
-            newFiles.map((newFile) => {
-                return api.fetchFile(newFile.id, newFile.blobID).then((objectUrl) => {
+            backendAttachments.map((attachment) => {
+                return api.fetchFile(attachment.id, attachment.blob_id).then((objectUrl) => {
                     return {
-                        ...newFile,
-                        objectUrl: objectUrl,
+                        fileId: attachment.id,
+                        blobId: attachment.blob_id,
+                        objectUrl,
                     };
                 });
             })
         )
-            .then((newlyLoadedFiles) => {
-                setFiles([...Object.values(filteredFiles), ...newlyLoadedFiles]);
+            .then((loadedBlobs) => {
+                const urlMap = Object.fromEntries(loadedBlobs.map((objInfo) => [objInfo.fileId, objInfo.objectUrl]));
+                setObjectUrls(urlMap);
             })
             .catch((err) => {
                 toast.error(`Error loading file: ${err}`);
             });
-    }, [transaction]); // TODO: do not add files as dependencies, we'd get an infinite loop then
+
+        setActive((oldActive) => Math.max(0, Math.min(oldActive, attachments.length - 1)));
+    }, [attachments]);
 
     const toNextImage = () => {
-        if (active < files.length - 1) {
+        if (active < attachments.length - 1) {
             setActive(active + 1);
         }
     };
@@ -88,25 +139,15 @@ export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
         }
     };
 
-    const doShowImage = (img) => {
+    const doShowImage = () => {
         setShowImage(true);
     };
 
     const deleteSelectedFile = () => {
-        // TODO: reimplement
-        // if (active < files.length) {
-        //     // sanity check, should not be needed
-        //     // TODO: implement
-        //     api.client.transactions
-        //         .deleteFile({ fileId: files[active].id })
-        //         .then((t) => {
-        //             // updateTransactionInState(t, setTransactions);
-        //             setShowImage(false);
-        //         })
-        //         .catch((err) => {
-        //             toast.error(`Error deleting file: ${err}`);
-        //         });
-        // }
+        if (active < attachments.length) {
+            dispatch(wipFileDeleted({ groupId, transactionId, fileId: attachments[active].id }));
+            setShowImage(false);
+        }
     };
 
     return (
@@ -121,39 +162,30 @@ export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
                     width: "100%",
                 }}
             >
-                {files.length === 0 ? (
+                {attachments.length === 0 ? (
                     <img height="100%" src={placeholderImg} alt="placeholder" />
                 ) : (
-                    files.map((item, idx) => (
-                        <Transition key={item.id} in={active === idx} timeout={duration}>
-                            {(state) => (
-                                <img
-                                    height="100%"
-                                    style={{
-                                        ...defaultStyle,
-                                        ...transitionStyles[state],
-                                    }}
-                                    onClick={() => doShowImage(item)}
-                                    src={item.objectUrl}
-                                    srcSet={item.objectUrl}
-                                    alt={item.filename.split(".")[0]}
-                                    loading="lazy"
-                                />
-                            )}
-                        </Transition>
+                    attachments.map((item, idx) => (
+                        <ImageDisplay
+                            key={item.id}
+                            file={item}
+                            isActive={idx === active}
+                            objectUrl={objectUrls[item.id]}
+                            onShowImage={doShowImage}
+                        />
                     ))
                 )}
                 <Chip
                     sx={{ position: "absolute", top: "5px", right: "10px" }}
                     size="small"
-                    label={`${Math.min(files.length, active + 1)} / ${files.length}`}
+                    label={`${active + 1} / ${attachments.length}`}
                 />
                 {active > 0 && (
                     <IconButton onClick={toPrevImage} sx={{ position: "absolute", top: "40%", left: "10px" }}>
                         <ChevronLeft />
                     </IconButton>
                 )}
-                {active < files.length - 1 && (
+                {active < attachments.length - 1 && (
                     <IconButton onClick={toNextImage} sx={{ position: "absolute", top: "40%", right: "10px" }}>
                         <ChevronRight />
                     </IconButton>
@@ -181,7 +213,9 @@ export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
                 )}
             </Grid>
             <Dialog open={showImage} onClose={() => setShowImage(false)} scroll="body">
-                {active < files.length && <DialogTitle>{files[active].filename.split(".")[0]}</DialogTitle>}
+                {active < attachments.length && (
+                    <DialogTitle>{attachments[active]?.filename.split(".")[0]}</DialogTitle>
+                )}
 
                 <DialogContent>
                     <Grid
@@ -192,16 +226,25 @@ export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
                             position: "relative",
                         }}
                     >
-                        {active < files.length && (
-                            <img
-                                height="100%"
-                                width="100%"
-                                src={files[active]?.objectUrl}
-                                srcSet={files[active]?.objectUrl}
-                                alt={files[active]?.filename}
-                                loading="lazy"
-                            />
-                        )}
+                        {active < attachments.length &&
+                            (attachments[active].type === "new" ? (
+                                <img
+                                    height="100%"
+                                    width="100%"
+                                    src={(attachments[active] as NewFile | undefined)?.content}
+                                    alt={attachments[active]?.filename}
+                                    loading="lazy"
+                                />
+                            ) : (
+                                <img
+                                    height="100%"
+                                    width="100%"
+                                    src={objectUrls[attachments[active].id]}
+                                    srcSet={objectUrls[attachments[active].id]}
+                                    alt={attachments[active]?.filename}
+                                    loading="lazy"
+                                />
+                            ))}
                         {active > 0 && (
                             <IconButton
                                 onClick={toPrevImage}
@@ -214,7 +257,7 @@ export const FileGallery: React.FC<Props> = ({ groupId, transactionId }) => {
                                 <ChevronLeft />
                             </IconButton>
                         )}
-                        {active < files.length - 1 && (
+                        {active < attachments.length - 1 && (
                             <IconButton
                                 onClick={toNextImage}
                                 sx={{
