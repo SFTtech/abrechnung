@@ -10,7 +10,7 @@ from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.config import read_config
-from abrechnung.domain.accounts import NewAccount, AccountType
+from abrechnung.domain.accounts import AccountType, NewAccount
 from abrechnung.domain.transactions import NewTransaction, TransactionType
 from abrechnung.framework.database import create_db_pool
 

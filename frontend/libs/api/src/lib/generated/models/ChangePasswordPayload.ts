@@ -7,4 +7,3 @@ export type ChangePasswordPayload = {
     new_password: string;
     old_password: string;
 };
-

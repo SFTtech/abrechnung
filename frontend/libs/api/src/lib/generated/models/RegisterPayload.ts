@@ -7,6 +7,5 @@ export type RegisterPayload = {
     username: string;
     password: string;
     email: string;
-    invite_token?: (string | null);
+    invite_token?: string | null;
 };
-

@@ -6,7 +6,13 @@ import asyncpg
 from abrechnung.core.auth import check_group_permissions, create_group_log
 from abrechnung.core.errors import InvalidCommand, NotFoundError
 from abrechnung.core.service import Service
-from abrechnung.domain.accounts import Account, AccountType, NewAccount, ClearingAccount, PersonalAccount
+from abrechnung.domain.accounts import (
+    Account,
+    AccountType,
+    ClearingAccount,
+    NewAccount,
+    PersonalAccount,
+)
 from abrechnung.domain.users import User
 from abrechnung.framework.database import Connection
 from abrechnung.framework.decorators import with_db_connection, with_db_transaction
@@ -145,9 +151,7 @@ class AccountService(Service):
     async def list_accounts(self, *, conn: Connection, user: User, group_id: int) -> list[Account]:
         await check_group_permissions(conn=conn, group_id=group_id, user=user)
         rows = await conn.fetch(
-            "select * "
-            "from full_account_state_valid_at(now()) "
-            "where group_id = $1",
+            "select * " "from full_account_state_valid_at(now()) " "where group_id = $1",
             group_id,
         )
         return [
@@ -161,9 +165,7 @@ class AccountService(Service):
     async def get_account(self, *, conn: Connection, user: User, account_id: int) -> Account:
         await self._check_account_permissions(conn=conn, user=user, account_id=account_id)
         row = await conn.fetchrow(
-            "select * "
-            "from full_account_state_valid_at(now()) "
-            "where id = $1",
+            "select * " "from full_account_state_valid_at(now()) " "where id = $1",
             account_id,
         )
         if row["type"] == AccountType.clearing.value:
@@ -190,7 +192,9 @@ class AccountService(Service):
 
     async def _create_account(self, *, conn: asyncpg.Connection, user: User, group_id: int, account: NewAccount) -> int:
         if account.clearing_shares and account.type != AccountType.clearing:
-            raise InvalidCommand(f"'{account.type.value}' accounts cannot have associated settlement distribution shares")
+            raise InvalidCommand(
+                f"'{account.type.value}' accounts cannot have associated settlement distribution shares"
+            )
 
         can_write, is_owner = await check_group_permissions(conn=conn, group_id=group_id, user=user, can_write=True)
         if account.owning_user_id is not None:
@@ -367,9 +371,7 @@ class AccountService(Service):
         )
 
         has_clearing_shares = await conn.fetchval(
-            "select 1 "
-            "from account_state_valid_at() a "
-            "where not deleted and $1 = any(involved_accounts)",
+            "select 1 " "from account_state_valid_at() a " "where not deleted and $1 = any(involved_accounts)",
             account_id,
         )
 
@@ -398,9 +400,7 @@ class AccountService(Service):
             raise InvalidCommand(f"Cannot delete an already deleted account")
 
         has_clearing_shares = await conn.fetchval(
-            "select 1 "
-            "from account_state_valid_at() p "
-            "where not p.deleted and $1 = any(p.involved_accounts)",
+            "select 1 " "from account_state_valid_at() p " "where not p.deleted and $1 = any(p.involved_accounts)",
             account_id,
         )
 
@@ -408,8 +408,7 @@ class AccountService(Service):
             raise InvalidCommand(f"Cannot delete an account that is references by another clearing account")
 
         revision_id = await conn.fetchval(
-            "insert into account_revision (user_id, account_id) "
-            "values ($1, $2) returning id",
+            "insert into account_revision (user_id, account_id) " "values ($1, $2) returning id",
             user.id,
             account_id,
         )

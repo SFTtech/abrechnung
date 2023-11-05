@@ -3,4 +3,4 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type AccountType = 'personal' | 'clearing';
+export type AccountType = "personal" | "clearing";

@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from enum import Enum
 
-from pydantic import BaseModel, model_validator, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 ALLOWED_FILETYPES = ["image/jpeg", "image/png", "image/bmp", "image/webp"]
 

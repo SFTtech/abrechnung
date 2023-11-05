@@ -9,15 +9,15 @@ from abrechnung.core.auth import check_group_permissions, create_group_log
 from abrechnung.core.errors import InvalidCommand, NotFoundError
 from abrechnung.core.service import Service
 from abrechnung.domain.transactions import (
+    ALLOWED_FILETYPES,
+    NewFile,
+    NewTransaction,
+    NewTransactionPosition,
     Transaction,
     TransactionPosition,
     TransactionType,
-    NewTransaction,
-    ALLOWED_FILETYPES,
-    NewFile,
-    UpdateTransaction,
-    NewTransactionPosition,
     UpdateFile,
+    UpdateTransaction,
 )
 from abrechnung.domain.users import User
 from abrechnung.framework.database import Connection

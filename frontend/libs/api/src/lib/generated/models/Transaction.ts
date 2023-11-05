@@ -3,9 +3,9 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { FileAttachment } from './FileAttachment';
-import type { TransactionPosition } from './TransactionPosition';
-import type { TransactionType } from './TransactionType';
+import type { FileAttachment } from "./FileAttachment";
+import type { TransactionPosition } from "./TransactionPosition";
+import type { TransactionType } from "./TransactionType";
 
 export type Transaction = {
     id: number;
@@ -25,4 +25,3 @@ export type Transaction = {
     positions: Array<TransactionPosition>;
     files: Array<FileAttachment>;
 };
-

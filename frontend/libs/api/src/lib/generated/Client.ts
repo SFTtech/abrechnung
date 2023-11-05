@@ -2,20 +2,19 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { BaseHttpRequest } from './core/BaseHttpRequest';
-import type { OpenAPIConfig } from './core/OpenAPI';
-import { FetchHttpRequest } from './core/FetchHttpRequest';
+import type { BaseHttpRequest } from "./core/BaseHttpRequest";
+import type { OpenAPIConfig } from "./core/OpenAPI";
+import { FetchHttpRequest } from "./core/FetchHttpRequest";
 
-import { AccountsService } from './services/AccountsService';
-import { AuthService } from './services/AuthService';
-import { CommonService } from './services/CommonService';
-import { GroupsService } from './services/GroupsService';
-import { TransactionsService } from './services/TransactionsService';
+import { AccountsService } from "./services/AccountsService";
+import { AuthService } from "./services/AuthService";
+import { CommonService } from "./services/CommonService";
+import { GroupsService } from "./services/GroupsService";
+import { TransactionsService } from "./services/TransactionsService";
 
 type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
 
 export class Client {
-
     public readonly accounts: AccountsService;
     public readonly auth: AuthService;
     public readonly common: CommonService;
@@ -26,10 +25,10 @@ export class Client {
 
     constructor(config?: Partial<OpenAPIConfig>, HttpRequest: HttpRequestConstructor = FetchHttpRequest) {
         this.request = new HttpRequest({
-            BASE: config?.BASE ?? '',
-            VERSION: config?.VERSION ?? '0.10.1',
+            BASE: config?.BASE ?? "",
+            VERSION: config?.VERSION ?? "0.10.1",
             WITH_CREDENTIALS: config?.WITH_CREDENTIALS ?? false,
-            CREDENTIALS: config?.CREDENTIALS ?? 'include',
+            CREDENTIALS: config?.CREDENTIALS ?? "include",
             TOKEN: config?.TOKEN,
             USERNAME: config?.USERNAME,
             PASSWORD: config?.PASSWORD,
@@ -44,4 +43,3 @@ export class Client {
         this.transactions = new TransactionsService(this.request);
     }
 }
-

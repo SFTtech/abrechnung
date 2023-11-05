@@ -14,4 +14,3 @@ export type GroupPreview = {
     invite_valid_until: string;
     invite_description: string;
 };
-

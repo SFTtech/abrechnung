@@ -8,4 +8,3 @@ export type UpdateGroupMemberPayload = {
     can_write: boolean;
     is_owner: boolean;
 };
-

@@ -8,4 +8,3 @@ export type UpdateFile = {
     filename: string;
     deleted: boolean;
 };
-

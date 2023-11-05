@@ -5,15 +5,16 @@ from datetime import date, datetime
 from abrechnung.application.accounts import AccountService
 from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
-from abrechnung.domain.accounts import NewAccount, AccountType
+from abrechnung.domain.accounts import AccountType, NewAccount
 from abrechnung.domain.transactions import (
-    UpdateTransaction,
-    Transaction,
     NewTransaction,
-    TransactionType,
     NewTransactionPosition,
+    Transaction,
     TransactionPosition,
+    TransactionType,
+    UpdateTransaction,
 )
+
 from .common import BaseTestCase
 
 
@@ -200,9 +201,7 @@ class TransactionAPITest(BaseTestCase):
                 debitor_shares={account1_id: 1.0},
             ),
         )
-        t = await self.transaction_service.get_transaction(
-            user=self.test_user, transaction_id=transaction_id
-        )
+        t = await self.transaction_service.get_transaction(user=self.test_user, transaction_id=transaction_id)
         self.assertEqual(100.0, t.value)
         self.assertEqual("foobar", t.description)
         self.assertEqual("€", t.currency_symbol)

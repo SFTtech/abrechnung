@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from abrechnung.domain.accounts import NewAccount, AccountType
+from abrechnung.domain.accounts import AccountType, NewAccount
 from abrechnung.domain.transactions import NewTransaction, TransactionType
 from tests.http_tests.common import HTTPAPITest
 

@@ -6,9 +6,9 @@ from pydantic import BaseModel
 
 from abrechnung.application.transactions import TransactionService
 from abrechnung.domain.transactions import (
+    NewTransaction,
     Transaction,
     TransactionPosition,
-    NewTransaction,
     UpdateTransaction,
 )
 from abrechnung.domain.users import User
