@@ -2,14 +2,17 @@ import {
     Alert,
     Box,
     Button,
+    Checkbox,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
+    FormControlLabel,
     LinearProgress,
     TextField,
     Typography,
 } from "@mui/material";
+import imageCompression from "browser-image-compression";
 import React, { useState } from "react";
 import { useAppDispatch } from "../../../store";
 import placeholderImg from "./PlaceholderImage.svg";
@@ -27,7 +30,7 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
         currentFile: undefined,
         previewImage: undefined,
         progress: 0,
-
+        compress: true,
         message: "",
         isError: false,
     });
@@ -44,6 +47,7 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
             progress: 0,
             message: "",
         });
+        console.log("checked: ", fileState.compress);
         setFilename(strippedFilename);
     };
 
@@ -55,23 +59,15 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
         }
     };
 
-    const upload = () => {
-        setFileState({
-            ...fileState,
-            progress: 0,
-        });
-
-        const properlyNamedFile = new File([fileState.currentFile], filename, { type: fileState.currentFile.type });
-
-        // TODO: reimplement file upload
-        // dispatch(uploadFile({ groupId, transactionId, file: properlyNamedFile, api }))
+    const dispatchUpload = (file) => {
+        // dispatch(uploadFile({ groupId, transactionId, file: file, api }))
         //     .unwrap()
         //     .then((t) => {
         //         setFileState({
         //             currentFile: undefined,
         //             previewImage: undefined,
         //             progress: 0,
-
+        //             compress: fileState.compress,
         //             message: "",
         //             isError: false,
         //         });
@@ -87,6 +83,65 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
         //             isError: true,
         //         });
         //     });
+    };
+
+    const updateCompressionProgress = (progress) => {
+        setFileState({
+            ...fileState,
+            progress: progress,
+            message: `compressing...`,
+            isError: false,
+        });
+    };
+
+    const upload = () => {
+        setFileState({
+            ...fileState,
+            progress: 0,
+        });
+
+        const properlyNamedFile = new File([fileState.currentFile], filename, { type: fileState.currentFile.type });
+
+        if (fileState.compress) {
+            const options = {
+                maxSizeMB: 1,
+                useWebWorker: true,
+                onProgress: updateCompressionProgress,
+            };
+
+            imageCompression(properlyNamedFile, options)
+                .then(function (compressedFile) {
+                    console.log("compressedFile instanceof Blob", compressedFile instanceof Blob); // true
+                    console.log(`compressedFile size ${compressedFile.size / 1024 / 1024} MB`); // smaller than maxSizeMB
+                    setFileState({
+                        ...fileState,
+                        progress: 0,
+                        message: `uploading...`,
+                        isError: false,
+                    });
+
+                    dispatchUpload(compressedFile); // write your own logic
+                })
+                .catch(function (error) {
+                    console.log(error.message);
+                    setFileState({
+                        ...fileState,
+                        progress: 0,
+                        message: `Failed to compress! ${error.message}`,
+                        isError: true,
+                    });
+                    return;
+                });
+        } else {
+            dispatchUpload(properlyNamedFile);
+        }
+    };
+
+    const toggleCompress = () => {
+        setFileState({
+            ...fileState,
+            compress: !fileState.compress,
+        });
     };
 
     return (
@@ -127,6 +182,7 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
                 )}
 
                 {fileState.isError && fileState.message && <Alert severity="error">{fileState.message}</Alert>}
+                {!fileState.isError && fileState.message && <Alert severity="info">{fileState.message}</Alert>}
             </DialogContent>
 
             <DialogActions>
@@ -142,6 +198,10 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
                     <Button component="span">Choose Image</Button>
                 </label>
 
+                <FormControlLabel
+                    control={<Checkbox checked={fileState.compress} onChange={toggleCompress} />}
+                    label="compress"
+                />
                 <Button color="primary" component="span" disabled={!fileState.currentFile} onClick={upload}>
                     Upload
                 </Button>
