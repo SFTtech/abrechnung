@@ -21,9 +21,9 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { TagSelector } from "../../../components/TagSelector";
 import { DeleteAccountModal } from "../../../components/accounts/DeleteAccountModal";
 import { MobilePaper } from "../../../components/style/mobile";
-import { TagSelector } from "../../../components/TagSelector";
 import { useTitle } from "../../../core/utils";
 import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "../../../store";
 import { getAccountLink } from "../../../utils";
@@ -44,7 +44,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
 
     const [searchValue, setSearchValue] = useState("");
     const [tagFilter, setTagFilter] = useState<string[]>(emptyList);
-    const [sortMode, setSortMode] = useState<AccountSortMode>("lastChanged");
+    const [sortMode, setSortMode] = useState<AccountSortMode>("last_changed");
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
     const clearingAccounts = useAppSelector((state) =>
         selectSortedAccounts({
@@ -125,7 +125,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                                 onChange={(evt) => setSortMode(evt.target.value as AccountSortMode)}
                                 value={sortMode}
                             >
-                                <MenuItem value="lastChanged">Last changed</MenuItem>
+                                <MenuItem value="last_changed">Last changed</MenuItem>
                                 <MenuItem value="name">Name</MenuItem>
                                 <MenuItem value="description">Description</MenuItem>
                                 <MenuItem value="dateInfo">Date</MenuItem>

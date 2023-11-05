@@ -1,8 +1,8 @@
-import React from "react";
-import { api } from "../../core/api";
-import { toast } from "react-toastify";
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import { Group } from "@abrechnung/types";
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
+import React from "react";
+import { toast } from "react-toastify";
+import { api } from "../../core/api";
 
 interface Props {
     show: boolean;
@@ -15,7 +15,8 @@ interface Props {
 
 export const GroupDeleteModal: React.FC<Props> = ({ show, onClose, groupToDelete }) => {
     const confirmDeleteGroup = () => {
-        api.deleteGroup(groupToDelete.id)
+        api.client.groups
+            .deleteGroup({ groupId: groupToDelete.id })
             .then((res) => {
                 onClose({}, "completed");
             })

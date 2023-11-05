@@ -1,9 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { Form, Formik } from "formik";
-import { api } from "../../core/api";
-import { toast } from "react-toastify";
-import Loading from "../../components/style/Loading";
+import { selectIsAuthenticated } from "@abrechnung/redux";
+import { LockOutlined } from "@mui/icons-material";
 import {
     Avatar,
     Box,
@@ -16,11 +12,15 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import { LockOutlined } from "@mui/icons-material";
-import { useQuery, useTitle } from "../../core/utils";
+import { Form, Formik } from "formik";
+import React, { useEffect, useState } from "react";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import * as yup from "yup";
+import Loading from "../../components/style/Loading";
+import { api } from "../../core/api";
+import { useQuery, useTitle } from "../../core/utils";
 import { selectAuthSlice, useAppSelector } from "../../store";
-import { selectIsAuthenticated } from "@abrechnung/redux";
 
 const validationSchema = yup.object({
     username: yup.string().required("username is required"),
@@ -63,7 +63,15 @@ export const Register: React.FC = () => {
             }
         }
 
-        api.register(values.username, values.email, values.password, inviteToken)
+        api.client.auth
+            .register({
+                requestBody: {
+                    username: values.username,
+                    email: values.email,
+                    password: values.password,
+                    invite_token: inviteToken,
+                },
+            })
             .then((res) => {
                 toast.success(`Registered successfully, please confirm your email before logging in...`, {
                     autoClose: 20000,

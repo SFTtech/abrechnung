@@ -1,7 +1,5 @@
-import React, { useState } from "react";
-import { toast } from "react-toastify";
-import { api } from "../../core/api";
-import { useNavigate } from "react-router-dom";
+import { leaveGroup, selectCurrentUserPermissions, selectGroupById, updateGroup } from "@abrechnung/redux";
+import { Cancel, Edit, Save } from "@mui/icons-material";
 import {
     Alert,
     Button,
@@ -15,20 +13,22 @@ import {
     Grid,
     LinearProgress,
 } from "@mui/material";
-import { MobilePaper } from "../../components/style/mobile";
-import { useTitle } from "../../core/utils";
 import { Form, Formik } from "formik";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import * as yup from "yup";
 import { DisabledFormControlLabel, DisabledTextField } from "../../components/style/DisabledTextField";
-import { useAppSelector, selectGroupSlice, useAppDispatch } from "../../store";
-import { selectGroupById, selectCurrentUserPermissions, updateGroup, leaveGroup } from "@abrechnung/redux";
-import { Cancel, Edit, Save } from "@mui/icons-material";
+import { MobilePaper } from "../../components/style/mobile";
+import { api } from "../../core/api";
+import { useTitle } from "../../core/utils";
+import { selectGroupSlice, useAppDispatch, useAppSelector } from "../../store";
 
 const validationSchema = yup.object({
     name: yup.string().required("group name is required"),
     description: yup.string(),
     terms: yup.string(),
-    currencySymbol: yup.string(),
+    currency_symbol: yup.string(),
     addUserAccountOnJoin: yup.boolean(),
 });
 
@@ -63,9 +63,9 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                     id: group.id,
                     name: values.name,
                     description: values.description,
-                    currencySymbol: values.currencySymbol,
+                    currency_symbol: values.currency_symbol,
                     terms: values.terms,
-                    addUserAccountOnJoin: values.addUserAccountOnJoin,
+                    add_user_account_on_join: values.addUserAccountOnJoin,
                 },
                 api,
             })
@@ -105,8 +105,8 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                     name: group.name,
                     description: group.description,
                     terms: group.terms,
-                    currencySymbol: group.currencySymbol,
-                    addUserAccountOnJoin: group.addUserAccountOnJoin,
+                    currency_symbol: group.currency_symbol,
+                    addUserAccountOnJoin: group.add_user_account_on_join,
                 }}
                 onSubmit={handleSubmit}
                 validationSchema={validationSchema}
@@ -146,12 +146,12 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                             required
                             fullWidth
                             type="text"
-                            name="currencySymbol"
+                            name="currency_symbol"
                             label="Currency"
                             disabled={!permissions.canWrite || !isEditing}
                             onBlur={handleBlur}
                             onChange={handleChange}
-                            value={values.currencySymbol}
+                            value={values.currency_symbol}
                         />
                         <DisabledTextField
                             variant="standard"

@@ -1,12 +1,12 @@
+import { selectIsAuthenticated } from "@abrechnung/redux";
+import { toFormikValidationSchema } from "@abrechnung/utils";
+import { Alert, Box, Button, Container, CssBaseline, LinearProgress, TextField, Typography } from "@mui/material";
+import { Form, Formik, FormikHelpers, FormikProps } from "formik";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Form, Formik, FormikHelpers, FormikProps } from "formik";
-import { api } from "../../core/api";
-import { Alert, Box, Button, Container, CssBaseline, LinearProgress, TextField, Typography } from "@mui/material";
-import { selectIsAuthenticated } from "@abrechnung/redux";
-import { useAppSelector, selectAuthSlice } from "../../store";
 import { z } from "zod";
-import { toFormikValidationSchema } from "@abrechnung/utils";
+import { api } from "../../core/api";
+import { selectAuthSlice, useAppSelector } from "../../store";
 
 const validationSchema = z.object({
     email: z.string({ required_error: "email is required" }).email("please enter a valid email address"),
@@ -26,7 +26,8 @@ export const RequestPasswordRecovery: React.FC = () => {
     }, [isLoggedIn, navigate]);
 
     const handleSubmit = (values: FormSchema, { setSubmitting, resetForm }: FormikHelpers<FormSchema>) => {
-        api.requestPasswordRecovery(values.email)
+        api.client.auth
+            .recoverPassword({ requestBody: { email: values.email } })
             .then(() => {
                 setStatus("success");
                 setError(null);

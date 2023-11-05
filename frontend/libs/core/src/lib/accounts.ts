@@ -1,59 +1,56 @@
 import {
     Account,
     AccountBalanceMap,
-    Transaction,
     ClearingAccount,
-    TransactionPosition,
     ClearingShares,
+    Transaction,
     TransactionBalanceEffect,
 } from "@abrechnung/types";
 import { fromISOString } from "@abrechnung/utils";
 import { computeTransactionBalanceEffect } from "./transactions";
 
-export type AccountSortMode = "lastChanged" | "name" | "description" | "dateInfo";
+export type AccountSortMode = "last_changed" | "name" | "description" | "dateInfo";
 
-export const getAccountSortFunc = (sortMode: AccountSortMode, wipAtTop = false) => {
+export const getAccountSortFunc = (
+    sortMode: AccountSortMode,
+    wipAtTop = false
+): ((a1: Account, a2: Account) => number) => {
     const sortingLookup = {
         personal: 50,
         clearing: 100,
     };
     const baseComparer = (a1: Account, a2: Account) => {
         if (wipAtTop) {
-            return sortingLookup[a1.type] - sortingLookup[a2.type] || +a2.isWip - +a1.isWip;
+            return sortingLookup[a1.type] - sortingLookup[a2.type] || +a2.is_wip - +a1.is_wip;
         }
         return sortingLookup[a1.type] - sortingLookup[a2.type];
     };
     const lastChangeComparer = (a1: Account, a2: Account) => {
-        return fromISOString(a2.lastChanged).getTime() - fromISOString(a1.lastChanged).getTime();
+        return fromISOString(a2.last_changed).getTime() - fromISOString(a1.last_changed).getTime();
     };
     switch (sortMode) {
-        case "lastChanged":
-            return (a1: Account, a2: Account) => baseComparer(a1, a2) || lastChangeComparer(a1, a2);
+        case "last_changed":
+            return (a1, a2) => baseComparer(a1, a2) || lastChangeComparer(a1, a2);
         case "name":
-            return (a1: Account, a2: Account) =>
-                baseComparer(a1, a2) || a1.name.toLowerCase().localeCompare(a2.name.toLowerCase());
+            return (a1, a2) => baseComparer(a1, a2) || a1.name.toLowerCase().localeCompare(a2.name.toLowerCase());
         case "description":
-            return (a1: Account, a2: Account) =>
+            return (a1, a2) =>
                 baseComparer(a1, a2) || a1.description.toLowerCase().localeCompare(a2.description.toLowerCase());
         case "dateInfo":
-            return (a1: Account, a2: Account) =>
+            return (a1, a2) =>
                 baseComparer(a1, a2) ||
                 (a1.type === "clearing" &&
                 a2.type === "clearing" &&
-                a1.dateInfo !== "" &&
-                a1.dateInfo != null &&
-                a2.dateInfo !== "" &&
-                a2.dateInfo != null
-                    ? fromISOString(a1.dateInfo).getTime() - fromISOString(a2.dateInfo).getTime()
+                a1.date_info !== "" &&
+                a1.date_info != null &&
+                a2.date_info !== "" &&
+                a2.date_info != null
+                    ? fromISOString(a1.date_info).getTime() - fromISOString(a2.date_info).getTime()
                     : lastChangeComparer(a1, a2));
     }
 };
 
-export const computeAccountBalances = (
-    accounts: Account[],
-    transactions: Transaction[],
-    transactionToPositions: { [k: number]: TransactionPosition[] }
-): AccountBalanceMap => {
+export const computeAccountBalances = (accounts: Account[], transactions: Transaction[]): AccountBalanceMap => {
     const s = performance.now();
     const accountBalances: AccountBalanceMap = accounts.reduce<AccountBalanceMap>((balances, account) => {
         balances[account.id] = {
@@ -66,9 +63,7 @@ export const computeAccountBalances = (
         return balances;
     }, {});
 
-    const balanceEffects = transactions.map((t) =>
-        computeTransactionBalanceEffect(t, transactionToPositions[t.id] ?? [])
-    );
+    const balanceEffects = transactions.map((t) => computeTransactionBalanceEffect(t));
 
     for (const balanceEffect of balanceEffects) {
         for (const accountIdStr in balanceEffect) {
@@ -85,8 +80,8 @@ export const computeAccountBalances = (
 
     // linearize the account dependency graph to properly redistribute clearing accounts
     const shareMap: Map<number, ClearingShares> = accounts.reduce((map, acc) => {
-        if (acc.type === "clearing" && Object.keys(acc.clearingShares).length) {
-            map.set(acc.id, acc.clearingShares);
+        if (acc.type === "clearing" && acc.clearing_shares != null && Object.keys(acc.clearing_shares).length) {
+            map.set(acc.id, acc.clearing_shares);
         }
         return map;
     }, new Map<number, ClearingShares>());
@@ -211,7 +206,7 @@ export const computeAccountBalanceHistory = (
         const a = balanceEffect[accountId];
         if (a) {
             balanceChanges.push({
-                date: transaction.billedAt,
+                date: transaction.billed_at,
                 change: a.total,
                 changeOrigin: {
                     type: "transaction",
@@ -224,7 +219,7 @@ export const computeAccountBalanceHistory = (
     for (const account of clearingAccounts) {
         if (balances[account.id]?.clearingResolution[accountId] !== undefined) {
             balanceChanges.push({
-                date: account.dateInfo,
+                date: account.date_info,
                 change: balances[account.id].clearingResolution[accountId],
                 changeOrigin: {
                     type: "clearing",

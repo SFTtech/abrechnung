@@ -1,8 +1,8 @@
-import React from "react";
+import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
+import { selectAccountBalances, selectGroupById, selectPersonalAccounts } from "@abrechnung/redux";
 import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import React from "react";
 import { renderCurrency } from "../style/datagrid/renderCurrency";
-import { selectGroupAccountsFiltered, selectGroupById, selectAccountBalances } from "@abrechnung/redux";
-import { useAppSelector, selectAccountSlice, selectGroupSlice } from "../../store";
 
 interface Props {
     groupId: number;
@@ -10,7 +10,7 @@ interface Props {
 
 export const BalanceTable: React.FC<Props> = ({ groupId }) => {
     const personalAccounts = useAppSelector((state) =>
-        selectGroupAccountsFiltered({ state: selectAccountSlice(state), groupId, type: "personal" })
+        selectPersonalAccounts({ state: selectAccountSlice(state), groupId })
     );
     const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
     const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
@@ -31,17 +31,17 @@ export const BalanceTable: React.FC<Props> = ({ groupId }) => {
         {
             field: "totalConsumed",
             headerName: "Received / Consumed",
-            renderCell: renderCurrency(group.currencySymbol, "red"),
+            renderCell: renderCurrency(group.currency_symbol, "red"),
         },
         {
             field: "totalPaid",
             headerName: "Paid",
-            renderCell: renderCurrency(group.currencySymbol, "green"),
+            renderCell: renderCurrency(group.currency_symbol, "green"),
         },
         {
             field: "balance",
             headerName: "Balance",
-            renderCell: renderCurrency(group.currencySymbol),
+            renderCell: renderCurrency(group.currency_symbol),
         },
     ];
 
@@ -51,10 +51,10 @@ export const BalanceTable: React.FC<Props> = ({ groupId }) => {
                 sx={{ border: 0 }}
                 rows={tableData}
                 columns={columns as any} // TODO: fixme and figure out proper typing
-                disableSelectionOnClick
+                disableRowSelectionOnClick
                 autoHeight
-                components={{
-                    Toolbar: GridToolbar,
+                slots={{
+                    toolbar: GridToolbar,
                 }}
             />
         </div>

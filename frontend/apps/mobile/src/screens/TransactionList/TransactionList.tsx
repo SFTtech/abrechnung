@@ -1,4 +1,10 @@
 /* eslint-disable react/prop-types */
+import LoadingIndicator from "@/components/LoadingIndicator";
+import Searchbar from "@/components/style/Searchbar";
+import { purchaseIcon, transferIcon } from "@/constants/Icons";
+import { useApi } from "@/core/ApiProvider";
+import { GroupTabScreenProps } from "@/navigation/types";
+import { selectActiveGroupId, selectTransactionSlice, selectUiSlice, useAppDispatch, useAppSelector } from "@/store";
 import { TransactionSortMode } from "@abrechnung/core";
 import {
     createTransaction,
@@ -13,18 +19,6 @@ import * as React from "react";
 import { useLayoutEffect, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { Appbar, FAB, Menu, Portal, RadioButton, Text, useTheme } from "react-native-paper";
-import LoadingIndicator from "../../components/LoadingIndicator";
-import Searchbar from "../../components/style/Searchbar";
-import { purchaseIcon, transferIcon } from "../../constants/Icons";
-import { api } from "../../core/api";
-import { GroupTabScreenProps } from "../../navigation/types";
-import {
-    selectActiveGroupId,
-    selectTransactionSlice,
-    selectUiSlice,
-    useAppDispatch,
-    useAppSelector,
-} from "../../store";
 import TransactionListItem from "./TransactionListItem";
 
 type Props = GroupTabScreenProps<"TransactionList">;
@@ -32,9 +26,11 @@ type Props = GroupTabScreenProps<"TransactionList">;
 export const TransactionList: React.FC<Props> = ({ navigation }) => {
     const theme = useTheme();
     const dispatch = useAppDispatch();
+    const { api } = useApi();
+
     const groupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) })) as number; // TODO: proper typing
     const [search, setSearch] = useState<string>("");
-    const [sortMode, setSortMode] = useState<TransactionSortMode>("lastChanged");
+    const [sortMode, setSortMode] = useState<TransactionSortMode>("last_changed");
     const transactions = useAppSelector((state) =>
         selectSortedTransactions({ state: state, groupId, searchTerm: search, sortMode })
     );
@@ -107,8 +103,8 @@ export const TransactionList: React.FC<Props> = ({ navigation }) => {
                                 value={sortMode}
                                 onValueChange={(value) => setSortMode(value as TransactionSortMode)}
                             >
-                                <RadioButton.Item position="trailing" label="Last changed" value="lastChanged" />
-                                <RadioButton.Item position="trailing" label="Billed at" value="billedAt" />
+                                <RadioButton.Item position="trailing" label="Last changed" value="last_changed" />
+                                <RadioButton.Item position="trailing" label="Billed at" value="billed_at" />
                                 <RadioButton.Item position="trailing" label="Name" value="name" />
                             </RadioButton.Group>
                         </Menu>

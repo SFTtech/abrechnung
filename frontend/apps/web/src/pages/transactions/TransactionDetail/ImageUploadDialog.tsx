@@ -1,4 +1,6 @@
-import { uploadFile } from "@abrechnung/redux";
+import { NewFile } from "@abrechnung/api";
+import { wipFileAdded } from "@abrechnung/redux";
+import { toBase64 } from "@abrechnung/utils";
 import {
     Alert,
     Box,
@@ -11,8 +13,8 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
+import imageCompression from "browser-image-compression";
 import React, { useState } from "react";
-import { api } from "../../../core/api";
 import { useAppDispatch } from "../../../store";
 import placeholderImg from "./PlaceholderImage.svg";
 
@@ -23,71 +25,67 @@ interface Props {
     onClose: () => void;
 }
 
+const MAX_FILESIZE_MB = 1;
+
 export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, show, onClose }) => {
     const dispatch = useAppDispatch();
-    const [fileState, setFileState] = useState({
-        currentFile: undefined,
-        previewImage: undefined,
-        progress: 0,
+    const [selectedFile, setSelectedFile] = useState<NewFile | undefined>(undefined);
+    const [compressionProgress, setCompressionProgress] = useState<number | undefined>(undefined);
+    const [error, setError] = useState<string | undefined>(undefined);
 
-        message: "",
-        isError: false,
-    });
-    const [filename, setFilename] = useState("");
+    const compressImage = async (file: File): Promise<File | undefined> => {
+        setCompressionProgress(0);
+        const options = {
+            maxSizeMB: MAX_FILESIZE_MB,
+            useWebWorker: true,
+            onProgress: setCompressionProgress,
+        };
 
-    const selectFile = (event) => {
-        const file: File = event.target.files[0];
-        const strippedFilename = event.target.files[0].name.split(".")[0];
-        const renamedFile = new File([file], strippedFilename, { type: file.type });
-        setFileState({
-            ...fileState,
-            currentFile: renamedFile,
-            previewImage: URL.createObjectURL(renamedFile),
-            progress: 0,
-            message: "",
-        });
-        setFilename(strippedFilename);
-    };
-
-    const onFilenameChange = (event) => {
-        if (event.target.value != null) {
-            setFilename(event.target.value);
-        } else {
-            setFilename("");
+        try {
+            const compressedImage = await imageCompression(file, options);
+            setCompressionProgress(undefined);
+            return compressedImage;
+        } catch (error) {
+            setCompressionProgress(undefined);
+            setError(`Failed to compress image! ${error.message}`);
+            return undefined;
         }
     };
 
-    const upload = () => {
-        setFileState({
-            ...fileState,
-            progress: 0,
-        });
-
-        const properlyNamedFile = new File([fileState.currentFile], filename, { type: fileState.currentFile.type });
-
-        dispatch(uploadFile({ groupId, transactionId, file: properlyNamedFile, api }))
-            .unwrap()
-            .then((t) => {
-                setFileState({
-                    currentFile: undefined,
-                    previewImage: undefined,
-                    progress: 0,
-
-                    message: "",
-                    isError: false,
-                });
-                onClose();
-            })
-            .catch((err) => {
-                console.log("error on uploading file", err);
-                setFileState({
-                    ...fileState,
-                    progress: 0,
-                    message: `Could not upload the image! ${err.message}`,
-                    currentFile: undefined,
-                    isError: true,
-                });
+    const selectFile = async (event) => {
+        const file: File = event.target.files[0];
+        const strippedFilename = event.target.files[0].name.split(".")[0];
+        const renamedFile = new File([file], strippedFilename, { type: file.type });
+        const compressedFile = await compressImage(renamedFile);
+        try {
+            const imageAsBase64 = await toBase64(compressedFile);
+            setSelectedFile({
+                content: imageAsBase64,
+                filename: compressedFile.name,
+                mime_type: compressedFile.type,
             });
+        } catch (e) {
+            setError(`Error during image upload: ${e.message}`);
+            setSelectedFile(undefined);
+        }
+    };
+
+    const onFilenameChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+        if (event.target.value == null) {
+            return;
+        }
+        setSelectedFile((prev) => ({ ...prev, filename: event.target.value }));
+    };
+
+    const upload = () => {
+        if (!selectedFile) {
+            return;
+        }
+        dispatch(wipFileAdded({ groupId, transactionId, file: selectedFile }));
+        onClose();
+        setError(undefined);
+        setSelectedFile(undefined);
+        setCompressionProgress(undefined);
     };
 
     return (
@@ -95,39 +93,41 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
             <DialogTitle>Upload Image</DialogTitle>
             <DialogContent>
                 <Box sx={{ padding: 1 }}>
-                    {fileState.previewImage ? (
-                        <img width="100%" src={fileState.previewImage} alt="" />
+                    {selectedFile ? (
+                        <img width="100%" src={selectedFile.content} alt="" />
                     ) : (
                         <img width="100%" src={placeholderImg} alt="placeholder" />
                     )}
                 </Box>
-
-                {fileState.currentFile && (
+                {compressionProgress !== undefined && (
                     <>
-                        <TextField
-                            name="filename"
-                            label="File Name"
-                            fullWidth
-                            variant="standard"
-                            value={filename}
-                            onChange={onFilenameChange}
-                        />
-
                         <Box display="flex" alignItems="center">
                             <Box width="100%" mr={1}>
-                                <LinearProgress variant="determinate" value={fileState.progress} />
+                                <LinearProgress variant="determinate" value={compressionProgress} />
                             </Box>
                             <Box minWidth={35}>
                                 <Typography
                                     variant="body2"
                                     color="textSecondary"
-                                >{`${fileState.progress}%`}</Typography>
+                                >{`${compressionProgress}%`}</Typography>
                             </Box>
                         </Box>
+                        <Alert severity="info">compressing ...</Alert>
                     </>
                 )}
 
-                {fileState.isError && fileState.message && <Alert severity="error">{fileState.message}</Alert>}
+                {selectedFile && (
+                    <TextField
+                        name="filename"
+                        label="File Name"
+                        fullWidth
+                        variant="standard"
+                        value={selectedFile.filename}
+                        onChange={onFilenameChange}
+                    />
+                )}
+
+                {error && <Alert severity="error">{error}</Alert>}
             </DialogContent>
 
             <DialogActions>
@@ -143,8 +143,8 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
                     <Button component="span">Choose Image</Button>
                 </label>
 
-                <Button color="primary" component="span" disabled={!fileState.currentFile} onClick={upload}>
-                    Upload
+                <Button color="primary" component="span" disabled={selectFile === undefined} onClick={upload}>
+                    Add
                 </Button>
             </DialogActions>
         </Dialog>

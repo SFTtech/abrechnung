@@ -43,11 +43,11 @@
         "react-dom": "*"
     },
     "scripts": {
-        "eas-build-pre-install": "cd ../../ && cp package-lock.json ./apps/mobile/",
-        "postinstall": "rm -r node_modules && cd ../../ && npm install && npx nx sync-deps mobile && npx nx ensure-symlink mobile",
+        "eas-build-pre-install": "cd ../../ && node tools/scripts/eas-build-pre-install.mjs . apps/mobile && cp package-lock.json apps/mobile",
         "start": "expo start --dev-client",
         "android": "expo run:android",
-        "ios": "expo run:ios"
+        "ios": "expo run:ios",
+        "eas-build-post-install": "cd ../../ && node tools/scripts/eas-build-post-install.mjs . apps/mobile"
     },
     "devDependencies": {
         "@babel/core": "^7.12.9"

@@ -5,26 +5,27 @@
     "projectType": "library",
     "targets": {
         "build": {
-            "executor": "@nrwl/js:tsc",
+            "executor": "@nx/js:tsc",
             "outputs": ["{options.outputPath}"],
             "options": {
                 "outputPath": "dist/libs/core",
                 "tsConfig": "libs/core/tsconfig.lib.json",
                 "packageJson": "libs/core/package.json",
                 "main": "libs/core/src/index.ts",
-                "assets": ["libs/core/*.md"]
+                "assets": ["libs/core/*.md"],
+                "updateBuildableProjectDepsInPackageJson": true
             }
         },
         "lint": {
-            "executor": "@nrwl/linter:eslint",
+            "executor": "@nx/eslint:lint",
             "outputs": ["{options.outputFile}"],
             "options": {
                 "lintFilePatterns": ["libs/core/**/*.ts"]
             }
         },
         "test": {
-            "executor": "@nrwl/jest:jest",
-            "outputs": ["coverage/libs/core"],
+            "executor": "@nx/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/libs/core"],
             "options": {
                 "jestConfig": "libs/core/jest.config.ts",
                 "passWithNoTests": true

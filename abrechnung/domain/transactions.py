@@ -1,7 +1,9 @@
-from dataclasses import dataclass, field
-from datetime import datetime, date
+from datetime import date, datetime
 from enum import Enum
-from typing import Optional
+
+from pydantic import BaseModel, field_validator, model_validator
+
+ALLOWED_FILETYPES = ["image/jpeg", "image/png", "image/bmp", "image/webp"]
 
 
 class TransactionType(Enum):
@@ -13,23 +15,88 @@ class TransactionType(Enum):
 TransactionShares = dict[int, float]
 
 
-@dataclass
-class TransactionPosition:
-    id: int
-
+class NewTransactionPosition(BaseModel):
     name: str
     price: float
     communist_shares: float
     # usages map account IDs to portions of the item share pool
     usages: TransactionShares
 
-    deleted: bool = False
+
+class TransactionPosition(NewTransactionPosition):
+    id: int
+    deleted: bool
 
 
-@dataclass
-class TransactionDetails:
+class FileAttachment(BaseModel):
+    id: int
+    filename: str
+    blob_id: int | None
+    mime_type: str | None
+    host_url: str | None = None
+    deleted: bool
+
+
+class NewFile(BaseModel):
+    filename: str
+    mime_type: str
+    # base64 encoded file content
+    content: str
+
+    @field_validator("mime_type")
+    @classmethod
+    def check_mime_type_is_allowed(cls, v: str) -> str:
+        if v not in ALLOWED_FILETYPES:
+            raise ValueError(f"File type {v} is not an accepted file type")
+        return v
+
+
+class UpdateFile(BaseModel):
+    id: int
+    filename: str
+    deleted: bool
+
+
+class NewTransaction(BaseModel):
+    type: TransactionType
     name: str
-    description: Optional[str]
+    description: str
+    value: float
+    currency_symbol: str
+    currency_conversion_rate: float
+    billed_at: date
+    tags: list[str] = []
+
+    creditor_shares: TransactionShares
+    debitor_shares: TransactionShares
+
+    new_files: list[NewFile] = []
+    new_positions: list[NewTransactionPosition] = []
+
+    @model_validator(mode="after")
+    def check_purchase_has_new_positions(self):
+        if self.type != TransactionType.purchase and len(self.new_positions) > 0:
+            raise ValueError("only purchases can have positions")
+        return self
+
+
+class UpdateTransaction(NewTransaction):
+    changed_files: list[UpdateFile] = []
+    changed_positions: list[TransactionPosition] = []
+
+    @model_validator(mode="after")
+    def check_purchase_has_changed_positions(self):
+        if self.type != TransactionType.purchase and len(self.changed_positions) > 0:
+            raise ValueError("only purchases can have positions")
+        return self
+
+
+class Transaction(BaseModel):
+    id: int
+    group_id: int
+    type: TransactionType
+    name: str
+    description: str
     value: float
     currency_symbol: str
     currency_conversion_rate: float
@@ -40,30 +107,7 @@ class TransactionDetails:
     # creditor and debitor shares map account IDs to portions of the communist share pool
     creditor_shares: TransactionShares
     debitor_shares: TransactionShares
-
-
-@dataclass
-class FileAttachment:
-    id: int
-    filename: str
-    blob_id: Optional[int]
-    mime_type: Optional[str]
-    host_url: str
-    deleted: bool
-
-
-@dataclass
-class Transaction:
-    id: int
-    group_id: int
-    type: str
-    is_wip: bool
     last_changed: datetime
-    committed_details: Optional[TransactionDetails]
-    pending_details: Optional[TransactionDetails]
 
-    committed_positions: Optional[list[TransactionPosition]] = field(default=None)
-    pending_positions: Optional[list[TransactionPosition]] = field(default=None)
-
-    committed_files: Optional[list[FileAttachment]] = field(default=None)
-    pending_files: Optional[list[FileAttachment]] = field(default=None)
+    positions: list[TransactionPosition]
+    files: list[FileAttachment]

@@ -1,57 +1,58 @@
-import { Purchase, Account, AccountBalanceMap } from "@abrechnung/types";
+import { Account, AccountBalanceMap, ClearingAccount, PersonalAccount, Transaction } from "@abrechnung/types";
 import { computeAccountBalances, computeGroupSettlement } from "./accounts";
 
-const purchaseTemplate = {
-    groupID: 0,
+const purchaseTemplate: Omit<Transaction, "id" | "debitor_shares" | "creditor_shares"> = {
+    group_id: 0,
     type: "purchase" as const,
-    billedAt: "2022-10-10",
-    currencyConversionRate: 1.0,
-    currencySymbol: "€",
+    billed_at: "2022-10-10",
+    currency_conversion_rate: 1.0,
+    currency_symbol: "€",
     name: "foobar",
     description: "",
+    value: 0,
     deleted: false,
-    attachments: [],
+    file_ids: [],
+    files: {},
+    position_ids: [],
+    positions: {},
     tags: [],
-    positions: [],
-    hasLocalChanges: false,
-    lastChanged: new Date().toISOString(),
-    isWip: false,
+    last_changed: new Date().toISOString(),
+    is_wip: false,
 };
 
 const accountTemplate = {
     name: "foobar",
-    groupID: 0,
+    group_id: 0,
     description: "",
     deleted: false,
-    hasLocalChanges: false,
-    lastChanged: new Date().toISOString(),
-    isWip: false,
+    last_changed: new Date().toISOString(),
+    is_wip: false,
 };
 
-const clearingAccountTemplate = {
+const clearingAccountTemplate: Omit<ClearingAccount, "id" | "clearing_shares"> = {
     ...accountTemplate,
     type: "clearing" as const,
-    dateInfo: "2022-01-01",
+    date_info: "2022-01-01",
     tags: [],
 };
 
-const personalAccountTemplate = {
+const personalAccountTemplate: Omit<PersonalAccount, "id"> = {
     ...accountTemplate,
     type: "personal" as const,
-    owningUserID: null,
+    owning_user_id: null,
 };
 
 describe("computeAccountBalances", () => {
     it("should compute the correct balance for one transaction", () => {
-        const t: Purchase = {
+        const t: Transaction = {
             ...purchaseTemplate,
             id: 0,
             value: 100,
-            creditorShares: { 1: 1 },
-            debitorShares: { 1: 1, 2: 2, 3: 1 },
+            creditor_shares: { 1: 1 },
+            debitor_shares: { 1: 1, 2: 2, 3: 1 },
         };
 
-        const accounts: Account[] = [
+        const accounts: PersonalAccount[] = [
             {
                 ...personalAccountTemplate,
                 id: 1,
@@ -90,17 +91,17 @@ describe("computeAccountBalances", () => {
             },
         };
 
-        const balances = computeAccountBalances(accounts, [t], {});
+        const balances = computeAccountBalances(accounts, [t]);
         expect(balances).toStrictEqual(expectedBalances);
     });
 
     it("should compute the correct balance for one transactions and a clearing account", () => {
-        const t: Purchase = {
+        const t: Transaction = {
             ...purchaseTemplate,
             id: 0,
             value: 100,
-            creditorShares: { 1: 1 },
-            debitorShares: { 1: 1, 2: 1, 4: 2 },
+            creditor_shares: { 1: 1 },
+            debitor_shares: { 1: 1, 2: 1, 4: 2 },
         };
 
         const accounts: Account[] = [
@@ -119,7 +120,7 @@ describe("computeAccountBalances", () => {
             {
                 ...clearingAccountTemplate,
                 id: 4,
-                clearingShares: { 3: 1 },
+                clearing_shares: { 3: 1 },
             },
         ];
 
@@ -156,32 +157,32 @@ describe("computeAccountBalances", () => {
             },
         };
 
-        const balances = computeAccountBalances(accounts, [t], {});
+        const balances = computeAccountBalances(accounts, [t]);
         expect(balances).toStrictEqual(expectedBalances);
     });
 
     it("should compute the correct balance with multiple transactions and interdependent clearing accounts", () => {
-        const transactions: Purchase[] = [
+        const transactions: Transaction[] = [
             {
                 ...purchaseTemplate,
                 id: 0,
                 value: 100,
-                creditorShares: { 1: 1 },
-                debitorShares: { 1: 1, 2: 1, 4: 2 },
+                creditor_shares: { 1: 1 },
+                debitor_shares: { 1: 1, 2: 1, 4: 2 },
             },
             {
                 ...purchaseTemplate,
                 id: 1,
                 value: 100,
-                creditorShares: { 3: 1 },
-                debitorShares: { 6: 1 },
+                creditor_shares: { 3: 1 },
+                debitor_shares: { 6: 1 },
             },
             {
                 ...purchaseTemplate,
                 id: 2,
                 value: 100,
-                creditorShares: { 2: 1 },
-                debitorShares: { 5: 1, 7: 1 },
+                creditor_shares: { 2: 1 },
+                debitor_shares: { 5: 1, 7: 1 },
             },
         ];
 
@@ -189,52 +190,38 @@ describe("computeAccountBalances", () => {
             {
                 ...personalAccountTemplate,
                 id: 1,
-                type: "personal",
-                owningUserID: null,
             },
             {
                 ...personalAccountTemplate,
                 id: 2,
-                type: "personal",
-                owningUserID: null,
             },
             {
                 ...personalAccountTemplate,
                 id: 3,
-                type: "personal",
-                owningUserID: null,
             },
             {
                 ...clearingAccountTemplate,
                 id: 4,
-                type: "clearing",
-                dateInfo: "2022-10-10",
-                tags: [],
-                clearingShares: { 3: 1 },
+                date_info: "2022-10-10",
+                clearing_shares: { 3: 1 },
             },
             {
                 ...clearingAccountTemplate,
                 id: 5,
-                type: "clearing",
-                dateInfo: "2022-10-10",
-                tags: [],
-                clearingShares: { 4: 2, 1: 1, 2: 1 },
+                date_info: "2022-10-10",
+                clearing_shares: { 4: 2, 1: 1, 2: 1 },
             },
             {
                 ...clearingAccountTemplate,
                 id: 6,
-                type: "clearing",
-                dateInfo: "2022-10-10",
-                tags: [],
-                clearingShares: { 5: 1 },
+                date_info: "2022-10-10",
+                clearing_shares: { 5: 1 },
             },
             {
                 ...clearingAccountTemplate,
                 id: 7,
-                type: "clearing",
-                dateInfo: "2022-10-10",
-                tags: [],
-                clearingShares: {},
+                date_info: "2022-10-10",
+                clearing_shares: {},
             },
         ];
 
@@ -290,32 +277,28 @@ describe("computeAccountBalances", () => {
             },
         };
 
-        const balances = computeAccountBalances(accounts, transactions, {});
+        const balances = computeAccountBalances(accounts, transactions);
         expect(balances).toStrictEqual(expectedBalances);
     });
 
     it("should also work correctly for randomly sorted interdependent clearing accounts", () => {
-        const transactions: Purchase[] = [
+        const transactions: Transaction[] = [
             {
                 ...purchaseTemplate,
                 id: 0,
                 value: 100,
-                creditorShares: { 1: 1 },
-                debitorShares: { 3: 1 },
+                creditor_shares: { 1: 1 },
+                debitor_shares: { 3: 1 },
             },
         ];
         const accounts: Account[] = [
             {
                 ...personalAccountTemplate,
                 id: 1,
-                type: "personal",
-                owningUserID: null,
             },
             {
                 ...personalAccountTemplate,
                 id: 2,
-                type: "personal",
-                owningUserID: null,
             },
         ];
         const nClearingAccounts = 10;
@@ -323,21 +306,15 @@ describe("computeAccountBalances", () => {
             accounts.push({
                 ...clearingAccountTemplate,
                 id: i + 3,
-                type: "clearing",
-                tags: [],
-                dateInfo: "2022-01-01",
-                clearingShares: { [i + 4]: 1 },
+                clearing_shares: { [i + 4]: 1 },
             });
         }
         accounts.push({
             ...clearingAccountTemplate,
             id: nClearingAccounts + 1,
-            type: "clearing",
-            tags: [],
-            dateInfo: "2022-01-01",
-            clearingShares: { 2: 1 },
+            clearing_shares: { 2: 1 },
         });
-        const balances = computeAccountBalances(accounts, transactions, {});
+        const balances = computeAccountBalances(accounts, transactions);
         expect(balances).toHaveProperty("2");
         expect(balances[2]).toStrictEqual({
             balance: -100,

@@ -4,22 +4,20 @@ import email.utils
 import itertools
 import logging
 import smtplib
-from typing import Optional
+from typing import Optional, Type
 
 import asyncpg
 
-from . import subcommand
+from abrechnung.framework.database import Connection, create_db_pool
+
 from .config import Config
-from abrechnung.framework.database import create_db_pool
 
 
-class MailerCli(subcommand.SubCommand):
-    def __init__(self, config: Config, **args):  # pylint: disable=super-init-not-called
-        del args  # unused
-
+class Mailer:
+    def __init__(self, config: Config):
         self.config = config
         self.events: Optional[asyncio.Queue] = None
-        self.psql = None
+        self.psql: Connection | None = None
         self.mailer = None
         self.logger = logging.getLogger(__name__)
 
@@ -46,18 +44,19 @@ class MailerCli(subcommand.SubCommand):
 
         db_pool = await create_db_pool(self.config.database, n_connections=1)
         self.psql = await db_pool.acquire()
+        assert self.psql is not None
         self.psql.add_termination_listener(self.terminate_callback)
         self.psql.add_log_listener(self.log_callback)
         await self.psql.add_listener("mailer", self.notification_callback)
 
         # run all of the events manually once
-        for handler in self.event_handlers.values():
-            await handler()
+        for event_handler in self.event_handlers.values():
+            await event_handler()
 
         # handle events
         while True:
             event = await self.events.get()
-            if event is StopIteration:
+            if isinstance(event, StopIteration):
                 break
             handler = self.event_handlers.get(event)
             if handler is None:
@@ -73,7 +72,7 @@ class MailerCli(subcommand.SubCommand):
         mode = self.config.email.mode
 
         if mode == "local":
-            mail_sender_class = smtplib.LMTP
+            mail_sender_class: Type[smtplib.SMTP] | Type[smtplib.LMTP] | Type[smtplib.SMTP_SSL] = smtplib.LMTP
         elif mode == "smtp-ssl":
             mail_sender_class = smtplib.SMTP_SSL
         else:
@@ -93,9 +92,7 @@ class MailerCli(subcommand.SubCommand):
             )
         return mailer
 
-    def notification_callback(
-        self, connection: asyncpg.Connection, pid: int, channel: str, payload: str
-    ):
+    def notification_callback(self, connection: asyncpg.Connection, pid: int, channel: str, payload: str):
         """runs whenever we get a psql notification"""
         assert connection is self.psql
         del pid  # unused
@@ -113,16 +110,14 @@ class MailerCli(subcommand.SubCommand):
         for _ in range(self.events.qsize()):
             self.events.get_nowait()
             self.events.task_done()
-        self.events.put_nowait(StopIteration)
+        self.events.put_nowait(StopIteration())
 
     async def log_callback(self, connection: asyncpg.Connection, message: str):
         """runs when psql sends a log message"""
         assert connection is self.psql
         self.logger.info(f"psql log message: {message}")
 
-    def send_email(
-        self, *text_lines: str, subject: str, dest_address: str, dest_name: str
-    ):
+    def send_email(self, *text_lines: str, subject: str, dest_address: str, dest_name: str):
         self.logger.info(f"sending email to {dest_address}, subject: {subject}")
 
         # we do this to not have one long hanging open connection with the mail server
@@ -153,6 +148,7 @@ class MailerCli(subcommand.SubCommand):
         return "", "Thoughtfully yours", "", f"    {self.config.service.name}"
 
     async def on_pending_registration_notification(self):
+        assert self.psql is not None
         unsent_mails = await self.psql.fetch(
             "select usr.id, usr.email, usr.username, pr.token, pr.valid_until "
             "from pending_registration pr join usr on usr.id = pr.user_id "
@@ -179,17 +175,14 @@ class MailerCli(subcommand.SubCommand):
                 )
 
                 await self.psql.execute(
-                    "update pending_registration "
-                    "set mail_next_attempt = null "
-                    "where token = $1",
+                    "update pending_registration set mail_next_attempt = null where token = $1",
                     row["token"],
                 )
             except smtplib.SMTPException as e:
-                self.logger.warning(
-                    f"Failed to send email to user {row['username']} with email {row['email']}: {e}"
-                )
+                self.logger.warning(f"Failed to send email to user {row['username']} with email {row['email']}: {e}")
 
     async def on_user_password_recovery_notification(self):
+        assert self.psql is not None
         unsent_mails = await self.psql.fetch(
             "select usr.id, usr.username, usr.email, ppr.token, ppr.valid_until "
             "from pending_password_recovery ppr join usr on usr.id = ppr.user_id "
@@ -216,17 +209,14 @@ class MailerCli(subcommand.SubCommand):
                 )
 
                 await self.psql.execute(
-                    "update pending_password_recovery "
-                    "set mail_next_attempt = null "
-                    "where token = $1",
+                    "update pending_password_recovery set mail_next_attempt = null where token = $1",
                     row["token"],
                 )
             except smtplib.SMTPException as e:
-                self.logger.warning(
-                    f"Failed to send email to user {row['username']} with email {row['email']}: {e}"
-                )
+                self.logger.warning(f"Failed to send email to user {row['username']} with email {row['email']}: {e}")
 
     async def on_user_email_update_notification(self):
+        assert self.psql is not None
         unsent_mails = await self.psql.fetch(
             "select usr.id, usr.username, usr.email as old_email, pec.new_email as new_email, pec.token, "
             "   pec.valid_until "
@@ -272,12 +262,8 @@ class MailerCli(subcommand.SubCommand):
                 )
 
                 await self.psql.execute(
-                    "update pending_email_change "
-                    "set mail_next_attempt = null "
-                    "where token = $1",
+                    "update pending_email_change set mail_next_attempt = null where token = $1",
                     row["token"],
                 )
             except smtplib.SMTPException as e:
-                self.logger.warning(
-                    f"Failed to send email to user {row['username']} with email {row['email']}: {e}"
-                )
+                self.logger.warning(f"Failed to send email to user {row['username']} with email {row['email']}: {e}")

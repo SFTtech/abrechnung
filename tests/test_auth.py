@@ -1,11 +1,10 @@
 # pylint: disable=attribute-defined-outside-init,missing-kwoa
-from copy import deepcopy
 from datetime import datetime, timedelta
 
 from abrechnung.application.groups import GroupService
 from abrechnung.application.users import UserService
-from abrechnung.config import Config
-from .common import BaseTestCase, TEST_CONFIG
+
+from .common import TEST_CONFIG, BaseTestCase
 
 
 class TransactionLogicTest(BaseTestCase):
@@ -24,11 +23,10 @@ class TransactionLogicTest(BaseTestCase):
         )
 
     async def test_register_guest_user(self):
-        config = deepcopy(TEST_CONFIG)
-        config["registration"]["allow_guest_users"] = True
-        config["registration"]["valid_email_domains"] = ["stusta.de"]
-        test_config = Config.parse_obj(config)
-        user_service = UserService(self.db_pool, config=test_config)
+        config = TEST_CONFIG.model_copy(deep=True)
+        config.registration.allow_guest_users = True
+        config.registration.valid_email_domains = ["stusta.de"]
+        user_service = UserService(self.db_pool, config=config)
 
         invite_token_id = await self.group_service.create_invite(
             user=self.user,
@@ -39,9 +37,7 @@ class TransactionLogicTest(BaseTestCase):
             valid_until=datetime.now() + timedelta(hours=1),
         )
         self.assertIsNotNone(invite_token_id)
-        invites = await self.group_service.list_invites(
-            user=self.user, group_id=self.group_id
-        )
+        invites = await self.group_service.list_invites(user=self.user, group_id=self.group_id)
         self.assertEqual(1, len(invites))
         invite_token = invites[0].token
 

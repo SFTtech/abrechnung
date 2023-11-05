@@ -28,7 +28,17 @@
             "package": "lol.sft.abrechnung"
         },
         "web": {
-            "favicon": "./assets/logo.png"
-        }
+            "favicon": "./assets/logo.png",
+            "bundler": "metro"
+        },
+        "plugins": [
+            [
+                "@config-plugins/detox",
+                {
+                    "skipProguard": false,
+                    "subdomains": ["10.0.2.2", "localhost"]
+                }
+            ]
+        ]
     }
 }

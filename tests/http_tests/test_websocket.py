@@ -1,12 +1,11 @@
 import asyncio
 import unittest
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
-from abrechnung.config import Config
-from abrechnung.http.cli import ApiCli
-from tests.common import BaseTestCase, TEST_CONFIG
+from abrechnung.http.api import Api
+from tests.common import TEST_CONFIG, BaseTestCase
 
 
 class WebsocketAPITest(BaseTestCase):
@@ -18,8 +17,8 @@ class WebsocketAPITest(BaseTestCase):
         except (AttributeError, RuntimeError):  # AttributeError->py36
             self.loop = asyncio.get_event_loop_policy().get_event_loop()
 
-        self.test_config = Config.parse_obj(TEST_CONFIG)
-        self.http_service = ApiCli(config=self.test_config)
+        self.test_config = TEST_CONFIG
+        self.http_service = Api(config=self.test_config)
         await self.http_service._setup()
 
         self.client = TestClient(self.http_service.api)
@@ -35,19 +34,10 @@ class WebsocketAPITest(BaseTestCase):
         resp = ws.receive_json()
         self.assertEqual(expected_msg, resp | expected_msg)
 
-    @unittest.skip(
-        "currently no test utility exists for async websocket tests with fastapi"
-    )
+    @unittest.skip("currently no test utility exists for async websocket tests with fastapi")
     async def test_websocket_notifications(self):
-        user, password = await self._create_test_user(
-            username="user", email="email@email.com"
-        )
-        _, session_id, session_token = await self.user_service.login_user(
-            "user", password=password, session_name="session1"
-        )
-        token = await self.user_service.get_access_token_from_session_token(
-            session_token
-        )
+        user, password = await self._create_test_user(username="user", email="email@email.com")
+        _, session_id, token = await self.user_service.login_user("user", password=password, session_name="session1")
 
         with self.client.websocket_connect("/api/v1/ws") as ws:
             self.assertIsNotNone(ws)

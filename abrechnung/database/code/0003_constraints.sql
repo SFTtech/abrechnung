@@ -16,10 +16,10 @@ begin
         from
             debitor_share cs
         where
-                cs.transaction_id = check_debitor_shares.transaction_id
+            cs.transaction_id = check_debitor_shares.transaction_id
             and cs.revision_id = check_debitor_shares.revision_id
             and cs.account_id != check_debitor_shares.account_id
-                             )
+    )
     select
         not (t.type in ('transfer') and cs_counts.share_count >= 1)
     into locals.is_valid
@@ -33,9 +33,11 @@ begin
             from
                 relevant_entries cs
             group by cs.transaction_id, cs.revision_id
-             ) cs_counts on cs_counts.transaction_id = t.id;
+        ) cs_counts on cs_counts.transaction_id = t.id;
 
-    if not locals.is_valid then raise '"transfer" type transactions can only have one debitor share'; end if;
+    if not locals.is_valid then
+        raise '"transfer" type transactions can only have one debitor share';
+    end if;
 
     return locals.is_valid;
 end
@@ -63,10 +65,10 @@ begin
         from
             creditor_share cs
         where
-                cs.transaction_id = check_creditor_shares.transaction_id
+            cs.transaction_id = check_creditor_shares.transaction_id
             and cs.revision_id = check_creditor_shares.revision_id
             and cs.account_id != check_creditor_shares.account_id
-                             )
+    )
     select
         not (t.type in ('purchase', 'transfer') and cs_counts.share_count >= 1)
     into locals.is_valid
@@ -80,7 +82,7 @@ begin
             from
                 relevant_entries cs
             group by cs.transaction_id, cs.revision_id
-             ) cs_counts on cs_counts.transaction_id = t.id;
+        ) cs_counts on cs_counts.transaction_id = t.id;
 
     if not locals.is_valid then
         raise '"purchase" and "transfer" type transactions can only have one creditor share';
@@ -96,9 +98,7 @@ alter table creditor_share add constraint check_creditor_shares
 
 create or replace function check_committed_transactions(
     revision_id bigint,
-    transaction_id integer,
-    started timestamptz,
-    committed timestamptz
+    transaction_id integer
 ) returns boolean as
 $$
 <<locals>> declare
@@ -107,18 +107,6 @@ $$
     transaction_type    text;
     transaction_deleted boolean;
 begin
-    if committed is null then return true; end if;
-
-    perform
-    from
-        transaction_revision tr
-    where
-            tr.transaction_id = check_committed_transactions.transaction_id
-        and tr.id != check_committed_transactions.revision_id
-        and tr.committed between check_committed_transactions.started and check_committed_transactions.committed;
-
-    if found then raise 'another change was committed earlier, committing is not possible due to conflicts'; end if;
-
     select
         t.type,
         th.deleted
@@ -127,7 +115,7 @@ begin
         transaction_history th
         join transaction t on t.id = th.id
     where
-            th.revision_id = check_committed_transactions.revision_id;
+        th.revision_id = check_committed_transactions.revision_id;
 
     if locals.transaction_deleted then -- if the transaction is deleted we simply accept anything as we dont care
         return true;
@@ -139,7 +127,7 @@ begin
     from
         creditor_share cs
     where
-            cs.transaction_id = check_committed_transactions.transaction_id
+        cs.transaction_id = check_committed_transactions.transaction_id
         and cs.revision_id = check_committed_transactions.revision_id;
 
     select
@@ -148,7 +136,7 @@ begin
     from
         debitor_share ds
     where
-            ds.transaction_id = check_committed_transactions.transaction_id
+        ds.transaction_id = check_committed_transactions.transaction_id
         and ds.revision_id = check_committed_transactions.revision_id;
 
     -- check that the number of shares fits the transaction type
@@ -200,42 +188,14 @@ begin
 end
 $$ language plpgsql;
 
-create or replace function check_transaction_revisions_change_per_user(
-    transaction_id integer,
-    user_id integer,
-    committed timestamp with time zone
-) returns boolean
-as
-$$
-<<locals>> declare
-    n_uncommitted int;
-begin
-    if committed is not null then return true; end if;
-
-    select count(*) into locals.n_uncommitted
-    from
-        transaction_revision tr
-    where
-            tr.transaction_id = check_transaction_revisions_change_per_user.transaction_id
-        and tr.user_id = check_transaction_revisions_change_per_user.user_id
-        and tr.committed is null;
-
-    if locals.n_uncommitted > 1 then raise 'users can only have one pending change per transaction'; end if;
-
-    return true;
-end
-$$ language plpgsql;
-
 alter table transaction_revision add constraint check_committed_transactions
-    check (check_committed_transactions(id, transaction_id, started, committed));
-alter table transaction_revision add constraint check_transaction_revisions_change_per_user
-    check (check_transaction_revisions_change_per_user(transaction_id, user_id, committed));
+    check (check_committed_transactions(id, transaction_id));
 
 alter table purchase_item_history add constraint check_purchase_item_communist_shares_gte_zero check (communist_shares >= 0);
 alter table purchase_item_usage add constraint check_purchase_item_usage_shares_gt_zero check (share_amount > 0);
 
 create or replace function check_committed_accounts(
-    revision_id bigint, account_id integer, started timestamp with time zone, committed timestamp with time zone
+    revision_id bigint, account_id integer
 ) returns boolean
     language plpgsql as
 $$
@@ -246,18 +206,6 @@ $$
     account_type      text;
     date_info         date;
 begin
-    if committed is null then return true; end if;
-
-    perform
-    from
-        account_revision ar
-    where
-            ar.account_id = check_committed_accounts.account_id
-        and ar.id != check_committed_accounts.revision_id
-        and ar.committed between check_committed_accounts.started and check_committed_accounts.committed;
-
-    if found then raise 'another change was committed earlier, committing is not possible due to conflicts'; end if;
-
     select
         a.type,
         a.group_id
@@ -314,37 +262,9 @@ begin
 end
 $$;
 
-create or replace function check_account_revisions_change_per_user(
-    account_id integer,
-    user_id integer,
-    committed timestamp with time zone
-) returns boolean
-as
-$$
-<<locals>> declare
-    n_uncommitted int;
-begin
-    if committed is not null then return true; end if;
-
-    select count(*) into locals.n_uncommitted
-    from
-        account_revision ar
-    where
-            ar.account_id = check_account_revisions_change_per_user.account_id
-        and ar.user_id = check_account_revisions_change_per_user.user_id
-        and ar.committed is null;
-
-    if locals.n_uncommitted > 1 then raise 'users can only have one pending change per account'; end if;
-
-    return true;
-end
-$$ language plpgsql;
-
 create or replace function check_committed_accounts(
     revision_id bigint,
-    account_id integer,
-    started timestamptz,
-    committed timestamptz
+    account_id integer
 ) returns boolean as
 $$
 <<locals>> declare
@@ -353,18 +273,6 @@ $$
     account_type      text;
     account_deleted   boolean;
 begin
-    if committed is null then return true; end if;
-
-    perform
-    from
-        account_revision ar
-    where
-            ar.account_id = check_committed_accounts.account_id
-        and ar.id != check_committed_accounts.revision_id
-        and ar.committed between check_committed_accounts.started and check_committed_accounts.committed;
-
-    if found then raise 'another change was committed earlier, committing is not possible due to conflicts'; end if;
-
     select
         a.type,
         ah.deleted,
@@ -395,14 +303,11 @@ end
 $$ language plpgsql;
 
 alter table account_revision add constraint check_committed_accounts
-    check (check_committed_accounts(id, account_id, started, committed));
-alter table account_revision add constraint check_account_revisions_change_per_user
-    check (check_account_revisions_change_per_user(account_id, user_id, committed));
+    check (check_committed_accounts(id, account_id));
 
 create or replace function check_clearing_accounts_for_cyclic_dependencies(
     revision_id bigint,
-    account_id integer,
-    committed timestamptz
+    account_id integer
 ) returns boolean as
 $$
 <<locals>> declare
@@ -413,8 +318,6 @@ $$
 
     cycle_path        int[];
 begin
-    if committed is null then return true; end if;
-
     select
         a.type,
         a.group_id
@@ -443,7 +346,7 @@ begin
         join account a on shares.account_id = a.id
         join search_graph sg on sg.share_account_id = shares.account_id and not sg.cycle
         where a.group_id = locals.group_id -- slight optimization for runtime
-                                                                                     )
+    )
     select path into locals.cycle_path from search_graph where cycle limit 1;
     -- TODO: good error message and print out all resulting cycles
     if found then
@@ -455,10 +358,10 @@ end
 $$ language plpgsql;
 
 alter table account_revision add constraint account_revision_check_cyclic
-    check (check_clearing_accounts_for_cyclic_dependencies(id, account_id, committed));
+    check (check_clearing_accounts_for_cyclic_dependencies(id, account_id));
 
 alter table account_history add constraint name_not_empty check ( name <> '' );
-alter table transaction_history add constraint description_not_empty check ( description <> '' );
+alter table transaction_history add constraint name_not_empty check ( name <> '' );
 alter table grp add constraint name_not_empty check ( name <> '' );
 alter table purchase_item_history add constraint name_not_empty check ( name <> '' );
 

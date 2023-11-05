@@ -1,5 +1,15 @@
-import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import React, { useState } from "react";
+import BalanceTable from "@/components/accounts/BalanceTable";
+import ListItemLink from "@/components/style/ListItemLink";
+import { MobilePaper } from "@/components/style/mobile";
+import { useTitle } from "@/core/utils";
+import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
+import {
+    selectAccountBalances,
+    selectClearingAccounts,
+    selectGroupById,
+    selectPersonalAccounts,
+} from "@abrechnung/redux";
+import { TabContext, TabList, TabPanel } from "@mui/lab";
 import {
     Alert,
     AlertTitle,
@@ -13,15 +23,10 @@ import {
     Typography,
     useMediaQuery,
 } from "@mui/material";
-import { TabContext, TabList, TabPanel } from "@mui/lab";
 import { useTheme } from "@mui/material/styles";
-import { useNavigate, Link as RouterLink } from "react-router-dom";
-import BalanceTable from "../../components/accounts/BalanceTable";
-import { MobilePaper } from "../../components/style/mobile";
-import ListItemLink from "../../components/style/ListItemLink";
-import { useTitle } from "../../core/utils";
-import { selectGroupAccountsFiltered, selectGroupById, selectAccountBalances } from "@abrechnung/redux";
-import { useAppSelector, selectAccountSlice, selectGroupSlice } from "../../store";
+import React, { useState } from "react";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface Props {
     groupId: number;
@@ -34,10 +39,10 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
 
     const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
     const personalAccounts = useAppSelector((state) =>
-        selectGroupAccountsFiltered({ state: selectAccountSlice(state), groupId, type: "personal" })
+        selectPersonalAccounts({ state: selectAccountSlice(state), groupId })
     );
     const clearingAccounts = useAppSelector((state) =>
-        selectGroupAccountsFiltered({ state: selectAccountSlice(state), groupId, type: "clearing" })
+        selectClearingAccounts({ state: selectAccountSlice(state), groupId })
     );
     const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
 
@@ -109,7 +114,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                             color: account.balance < 0 ? colorRedInverted : colorGreenInverted,
                                         }}
                                     >
-                                        {account.balance.toFixed(2)} {group.currencySymbol}{" "}
+                                        {account.balance.toFixed(2)} {group.currency_symbol}
                                     </Typography>
                                 </Typography>
                             ))}
@@ -131,7 +136,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                                         : colorGreenInverted,
                                             }}
                                         >
-                                            {balances[account.id]?.balance.toFixed(2)} {group.currencySymbol}
+                                            {balances[account.id]?.balance.toFixed(2)} {group.currency_symbol}
                                         </Typography>
                                     </ListItemLink>
                                     <Divider key={account.id * 2} component="li" />
@@ -155,7 +160,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                     <XAxis
                                         stroke={theme.palette.text.primary}
                                         type="number"
-                                        unit={group.currencySymbol}
+                                        unit={group.currency_symbol}
                                     />
                                     <YAxis
                                         dataKey="name"
@@ -165,7 +170,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                     />
                                     <Tooltip
                                         formatter={(label) =>
-                                            parseFloat(String(label)).toFixed(2) + ` ${group.currencySymbol}`
+                                            parseFloat(String(label)).toFixed(2) + ` ${group.currency_symbol}`
                                         }
                                         labelStyle={{
                                             color: theme.palette.text.primary,
@@ -189,7 +194,9 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                             );
                                         })}
                                         <LabelList
-                                            dataKey={(entry) => `${entry["balance"].toFixed(2)}${group.currencySymbol}`}
+                                            dataKey={(entry) =>
+                                                `${entry["balance"].toFixed(2)}${group.currency_symbol}`
+                                            }
                                             position="insideLeft"
                                             fill={theme.palette.text.primary}
                                         />

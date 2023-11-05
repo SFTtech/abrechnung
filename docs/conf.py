@@ -11,7 +11,6 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import datetime
-import json
 import sys
 from pathlib import Path
 
@@ -20,17 +19,12 @@ sys.path[:0] = [str(HERE.parent), str(HERE / "_ext")]
 BUILD_DIR = HERE / "_build"
 
 import abrechnung
-from abrechnung.config import Config
-from abrechnung.http.cli import ApiCli
-from tests.common import TEST_CONFIG
 
 # -- Project information -----------------------------------------------------
 
 project = "abrechnung"
 author = "Michael Loipführer, Jonas Jelten, Michael Enßlin"
-copyright = (  # pylint: disable=redefined-builtin
-    f"{datetime.datetime.now():%Y}, {author}"
-)
+copyright = f"{datetime.datetime.now():%Y}, {author}"  # pylint: disable=redefined-builtin
 
 version = abrechnung.__version__.replace(".dirty", "")
 release = version
@@ -97,18 +91,3 @@ html_context = dict(
 # so a file named "default.css" will overwrite the builtin "default.css".
 # html_static_path = ["_static"]
 html_show_sphinx = False
-
-
-def generate_openapi_json():
-    """
-    generate swagger OpenAPI
-    """
-    config = Config.parse_obj(TEST_CONFIG)
-    api = ApiCli(config)
-
-    BUILD_DIR.mkdir(parents=True, exist_ok=True)
-    with open(BUILD_DIR / "openapi.json", "w+", encoding="utf-8") as f:
-        json.dump(api.api.openapi(), f)
-
-
-generate_openapi_json()

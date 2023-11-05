@@ -13,8 +13,7 @@ const connectionStatusProvider: IConnectionStatusProvider = {
     },
 };
 
-export const api = new Api(connectionStatusProvider);
-api.init(baseURL);
+export const api = new Api(connectionStatusProvider, baseURL);
 
 const websocketURL = `${window.location.protocol === "https:" ? "wss" : "ws"}://${siteHost}/api/v1/ws`;
 

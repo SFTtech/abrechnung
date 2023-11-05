@@ -1,81 +1,76 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { AuthSliceState } from "../types";
-import { Session, User } from "@abrechnung/types";
-import { Api } from "@abrechnung/api";
-import memoize from "proxy-memoize";
+import { Api, Session, User } from "@abrechnung/api";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { PURGE } from "redux-persist";
+import { AuthSliceState } from "../types";
 
 const initialState: AuthSliceState = {
     baseUrl: undefined,
-    sessionToken: undefined,
+    accessToken: undefined,
     profile: undefined,
     activeInstanceId: 0,
 };
 
 // selectors
-export const selectSessionToken = memoize((args: { state: AuthSliceState }): string | undefined => {
+export const selectAccessToken = (args: { state: AuthSliceState }): string | undefined => {
     const { state } = args;
-    return state.sessionToken;
-});
+    return state.accessToken;
+};
 
-export const selectBaseUrl = memoize((args: { state: AuthSliceState }): string | undefined => {
+export const selectBaseUrl = (args: { state: AuthSliceState }): string | undefined => {
     const { state } = args;
     return state.baseUrl;
-});
+};
 
-export const selectIsAuthenticated = memoize((args: { state: AuthSliceState }): boolean => {
+export const selectIsAuthenticated = (args: { state: AuthSliceState }): boolean => {
     const { state } = args;
-    return state.sessionToken !== undefined && state.baseUrl !== undefined;
-});
+    return state.accessToken !== undefined && state.baseUrl !== undefined;
+};
 
-export const selectProfile = memoize((args: { state: AuthSliceState }): User | undefined => {
+export const selectProfile = (args: { state: AuthSliceState }): User | undefined => {
     const { state } = args;
     return state.profile;
-});
+};
 
-export const selectCurrentUserId = memoize((args: { state: AuthSliceState }): number | undefined => {
+export const selectCurrentUserId = (args: { state: AuthSliceState }): number | undefined => {
     const { state } = args;
     return state.profile?.id;
-});
+};
 
-export const selectIsGuestUser = memoize((args: { state: AuthSliceState }): boolean | undefined => {
+export const selectIsGuestUser = (args: { state: AuthSliceState }): boolean | undefined => {
     const { state } = args;
     if (state.profile === undefined) {
         return undefined;
     }
-    return state.profile.isGuestUser;
-});
+    return state.profile.is_guest_user;
+};
 
-export const selectLoginSessions = memoize((args: { state: AuthSliceState }): Session[] => {
+export const selectLoginSessions = (args: { state: AuthSliceState }): Session[] => {
     const { state } = args;
     if (state.profile === undefined) {
         return [];
     }
     return state.profile.sessions;
-});
+};
 
 // async thunks
 export const fetchProfile = createAsyncThunk<User, { api: Api }>("fetchProfile", async ({ api }) => {
-    return await api.fetchProfile();
+    return await api.client.auth.getProfile();
 });
 
 export const login = createAsyncThunk<
-    { profile: User; sessionToken: string; baseUrl: string },
-    { username: string; password: string; sessionName: string; apiUrl?: string; api: Api }
->("login", async ({ username, password, sessionName, apiUrl, api }) => {
-    // TODO: error handling
-    if (apiUrl) {
-        await api.init(apiUrl);
-    }
-    const loginResp = await api.login(username, password, sessionName);
-    const profile = await api.fetchProfile();
-    return { profile: profile, sessionToken: loginResp.sessionToken, baseUrl: loginResp.baseUrl };
+    { profile: User; accessToken: string; baseUrl: string },
+    { username: string; password: string; sessionName: string; api: Api }
+>("login", async ({ username, password, sessionName, api }) => {
+    const loginResp = await api.client.auth.login({ requestBody: { username, password, session_name: sessionName } });
+    api.init(loginResp.access_token);
+    const profile = await api.client.auth.getProfile();
+    return { profile: profile, accessToken: loginResp.access_token, baseUrl: api.getBaseApiUrl() };
 });
 
 export const logout = createAsyncThunk<void, { api: Api }>("logout", async ({ api }, { dispatch }) => {
     if (await api.hasConnection()) {
         try {
-            await api.logout();
+            await api.client.auth.logout();
         } catch (err) {
             console.error("Unexpected error occured while trying to logout.", err);
         }
@@ -100,14 +95,14 @@ const authSlice = createSlice({
             state.profile = action.payload;
         });
         builder.addCase(login.fulfilled, (state, action) => {
-            const { profile, sessionToken, baseUrl } = action.payload;
+            const { profile, accessToken, baseUrl } = action.payload;
             state.profile = profile;
-            state.sessionToken = sessionToken;
+            state.accessToken = accessToken;
             state.baseUrl = baseUrl;
         });
         builder.addCase(logout.fulfilled, (state, action) => {
             state.profile = undefined;
-            state.sessionToken = undefined;
+            state.accessToken = undefined;
         });
     },
 });

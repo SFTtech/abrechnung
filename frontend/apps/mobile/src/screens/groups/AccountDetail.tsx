@@ -1,48 +1,43 @@
-import { GroupStackScreenProps } from "../../navigation/types";
+import TransactionShareInput from "@/components/transaction-shares/TransactionShareInput";
+import { clearingAccountIcon, getTransactionIcon } from "@/constants/Icons";
+import { useApi } from "@/core/ApiProvider";
+import { notify } from "@/notifications";
+import { selectAccountSlice, selectGroupSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
+import { successColor } from "@/theme";
+import {
+    deleteAccount,
+    selectAccountBalances,
+    selectAccountById,
+    selectClearingAccountsInvolvingAccounts,
+    selectCurrentUserPermissions,
+    selectGroupcurrency_symbol,
+    selectTransactionsInvolvingAccount,
+} from "@abrechnung/redux";
+import { Account, AccountBalance, Transaction, TransactionShare } from "@abrechnung/types";
+import { fromISOString } from "@abrechnung/utils";
+import * as React from "react";
+import { useLayoutEffect } from "react";
 import { ScrollView, StyleSheet, View } from "react-native";
 import {
     ActivityIndicator,
-    Portal,
-    Dialog,
-    IconButton,
     Button,
     Chip,
+    Dialog,
     Divider,
+    IconButton,
     List,
+    Portal,
     Text,
     useTheme,
 } from "react-native-paper";
-import * as React from "react";
-import { useLayoutEffect } from "react";
-import { Transaction, AccountBalance, Account, TransactionShare } from "@abrechnung/types";
-import { clearingAccountIcon, getTransactionIcon } from "../../constants/Icons";
-import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
-import { successColor } from "../../theme";
-import {
-    selectAccountSlice,
-    selectGroupSlice,
-    selectTransactionSlice,
-    useAppDispatch,
-    useAppSelector,
-} from "../../store";
-import {
-    selectAccountBalances,
-    selectAccountById,
-    selectGroupCurrencySymbol,
-    selectTransactionsInvolvingAccount,
-    selectCurrentUserPermissions,
-    selectClearingAccountsInvolvingAccounts,
-    deleteAccount,
-} from "@abrechnung/redux";
-import { fromISOString } from "@abrechnung/utils";
-import { api } from "../../core/api";
-import { notify } from "../../notifications";
+import { GroupStackScreenProps } from "../../navigation/types";
 
 type ArrayAccountsAndTransactions = Array<Transaction | Account>;
 
 export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = ({ route, navigation }) => {
     const theme = useTheme();
     const dispatch = useAppDispatch();
+    const { api } = useApi();
 
     const { groupId, accountId } = route.params;
 
@@ -60,10 +55,10 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
 
     const combinedList: ArrayAccountsAndTransactions = (transactions as ArrayAccountsAndTransactions)
         .concat(clearingAccounts)
-        .sort((f1, f2) => fromISOString(f2.lastChanged).getTime() - fromISOString(f1.lastChanged).getTime());
+        .sort((f1, f2) => fromISOString(f2.last_changed).getTime() - fromISOString(f1.last_changed).getTime());
 
-    const currencySymbol = useAppSelector((state) =>
-        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
+    const currency_symbol = useAppSelector((state) =>
+        selectGroupcurrency_symbol({ state: selectGroupSlice(state), groupId })
     );
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
 
@@ -78,7 +73,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
             .catch((err) => {
                 notify({ text: `Error while deleting account: ${err.toString()}` });
             });
-    }, [groupId, accountId, dispatch, navigation]);
+    }, [api, groupId, accountId, dispatch, navigation]);
 
     const closeConfirmDeleteModal = () => setConfirmDeleteModalOpen(false);
     const openConfirmDeleteModal = () => setConfirmDeleteModalOpen(true);
@@ -111,12 +106,12 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
         <List.Item
             key={`transaction-${transaction.id}`}
             title={transaction.name}
-            description={transaction.billedAt}
+            description={transaction.billed_at}
             left={(props) => <List.Icon {...props} icon={getTransactionIcon(transaction.type)} />}
             right={(props) => (
                 <Text>
                     {transaction.value.toFixed(2)}
-                    {transaction.currencySymbol}
+                    {transaction.currency_symbol}
                 </Text>
             )}
             onPress={() =>
@@ -138,7 +133,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
             right={(props) => (
                 <Text>
                     {accountBalances[account.id]?.clearingResolution[accountId]?.toFixed(2)}
-                    {currencySymbol}
+                    {currency_symbol}
                 </Text>
             )}
             onPress={() =>
@@ -151,7 +146,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
     );
 
     const renderTransactionListEntry = (element: Transaction | Account) => {
-        if (element.type === "purchase" || element.type === "transfer" || element.type === "mimo") {
+        if (element.type === "purchase" || element.type === "transfer") {
             return renderTransactionListEntryTransaction(element);
         } else if (element.type === "clearing") {
             return renderTransactionListEntryClearing(element);
@@ -219,7 +214,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                 title="Balance"
                 right={(props) => (
                     <Text style={{ color: textColor }}>
-                        {balance.balance.toFixed(2)} {currencySymbol}
+                        {balance.balance.toFixed(2)} {currency_symbol}
                     </Text>
                 )}
             />

@@ -47,11 +47,7 @@ async def psql_attach(config: DatabaseConfig):
             def escape_colon(value: str):
                 return value.replace("\\", "\\\\").replace(":", "\\:")
 
-            if (
-                config.user is not None
-                and config.password is not None
-                and config.host is not None
-            ):
+            if config.user is not None and config.password is not None and config.host is not None:
                 passfile = exitstack.enter_context(tempfile.NamedTemporaryFile("w"))
                 os.chmod(passfile.name, 0o600)
 
@@ -94,9 +90,7 @@ async def drop_all_views(conn: asyncpg.Connection, schema: str):
 
     # we use drop if exists here as the cascade dropping might lead the view to being already dropped
     # due to being a dependency of another view
-    drop_statements = "\n".join(
-        [f"drop view if exists {view} cascade;" for view in views]
-    )
+    drop_statements = "\n".join([f"drop view if exists {view} cascade;" for view in views])
     await conn.execute(drop_statements)
 
 
@@ -162,15 +156,11 @@ async def drop_all_constraints(conn: asyncpg.Connection, schema: str):
         constraint_type = row["constraint_type"].decode("utf-8")
         table_name = row["table_name"]
         if constraint_type == "c":
-            constraints.append(
-                f"alter table {table_name} drop constraint {constraint_name};"
-            )
+            constraints.append(f"alter table {table_name} drop constraint {constraint_name};")
         elif constraint_type == "t":
             constraints.append(f"drop constraint trigger {constraint_name};")
         else:
-            raise RuntimeError(
-                f'Unknown constraint type "{constraint_type}" for constraint "{constraint_name}"'
-            )
+            raise RuntimeError(f'Unknown constraint type "{constraint_type}" for constraint "{constraint_name}"')
 
     if len(constraints) == 0:
         return
@@ -187,18 +177,14 @@ async def drop_db_code(conn: asyncpg.Connection, schema: str):
 
 
 class SchemaRevision:
-    def __init__(
-        self, file_name: Path, code: str, version: str, requires: Optional[str]
-    ):
+    def __init__(self, file_name: Path, code: str, version: str, requires: Optional[str]):
         self.file_name = file_name
         self.code = code
         self.version = version
         self.requires = requires
 
     async def apply(self, conn):
-        logger.info(
-            f"Applying revision {self.file_name.name} with version {self.version}"
-        )
+        logger.info(f"Applying revision {self.file_name.name} with version {self.version}")
         if self.requires:
             version = await conn.fetchval(
                 f"update {REVISION_TABLE} set version = $1 where version = $2 returning version",
@@ -206,9 +192,7 @@ class SchemaRevision:
                 self.requires,
             )
             if version != self.version:
-                raise ValueError(
-                    f"Found other revision present than {self.requires} which was required"
-                )
+                raise ValueError(f"Found other revision present than {self.requires} which was required")
         else:
             n_table = await conn.fetchval(f"select count(*) from {REVISION_TABLE}")
             if n_table != 0:
@@ -216,15 +200,11 @@ class SchemaRevision:
                     f"Could not apply revision {self.version} as there appears to be a revision present,"
                     f"none was expected"
                 )
-            await conn.execute(
-                f"insert into {REVISION_TABLE} (version) values ($1)", self.version
-            )
+            await conn.execute(f"insert into {REVISION_TABLE} (version) values ($1)", self.version)
 
         # now we can actually apply the revision
         try:
-            if (
-                len(self.code.splitlines()) > 2
-            ):  # does not only consist of first two header comment lines
+            if len(self.code.splitlines()) > 2:  # does not only consist of first two header comment lines
                 await conn.execute(self.code)
         except asyncpg.exceptions.PostgresSyntaxError as exc:
             exc_dict = exc.as_dict()
@@ -250,13 +230,11 @@ class SchemaRevision:
 
             if (version_match := REVISION_VERSION_RE.match(lines[0])) is None:
                 raise ValueError(
-                    f"Invalid version string in revision {revision}, "
-                    f"should be of form '-- revision: <name>'"
+                    f"Invalid version string in revision {revision}, " f"should be of form '-- revision: <name>'"
                 )
             if (requires_match := REVISION_REQUIRES_RE.match(lines[1])) is None:
                 raise ValueError(
-                    f"Invalid requires string in revision {revision}, "
-                    f"should be of form '-- requires: <name>'"
+                    f"Invalid requires string in revision {revision}, " f"should be of form '-- requires: <name>'"
                 )
 
             version = version_match["version"]
@@ -286,13 +264,9 @@ class SchemaRevision:
         sorted_revisions = [first_revision]
         while len(sorted_revisions) < len(revisions):
             curr_revision = sorted_revisions[-1]
-            next_revision = next(
-                (x for x in revisions if x.requires == curr_revision.version), None
-            )
+            next_revision = next((x for x in revisions if x.requires == curr_revision.version), None)
             if next_revision is None:
-                raise ValueError(
-                    f"Could not find the successor to revision {curr_revision.version}"
-                )
+                raise ValueError(f"Could not find the successor to revision {curr_revision.version}")
             sorted_revisions.append(next_revision)
 
         return sorted_revisions
@@ -315,13 +289,9 @@ async def apply_revisions(
 
     async with db_pool.acquire() as conn:
         async with conn.transaction():
-            await conn.execute(
-                f"create table if not exists {REVISION_TABLE} (version text not null primary key)"
-            )
+            await conn.execute(f"create table if not exists {REVISION_TABLE} (version text not null primary key)")
 
-            curr_revision = await conn.fetchval(
-                f"select version from {REVISION_TABLE} limit 1"
-            )
+            curr_revision = await conn.fetchval(f"select version from {REVISION_TABLE} limit 1")
 
             await drop_db_code(conn=conn, schema="public")
             # TODO: perform a dry run to check all revisions before doing anything
@@ -338,9 +308,7 @@ async def apply_revisions(
                     return
 
             if not found:
-                raise ValueError(
-                    f"Unknown revision {curr_revision} present in database"
-                )
+                raise ValueError(f"Unknown revision {curr_revision} present in database")
 
             await _apply_db_code(conn=conn, code_path=code_path)
 
@@ -370,9 +338,8 @@ class Connection(asyncpg.Connection):
 
 
 async def init_connection(conn: Connection):
-    await conn.set_type_codec(
-        "json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog"
-    )
+    await conn.set_type_codec("json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
+    await conn.set_type_codec("jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
 
 
 async def create_db_pool(cfg: DatabaseConfig, n_connections=10) -> asyncpg.Pool:

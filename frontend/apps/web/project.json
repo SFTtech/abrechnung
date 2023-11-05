@@ -1,4 +1,5 @@
 {
+    "name": "web",
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "apps/web/src",
     "projectType": "application",
@@ -11,7 +12,7 @@
             }
         },
         "build": {
-            "executor": "@nrwl/web:webpack",
+            "executor": "@nx/webpack:webpack",
             "outputs": ["{options.outputPath}"],
             "defaultConfiguration": "production",
             "dependsOn": ["collect-assets"],
@@ -26,7 +27,7 @@
                 "assets": ["apps/web/src/favicon.png", "apps/web/src/assets"],
                 "styles": ["apps/web/src/styles.css"],
                 "scripts": [],
-                "webpackConfig": "@nrwl/react/plugins/webpack"
+                "webpackConfig": "@nx/react/plugins/webpack"
             },
             "configurations": {
                 "development": {
@@ -52,7 +53,7 @@
             }
         },
         "serve": {
-            "executor": "@nrwl/web:dev-server",
+            "executor": "@nx/webpack:dev-server",
             "defaultConfiguration": "development",
             "dependsOn": ["collect-assets"],
             "options": {
@@ -71,7 +72,7 @@
             }
         },
         "lint": {
-            "executor": "@nrwl/linter:eslint",
+            "executor": "@nx/eslint:lint",
             "outputs": ["{options.outputFile}"],
             "dependsOn": ["collect-assets"],
             "options": {
@@ -79,8 +80,8 @@
             }
         },
         "test": {
-            "executor": "@nrwl/jest:jest",
-            "outputs": ["coverage/apps/web"],
+            "executor": "@nx/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/apps/web"],
             "dependsOn": ["collect-assets"],
             "options": {
                 "jestConfig": "apps/web/jest.config.ts",

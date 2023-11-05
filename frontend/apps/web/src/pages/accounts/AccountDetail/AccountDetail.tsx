@@ -1,15 +1,15 @@
-import React from "react";
-import { useParams, Navigate } from "react-router-dom";
-import { Grid, Typography } from "@mui/material";
-import { MobilePaper } from "../../../components/style/mobile";
-import { useTitle, useQuery } from "../../../core/utils";
-import BalanceHistoryGraph from "../../../components/accounts/BalanceHistoryGraph";
-import AccountTransactionList from "../../../components/accounts/AccountTransactionList";
-import ClearingAccountDetail from "../../../components/accounts/ClearingAccountDetail";
-import { selectAccountSlice, selectGroupSlice, useAppSelector } from "../../../store";
+import AccountTransactionList from "@/components/accounts/AccountTransactionList";
+import BalanceHistoryGraph from "@/components/accounts/BalanceHistoryGraph";
+import ClearingAccountDetail from "@/components/accounts/ClearingAccountDetail";
+import { Loading } from "@/components/style/Loading";
+import { MobilePaper } from "@/components/style/mobile";
+import { useQuery, useTitle } from "@/core/utils";
+import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
 import { selectAccountById, selectGroupById } from "@abrechnung/redux";
+import { Grid, Typography } from "@mui/material";
+import React from "react";
+import { Navigate, useParams } from "react-router-dom";
 import { AccountInfo } from "./AccountInfo";
-import { Loading } from "../../../components/style/Loading";
 
 interface Props {
     groupId: number;
@@ -47,7 +47,7 @@ export const AccountDetail: React.FC<Props> = ({ groupId }) => {
         }
     }
 
-    if (account.isWip) {
+    if (account.is_wip) {
         return <AccountEdit groupId={groupId} accountId={accountId} />;
     }
 

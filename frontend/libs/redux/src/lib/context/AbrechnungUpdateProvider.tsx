@@ -1,17 +1,16 @@
 import { AbrechnungWebSocket, Api, NotificationPayload } from "@abrechnung/api";
-import { Subscription } from "../types";
-import { useDispatch } from "react-redux";
-import React from "react";
-import { fetchAccount } from "../accounts";
-import { fetchTransaction } from "../transactions";
 import { AnyAction, ThunkDispatch } from "@reduxjs/toolkit";
-import { IRootState } from "../types";
+import React from "react";
+import { useDispatch } from "react-redux";
+import { fetchAccount } from "../accounts";
+import { fetchGroupInvites, fetchGroupLog, fetchGroupMembers, fetchGroups } from "../groups";
 import { subscribe, unsubscribe } from "../subscriptions";
-import { fetchGroups, fetchGroupInvites, fetchGroupLog, fetchGroupMembers } from "../groups";
+import { fetchTransaction } from "../transactions";
+import { IRootState, Subscription } from "../types";
 
 export interface IAbrechnungUpdateProvider {
-    api: Api;
-    websocket: AbrechnungWebSocket;
+    api?: Api;
+    websocket?: AbrechnungWebSocket;
     children: React.ReactElement;
 }
 
@@ -32,6 +31,9 @@ export const AbrechnungUpdateProvider: React.FC<IAbrechnungUpdateProvider> = ({ 
     const dispatch = useDispatch<ThunkDispatch<IRootState, undefined, AnyAction>>();
 
     React.useEffect(() => {
+        if (!api || !websocket) {
+            return () => undefined;
+        }
         const callback = (notificationPayload: NotificationPayload) => {
             switch (notificationPayload.type) {
                 case "account":

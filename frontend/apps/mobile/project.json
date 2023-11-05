@@ -1,4 +1,5 @@
 {
+    "name": "mobile",
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "apps/mobile/src",
     "projectType": "application",
@@ -11,19 +12,11 @@
             }
         },
         "start": {
-            "executor": "@nrwl/expo:start",
+            "executor": "@nx/expo:start",
             "options": {
                 "port": 8081
             },
-            "dependsOn": ["collect-assets"]
-        },
-        "web": {
-            "executor": "@nrwl/expo:start",
-            "options": {
-                "port": 8081,
-                "webpack": true
-            },
-            "dependsOn": ["collect-assets"]
+            "dependsOn": ["ensure-symlink", "sync-deps"]
         },
         "serve": {
             "executor": "nx:run-commands",
@@ -33,93 +26,53 @@
             "dependsOn": ["collect-assets"]
         },
         "run-ios": {
-            "executor": "@nrwl/expo:run",
+            "executor": "@nx/expo:run",
             "options": {
                 "platform": "ios"
             },
-            "dependsOn": ["collect-assets"]
+            "dependsOn": ["ensure-symlink", "sync-deps"]
         },
         "run-android": {
-            "executor": "@nrwl/expo:run",
+            "executor": "@nx/expo:run",
             "options": {
                 "platform": "android"
             },
-            "dependsOn": ["collect-assets"]
+            "dependsOn": ["ensure-symlink", "sync-deps"]
         },
         "build": {
-            "executor": "@nrwl/expo:build",
+            "executor": "@nx/expo:build",
             "options": {},
             "dependsOn": ["collect-assets"]
         },
         "build-list": {
-            "executor": "@nrwl/expo:build-list",
+            "executor": "@nx/expo:build-list",
             "options": {},
             "dependsOn": ["collect-assets"]
         },
         "download": {
-            "executor": "@nrwl/expo:download",
+            "executor": "@nx/expo:download",
             "options": {
                 "output": "apps/mobile/dist"
             },
             "dependsOn": ["collect-assets"]
         },
-        "build-ios": {
-            "executor": "@nrwl/expo:build-ios",
-            "options": {},
-            "dependsOn": ["collect-assets"]
-        },
-        "build-android": {
-            "executor": "@nrwl/expo:build-android",
-            "options": {},
-            "dependsOn": ["collect-assets"]
-        },
-        "build-web": {
-            "executor": "@nrwl/expo:build-web",
-            "options": {},
-            "dependsOn": ["collect-assets"]
-        },
-        "build-status": {
-            "executor": "@nrwl/expo:build-web",
-            "options": {},
-            "dependsOn": ["collect-assets"]
-        },
         "sync-deps": {
-            "executor": "@nrwl/expo:sync-deps",
+            "executor": "@nx/expo:sync-deps",
             "options": {},
             "dependsOn": ["collect-assets"]
         },
         "ensure-symlink": {
-            "executor": "@nrwl/expo:ensure-symlink",
-            "options": {},
-            "dependsOn": ["collect-assets"]
-        },
-        "publish": {
-            "executor": "@nrwl/expo:publish",
-            "options": {},
-            "dependsOn": ["collect-assets"]
-        },
-        "publish-set": {
-            "executor": "@nrwl/expo:publish-set",
-            "options": {},
-            "dependsOn": ["collect-assets"]
-        },
-        "rollback": {
-            "executor": "@nrwl/expo:rollback",
+            "executor": "@nx/expo:ensure-symlink",
             "options": {},
             "dependsOn": ["collect-assets"]
         },
         "prebuild": {
-            "executor": "@nrwl/expo:prebuild",
+            "executor": "@nx/expo:prebuild",
             "options": {},
-            "dependsOn": ["collect-assets"]
-        },
-        "eject": {
-            "executor": "@nrwl/expo:eject",
-            "options": {},
-            "dependsOn": ["collect-assets"]
+            "dependsOn": ["ensure-symlink", "sync-deps"]
         },
         "lint": {
-            "executor": "@nrwl/linter:eslint",
+            "executor": "@nx/eslint:lint",
             "outputs": ["{options.outputFile}"],
             "options": {
                 "lintFilePatterns": ["apps/mobile/**/*.{ts,tsx,js,jsx}"]
@@ -127,8 +80,8 @@
             "dependsOn": ["collect-assets"]
         },
         "test": {
-            "executor": "@nrwl/jest:jest",
-            "outputs": ["coverage/apps/mobile"],
+            "executor": "@nx/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/apps/mobile"],
             "options": {
                 "jestConfig": "apps/mobile/jest.config.ts",
                 "passWithNoTests": true

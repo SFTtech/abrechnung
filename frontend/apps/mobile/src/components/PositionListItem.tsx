@@ -1,18 +1,18 @@
-import { List, Menu, Portal, Text, useTheme } from "react-native-paper";
-import PositionDialog from "./PositionDialog";
-import React, { useState } from "react";
-import { TransactionPosition } from "@abrechnung/types";
-import { useAppDispatch } from "../store";
 import { positionDeleted, wipPositionAdded } from "@abrechnung/redux";
+import { TransactionPosition } from "@abrechnung/types";
+import React, { useState } from "react";
+import { List, Menu, Portal, Text, useTheme } from "react-native-paper";
+import { useAppDispatch } from "../store";
+import PositionDialog from "./PositionDialog";
 
 interface Props {
     groupId: number;
-    currencySymbol: string;
+    currency_symbol: string;
     position: TransactionPosition;
     editing: boolean;
 }
 
-export const PositionListItem: React.FC<Props> = ({ groupId, currencySymbol, position, editing }) => {
+export const PositionListItem: React.FC<Props> = ({ groupId, currency_symbol, position, editing }) => {
     const theme = useTheme();
     const dispatch = useAppDispatch();
     const [showPositionDialog, setShowPositionDialog] = useState(false);
@@ -52,7 +52,7 @@ export const PositionListItem: React.FC<Props> = ({ groupId, currencySymbol, pos
                         onLongPress={openMenu}
                         right={(props) => (
                             <Text>
-                                {position.price.toFixed(2)} {currencySymbol}
+                                {position.price.toFixed(2)} {currency_symbol}
                             </Text>
                         )}
                     />
@@ -68,7 +68,7 @@ export const PositionListItem: React.FC<Props> = ({ groupId, currencySymbol, pos
                     editing={editing}
                     showDialog={showPositionDialog}
                     onHideDialog={() => setShowPositionDialog(false)}
-                    currencySymbol={currencySymbol}
+                    currency_symbol={currency_symbol}
                 />
             </Portal>
         </>

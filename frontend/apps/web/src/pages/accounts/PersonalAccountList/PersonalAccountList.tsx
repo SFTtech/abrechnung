@@ -1,3 +1,7 @@
+import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
+import { MobilePaper } from "@/components/style/mobile";
+import { useTitle } from "@/core/utils";
+import { selectAccountSlice, selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
 import { AccountSortMode } from "@abrechnung/core";
 import {
     createAccount,
@@ -28,10 +32,6 @@ import {
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { DeleteAccountModal } from "../../../components/accounts/DeleteAccountModal";
-import { MobilePaper } from "../../../components/style/mobile";
-import { useTitle } from "../../../core/utils";
-import { selectAccountSlice, selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "../../../store";
 import { PersonalAccountListItem } from "./PersonalAccountListItem";
 
 interface Props {
@@ -131,7 +131,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                             >
                                 <MenuItem value="name">Name</MenuItem>
                                 <MenuItem value="description">Description</MenuItem>
-                                <MenuItem value="lastChanged">Last changed</MenuItem>
+                                <MenuItem value="last_changed">Last changed</MenuItem>
                             </Select>
                         </FormControl>
                     </Box>

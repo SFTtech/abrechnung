@@ -3,15 +3,3 @@ sphinx-autobuild
 sphinx-rtd-theme
 sphinx-autodoc-typehints
 sphinxcontrib-openapi
-mistune~=0.8
-
-# abrechnung requirements, needed as we are using core code e.g. for openapi docs and config docs
-fastapi
-asyncpg
-uvicorn[standard]
-passlib[bcrypt]
-python-jose[cryptography]
-PyYAML
-schema
-email-validator
-python-multipart

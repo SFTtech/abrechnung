@@ -1,5 +1,5 @@
 import asyncpg
-from fastapi import Request, Depends
+from fastapi import Depends, Request
 
 from abrechnung.application.accounts import AccountService
 from abrechnung.application.groups import GroupService

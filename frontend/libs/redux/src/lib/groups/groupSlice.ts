@@ -1,11 +1,11 @@
-import { createSlice, createAsyncThunk, Draft } from "@reduxjs/toolkit";
-import { GroupInfo, GroupSliceState, IRootState, StateStatus } from "../types";
-import { Group, GroupMember, GroupInvite, GroupLogEntry, GroupBase, GroupPermissions } from "@abrechnung/types";
-import { Api } from "@abrechnung/api";
+import { Api, Group, GroupInvite, GroupLog, GroupMember, GroupPayload } from "@abrechnung/api";
+import { GroupPermissions } from "@abrechnung/types";
+import { lambdaComparator } from "@abrechnung/utils";
+import { Draft, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import memoize from "proxy-memoize";
+import { GroupInfo, GroupSliceState, IRootState, StateStatus } from "../types";
 import { addEntity, getGroupScopedState, removeEntity } from "../utils";
 import { leaveGroup } from "./actions";
-import { lambdaComparator } from "@abrechnung/utils";
 
 const initialState: GroupSliceState = {
     groups: {
@@ -70,7 +70,7 @@ export const selectGroupCurrencySymbol = memoize(
     (args: { state: GroupSliceState; groupId: number }): string | undefined => {
         const { state, groupId } = args;
         const group = selectGroupByIdInternal({ state, groupId });
-        return group?.currencySymbol;
+        return group?.currency_symbol;
     }
 );
 
@@ -146,10 +146,10 @@ export const selectGroupLogIds = memoize((args: { state: GroupSliceState; groupI
     return s.groupLog.ids;
 });
 
-export const selectGroupLogs = memoize((args: { state: GroupSliceState; groupId: number }): GroupLogEntry[] => {
+export const selectGroupLogs = memoize((args: { state: GroupSliceState; groupId: number }): GroupLog[] => {
     const { state, groupId } = args;
     const s = getGroupScopedState<GroupInfo, GroupSliceState>(state, groupId);
-    return s.groupLog.ids.map((id) => s.groupLog.byId[id]).sort(lambdaComparator((t) => t.loggedAt, true));
+    return s.groupLog.ids.map((id) => s.groupLog.byId[id]).sort(lambdaComparator((t) => t.logged_at, true));
 });
 
 export const selectGroupLogStatus = memoize(
@@ -166,7 +166,7 @@ export const selectGroupLogStatus = memoize(
 export const fetchGroups = createAsyncThunk<Group[], { api: Api }>(
     "fetchGroups",
     async ({ api }) => {
-        return await api.fetchGroups();
+        return await api.client.groups.listGroups();
     }
     // {
     //     condition: ({ api }, { getState }): boolean => {
@@ -182,21 +182,21 @@ export const fetchGroups = createAsyncThunk<Group[], { api: Api }>(
 export const fetchGroup = createAsyncThunk<Group, { groupId: number; api: Api }, { state: IRootState }>(
     "fetchGroup",
     async ({ groupId, api }) => {
-        return await api.fetchGroup(groupId);
+        return await api.client.groups.getGroup({ groupId });
     }
 );
 
-export const createGroup = createAsyncThunk<Group, { group: Omit<GroupBase, "id">; api: Api }>(
+export const createGroup = createAsyncThunk<Group, { group: GroupPayload; api: Api }>(
     "createGroup",
     async ({ group, api }) => {
-        return await api.createGroup(group);
+        return await api.client.groups.createGroup({ requestBody: group });
     }
 );
 
 export const fetchGroupMembers = createAsyncThunk<GroupMember[], { groupId: number; api: Api }, { state: IRootState }>(
     "fetchGroupMembers",
     async ({ groupId, api }) => {
-        return await api.fetchGroupMembers(groupId);
+        return await api.client.groups.listMembers({ groupId });
     }
     // {
     //     condition: ({ groupId }, { getState }): boolean => {
@@ -212,10 +212,10 @@ export const fetchGroupMembers = createAsyncThunk<GroupMember[], { groupId: numb
     // }
 );
 
-export const fetchGroupLog = createAsyncThunk<GroupLogEntry[], { groupId: number; api: Api }, { state: IRootState }>(
+export const fetchGroupLog = createAsyncThunk<GroupLog[], { groupId: number; api: Api }, { state: IRootState }>(
     "fetchGroupLog",
     async ({ groupId, api }) => {
-        return await api.fetchGroupLog(groupId);
+        return await api.client.groups.listLog({ groupId });
     }
     // {
     //     condition: ({ groupId }, { getState }): boolean => {
@@ -234,7 +234,7 @@ export const fetchGroupLog = createAsyncThunk<GroupLogEntry[], { groupId: number
 export const fetchGroupInvites = createAsyncThunk<GroupInvite[], { groupId: number; api: Api }, { state: IRootState }>(
     "fetchGroupInvites",
     async ({ groupId, api }) => {
-        return await api.fetchGroupInvites(groupId);
+        return await api.client.groups.listInvites({ groupId });
     }
     // {
     //     condition: ({ groupId }, { getState }): boolean => {
@@ -250,24 +250,27 @@ export const fetchGroupInvites = createAsyncThunk<GroupInvite[], { groupId: numb
     // }
 );
 
-export const updateGroup = createAsyncThunk<Group, { group: GroupBase; api: Api }, { state: IRootState }>(
-    "updateGroup",
-    async ({ group, api }) => {
-        const resp = await api.updateGroupMetadata(group);
-        return resp;
-    }
-);
+export const updateGroup = createAsyncThunk<
+    Group,
+    { group: GroupPayload & { id: number }; api: Api },
+    { state: IRootState }
+>("updateGroup", async ({ group, api }) => {
+    const resp = await api.client.groups.updateGroup({ groupId: group.id, requestBody: group });
+    return resp;
+});
 
 export const updateGroupMemberPrivileges = createAsyncThunk<
     GroupMember,
     { groupId: number; memberId: number; permissions: GroupPermissions; api: Api },
     { state: IRootState }
 >("updateGroupMemberPrivileges", async ({ groupId, memberId, permissions, api }) => {
-    return await api.updateGroupMemberPrivileges({
+    return await api.client.groups.updateMemberPermissions({
         groupId,
-        userId: memberId,
-        isOwner: permissions.isOwner,
-        canWrite: permissions.canWrite,
+        requestBody: {
+            user_id: memberId,
+            is_owner: permissions.isOwner,
+            can_write: permissions.canWrite,
+        },
     });
 });
 
@@ -276,7 +279,7 @@ export const deleteGroupInvite = createAsyncThunk<
     { groupId: number; inviteId: number; api: Api },
     { state: IRootState }
 >("deleteGroupInvite", async ({ groupId, inviteId, api }) => {
-    await api.deleteGroupInvite(groupId, inviteId);
+    await api.client.groups.deleteInvite({ groupId, inviteId });
 });
 
 const groupSlice = createSlice({
@@ -310,10 +313,10 @@ const groupSlice = createSlice({
             const { groupId } = action.meta.arg;
             const members = action.payload;
             const membersById = members.reduce<{ [k: number]: GroupMember }>((byId, member) => {
-                byId[member.userID] = member;
+                byId[member.user_id] = member;
                 return byId;
             }, {});
-            const memberIds = members.map((member) => member.userID);
+            const memberIds = members.map((member) => member.user_id);
             state.byGroupId[groupId].groupMembers.byId = membersById;
             state.byGroupId[groupId].groupMembers.ids = memberIds;
 
@@ -335,7 +338,7 @@ const groupSlice = createSlice({
         builder.addCase(fetchGroupLog.fulfilled, (state, action) => {
             const { groupId } = action.meta.arg;
             const logs = action.payload;
-            const logsById = logs.reduce<{ [k: number]: GroupLogEntry }>((byId, log) => {
+            const logsById = logs.reduce<{ [k: number]: GroupLog }>((byId, log) => {
                 byId[log.id] = log;
                 return byId;
             }, {});
@@ -362,7 +365,7 @@ const groupSlice = createSlice({
                 return;
             }
             // we assume that the member id is already in the id list
-            state.byGroupId[groupId].groupMembers.byId[member.userID] = member;
+            state.byGroupId[groupId].groupMembers.byId[member.user_id] = member;
         });
         builder.addCase(deleteGroupInvite.fulfilled, (state, action) => {
             const { groupId, inviteId } = action.meta.arg;

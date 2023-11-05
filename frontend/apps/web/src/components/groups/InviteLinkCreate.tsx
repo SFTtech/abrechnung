@@ -1,8 +1,4 @@
-import { Form, Formik } from "formik";
-import React from "react";
-import { toast } from "react-toastify";
-import { api } from "../../core/api";
-import { DateTime } from "luxon";
+import { Group } from "@abrechnung/api";
 import {
     Button,
     Checkbox,
@@ -15,7 +11,11 @@ import {
     TextField,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers";
-import { Group } from "@abrechnung/types";
+import { Form, Formik } from "formik";
+import { DateTime } from "luxon";
+import React from "react";
+import { toast } from "react-toastify";
+import { api } from "../../core/api";
 
 interface Props {
     group: Group;
@@ -28,7 +28,16 @@ interface Props {
 
 export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
     const handleSubmit = (values, { setSubmitting }) => {
-        api.createGroupInvite(group.id, values.description, values.validUntil, values.singleUse, values.joinAsEditor)
+        api.client.groups
+            .createInvite({
+                groupId: group.id,
+                requestBody: {
+                    description: values.description,
+                    valid_until: values.validUntil,
+                    single_use: values.singleUse,
+                    join_as_editor: values.joinAsEditor,
+                },
+            })
             .then((result) => {
                 toast.success("Successfully created invite token");
                 setSubmitting(false);
@@ -73,18 +82,17 @@ export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
                                 onBlur={handleBlur}
                             />
                             <DateTimePicker
-                                inputFormat="yyyy-MM-dd HH:mm"
+                                format="yyyy-MM-dd HH:mm"
                                 value={values.validUntil}
                                 onChange={(val) => setFieldValue("validUntil", val, true)}
-                                renderInput={(props) => (
-                                    <TextField
-                                        name="validUntil"
-                                        sx={{ marginTop: 2 }}
-                                        variant="standard"
-                                        fullWidth
-                                        {...props}
-                                    />
-                                )}
+                                slotProps={{
+                                    textField: {
+                                        name: "validUntil",
+                                        sx: { marginTop: 2 },
+                                        variant: "standard",
+                                        fullWidth: true,
+                                    },
+                                }}
                             />
                             <FormControlLabel
                                 sx={{ mt: 2 }}

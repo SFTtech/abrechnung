@@ -117,7 +117,10 @@ export class AbrechnungWebSocket {
     } = {};
     private bareNotificationHandler: SubscriptionCallback[] = [];
 
-    constructor(private url: string, private api: Api) {
+    constructor(
+        private url: string,
+        private api: Api
+    ) {
         // cannot reuse init() here as otherwise ws will be uninitialized
         this.ws = new WebSocket(this.url);
         this.ws.onopen = this.onopen;
@@ -211,39 +214,27 @@ export class AbrechnungWebSocket {
     };
 
     public sendSubscriptionRequest = (subscriptionType: string, elementId: number) => {
-        this.api
-            .getToken()
-            .then((token: string) => {
-                return this.send({
-                    type: "subscribe",
-                    token: token,
-                    data: {
-                        subscription_type: subscriptionType,
-                        element_id: elementId,
-                    },
-                });
-            })
-            .catch((err) => {
-                console.error("error while trying to send subscribe request", err);
-            });
+        const token = this.api.getToken();
+        return this.send({
+            type: "subscribe",
+            token: token,
+            data: {
+                subscription_type: subscriptionType,
+                element_id: elementId,
+            },
+        });
     };
 
     public sendUnsubscriptionRequest = (subscriptionType: string, elementId: number) => {
-        this.api
-            .getToken()
-            .then((token: string) => {
-                this.send({
-                    type: "unsubscribe",
-                    token: token,
-                    data: {
-                        subscription_type: subscriptionType,
-                        element_id: elementId,
-                    },
-                });
-            })
-            .catch((err) => {
-                console.error("error while trying to send unsubscribe request", err);
-            });
+        const token = this.api.getToken();
+        this.send({
+            type: "unsubscribe",
+            token: token,
+            data: {
+                subscription_type: subscriptionType,
+                element_id: elementId,
+            },
+        });
     };
 
     public subscribe = (subscriptionType: SubscriptionType, elementId: number, callback: SubscriptionCallback) => {

@@ -1,3 +1,10 @@
+import {
+    FileAttachment as BackendFileAttachment,
+    Transaction as BackendTransaction,
+    TransactionPosition as BackendTransactionPosition,
+    NewFile,
+    UpdateFile,
+} from "@abrechnung/api";
 import { z } from "zod";
 
 export type TransactionShare = { [k: number]: number };
@@ -7,32 +14,32 @@ export type TransactionType = "purchase" | "transfer";
 const BaseTransactionValidator = z.object({
     name: z.string({ required_error: "Name is required" }).min(1, "Name is required"),
     value: z.number({ required_error: "Value is required" }),
-    billedAt: z
+    billed_at: z
         .string({ required_error: "Billed at is required" })
         .regex(/\d{4}-\d{2}-\d{2}/, "A valid date is required"),
     description: z.string().optional(),
-    currencySymbol: z.string({ required_error: "Currency is required" }).min(1, "Currency is required"),
-    currencyConversionRate: z
+    currency_symbol: z.string({ required_error: "Currency is required" }).min(1, "Currency is required"),
+    currency_conversion_rate: z
         .number({ required_error: "Currency conversion rate is required" })
         .positive("Currency conversion rate must be larger than 0"),
 });
 
 export const PurchaseValidator = z
     .object({
-        creditorShares: z
+        creditor_shares: z
             .record(z.number())
             .refine((shares) => Object.keys(shares).length > 0, "somebody has payed for this"),
-        debitorShares: z.record(z.number()).refine((shares) => Object.keys(shares).length > 0, "select at least one"),
+        debitor_shares: z.record(z.number()).refine((shares) => Object.keys(shares).length > 0, "select at least one"),
     })
     .merge(BaseTransactionValidator)
     .passthrough();
 
 export const TransferValidator = z
     .object({
-        creditorShares: z
+        creditor_shares: z
             .record(z.number())
             .refine((shares) => Object.keys(shares).length > 0, "somebody has payed for this"),
-        debitorShares: z
+        debitor_shares: z
             .record(z.number())
             .refine((shares) => Object.keys(shares).length > 0, "who received this money?"),
     })
@@ -44,35 +51,16 @@ export const TransactionValidator = z.discriminatedUnion("type", [
     TransferValidator.merge(z.object({ type: z.literal("transfer") })),
 ]);
 
-export interface TransactionAttachment {
-    id: number;
-    transactionID: number;
-    filename: string;
-    blobID: number;
-    url: string;
-    deleted: boolean;
-}
-
-export interface TransactionPosition {
-    id: number;
-    transactionID: number;
-    name: string;
-    price: number;
-    communistShares: number;
-    usages: TransactionShare;
-    deleted: boolean;
-}
-
 export const PositionValidator = z
     .object({
         name: z.string({ required_error: "name is required" }).min(1, "name is required"),
         price: z.number({ required_error: "price is required" }),
-        communistShares: z.number({ required_error: "price is required" }),
+        communist_shares: z.number({ required_error: "price is required" }),
         usages: z.record(z.number()),
     })
     .refine(
         (position) => {
-            if (Object.keys(position.usages).length === 0 && position.communistShares === 0) {
+            if (Object.keys(position.usages).length === 0 && position.communist_shares === 0) {
                 return false;
             }
             return true;
@@ -89,61 +77,26 @@ export interface TransactionAccountBalance {
 
 export type TransactionBalanceEffect = { [k: number]: TransactionAccountBalance };
 
-interface CommonTransactionMetadata {
-    // static fields which never change through the lifetime of a transaction
-    id: number;
-    groupID: number;
-    type: TransactionType;
-
-    // fields that can change and are part of a transaction
-    name: string;
-    description: string;
-    value: number;
-    currencySymbol: string;
-    currencyConversionRate: number;
-    billedAt: string;
-    tags: string[];
-    creditorShares: TransactionShare;
-    debitorShares: TransactionShare;
-    deleted: boolean;
-
-    attachments: number[];
-}
-
-export interface PurchaseBase extends CommonTransactionMetadata {
-    type: "purchase";
-    positions: number[];
-}
-
-export interface TransferBase extends CommonTransactionMetadata {
-    type: "transfer";
-}
-
-export type TransactionBase = PurchaseBase | TransferBase;
-
-interface TransactionMetadata {
-    // fields that can change and are computed
-    hasLocalChanges: boolean;
-    lastChanged: string;
-    isWip: boolean;
-}
-
-export type Purchase = PurchaseBase & TransactionMetadata;
-export type Transfer = TransferBase & TransactionMetadata;
-
-export type TransactionTypeMap = {
-    purchase: Purchase;
-    transfer: Transfer;
+export type TransactionPosition = BackendTransactionPosition & {
+    is_changed: boolean;
+    only_local: boolean;
 };
 
-export type Transaction = Purchase | Transfer;
+export type UpdatedFileAttachment = { blob_id: number | null; mime_type: string | null } & UpdateFile;
 
-/**
- * mainly used easier internal parameter passing,
- * e.g. when returning data from the http api wrappers
- */
-export interface TransactionContainer {
-    transaction: Transaction;
-    positions: TransactionPosition[];
-    attachments: TransactionAttachment[];
-}
+export type FileAttachment =
+    | (BackendFileAttachment & { type: "backend" })
+    | ({ type: "updated" } & UpdatedFileAttachment)
+    | ({ type: "new"; id: number } & NewFile);
+
+export type Transaction = Omit<BackendTransaction, "positions" | "files" | "is_wip"> & {
+    is_wip: boolean;
+    positions: {
+        [k: number]: TransactionPosition;
+    };
+    position_ids: number[];
+    files: {
+        [k: number]: FileAttachment;
+    };
+    file_ids: number[];
+};

@@ -1,9 +1,9 @@
+import { Button, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Loading from "../../components/style/Loading";
 import { api } from "../../core/api";
-import { Button, Typography } from "@mui/material";
 import { useTitle } from "../../core/utils";
 
 export const ConfirmEmailChange: React.FC = () => {
@@ -15,7 +15,8 @@ export const ConfirmEmailChange: React.FC = () => {
     const confirmEmail = (e) => {
         e.preventDefault();
         setStatus("loading");
-        api.confirmEmailChange(token)
+        api.client.auth
+            .confirmEmailChange({ requestBody: { token } })
             .then((value) => {
                 setStatus("success");
             })

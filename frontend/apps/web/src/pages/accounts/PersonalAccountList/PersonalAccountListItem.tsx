@@ -1,15 +1,15 @@
-import React from "react";
-import { ListItem, ListItemText, Chip, ListItemSecondaryAction, IconButton } from "@mui/material";
-import { Edit, Delete } from "@mui/icons-material";
-import { ListItemLink } from "../../../components/style/ListItemLink";
-import { useAppSelector, selectAccountSlice, selectGroupSlice, useAppDispatch } from "../../../store";
 import {
+    accountEditStarted,
     selectAccountById,
     selectCurrentUserPermissions,
     selectGroupMemberIdToUsername,
-    accountEditStarted,
 } from "@abrechnung/redux";
+import { Delete, Edit } from "@mui/icons-material";
+import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText } from "@mui/material";
+import React from "react";
 import { useNavigate } from "react-router-dom";
+import { ListItemLink } from "../../../components/style/ListItemLink";
+import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "../../../store";
 import { getAccountLink } from "../../../utils";
 
 interface Props {
@@ -32,14 +32,14 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
     );
 
     const edit = () => {
-        if (!account.isWip) {
+        if (!account.is_wip) {
             dispatch(accountEditStarted({ groupId, accountId }));
         }
         navigate(getAccountLink(groupId, account.type, account.id));
     };
     let owningUserInfo = null;
-    if (account.type === "personal" && account.owningUserID !== null) {
-        if (account.owningUserID === currentUserId) {
+    if (account.type === "personal" && account.owning_user_id !== null) {
+        if (account.owning_user_id === currentUserId) {
             owningUserInfo = (
                 <span>
                     , owned by <Chip size="small" component="span" color="primary" label="you" />
@@ -53,7 +53,7 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
                         size="small"
                         component="span"
                         color="secondary"
-                        label={memberIDToUsername[account.owningUserID]}
+                        label={memberIDToUsername[account.owning_user_id]}
                     />
                 </span>
             );
@@ -68,7 +68,7 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
                     secondaryTypographyProps={{ component: "div" }}
                     primary={
                         <div>
-                            {account.isWip && (
+                            {account.is_wip && (
                                 <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 1 }} />
                             )}
                             <span>{account.name}</span>

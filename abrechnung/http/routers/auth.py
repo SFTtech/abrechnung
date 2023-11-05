@@ -1,15 +1,14 @@
 from typing import Optional
 
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
 
-from abrechnung.core.errors import InvalidCommand
-from abrechnung.application.users import InvalidPassword
-from abrechnung.application.users import UserService
+from abrechnung.application.users import InvalidPassword, UserService
 from abrechnung.config import Config
+from abrechnung.core.errors import InvalidCommand
 from abrechnung.domain.users import User
-from abrechnung.http.auth import get_current_user, get_current_session_id
+from abrechnung.http.auth import get_current_session_id, get_current_user
 from abrechnung.http.dependencies import get_config, get_user_service
 
 router = APIRouter(
@@ -21,29 +20,22 @@ router = APIRouter(
 class Token(BaseModel):
     user_id: int
     access_token: str
-    session_token: str
 
 
 @router.post(
-    "/v1/auth/token", summary="login with username and password", response_model=Token
+    "/v1/auth/token", summary="login with username and password", response_model=Token, operation_id="get_token"
 )
-async def token(
+async def get_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
     user_service: UserService = Depends(get_user_service),
 ):
-    user_id, session_id, session_token = await user_service.login_user(
+    user_id, session_id, access_token = await user_service.login_user(
         username=form_data.username,
         password=form_data.password,
         session_name="foobar",  # TODO: FIXME
     )
 
-    access_token = await user_service.get_access_token_from_session_token(
-        session_token=session_token
-    )
-
-    return Token(
-        user_id=user_id, access_token=access_token, session_token=session_token
-    )
+    return Token(user_id=user_id, access_token=access_token)
 
 
 class LoginPayload(BaseModel):
@@ -52,32 +44,25 @@ class LoginPayload(BaseModel):
     session_name: str
 
 
-@router.post(
-    "/v1/auth/login", summary="login with username and password", response_model=Token
-)
+@router.post("/v1/auth/login", summary="login with username and password", response_model=Token, operation_id="login")
 async def login(
     payload: LoginPayload,
     user_service: UserService = Depends(get_user_service),
 ):
-    user_id, session_id, session_token = await user_service.login_user(
+    user_id, session_id, access_token = await user_service.login_user(
         username=payload.username,
         password=payload.password,
         session_name=payload.session_name,
     )
 
-    access_token = await user_service.get_access_token_from_session_token(
-        session_token=session_token
-    )
-
-    return Token(
-        user_id=user_id, access_token=access_token, session_token=session_token
-    )
+    return Token(user_id=user_id, access_token=access_token)
 
 
 @router.post(
     "/v1/auth/logout",
     summary="sign out of the current session",
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="logout",
 )
 async def logout(
     session_id: int = Depends(get_current_session_id),
@@ -87,27 +72,6 @@ async def logout(
     await user_service.logout_user(session_id=session_id, user=user)
 
 
-class FetchAccessTokenPayload(BaseModel):
-    token: str
-
-
-@router.post(
-    "/v1/auth/fetch_access_token",
-    summary="get a short lived access token ussing a session token",
-)
-async def fetch_access_token(
-    payload: FetchAccessTokenPayload,
-    user_service: UserService = Depends(get_user_service),
-):
-    access_token = await user_service.get_access_token_from_session_token(
-        session_token=payload.token
-    )
-
-    return {
-        "access_token": access_token,
-    }
-
-
 class RegisterPayload(BaseModel):
     username: str
     password: str
@@ -115,7 +79,13 @@ class RegisterPayload(BaseModel):
     invite_token: Optional[str] = None
 
 
-@router.post("/v1/auth/register", summary="register a new user")
+class RegisterResponse(BaseModel):
+    user_id: int
+
+
+@router.post(
+    "/v1/auth/register", summary="register a new user", response_model=RegisterResponse, operation_id="register"
+)
 async def register(
     payload: RegisterPayload,
     config: Config = Depends(get_config),
@@ -135,7 +105,7 @@ async def register(
             invite_token=payload.invite_token,
         )
 
-    return {"user_id": str(user_id)}
+    return RegisterResponse(user_id=user_id)
 
 
 class ConfirmRegistrationPayload(BaseModel):
@@ -146,6 +116,7 @@ class ConfirmRegistrationPayload(BaseModel):
     "/v1/auth/confirm_registration",
     summary="confirm a pending registration",
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="confirm_registration",
 )
 async def confirm_registration(
     payload: ConfirmRegistrationPayload,
@@ -157,10 +128,8 @@ async def confirm_registration(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.get(
-    "/v1/profile", summary="fetch user profile information", response_model=User
-)
-async def profile(
+@router.get("/v1/profile", summary="fetch user profile information", response_model=User, operation_id="get_profile")
+async def get_profile(
     user: User = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
 ):
@@ -176,6 +145,7 @@ class ChangePasswordPayload(BaseModel):
     "/v1/profile/change_password",
     summary="change password",
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="change_password",
 )
 async def change_password(
     payload: ChangePasswordPayload,
@@ -201,6 +171,7 @@ class ChangeEmailPayload(BaseModel):
     "/v1/profile/change_email",
     summary="change email",
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="change_email",
 )
 async def change_email(
     payload: ChangeEmailPayload,
@@ -225,6 +196,7 @@ class ConfirmEmailChangePayload(BaseModel):
     "/v1/auth/confirm_email_change",
     summary="confirm a pending email change",
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="confirm_email_change",
 )
 async def confirm_email_change(
     payload: ConfirmEmailChangePayload,
@@ -241,6 +213,7 @@ class RecoverPasswordPayload(BaseModel):
     "/v1/auth/recover_password",
     summary="recover password",
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="recover_password",
 )
 async def recover_password(
     payload: RecoverPasswordPayload,
@@ -263,15 +236,14 @@ class ConfirmPasswordRecoveryPayload(BaseModel):
     "/v1/auth/confirm_password_recovery",
     summary="confirm a pending password recovery",
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="confirm_password_recovery",
 )
 async def confirm_password_recovery(
     payload: ConfirmPasswordRecoveryPayload,
     user_service: UserService = Depends(get_user_service),
 ):
     try:
-        await user_service.confirm_password_recovery(
-            token=payload.token, new_password=payload.new_password
-        )
+        await user_service.confirm_password_recovery(token=payload.token, new_password=payload.new_password)
     except PermissionError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -284,6 +256,7 @@ class DeleteSessionPayload(BaseModel):
     "/v1/auth/delete_session",
     summary="delete a given user session",
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="delete_session",
 )
 async def delete_session(
     payload: DeleteSessionPayload,
@@ -302,6 +275,7 @@ class RenameSessionPayload(BaseModel):
     "/v1/auth/rename_session",
     summary="rename a given user session",
     status_code=status.HTTP_204_NO_CONTENT,
+    operation_id="rename_session",
 )
 async def rename_session(
     payload: RenameSessionPayload,

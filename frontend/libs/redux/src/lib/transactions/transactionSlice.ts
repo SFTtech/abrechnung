@@ -1,29 +1,25 @@
-import { Api } from "@abrechnung/api";
-import { computeTransactionBalanceEffect, getTransactionSortFunc, TransactionSortMode } from "@abrechnung/core";
 import {
-    Purchase,
+    Api,
+    Transaction as BackendTransaction,
+    TransactionPosition as BackendTransactionPosition,
+    NewFile,
+    NewTransactionPosition,
+    UpdateFile,
+} from "@abrechnung/api";
+import { TransactionSortMode, computeTransactionBalanceEffect, getTransactionSortFunc } from "@abrechnung/core";
+import {
+    FileAttachment,
     Transaction,
-    TransactionAttachment,
     TransactionBalanceEffect,
-    TransactionBase,
-    TransactionContainer,
     TransactionPosition,
     TransactionType,
-    TransactionTypeMap,
 } from "@abrechnung/types";
 import { toISODateString } from "@abrechnung/utils";
-import { createAsyncThunk, createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
+import { Draft, PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import memoize from "proxy-memoize";
 import { leaveGroup } from "../groups";
-import {
-    ENABLE_OFFLINE_MODE,
-    IRootState,
-    ITransactionRootState,
-    StateStatus,
-    TransactionSliceState,
-    TransactionState,
-} from "../types";
-import { addEntity, EntityState, getGroupScopedState, removeEntity } from "../utils";
+import { IRootState, ITransactionRootState, StateStatus, TransactionSliceState, TransactionState } from "../types";
+import { addEntity, getGroupScopedState, removeEntity } from "../utils";
 
 export const initializeGroupState = (state: Draft<TransactionSliceState>, groupId: number) => {
     if (state.byGroupId[groupId]) {
@@ -39,269 +35,85 @@ export const initializeGroupState = (state: Draft<TransactionSliceState>, groupI
             byId: {},
             ids: [],
         },
-        pendingTransactions: {
-            byId: {},
-            ids: [],
-        },
-        positions: {
-            byId: {},
-            ids: [],
-        },
-        wipPositions: {
-            byId: {},
-            ids: [],
-        },
-        pendingPositions: {
-            byId: {},
-            ids: [],
-        },
-        attachments: {
-            byId: {},
-            ids: [],
-        },
         status: "loading",
     };
 };
 
-export const selectGroupTransactionsStatus = memoize(
-    (args: { state: TransactionSliceState; groupId: number }): StateStatus | undefined => {
-        const { state, groupId } = args;
-        if (!state.byGroupId[groupId]) {
-            return undefined;
-        }
-        return state.byGroupId[groupId].status;
-    }
-);
-
-const selectGroupTransactionIdsInternal = (args: { state: TransactionSliceState; groupId: number }): number[] => {
-    const t = performance.now();
+export const selectGroupTransactionsStatus = (args: {
+    state: TransactionSliceState;
+    groupId: number;
+}): StateStatus | undefined => {
     const { state, groupId } = args;
-    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-    // TODO: merge wip changes here
-    const res = s.transactions.ids
-        .concat(...s.pendingTransactions.ids.filter((id) => id < 0))
-        .concat(...s.wipTransactions.ids.filter((id) => id < 0 && s.pendingTransactions.ids[id] === undefined))
-        .filter(
-            (id) =>
-                !(
-                    s.wipTransactions.byId[id]?.deleted ??
-                    s.pendingTransactions.byId[id]?.deleted ??
-                    s.transactions.byId[id]?.deleted
-                )
-        );
-    console.log("selectGroupTransactionIdsInternal took " + (performance.now() - t) + " milliseconds.");
-    return res;
+    if (!state.byGroupId[groupId]) {
+        return undefined;
+    }
+    return state.byGroupId[groupId].status;
 };
 
-export const selectGroupTransactionIds = memoize(selectGroupTransactionIdsInternal, { size: 5 });
-
-export const selectGroupTransactionsInternal = (args: {
+export const selectGroupTransactionsWithoutWipInternal = (args: {
     state: TransactionSliceState;
     groupId: number;
 }): Transaction[] => {
-    const t = performance.now();
     const { state, groupId } = args;
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-    const transactionIds = selectGroupTransactionIdsInternal({ state, groupId });
-    const res = transactionIds.map(
-        (id) => s.wipTransactions.byId[id] ?? s.pendingTransactions.byId[id] ?? s.transactions.byId[id]
-    );
-    console.log("selectGroupTransactionsInternal took " + (performance.now() - t) + " milliseconds.");
-    return res;
+    return s.transactions.ids.map((id) => s.transactions.byId[id]);
 };
-export const selectGroupTransactions = memoize(selectGroupTransactionsInternal, { size: 5 });
+export const selectGroupTransactionsWithoutWip = memoize(selectGroupTransactionsWithoutWipInternal, { size: 5 });
 
-export const selectTransactionByIdMap = memoize(
-    (args: { state: TransactionSliceState; groupId: number }): { [k: number]: Transaction } => {
-        const { state, groupId } = args;
-        const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-        const transactionIds = selectGroupTransactionIdsInternal({ state, groupId });
-        return transactionIds.reduce<{ [k: number]: Transaction }>((map, id) => {
-            map[id] = s.wipTransactions.byId[id] ?? s.pendingTransactions.byId[id] ?? s.transactions.byId[id];
-            return map;
-        }, {});
-    }
-);
-
-const selectGroupPositionIdsInternal = (args: { state: TransactionSliceState; groupId: number }): number[] => {
-    const { state, groupId } = args;
-    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-    // TODO: merge wip changes here
-    return s.positions.ids
-        .concat(...s.pendingPositions.ids.filter((id) => id < 0))
-        .concat(...s.wipPositions.ids.filter((id) => id < 0 && s.pendingPositions.ids[id] === undefined))
-        .filter(
-            (id) =>
-                !(
-                    s.wipPositions.byId[id]?.deleted ??
-                    s.pendingPositions.byId[id]?.deleted ??
-                    s.positions.byId[id]?.deleted
-                )
-        );
-};
-
-export const selectGroupPositionIds = memoize(selectGroupPositionIdsInternal, { size: 5 });
-
-export const selectGroupPositionsInternal = (args: {
+export const selectGroupTransactionsWithWipInternal = (args: {
     state: TransactionSliceState;
     groupId: number;
-}): TransactionPosition[] => {
+}): Transaction[] => {
     const { state, groupId } = args;
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-    const positionIds = selectGroupPositionIdsInternal({ state, groupId });
-    return positionIds.map((id) => s.wipPositions.byId[id] ?? s.pendingPositions.byId[id] ?? s.positions.byId[id]);
+    const transactions = s.transactions.ids
+        .filter((id) => !(id in s.wipTransactions.byId))
+        .map((id) => s.transactions.byId[id]);
+    const wipTransactions = s.wipTransactions.ids.map((id) => s.wipTransactions.byId[id]);
+    return transactions.concat(wipTransactions).filter((t) => !t.deleted);
 };
+export const selectGroupTransactionsWithWip = memoize(selectGroupTransactionsWithWipInternal, { size: 5 });
 
-export const selectGroupPositions = memoize(selectGroupPositionsInternal, { size: 5 });
-
-export const selectTransactionPositionMapInternal = (args: {
+export const selectTransactionByIdMap = (args: {
     state: TransactionSliceState;
     groupId: number;
-}): { [k: number]: TransactionPosition[] } => {
+}): { [k: number]: Transaction } => {
     const { state, groupId } = args;
-    const transactionIds = selectGroupTransactionIdsInternal(args);
-    return transactionIds.reduce<{ [k: number]: TransactionPosition[] }>((map, transactionId) => {
-        const positions = selectTransactionPositionsInternal({ state, groupId, transactionId });
-        map[transactionId] = positions;
-        return map;
-    }, {});
+    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+    return s.transactions.byId;
 };
 
-export const selectTransactionPositionMap = memoize(selectTransactionPositionMapInternal);
-
-const selectTransactionByIdInternal = (args: {
+export const selectTransactionByIdInternal = (args: {
     state: TransactionSliceState;
     groupId: number;
     transactionId: number;
 }): Transaction | undefined => {
     const { state, groupId, transactionId } = args;
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-    return getTransactionWithWip(s, transactionId);
+    return s.wipTransactions.byId[transactionId] ?? s.transactions.byId[transactionId];
 };
-
 export const selectTransactionById = memoize(selectTransactionByIdInternal);
 
-const selectTransactionIsWipInternal = (args: {
-    state: TransactionSliceState;
-    groupId: number;
-    transactionId: number;
-}): boolean => {
-    const transaction = selectTransactionByIdInternal(args);
-    if (!transaction) {
-        return false;
-    }
-    return transaction.isWip;
-};
-
-export const selectTransactionIsWip = memoize(selectTransactionIsWipInternal);
 export const selectNextLocalPositionId = memoize((args: { state: TransactionSliceState }): number => {
     const { state } = args;
     return state.nextLocalPositionId;
 });
 
-export const selectTransactionHasAttachments = memoize(
-    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): boolean => {
-        const { state, groupId } = args;
-        const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-        const transaction = selectTransactionByIdInternal(args);
-        if (!transaction) {
-            return false;
-        }
-
-        return transaction.attachments.reduce((isNotDeleted, attachmentId) => {
-            return s.attachments.byId[attachmentId].deleted ? isNotDeleted : true;
-        }, false);
-    }
-);
-
-export const selectTransactionAttachments = memoize(
-    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): TransactionAttachment[] => {
-        const { state, groupId, transactionId } = args;
-        const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-        const attachmentIds = new Set<number>([
-            ...(s.wipTransactions.byId[transactionId]?.attachments ?? []),
-            ...(s.transactions.byId[transactionId]?.attachments ?? []),
-            ...(s.pendingTransactions.byId[transactionId]?.attachments ?? []),
-        ]);
-        return Array.from(attachmentIds)
-            .map((id) => s.attachments.byId[id])
-            .filter((a) => !a.deleted);
-    }
-);
-
-const selectTransactionPositionIdsInternal = (args: {
-    state: TransactionSliceState;
-    groupId: number;
-    transactionId: number;
-}): number[] => {
-    const { state, groupId, transactionId } = args;
-    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-    const wipTransaction = s.wipTransactions.byId[transactionId];
-    const pendingTransaction = s.pendingTransactions.byId[transactionId];
-    const transaction = s.transactions.byId[transactionId];
-    if (
-        (wipTransaction !== undefined && wipTransaction.type !== "purchase") ||
-        (pendingTransaction !== undefined && pendingTransaction.type !== "purchase") ||
-        (transaction !== undefined && transaction.type !== "purchase")
-    ) {
-        return [];
-    }
-    const positionIds = new Set<number>([
-        ...((wipTransaction as Purchase | undefined)?.positions ?? []), // TODO: FIXME apparently the compiler is not smart enough to get this
-        ...((pendingTransaction as Purchase | undefined)?.positions ?? []),
-        ...((transaction as Purchase | undefined)?.positions ?? []),
-    ]);
-    return Array.from(positionIds);
-};
-
-const selectTransactionPositionsInternal = (args: {
-    state: TransactionSliceState;
-    groupId: number;
-    transactionId: number;
-}): TransactionPosition[] => {
-    const { state, groupId, transactionId } = args;
-    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-    const positionIds = selectTransactionPositionIdsInternal(args);
-    return Array.from(positionIds)
-        .map((id) => {
-            const pos = s.wipPositions.byId[id] ?? s.pendingPositions.byId[id] ?? s.positions.byId[id];
-            if (pos === undefined) {
-                console.warn("position is undefined for transaction", transactionId, "position id", id);
-            }
-            return pos;
-        })
-        .filter((p) => p && !p.deleted);
-};
-
-export const selectTransactionPositions = memoize(selectTransactionPositionsInternal);
-
-export const selectTransactionHasPositions = memoize(
-    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): boolean => {
-        const positions = selectTransactionPositionsInternal(args);
-        return positions.length > 0;
-    }
-);
-
-export const selectTransactionPositionTotal = memoize(
-    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): number => {
-        const positions = selectTransactionPositionsInternal(args);
-        return positions.reduce((sum, pos) => sum + pos.price, 0);
-    }
-);
-
-export const selectTransactionPositionsWithEmpty = memoize(
+export const selectWipTransactionPositions = memoize(
     (args: { state: TransactionSliceState; groupId: number; transactionId: number }): TransactionPosition[] => {
-        const { state, transactionId } = args;
-        const positions = selectTransactionPositionsInternal(args);
-        const isWip = selectTransactionIsWipInternal(args);
-        if (isWip) {
+        const { state, groupId, transactionId } = args;
+        const transaction = selectTransactionByIdInternal({ state, groupId, transactionId });
+        const positions =
+            transaction?.position_ids.map((id) => transaction.positions[id]).filter((p) => !p.deleted) ?? [];
+        if (transaction?.is_wip) {
             return [
                 ...positions,
                 {
                     id: state.nextLocalPositionId,
-                    transactionID: transactionId,
                     name: "",
-                    communistShares: 0,
+                    communist_shares: 0,
+                    is_changed: false,
+                    only_local: true,
                     price: 0,
                     usages: {},
                     deleted: false,
@@ -313,36 +125,79 @@ export const selectTransactionPositionsWithEmpty = memoize(
     }
 );
 
-export const selectTransactionBalanceEffectInternal = (args: {
-    state: TransactionSliceState;
-    groupId: number;
-    transactionId: number;
-}): TransactionBalanceEffect | undefined => {
-    const transaction = selectTransactionByIdInternal(args);
-    if (!transaction) {
-        return undefined;
+export const selectTransactionHasPositions = memoize(
+    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): boolean => {
+        const { state, groupId, transactionId } = args;
+        const transaction = selectTransactionByIdInternal({ state, groupId, transactionId });
+        if (!transaction) {
+            return false;
+        }
+        return transaction.position_ids.reduce<boolean>((acc, id) => {
+            return acc || !transaction.positions[id].deleted;
+        }, false);
     }
-    const positions = selectTransactionPositionsInternal(args);
-    return computeTransactionBalanceEffect(transaction, positions);
-};
+);
 
-export const selectTransactionBalanceEffect = memoize(selectTransactionBalanceEffectInternal);
+export const selectTransactionFiles = memoize(
+    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): FileAttachment[] => {
+        const { state, groupId, transactionId } = args;
+        const transaction = selectTransactionByIdInternal({ state, groupId, transactionId });
+        if (!transaction) {
+            return [];
+        }
+        return transaction.file_ids
+            .filter((id) => {
+                const file = transaction.files[id];
+                if (file.type !== "new" && file.deleted) {
+                    return false;
+                }
+                return true;
+            })
+            .map((id) => transaction.files[id]);
+    }
+);
+
+export const selectTransactionHasFiles = memoize(
+    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): boolean => {
+        const { state, groupId, transactionId } = args;
+        const transaction = selectTransactionByIdInternal({ state, groupId, transactionId });
+        if (!transaction) {
+            return false;
+        }
+        return transaction.file_ids.reduce<boolean>((acc, id) => {
+            const file = transaction.files[id];
+            if (file.type === "new") {
+                return true;
+            }
+            return acc || !file.deleted;
+        }, false);
+    }
+);
+
+export const selectTransactionBalanceEffect = memoize(
+    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): TransactionBalanceEffect => {
+        const { state, groupId, transactionId } = args;
+        const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+        const transaction = s.wipTransactions.byId[transactionId] ?? s.transactions.byId[transactionId];
+        return computeTransactionBalanceEffect(transaction);
+    }
+);
 
 export const selectTransactionBalanceEffectsInternal = (args: {
     state: TransactionSliceState;
     groupId: number;
 }): { [k: number]: TransactionBalanceEffect } => {
-    const s = performance.now();
     const { state, groupId } = args;
-    const transactionIds = selectGroupTransactionIdsInternal(args);
+    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+    const transactionIds = s.transactions.ids;
     const res = transactionIds.reduce<{ [k: number]: TransactionBalanceEffect }>((map, transactionId) => {
-        const balanceEffect = selectTransactionBalanceEffectInternal({ state, groupId, transactionId });
+        const transaction = s.transactions.byId[transactionId];
+        const balanceEffect = computeTransactionBalanceEffect(transaction);
         if (balanceEffect) {
             map[transactionId] = balanceEffect;
         }
         return map;
     }, {});
-    console.log("selectTransactionBalanceEffectsInternal took " + (performance.now() - s) + " milliseconds.");
     return res;
 };
 
@@ -375,20 +230,20 @@ export const selectTransactionsInvolvingAccount = memoize(
         const { state, groupId, sortMode } = args;
         const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
         return transactionIds
-            .map((id) => s.wipTransactions.byId[id] ?? s.pendingTransactions.byId[id] ?? s.transactions.byId[id])
-            .sort(getTransactionSortFunc(sortMode ?? "lastChanged"));
+            .map((id) => s.wipTransactions.byId[id] ?? s.transactions.byId[id])
+            .sort(getTransactionSortFunc(sortMode ?? "last_changed"));
     }
 );
 
 // async thunks
 export const fetchTransactions = createAsyncThunk<
-    TransactionContainer[],
+    BackendTransaction[],
     { groupId: number; api: Api; fetchAnyway?: boolean },
     { state: IRootState }
 >(
     "fetchTransactions",
     async ({ groupId, api }) => {
-        return await api.fetchTransactions(groupId);
+        return await api.client.transactions.listTransactions({ groupId });
     },
     {
         condition: ({ groupId, fetchAnyway = false }, { getState }): boolean => {
@@ -409,11 +264,11 @@ export const fetchTransactions = createAsyncThunk<
 );
 
 export const fetchTransaction = createAsyncThunk<
-    TransactionContainer,
+    BackendTransaction,
     { transactionId: number; api: Api },
     { state: IRootState }
 >("fetchTransaction", async ({ transactionId, api }) => {
-    return await api.fetchTransaction(transactionId);
+    return await api.client.transactions.getTransaction({ transactionId });
 });
 
 export const createTransaction = createAsyncThunk<
@@ -424,15 +279,7 @@ export const createTransaction = createAsyncThunk<
         data?: Partial<
             Omit<
                 Transaction,
-                | "id"
-                | "type"
-                | "positions"
-                | "groupId"
-                | "hasLocalChanges"
-                | "isWip"
-                | "lastChanged"
-                | "deleted"
-                | "attachments"
+                "id" | "type" | "positions" | "group_id" | "is_wip" | "last_changed" | "deleted" | "files"
             >
         >;
     },
@@ -442,35 +289,36 @@ export const createTransaction = createAsyncThunk<
     const transactionId = state.transactions.nextLocalTransactionId;
     const transactionBase = {
         id: transactionId,
-        groupID: groupId,
+        group_id: groupId,
         name: "",
         description: "",
         value: 0,
-        currencyConversionRate: 1.0,
-        currencySymbol: "€",
-        billedAt: toISODateString(new Date()),
-        creditorShares: {},
-        debitorShares: {},
+        currency_conversion_rate: 1.0,
+        currency_symbol: "€",
+        billed_at: toISODateString(new Date()),
+        creditor_shares: {},
+        debitor_shares: {},
         tags: [],
-        deleted: false,
-        positions: [],
-        attachments: [],
-        hasLocalChanges: true,
-        isWip: true,
-        lastChanged: new Date().toISOString(),
+        positions: {},
+        position_ids: [],
+        files: {},
+        file_ids: [],
         ...data,
+        deleted: false,
+        last_changed: new Date().toISOString(),
     };
     let transaction: Transaction;
     if (type === "purchase") {
         transaction = {
             ...transactionBase,
             type: "purchase",
-            positions: [],
+            is_wip: true,
         };
     } else {
         transaction = {
             ...transactionBase,
             type: "transfer",
+            is_wip: true,
         };
     }
     dispatch(advanceNextLocalTransactionId());
@@ -480,96 +328,90 @@ export const createTransaction = createAsyncThunk<
 export const saveTransaction = createAsyncThunk<
     {
         oldTransactionId: number;
-        oldPositionIds: number[];
-        transactionContainer: TransactionContainer;
-        isSynced: boolean;
+        transaction: BackendTransaction;
     },
     { groupId: number; transactionId: number; api: Api },
     { state: IRootState }
 >("saveTransaction", async ({ groupId, transactionId, api }, { getState, dispatch, rejectWithValue }) => {
     const state = getState();
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state.transactions, groupId);
-    let wipTransaction = s.wipTransactions.byId[transactionId];
+    const wipTransaction = s.wipTransactions.byId[transactionId];
     if (!wipTransaction) {
-        wipTransaction = s.pendingTransactions.byId[transactionId] ?? s.transactions.byId[transactionId];
-        if (wipTransaction === undefined || !wipTransaction.isWip) {
-            // TODO: maybe cancel action instead of rejecting
-            return rejectWithValue("cannot save a transaction without wip changes");
-        }
+        return rejectWithValue("cannot save a transaction without wip changes");
     }
 
-    // TODO: include pendingPositionChanges for offline mode
-    let wipPositionIds: number[] = [];
-    let wipPositions: TransactionPosition[] = [];
-    if (wipTransaction.type === "purchase") {
-        wipPositionIds = wipTransaction.positions.filter((positionId) => s.wipPositions.byId[positionId] !== undefined);
-        wipPositions = wipPositionIds.map((positionId) => s.wipPositions.byId[positionId]);
-    }
-
-    let updatedTransactionContainer: TransactionContainer;
-    let isSynced: boolean;
-    if (await api.hasConnection()) {
-        updatedTransactionContainer = await api.pushTransactionChanges(wipTransaction, wipPositions, true);
-        isSynced = true;
-    } else if (ENABLE_OFFLINE_MODE) {
-        // TODO: IMPLEMENT properly
-        updatedTransactionContainer = {
-            transaction: {
-                ...wipTransaction,
-                hasLocalChanges: true,
-                isWip: false,
-                lastChanged: new Date().toISOString(),
-            },
-            positions: [...wipPositions],
-            attachments: [],
-        };
-        isSynced = false;
-        throw new Error("not implemented fully");
-    } else {
+    let updatedTransaction: BackendTransaction;
+    if (!(await api.hasConnection())) {
         throw new Error("no internet connection");
+    }
+    const newPositions: NewTransactionPosition[] = Object.values(wipTransaction.positions)
+        .filter((p) => p.is_changed && p.only_local)
+        .map((p) => ({
+            name: p.name,
+            communist_shares: p.communist_shares,
+            price: p.price,
+            usages: p.usages,
+        }));
+    const changedPositions: BackendTransactionPosition[] = Object.values(wipTransaction.positions)
+        .filter((p) => p.is_changed && !p.only_local)
+        .map((p) => ({
+            id: p.id,
+            name: p.name,
+            communist_shares: p.communist_shares,
+            price: p.price,
+            usages: p.usages,
+            deleted: p.deleted,
+        }));
+
+    const newFiles: NewFile[] = (Object.values(wipTransaction.files).filter((f) => f.type === "new") as NewFile[]).map(
+        (f) => ({
+            filename: f.filename,
+            // strip away the metadata from the base64 string
+            content: f.content.includes(",") ? f.content.split(",")[1] : f.content,
+            mime_type: f.mime_type,
+        })
+    );
+    console.log("newFIles", newFiles);
+    const changedFiles: UpdateFile[] = (
+        Object.values(wipTransaction.files).filter((f) => f.type === "updated") as UpdateFile[]
+    ).map((f) => ({
+        id: f.id,
+        filename: f.filename,
+        deleted: f.deleted,
+    }));
+
+    // remove keys we don't want to send to the backend
+    const { position_ids, positions, ...body } = wipTransaction;
+
+    if (wipTransaction.id < 0) {
+        updatedTransaction = await api.client.transactions.createTransaction({
+            groupId,
+            requestBody: {
+                ...body,
+                new_positions: newPositions,
+                new_files: newFiles,
+            },
+        });
+    } else {
+        updatedTransaction = await api.client.transactions.updateTransaction({
+            transactionId: wipTransaction.id,
+            requestBody: {
+                ...body,
+                new_positions: newPositions,
+                changed_positions: changedPositions,
+                new_files: newFiles,
+                changed_files: changedFiles,
+            },
+        });
     }
     return {
         oldTransactionId: transactionId,
-        oldPositionIds: wipPositionIds,
-        transactionContainer: updatedTransactionContainer,
-        isSynced: isSynced,
-    };
-});
-
-export const discardTransactionChange = createAsyncThunk<
-    { transaction: TransactionContainer | undefined; deletedTransaction: boolean },
-    { groupId: number; transactionId: number; api: Api },
-    { state: IRootState }
->("discardTransactionChange", async ({ groupId, transactionId, api }, { getState, rejectWithValue }) => {
-    const state = getState();
-    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state.transactions, groupId);
-    const wipTransaction = s.wipTransactions.byId[transactionId];
-    if (!wipTransaction) {
-        const transaction = s.transactions.byId[transactionId];
-        if (transaction && transaction.isWip) {
-            if (await api.hasConnection()) {
-                const resp = await api.discardTransactionChange(transactionId);
-                return { transaction: resp, deletedTransaction: false };
-            } else {
-                return rejectWithValue("cannot discard server side changes without an internet connection");
-            }
-        }
-
-        return {
-            transaction: undefined,
-            deletedTransaction: false,
-        };
-    }
-
-    return {
-        transaction: undefined,
-        deletedTransaction:
-            s.transactions.byId[transactionId] === undefined && s.pendingTransactions.byId[transactionId] === undefined,
+        transaction: updatedTransaction,
     };
 });
 
 export const deleteTransaction = createAsyncThunk<
-    { transaction: Transaction | undefined; isSynced: boolean },
+    { transaction: BackendTransaction | undefined },
     { groupId: number; transactionId: number; api: Api },
     { state: IRootState }
 >("deleteTransaction", async ({ groupId, transactionId, api }, { getState, rejectWithValue }) => {
@@ -580,86 +422,69 @@ export const deleteTransaction = createAsyncThunk<
     const transaction = s.transactions.byId[transactionId];
     if (transaction) {
         if (await api.hasConnection()) {
-            const container = await api.deleteTransaction(transactionId);
-            return { transaction: container.transaction, isSynced: true };
-        } else if (ENABLE_OFFLINE_MODE) {
-            return {
-                transaction: {
-                    ...transaction,
-                    deleted: true,
-                    hasLocalChanges: true,
-                    isWip: false,
-                    lastChanged: new Date().toISOString(),
-                },
-                isSynced: false,
-            };
+            const backendTransaction = await api.client.transactions.deleteTransaction({ transactionId });
+            return { transaction: backendTransaction };
         } else {
             return rejectWithValue("no internet connection");
         }
     }
 
-    return { transaction: undefined, isSynced: false };
-});
-
-export const uploadFile = createAsyncThunk<
-    { transaction: Transaction; attachments: TransactionAttachment[] },
-    { groupId: number; transactionId: number; file: File; api: Api },
-    { state: IRootState }
->("uploadFile", async ({ groupId, transactionId, file, api }, { rejectWithValue }) => {
-    if (!(await api.hasConnection())) {
-        return rejectWithValue("no internet connection");
-    }
-
-    const container = await api.uploadFile(transactionId, file);
-    return { transaction: container.transaction, attachments: container.attachments };
+    return { transaction: undefined };
 });
 
 const initialState: TransactionSliceState = {
     byGroupId: {},
-    nextLocalPositionId: -1,
     nextLocalTransactionId: -1,
+    nextLocalPositionId: -1,
+    nextLocalFileId: -1,
     activeInstanceId: 0,
 };
 
-const getTransactionWithWip = (state: TransactionState, transactionId: number): Transaction | undefined => {
-    return (
-        state.wipTransactions.byId[transactionId] ??
-        state.pendingTransactions.byId[transactionId] ??
-        state.transactions.byId[transactionId]
-    );
+const backendTransactionToTransaction = (t: BackendTransaction): Transaction => {
+    return {
+        id: t.id,
+        group_id: t.group_id,
+        type: t.type,
+        name: t.name,
+        description: t.description,
+        creditor_shares: t.creditor_shares,
+        debitor_shares: t.debitor_shares,
+        currency_symbol: t.currency_symbol,
+        currency_conversion_rate: t.currency_conversion_rate,
+        billed_at: t.billed_at,
+        last_changed: t.last_changed,
+        tags: t.tags,
+        value: t.value,
+        is_wip: false,
+        deleted: t.deleted,
+        position_ids: t.positions.map((p) => p.id),
+        positions: Object.fromEntries(t.positions.map((p) => [p.id, { ...p, is_changed: false, only_local: false }])),
+        file_ids: t.files.map((f) => f.id),
+        files: Object.fromEntries(t.files.map((f) => [f.id, { ...f, type: "backend" }])),
+    };
 };
 
-const moveTransactionToWip = (s: Draft<TransactionState>, transactionId: number) => {
+const moveTransactionToWip = (s: Draft<TransactionState>, transactionId: number): Transaction | undefined => {
     if (s.wipTransactions.byId[transactionId] === undefined) {
-        const transaction = s.pendingTransactions.byId[transactionId] ?? s.transactions.byId[transactionId];
-        s.wipTransactions.byId[transactionId] = {
+        const transaction = s.transactions.byId[transactionId];
+        const wipTransaction: Transaction = {
             ...transaction,
-            hasLocalChanges: true,
-            isWip: true,
-            lastChanged: new Date().toISOString(),
+            is_wip: true,
+            last_changed: new Date().toISOString(),
         };
+        s.wipTransactions.byId[transactionId] = wipTransaction;
         s.wipTransactions.ids.push(transactionId);
+        return wipTransaction;
     }
-};
-
-const removePositionsForTransaction = (state: EntityState<TransactionPosition>, transactionId: number): void => {
-    const positionIds = Object.keys(state.byId).filter((id) => state.byId[Number(id)].transactionID === transactionId);
-    for (const id of positionIds) {
-        removeEntity(state, Number(id));
-    }
+    return s.wipTransactions.byId[transactionId];
 };
 
 const updateTransactionLastChanged = (s: Draft<TransactionState>, transactionId: number) => {
-    moveTransactionToWip(s, transactionId);
-    s.wipTransactions.byId[transactionId].lastChanged = new Date().toISOString();
-};
-
-const addPositionToWipTransaction = (s: Draft<TransactionState>, transactionId: number, positionId: number) => {
-    moveTransactionToWip(s, transactionId);
-    const transaction = s.wipTransactions.byId[transactionId];
-    if (transaction && transaction.type === "purchase" && !transaction.positions.includes(positionId)) {
-        transaction.positions.push(positionId);
+    const wipTransaction = moveTransactionToWip(s, transactionId);
+    if (!wipTransaction) {
+        return;
     }
+    wipTransaction.last_changed = new Date().toISOString();
 };
 
 const transactionSlice = createSlice({
@@ -672,53 +497,131 @@ const transactionSlice = createSlice({
         advanceNextLocalPositionId: (state, action: PayloadAction<void>) => {
             state.nextLocalPositionId = state.nextLocalPositionId - 1;
         },
+        advanceNextLocalFileId: (state, action: PayloadAction<void>) => {
+            state.nextLocalFileId = state.nextLocalFileId - 1;
+        },
         transactionEditStarted: (state, action: PayloadAction<{ groupId: number; transactionId: number }>) => {
             const { groupId, transactionId } = action.payload;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-            if (s.wipTransactions.byId[transactionId] !== undefined) {
+            if (transactionId in s.wipTransactions.byId) {
                 return;
             }
-            const transaction = s.pendingTransactions.byId[transactionId] ?? s.transactions.byId[transactionId];
-            s.wipTransactions.ids.push(transactionId);
-            s.wipTransactions.byId[transactionId] = {
-                ...transaction,
-                hasLocalChanges: true,
-                isWip: true,
-            };
+            moveTransactionToWip(s, transactionId);
         },
-        wipTransactionUpdated: (state, action: PayloadAction<TransactionBase>) => {
+        wipFileAdded: (state, action: PayloadAction<{ groupId: number; transactionId: number; file: NewFile }>) => {
+            const { groupId, transactionId, file } = action.payload;
+            const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+            const wipTransaction = moveTransactionToWip(s, transactionId);
+            if (!wipTransaction) {
+                return;
+            }
+            const fileId = state.nextLocalFileId;
+            wipTransaction.file_ids.push(fileId);
+            wipTransaction.files[fileId] = {
+                id: fileId,
+                type: "new",
+                ...file,
+            };
+
+            state.nextLocalFileId -= 1;
+        },
+        wipFileUpdated: (
+            state,
+            action: PayloadAction<{ groupId: number; transactionId: number; file: Omit<UpdateFile, "deleted"> }>
+        ) => {
+            const { groupId, transactionId, file } = action.payload;
+            const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+            const wipTransaction = moveTransactionToWip(s, transactionId);
+            if (!wipTransaction) {
+                return;
+            }
+            const wipFile = wipTransaction.files[file.id];
+            if (!wipFile) {
+                return;
+            }
+            if (wipFile.type === "new") {
+                wipTransaction.files[file.id] = {
+                    ...wipFile,
+                    ...file,
+                };
+            } else {
+                wipTransaction.files[file.id] = {
+                    ...wipFile,
+                    type: "updated",
+                    ...file,
+                };
+            }
+        },
+        wipFileDeleted: (state, action: PayloadAction<{ groupId: number; transactionId: number; fileId: number }>) => {
+            const { groupId, transactionId, fileId } = action.payload;
+            const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+            const wipTransaction = moveTransactionToWip(s, transactionId);
+            if (!wipTransaction) {
+                return;
+            }
+            const wipFile = wipTransaction.files[fileId];
+            if (!wipFile) {
+                return;
+            }
+            if (wipFile.type === "new") {
+                wipTransaction.file_ids = wipTransaction.file_ids.filter((id) => id !== fileId);
+                delete wipTransaction.files[fileId];
+            } else {
+                wipTransaction.files[fileId] = {
+                    ...wipFile,
+                    type: "updated",
+                    deleted: true,
+                };
+            }
+        },
+        wipTransactionUpdated: (
+            state,
+            action: PayloadAction<
+                Partial<Omit<Transaction, "positions" | "files" | "is_wip" | "last_changed">> &
+                    Pick<Transaction, "id" | "group_id">
+            >
+        ) => {
             const transaction = action.payload;
-            const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, transaction.groupID);
+            const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, transaction.group_id);
             if (s.wipTransactions.byId[transaction.id] === undefined) {
                 s.wipTransactions.ids.push(transaction.id);
             }
-            const currentTransaction = getTransactionWithWip(s, transaction.id);
-            if (currentTransaction !== undefined) {
-                s.wipTransactions.byId[transaction.id] = {
-                    ...currentTransaction,
-                    ...transaction,
-                    isWip: true,
-                    hasLocalChanges: true,
-                    lastChanged: new Date().toISOString(),
-                };
+            const wipTransaction = moveTransactionToWip(s, transaction.id);
+            if (!wipTransaction) {
+                return;
             }
+            s.wipTransactions.byId[transaction.id] = {
+                ...wipTransaction,
+                ...transaction,
+                is_wip: true,
+                last_changed: new Date().toISOString(),
+            };
         },
         wipPositionAdded: (
             state,
             action: PayloadAction<{
                 groupId: number;
                 transactionId: number;
-                position: Omit<TransactionPosition, "id" | "transactionID" | "deleted">;
+                position: Omit<TransactionPosition, "id" | "deleted">;
             }>
         ) => {
             const { groupId, transactionId, position } = action.payload;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-            const positionId = state.nextLocalPositionId;
-            addEntity(s.wipPositions, { ...position, id: positionId, transactionID: transactionId, deleted: false });
+            const wipTransaction = moveTransactionToWip(s, transactionId);
+            if (!wipTransaction || wipTransaction.type !== "purchase") {
+                return;
+            }
 
+            const positionId = state.nextLocalPositionId;
             state.nextLocalPositionId = positionId - 1;
-            updateTransactionLastChanged(s, transactionId); // this makes sure the transaction exists as wip
-            (s.wipTransactions.byId[transactionId] as Purchase).positions.push(positionId); // TODO: FIXME: remove typing hack
+            wipTransaction.position_ids.push(positionId);
+            wipTransaction.positions[positionId] = {
+                id: positionId,
+                ...position,
+                deleted: false,
+                only_local: true,
+                is_changed: true,
+            };
         },
         wipPositionUpdated: (
             state,
@@ -726,12 +629,27 @@ const transactionSlice = createSlice({
         ) => {
             const { groupId, position, transactionId } = action.payload;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+            const wipTransaction = moveTransactionToWip(s, transactionId);
+            if (!wipTransaction) {
+                return;
+            }
             if (position.id === state.nextLocalPositionId) {
                 // we updated the empty position in the list
                 state.nextLocalPositionId = state.nextLocalPositionId - 1;
-                addPositionToWipTransaction(s, transactionId, position.id);
             }
-            addEntity(s.wipPositions, position);
+            if (!(position.id in wipTransaction.positions)) {
+                wipTransaction.position_ids.push(position.id);
+                wipTransaction.positions[position.id] = {
+                    ...position,
+                    is_changed: true,
+                };
+            } else {
+                wipTransaction.positions[position.id] = {
+                    ...wipTransaction.positions[position.id],
+                    ...position,
+                    is_changed: true,
+                };
+            }
             updateTransactionLastChanged(s, transactionId);
         },
         positionDeleted: (
@@ -740,18 +658,30 @@ const transactionSlice = createSlice({
         ) => {
             const { groupId, positionId, transactionId } = action.payload;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-            if (s.pendingPositions.byId[positionId] === undefined && s.positions.byId[positionId] === undefined) {
-                removeEntity(s.wipPositions, positionId);
-                moveTransactionToWip(s, transactionId);
-                const transaction = s.wipTransactions.byId[transactionId];
-                if (transaction.type === "purchase") {
-                    transaction.positions = transaction.positions.filter((id) => id !== positionId);
-                }
+            const wipTransaction = moveTransactionToWip(s, transactionId);
+            if (!wipTransaction) {
+                return;
+            }
+            if (!(positionId in wipTransaction.positions)) {
+                return;
+            }
+            const position = wipTransaction.positions[positionId];
+            if (position.only_local) {
+                wipTransaction.position_ids = wipTransaction.position_ids.filter((id) => id !== positionId);
+                delete wipTransaction.positions[positionId];
             } else {
-                const position = s.pendingPositions.byId[positionId] ?? s.positions.byId[positionId];
-                addEntity(s.wipPositions, { ...position, deleted: true });
+                wipTransaction.positions[positionId] = {
+                    ...position,
+                    deleted: true,
+                    is_changed: true,
+                };
             }
             updateTransactionLastChanged(s, transactionId);
+        },
+        discardTransactionChange: (state, action: PayloadAction<{ groupId: number; transactionId: number }>) => {
+            const { groupId, transactionId } = action.payload;
+            const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+            removeEntity(s.wipTransactions, transactionId);
         },
     },
     extraReducers: (builder) => {
@@ -768,154 +698,51 @@ const transactionSlice = createSlice({
             // TODO: proper error handling here, we might also want to initialize the group state in order for other components to not fail
         });
         builder.addCase(fetchTransactions.fulfilled, (state, action) => {
-            const transactionContainers = action.payload;
+            const transactions = action.payload;
             const groupId = action.meta.arg.groupId;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
             // TODO: optimize such that we maybe only update those who have actually changed??
-            const transactionsById = transactionContainers.reduce<{ [k: number]: Transaction }>((byId, container) => {
-                byId[container.transaction.id] = container.transaction;
+            const transactionsById = transactions.reduce<{ [k: number]: Transaction }>((byId, transaction) => {
+                byId[transaction.id] = backendTransactionToTransaction(transaction);
                 return byId;
             }, {});
             s.transactions.byId = transactionsById;
-            s.transactions.ids = transactionContainers.map((t) => t.transaction.id);
-
-            const positionsbyId = transactionContainers.reduce<{ [k: number]: TransactionPosition }>(
-                (byId, container) => {
-                    container.positions.forEach((p) => {
-                        byId[p.id] = p;
-                    });
-                    return byId;
-                },
-                {}
-            );
-            s.positions.byId = positionsbyId;
-            s.positions.ids = transactionContainers.map((t) => t.positions.map((p) => p.id)).flat();
-
-            const attachmentsById = transactionContainers.reduce<{ [k: number]: TransactionAttachment }>(
-                (byId, container) => {
-                    container.attachments.forEach((a) => {
-                        byId[a.id] = a;
-                    });
-                    return byId;
-                },
-                {}
-            );
-            s.attachments.byId = attachmentsById;
-            s.attachments.ids = transactionContainers.map((t) => t.attachments.map((a) => a.id)).flat();
+            s.transactions.ids = transactions.map((t) => t.id);
 
             s.status = "initialized";
         });
         builder.addCase(fetchTransaction.fulfilled, (state, action) => {
-            const transactionContainer = action.payload;
-            const groupId = transactionContainer.transaction.groupID;
-            const transactionId = transactionContainer.transaction.id;
+            const transaction = action.payload;
+            const groupId = transaction.group_id;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-            if (!s.transactions.byId[transactionId]) {
-                s.transactions.ids.push(transactionId);
-            }
-            s.transactions.byId[transactionId] = transactionContainer.transaction;
-            for (const position of transactionContainer.positions) {
-                if (!s.positions.byId[position.id]) {
-                    s.positions.ids.push(position.id);
-                }
-                s.positions.byId[position.id] = position;
-            }
-
-            for (const attachment of transactionContainer.attachments) {
-                if (!s.attachments.byId[attachment.id]) {
-                    s.attachments.ids.push(attachment.id);
-                }
-                s.attachments.byId[attachment.id] = attachment;
-            }
+            addEntity(s.transactions, backendTransactionToTransaction(transaction));
         });
         builder.addCase(saveTransaction.fulfilled, (state, action) => {
-            const { oldTransactionId, oldPositionIds, transactionContainer, isSynced } = action.payload;
-            const groupId = transactionContainer.transaction.groupID;
+            const { oldTransactionId, transaction } = action.payload;
+            const groupId = transaction.group_id;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-            if (isSynced) {
-                addEntity(s.transactions, transactionContainer.transaction);
-                removeEntity(s.pendingTransactions, oldTransactionId);
-                for (const positionId of oldPositionIds) {
-                    removeEntity(s.pendingPositions, positionId);
-                }
-                for (const position of transactionContainer.positions) {
-                    addEntity(s.positions, position);
-                }
-                for (const attachment of transactionContainer.attachments) {
-                    addEntity(s.attachments, attachment);
-                }
-            } else {
-                addEntity(s.pendingTransactions, transactionContainer.transaction);
-                for (const position of transactionContainer.positions) {
-                    addEntity(s.pendingPositions, position);
-                }
-            }
-
+            addEntity(s.transactions, backendTransactionToTransaction(transaction));
             removeEntity(s.wipTransactions, oldTransactionId);
-            for (const positionId of oldPositionIds) {
-                removeEntity(s.wipPositions, positionId); // TODO: make more efficient
-            }
-        });
-        builder.addCase(discardTransactionChange.fulfilled, (state, action) => {
-            const { groupId, transactionId } = action.meta.arg;
-            const { transaction: updatedTransaction } = action.payload;
-            const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-            if (updatedTransaction) {
-                addEntity(s.transactions, updatedTransaction.transaction);
-                for (const position of updatedTransaction.positions) {
-                    addEntity(s.positions, position);
-                }
-                for (const attachment of updatedTransaction.attachments) {
-                    addEntity(s.attachments, attachment);
-                }
-                removeEntity(s.wipTransactions, transactionId);
-                removePositionsForTransaction(s.wipPositions, transactionId);
-                return;
-            }
-
-            removeEntity(s.wipTransactions, transactionId);
-            removePositionsForTransaction(s.wipPositions, transactionId);
         });
         builder.addCase(createTransaction.fulfilled, (state, action) => {
             const { transaction } = action.payload;
             const { groupId } = action.meta.arg;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-            s.wipTransactions.byId[transaction.id] = transaction;
-            s.wipTransactions.ids.push(transaction.id);
+            addEntity(s.wipTransactions, { ...transaction, is_wip: true });
         });
         builder.addCase(deleteTransaction.fulfilled, (state, action) => {
-            const { transaction, isSynced } = action.payload;
+            const { transaction } = action.payload;
             const { groupId, transactionId } = action.meta.arg;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
             // transaction is known by the server, i.e. id > 0
             if (transaction) {
-                if (isSynced) {
-                    addEntity(s.transactions, transaction);
-                    removeEntity(s.pendingTransactions, transaction.id);
-                } else {
-                    addEntity(s.pendingTransactions, transaction);
-                }
-                removeEntity(s.wipTransactions, transaction.id);
-                removePositionsForTransaction(s.wipPositions, transaction.id);
-                return;
+                addEntity(s.transactions, backendTransactionToTransaction(transaction));
             }
-            // transaction is only stored locally, we can purge it fully, i.e. id < 0
-            removeEntity(s.pendingTransactions, transactionId);
             removeEntity(s.wipTransactions, transactionId);
-            removePositionsForTransaction(s.wipPositions, transactionId);
-            removePositionsForTransaction(s.pendingPositions, transactionId);
         });
         builder.addCase(leaveGroup.fulfilled, (state, action) => {
             const { groupId } = action.meta.arg;
             delete state.byGroupId[groupId];
-        });
-        builder.addCase(uploadFile.fulfilled, (state, action) => {
-            const { transaction, attachments } = action.payload;
-            const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, transaction.groupID);
-            addEntity(s.transactions, transaction);
-            for (const attachment of attachments) {
-                addEntity(s.attachments, attachment);
-            }
         });
     },
 });
@@ -923,7 +750,16 @@ const transactionSlice = createSlice({
 // internal actions
 const { advanceNextLocalTransactionId } = transactionSlice.actions;
 
-export const { transactionEditStarted, wipTransactionUpdated, wipPositionUpdated, wipPositionAdded, positionDeleted } =
-    transactionSlice.actions;
+export const {
+    transactionEditStarted,
+    wipTransactionUpdated,
+    wipFileAdded,
+    wipFileDeleted,
+    wipFileUpdated,
+    wipPositionUpdated,
+    wipPositionAdded,
+    positionDeleted,
+    discardTransactionChange,
+} = transactionSlice.actions;
 
 export const { reducer: transactionReducer } = transactionSlice;

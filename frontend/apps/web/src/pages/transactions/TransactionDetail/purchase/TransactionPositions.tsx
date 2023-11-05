@@ -1,9 +1,14 @@
+import { AccountSelect } from "@/components/AccountSelect";
+import { NumericInput } from "@/components/NumericInput";
+import { TextInput } from "@/components/TextInput";
+import { MobilePaper } from "@/components/style/mobile";
+import { RootState, selectAccountSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
 import {
     positionDeleted,
     selectGroupAccounts,
     selectTransactionBalanceEffect,
     selectTransactionById,
-    selectTransactionPositionsWithEmpty,
+    selectWipTransactionPositions,
     wipPositionAdded,
     wipPositionUpdated,
 } from "@abrechnung/redux";
@@ -24,13 +29,9 @@ import {
     Typography,
     useTheme,
 } from "@mui/material";
+import memoize from "proxy-memoize";
 import React, { useState } from "react";
 import { typeToFlattenedError, z } from "zod";
-import AccountSelect from "../../../../components/AccountSelect";
-import { NumericInput } from "../../../../components/NumericInput";
-import { MobilePaper } from "../../../../components/style/mobile";
-import { TextInput } from "../../../../components/TextInput";
-import { selectAccountSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "../../../../store";
 
 interface PositionTableRowProps {
     position: TransactionPosition;
@@ -38,7 +39,7 @@ interface PositionTableRowProps {
         position: TransactionPosition,
         newName: string,
         newPrice: number,
-        newCommunistShares: number
+        newcommunist_shares: number
     ) => void;
     transactionAccounts: number[];
     showAdvanced: boolean;
@@ -81,9 +82,9 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
                         {validationError.formErrors}
                     </FormHelperText>
                 )}
-                {validationError && validationError.fieldErrors.communistShares && (
+                {validationError && validationError.fieldErrors.communist_shares && (
                     <FormHelperText sx={{ marginLeft: 0 }} error={true}>
-                        {validationError.fieldErrors.communistShares}
+                        {validationError.fieldErrors.communist_shares}
                     </FormHelperText>
                 )}
                 {validationError && validationError.fieldErrors.usages && (
@@ -95,7 +96,7 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
                     value={position.name}
                     error={validationError && !!validationError.fieldErrors.name}
                     helperText={validationError && validationError.fieldErrors.name}
-                    onChange={(value) => updatePosition(position, value, position.price, position.communistShares)}
+                    onChange={(value) => updatePosition(position, value, position.price, position.communist_shares)}
                 />
             </TableCell>
             <TableCell align="right">
@@ -104,7 +105,7 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
                     style={{ width: 70 }}
                     error={validationError && !!validationError.fieldErrors.price}
                     helperText={validationError && validationError.fieldErrors.price}
-                    onChange={(value) => updatePosition(position, position.name, value, position.communistShares)}
+                    onChange={(value) => updatePosition(position, position.name, value, position.communist_shares)}
                 />
             </TableCell>
             {transactionAccounts.map((accountID) => (
@@ -132,16 +133,16 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
             <TableCell align="right">
                 {showAdvanced ? (
                     <NumericInput
-                        value={position.communistShares}
+                        value={position.communist_shares}
                         sx={{ maxWidth: 50 }}
                         onChange={(value) => updatePosition(position, position.name, position.price, value)}
-                        error={validationError && !!validationError.fieldErrors.communistShares}
+                        error={validationError && !!validationError.fieldErrors.communist_shares}
                         inputProps={{ tabIndex: -1 }}
                     />
                 ) : (
                     <Checkbox
                         name="communist-checked"
-                        checked={position.communistShares !== 0}
+                        checked={position.communist_shares !== 0}
                         onChange={(event) =>
                             updatePosition(position, position.name, position.price, event.target.checked ? 1 : 0)
                         }
@@ -172,6 +173,24 @@ interface TransactionPositionsProps {
     validationErrors?: ValidationErrors;
 }
 
+const selectPositions = memoize(
+    ({ state, groupId, transactionId }: { state: RootState; groupId: number; transactionId: number }) => {
+        const positions = selectWipTransactionPositions({
+            state: selectTransactionSlice(state),
+            groupId,
+            transactionId,
+        });
+        const positionsHaveComplexShares = positions.reduce(
+            (hasComplex, position) =>
+                hasComplex ||
+                (position.communist_shares !== 0 && position.communist_shares !== 1) ||
+                Object.values(position.usages).reduce((nonOne, usage) => nonOne || (usage !== 0 && usage !== 1), false),
+            false
+        );
+        return { positions, positionsHaveComplexShares };
+    }
+);
+
 export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     groupId,
     transactionId,
@@ -181,21 +200,9 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
     );
-    const { positions, positionsHaveComplexShares } = useAppSelector((state) => {
-        const positions = selectTransactionPositionsWithEmpty({
-            state: selectTransactionSlice(state),
-            groupId,
-            transactionId,
-        });
-        const positionsHaveComplexShares = positions.reduce(
-            (hasComplex, position) =>
-                hasComplex ||
-                (position.communistShares !== 0 && position.communistShares !== 1) ||
-                Object.values(position.usages).reduce((nonOne, usage) => nonOne || (usage !== 0 && usage !== 1), false),
-            false
-        );
-        return { positions, positionsHaveComplexShares };
-    });
+    const { positions, positionsHaveComplexShares } = useAppSelector((state) =>
+        selectPositions({ state, groupId, transactionId })
+    );
     const transactionBalanceEffect = useAppSelector((state) =>
         selectTransactionBalanceEffect({ state: selectTransactionSlice(state), groupId, transactionId })
     );
@@ -217,7 +224,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     const [additionalPurchaseItemAccounts, setAdditionalPurchaseItemAccounts] = useState([]);
     const transactionAccounts: number[] = Array.from(
         new Set<number>(
-            Object.keys(transaction.debitorShares)
+            Object.keys(transaction.debitor_shares)
                 .map((id) => parseInt(id))
                 .concat(positionAccounts)
                 .concat(additionalPurchaseItemAccounts)
@@ -235,9 +242,9 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
         return transactionBalanceEffect[accountID] !== undefined ? transactionBalanceEffect[accountID].positions : 0;
     };
 
-    const updatePosition = (position: TransactionPosition, name: string, price: number, communistShares: number) => {
+    const updatePosition = (position: TransactionPosition, name: string, price: number, communist_shares: number) => {
         dispatch(
-            wipPositionUpdated({ groupId, transactionId, position: { ...position, name, price, communistShares } })
+            wipPositionUpdated({ groupId, transactionId, position: { ...position, name, price, communist_shares } })
         );
     };
 
@@ -270,7 +277,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
         <MobilePaper sx={{ marginTop: 2 }}>
             <Grid container direction="row" justifyContent="space-between">
                 <Typography>Positions</Typography>
-                {transaction.isWip && (
+                {transaction.is_wip && (
                     <FormControlLabel
                         control={<Checkbox name={`show-advanced`} />}
                         checked={showAdvanced}
@@ -285,12 +292,12 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                         <TableRow>
                             <TableCell>Name</TableCell>
                             <TableCell align="right">Price</TableCell>
-                            {(transaction.isWip ? transactionAccounts : positionAccounts).map((accountID) => (
+                            {(transaction.is_wip ? transactionAccounts : positionAccounts).map((accountID) => (
                                 <TableCell align="right" sx={{ minWidth: 80 }} key={accountID}>
                                     {accounts.find((account) => account.id === accountID).name}
                                 </TableCell>
                             ))}
-                            {transaction.isWip && (
+                            {transaction.is_wip && (
                                 <>
                                     {showAccountSelect && (
                                         <TableCell align="right">
@@ -311,11 +318,11 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                 </>
                             )}
                             <TableCell align="right">Shared</TableCell>
-                            {transaction.isWip && <TableCell></TableCell>}
+                            {transaction.is_wip && <TableCell></TableCell>}
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {transaction.isWip
+                        {transaction.is_wip
                             ? positions.map((position, idx) => (
                                   <PositionTableRow
                                       key={position.id}
@@ -335,7 +342,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                   <TableRow hover key={position.id}>
                                       <TableCell>{position.name}</TableCell>
                                       <TableCell align="right" style={{ minWidth: 80 }}>
-                                          {position.price.toFixed(2)} {transaction.currencySymbol}
+                                          {position.price.toFixed(2)} {transaction.currency_symbol}
                                       </TableCell>
                                       {positionAccounts.map((accountID) => (
                                           <TableCell align="right" key={accountID}>
@@ -355,9 +362,9 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                       ))}
                                       <TableCell align="right">
                                           {positionsHaveComplexShares ? (
-                                              position.communistShares
+                                              position.communist_shares
                                           ) : (
-                                              <Checkbox checked={position.communistShares !== 0} disabled={true} />
+                                              <Checkbox checked={position.communist_shares !== 0} disabled={true} />
                                           )}
                                       </TableCell>
                                   </TableRow>
@@ -367,11 +374,11 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                 <Typography sx={{ fontWeight: "bold" }}>Total:</Typography>
                             </TableCell>
                             <TableCell align="right">
-                                {totalPositionValue.toFixed(2)} {transaction.currencySymbol}
+                                {totalPositionValue.toFixed(2)} {transaction.currency_symbol}
                             </TableCell>
-                            {(transaction.isWip ? transactionAccounts : positionAccounts).map((accountID) => (
+                            {(transaction.is_wip ? transactionAccounts : positionAccounts).map((accountID) => (
                                 <TableCell align="right" key={accountID}>
-                                    {purchaseItemSumForAccount(accountID).toFixed(2)} {transaction.currencySymbol}
+                                    {purchaseItemSumForAccount(accountID).toFixed(2)} {transaction.currency_symbol}
                                 </TableCell>
                             ))}
                             <TableCell align="right" colSpan={showAddAccount ? 2 : 1}>
@@ -382,22 +389,22 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                         0
                                     )
                                 ).toFixed(2)}{" "}
-                                {transaction.currencySymbol}
+                                {transaction.currency_symbol}
                             </TableCell>
-                            {transaction.isWip && <TableCell></TableCell>}
+                            {transaction.is_wip && <TableCell></TableCell>}
                         </TableRow>
                         <TableRow hover>
                             <TableCell>
                                 <Typography sx={{ fontWeight: "bold" }}>Remaining:</Typography>
                             </TableCell>
                             <TableCell align="right">
-                                {sharedTransactionValue.toFixed(2)} {transaction.currencySymbol}
+                                {sharedTransactionValue.toFixed(2)} {transaction.currency_symbol}
                             </TableCell>
-                            {(transaction.isWip ? transactionAccounts : positionAccounts).map((accountID) => (
+                            {(transaction.is_wip ? transactionAccounts : positionAccounts).map((accountID) => (
                                 <TableCell align="right" key={accountID}></TableCell>
                             ))}
                             <TableCell align="right" colSpan={showAddAccount ? 2 : 1}></TableCell>
-                            {transaction.isWip && <TableCell></TableCell>}
+                            {transaction.is_wip && <TableCell></TableCell>}
                         </TableRow>
                     </TableBody>
                 </Table>

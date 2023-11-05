@@ -1,14 +1,5 @@
-import {
-    User,
-    Account,
-    Group,
-    GroupMember,
-    Transaction,
-    TransactionAttachment,
-    TransactionPosition,
-    GroupInvite,
-    GroupLogEntry,
-} from "@abrechnung/types";
+import { Group, GroupInvite, GroupLog, GroupMember, User } from "@abrechnung/api";
+import { Account, Transaction } from "@abrechnung/types";
 
 export const ENABLE_OFFLINE_MODE = false;
 
@@ -53,7 +44,7 @@ export type AbrechnungInstanceAwareState = {
 
 export interface AuthState {
     baseUrl: string | undefined;
-    sessionToken: string | undefined;
+    accessToken: string | undefined;
     profile: User | undefined;
 }
 
@@ -71,7 +62,7 @@ export interface GroupInfo {
     };
     groupInvitesStatus: StateStatus;
     groupLog: {
-        byId: { [k: number]: GroupLogEntry };
+        byId: { [k: number]: GroupLog };
         ids: number[];
     };
     groupLogStatus: StateStatus;
@@ -96,10 +87,6 @@ export interface AccountState {
         byId: { [k: number]: Account };
         ids: number[];
     };
-    pendingAccounts: {
-        byId: { [k: number]: Account };
-        ids: number[];
-    };
     status: StateStatus;
 }
 
@@ -117,31 +104,15 @@ export interface TransactionState {
         byId: { [k: number]: Transaction };
         ids: number[];
     };
-    pendingTransactions: {
-        byId: { [k: number]: Transaction };
-        ids: number[];
-    };
-    positions: {
-        byId: { [k: number]: TransactionPosition };
-        ids: number[];
-    };
-    wipPositions: {
-        byId: { [k: number]: TransactionPosition };
-        ids: number[];
-    };
-    pendingPositions: {
-        byId: { [k: number]: TransactionPosition };
-        ids: number[];
-    };
-    attachments: {
-        byId: { [k: number]: TransactionAttachment };
-        ids: number[];
-    };
     status: StateStatus;
 }
 
 export type TransactionSliceState = AbrechnungInstanceAwareState &
-    GroupScopedState<TransactionState> & { nextLocalTransactionId: number; nextLocalPositionId: number };
+    GroupScopedState<TransactionState> & {
+        nextLocalTransactionId: number;
+        nextLocalPositionId: number;
+        nextLocalFileId: number;
+    };
 
 export interface ITransactionRootState {
     transactions: TransactionSliceState;

@@ -2,7 +2,7 @@
 import argparse
 import asyncio
 import random
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from abrechnung.application.accounts import AccountService
@@ -10,6 +10,8 @@ from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.config import read_config
+from abrechnung.domain.accounts import AccountType, NewAccount
+from abrechnung.domain.transactions import NewTransaction, TransactionType
 from abrechnung.framework.database import create_db_pool
 
 
@@ -52,9 +54,11 @@ async def main(
         account_id = await account_service.create_account(
             user=user,
             group_id=group_id,
-            type="personal",
-            name=f"Account {i}",
-            description="",
+            account=NewAccount(
+                type=AccountType.personal,
+                name=f"Account {i}",
+                description="",
+            ),
         )
         account_ids.append(account_id)
 
@@ -71,11 +75,13 @@ async def main(
         event_id = await account_service.create_account(
             user=user,
             group_id=group_id,
-            type="clearing",
-            name=f"Event {i}",
-            description="",
-            date_info=random_date(),
-            clearing_shares=clearing_shares,
+            account=NewAccount(
+                type=AccountType.clearing,
+                name=f"Event {i}",
+                description="",
+                date_info=random_date(),
+                clearing_shares=clearing_shares,
+            ),
         )
         event_ids.append(event_id)
 
@@ -95,17 +101,18 @@ async def main(
         transaction_id = await transaction_service.create_transaction(
             user=user,
             group_id=group_id,
-            type="purchase",
-            value=random.random() * 100,
-            name=f"Purchase {i}",
-            description="",
-            billed_at=random_date(),
-            currency_symbol="€",
-            currency_conversion_rate=1.0,
-            tags=[],
-            creditor_shares=creditor_shares,
-            debitor_shares=debitor_shares,
-            perform_commit=True,
+            transaction=NewTransaction(
+                type=TransactionType.purchase,
+                value=random.random() * 100,
+                name=f"Purchase {i}",
+                description="",
+                billed_at=random_date(),
+                currency_symbol="€",
+                currency_conversion_rate=1.0,
+                tags=[],
+                creditor_shares=creditor_shares,
+                debitor_shares=debitor_shares,
+            ),
         )
         transaction_ids.append(transaction_id)
 
@@ -118,17 +125,18 @@ async def main(
         transaction_id = await transaction_service.create_transaction(
             user=user,
             group_id=group_id,
-            type="transfer",
-            value=random.random() * 200,
-            name=f"Transfer {i}",
-            description="",
-            billed_at=random_date(),
-            currency_symbol="€",
-            currency_conversion_rate=1.0,
-            tags=[],
-            creditor_shares=creditor_shares,
-            debitor_shares=debitor_shares,
-            perform_commit=True,
+            transaction=NewTransaction(
+                type=TransactionType.transfer,
+                value=random.random() * 200,
+                name=f"Transfer {i}",
+                description="",
+                billed_at=random_date(),
+                currency_symbol="€",
+                currency_conversion_rate=1.0,
+                tags=[],
+                creditor_shares=creditor_shares,
+                debitor_shares=debitor_shares,
+            ),
         )
         transaction_ids.append(transaction_id)
 

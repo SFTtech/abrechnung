@@ -1,11 +1,12 @@
 {
+    "name": "redux",
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "libs/redux/src",
     "projectType": "library",
     "tags": [],
     "targets": {
         "build": {
-            "executor": "@nrwl/web:rollup",
+            "executor": "@nx/web:rollup",
             "outputs": ["{options.outputPath}"],
             "options": {
                 "outputPath": "dist/libs/redux",
@@ -13,7 +14,7 @@
                 "project": "libs/redux/package.json",
                 "entryFile": "libs/redux/src/index.ts",
                 "external": ["react/jsx-runtime"],
-                "rollupConfig": "@nrwl/react/plugins/bundle-rollup",
+                "rollupConfig": "@nx/react/plugins/bundle-rollup",
                 "compiler": "babel",
                 "assets": [
                     {
@@ -25,15 +26,15 @@
             }
         },
         "lint": {
-            "executor": "@nrwl/linter:eslint",
+            "executor": "@nx/eslint:lint",
             "outputs": ["{options.outputFile}"],
             "options": {
                 "lintFilePatterns": ["libs/redux/**/*.{ts,tsx,js,jsx}"]
             }
         },
         "test": {
-            "executor": "@nrwl/jest:jest",
-            "outputs": ["coverage/libs/redux"],
+            "executor": "@nx/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/libs/redux"],
             "options": {
                 "jestConfig": "libs/redux/jest.config.ts",
                 "passWithNoTests": true

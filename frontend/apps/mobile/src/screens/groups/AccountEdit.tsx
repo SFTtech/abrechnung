@@ -1,3 +1,10 @@
+import DateTimeInput from "@/components/DateTimeInput";
+import { TagSelect } from "@/components/tag-select";
+import TransactionShareInput from "@/components/transaction-shares/TransactionShareInput";
+import { useApi } from "@/core/ApiProvider";
+import { GroupStackScreenProps } from "@/navigation/types";
+import { notify } from "@/notifications";
+import { selectAccountSlice, useAppDispatch, useAppSelector } from "@/store";
 import {
     deleteAccount,
     discardAccountChange,
@@ -23,17 +30,11 @@ import {
     TextInput,
     useTheme,
 } from "react-native-paper";
-import DateTimeInput from "../../components/DateTimeInput";
-import { TagSelect } from "../../components/tag-select";
-import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
-import { api } from "../../core/api";
-import { GroupStackScreenProps } from "../../navigation/types";
-import { notify } from "../../notifications";
-import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
 
 export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ route, navigation }) => {
     const theme = useTheme();
     const dispatch = useAppDispatch();
+    const { api } = useApi();
 
     const { groupId, accountId } = route.params;
 
@@ -46,7 +47,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
         if (account) {
             return dispatch(discardAccountChange({ groupId, accountId: account.id, api })).unwrap();
         }
-    }, [dispatch, account, groupId]);
+    }, [api, dispatch, account, groupId]);
 
     const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
     const onDeleteAccount = React.useCallback(() => {
@@ -58,7 +59,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
             .catch((err) => {
                 notify({ text: `Error while deleting account: ${err.toString()}` });
             });
-    }, [groupId, accountId, dispatch, navigation]);
+    }, [api, groupId, accountId, dispatch, navigation]);
 
     const closeConfirmDeleteModal = () => setConfirmDeleteModalOpen(false);
     const openConfirmDeleteModal = () => setConfirmDeleteModalOpen(true);
@@ -143,7 +144,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                 }
                 navigation.pop();
             });
-    }, [dispatch, groupId, account, navigation, formik]);
+    }, [api, dispatch, groupId, account, navigation, formik]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -155,7 +156,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                         <Button onPress={cancelEdit} textColor={theme.colors.error}>
                             Cancel
                         </Button>
-                        <Button onPress={formik.handleSubmit}>Save</Button>
+                        <Button onPress={() => formik.handleSubmit}>Save</Button>
                         <IconButton icon="delete" iconColor={theme.colors.error} onPress={openConfirmDeleteModal} />
                     </>
                 );

@@ -42,9 +42,7 @@ def parse_postgres_datetime(dt: str) -> datetime:
             millis = int(subseconds.ljust(3, "0"))
 
         tzsign = -1 if m.group("tzsign") == "-" else 1
-        tzdelta = timedelta(
-            hours=int(m.group("tzhours")), minutes=int(m.group("tzminutes"))
-        )
+        tzdelta = timedelta(hours=int(m.group("tzhours")), minutes=int(m.group("tzminutes")))
         tz = timezone(tzsign * tzdelta)
 
         return datetime(
@@ -141,9 +139,7 @@ async def run_as_fg_process(args, **kwargs):
 
     try:
         # fork the child
-        child = await asyncio.create_subprocess_exec(
-            *args, preexec_fn=new_pgid, **kwargs
-        )
+        child = await asyncio.create_subprocess_exec(*args, preexec_fn=new_pgid, **kwargs)
 
         # we can't set the process group id from the parent since the child
         # will already have exec'd. and we can't SIGSTOP it before exec,

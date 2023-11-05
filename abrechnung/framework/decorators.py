@@ -1,5 +1,7 @@
 from functools import wraps
 
+from abrechnung.framework.database import Connection
+
 
 def with_db_connection(func):
     @wraps(func)

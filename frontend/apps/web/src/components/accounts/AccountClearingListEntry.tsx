@@ -1,12 +1,12 @@
-import ListItemLink from "../style/ListItemLink";
+import { selectAccountBalances, selectAccountById, selectGroupCurrencySymbol } from "@abrechnung/redux";
 import { Box, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
 import { balanceColor } from "../../core/utils";
-import { ClearingAccountIcon } from "../style/AbrechnungIcons";
-import { selectAccountById, selectGroupCurrencySymbol, selectAccountBalances } from "@abrechnung/redux";
-import { useAppSelector, selectAccountSlice, selectGroupSlice } from "../../store";
+import { selectAccountSlice, selectGroupSlice, useAppSelector } from "../../store";
 import { getAccountLink } from "../../utils";
+import { ClearingAccountIcon } from "../style/AbrechnungIcons";
+import ListItemLink from "../style/ListItemLink";
 
 interface Props {
     groupId: number;
@@ -16,7 +16,7 @@ interface Props {
 
 export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, clearingAccountId }) => {
     const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
-    const currencySymbol = useAppSelector((state) =>
+    const currency_symbol = useAppSelector((state) =>
         selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
     );
     const clearingAccount = useAppSelector((state) =>
@@ -43,7 +43,7 @@ export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, 
                 secondary={
                     <Box sx={{ display: "flex", flexDirection: "column" }}>
                         <span>{clearingAccount.description}</span>
-                        {clearingAccount.dateInfo != null && <span>{clearingAccount.dateInfo}</span>}
+                        {clearingAccount.date_info != null && <span>{clearingAccount.date_info}</span>}
                     </Box>
                 }
             />
@@ -56,12 +56,12 @@ export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, 
                                 balanceColor(balances[clearingAccount.id]?.clearingResolution[accountId], theme),
                         }}
                     >
-                        {balances[clearingAccount.id]?.clearingResolution[accountId]?.toFixed(2)} {currencySymbol}
+                        {balances[clearingAccount.id]?.clearingResolution[accountId]?.toFixed(2)} {currency_symbol}
                     </Typography>
                     <br />
                     <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
                         last changed:{" "}
-                        {DateTime.fromISO(clearingAccount.lastChanged).toLocaleString(DateTime.DATETIME_FULL)}
+                        {DateTime.fromISO(clearingAccount.last_changed).toLocaleString(DateTime.DATETIME_FULL)}
                     </Typography>
                 </Typography>
             </ListItemText>

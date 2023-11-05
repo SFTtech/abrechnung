@@ -4,11 +4,13 @@ test:
 
 .PHONY: format
 format:
+	isort .
 	black .
 	cd frontend && npx prettier --write . && cd ..
 
 .PHONY: check-format
 check-format:
+	isort --check-only .
 	black --check .
 
 .PHONY: check-format-frontend
@@ -28,7 +30,7 @@ eslint:
 
 .PHONY: mypy
 mypy:
-	mypy --ignore-missing-imports .
+	mypy .
 
 .PHONY: package
 package:
@@ -37,3 +39,8 @@ package:
 .PHONY: docs
 docs:
 	$(MAKE) -C docs html
+
+.PHONY: generate-openapi
+generate-openapi:
+	mkdir -p api
+	python3 -m abrechnung -c config.yaml show-openapi > api/openapi.json

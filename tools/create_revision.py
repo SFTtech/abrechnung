@@ -13,16 +13,11 @@ def main(name: str):
     new_revision_version = os.urandom(4).hex()
     file_path = REVISION_PATH / filename
     with file_path.open("w+") as f:
-        f.write(
-            f"-- revision: {new_revision_version}\n"
-            f"-- requires: {revisions[-1].version}\n"
-        )
+        f.write(f"-- revision: {new_revision_version}\n" f"-- requires: {revisions[-1].version}\n")
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        prog="DB utilty", description="Utility to create new database revision files"
-    )
+    parser = argparse.ArgumentParser(prog="DB utilty", description="Utility to create new database revision files")
     parser.add_argument("name", type=str)
     args = parser.parse_args()
     main(args.name)

@@ -1,10 +1,10 @@
+import { toFormikValidationSchema } from "@abrechnung/utils";
+import { Alert, Box, Button, Container, CssBaseline, LinearProgress, Link, TextField, Typography } from "@mui/material";
+import { Form, Formik, FormikHelpers, FormikProps } from "formik";
 import React, { useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
-import { api } from "../../core/api";
-import { Form, Formik, FormikHelpers, FormikProps } from "formik";
-import { Alert, Box, Button, Container, CssBaseline, LinearProgress, Link, TextField, Typography } from "@mui/material";
 import { z } from "zod";
-import { toFormikValidationSchema } from "@abrechnung/utils";
+import { api } from "../../core/api";
 
 const validationSchema = z
     .object({
@@ -23,7 +23,8 @@ export const ConfirmPasswordRecovery: React.FC = () => {
     const { token } = useParams();
 
     const handleSubmit = (values: FormSchema, { setSubmitting, resetForm }: FormikHelpers<FormSchema>) => {
-        api.confirmPasswordRecovery({ newPassword: values.password, token })
+        api.client.auth
+            .confirmPasswordRecovery({ requestBody: { new_password: values.password, token } })
             .then(() => {
                 setStatus("success");
                 setError(null);

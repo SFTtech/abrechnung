@@ -1,3 +1,17 @@
+import LoadingIndicator from "@/components/LoadingIndicator";
+import Searchbar from "@/components/style/Searchbar";
+import { getAccountIcon } from "@/constants/Icons";
+import { useApi } from "@/core/ApiProvider";
+import { GroupTabScreenProps } from "@/navigation/types";
+import {
+    selectAccountSlice,
+    selectActiveGroupId,
+    selectGroupSlice,
+    selectUiSlice,
+    useAppDispatch,
+    useAppSelector,
+} from "@/store";
+import { successColor } from "@/theme";
 import { AccountSortMode } from "@abrechnung/core";
 import {
     createAccount,
@@ -5,7 +19,7 @@ import {
     selectAccountBalances,
     selectCurrentUserPermissions,
     selectGroupAccountsStatus,
-    selectGroupCurrencySymbol,
+    selectGroupcurrency_symbol,
     selectSortedAccounts,
 } from "@abrechnung/redux";
 import { Account, AccountBalance, AccountType } from "@abrechnung/types";
@@ -15,26 +29,13 @@ import * as React from "react";
 import { useLayoutEffect, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { Appbar, FAB, List, Menu, Portal, RadioButton, Text, useTheme } from "react-native-paper";
-import LoadingIndicator from "../../components/LoadingIndicator";
-import Searchbar from "../../components/style/Searchbar";
-import { getAccountIcon } from "../../constants/Icons";
-import { api } from "../../core/api";
-import { GroupTabScreenProps } from "../../navigation/types";
-import {
-    selectAccountSlice,
-    selectActiveGroupId,
-    selectGroupSlice,
-    selectUiSlice,
-    useAppDispatch,
-    useAppSelector,
-} from "../../store";
-import { successColor } from "../../theme";
 
 type Props = GroupTabScreenProps<"AccountList" | "ClearingAccountList">;
 
 export const AccountList: React.FC<Props> = ({ route, navigation }) => {
     const theme = useTheme();
     const dispatch = useAppDispatch();
+    const { api } = useApi();
     const accountType: AccountType = route.name === "AccountList" ? "personal" : "clearing";
 
     const groupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) })) as number; // TODO: proper typing
@@ -51,8 +52,8 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
     );
     const accountBalances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
-    const currencySymbol = useAppSelector((state) =>
-        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
+    const currency_symbol = useAppSelector((state) =>
+        selectGroupcurrency_symbol({ state: selectGroupSlice(state), groupId })
     );
     const accountStatus = useAppSelector((state) =>
         selectGroupAccountsStatus({ state: selectAccountSlice(state), groupId })
@@ -116,7 +117,7 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
                             >
                                 <RadioButton.Item position="trailing" label="Name" value="name" />
                                 <RadioButton.Item position="trailing" label="Description" value="description" />
-                                <RadioButton.Item position="trailing" label="Last changed" value="lastChanged" />
+                                <RadioButton.Item position="trailing" label="Last changed" value="last_changed" />
                             </RadioButton.Group>
                         </Menu>
                     </>
@@ -173,7 +174,7 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
                             />
                         ) : null}
                         <Text style={{ color: textColor }}>
-                            {balance.balance.toFixed(2)} {currencySymbol}
+                            {balance.balance.toFixed(2)} {currency_symbol}
                         </Text>
                     </>
                 )}

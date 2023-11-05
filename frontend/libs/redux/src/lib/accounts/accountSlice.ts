@@ -1,14 +1,12 @@
-import { Api } from "@abrechnung/api";
-import { Account, AccountBase, AccountType, PersonalAccount, ClearingAccount } from "@abrechnung/types";
-import { createAsyncThunk, createSlice, PayloadAction, Draft } from "@reduxjs/toolkit";
-import { AccountSliceState, AccountState, ENABLE_OFFLINE_MODE, IRootState, StateStatus } from "../types";
-import { getGroupScopedState } from "../utils";
-import memoize from "proxy-memoize";
+import { AccountType, Api } from "@abrechnung/api";
 import { AccountSortMode, getAccountSortFunc } from "@abrechnung/core";
+import { Account, BackendAccount, ClearingAccount, PersonalAccount } from "@abrechnung/types";
 import { fromISOString, toISODateString } from "@abrechnung/utils";
+import { Draft, PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import memoize from "proxy-memoize";
 import { leaveGroup } from "../groups";
-import { addEntity, removeEntity } from "../utils";
-import { number } from "zod";
+import { AccountSliceState, AccountState, IRootState, StateStatus } from "../types";
+import { addEntity, getGroupScopedState, removeEntity } from "../utils";
 
 const initializeGroupState = (state: Draft<AccountSliceState>, groupId: number) => {
     if (state.byGroupId[groupId]) {
@@ -24,10 +22,6 @@ const initializeGroupState = (state: Draft<AccountSliceState>, groupId: number) 
             byId: {},
             ids: [],
         },
-        pendingAccounts: {
-            byId: {},
-            ids: [],
-        },
         status: "loading",
     };
 };
@@ -38,90 +32,47 @@ const initialState: AccountSliceState = {
     activeInstanceId: 0,
 };
 
-const getAccountWithWip = (state: AccountState, accountId: number): Account | undefined => {
-    return state.wipAccounts.byId[accountId] ?? state.pendingAccounts.byId[accountId] ?? state.accounts.byId[accountId];
-};
-
 // selectors
-export const selectGroupAccountsStatus = memoize(
-    (args: { state: AccountSliceState; groupId: number }): StateStatus | undefined => {
-        const { state, groupId } = args;
-        if (!state.byGroupId[groupId]) {
-            return undefined;
-        }
-        return state.byGroupId[groupId].status;
-    }
-);
-
-const selectGroupAccountIdsInternal = (args: { state: AccountSliceState; groupId: number }): number[] => {
+export const selectGroupAccountsStatus = (args: {
+    state: AccountSliceState;
+    groupId: number;
+}): StateStatus | undefined => {
     const { state, groupId } = args;
-    const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
-    // TODO: merge wip changes here
-    const sortFunc = getAccountSortFunc("name");
-    return s.accounts.ids
-        .concat(...s.pendingAccounts.ids.filter((id) => id < 0))
-        .concat(...s.wipAccounts.ids.filter((id) => id < 0 && s.pendingAccounts.ids[id] === undefined))
-        .filter((id) => {
-            const acc = s.wipAccounts.byId[id] ?? s.pendingAccounts.byId[id] ?? s.accounts.byId[id];
-            if (acc === undefined) {
-                console.log("error, undefined account for id:", id);
-                return false;
-            }
-            return !acc.deleted;
-        })
-        .sort((id1, id2) =>
-            sortFunc(
-                s.wipAccounts.byId[id1] ?? s.pendingAccounts.byId[id1] ?? s.accounts.byId[id1],
-                s.wipAccounts.byId[id2] ?? s.pendingAccounts.byId[id2] ?? s.accounts.byId[id2]
-            )
-        );
+    if (!state.byGroupId[groupId]) {
+        return undefined;
+    }
+    return state.byGroupId[groupId].status;
 };
-
-export const selectGroupAccountIds = memoize(selectGroupAccountIdsInternal);
 
 export const selectGroupAccountsInternal = (args: { state: AccountSliceState; groupId: number }): Account[] => {
     const { state, groupId } = args;
     const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
-    const accountIds = selectGroupAccountIdsInternal({ state, groupId });
-    return accountIds.map((id: number) => s.wipAccounts.byId[id] ?? s.pendingAccounts.byId[id] ?? s.accounts.byId[id]);
+    const wipAccounts = s.wipAccounts.ids.map((id) => s.wipAccounts.byId[id]);
+    const accounts = s.accounts.ids.filter((id) => !(id in s.wipAccounts.byId)).map((id) => s.accounts.byId[id]);
+    return wipAccounts.concat(accounts).filter((acc) => !acc.deleted);
 };
+
 export const selectGroupAccounts = memoize(selectGroupAccountsInternal);
 
-const selectGroupAccountIdsFilteredInternal = (args: {
+export const selectClearingAccountsInternal = (args: {
     state: AccountSliceState;
     groupId: number;
-    type: AccountType;
-}): number[] => {
-    const { state, groupId, type } = args;
-    const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
-    const accountIds = selectGroupAccountIdsInternal({ state: state, groupId });
-    // TODO: merge wip changes here
-    // TODO: memoize for caching
-    return accountIds.filter((id: number) => s.accounts.byId[id]?.type === type);
+}): ClearingAccount[] => {
+    const accounts = selectGroupAccountsInternal(args);
+    return accounts.filter((acc) => acc.type === "clearing") as ClearingAccount[];
 };
 
-export const selectGroupAccountIdsFiltered = memoize(selectGroupAccountIdsFilteredInternal);
+export const selectClearingAccounts = memoize(selectClearingAccountsInternal);
 
-export const selectAccountsFilteredCount = memoize(
-    (args: { state: AccountSliceState; groupId: number; type: AccountType }): number => {
-        const accountIds = selectGroupAccountIdsFilteredInternal(args);
-        return accountIds.length;
-    }
-);
-
-type NarrowedAccount<AccountTypeT extends AccountType> = AccountTypeT extends "personal"
-    ? PersonalAccount
-    : ClearingAccount;
-
-export const selectGroupAccountsFilteredInternal = <AccountTypeT extends AccountType>(args: {
+export const selectPersonalAccountsInternal = (args: {
     state: AccountSliceState;
     groupId: number;
-    type: AccountTypeT;
-}): NarrowedAccount<AccountTypeT>[] => {
-    const { state, groupId, type } = args;
-    const accounts = selectGroupAccountsInternal({ state, groupId });
-    return accounts.filter((acc: Account) => acc.type === type) as NarrowedAccount<AccountTypeT>[];
+}): PersonalAccount[] => {
+    const accounts = selectGroupAccountsInternal(args);
+    return accounts.filter((acc) => acc.type === "personal") as PersonalAccount[];
 };
+
+export const selectPersonalAccounts = memoize(selectPersonalAccountsInternal);
 
 export const selectSortedAccounts = memoize(
     (args: {
@@ -154,8 +105,8 @@ export const selectSortedAccounts = memoize(
                 if (
                     a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     a.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    fromISOString(a.lastChanged).toDateString().toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    (a.type === "clearing" && a.dateInfo && a.dateInfo.includes(searchTerm.toLowerCase()))
+                    fromISOString(a.last_changed).toDateString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (a.type === "clearing" && a.date_info && a.date_info.includes(searchTerm.toLowerCase()))
                 ) {
                     return true;
                 }
@@ -169,8 +120,6 @@ export const selectSortedAccounts = memoize(
     }
 );
 
-export const selectGroupAccountsFiltered = memoize(selectGroupAccountsFilteredInternal);
-
 const selectAccountByIdInternal = (args: {
     state: AccountSliceState;
     groupId: number;
@@ -178,7 +127,7 @@ const selectAccountByIdInternal = (args: {
 }): Account | undefined => {
     const { state, groupId, accountId } = args;
     const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
-    return s.wipAccounts.byId[accountId] ?? s.pendingAccounts.byId[accountId] ?? s.accounts.byId[accountId];
+    return s.wipAccounts.byId[accountId] ?? s.accounts.byId[accountId];
 };
 export const selectAccountById = memoize(selectAccountByIdInternal);
 
@@ -193,57 +142,42 @@ export const selectWipAccountById = memoize(
 export const selectAccountsOwnedByUser = memoize(
     (args: { state: AccountSliceState; groupId: number; userId: number }): Account[] => {
         const { state, groupId, userId } = args;
-        const accounts = selectGroupAccountsFilteredInternal({ state, groupId, type: "personal" });
-        return accounts.filter((acc: Account) => acc.type === "personal" && acc.owningUserID === userId);
+        const accounts = selectGroupAccountsInternal({ state, groupId });
+        return accounts.filter((acc: Account) => acc.type === "personal" && acc.owning_user_id === userId);
     }
 );
 
 export const selectClearingAccountsInvolvingAccounts = memoize(
     (args: { state: AccountSliceState; groupId: number; accountId: number }): Account[] => {
         const { state, groupId, accountId } = args;
-        const accounts = selectGroupAccountsFilteredInternal({ state, groupId, type: "clearing" });
+        const accounts = selectGroupAccountsInternal({ state, groupId });
         return accounts.filter(
             (acc: Account) =>
-                acc.type === "clearing" && acc.clearingShares && acc.clearingShares[accountId] !== undefined
+                acc.type === "clearing" && acc.clearing_shares && acc.clearing_shares[accountId] !== undefined
         );
     }
 );
 
-export const selectAccountIdToAccountMapInternal = (args: {
+export const selectAccountIdToAccountMap = ({
+    state,
+    groupId,
+}: {
     state: AccountSliceState;
     groupId: number;
 }): { [k: number]: Account } => {
-    const accounts = selectGroupAccountsInternal(args);
-    return accounts.reduce<{ [k: number]: Account }>((map, account) => {
-        map[account.id] = account;
-        return map;
-    }, {});
+    const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
+    return s.accounts.byId;
 };
-
-export const selectAccountIdToAccountMap = memoize(selectAccountIdToAccountMapInternal);
-
-export const selectAccountIdToNameMapInternal = (args: {
-    state: AccountSliceState;
-    groupId: number;
-}): { [k: number]: string } => {
-    const accounts = selectGroupAccountsInternal(args);
-    return accounts.reduce<{ [k: number]: string }>((idNameMap, account) => {
-        idNameMap[account.id] = account.name;
-        return idNameMap;
-    }, {});
-};
-
-export const selectAccountIdToNameMap = memoize(selectAccountIdToNameMapInternal);
 
 // async thunks
 export const fetchAccounts = createAsyncThunk<
-    Account[],
+    BackendAccount[],
     { groupId: number; api: Api; fetchAnyway?: boolean },
     { state: IRootState }
 >(
     "fetchAccounts",
     async ({ groupId, api }) => {
-        return await api.fetchAccounts(groupId);
+        return await api.client.accounts.listAccounts({ groupId });
     },
     {
         condition: ({ groupId, fetchAnyway = false }, { getState }): boolean => {
@@ -260,49 +194,42 @@ export const fetchAccounts = createAsyncThunk<
     }
 );
 
-export const fetchAccount = createAsyncThunk<Account, { accountId: number; api: Api }, { state: IRootState }>(
+export const fetchAccount = createAsyncThunk<BackendAccount, { accountId: number; api: Api }, { state: IRootState }>(
     "fetchAccount",
     async ({ accountId, api }) => {
-        return await api.fetchAccount(accountId);
+        return await api.client.accounts.getAccount({ accountId });
     }
 );
 
 export const saveAccount = createAsyncThunk<
-    { oldAccountId: number; account: Account; isSynced: boolean },
+    { oldAccountId: number; account: BackendAccount },
     { groupId: number; accountId: number; api: Api },
     { state: IRootState }
 >("saveAccount", async ({ groupId, accountId, api }, { getState, rejectWithValue }) => {
     const state = getState();
     const s = getGroupScopedState<AccountState, AccountSliceState>(state.accounts, groupId);
-    let wipAccount = s.wipAccounts.byId[accountId];
+    const wipAccount = s.wipAccounts.byId[accountId];
     if (!wipAccount) {
-        wipAccount = s.pendingAccounts.byId[accountId] ?? s.accounts.byId[accountId];
-        if (wipAccount === undefined || !wipAccount.isWip) {
-            // TODO: maybe cancel action instead of rejecting
-            return rejectWithValue("cannot save a account without wip changes");
-        }
+        return rejectWithValue("cannot save a account without wip changes");
     }
-    let updatedAccount: Account;
-    let isSynced: boolean;
+    let updatedAccount: BackendAccount;
     if (await api.hasConnection()) {
-        updatedAccount = await api.pushAccountChanges(wipAccount);
-        isSynced = true;
-    } else if (ENABLE_OFFLINE_MODE) {
-        // TODO: IMPLEMENT properly
-        updatedAccount = {
-            ...wipAccount,
-            isWip: false,
-            hasLocalChanges: true,
-            lastChanged: new Date().toISOString(),
-        };
-        isSynced = false;
-        throw new Error("not implemented fully");
+        if (wipAccount.id < 0) {
+            updatedAccount = await api.client.accounts.createAccount({
+                groupId,
+                requestBody: { owning_user_id: null, tags: [], date_info: null, ...wipAccount },
+            });
+        } else {
+            updatedAccount = await api.client.accounts.updateAccount({
+                accountId: wipAccount.id,
+                requestBody: { owning_user_id: null, tags: [], date_info: null, ...wipAccount },
+            });
+        }
     } else {
         throw new Error("no internet connection");
     }
     return {
         account: updatedAccount,
-        isSynced: isSynced,
         oldAccountId: accountId,
     };
 });
@@ -318,30 +245,28 @@ export const createAccount = createAsyncThunk<
     if (type === "personal") {
         account = {
             id: accountId,
-            groupID: groupId,
+            group_id: groupId,
             type: type,
             name: "",
             description: "",
-            owningUserID: null,
+            owning_user_id: null,
             deleted: false,
-            hasLocalChanges: true,
-            isWip: true,
-            lastChanged: new Date().toISOString(),
+            is_wip: true,
+            last_changed: new Date().toISOString(),
         };
     } else {
         account = {
             id: accountId,
-            groupID: groupId,
+            group_id: groupId,
             type: type,
             name: "",
             description: "",
-            clearingShares: {},
-            dateInfo: toISODateString(new Date()),
+            clearing_shares: {},
+            date_info: toISODateString(new Date()),
             tags: [],
             deleted: false,
-            hasLocalChanges: true,
-            isWip: true,
-            lastChanged: new Date().toISOString(),
+            is_wip: true,
+            last_changed: new Date().toISOString(),
         };
     }
     dispatch(advanceNextLocalAccountId());
@@ -349,7 +274,7 @@ export const createAccount = createAsyncThunk<
 });
 
 export const deleteAccount = createAsyncThunk<
-    { account: Account | undefined; isSynced: boolean },
+    { account: BackendAccount | undefined },
     { groupId: number; accountId: number; api: Api },
     { state: IRootState }
 >("deleteAccount", async ({ groupId, accountId, api }, { getState, rejectWithValue }) => {
@@ -360,57 +285,53 @@ export const deleteAccount = createAsyncThunk<
     const account = s.accounts.byId[accountId];
     if (account) {
         if (await api.hasConnection()) {
-            const updatedAccount = await api.deleteAccount(accountId);
-            return { account: updatedAccount, isSynced: true };
-        } else if (ENABLE_OFFLINE_MODE) {
-            return {
-                account: {
-                    ...account,
-                    deleted: true,
-                    hasLocalChanges: true,
-                    isWip: false,
-                    lastChanged: new Date().toISOString(),
-                },
-                isSynced: false,
-            };
+            const backendAccount = await api.client.accounts.deleteAccount({ accountId });
+            return { account: backendAccount };
         } else {
             return rejectWithValue("no internet connection");
         }
     }
 
-    return { account: undefined, isSynced: false };
+    return { account: undefined };
 });
 
-export const discardAccountChange = createAsyncThunk<
-    { account: Account | undefined; deletedAccount: boolean },
-    { groupId: number; accountId: number; api: Api },
-    { state: IRootState }
->("discardAccountChange", async ({ groupId, accountId, api }, { getState, rejectWithValue }) => {
-    const state = getState();
-    const s = getGroupScopedState<AccountState, AccountSliceState>(state.accounts, groupId);
-    const wipAccount = s.wipAccounts.byId[accountId];
-    if (!wipAccount) {
+const moveAccountToWip = (s: Draft<AccountState>, accountId: number): Account | undefined => {
+    if (s.wipAccounts.byId[accountId] === undefined) {
         const account = s.accounts.byId[accountId];
-        if (account && account.isWip) {
-            if (await api.hasConnection()) {
-                const resp = await api.discardAccountChange(accountId);
-                return { account: resp, deletedAccount: false };
-            } else {
-                return rejectWithValue("cannot discard server side changes without an internet connection");
-            }
+        let wipAccount: Account;
+        if (account.type === "clearing") {
+            wipAccount = {
+                id: account.id,
+                group_id: account.group_id,
+                name: account.name,
+                description: account.description,
+                tags: account.tags,
+                type: "clearing",
+                deleted: account.deleted,
+                clearing_shares: account.clearing_shares,
+                is_wip: true,
+                last_changed: new Date().toISOString(),
+                date_info: account.date_info,
+            };
+        } else {
+            wipAccount = {
+                id: account.id,
+                group_id: account.group_id,
+                name: account.name,
+                description: account.description,
+                type: "personal",
+                deleted: account.deleted,
+                is_wip: true,
+                last_changed: new Date().toISOString(),
+                owning_user_id: account.owning_user_id,
+            };
         }
-
-        return {
-            account: undefined,
-            deletedAccount: false,
-        };
+        s.wipAccounts.byId[accountId] = wipAccount;
+        s.wipAccounts.ids.push(accountId);
+        return wipAccount;
     }
-
-    return {
-        account: undefined,
-        deletedAccount: s.accounts.byId[accountId] === undefined && s.pendingAccounts.byId[accountId] === undefined,
-    };
-});
+    return s.wipAccounts.byId[accountId];
+};
 
 const accountSlice = createSlice({
     name: "accounts",
@@ -430,26 +351,22 @@ const accountSlice = createSlice({
                 ...account,
                 name: `${account.name} - Copy`,
                 id: newAccountId,
-                lastChanged: new Date().toISOString(),
-                hasLocalChanges: true,
-                hasCommittedChanges: false,
-                isWip: true,
+                last_changed: new Date().toISOString(),
+                is_wip: true,
             };
 
-            state.wipAccounts.ids.push(newAccountId);
-            state.wipAccounts.byId[newAccountId] = newAccount;
+            addEntity(state.wipAccounts, newAccount);
         },
         advanceNextLocalAccountId: (sliceState, action: PayloadAction<void>) => {
             sliceState.nextLocalAccountId = sliceState.nextLocalAccountId - 1;
         },
         accountAdded: (sliceState, action: PayloadAction<Account>) => {
             const account = action.payload;
-            const state = getGroupScopedState<AccountState, AccountSliceState>(sliceState, account.groupID);
+            const state = getGroupScopedState<AccountState, AccountSliceState>(sliceState, account.group_id);
             if (state.accounts.byId[account.id] !== undefined) {
                 return;
             }
-            state.accounts.ids.push(account.id);
-            state.accounts.byId[account.id] = account;
+            addEntity(state.accounts, account);
         },
         accountsUpdated: (state, action: PayloadAction<Account[]>) => {
             // TODO: implement
@@ -460,31 +377,33 @@ const accountSlice = createSlice({
             if (state.wipAccounts.byId[accountId] !== undefined || state.accounts.byId[accountId] === undefined) {
                 return;
             }
-            const account = state.pendingAccounts.byId[accountId] ?? state.accounts.byId[accountId];
-            state.wipAccounts.ids.push(accountId);
-            state.wipAccounts.byId[accountId] = {
-                ...account,
-                hasLocalChanges: true,
-                isWip: true,
-            };
+            moveAccountToWip(state, accountId);
         },
-        wipAccountUpdated: (sliceState, action: PayloadAction<AccountBase>) => {
+        wipAccountUpdated: (
+            sliceState,
+            action: PayloadAction<
+                Partial<Omit<Account, "type" | "last_changed" | "is_wip">> & Pick<Account, "id" | "group_id">
+            >
+        ) => {
             const account = action.payload;
-            const s = getGroupScopedState<AccountState, AccountSliceState>(sliceState, account.groupID);
+            const s = getGroupScopedState<AccountState, AccountSliceState>(sliceState, account.group_id);
             if (s.wipAccounts.byId[account.id] === undefined) {
                 s.wipAccounts.ids.push(account.id);
             }
-            const currentAccount = getAccountWithWip(s, account.id);
-            if (currentAccount !== undefined && currentAccount.type === account.type) {
-                const newAccount: Account = {
-                    ...currentAccount,
-                    ...account,
-                    isWip: true,
-                    hasLocalChanges: true,
-                    lastChanged: new Date().toISOString(),
-                };
-                s.wipAccounts.byId[account.id] = newAccount;
+            const wipAccount = moveAccountToWip(s, account.id);
+            if (!wipAccount) {
+                return;
             }
+            s.wipAccounts.byId[account.id] = {
+                ...wipAccount,
+                ...account,
+                last_changed: new Date().toISOString(),
+            };
+        },
+        discardAccountChange: (state, action: PayloadAction<{ groupId: number; accountId: number }>) => {
+            const { groupId, accountId } = action.payload;
+            const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
+            removeEntity(s.wipAccounts, accountId);
         },
     },
     extraReducers: (builder) => {
@@ -509,7 +428,7 @@ const accountSlice = createSlice({
             const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
             // TODO: optimize such that we maybe only update those who have actually changed??
             const byId = accounts.reduce<{ [k: number]: Account }>((byId, account) => {
-                byId[account.id] = account;
+                byId[account.id] = { ...account, is_wip: false };
                 return byId;
             }, {});
             s.accounts.byId = byId;
@@ -518,64 +437,31 @@ const accountSlice = createSlice({
         });
         builder.addCase(fetchAccount.fulfilled, (state, action) => {
             const account = action.payload;
-            const groupId = account.groupID;
+            const groupId = account.group_id;
             const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
-            if (!s.accounts.byId[account.id]) {
-                s.accounts.ids.push(account.id);
-            }
-            s.accounts.byId[account.id] = account;
+            addEntity(s.accounts, account);
         });
         builder.addCase(saveAccount.fulfilled, (sliceState, action) => {
             const s = getGroupScopedState<AccountState, AccountSliceState>(sliceState, action.meta.arg.groupId);
-            const { account, isSynced, oldAccountId } = action.payload;
-            if (isSynced) {
-                addEntity(s.accounts, account);
-                removeEntity(s.pendingAccounts, oldAccountId);
-            } else {
-                addEntity(s.pendingAccounts, account);
-            }
+            const { account, oldAccountId } = action.payload;
+            addEntity(s.accounts, { ...account, is_wip: false });
             removeEntity(s.wipAccounts, oldAccountId);
-        });
-        builder.addCase(saveAccount.rejected, (state, action) => {
-            // TODO: do something?
-        });
-        builder.addCase(discardAccountChange.fulfilled, (state, action) => {
-            const { groupId, accountId } = action.meta.arg;
-            const { account: updatedAccount } = action.payload;
-            const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
-            if (updatedAccount) {
-                addEntity(s.accounts, updatedAccount);
-                removeEntity(s.wipAccounts, accountId);
-                return;
-            }
-
-            removeEntity(s.wipAccounts, accountId);
-        });
-        builder.addCase(deleteAccount.fulfilled, (state, action) => {
-            const { account, isSynced } = action.payload;
-            const { groupId, accountId } = action.meta.arg;
-            const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
-            // account is known by the server, i.e. id > 0
-            if (account) {
-                if (isSynced) {
-                    addEntity(s.accounts, account);
-                    removeEntity(s.pendingAccounts, account.id);
-                } else {
-                    addEntity(s.pendingAccounts, account);
-                }
-                removeEntity(s.wipAccounts, account.id);
-                return;
-            }
-            // account is only stored locally, we can purge it fully, i.e. id < 0
-            removeEntity(s.pendingAccounts, accountId);
-            removeEntity(s.wipAccounts, accountId);
         });
         builder.addCase(createAccount.fulfilled, (state, action) => {
             const { account } = action.payload;
             const { groupId } = action.meta.arg;
             const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
-            s.wipAccounts.byId[account.id] = account;
-            s.wipAccounts.ids.push(account.id);
+            addEntity(s.wipAccounts, account);
+        });
+        builder.addCase(deleteAccount.fulfilled, (state, action) => {
+            const { account } = action.payload;
+            const { groupId, accountId } = action.meta.arg;
+            const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
+            // account is known by the server, i.e. id > 0
+            if (account) {
+                addEntity(s.accounts, account);
+            }
+            removeEntity(s.wipAccounts, accountId);
         });
         builder.addCase(leaveGroup.fulfilled, (state, action) => {
             const { groupId } = action.meta.arg;
@@ -587,7 +473,13 @@ const accountSlice = createSlice({
 // local reducers
 const { advanceNextLocalAccountId } = accountSlice.actions;
 
-export const { wipAccountUpdated, accountAdded, accountEditStarted, accountsUpdated, copyAccount } =
-    accountSlice.actions;
+export const {
+    wipAccountUpdated,
+    accountAdded,
+    accountEditStarted,
+    accountsUpdated,
+    copyAccount,
+    discardAccountChange,
+} = accountSlice.actions;
 
 export const { reducer: accountReducer } = accountSlice;

@@ -46,9 +46,7 @@ async def hook(request: web.Request):
         print(f"Upload successful, received {filename} of size {size} bytes.")
 
     await copy_file_to_container(request, "/tmp/abrechnung_latest.deb", archive_name)
-    await run_in_container(
-        request, ["apt-get", "install", "-y", "--reinstall", archive_name]
-    )
+    await run_in_container(request, ["apt-get", "install", "-y", "--reinstall", archive_name])
     await run_in_container(request, ["abrechnung", "-vvv", "db", "migrate"])
     await run_in_container(request, ["systemctl", "daemon-reload"])
     await run_in_container(request, ["systemctl", "restart", "abrechnung-api.service"])
@@ -65,9 +63,7 @@ def main():
 
     webhook_secret = os.environ.get("WEBHOOK_SECRET")
     if not webhook_secret:
-        cli.error(
-            "Required to set the webhook secret in the 'WEBHOOK_SECRET' env variable"
-        )
+        cli.error("Required to set the webhook secret in the 'WEBHOOK_SECRET' env variable")
 
     app = web.Application()
     app.add_routes(routes)
