@@ -5,7 +5,6 @@ import traceback
 from typing import Optional
 
 import asyncpg
-import schema
 from fastapi import APIRouter, Request, WebSocket, WebSocketException, status
 
 from abrechnung.application.users import UserService
@@ -15,48 +14,6 @@ from abrechnung.http.utils import encode_json
 router = APIRouter(
     prefix="/api",
     tags=["websocket"],
-)
-
-CLIENT_SCHEMA = schema.Schema(
-    schema.Or(
-        {
-            "type": "subscribe",
-            "token": str,
-            "data": {"subscription_type": str, "element_id": int},
-        },
-        {
-            "type": "unsubscribe",
-            "token": str,
-            "data": {"subscription_type": str, "element_id": int},
-        },
-    )
-)
-
-SERVER_SCHEMA = schema.Schema(
-    schema.Or(
-        {"type": "error", "data": {"code": int, "msg": str}},
-        {
-            "type": "notification",
-            "data": {
-                "subscription_type": str,
-                "element_id": int,
-            },
-        },
-        {
-            "type": "subscribe_success",
-            "data": {
-                "subscription_type": str,
-                "element_id": int,
-            },
-        },
-        {
-            "type": "unsubscribe_success",
-            "data": {
-                "subscription_type": str,
-                "element_id": int,
-            },
-        },
-    )
 )
 
 
@@ -202,14 +159,10 @@ async def websocket_endpoint(
     try:
         while True:
             msg = await ws.receive_json()
-            CLIENT_SCHEMA.validate(msg)
             try:
                 async with db_pool.acquire() as connection:
                     response = await ws_message(connection, connection_id, msg, user_service)
-            except (
-                asyncpg.DataError,
-                schema.SchemaError,
-            ) as exc:
+            except asyncpg.DataError as exc:
                 response = make_error_msg(code=status.HTTP_400_BAD_REQUEST, msg=str(exc))
             except Exception as exc:
                 traceback.print_exc()

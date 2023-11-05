@@ -154,7 +154,6 @@ class TransactionService(Service):
     async def _update_file_in_revision(
         *, conn: Connection, revision_id: int, transaction_id: int, attachment: UpdateFile
     ) -> int:
-
         if "." in attachment.filename:
             raise InvalidCommand(f"Dots '.' are not allowed in file names")
 
