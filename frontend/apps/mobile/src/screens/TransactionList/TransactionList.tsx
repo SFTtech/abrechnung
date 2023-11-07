@@ -1,10 +1,4 @@
 /* eslint-disable react/prop-types */
-import LoadingIndicator from "@/components/LoadingIndicator";
-import Searchbar from "@/components/style/Searchbar";
-import { purchaseIcon, transferIcon } from "@/constants/Icons";
-import { useApi } from "@/core/ApiProvider";
-import { GroupTabScreenProps } from "@/navigation/types";
-import { selectActiveGroupId, selectTransactionSlice, selectUiSlice, useAppDispatch, useAppSelector } from "@/store";
 import { TransactionSortMode } from "@abrechnung/core";
 import {
     createTransaction,
@@ -19,6 +13,18 @@ import * as React from "react";
 import { useLayoutEffect, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { Appbar, FAB, Menu, Portal, RadioButton, Text, useTheme } from "react-native-paper";
+import LoadingIndicator from "../../components/LoadingIndicator";
+import Searchbar from "../../components/style/Searchbar";
+import { purchaseIcon, transferIcon } from "../../constants/Icons";
+import { useApi } from "../../core/ApiProvider";
+import { GroupTabScreenProps } from "../../navigation/types";
+import {
+    selectActiveGroupId,
+    selectTransactionSlice,
+    selectUiSlice,
+    useAppDispatch,
+    useAppSelector,
+} from "../../store";
 import TransactionListItem from "./TransactionListItem";
 
 type Props = GroupTabScreenProps<"TransactionList">;
@@ -120,7 +126,7 @@ export const TransactionList: React.FC<Props> = ({ navigation }) => {
             .then(({ transaction }) => {
                 navigation.navigate("TransactionDetail", {
                     transactionId: transaction.id,
-                    groupId: transaction.groupID,
+                    groupId: transaction.group_id,
                     editing: true,
                 });
             });

@@ -93,11 +93,11 @@ export const App: React.FC = () => {
             }}
         >
             <SafeAreaProvider>
-                {api === undefined ? (
+                {baseUrl !== undefined && api === undefined ? (
                     <SplashScreen />
                 ) : (
-                    <ApiProvider api={api.api} websocket={api.websocket} initApi={initApi}>
-                        <AbrechnungUpdateProvider api={api.api} websocket={api.websocket}>
+                    <ApiProvider api={api?.api} websocket={api?.websocket} initApi={initApi}>
+                        <AbrechnungUpdateProvider api={api?.api} websocket={api?.websocket}>
                             <>
                                 <React.Suspense fallback={<SplashScreen />}>
                                     {isAuthenticated && groupStoreStatus !== "initialized" ? (

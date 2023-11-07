@@ -1,8 +1,8 @@
-import { useApi } from "@/core/ApiProvider";
 import { selectGroupById } from "@abrechnung/redux";
 import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import { List } from "react-native-paper";
+import { useApi } from "../core/ApiProvider";
 import { changeActiveGroup, selectGroupSlice, useAppDispatch, useAppSelector } from "../store";
 
 interface Props {

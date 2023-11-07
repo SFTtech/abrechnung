@@ -1,4 +1,3 @@
-import { useApi } from "@/core/ApiProvider";
 import { login } from "@abrechnung/redux";
 import { toFormikValidationSchema } from "@abrechnung/utils";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -8,6 +7,7 @@ import React, { useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Appbar, Button, HelperText, ProgressBar, Text, TextInput, useTheme } from "react-native-paper";
 import { z } from "zod";
+import { useInitApi } from "../core/ApiProvider";
 import { RootDrawerScreenProps } from "../navigation/types";
 import { notify } from "../notifications";
 import { useAppDispatch } from "../store";
@@ -20,9 +20,10 @@ const validationSchema = z.object({
 type FormSchema = z.infer<typeof validationSchema>;
 
 export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigation }) => {
+    console.log("foobar");
     const theme = useTheme();
     const dispatch = useAppDispatch();
-    const { initApi } = useApi();
+    const initApi = useInitApi();
 
     const [showPassword, setShowPassword] = useState(false);
 
@@ -31,7 +32,9 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
     };
 
     const handleSubmit = (values: FormSchema, { setSubmitting }: FormikHelpers<FormSchema>) => {
+        console.log("submit started");
         const { api } = initApi(values.server);
+        console.log("logging in");
         dispatch(
             login({
                 username: values.username,
@@ -42,6 +45,7 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
         )
             .unwrap()
             .then(() => {
+                console.log("logged in");
                 setSubmitting(false);
             })
             .catch((err: SerializedError) => {
@@ -129,7 +133,7 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                         )}
 
                         {isSubmitting ? <ProgressBar indeterminate={true} /> : null}
-                        <Button mode="contained" style={styles.submit} onPress={() => handleSubmit}>
+                        <Button mode="contained" style={styles.submit} onPress={handleSubmit}>
                             Login
                         </Button>
 

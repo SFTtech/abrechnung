@@ -1,10 +1,3 @@
-import DateTimeInput from "@/components/DateTimeInput";
-import { TagSelect } from "@/components/tag-select";
-import TransactionShareInput from "@/components/transaction-shares/TransactionShareInput";
-import { useApi } from "@/core/ApiProvider";
-import { GroupStackScreenProps } from "@/navigation/types";
-import { notify } from "@/notifications";
-import { selectAccountSlice, useAppDispatch, useAppSelector } from "@/store";
 import {
     deleteAccount,
     discardAccountChange,
@@ -30,6 +23,13 @@ import {
     TextInput,
     useTheme,
 } from "react-native-paper";
+import DateTimeInput from "../../components/DateTimeInput";
+import { TagSelect } from "../../components/tag-select";
+import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
+import { useApi } from "../../core/ApiProvider";
+import { GroupStackScreenProps } from "../../navigation/types";
+import { notify } from "../../notifications";
+import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
 
 export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ route, navigation }) => {
     const theme = useTheme();
@@ -45,9 +45,9 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
 
     const onGoBack = React.useCallback(async () => {
         if (account) {
-            return dispatch(discardAccountChange({ groupId, accountId: account.id, api })).unwrap();
+            return dispatch(discardAccountChange({ groupId, accountId: account.id }));
         }
-    }, [api, dispatch, account, groupId]);
+    }, [dispatch, account, groupId]);
 
     const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
     const onDeleteAccount = React.useCallback(() => {
@@ -94,15 +94,15 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                       type: account.type,
                       name: account.name,
                       description: account.description,
-                      clearingShares: account.clearingShares,
-                      dateInfo: account.dateInfo,
+                      clearing_shares: account.clearing_shares,
+                      date_info: account.date_info,
                       tags: account.tags,
                   }
                 : {
                       type: account.type,
                       name: account.name,
                       description: account.description,
-                      owningUserID: account.owningUserID,
+                      owning_user_id: account.owning_user_id,
                   },
         validationSchema: toFormikValidationSchema(AccountValidator),
         onSubmit: (values, { setSubmitting }) => {
@@ -136,15 +136,10 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
             return;
         }
 
-        dispatch(discardAccountChange({ groupId, accountId: account.id, api }))
-            .unwrap()
-            .then(({ deletedAccount }) => {
-                if (deletedAccount) {
-                    formik.resetForm();
-                }
-                navigation.pop();
-            });
-    }, [api, dispatch, groupId, account, navigation, formik]);
+        dispatch(discardAccountChange({ groupId, accountId: account.id }));
+        formik.resetForm();
+        navigation.pop();
+    }, [dispatch, groupId, account, navigation, formik]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -199,22 +194,22 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
             {formik.touched.description && !!formik.errors.description ? (
                 <HelperText type="error">{formik.errors.description}</HelperText>
             ) : null}
-            {account.type === "personal" && formik.touched.owningUserID && !!formik.errors.owningUserID && (
-                <HelperText type="error">{formik.errors.owningUserID}</HelperText>
+            {account.type === "personal" && formik.touched.owning_user_id && !!formik.errors.owning_user_id && (
+                <HelperText type="error">{formik.errors.owning_user_id}</HelperText>
             )}
             {formik.values.type === "clearing" && (
                 <>
                     <DateTimeInput
                         label="Date"
-                        value={fromISOStringNullable(formik.values.dateInfo)}
+                        value={fromISOStringNullable(formik.values.date_info)}
                         editable={true}
                         style={styles.input}
                         onChange={(val) => formik.setFieldValue("dateInfo", toISODateStringNullable(val))}
                         onBlur={onUpdate}
-                        error={formik.touched.dateInfo && !!formik.errors.dateInfo}
+                        error={formik.touched.date_info && !!formik.errors.date_info}
                     />
-                    {formik.touched.dateInfo && !!formik.errors.dateInfo && (
-                        <HelperText type="error">{formik.errors.dateInfo}</HelperText>
+                    {formik.touched.date_info && !!formik.errors.date_info && (
+                        <HelperText type="error">{formik.errors.date_info}</HelperText>
                     )}
                     <TagSelect
                         groupId={groupId}
@@ -233,18 +228,18 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                         title="Participated"
                         disabled={false}
                         groupId={groupId}
-                        value={formik.values.clearingShares}
+                        value={formik.values.clearing_shares}
                         onChange={(newValue) => {
-                            formik.setFieldValue("clearingShares", newValue);
+                            formik.setFieldValue("clearing_shares", newValue);
                             onUpdate();
                         }}
                         enableAdvanced={true}
                         multiSelect={true}
                         excludedAccounts={[account.id]}
-                        error={formik.touched.clearingShares && !!formik.errors.clearingShares}
+                        error={formik.touched.clearing_shares && !!formik.errors.clearing_shares}
                     />
-                    {formik.touched.clearingShares && !!formik.errors.clearingShares && (
-                        <HelperText type="error">{formik.errors.clearingShares}</HelperText>
+                    {formik.touched.clearing_shares && !!formik.errors.clearing_shares && (
+                        <HelperText type="error">{formik.errors.clearing_shares}</HelperText>
                     )}
                 </>
             )}

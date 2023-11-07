@@ -1,4 +1,3 @@
-import { useApi } from "@/core/ApiProvider";
 import { components } from "@abrechnung/api";
 import { createGroup } from "@abrechnung/redux";
 import { toFormikValidationSchema } from "@abrechnung/utils";
@@ -7,6 +6,7 @@ import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Button, Checkbox, HelperText, ProgressBar, TextInput, useTheme } from "react-native-paper";
 import { CurrencySelect } from "../components/CurrencySelect";
+import { useApi } from "../core/ApiProvider";
 import { GroupStackScreenProps } from "../navigation/types";
 import { useAppDispatch } from "../store";
 

@@ -1,7 +1,3 @@
-import { useApi } from "@/core/ApiProvider";
-import { RootDrawerScreenProps } from "@/navigation/types";
-import { notify } from "@/notifications";
-import { selectAuthSlice, useAppSelector } from "@/store";
 import { selectIsAuthenticated } from "@abrechnung/redux";
 import { toFormikValidationSchema } from "@abrechnung/utils";
 import { Formik, FormikHelpers } from "formik";
@@ -9,6 +5,10 @@ import React from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Appbar, Button, HelperText, ProgressBar, Text, TextInput, useTheme } from "react-native-paper";
 import { z } from "zod";
+import { useInitApi } from "../core/ApiProvider";
+import { RootDrawerScreenProps } from "../navigation/types";
+import { notify } from "../notifications";
+import { selectAuthSlice, useAppSelector } from "../store";
 
 const validationSchema = z.object({
     server: z.string({ required_error: "server is required" }).url({ message: "invalid server url" }),
@@ -23,7 +23,7 @@ type FormErrors = Partial<Record<keyof FormSchema, string>>;
 export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigation }) => {
     const theme = useTheme();
     const loggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
-    const { initApi } = useApi();
+    const initApi = useInitApi();
 
     React.useEffect(() => {
         if (loggedIn) {

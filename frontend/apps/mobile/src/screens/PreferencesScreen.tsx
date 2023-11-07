@@ -1,8 +1,8 @@
-import { useApi } from "@/core/ApiProvider";
 import { clearCache, logout } from "@abrechnung/redux";
 import * as React from "react";
 import { View } from "react-native";
 import { Dialog, Divider, List, Portal, RadioButton, useTheme } from "react-native-paper";
+import { useApi } from "../core/ApiProvider";
 import { RootDrawerScreenProps } from "../navigation/types";
 import { ThemeMode, selectSettingsSlice, selectTheme, themeChanged, useAppDispatch, useAppSelector } from "../store";
 
