@@ -1,4 +1,4 @@
-name: Build release artifacts
+name: Push or tag on master
 on:
   # we build on all pushes to master to (hopefully) get early warning
   # of things breaking (but only build one set of debs)
@@ -13,44 +13,18 @@ env:
     DOCKER_IMAGE_TAGS: latest ${{ github.sha }} ${{github.ref_name}}
 
 jobs:
-  build-and-publish-sdist:
-    name: Build and publish Python distributions to PyPI and TestPyPI
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@master
+  build_and_test_frontend:
+    uses: ./.github/workflows/frontend.yaml
 
-    - name: Set up Python 3.9
-      uses: actions/setup-python@v1
-      with:
-        python-version: 3.9
-
-    - name: Install pypa/flit
-      run: pip install flit
-
-    - name: Build a binary wheel and a source tarball
-      run: flit build
-
-    - uses: actions/upload-artifact@v2
-      with:
-        name: python-dist
-        path: dist/*
-
-          #- name: Publish distribution 📦 to Test PyPI
-          #  if: startsWith(github.ref, 'refs/tags')
-          #  uses: pypa/gh-action-pypi-publish@master
-          #  with:
-          #    password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          #    repository_url: https://test.pypi.org/legacy/
-
-          #- name: Publish distribution 📦 to PyPI
-          #  if: startsWith(github.ref, 'refs/tags')
-          #  uses: pypa/gh-action-pypi-publish@master
-          #  with:
-          #    password: ${{ secrets.PYPI_API_TOKEN }}
+  build_and_test_backend:
+    uses: ./.github/workflows/backend.yaml
 
   get-distros:
     name: "Calculate list of debian distros and docker image tags"
     runs-on: ubuntu-latest
+    needs:
+      - frontend
+      - backend
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
@@ -69,11 +43,12 @@ jobs:
     outputs:
       distros: ${{ steps.set-distros.outputs.distros }}
       tags: ${{ steps.set-distros.outputs.tags }}
-  
+
   build-and-publish-docker:
     name: Build and publish ready made docker containers
     runs-on: ubuntu-latest
-    needs: get-distros
+    needs:
+    - get-distros
     steps:
     - uses: actions/checkout@master
 
@@ -95,7 +70,7 @@ jobs:
         registry: quay.io/abrechnung
         username: ${{ secrets.DOCKERHUB_REGISTRY_USER }}
         password: ${{ secrets.DOCKERHUB_REGISTRY_PASSWORD }}
-    
+
     - name: Build Frontend Image
       id: build-frontend-image
       uses: redhat-actions/buildah-build@v2
@@ -117,7 +92,8 @@ jobs:
 
   # now build the packages with an abrechnung build.
   build-debs:
-    needs: get-distros
+    needs:
+    - get-distros
     name: "Build .deb packages"
     runs-on: ubuntu-latest
     strategy:
@@ -182,23 +158,22 @@ jobs:
     name: "Attach assets to release"
     if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/tags/') }}
     needs:
+      - frontend
+      - backend
       - build-debs
       - build-and-publish-sdist
     runs-on: ubuntu-latest
     steps:
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v2
-      - name: Build a tarball for the debs
-        run: tar -cvJf debs.tar.xz debs
       - name: Attach to release
         uses: softprops/action-gh-release@a929a66f232c1b11af63782948aa2210f981808a  # PR#109
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
-            python-dist/*
             debs/*.deb
-            debs.tar.xz
+            frontend/apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
           # if it's not already published, keep the release as a draft.
           draft: true
           # mark it as a prerelease if the tag contains 'rc'.
