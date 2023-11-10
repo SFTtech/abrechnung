@@ -5,8 +5,6 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import * as React from "react";
 import { useEffect } from "react";
-import { View } from "react-native";
-import { Text } from "react-native-paper";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { clearingAccountIcon, personalAccountIcon } from "../constants/Icons";
 import { useOptionalApi } from "../core/ApiProvider";
@@ -48,12 +46,6 @@ export const Navigation: React.FC<{ theme: Theme }> = ({ theme }) => {
 };
 
 const Drawer = createDrawerNavigator<RootDrawerParamList>();
-
-const DummyScreen = () => (
-    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text>Dummy Screen</Text>
-    </View>
-);
 
 const RootNavigator: React.FC = () => {
     const { api, websocket } = useOptionalApi();
