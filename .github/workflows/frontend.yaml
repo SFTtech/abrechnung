@@ -92,6 +92,14 @@ jobs:
         run: npm ci
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
       - name: Build web app
@@ -100,4 +108,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: app-debug-apk
-          path: frontend/apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
