@@ -1,11 +1,11 @@
-import { Action, AnyAction, ReducersMapObject } from "redux";
 import { combineReducers } from "@reduxjs/toolkit";
-import { persistReducer, createMigrate, type Storage, MigrationManifest } from "redux-persist";
-import { accountReducer, accountMigrations, accountSliceVersion } from "./accounts";
-import { transactionReducer, transactionMigrations, transactionSliceVersion } from "./transactions";
-import { authReducer, authMigrations, authSliceVersion } from "./auth";
-import { groupReducer, groupMigrations, groupSliceVersion } from "./groups";
+import { Action, AnyAction, ReducersMapObject } from "redux";
+import { MigrationManifest, createMigrate, persistReducer, type Storage } from "redux-persist";
+import { accountMigrations, accountReducer, accountSliceVersion } from "./accounts";
+import { authMigrations, authReducer, authSliceVersion } from "./auth";
+import { groupMigrations, groupReducer, groupSliceVersion } from "./groups";
 import { subscriptionReducer } from "./subscriptions";
+import { transactionMigrations, transactionReducer, transactionSliceVersion } from "./transactions";
 
 const getPersistConfig = (key: string, version: number, storage: Storage, migrations: MigrationManifest) => {
     return {
@@ -22,18 +22,21 @@ export const getAbrechnungReducer = <S, A extends Action = AnyAction>(
 ) => {
     return combineReducers({
         accounts: persistReducer(
-            getPersistConfig("accounts", accountSliceVersion, persistStorage, accountMigrations),
+            getPersistConfig("accounts", accountSliceVersion, persistStorage, accountMigrations as any),
             accountReducer
         ),
         groups: persistReducer(
-            getPersistConfig("groups", groupSliceVersion, persistStorage, groupMigrations),
+            getPersistConfig("groups", groupSliceVersion, persistStorage, groupMigrations as any),
             groupReducer
         ),
         transactions: persistReducer(
-            getPersistConfig("transactions", transactionSliceVersion, persistStorage, transactionMigrations),
+            getPersistConfig("transactions", transactionSliceVersion, persistStorage, transactionMigrations as any),
             transactionReducer
         ),
-        auth: persistReducer(getPersistConfig("auth", authSliceVersion, persistStorage, authMigrations), authReducer),
+        auth: persistReducer(
+            getPersistConfig("auth", authSliceVersion, persistStorage, authMigrations as any),
+            authReducer
+        ),
         subscriptions: subscriptionReducer,
         ...additionalReducers,
     });
