@@ -1,3 +1,12 @@
-export const transactionSliceVersion = 2;
+import { TransactionSliceState } from "../types";
 
-export const transactionMigrations = {};
+export const transactionSliceVersion = 3;
+
+export const transactionMigrations = {
+    1: (state: TransactionSliceState) => {
+        return {};
+    },
+    2: (state: TransactionSliceState) => {
+        return {};
+    },
+};

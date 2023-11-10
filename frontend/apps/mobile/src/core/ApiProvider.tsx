@@ -27,11 +27,11 @@ export const useInitApi = () => {
 export const useApi = (): { api: Api; websocket: AbrechnungWebSocket; initApi: IInitApi } => {
     const { api, websocket, initApi } = React.useContext(ApiContext);
     if (!api || !websocket) {
-        throw new Error("api not initialized");
+        throw new Error("api has not been initialized");
     }
     return { api, websocket, initApi };
 };
 
-export const useOptionalApi = () => {
+export const useOptionalApi = (): IApiProvierContext => {
     return React.useContext(ApiContext);
 };

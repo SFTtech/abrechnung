@@ -1,5 +1,6 @@
 import { selectSortedAccounts, wipPositionUpdated } from "@abrechnung/redux";
 import { PositionValidationErrors, TransactionPosition, ValidationError, validatePosition } from "@abrechnung/types";
+import memoize from "proxy-memoize";
 import React, { useCallback, useEffect, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import {
@@ -15,7 +16,7 @@ import {
     useTheme,
 } from "react-native-paper";
 import { notify } from "../notifications";
-import { selectAccountSlice, useAppDispatch, useAppSelector } from "../store";
+import { RootState, selectAccountSlice, useAppDispatch, useAppSelector } from "../store";
 import { NumericInput } from "./NumericInput";
 import { KeyboardAvoidingDialog } from "./style/KeyboardAvoidingDialog";
 
@@ -54,20 +55,23 @@ export const PositionDialog: React.FC<Props> = ({
     const theme = useTheme();
 
     const [localEditingState, setLocalEditingState] = useState<localEditingState>(initialEditingState);
-
     const [searchTerm, setSearchTerm] = useState("");
-    const accounts = useAppSelector((state) => {
-        const sorted = selectSortedAccounts({
-            state: selectAccountSlice(state),
-            groupId,
-            sortMode: "name",
-            searchTerm,
-        });
-        if (!editing) {
-            return sorted.filter((acc) => (localEditingState.usages[acc.id] ?? 0) > 0);
-        }
-        return sorted;
-    });
+    const selector = React.useCallback(
+        memoize((state: RootState) => {
+            const sorted = selectSortedAccounts({
+                state: selectAccountSlice(state),
+                groupId,
+                sortMode: "name",
+                searchTerm,
+            });
+            if (!editing) {
+                return sorted.filter((acc) => (localEditingState.usages[acc.id] ?? 0) > 0);
+            }
+            return sorted;
+        }),
+        [groupId, searchTerm, editing, localEditingState]
+    );
+    const accounts = useAppSelector(selector);
     const [errors, setErrors] = useState<PositionValidationErrors>({});
 
     const toggleShare = (accountID: number) => {

@@ -56,6 +56,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
         selectWipTransactionPositions({ state: selectTransactionSlice(state), groupId, transactionId })
     );
     const totalPositionValue = positions.reduce((acc, curr) => acc + curr.price, 0);
+
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
 
     const onGoBack = React.useCallback(async () => {
@@ -109,7 +110,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                       name: transaction.name,
                       value: transaction.value,
                       currency_symbol: transaction.currency_symbol,
-                      currency_conversion_rate: transaction.currency_conversion_rate,
+                      currencyConversionRate: transaction.currency_conversion_rate,
                       description: transaction.description ?? "",
                       creditor_shares: transaction.creditor_shares,
                       debitor_shares: transaction.debitor_shares,
@@ -163,16 +164,13 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 params: { groupId },
             });
         } else {
-            if (transaction) {
-                formik.resetForm();
-            }
-            navigation.replace("TransactionDetail", {
+            navigation.navigate("TransactionDetail", {
                 transactionId: transactionId,
                 groupId: groupId,
                 editing: false,
             });
         }
-    }, [dispatch, transaction, groupId, navigation, transactionId, formik]);
+    }, [dispatch, groupId, navigation, transactionId]);
 
     useLayoutEffect(() => {
         navigation.setOptions({

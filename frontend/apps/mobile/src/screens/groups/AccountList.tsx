@@ -10,12 +10,12 @@ import {
     selectSortedAccounts,
 } from "@abrechnung/redux";
 import { Account, AccountBalance } from "@abrechnung/types";
-import { MaterialIcons } from "@expo/vector-icons";
 import { useIsFocused } from "@react-navigation/native";
 import * as React from "react";
 import { useLayoutEffect, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { Appbar, FAB, List, Menu, Portal, RadioButton, Text, useTheme } from "react-native-paper";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import LoadingIndicator from "../../components/LoadingIndicator";
 import Searchbar from "../../components/style/Searchbar";
 import { getAccountIcon } from "../../constants/Icons";

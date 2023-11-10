@@ -230,7 +230,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                         groupId={groupId}
                         value={formik.values.clearing_shares}
                         onChange={(newValue) => {
-                            formik.setFieldValue("clearing_shares", newValue);
+                            formik.setFieldValue("clearingShares", newValue);
                             onUpdate();
                         }}
                         enableAdvanced={true}

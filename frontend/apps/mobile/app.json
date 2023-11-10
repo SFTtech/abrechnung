@@ -1,42 +1,42 @@
 {
-  "expo": {
     "name": "Abrechnung",
-    "slug": "abrechnung",
+    "displayName": "Abrechnung",
     "version": "0.2.0",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
     "scheme": "abrechnung",
     "userInterfaceStyle": "automatic",
     "splash": {
-      "image": "./assets/logo_splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+        "image": "./assets/logo_splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#ffffff"
     },
     "updates": {
-      "fallbackToCacheTimeout": 0
+        "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "lol.sft.abrechnung"
+        "supportsTablet": true,
+        "bundleIdentifier": "lol.sft.abrechnung"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/logo_android.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "lol.sft.abrechnung"
+        "adaptiveIcon": {
+            "foregroundImage": "./assets/logo_android.png",
+            "backgroundColor": "#ffffff"
+        },
+        "package": "lol.sft.abrechnung"
     },
     "web": {
-      "favicon": "./assets/logo.png",
-      "bundler": "metro"
+        "favicon": "./assets/logo.png",
+        "bundler": "metro"
     },
-    "extra": {
-      "eas": {
-        "projectId": "2c80047e-57f5-4497-83bc-ffddc74b2909"
-      }
-    }
-  }
+    "plugins": [
+        [
+            "@config-plugins/detox",
+            {
+                "skipProguard": false,
+                "subdomains": ["10.0.2.2", "localhost"]
+            }
+        ]
+    ]
 }

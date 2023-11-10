@@ -16,7 +16,8 @@ import {
     selectGroupTransactionsWithWipInternal,
     selectTransactionBalanceEffectsInternal,
 } from "./transactions";
-import { IRootState } from "./types";
+import { AccountSliceState, AccountState, IRootState } from "./types";
+import { getGroupScopedState } from "./utils";
 
 const selectAccountBalancesInternal = (args: { state: IRootState; groupId: number }): AccountBalanceMap => {
     const s = performance.now();
@@ -94,8 +95,7 @@ export const selectSortedTransactions = memoize(
         tags?: string[];
     }): Transaction[] => {
         const { state, groupId, sortMode, searchTerm, tags = [] } = args;
-        // const s = getGroupScopedState<AccountState, AccountSliceState>(state.accounts, groupId);
-        const s = state.accounts.byGroupId[groupId];
+        const s = getGroupScopedState<AccountState, AccountSliceState>(state.accounts, groupId);
         const balanceEffects = selectTransactionBalanceEffectsInternal({ state: state.transactions, groupId });
         const transactions = selectGroupTransactionsWithWipInternal({ state: state.transactions, groupId });
         const compareFunction = getTransactionSortFunc(sortMode);

@@ -1,3 +1,12 @@
-export const accountSliceVersion = 2;
+import { AccountSliceState } from "../types";
 
-export const accountMigrations = {};
+export const accountSliceVersion = 3;
+
+export const accountMigrations = {
+    1: (state: AccountSliceState) => {
+        return {};
+    },
+    2: (state: AccountSliceState) => {
+        return {};
+    },
+};

@@ -1,11 +1,11 @@
 import { login } from "@abrechnung/redux";
 import { toFormikValidationSchema } from "@abrechnung/utils";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { SerializedError } from "@reduxjs/toolkit";
 import { Formik, FormikHelpers } from "formik";
 import React, { useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Appbar, Button, HelperText, ProgressBar, Text, TextInput, useTheme } from "react-native-paper";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { z } from "zod";
 import { useInitApi } from "../core/ApiProvider";
 import { RootDrawerScreenProps } from "../navigation/types";
@@ -20,7 +20,6 @@ const validationSchema = z.object({
 type FormSchema = z.infer<typeof validationSchema>;
 
 export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigation }) => {
-    console.log("foobar");
     const theme = useTheme();
     const dispatch = useAppDispatch();
     const initApi = useInitApi();
@@ -32,9 +31,8 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
     };
 
     const handleSubmit = (values: FormSchema, { setSubmitting }: FormikHelpers<FormSchema>) => {
-        console.log("submit started");
+        console.log("submitting and logging in");
         const { api } = initApi(values.server);
-        console.log("logging in");
         dispatch(
             login({
                 username: values.username,
@@ -45,7 +43,6 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
         )
             .unwrap()
             .then(() => {
-                console.log("logged in");
                 setSubmitting(false);
             })
             .catch((err: SerializedError) => {

@@ -1,12 +1,10 @@
 {
     "extends": ["plugin:@nx/react", "../../.eslintrc.json"],
-    "ignorePatterns": ["!**/*", ".expo", "node_modules", "web-build"],
+    "ignorePatterns": ["!**/*", "public", ".cache", "node_modules"],
     "overrides": [
         {
             "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
-            "rules": {
-                "@typescript-eslint/ban-ts-comment": "off"
-            }
+            "rules": {}
         },
         {
             "files": ["*.ts", "*.tsx"],

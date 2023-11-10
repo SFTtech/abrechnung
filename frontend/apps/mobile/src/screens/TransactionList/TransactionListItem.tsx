@@ -1,8 +1,8 @@
 import { selectTransactionById } from "@abrechnung/redux";
-import { MaterialIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import React from "react";
 import { List, Text, useTheme } from "react-native-paper";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { getTransactionIcon } from "../../constants/Icons";
 import { selectTransactionSlice, useAppSelector } from "../../store";
 
@@ -36,7 +36,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId })
             left={(props) => <List.Icon {...props} icon={getTransactionIcon(transaction.type)} />}
             right={(props) => (
                 <>
-                    {transaction.hasLocalChanges ? (
+                    {transaction.is_wip ? (
                         <MaterialIcons
                             style={{ marginRight: 8, marginTop: 4 }}
                             size={20}

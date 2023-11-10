@@ -1,10 +1,11 @@
 import { AbrechnungWebSocket, Api, IConnectionStatusProvider } from "@abrechnung/api";
-import * as Network from "expo-network";
+// import { fetch as fetchNetworkState } from "@react-native-community/netinfo";
 
 export const connectionStatusProvider: IConnectionStatusProvider = {
     hasConnection: async () => {
-        const networkState = await Network.getNetworkStateAsync();
-        return networkState.isInternetReachable ?? false;
+        // const networkState = await fetchNetworkState();
+        // return networkState.isInternetReachable;
+        return true;
     },
 };
 

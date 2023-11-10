@@ -1,20 +1,18 @@
-import { selectGroups, selectIsAuthenticated, subscribe, unsubscribe, fetchGroupDependencies } from "@abrechnung/redux";
-import { MaterialIcons } from "@expo/vector-icons";
+import { fetchGroupDependencies, selectGroups, selectIsAuthenticated, subscribe, unsubscribe } from "@abrechnung/redux";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import * as React from "react";
 import { useEffect } from "react";
+import { View } from "react-native";
+import { Text } from "react-native-paper";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { clearingAccountIcon, personalAccountIcon } from "../constants/Icons";
-import { api, websocket } from "../core/api";
+import { useOptionalApi } from "../core/ApiProvider";
 import { notify } from "../notifications";
 import { AddGroup } from "../screens/AddGroup";
 import { GroupList } from "../screens/GroupList";
-import AccountDetail from "../screens/groups/AccountDetail";
-import AccountEdit from "../screens/groups/AccountEdit";
-import AccountList from "../screens/groups/AccountList";
-import TransactionDetail from "../screens/groups/TransactionDetail";
 import HomeScreen from "../screens/HomeScreen";
 import LoginScreen from "../screens/Login";
 import PreferencesScreen from "../screens/PreferencesScreen";
@@ -22,6 +20,10 @@ import ProfileScreen from "../screens/ProfileScreen";
 import RegisterScreen from "../screens/Register";
 import { SplashScreen } from "../screens/SplashScreen";
 import { TransactionList } from "../screens/TransactionList";
+import AccountDetail from "../screens/groups/AccountDetail";
+import AccountEdit from "../screens/groups/AccountEdit";
+import AccountList from "../screens/groups/AccountList";
+import TransactionDetail from "../screens/groups/TransactionDetail";
 import {
     changeActiveGroup,
     selectActiveGroupId,
@@ -47,14 +49,21 @@ export const Navigation: React.FC<{ theme: Theme }> = ({ theme }) => {
 
 const Drawer = createDrawerNavigator<RootDrawerParamList>();
 
+const DummyScreen = () => (
+    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>Dummy Screen</Text>
+    </View>
+);
+
 const RootNavigator: React.FC = () => {
+    const { api, websocket } = useOptionalApi();
     const dispatch = useAppDispatch();
     const activeGroupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) }));
     const groups = useAppSelector((state) => selectGroups({ state: selectGroupSlice(state) }));
     const isAuthenticated = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
 
     useEffect(() => {
-        if (!isAuthenticated) {
+        if (!isAuthenticated || !api) {
             return;
         }
 
@@ -73,10 +82,10 @@ const RootNavigator: React.FC = () => {
                     notify({ text: "error while updating group content" });
                 });
         }
-    }, [isAuthenticated, dispatch, activeGroupId, groups]);
+    }, [api, isAuthenticated, dispatch, activeGroupId, groups]);
 
     useEffect(() => {
-        if (!isAuthenticated || activeGroupId === undefined) {
+        if (!isAuthenticated || activeGroupId === undefined || !websocket) {
             return;
         }
         dispatch(subscribe({ subscription: { type: "transaction", groupId: activeGroupId }, websocket }));
@@ -88,17 +97,23 @@ const RootNavigator: React.FC = () => {
             dispatch(unsubscribe({ subscription: { type: "account", groupId: activeGroupId }, websocket }));
             dispatch(unsubscribe({ subscription: { type: "group_member", groupId: activeGroupId }, websocket }));
         };
-    }, [isAuthenticated, activeGroupId, dispatch]);
+    }, [websocket, isAuthenticated, activeGroupId, dispatch]);
 
     const propsWithHeader = {
         headerShown: true,
         header: (props) => <Header {...props} />,
     };
 
+    const initialRoutName = isAuthenticated
+        ? activeGroupId === undefined
+            ? "GroupList"
+            : "GroupStackNavigator"
+        : "Login";
+
     return (
         <Drawer.Navigator
             id="Drawer"
-            initialRouteName={activeGroupId === undefined ? "GroupList" : "GroupStackNavigator"}
+            initialRouteName={initialRoutName}
             drawerContent={(props) => <DrawerContent {...props} />}
             screenOptions={{ headerShown: false }}
         >
@@ -130,10 +145,10 @@ const RootNavigator: React.FC = () => {
                     />
                 </>
             ) : (
-                <Drawer.Group>
+                <>
                     <Drawer.Screen name="Login" component={LoginScreen} options={{ headerTitle: "Login" }} />
                     <Drawer.Screen name="Register" component={RegisterScreen} options={{ headerTitle: "Register" }} />
-                </Drawer.Group>
+                </>
             )}
         </Drawer.Navigator>
     );

@@ -1,9 +1,10 @@
 import React from "react";
-import SplashScreen from "./screens/SplashScreen";
-import useCachedResources from "./hooks/useCachedResources";
+import "react-native-gesture-handler";
 import { Provider } from "react-redux";
-import { App } from "./App";
 import { PersistGate } from "redux-persist/integration/react";
+import { App } from "./App";
+import { useCachedResources } from "./hooks/useCachedResources";
+import SplashScreen from "./screens/SplashScreen";
 import { persistor, store } from "./store";
 
 export const AppWrapper: React.FC = () => {
@@ -21,5 +22,3 @@ export const AppWrapper: React.FC = () => {
         );
     }
 };
-
-export default AppWrapper;
