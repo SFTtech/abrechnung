@@ -82,16 +82,20 @@ jobs:
         working-directory: frontend
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Nodejs
         uses: actions/setup-node@v2
         with:
           node-version: "18"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
+
       - name: Install dependencies
         run: npm ci
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v2
+
       - uses: actions/cache@v3
         with:
           path: |
@@ -100,12 +104,42 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
+
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
-      - name: Build web app
-        run: npx nx build-android mobile
+
+#      - name: Build App Bundle
+#        run: npx nx build-android mobile --mode release
+
+      - name: Build App APK
+        run: npx nx build-android mobile --tasks assembleRelease
+
+      - name: Sign App APK
+        id: sign_app_apk
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: frontend/apps/mobile/android/app/build/outputs/apk/release
+          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
+          alias: ${{ secrets.ANDROID_KEY_STORE_ALIAS }}
+          keyStorePassword: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
+
+#      - name: Sign App Bundle
+#        id: sign_app_aab
+#        uses: r0adkll/sign-android-release@v1
+#        with:
+#          releaseDirectory: frontend/apps/mobile/android/app/build/outputs/bundle/release
+#          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
+#          alias: ${{ secrets.ANDROID_KEY_STORE_ALIAS }}
+#          keyStorePassword: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
+
+#      - name: Upload App Bundle
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: app-release-aab
+#          path: frontend/apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
+
       - name: Upload APK
         uses: actions/upload-artifact@v3
         with:
-          name: app-debug-apk
-          path: apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          name: app-release-apk
+          path: ${{steps.sign_app_apk.outputs.signedReleaseFile}}
