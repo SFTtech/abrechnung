@@ -3,7 +3,7 @@ import { Account } from "@abrechnung/types";
 import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import React from "react";
-import { selectAccountSlice, useAppSelector } from "../store";
+import { selectAccountSlice, useAppSelector } from "@/store";
 import { getAccountIcon } from "./style/AbrechnungIcons";
 import { DisabledTextField } from "./style/DisabledTextField";
 

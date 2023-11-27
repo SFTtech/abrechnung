@@ -1,11 +1,12 @@
-import { Button, Checkbox, Dialog, List, Searchbar } from "react-native-paper";
+import { selectSortedAccounts } from "@abrechnung/redux";
+import { TransactionShare } from "@abrechnung/types";
+import memoize from "proxy-memoize";
 import * as React from "react";
 import { useEffect, useState } from "react";
-import { getAccountIcon } from "../../constants/Icons";
 import { ScrollView } from "react-native";
-import { TransactionShare } from "@abrechnung/types";
-import { useAppSelector, selectAccountSlice } from "../../store";
-import { selectSortedAccounts } from "@abrechnung/redux";
+import { Button, Checkbox, Dialog, List, Searchbar } from "react-native-paper";
+import { getAccountIcon } from "../../constants/Icons";
+import { RootState, selectAccountSlice, useAppSelector } from "../../store";
 import { KeyboardAvoidingDialog } from "../style/KeyboardAvoidingDialog";
 
 interface Props {
@@ -35,18 +36,22 @@ export const TransactionShareDialog: React.FC<Props> = ({
 }) => {
     const [shares, setShares] = useState<TransactionShare>({});
     const [searchTerm, setSearchTerm] = useState("");
-    const accounts = useAppSelector((state) => {
-        const sorted = selectSortedAccounts({
-            state: selectAccountSlice(state),
-            groupId,
-            sortMode: "name",
-            searchTerm,
-        });
-        if (disabled) {
-            return sorted.filter((acc) => (shares[acc.id] ?? 0) > 0 && !excludedAccounts.includes(acc.id));
-        }
-        return sorted.filter((acc) => !excludedAccounts.includes(acc.id));
-    });
+    const selector = React.useCallback(
+        memoize((state: RootState) => {
+            const sorted = selectSortedAccounts({
+                state: selectAccountSlice(state),
+                groupId,
+                sortMode: "name",
+                searchTerm,
+            });
+            if (disabled) {
+                return sorted.filter((acc) => (shares[acc.id] ?? 0) > 0 && !excludedAccounts.includes(acc.id));
+            }
+            return sorted.filter((acc) => !excludedAccounts.includes(acc.id));
+        }),
+        [groupId, searchTerm, disabled, shares, excludedAccounts]
+    );
+    const accounts = useAppSelector(selector);
 
     const toggleShare = (account_id: number) => {
         const currVal = shares[account_id] !== undefined ? shares[account_id] : 0;

@@ -3,8 +3,8 @@ import { HelpOutline } from "@mui/icons-material";
 import { Chip, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
-import { balanceColor } from "../../core/utils";
-import { selectGroupSlice, selectTransactionSlice, useAppSelector } from "../../store";
+import { balanceColor } from "@/core/utils";
+import { selectGroupSlice, selectTransactionSlice, useAppSelector } from "@/store";
 import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 import ListItemLink from "../style/ListItemLink";
 

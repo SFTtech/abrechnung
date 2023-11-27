@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
-import Loading from "../../components/style/Loading";
-import { useAppDispatch, useAppSelector, selectAuthSlice } from "../../store";
+import { Loading } from "@/components/style/Loading";
+import { useAppDispatch, useAppSelector, selectAuthSlice } from "@/store";
 import { logout, selectIsAuthenticated } from "@abrechnung/redux";
-import { api } from "../../core/api";
+import { api } from "@/core/api";
 import { Navigate } from "react-router-dom";
 
 export const Logout: React.FC = () => {

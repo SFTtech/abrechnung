@@ -1,16 +1,10 @@
-import TransactionShareInput from "@/components/transaction-shares/TransactionShareInput";
-import { clearingAccountIcon, getTransactionIcon } from "@/constants/Icons";
-import { useApi } from "@/core/ApiProvider";
-import { notify } from "@/notifications";
-import { selectAccountSlice, selectGroupSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
-import { successColor } from "@/theme";
 import {
     deleteAccount,
     selectAccountBalances,
     selectAccountById,
     selectClearingAccountsInvolvingAccounts,
     selectCurrentUserPermissions,
-    selectGroupcurrency_symbol,
+    selectGroupCurrencySymbol,
     selectTransactionsInvolvingAccount,
 } from "@abrechnung/redux";
 import { Account, AccountBalance, Transaction, TransactionShare } from "@abrechnung/types";
@@ -30,7 +24,19 @@ import {
     Text,
     useTheme,
 } from "react-native-paper";
+import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
+import { clearingAccountIcon, getTransactionIcon } from "../../constants/Icons";
+import { useApi } from "../../core/ApiProvider";
 import { GroupStackScreenProps } from "../../navigation/types";
+import { notify } from "../../notifications";
+import {
+    selectAccountSlice,
+    selectGroupSlice,
+    selectTransactionSlice,
+    useAppDispatch,
+    useAppSelector,
+} from "../../store";
+import { successColor } from "../../theme";
 
 type ArrayAccountsAndTransactions = Array<Transaction | Account>;
 
@@ -58,7 +64,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
         .sort((f1, f2) => fromISOString(f2.last_changed).getTime() - fromISOString(f1.last_changed).getTime());
 
     const currency_symbol = useAppSelector((state) =>
-        selectGroupcurrency_symbol({ state: selectGroupSlice(state), groupId })
+        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
     );
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
 
@@ -116,7 +122,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
             )}
             onPress={() =>
                 navigation.navigate("TransactionDetail", {
-                    groupId: transaction.groupID,
+                    groupId: transaction.group_id,
                     transactionId: transaction.id,
                     editing: false,
                 })
@@ -138,7 +144,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
             )}
             onPress={() =>
                 navigation.navigate("AccountDetail", {
-                    groupId: account.groupID,
+                    groupId: account.group_id,
                     accountId: account.id,
                 })
             }
@@ -173,7 +179,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
             <List.Item title={account.name} description={account.description} />
             {account.type === "clearing" && (
                 <>
-                    {account.dateInfo != null && <List.Item title="Date" description={account.dateInfo} />}
+                    {account.date_info != null && <List.Item title="Date" description={account.date_info} />}
                     {account.tags.length > 0 && (
                         <View style={{ paddingLeft: 16 }}>
                             <Text style={{ fontSize: theme.fonts.bodyLarge.fontSize }}>Tags</Text>
@@ -200,7 +206,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                         title="Participated"
                         disabled={true}
                         groupId={groupId}
-                        value={account.clearingShares as TransactionShare}
+                        value={account.clearing_shares as TransactionShare}
                         onChange={() => {
                             return;
                         }}

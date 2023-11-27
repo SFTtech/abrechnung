@@ -1,7 +1,7 @@
 import React from "react";
-import { api } from "../../core/api";
+import { api } from "@/core/api";
 import { Dialog, DialogTitle, DialogActions, DialogContent, Button, LinearProgress } from "@mui/material";
-import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
+import { selectAccountSlice, useAppDispatch, useAppSelector } from "@/store";
 import { deleteAccount, selectAccountById } from "@abrechnung/redux";
 import { toast } from "react-toastify";
 

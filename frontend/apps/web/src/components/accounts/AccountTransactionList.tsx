@@ -3,7 +3,7 @@ import { Account, Transaction } from "@abrechnung/types";
 import { Alert, List } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
-import { selectAccountSlice, selectTransactionSlice, useAppSelector } from "../../store";
+import { selectAccountSlice, selectTransactionSlice, useAppSelector } from "@/store";
 import AccountClearingListEntry from "./AccountClearingListEntry";
 import AccountTransactionListEntry from "./AccountTransactionListEntry";
 

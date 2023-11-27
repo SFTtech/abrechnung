@@ -1,12 +1,12 @@
 import {
     Api,
-    Transaction as BackendTransaction,
-    TransactionPosition as BackendTransactionPosition,
     NewFile,
     NewTransactionPosition,
+    Transaction as BackendTransaction,
+    TransactionPosition as BackendTransactionPosition,
     UpdateFile,
 } from "@abrechnung/api";
-import { TransactionSortMode, computeTransactionBalanceEffect, getTransactionSortFunc } from "@abrechnung/core";
+import { computeTransactionBalanceEffect, getTransactionSortFunc, TransactionSortMode } from "@abrechnung/core";
 import {
     FileAttachment,
     Transaction,
@@ -15,7 +15,7 @@ import {
     TransactionType,
 } from "@abrechnung/types";
 import { toISODateString } from "@abrechnung/utils";
-import { Draft, PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createAsyncThunk, createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
 import memoize from "proxy-memoize";
 import { leaveGroup } from "../groups";
 import { IRootState, ITransactionRootState, StateStatus, TransactionSliceState, TransactionState } from "../types";
@@ -29,10 +29,12 @@ export const initializeGroupState = (state: Draft<TransactionSliceState>, groupI
     state.byGroupId[groupId] = {
         transactions: {
             byId: {},
+            balanceEffects: {},
             ids: [],
         },
         wipTransactions: {
             byId: {},
+            balanceEffects: {},
             ids: [],
         },
         status: "loading",
@@ -174,34 +176,24 @@ export const selectTransactionHasFiles = memoize(
     }
 );
 
-export const selectTransactionBalanceEffect = memoize(
-    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): TransactionBalanceEffect => {
-        const { state, groupId, transactionId } = args;
-        const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-        const transaction = s.wipTransactions.byId[transactionId] ?? s.transactions.byId[transactionId];
-        return computeTransactionBalanceEffect(transaction);
-    }
-);
+export const selectTransactionBalanceEffect = (args: {
+    state: TransactionSliceState;
+    groupId: number;
+    transactionId: number;
+}): TransactionBalanceEffect => {
+    const { state, groupId, transactionId } = args;
+    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+    return s.wipTransactions.balanceEffects[transactionId] ?? s.transactions.balanceEffects[transactionId];
+};
 
-export const selectTransactionBalanceEffectsInternal = (args: {
+export const selectTransactionBalanceEffects = (args: {
     state: TransactionSliceState;
     groupId: number;
 }): { [k: number]: TransactionBalanceEffect } => {
     const { state, groupId } = args;
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-    const transactionIds = s.transactions.ids;
-    const res = transactionIds.reduce<{ [k: number]: TransactionBalanceEffect }>((map, transactionId) => {
-        const transaction = s.transactions.byId[transactionId];
-        const balanceEffect = computeTransactionBalanceEffect(transaction);
-        if (balanceEffect) {
-            map[transactionId] = balanceEffect;
-        }
-        return map;
-    }, {});
-    return res;
+    return s.transactions.balanceEffects;
 };
-
-export const selectTransactionBalanceEffects = memoize(selectTransactionBalanceEffectsInternal);
 
 const selectTransactionIdsInvolvingAccountInternal = (args: {
     state: TransactionSliceState;
@@ -209,7 +201,7 @@ const selectTransactionIdsInvolvingAccountInternal = (args: {
     accountId: number;
 }): number[] => {
     const { state, groupId, accountId } = args;
-    const balanceEffects = selectTransactionBalanceEffectsInternal({ state, groupId });
+    const balanceEffects = selectTransactionBalanceEffects({ state, groupId });
     return Object.entries(balanceEffects)
         .filter(([transactionId, balanceEffect]) => {
             return balanceEffect[accountId] !== undefined;
@@ -487,6 +479,10 @@ const updateTransactionLastChanged = (s: Draft<TransactionState>, transactionId:
     wipTransaction.last_changed = new Date().toISOString();
 };
 
+const updateTransactionBalanceEffect = (s: Draft<TransactionState["transactions"]>, transactionId: number) => {
+    s.balanceEffects[transactionId] = computeTransactionBalanceEffect(s.byId[transactionId]);
+};
+
 const transactionSlice = createSlice({
     name: "transactions",
     initialState,
@@ -596,6 +592,7 @@ const transactionSlice = createSlice({
                 is_wip: true,
                 last_changed: new Date().toISOString(),
             };
+            updateTransactionBalanceEffect(s.wipTransactions, transaction.id);
         },
         wipPositionAdded: (
             state,
@@ -622,6 +619,7 @@ const transactionSlice = createSlice({
                 only_local: true,
                 is_changed: true,
             };
+            updateTransactionBalanceEffect(s.wipTransactions, wipTransaction.id);
         },
         wipPositionUpdated: (
             state,
@@ -634,6 +632,15 @@ const transactionSlice = createSlice({
                 return;
             }
             if (position.id === state.nextLocalPositionId) {
+                if (
+                    position.name === "" &&
+                    position.price === 0 &&
+                    position.communist_shares === 0 &&
+                    Object.keys(position.usages).length === 0
+                ) {
+                    // in case nothing changed we do nothing
+                    return;
+                }
                 // we updated the empty position in the list
                 state.nextLocalPositionId = state.nextLocalPositionId - 1;
             }
@@ -651,6 +658,7 @@ const transactionSlice = createSlice({
                 };
             }
             updateTransactionLastChanged(s, transactionId);
+            updateTransactionBalanceEffect(s.wipTransactions, wipTransaction.id);
         },
         positionDeleted: (
             state,
@@ -677,11 +685,13 @@ const transactionSlice = createSlice({
                 };
             }
             updateTransactionLastChanged(s, transactionId);
+            updateTransactionBalanceEffect(s.wipTransactions, wipTransaction.id);
         },
         discardTransactionChange: (state, action: PayloadAction<{ groupId: number; transactionId: number }>) => {
             const { groupId, transactionId } = action.payload;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
             removeEntity(s.wipTransactions, transactionId);
+            delete s.wipTransactions.balanceEffects[transactionId];
         },
     },
     extraReducers: (builder) => {
@@ -702,11 +712,16 @@ const transactionSlice = createSlice({
             const groupId = action.meta.arg.groupId;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
             // TODO: optimize such that we maybe only update those who have actually changed??
-            const transactionsById = transactions.reduce<{ [k: number]: Transaction }>((byId, transaction) => {
+            s.transactions.byId = transactions.reduce<{ [k: number]: Transaction }>((byId, transaction) => {
                 byId[transaction.id] = backendTransactionToTransaction(transaction);
                 return byId;
             }, {});
-            s.transactions.byId = transactionsById;
+            s.transactions.balanceEffects = Object.values(s.transactions.byId).reduce<{
+                [id: number]: TransactionBalanceEffect;
+            }>((balanceEffects, transaction) => {
+                balanceEffects[transaction.id] = computeTransactionBalanceEffect(transaction);
+                return balanceEffects;
+            }, {});
             s.transactions.ids = transactions.map((t) => t.id);
 
             s.status = "initialized";
@@ -716,19 +731,23 @@ const transactionSlice = createSlice({
             const groupId = transaction.group_id;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
             addEntity(s.transactions, backendTransactionToTransaction(transaction));
+            updateTransactionBalanceEffect(s.transactions, transaction.id);
         });
         builder.addCase(saveTransaction.fulfilled, (state, action) => {
             const { oldTransactionId, transaction } = action.payload;
             const groupId = transaction.group_id;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
             addEntity(s.transactions, backendTransactionToTransaction(transaction));
+            updateTransactionBalanceEffect(s.transactions, transaction.id);
             removeEntity(s.wipTransactions, oldTransactionId);
+            delete s.wipTransactions.balanceEffects[oldTransactionId];
         });
         builder.addCase(createTransaction.fulfilled, (state, action) => {
             const { transaction } = action.payload;
             const { groupId } = action.meta.arg;
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
             addEntity(s.wipTransactions, { ...transaction, is_wip: true });
+            updateTransactionBalanceEffect(s.wipTransactions, transaction.id);
         });
         builder.addCase(deleteTransaction.fulfilled, (state, action) => {
             const { transaction } = action.payload;
@@ -739,6 +758,7 @@ const transactionSlice = createSlice({
                 addEntity(s.transactions, backendTransactionToTransaction(transaction));
             }
             removeEntity(s.wipTransactions, transactionId);
+            delete s.wipTransactions.balanceEffects[transactionId];
         });
         builder.addCase(leaveGroup.fulfilled, (state, action) => {
             const { groupId } = action.meta.arg;

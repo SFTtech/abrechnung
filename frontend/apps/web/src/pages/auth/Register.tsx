@@ -16,17 +16,21 @@ import { Form, Formik } from "formik";
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import * as yup from "yup";
-import Loading from "../../components/style/Loading";
-import { api } from "../../core/api";
-import { useQuery, useTitle } from "../../core/utils";
-import { selectAuthSlice, useAppSelector } from "../../store";
+import { z } from "zod";
+import { Loading } from "@/components/style/Loading";
+import { api } from "@/core/api";
+import { useQuery, useTitle } from "@/core/utils";
+import { selectAuthSlice, useAppSelector } from "@/store";
+import { toFormikValidationSchema } from "@abrechnung/utils";
 
-const validationSchema = yup.object({
-    username: yup.string().required("username is required"),
-    email: yup.string().required("email is required"),
-    password: yup.string().required("password is required"),
+const validationSchema = z.object({
+    username: z.string({ required_error: "username is required" }),
+    email: z.string({ required_error: "email is required" }),
+    password: z.string({ required_error: "password is required" }),
+    password2: z.string(),
 });
+
+type FormValues = z.infer<typeof validationSchema>;
 
 export const Register: React.FC = () => {
     const loggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
@@ -51,7 +55,7 @@ export const Register: React.FC = () => {
         }
     }, [loggedIn, navigate, query]);
 
-    const handleSubmit = (values, { setSubmitting }) => {
+    const handleSubmit = (values: FormValues, { setSubmitting }) => {
         // extract a potential invite token (which should be a uuid) from the query args
         let inviteToken = undefined;
         console.log(query.get("next"));
@@ -85,7 +89,7 @@ export const Register: React.FC = () => {
             });
     };
 
-    const validate = (values) => {
+    const validate = (values: FormValues) => {
         const errors = {};
         if (values.password !== values.password2) {
             errors["password2"] = "Passwords do not match";
@@ -114,7 +118,7 @@ export const Register: React.FC = () => {
                 </Typography>
                 <Formik
                     validate={validate}
-                    validationSchema={validationSchema}
+                    validationSchema={toFormikValidationSchema(validationSchema)}
                     initialValues={{
                         username: "",
                         email: "",

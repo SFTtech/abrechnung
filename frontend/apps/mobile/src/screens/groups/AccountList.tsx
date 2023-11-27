@@ -1,17 +1,4 @@
-import LoadingIndicator from "@/components/LoadingIndicator";
-import Searchbar from "@/components/style/Searchbar";
-import { getAccountIcon } from "@/constants/Icons";
-import { useApi } from "@/core/ApiProvider";
-import { GroupTabScreenProps } from "@/navigation/types";
-import {
-    selectAccountSlice,
-    selectActiveGroupId,
-    selectGroupSlice,
-    selectUiSlice,
-    useAppDispatch,
-    useAppSelector,
-} from "@/store";
-import { successColor } from "@/theme";
+import { AccountType } from "@abrechnung/api";
 import { AccountSortMode } from "@abrechnung/core";
 import {
     createAccount,
@@ -19,16 +6,30 @@ import {
     selectAccountBalances,
     selectCurrentUserPermissions,
     selectGroupAccountsStatus,
-    selectGroupcurrency_symbol,
+    selectGroupCurrencySymbol,
     selectSortedAccounts,
 } from "@abrechnung/redux";
-import { Account, AccountBalance, AccountType } from "@abrechnung/types";
-import { MaterialIcons } from "@expo/vector-icons";
+import { Account, AccountBalance } from "@abrechnung/types";
 import { useIsFocused } from "@react-navigation/native";
 import * as React from "react";
 import { useLayoutEffect, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { Appbar, FAB, List, Menu, Portal, RadioButton, Text, useTheme } from "react-native-paper";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
+import LoadingIndicator from "../../components/LoadingIndicator";
+import Searchbar from "../../components/style/Searchbar";
+import { getAccountIcon } from "../../constants/Icons";
+import { useApi } from "../../core/ApiProvider";
+import { GroupTabScreenProps } from "../../navigation/types";
+import {
+    selectAccountSlice,
+    selectActiveGroupId,
+    selectGroupSlice,
+    selectUiSlice,
+    useAppDispatch,
+    useAppSelector,
+} from "../../store";
+import { successColor } from "../../theme";
 
 type Props = GroupTabScreenProps<"AccountList" | "ClearingAccountList">;
 
@@ -53,7 +54,7 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
     const accountBalances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
     const currency_symbol = useAppSelector((state) =>
-        selectGroupcurrency_symbol({ state: selectGroupSlice(state), groupId })
+        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
     );
     const accountStatus = useAppSelector((state) =>
         selectGroupAccountsStatus({ state: selectAccountSlice(state), groupId })
@@ -158,14 +159,14 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
                     ) : (
                         <>
                             {account.description && <Text>{account.description}</Text>}
-                            <Text>{account.dateInfo}</Text>
+                            <Text>{account.date_info}</Text>
                         </>
                     )
                 }
                 left={(props) => <List.Icon {...props} icon={getAccountIcon(account.type)} />}
                 right={(props) => (
                     <>
-                        {account.hasLocalChanges ? (
+                        {account.is_wip ? (
                             <MaterialIcons
                                 style={{ marginRight: 8, marginTop: 4 }}
                                 size={20}

@@ -1,10 +1,10 @@
-import { useApi } from "@/core/ApiProvider";
 import { fetchGroups, selectGroupIds } from "@abrechnung/redux";
 import React from "react";
 import { RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { FAB } from "react-native-paper";
 import { GroupListItem } from "../components/GroupListItem";
 import LoadingIndicator from "../components/LoadingIndicator";
+import { useApi } from "../core/ApiProvider";
 import { RootDrawerScreenProps } from "../navigation/types";
 import { selectGroupSlice, useAppDispatch, useAppSelector } from "../store";
 

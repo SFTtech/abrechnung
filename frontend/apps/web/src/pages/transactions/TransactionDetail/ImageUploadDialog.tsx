@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import imageCompression from "browser-image-compression";
 import React, { useState } from "react";
-import { useAppDispatch } from "../../../store";
+import { useAppDispatch } from "@/store";
 import placeholderImg from "./PlaceholderImage.svg";
 
 interface Props {
@@ -143,7 +143,7 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
                     <Button component="span">Choose Image</Button>
                 </label>
 
-                <Button color="primary" component="span" disabled={selectFile === undefined} onClick={upload}>
+                <Button color="primary" component="span" onClick={upload}>
                     Add
                 </Button>
             </DialogActions>

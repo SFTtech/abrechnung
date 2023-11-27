@@ -5,14 +5,14 @@
  */
 
 import { LinkingOptions } from "@react-navigation/native";
-import * as Linking from "expo-linking";
+// import * as Linking from "expo-linking";
 
 import { RootDrawerParamList } from "./types";
 
-const prefix = Linking.createURL("/");
+// const prefix = Linking.createURL("/");
 
 export const linkingOptions: LinkingOptions<RootDrawerParamList> = {
-    prefixes: [prefix],
+    // prefixes: [prefix],
     config: {
         screens: {
             GroupList: "groups",

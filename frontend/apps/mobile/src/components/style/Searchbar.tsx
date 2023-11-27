@@ -15,8 +15,8 @@ import {
 
 import color from "color";
 
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Surface, IconButton, ActivityIndicator, useTheme } from "react-native-paper";
+import { ActivityIndicator, IconButton, Surface, useTheme } from "react-native-paper";
+import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 
 export type Props = React.ComponentPropsWithRef<typeof TextInput> & {
     /**

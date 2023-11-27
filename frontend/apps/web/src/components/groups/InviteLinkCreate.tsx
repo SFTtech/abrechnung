@@ -15,7 +15,7 @@ import { Form, Formik } from "formik";
 import { DateTime } from "luxon";
 import React from "react";
 import { toast } from "react-toastify";
-import { api } from "../../core/api";
+import { api } from "@/core/api";
 
 interface Props {
     group: Group;

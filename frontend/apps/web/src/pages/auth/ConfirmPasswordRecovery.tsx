@@ -4,7 +4,7 @@ import { Form, Formik, FormikHelpers, FormikProps } from "formik";
 import React, { useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import { z } from "zod";
-import { api } from "../../core/api";
+import { api } from "@/core/api";
 
 const validationSchema = z
     .object({

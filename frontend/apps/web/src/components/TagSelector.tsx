@@ -2,7 +2,7 @@ import { selectTagsInGroup } from "@abrechnung/redux";
 import { Add as AddIcon } from "@mui/icons-material";
 import { Box, Checkbox, Chip, ChipProps, ListItemIcon, ListItemText, MenuItem, TextFieldProps } from "@mui/material";
 import * as React from "react";
-import { useAppSelector } from "../store";
+import { useAppSelector } from "@/store";
 import { AddNewTagDialog } from "./AddNewTagDialog";
 import { DisabledTextField } from "./style/DisabledTextField";
 

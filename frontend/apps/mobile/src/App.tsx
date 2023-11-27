@@ -8,11 +8,11 @@ import {
     subscribe,
     unsubscribe,
 } from "@abrechnung/redux";
-import { MaterialIcons } from "@expo/vector-icons";
-import { StatusBar } from "expo-status-bar";
-import React from "react";
+import * as React from "react";
+import { StatusBar } from "react-native";
 import { Provider as PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { ApiProvider } from "./core/ApiProvider";
 import { createApi } from "./core/api";
 import useColorScheme from "./hooks/useColorScheme";
@@ -55,7 +55,7 @@ export const App: React.FC = () => {
     React.useEffect(() => {
         if (baseUrl !== undefined) {
             const { api, websocket } = createApi(baseUrl);
-            console.log("initializing api with session token", accessToken, "and api url:", baseUrl);
+            console.log("initializing api with access token", accessToken, "and api url:", baseUrl);
             api.init(accessToken)
                 .then(() => {
                     dispatch(fetchGroups({ api: api })).then(() => {
@@ -93,11 +93,11 @@ export const App: React.FC = () => {
             }}
         >
             <SafeAreaProvider>
-                {api === undefined ? (
+                {baseUrl !== undefined && api === undefined ? (
                     <SplashScreen />
                 ) : (
-                    <ApiProvider api={api.api} websocket={api.websocket} initApi={initApi}>
-                        <AbrechnungUpdateProvider api={api.api} websocket={api.websocket}>
+                    <ApiProvider api={api?.api} websocket={api?.websocket} initApi={initApi}>
+                        <AbrechnungUpdateProvider api={api?.api} websocket={api?.websocket}>
                             <>
                                 <React.Suspense fallback={<SplashScreen />}>
                                     {isAuthenticated && groupStoreStatus !== "initialized" ? (
@@ -116,5 +116,3 @@ export const App: React.FC = () => {
         </PaperProvider>
     );
 };
-
-export default App;

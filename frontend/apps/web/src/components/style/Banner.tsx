@@ -1,7 +1,7 @@
 import React from "react";
 import { Alert, AlertTitle } from "@mui/material";
 import { useRecoilValue } from "recoil";
-import { config } from "../../state/config";
+import { config } from "@/state/config";
 
 export const Banner: React.FC = () => {
     const cfg = useRecoilValue(config);

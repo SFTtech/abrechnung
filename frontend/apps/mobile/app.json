@@ -1,44 +1,42 @@
 {
-    "expo": {
-        "name": "Abrechnung",
-        "slug": "abrechnung",
-        "version": "0.2.0",
-        "orientation": "portrait",
-        "icon": "./assets/logo.png",
-        "scheme": "abrechnung",
-        "userInterfaceStyle": "automatic",
-        "splash": {
-            "image": "./assets/logo_splash.png",
-            "resizeMode": "contain",
+    "name": "Abrechnung",
+    "displayName": "Abrechnung",
+    "version": "0.2.0",
+    "orientation": "portrait",
+    "icon": "./assets/logo.png",
+    "scheme": "abrechnung",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+        "image": "./assets/logo_splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#ffffff"
+    },
+    "updates": {
+        "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+        "supportsTablet": true,
+        "bundleIdentifier": "lol.sft.abrechnung"
+    },
+    "android": {
+        "adaptiveIcon": {
+            "foregroundImage": "./assets/logo_android.png",
             "backgroundColor": "#ffffff"
         },
-        "updates": {
-            "fallbackToCacheTimeout": 0
-        },
-        "assetBundlePatterns": ["**/*"],
-        "ios": {
-            "supportsTablet": true,
-            "bundleIdentifier": "lol.sft.abrechnung"
-        },
-        "android": {
-            "adaptiveIcon": {
-                "foregroundImage": "./assets/logo_android.png",
-                "backgroundColor": "#ffffff"
-            },
-            "package": "lol.sft.abrechnung"
-        },
-        "web": {
-            "favicon": "./assets/logo.png",
-            "bundler": "metro"
-        },
-        "plugins": [
-            [
-                "@config-plugins/detox",
-                {
-                    "skipProguard": false,
-                    "subdomains": ["10.0.2.2", "localhost"]
-                }
-            ]
+        "package": "lol.sft.abrechnung"
+    },
+    "web": {
+        "favicon": "./assets/logo.png",
+        "bundler": "metro"
+    },
+    "plugins": [
+        [
+            "@config-plugins/detox",
+            {
+                "skipProguard": false,
+                "subdomains": ["10.0.2.2", "localhost"]
+            }
         ]
-    }
+    ]
 }

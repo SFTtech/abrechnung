@@ -1,20 +1,10 @@
-import DateTimeInput from "@/components/DateTimeInput";
-import { NumericInput } from "@/components/NumericInput";
-import PositionListItem from "@/components/PositionListItem";
-import { TagSelect } from "@/components/tag-select";
-import TransactionShareInput from "@/components/transaction-shares/TransactionShareInput";
-import { useApi } from "@/core/ApiProvider";
-import { GroupStackScreenProps } from "@/navigation/types";
-import { notify } from "@/notifications";
-import { selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
 import {
     deleteTransaction,
     discardTransactionChange,
     saveTransaction,
     selectCurrentUserPermissions,
     selectTransactionById,
-    selectTransactionPositionTotal,
-    selectTransactionPositions,
+    selectWipTransactionPositions,
     wipPositionAdded,
     wipTransactionUpdated,
 } from "@abrechnung/redux";
@@ -41,6 +31,15 @@ import {
     TextInput,
     useTheme,
 } from "react-native-paper";
+import DateTimeInput from "../../components/DateTimeInput";
+import { NumericInput } from "../../components/NumericInput";
+import PositionListItem from "../../components/PositionListItem";
+import { TagSelect } from "../../components/tag-select";
+import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
+import { useApi } from "../../core/ApiProvider";
+import { GroupStackScreenProps } from "../../navigation/types";
+import { notify } from "../../notifications";
+import { selectTransactionSlice, useAppDispatch, useAppSelector } from "../../store";
 
 export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetail">> = ({ route, navigation }) => {
     const theme = useTheme();
@@ -54,19 +53,18 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
     );
     const positions = useAppSelector((state) =>
-        selectTransactionPositions({ state: selectTransactionSlice(state), groupId, transactionId })
+        selectWipTransactionPositions({ state: selectTransactionSlice(state), groupId, transactionId })
     );
-    const positionTotal = useAppSelector((state) =>
-        selectTransactionPositionTotal({ state: selectTransactionSlice(state), groupId, transactionId })
-    );
+    const totalPositionValue = positions.reduce((acc, curr) => acc + curr.price, 0);
+
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
 
     const onGoBack = React.useCallback(async () => {
         if (editing && transaction != null) {
-            dispatch(discardTransactionChange({ groupId, transactionId: transaction.id, api }));
+            dispatch(discardTransactionChange({ groupId, transactionId: transaction.id }));
         }
         return;
-    }, [api, dispatch, editing, transaction, groupId]);
+    }, [dispatch, editing, transaction, groupId]);
 
     const onDeleteTransaction = React.useCallback(() => {
         dispatch(deleteTransaction({ api, groupId, transactionId }))
@@ -112,7 +110,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                       name: transaction.name,
                       value: transaction.value,
                       currency_symbol: transaction.currency_symbol,
-                      currencyConversionRate: transaction.currencyConversionRate,
+                      currencyConversionRate: transaction.currency_conversion_rate,
                       description: transaction.description ?? "",
                       creditor_shares: transaction.creditor_shares,
                       debitor_shares: transaction.debitor_shares,
@@ -129,9 +127,9 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
             dispatch(wipTransactionUpdated({ ...transaction, ...values }));
             dispatch(saveTransaction({ api, transactionId, groupId }))
                 .unwrap()
-                .then(({ transactionContainer }) => {
+                .then(({ transaction }) => {
                     navigation.navigate("TransactionDetail", {
-                        transactionId: transactionContainer.transaction.id,
+                        transactionId: transaction.id,
                         groupId: groupId,
                         editing: false,
                     });
@@ -159,26 +157,20 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
     }, [navigation, transactionId, groupId]);
 
     const cancelEdit = React.useCallback(() => {
-        dispatch(discardTransactionChange({ transactionId, groupId, api }))
-            .unwrap()
-            .then(({ deletedTransaction }) => {
-                if (deletedTransaction) {
-                    navigation.navigate("BottomTabNavigator", {
-                        screen: "TransactionList",
-                        params: { groupId },
-                    });
-                } else {
-                    if (transaction) {
-                        formik.resetForm();
-                    }
-                    navigation.replace("TransactionDetail", {
-                        transactionId: transactionId,
-                        groupId: groupId,
-                        editing: false,
-                    });
-                }
+        dispatch(discardTransactionChange({ transactionId, groupId }));
+        if (transactionId < 0) {
+            navigation.navigate("BottomTabNavigator", {
+                screen: "TransactionList",
+                params: { groupId },
             });
-    }, [dispatch, transaction, groupId, navigation, transactionId, formik]);
+        } else {
+            navigation.navigate("TransactionDetail", {
+                transactionId: transactionId,
+                groupId: groupId,
+                editing: false,
+            });
+        }
+    }, [dispatch, groupId, navigation, transactionId]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -219,6 +211,8 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                     price: 0,
                     usages: {},
                     communist_shares: 0,
+                    is_changed: false,
+                    only_local: true,
                 },
             })
         );
@@ -399,7 +393,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                             title="Total"
                             right={(props) => (
                                 <Text>
-                                    {positionTotal.toFixed(2)} {transaction.currency_symbol}
+                                    {totalPositionValue.toFixed(2)} {transaction.currency_symbol}
                                 </Text>
                             )}
                         />
@@ -407,7 +401,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                             title="Remaining"
                             right={(props) => (
                                 <Text>
-                                    {((formik.values?.value ?? 0) - positionTotal).toFixed(2)}{" "}
+                                    {((formik.values?.value ?? 0) - totalPositionValue).toFixed(2)}{" "}
                                     {transaction.currency_symbol}
                                 </Text>
                             )}

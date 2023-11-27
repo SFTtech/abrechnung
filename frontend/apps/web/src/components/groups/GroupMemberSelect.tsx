@@ -2,7 +2,7 @@ import React from "react";
 import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
 import { DisabledTextField } from "../style/DisabledTextField";
 import { styled } from "@mui/material/styles";
-import { selectGroupSlice, useAppSelector } from "../../store";
+import { selectGroupSlice, useAppSelector } from "@/store";
 import { selectGroupMemberIds, selectGroupMemberIdToUsername } from "@abrechnung/redux";
 
 const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({

@@ -10,23 +10,21 @@ import {
     LinearProgress,
     TextField,
 } from "@mui/material";
-import { Form, Formik, FormikProps } from "formik";
+import { Form, Formik, FormikHelpers, FormikProps } from "formik";
 import React, { ReactNode } from "react";
 import { toast } from "react-toastify";
-import * as yup from "yup";
-import { api } from "../../core/api";
-import { useAppDispatch } from "../../store";
+import { z } from "zod";
+import { api } from "@/core/api";
+import { useAppDispatch } from "@/store";
+import { toFormikValidationSchema } from "@abrechnung/utils";
 
-interface FormValues {
-    name: string;
-    description: string;
-    addUserAccountOnJoin: boolean;
-}
-
-const validationSchema = yup.object({
-    name: yup.string().required("Name is required"),
-    description: yup.string(),
+const validationSchema = z.object({
+    name: z.string({ required_error: "Name is required" }),
+    description: z.string().optional(),
+    addUserAccountOnJoin: z.boolean(),
 });
+
+type FormValues = z.infer<typeof validationSchema>;
 
 interface Props {
     show: boolean;
@@ -39,7 +37,7 @@ interface Props {
 export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
     const dispatch = useAppDispatch();
 
-    const handleSubmit = (values, { setSubmitting }) => {
+    const handleSubmit = (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
         dispatch(
             createGroup({
                 api,
@@ -74,7 +72,7 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
                         addUserAccountOnJoin: false,
                     }}
                     onSubmit={handleSubmit}
-                    validationSchema={validationSchema}
+                    validationSchema={toFormikValidationSchema(validationSchema)}
                 >
                     {({
                         values,

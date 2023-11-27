@@ -1,10 +1,10 @@
 import { DrawerNavigationProp } from "@react-navigation/drawer";
 import { HeaderTitleProps } from "@react-navigation/elements";
+import { MaterialTopTabNavigationProp } from "@react-navigation/material-top-tabs";
 import { Route } from "@react-navigation/native";
 import { StackHeaderProps, StackNavigationProp } from "@react-navigation/stack";
-import { MaterialTopTabNavigationProp } from "@react-navigation/material-top-tabs";
 import * as React from "react";
-import { Appbar, useTheme, Banner } from "react-native-paper";
+import { Appbar, Banner, useTheme } from "react-native-paper";
 import { selectGlobalInfo, useAppSelector } from "../store";
 import { GroupStackParamList, GroupTabParamList, RootDrawerParamList } from "./types";
 

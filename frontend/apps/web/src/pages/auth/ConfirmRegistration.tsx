@@ -1,10 +1,10 @@
 import { Alert, Button, Container, Link, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
-import Loading from "../../components/style/Loading";
-import { MobilePaper } from "../../components/style/mobile";
-import { api } from "../../core/api";
-import { useTitle } from "../../core/utils";
+import { Loading } from "@/components/style/Loading";
+import { MobilePaper } from "@/components/style/mobile";
+import { api } from "@/core/api";
+import { useTitle } from "@/core/utils";
 
 export const ConfirmRegistration: React.FC = () => {
     const [error, setError] = useState(null);

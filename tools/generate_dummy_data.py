@@ -11,7 +11,11 @@ from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.config import read_config
 from abrechnung.domain.accounts import AccountType, NewAccount
-from abrechnung.domain.transactions import NewTransaction, TransactionType
+from abrechnung.domain.transactions import (
+    NewTransaction,
+    NewTransactionPosition,
+    TransactionType,
+)
 from abrechnung.framework.database import create_db_pool
 
 
@@ -94,16 +98,30 @@ async def main(
             max(2, people_per_transaction - 4),
             min(n_accounts + n_events, people_per_transaction + 4),
         )
+        value = random.random() * 100
         debitors = random.choices(account_ids, k=n_involved)
         debitor_shares = {k: 1.0 for k in debitors}
         creditor = random.choice(account_ids)
         creditor_shares = {creditor: 1.0}
+        positions = []
+        n_positions = random.randint(0, 30)
+        for pos_i in range(n_positions):
+            max_position_price = value / n_positions
+            pos_participants = random.choices(account_ids, k=random.randint(1, n_involved))
+            positions.append(
+                NewTransactionPosition(
+                    name=f"Position {pos_i}",
+                    communist_shares=0,
+                    usages={k: 1.0 for k in pos_participants},
+                    price=random.random() * max_position_price,
+                )
+            )
         transaction_id = await transaction_service.create_transaction(
             user=user,
             group_id=group_id,
             transaction=NewTransaction(
                 type=TransactionType.purchase,
-                value=random.random() * 100,
+                value=value,
                 name=f"Purchase {i}",
                 description="",
                 billed_at=random_date(),
@@ -112,6 +130,7 @@ async def main(
                 tags=[],
                 creditor_shares=creditor_shares,
                 debitor_shares=debitor_shares,
+                new_positions=positions,
             ),
         )
         transaction_ids.append(transaction_id)

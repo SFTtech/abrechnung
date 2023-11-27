@@ -8,9 +8,9 @@ import { Delete, Edit } from "@mui/icons-material";
 import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText } from "@mui/material";
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { ListItemLink } from "../../../components/style/ListItemLink";
-import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "../../../store";
-import { getAccountLink } from "../../../utils";
+import { ListItemLink } from "@/components/style/ListItemLink";
+import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { getAccountLink } from "@/utils";
 
 interface Props {
     groupId: number;

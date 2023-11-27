@@ -5,22 +5,11 @@
         "jsx": "react-native",
         "lib": ["dom", "esnext"],
         "moduleResolution": "node",
-        "noEmit": true,
         "skipLibCheck": true,
         "resolveJsonModule": true,
-        "strict": true,
-        "target": "ESNext",
-        "baseUrl": ".",
-        "paths": {
-            "@abrechnung/api": ["../../libs/api/src/index.ts"],
-            "@abrechnung/core": ["../../libs/core/src/index.ts"],
-            "@abrechnung/redux": ["../../libs/redux/src/index.ts"],
-            "@abrechnung/types": ["../../libs/types/src/index.ts"],
-            "@abrechnung/utils": ["../../libs/utils/src/index.ts"],
-            "@/*": ["src/*"]
-        }
+        "declaration": true
     },
-    "files": ["../../node_modules/@nx/expo/typings/svg.d.ts"],
+    "files": [],
     "include": [],
     "references": [
         {
@@ -29,6 +18,5 @@
         {
             "path": "./tsconfig.spec.json"
         }
-    ],
-    "exclude": ["node_modules"]
+    ]
 }

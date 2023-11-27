@@ -122,10 +122,10 @@ export class AbrechnungWebSocket {
         private api: Api
     ) {
         // cannot reuse init() here as otherwise ws will be uninitialized
-        this.ws = new WebSocket(this.url);
-        this.ws.onopen = this.onopen;
-        this.ws.onclose = this.onclose;
-        this.ws.onmessage = this.onmessage;
+        // this.ws = new WebSocket(this.url);
+        // this.ws.onopen = this.onopen;
+        // this.ws.onclose = this.onclose;
+        // this.ws.onmessage = this.onmessage;
     }
 
     public setUrl = (url: string) => {

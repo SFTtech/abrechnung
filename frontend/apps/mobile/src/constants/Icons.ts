@@ -1,4 +1,4 @@
-import { AccountType, TransactionType } from "@abrechnung/types";
+import { AccountType, TransactionType } from "@abrechnung/api";
 
 export const clearingAccountIcon = "calendar-today";
 export const personalAccountIcon = "person";

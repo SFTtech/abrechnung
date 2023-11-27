@@ -3,18 +3,10 @@
  * https://reactnavigation.org/docs/typescript/
  */
 
-import { CompositeScreenProps, NavigatorScreenParams } from "@react-navigation/native";
-import { StackScreenProps } from "@react-navigation/stack";
 import { DrawerScreenProps } from "@react-navigation/drawer";
 import { MaterialTopTabScreenProps } from "@react-navigation/material-top-tabs";
-
-declare global {
-    // eslint-disable-next-line @typescript-eslint/no-namespace
-    namespace ReactNavigation {
-        // @ts-ignore
-        type RootParamList = RootDrawerParamList;
-    }
-}
+import { CompositeScreenProps, NavigatorScreenParams } from "@react-navigation/native";
+import { StackScreenProps } from "@react-navigation/stack";
 
 export type RootDrawerParamList = {
     GroupStackNavigator: NavigatorScreenParams<GroupStackParamList>;
