@@ -130,51 +130,44 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
     const theme = useTheme();
     const isSmallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
 
+    const [showEvents, setShowEvents] = React.useState(false);
+    const [showAdvanced, setShowAdvanced] = React.useState(false);
     const [searchValue, setSearchValue] = React.useState("");
 
-    const selector = React.useCallback(
-        memoize((state: RootState) => {
+    const unfilteredAccounts = useAppSelector((state) =>
+        selectGroupAccounts({ state: selectAccountSlice(state), groupId })
+    );
+    const accounts = React.useMemo(() => {
+        return unfilteredAccounts.filter((a) => {
             const isAccountShown = (accountId: number) => {
-                if (editable) {
+                if (value[accountId] !== undefined) {
                     return true;
+                }
+
+                if (editable) {
+                    return !(!showEvents && a.type === "clearing");
                 }
                 if (shouldDisplayAccount) {
                     return shouldDisplayAccount(accountId);
                 }
-
-                return value[accountId] !== undefined;
+                return false;
             };
-
-            const accounts = selectGroupAccounts({
-                state: selectAccountSlice(state),
-                groupId,
-            });
-            return accounts.filter((a) => {
-                if (excludeAccounts && excludeAccounts.includes(a.id)) {
-                    return false;
-                }
-                if (!isAccountShown(a.id)) {
-                    return false;
-                }
-                if (searchValue && searchValue !== "") {
-                    if (
-                        a.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-                        a.description.toLowerCase().includes(searchValue.toLowerCase()) ||
-                        (a.type === "clearing" && a.date_info && a.date_info.includes(searchValue.toLowerCase()))
-                    ) {
-                        return true;
-                    }
-                    return false;
-                }
-                return true;
-            });
-        }),
-        [groupId, editable, shouldDisplayAccount]
-    );
-
-    const accounts = useAppSelector(selector);
-
-    const [showAdvanced, setShowAdvanced] = React.useState(false);
+            if (excludeAccounts && excludeAccounts.includes(a.id)) {
+                return false;
+            }
+            if (!isAccountShown(a.id)) {
+                return false;
+            }
+            if (searchValue && searchValue !== "") {
+                return (
+                    a.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+                    a.description.toLowerCase().includes(searchValue.toLowerCase()) ||
+                    (a.type === "clearing" && a.date_info && a.date_info.includes(searchValue.toLowerCase()))
+                );
+            }
+            return true;
+        });
+    }, [value, showEvents, editable, searchValue, unfilteredAccounts, excludeAccounts, shouldDisplayAccount]);
 
     React.useEffect(() => {
         if (Object.values(value).reduce((showAdvanced, value) => showAdvanced || value !== 1, false)) {
@@ -200,7 +193,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
         }
         return nAccs;
     }, 0);
-    const showSearch = !isSmallScreen && accounts.length > 5;
+    const showSearch = !isSmallScreen && unfilteredAccounts.length > 5;
 
     const handleAccountShareChange = (accountId: number, shareValue: number) => {
         const newValue = { ...value };
@@ -222,12 +215,24 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                     {nSelectedEvents > 0 && <Chip label={`${nSelectedEvents} Events`} size="small" color="primary" />}
                 </Box>
                 {editable && (
-                    <FormControlLabel
-                        control={<Checkbox name={`show-advanced`} />}
-                        checked={showAdvanced}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setShowAdvanced(event.target.checked)}
-                        label="Advanced"
-                    />
+                    <Box>
+                        <FormControlLabel
+                            control={<Checkbox name="show-events" />}
+                            checked={showEvents}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                                setShowEvents(event.target.checked)
+                            }
+                            label="Show Events"
+                        />
+                        <FormControlLabel
+                            control={<Checkbox name="show-advanced" />}
+                            checked={showAdvanced}
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                                setShowAdvanced(event.target.checked)
+                            }
+                            label="Advanced"
+                        />
+                    </Box>
                 )}
             </Grid>
             <Divider variant="middle" sx={{ marginLeft: 0 }} />

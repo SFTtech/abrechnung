@@ -3,9 +3,9 @@ import { HelpOutline } from "@mui/icons-material";
 import { Chip, Divider, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
-import { PurchaseIcon, TransferIcon } from "../../../components/style/AbrechnungIcons";
-import ListItemLink from "../../../components/style/ListItemLink";
-import { selectAccountSlice, selectTransactionSlice, useAppSelector } from "../../../store";
+import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
+import { ListItemLink } from "@/components/style/ListItemLink";
+import { selectAccountSlice, selectTransactionSlice, useAppSelector } from "@/store";
 
 interface Props {
     groupId: number;

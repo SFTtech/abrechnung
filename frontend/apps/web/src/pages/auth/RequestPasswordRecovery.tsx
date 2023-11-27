@@ -5,8 +5,8 @@ import { Form, Formik, FormikHelpers, FormikProps } from "formik";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
-import { api } from "../../core/api";
-import { selectAuthSlice, useAppSelector } from "../../store";
+import { api } from "@/core/api";
+import { selectAuthSlice, useAppSelector } from "@/store";
 
 const validationSchema = z.object({
     email: z.string({ required_error: "email is required" }).email("please enter a valid email address"),

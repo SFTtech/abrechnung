@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { Form, Formik } from "formik";
-import { api } from "../../core/api";
+import { Form, Formik, FormikHelpers } from "formik";
+import { api } from "@/core/api";
 import { toast } from "react-toastify";
-import { useQuery, useTitle } from "../../core/utils";
+import { useQuery, useTitle } from "@/core/utils";
 import {
     Avatar,
     Box,
@@ -17,14 +17,17 @@ import {
     Typography,
 } from "@mui/material";
 import { LockOutlined } from "@mui/icons-material";
-import * as yup from "yup";
-import { useAppDispatch, useAppSelector, selectAuthSlice } from "../../store";
+import { z } from "zod";
+import { useAppDispatch, useAppSelector, selectAuthSlice } from "@/store";
 import { selectIsAuthenticated, login } from "@abrechnung/redux";
+import { toFormikValidationSchema } from "@abrechnung/utils";
 
-const validationSchema = yup.object({
-    username: yup.string().required("username is required"),
-    password: yup.string().required("password is required"),
+const validationSchema = z.object({
+    username: z.string({ required_error: "username is required" }),
+    password: z.string({ required_error: "password is required" }),
 });
+
+type FormValues = z.infer<typeof validationSchema>;
 
 export const Login: React.FC = () => {
     const isLoggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
@@ -46,7 +49,7 @@ export const Login: React.FC = () => {
         }
     }, [isLoggedIn, navigate, query]);
 
-    const handleSubmit = (values: { username: string; password: string }, { setSubmitting }) => {
+    const handleSubmit = (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
         const sessionName = navigator.appVersion + " " + navigator.userAgent + " " + navigator.appName;
         dispatch(login({ username: values.username, password: values.password, sessionName, api }))
             .unwrap()
@@ -73,7 +76,7 @@ export const Login: React.FC = () => {
                 <Formik
                     initialValues={{ password: "", username: "" }}
                     onSubmit={handleSubmit}
-                    validationSchema={validationSchema}
+                    validationSchema={toFormikValidationSchema(validationSchema)}
                 >
                     {({ values, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
                         <Form onSubmit={handleSubmit}>

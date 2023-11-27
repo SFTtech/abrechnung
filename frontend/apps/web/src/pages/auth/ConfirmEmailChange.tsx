@@ -2,9 +2,9 @@ import { Button, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import Loading from "../../components/style/Loading";
-import { api } from "../../core/api";
-import { useTitle } from "../../core/utils";
+import { Loading } from "@/components/style/Loading";
+import { api } from "@/core/api";
+import { useTitle } from "@/core/utils";
 
 export const ConfirmEmailChange: React.FC = () => {
     const [status, setStatus] = useState("idle");

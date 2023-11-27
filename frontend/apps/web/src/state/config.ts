@@ -1,23 +1,24 @@
 import { selector } from "recoil";
 import axios from "axios";
-import * as yup from "yup";
+import { z } from "zod";
 import DevConfig from "../assets/config.json";
-import { environment } from "../environments/environment";
+import { environment } from "@/environments/environment";
 import { AlertColor } from "@mui/material/Alert/Alert";
 
-const configSchema = yup.object({
-    imprintURL: yup.string().nullable(),
-    sourceCodeURL: yup.string().required(),
-    issueTrackerURL: yup.string().nullable(),
-    messages: yup
+const configSchema = z.object({
+    imprintURL: z.string().optional().nullable(),
+    sourceCodeURL: z.string().optional(),
+    issueTrackerURL: z.string().optional().nullable(),
+    messages: z
         .array(
-            yup.object({
-                type: yup.string().required().oneOf(["info", "error", "warning", "success"]),
-                title: yup.string().default(null).nullable(),
-                body: yup.string().required(),
+            z.object({
+                type: z.union([z.literal("info"), z.literal("error"), z.literal("warning"), z.literal("success")]),
+                title: z.string().default(null).nullable(),
+                body: z.string(),
             })
         )
-        .required(),
+        .optional(),
+    error: z.string().optional(),
 });
 
 export interface StatusMessage {
@@ -26,13 +27,7 @@ export interface StatusMessage {
     body: string;
 }
 
-export interface Config {
-    imprintURL?: string | null;
-    sourceCodeURL?: string;
-    issueTrackerURL?: string | null;
-    messages?: Array<StatusMessage>;
-    error?: string;
-}
+export type Config = z.infer<typeof configSchema>;
 
 export const config = selector<Config>({
     key: "config",
@@ -46,7 +41,7 @@ export const config = selector<Config>({
                 headers: { "Content-Type": "application/json" },
             });
             try {
-                return (await configSchema.validate(await resp.data)) as Config;
+                return await configSchema.parseAsync(await resp.data);
             } catch (e) {
                 console.log(e);
                 return {

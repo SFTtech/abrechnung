@@ -108,38 +108,20 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
 
-#      - name: Build App Bundle
-#        run: npx nx build-android mobile --mode release
-
       - name: Build App APK
         run: npx nx build-android mobile --tasks assembleRelease
 
-      - name: Sign App APK
-        id: sign_app_apk
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: frontend/apps/mobile/android/app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
-          alias: ${{ secrets.ANDROID_KEY_STORE_ALIAS }}
-          keyStorePassword: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
-
-#      - name: Sign App Bundle
-#        id: sign_app_aab
+#      - name: Sign App APK
+#        id: sign_app_apk
 #        uses: r0adkll/sign-android-release@v1
 #        with:
-#          releaseDirectory: frontend/apps/mobile/android/app/build/outputs/bundle/release
+#          releaseDirectory: frontend/apps/mobile/android/app/build/outputs/apk/release
 #          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
 #          alias: ${{ secrets.ANDROID_KEY_STORE_ALIAS }}
 #          keyStorePassword: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
 
-#      - name: Upload App Bundle
+#      - name: Upload APK
 #        uses: actions/upload-artifact@v3
 #        with:
-#          name: app-release-aab
-#          path: frontend/apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v3
-        with:
-          name: app-release-apk
-          path: ${{steps.sign_app_apk.outputs.signedReleaseFile}}
+#          name: app-release-apk
+#          path: ${{steps.sign_app_apk.outputs.signedReleaseFile}}

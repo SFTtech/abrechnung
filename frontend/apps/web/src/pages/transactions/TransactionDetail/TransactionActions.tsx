@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { selectTransactionSlice, useAppSelector } from "../../../store";
+import { selectTransactionSlice, useAppSelector } from "@/store";
 
 interface Props {
     groupId: number;

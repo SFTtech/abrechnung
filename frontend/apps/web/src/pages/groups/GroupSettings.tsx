@@ -13,24 +13,27 @@ import {
     Grid,
     LinearProgress,
 } from "@mui/material";
-import { Form, Formik } from "formik";
+import { Form, Formik, FormikHelpers } from "formik";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import * as yup from "yup";
-import { DisabledFormControlLabel, DisabledTextField } from "../../components/style/DisabledTextField";
-import { MobilePaper } from "../../components/style/mobile";
-import { api } from "../../core/api";
-import { useTitle } from "../../core/utils";
-import { selectGroupSlice, useAppDispatch, useAppSelector } from "../../store";
+import { z } from "zod";
+import { DisabledFormControlLabel, DisabledTextField } from "@/components/style/DisabledTextField";
+import { MobilePaper } from "@/components/style/mobile";
+import { api } from "@/core/api";
+import { useTitle } from "@/core/utils";
+import { selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { toFormikValidationSchema } from "@abrechnung/utils";
 
-const validationSchema = yup.object({
-    name: yup.string().required("group name is required"),
-    description: yup.string(),
-    terms: yup.string(),
-    currency_symbol: yup.string(),
-    addUserAccountOnJoin: yup.boolean(),
+const validationSchema = z.object({
+    name: z.string({ required_error: "group name is required" }),
+    description: z.string().optional(),
+    terms: z.string().optional(),
+    currency_symbol: z.string().optional(),
+    addUserAccountOnJoin: z.boolean().optional(),
 });
+
+type FormValues = z.infer<typeof validationSchema>;
 
 interface Props {
     groupId: number;
@@ -56,7 +59,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
         setIsEditing(false);
     };
 
-    const handleSubmit = (values, { setSubmitting }) => {
+    const handleSubmit = (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
         dispatch(
             updateGroup({
                 group: {
@@ -71,7 +74,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
             })
         )
             .unwrap()
-            .then((res) => {
+            .then(() => {
                 setSubmitting(false);
                 setIsEditing(false);
             })
@@ -84,7 +87,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
     const confirmLeaveGroup = () => {
         dispatch(leaveGroup({ groupId, api }))
             .unwrap()
-            .then((res) => {
+            .then(() => {
                 navigate("/");
             })
             .catch((err) => {
@@ -109,7 +112,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                     addUserAccountOnJoin: group.add_user_account_on_join,
                 }}
                 onSubmit={handleSubmit}
-                validationSchema={validationSchema}
+                validationSchema={toFormikValidationSchema(validationSchema)}
                 enableReinitialize={true}
             >
                 {({ values, handleBlur, handleChange, handleSubmit, isSubmitting }) => (

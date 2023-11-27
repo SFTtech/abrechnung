@@ -1,6 +1,6 @@
 import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
 import { selectAccountBalances, selectGroupById, selectPersonalAccounts } from "@abrechnung/redux";
-import { DataGrid, GridToolbar } from "@mui/x-data-grid";
+import { DataGrid, GridColDef, GridToolbar } from "@mui/x-data-grid";
 import React from "react";
 import { renderCurrency } from "../style/datagrid/renderCurrency";
 
@@ -17,15 +17,17 @@ export const BalanceTable: React.FC<Props> = ({ groupId }) => {
 
     const tableData = personalAccounts.map((acc) => {
         return {
-            ...acc,
+            id: acc.id,
+            name: acc.name,
+            description: acc.description,
             balance: balances[acc.id]?.balance ?? 0,
             totalPaid: balances[acc.id]?.totalPaid ?? 0,
             totalConsumed: balances[acc.id]?.totalConsumed ?? 0,
         };
     });
 
-    const columns = [
-        { field: "id", headerName: "ID", hide: true },
+    const columns: GridColDef[] = [
+        { field: "id", headerName: "ID" },
         { field: "name", headerName: "Name", width: 150 },
         { field: "description", headerName: "Description", width: 200 },
         {
@@ -50,7 +52,14 @@ export const BalanceTable: React.FC<Props> = ({ groupId }) => {
             <DataGrid
                 sx={{ border: 0 }}
                 rows={tableData}
-                columns={columns as any} // TODO: fixme and figure out proper typing
+                initialState={{
+                    columns: {
+                        columnVisibilityModel: {
+                            id: false,
+                        },
+                    },
+                }}
+                columns={columns}
                 disableRowSelectionOnClick
                 autoHeight
                 slots={{

@@ -2,9 +2,9 @@ import { selectAccountBalances, selectAccountById, selectGroupCurrencySymbol } f
 import { Box, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
-import { balanceColor } from "../../core/utils";
-import { selectAccountSlice, selectGroupSlice, useAppSelector } from "../../store";
-import { getAccountLink } from "../../utils";
+import { balanceColor } from "@/core/utils";
+import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
+import { getAccountLink } from "@/utils";
 import { ClearingAccountIcon } from "../style/AbrechnungIcons";
 import ListItemLink from "../style/ListItemLink";
 

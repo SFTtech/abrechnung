@@ -1,7 +1,7 @@
 import { selectIsAuthenticated } from "@abrechnung/redux";
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { selectAuthSlice, useAppSelector } from "../store";
+import { selectAuthSlice, useAppSelector } from "@/store";
 
 interface Props {
     authFallback?: string;

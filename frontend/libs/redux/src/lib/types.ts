@@ -1,5 +1,5 @@
 import { Group, GroupInvite, GroupLog, GroupMember, User } from "@abrechnung/api";
-import { Account, Transaction } from "@abrechnung/types";
+import { Account, Transaction, TransactionBalanceEffect } from "@abrechnung/types";
 
 export const ENABLE_OFFLINE_MODE = false;
 
@@ -97,11 +97,13 @@ export type AccountSliceState = AbrechnungInstanceAwareState &
 
 export interface TransactionState {
     transactions: {
-        byId: { [k: number]: Transaction };
+        byId: { [transactionId: number]: Transaction };
+        balanceEffects: { [transactionId: number]: TransactionBalanceEffect };
         ids: number[];
     };
     wipTransactions: {
-        byId: { [k: number]: Transaction };
+        byId: { [transactionId: number]: Transaction };
+        balanceEffects: { [transactionId: number]: TransactionBalanceEffect };
         ids: number[];
     };
     status: StateStatus;

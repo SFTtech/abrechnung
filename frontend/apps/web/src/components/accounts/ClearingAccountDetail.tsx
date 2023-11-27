@@ -1,7 +1,7 @@
 import { selectAccountBalances, selectAccountById, selectGroupCurrencySymbol } from "@abrechnung/redux";
 import { TableCell } from "@mui/material";
 import React from "react";
-import { selectAccountSlice, selectGroupSlice, useAppSelector } from "../../store";
+import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
 import { ShareSelect } from "../ShareSelect";
 
 interface Props {

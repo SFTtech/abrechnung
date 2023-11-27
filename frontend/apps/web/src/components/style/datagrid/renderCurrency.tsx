@@ -1,17 +1,17 @@
 import { useTheme } from "@mui/material/styles";
 import * as React from "react";
 
-function pnlFormatter(value, currency_symbol) {
+function pnlFormatter(value: number, currency_symbol: string) {
     return `${value.toFixed(2)} ${currency_symbol}`;
 }
 
 interface CurrencyValueProps {
     currency_symbol: string;
-    value: number;
+    value?: number;
     forceColor: string;
 }
 
-const CurrencyValue = React.memo(({ currency_symbol, value, forceColor }: CurrencyValueProps) => {
+const CurrencyValue = React.memo(({ currency_symbol, value = 0, forceColor }: CurrencyValueProps) => {
     const theme = useTheme();
 
     const positiveColor = theme.palette.mode === "light" ? theme.palette.success.dark : theme.palette.success.light;
@@ -35,10 +35,10 @@ const CurrencyValue = React.memo(({ currency_symbol, value, forceColor }: Curren
 CurrencyValue.displayName = "CurrencyValue";
 
 export function renderCurrency(
-    currency_symbol,
+    currency_symbol: string,
     forceColor = undefined
-): (params: { value: number }) => React.ReactNode {
-    const component: React.FC<{ value: number }> = (params) => {
+): (params: { value?: number }) => React.ReactNode {
+    const component: React.FC<{ value?: number }> = (params) => {
         return <CurrencyValue currency_symbol={currency_symbol} value={params.value} forceColor={forceColor} />;
     };
     component.displayName = "CurrencyValue";
