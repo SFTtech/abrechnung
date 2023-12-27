@@ -22,10 +22,6 @@ jobs:
   get-distros:
     name: "Calculate list of debian distros and docker image tags"
     runs-on: ubuntu-latest
-    needs:
-      - lint
-      - build-web
-      - test
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
