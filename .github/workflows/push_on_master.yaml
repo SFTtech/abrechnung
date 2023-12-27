@@ -155,8 +155,6 @@ jobs:
     name: "Attach assets to release"
     if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/tags/') }}
     needs:
-      - frontend
-      - backend
       - build-debs
       - build-and-publish-sdist
     runs-on: ubuntu-latest
