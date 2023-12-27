@@ -156,7 +156,6 @@ jobs:
     if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/tags/') }}
     needs:
       - build-debs
-      - build-and-publish-sdist
     runs-on: ubuntu-latest
     steps:
       - name: Download all workflow run artifacts
