@@ -363,7 +363,6 @@ export const saveTransaction = createAsyncThunk<
             mime_type: f.mime_type,
         })
     );
-    console.log("newFIles", newFiles);
     const changedFiles: UpdateFile[] = (
         Object.values(wipTransaction.files).filter((f) => f.type === "updated") as UpdateFile[]
     ).map((f) => ({
