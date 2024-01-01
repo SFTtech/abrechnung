@@ -44,6 +44,7 @@ dev = [
     "mypy~=1.5",
     "types-PyYAML~=6.0",
     "pylint~=3.0",
+    "bump-my-version~=0.15"
 ]
 docs = [
     "sphinx",
@@ -63,8 +64,8 @@ namespaces = false
 exclude = ["tests*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "abrechnung.__version__"}
-readme = {file = ["README.md"]}
+version = { attr = "abrechnung.__version__" }
+readme = { file = ["README.md"] }
 
 [tool.pylint.MASTER]
 extension-pkg-whitelist = [
@@ -101,4 +102,11 @@ plugins = [
 [tool.coverage.run]
 source = [
     "abrechnung"
+]
+
+[tool.bumpversion]
+current_version = "0.12.0"
+commit = false
+files = [
+    { filename = "abrechnung/__init__.py" },
 ]
