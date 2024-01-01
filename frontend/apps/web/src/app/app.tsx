@@ -18,7 +18,7 @@ import { api, ws } from "../core/api";
 import { selectAuthSlice, selectSettingsSlice, selectTheme, useAppDispatch, useAppSelector } from "../store";
 import { Router } from "./Router";
 
-export default function App() {
+export const App = () => {
     const darkModeSystem = useMediaQuery("(prefers-color-scheme: dark)");
     const dispatch = useAppDispatch();
     const groupStoreStatus = useAppSelector((state) => state.groups.status);
@@ -93,4 +93,4 @@ export default function App() {
             </ThemeProvider>
         </StyledEngineProvider>
     );
-}
+};

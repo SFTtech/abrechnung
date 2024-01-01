@@ -1,11 +1,27 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { persistStore } from "redux-persist";
-import storage from "redux-persist/lib/storage";
 import { getAbrechnungReducer } from "@abrechnung/redux";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { settingsReducer } from "./settingsSlice";
+import localForage from "localforage";
 
-const rootReducer = getAbrechnungReducer(storage, { settings: settingsReducer });
+/**
+ * Persist you redux state using IndexedDB
+ * @param {string} dbName - IndexedDB database name
+ */
+const storage = (dbName: string) => {
+    const db = localForage.createInstance({
+        name: dbName,
+    });
+    return {
+        db,
+        getItem: db.getItem,
+        setItem: db.setItem,
+        removeItem: db.removeItem,
+    };
+};
+
+const rootReducer = getAbrechnungReducer(storage("abrechnung"), { settings: settingsReducer });
 
 export const store = configureStore({
     reducer: rootReducer,
