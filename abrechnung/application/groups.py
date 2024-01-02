@@ -21,15 +21,15 @@ from abrechnung.framework.decorators import with_db_transaction
 class GroupService(Service):
     @with_db_transaction
     async def create_group(
-        self,
-        *,
-        conn: Connection,
-        user: User,
-        name: str,
-        description: str,
-        currency_symbol: str,
-        add_user_account_on_join: bool,
-        terms: str,
+            self,
+            *,
+            conn: Connection,
+            user: User,
+            name: str,
+            description: str,
+            currency_symbol: str,
+            add_user_account_on_join: bool,
+            terms: str,
     ) -> int:
         if user.is_guest_user:
             raise PermissionError(f"guest users are not allowed to create group new groups")
@@ -70,15 +70,15 @@ class GroupService(Service):
 
     @with_db_transaction
     async def create_invite(
-        self,
-        *,
-        conn: Connection,
-        user: User,
-        group_id: int,
-        description: str,
-        single_use: bool,
-        join_as_editor: bool,
-        valid_until: datetime,
+            self,
+            *,
+            conn: Connection,
+            user: User,
+            group_id: int,
+            description: str,
+            single_use: bool,
+            join_as_editor: bool,
+            valid_until: datetime,
     ) -> int:
         if user.is_guest_user:
             raise PermissionError(f"guest users are not allowed to create group invites")
@@ -98,12 +98,12 @@ class GroupService(Service):
 
     @with_db_transaction
     async def delete_invite(
-        self,
-        *,
-        conn: Connection,
-        user: User,
-        group_id: int,
-        invite_id: int,
+            self,
+            *,
+            conn: Connection,
+            user: User,
+            group_id: int,
+            invite_id: int,
     ):
         await check_group_permissions(conn=conn, group_id=group_id, user=user, can_write=True)
         deleted_id = await conn.fetchval(
@@ -155,6 +155,12 @@ class GroupService(Service):
         if not group:
             raise PermissionError(f"Invalid invite token")
 
+        user_is_already_member = await conn.fetchval(
+            "select exists (select user_id from group_membership where user_id = $1 and group_id = $2)", user.id,
+            invite["group_id"])
+        if user_is_already_member:
+            raise InvalidCommand(f"User is already a member of this group")
+
         await conn.execute(
             "insert into group_membership (user_id, group_id, invited_by, can_write, is_owner) "
             "values ($1, $2, $3, $4, false)",
@@ -203,16 +209,16 @@ class GroupService(Service):
 
     @with_db_transaction
     async def update_group(
-        self,
-        *,
-        conn: Connection,
-        user: User,
-        group_id: int,
-        name: str,
-        description: str,
-        currency_symbol: str,
-        add_user_account_on_join: bool,
-        terms: str,
+            self,
+            *,
+            conn: Connection,
+            user: User,
+            group_id: int,
+            name: str,
+            description: str,
+            currency_symbol: str,
+            add_user_account_on_join: bool,
+            terms: str,
     ):
         await check_group_permissions(conn=conn, group_id=group_id, user=user, is_owner=True)
         await conn.execute(
@@ -229,14 +235,14 @@ class GroupService(Service):
 
     @with_db_transaction
     async def update_member_permissions(
-        self,
-        *,
-        conn: Connection,
-        user: User,
-        group_id: int,
-        member_id: int,
-        can_write: bool,
-        is_owner: bool,
+            self,
+            *,
+            conn: Connection,
+            user: User,
+            group_id: int,
+            member_id: int,
+            can_write: bool,
+            is_owner: bool,
     ):
         if user.id == member_id:
             raise InvalidCommand(f"group members cannot modify their own privileges")
