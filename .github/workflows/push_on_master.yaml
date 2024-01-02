@@ -15,16 +15,18 @@ env:
 jobs:
   build_and_test_frontend:
     uses: ./.github/workflows/frontend.yaml
+    secrets: inherit
 
   build_and_test_backend:
     uses: ./.github/workflows/backend.yaml
+    secrets: inherit
 
   get-distros:
     name: "Calculate list of debian distros and docker image tags"
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
       - id: set-distros
         run: |
           # if we're running from a tag, get the full list of distros; otherwise just use debian:sid
@@ -47,9 +49,9 @@ jobs:
     needs:
     - get-distros
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v4
     - name: Set up Nodejs
-      uses: actions/setup-node@v2
+      uses: actions/setup-node@v4
       with:
         node-version: "18"
         cache: "npm"
@@ -112,7 +114,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           path: src
 
@@ -130,7 +132,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
       - name: Set up python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
 
       - name: Build the packages
         # see https://github.com/docker/build-push-action/issues/252
@@ -145,7 +147,7 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
       - name: Upload debs as artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: debs
           path: debs/*
@@ -161,7 +163,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
       - name: Trigger demo deployment via webhook
         run: curl ${{ secrets.DEMO_DEPLOY_WEBHOOK_URL }} -F "archive=@$(find -name 'abrechnung_*bookworm*_amd64.deb')" --fail
 
@@ -176,7 +178,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
       - name: Attach to release
         uses: softprops/action-gh-release@a929a66f232c1b11af63782948aa2210f981808a  # PR#109
         env:
@@ -184,7 +186,7 @@ jobs:
         with:
           files: |
             debs/*.deb
-            frontend/apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+            app-release-apk/app-release.apk
           # if it's not already published, keep the release as a draft.
           draft: true
           # mark it as a prerelease if the tag contains 'rc'.
