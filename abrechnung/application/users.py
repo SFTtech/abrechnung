@@ -109,7 +109,6 @@ class UserService(Service):
 
             return self._check_password(password, user["hashed_password"])
 
-
     @with_db_transaction
     async def login_user(
         self, *, conn: Connection, username: str, password: str, session_name: str

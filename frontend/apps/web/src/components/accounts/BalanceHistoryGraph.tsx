@@ -56,10 +56,10 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
                 balanceHistory.length === 0
                     ? undefined
                     : !hasNegativeEntries
-                    ? min
-                    : !hasPositiveEntries
-                    ? max
-                    : undefined;
+                      ? min
+                      : !hasPositiveEntries
+                        ? max
+                        : undefined;
 
             const graphData: Serie[] = [];
             let lastPoint = balanceHistory[0];

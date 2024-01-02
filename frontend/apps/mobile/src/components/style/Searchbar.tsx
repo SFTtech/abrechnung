@@ -220,8 +220,8 @@ const Searchbar = React.forwardRef<TextInputHandles, Props>(
                                 rest.clearButtonMode === "always"
                                     ? iconColor
                                     : value
-                                    ? iconColor
-                                    : "rgba(255, 255, 255, 0)"
+                                      ? iconColor
+                                      : "rgba(255, 255, 255, 0)"
                             }
                             rippleColor={rippleColor}
                             onPress={handleClearPress}

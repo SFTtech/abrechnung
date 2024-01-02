@@ -39,8 +39,8 @@ export const Header: React.FC<Props> = ({ navigation, route, options, back, ...p
         options.headerTitle !== undefined
             ? options.headerTitle
             : options.title !== undefined
-            ? options.title
-            : route.name;
+              ? options.title
+              : route.name;
     const showTitle = options.titleShown ?? true;
     const globalInfo = useAppSelector((state) => selectGlobalInfo({ state: state.ui }));
 
