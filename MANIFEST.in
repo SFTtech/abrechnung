@@ -1,0 +1,2 @@
+include abrechnung/database/code/*.sql
+include abrechnung/database/revisions/*.sql
