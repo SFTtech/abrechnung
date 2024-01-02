@@ -15,7 +15,6 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import {
     ActivityIndicator,
     Button,
-    Chip,
     Dialog,
     Divider,
     IconButton,
@@ -184,21 +183,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                         <View style={{ paddingLeft: 16 }}>
                             <Text style={{ fontSize: theme.fonts.bodyLarge.fontSize }}>Tags</Text>
                             <View style={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}>
-                                {account.tags.map((tag) => (
-                                    <Chip
-                                        key={tag}
-                                        mode="outlined"
-                                        compact={true}
-                                        style={{
-                                            marginRight: 3,
-                                            backgroundColor: theme.colors.backdrop,
-                                            borderColor: theme.colors.primary,
-                                            marginBottom: 2,
-                                        }}
-                                    >
-                                        {tag}
-                                    </Chip>
-                                ))}
+                                <Text>{account.tags.join(", ")}</Text>
                             </View>
                         </View>
                     )}
@@ -207,9 +192,6 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                         disabled={true}
                         groupId={groupId}
                         value={account.clearing_shares as TransactionShare}
-                        onChange={() => {
-                            return;
-                        }}
                         enableAdvanced={true}
                         multiSelect={true}
                         excludedAccounts={[account.id]}
@@ -218,7 +200,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
             )}
             <List.Item
                 title="Balance"
-                right={(props) => (
+                right={() => (
                     <Text style={{ color: textColor }}>
                         {balance.balance.toFixed(2)} {currency_symbol}
                     </Text>

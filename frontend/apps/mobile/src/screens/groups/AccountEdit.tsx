@@ -11,25 +11,14 @@ import { fromISOStringNullable, toFormikValidationSchema, toISODateStringNullabl
 import { useFocusEffect } from "@react-navigation/native";
 import { useFormik } from "formik";
 import React, { useEffect, useLayoutEffect } from "react";
-import { BackHandler, ScrollView, StyleSheet, View } from "react-native";
-import {
-    ActivityIndicator,
-    Button,
-    Dialog,
-    HelperText,
-    IconButton,
-    Portal,
-    ProgressBar,
-    TextInput,
-    useTheme,
-} from "react-native-paper";
-import DateTimeInput from "../../components/DateTimeInput";
-import { TagSelect } from "../../components/tag-select";
-import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
+import { BackHandler, ScrollView, StyleSheet } from "react-native";
+import { Button, Dialog, HelperText, IconButton, Portal, ProgressBar, TextInput, useTheme } from "react-native-paper";
+import { TransactionShareInput } from "../../components/transaction-shares/TransactionShareInput";
 import { useApi } from "../../core/ApiProvider";
 import { GroupStackScreenProps } from "../../navigation/types";
 import { notify } from "../../notifications";
 import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
+import { LoadingIndicator, TagSelect, DateTimeInput } from "../../components";
 
 export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ route, navigation }) => {
     const theme = useTheme();
@@ -90,20 +79,20 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
             account === undefined
                 ? {}
                 : account.type === "clearing"
-                ? {
-                      type: account.type,
-                      name: account.name,
-                      description: account.description,
-                      clearing_shares: account.clearing_shares,
-                      date_info: account.date_info,
-                      tags: account.tags,
-                  }
-                : {
-                      type: account.type,
-                      name: account.name,
-                      description: account.description,
-                      owning_user_id: account.owning_user_id,
-                  },
+                  ? {
+                        type: account.type,
+                        name: account.name,
+                        description: account.description,
+                        clearing_shares: account.clearing_shares,
+                        date_info: account.date_info,
+                        tags: account.tags,
+                    }
+                  : {
+                        type: account.type,
+                        name: account.name,
+                        description: account.description,
+                        owning_user_id: account.owning_user_id,
+                    },
         validationSchema: toFormikValidationSchema(AccountValidator),
         onSubmit: (values, { setSubmitting }) => {
             if (!account) {
@@ -114,9 +103,12 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
             dispatch(wipAccountUpdated({ ...account, ...values }));
             dispatch(saveAccount({ groupId: groupId, accountId: account.id, api }))
                 .unwrap()
-                .then(() => {
+                .then(({ account }) => {
                     setSubmitting(false);
-                    navigation.pop(1);
+                    navigation.replace("AccountDetail", {
+                        accountId: account.id,
+                        groupId: groupId,
+                    });
                 })
                 .catch(() => {
                     setSubmitting(false);
@@ -130,6 +122,15 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
             dispatch(wipAccountUpdated({ ...account, ...formik.values }));
         }
     }, [dispatch, account, formik]);
+
+    const updateWipAccount = React.useCallback(
+        (values: Partial<typeof formik.values>) => {
+            if (account) {
+                dispatch(wipAccountUpdated({ ...account, ...values }));
+            }
+        },
+        [dispatch, account, formik]
+    );
 
     const cancelEdit = React.useCallback(() => {
         if (!account) {
@@ -151,7 +152,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                         <Button onPress={cancelEdit} textColor={theme.colors.error}>
                             Cancel
                         </Button>
-                        <Button onPress={() => formik.handleSubmit}>Save</Button>
+                        <Button onPress={() => formik.handleSubmit()}>Save</Button>
                         <IconButton icon="delete" iconColor={theme.colors.error} onPress={openConfirmDeleteModal} />
                     </>
                 );
@@ -160,11 +161,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
     }, [theme, account, navigation, formik, cancelEdit, onGoBack]);
 
     if (account == null) {
-        return (
-            <View>
-                <ActivityIndicator animating={true} />
-            </View>
-        );
+        return <LoadingIndicator />;
     }
 
     return (
@@ -217,8 +214,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                         value={formik.values.tags}
                         disabled={false}
                         onChange={(val) => {
-                            formik.setFieldValue("tags", val);
-                            onUpdate();
+                            updateWipAccount({ tags: val });
                         }}
                     />
                     {formik.touched.tags && !!formik.errors.tags && (
@@ -230,8 +226,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                         groupId={groupId}
                         value={formik.values.clearing_shares}
                         onChange={(newValue) => {
-                            formik.setFieldValue("clearingShares", newValue);
-                            onUpdate();
+                            updateWipAccount({ clearing_shares: newValue });
                         }}
                         enableAdvanced={true}
                         multiSelect={true}

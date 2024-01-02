@@ -1,8 +1,13 @@
 const translations = {
+    app: {
+        name: "Abrechnung",
+    },
     common: {
         username: "Username",
+        server: "Server",
         email: "E-Mail",
         password: "Password",
+        repeatPassword: "Repeat Password",
         save: "Save",
         yes: "Yes",
         cancel: "Cancel",
@@ -35,13 +40,17 @@ const translations = {
             pageTitle: "Change Password",
             success: "Successfully changed password",
             newPassword: "New Password",
-            repeatPassword: "Repeat Password",
         },
         changeEmail: {
             tabTitle: "Abrechnung - Change E-Mail",
             pageTitle: "Change E-Mail",
             success: "Requested email change, you should receive an email with a confirmation link soon",
             newEmail: "New E-Mail",
+        },
+    },
+    auth: {
+        register: {
+            title: "Register",
         },
     },
     languages: {

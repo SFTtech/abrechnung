@@ -1,5 +1,5 @@
 import { selectSortedAccounts, wipPositionUpdated } from "@abrechnung/redux";
-import { PositionValidationErrors, TransactionPosition, ValidationError, validatePosition } from "@abrechnung/types";
+import { TransactionPosition, PositionValidator, PositionValidationErrors } from "@abrechnung/types";
 import memoize from "proxy-memoize";
 import React, { useCallback, useEffect, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
@@ -15,13 +15,13 @@ import {
     TextInput,
     useTheme,
 } from "react-native-paper";
-import { notify } from "../notifications";
 import { RootState, selectAccountSlice, useAppDispatch, useAppSelector } from "../store";
 import { NumericInput } from "./NumericInput";
 import { KeyboardAvoidingDialog } from "./style/KeyboardAvoidingDialog";
 
 interface Props {
     groupId: number;
+    transactionId: number;
     position: TransactionPosition;
     editing: boolean;
     showDialog: boolean;
@@ -43,8 +43,11 @@ const initialEditingState: localEditingState = {
     communist_shares: 0,
 };
 
+const emptyFormErrors: PositionValidationErrors = { fieldErrors: {}, formErrors: [] };
+
 export const PositionDialog: React.FC<Props> = ({
     groupId,
+    transactionId,
     position,
     editing,
     showDialog,
@@ -72,7 +75,7 @@ export const PositionDialog: React.FC<Props> = ({
         [groupId, searchTerm, editing, localEditingState]
     );
     const accounts = useAppSelector(selector);
-    const [errors, setErrors] = useState<PositionValidationErrors>({});
+    const [errors, setErrors] = useState<PositionValidationErrors>(emptyFormErrors);
 
     const toggleShare = (accountID: number) => {
         const currVal = localEditingState.usages[accountID] !== undefined ? localEditingState.usages[accountID] : 0;
@@ -99,7 +102,7 @@ export const PositionDialog: React.FC<Props> = ({
                 usages: position.usages,
             });
         }
-        setErrors({});
+        setErrors(emptyFormErrors);
     }, [position, setLocalEditingState, setErrors]);
 
     useEffect(() => {
@@ -118,18 +121,13 @@ export const PositionDialog: React.FC<Props> = ({
             communist_shares: localEditingState.communist_shares,
             price: localEditingState.price,
         };
-        // TODO: perform input validation
-        try {
-            validatePosition(newPosition);
-            dispatch(wipPositionUpdated({ groupId, transactionId: position.transactionID, position: newPosition }));
-            setErrors({});
+        const validateRet = PositionValidator.safeParse(newPosition);
+        if (validateRet.success) {
+            dispatch(wipPositionUpdated({ groupId, transactionId, position: newPosition }));
+            setErrors(emptyFormErrors);
             onHideDialog();
-        } catch (err) {
-            if (err instanceof ValidationError) {
-                setErrors(err.data);
-            } else {
-                notify({ text: `Error while saving position: ${(err as Error).toString()}` });
-            }
+        } else {
+            setErrors(validateRet.error.flatten());
         }
     };
 
@@ -193,9 +191,11 @@ export const PositionDialog: React.FC<Props> = ({
                             editable={editing}
                             onChangeText={onChangeName}
                             style={inputStyles}
-                            error={errors.name !== undefined}
+                            error={errors.fieldErrors.name !== undefined}
                         />
-                        {errors.name !== undefined && <HelperText type="error">{errors.name}</HelperText>}
+                        {errors.fieldErrors.name !== undefined && (
+                            <HelperText type="error">{errors.fieldErrors.name}</HelperText>
+                        )}
                         <NumericInput
                             label="Price" // TODO: proper float input
                             value={localEditingState.price}
@@ -204,9 +204,11 @@ export const PositionDialog: React.FC<Props> = ({
                             onChange={onChangePrice}
                             style={inputStyles}
                             right={<TextInput.Affix text={currency_symbol} />}
-                            error={errors.price !== undefined}
+                            error={errors.fieldErrors.price !== undefined}
                         />
-                        {errors.price !== undefined && <HelperText type="error">{errors.price}</HelperText>}
+                        {errors.fieldErrors.price !== undefined && (
+                            <HelperText type="error">{errors.fieldErrors.price}</HelperText>
+                        )}
 
                         <List.Item
                             title="Communist Shares"

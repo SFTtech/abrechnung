@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { TouchableHighlight, View } from "react-native";
-import { Chip, Portal, Text, useTheme } from "react-native-paper";
+import { Portal, Text, useTheme } from "react-native-paper";
 import { TagSelectDialog } from "./TagSelectDialog";
 
 interface Props {
@@ -41,20 +41,7 @@ export const TagSelect: React.FC<Props> = ({ groupId, label, value, onChange, di
                         {label}
                     </Text>
                     <View style={{ display: "flex", flexDirection: "row" }}>
-                        {value.map((tag) => (
-                            <Chip
-                                key={tag}
-                                mode="outlined"
-                                compact={true}
-                                style={{
-                                    marginRight: 4,
-                                    backgroundColor: theme.colors.backdrop,
-                                    borderColor: theme.colors.primary,
-                                }}
-                            >
-                                {tag}
-                            </Chip>
-                        ))}
+                        <Text>{value.join(", ")}</Text>
                     </View>
                 </View>
             </TouchableHighlight>

@@ -9,18 +9,33 @@ import { useInitApi } from "../core/ApiProvider";
 import { RootDrawerScreenProps } from "../navigation/types";
 import { notify } from "../notifications";
 import { selectAuthSlice, useAppSelector } from "../store";
+import { useTranslation } from "react-i18next";
+import { ApiError } from "@abrechnung/api";
 
-const validationSchema = z.object({
-    server: z.string({ required_error: "server is required" }).url({ message: "invalid server url" }),
-    username: z.string({ required_error: "username is required" }),
-    email: z.string({ required_error: "email is required" }).email({ message: "invalid email" }),
-    password: z.string({ required_error: "password is required" }),
-    password2: z.string({ required_error: "repeat the password" }),
-});
+const validationSchema = z
+    .object({
+        server: z.string({ required_error: "server is required" }).url({ message: "invalid server url" }),
+        username: z.string({ required_error: "username is required" }),
+        email: z.string({ required_error: "email is required" }).email({ message: "invalid email" }),
+        password: z.string({ required_error: "password is required" }),
+        password2: z.string({ required_error: "repeat the password" }),
+    })
+    .refine((data) => data.password === data.password2, {
+        message: "Passwords do not match",
+        path: ["password2"],
+    });
 type FormSchema = z.infer<typeof validationSchema>;
-type FormErrors = Partial<Record<keyof FormSchema, string>>;
+
+const initialValues: FormSchema = {
+    server: "https://demo.abrechnung.sft.lol",
+    username: "",
+    email: "",
+    password: "",
+    password2: "",
+};
 
 export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigation }) => {
+    const { t } = useTranslation();
     const theme = useTheme();
     const loggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
     const initApi = useInitApi();
@@ -40,50 +55,33 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                 setSubmitting(false);
                 navigation.navigate("Login");
             })
-            .catch((err) => {
-                notify({ text: `${err.toString()}` });
+            .catch((err: ApiError) => {
+                notify({ text: `${err.body.msg}` });
                 setSubmitting(false);
             });
-    };
-
-    const validate = (values: FormSchema) => {
-        const errors: FormErrors = {};
-        if (values.password !== values.password2) {
-            errors["password2"] = "Passwords do not match";
-        }
-        return errors;
     };
 
     return (
         <>
             <Appbar.Header theme={{ colors: { primary: theme.colors.surface } }}>
-                <Appbar.Content title="Register" />
+                <Appbar.Content title={t("auth.register.title")} />
             </Appbar.Header>
             <Formik
-                validate={validate}
                 validationSchema={toFormikValidationSchema(validationSchema)}
-                validateOnBlur={false}
-                validateOnChange={false}
-                initialValues={{
-                    server: "https://demo.abrechnung.sft.lol",
-                    username: "",
-                    email: "",
-                    password: "",
-                    password2: "",
-                }}
+                initialValues={initialValues}
                 onSubmit={handleSubmit}
             >
                 {({ values, handleBlur, setFieldValue, touched, handleSubmit, isSubmitting, errors }) => (
                     <View style={styles.container}>
                         <TextInput
-                            label="Server"
+                            label={t("common.server")}
                             style={styles.input}
                             returnKeyType="next"
                             autoCapitalize="none"
                             textContentType="URL"
                             keyboardType="url"
                             value={values.server}
-                            onBlur={handleBlur("server")}
+                            onBlur={() => handleBlur("server")}
                             onChangeText={(val) => setFieldValue("server", val)}
                             error={touched.server && !!errors.server}
                         />
@@ -91,13 +89,13 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
 
                         <TextInput
                             autoFocus={true}
-                            label="Username"
+                            label={t("common.username")}
                             style={styles.input}
                             textContentType="username"
                             returnKeyType="next"
                             autoCapitalize="none"
                             error={touched.username && !!errors.username}
-                            onBlur={handleBlur("username")}
+                            onBlur={() => handleBlur("username")}
                             onChangeText={(val) => setFieldValue("username", val)}
                             value={values.username}
                         />
@@ -106,27 +104,27 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                         )}
 
                         <TextInput
-                            label="E-Mail"
+                            label={t("common.email")}
                             style={styles.input}
                             keyboardType="email-address"
                             returnKeyType="next"
                             autoCapitalize="none"
                             error={touched.email && !!errors.email}
-                            onBlur={handleBlur("email")}
+                            onBlur={() => handleBlur("email")}
                             onChangeText={(val) => setFieldValue("email", val)}
                             value={values.email}
                         />
                         {touched.email && !!errors.email && <HelperText type="error">{errors.email}</HelperText>}
 
                         <TextInput
-                            label="Password"
+                            label={t("common.password")}
                             style={styles.input}
                             keyboardType="default"
                             secureTextEntry={true}
                             returnKeyType="next"
                             autoCapitalize="none"
                             error={touched.password && !!errors.password}
-                            onBlur={handleBlur("password")}
+                            onBlur={() => handleBlur("password")}
                             onChangeText={(val) => setFieldValue("password", val)}
                             value={values.password}
                         />
@@ -135,14 +133,14 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                         )}
 
                         <TextInput
-                            label="Repeat Password"
+                            label={t("common.repeatPassword")}
                             style={styles.input}
                             keyboardType="default"
                             secureTextEntry={true}
                             returnKeyType="next"
                             autoCapitalize="none"
                             error={touched.password2 && !!errors.password2}
-                            onBlur={handleBlur("password2")}
+                            onBlur={() => handleBlur("password2")}
                             onChangeText={(val) => setFieldValue("password2", val)}
                             value={values.password2}
                         />
@@ -151,12 +149,12 @@ export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigati
                         )}
 
                         {isSubmitting ? <ProgressBar indeterminate={true} /> : null}
-                        <Button mode="contained" disabled={isSubmitting} onPress={() => handleSubmit}>
-                            Register
+                        <Button mode="contained" disabled={isSubmitting} onPress={() => handleSubmit()}>
+                            {t("auth.register.title")}
                         </Button>
 
                         <View style={styles.row}>
-                            <Text>Already have an account? </Text>
+                            <Text>Already have an account?</Text>
                             <TouchableOpacity onPress={() => navigation.navigate("Login")}>
                                 <Text style={styles.link}>Sign in</Text>
                             </TouchableOpacity>

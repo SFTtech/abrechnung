@@ -1,5 +1,5 @@
 import { selectGroups } from "@abrechnung/redux";
-import { DrawerContentScrollView } from "@react-navigation/drawer";
+import { DrawerContentScrollView, DrawerNavigationProp } from "@react-navigation/drawer";
 import { useNavigation } from "@react-navigation/native";
 import * as React from "react";
 import { ScrollView, ScrollViewProps, StyleSheet, View } from "react-native";
@@ -14,6 +14,7 @@ import {
     useAppDispatch,
     useAppSelector,
 } from "../store";
+import { RootDrawerParamList } from "./types";
 
 type Props = React.ForwardRefExoticComponent<ScrollViewProps & React.RefAttributes<ScrollView>>;
 
@@ -21,9 +22,13 @@ export const DrawerContent: React.FC<Props> = (props) => {
     const theme = useTheme();
     const { api } = useOptionalApi();
     const dispatch = useAppDispatch();
-    const navigation = useNavigation();
+    const navigation = useNavigation<DrawerNavigationProp<RootDrawerParamList>>();
     const activeGroupID = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) }));
     const groups = useAppSelector((state) => selectGroups({ state: selectGroupSlice(state) }));
+
+    if (!api) {
+        return null;
+    }
 
     return (
         <DrawerContentScrollView {...props}>
@@ -42,8 +47,8 @@ export const DrawerContent: React.FC<Props> = (props) => {
                                         .unwrap()
                                         .then(() => {
                                             navigation.navigate("GroupStackNavigator", {
-                                                screen: "TransactionList",
-                                                params: { groupId: group.id },
+                                                screen: "BottomTabNavigator",
+                                                params: { screen: "TransactionList", params: { groupId: group.id } },
                                             });
                                         });
                                 }}
@@ -56,7 +61,7 @@ export const DrawerContent: React.FC<Props> = (props) => {
                         style={styles.addGroupButton}
                         size={32}
                         mode="contained"
-                        onPress={() => navigation.navigate("AddGroup")}
+                        onPress={() => navigation.navigate("GroupStackNavigator", { screen: "AddGroup" })}
                     />
                 </Drawer.Section>
                 <Drawer.Section style={styles.drawerSection}>

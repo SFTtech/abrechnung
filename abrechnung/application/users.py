@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 from typing import Optional
 
-import asyncpg
 from asyncpg.pool import Pool
 from email_validator import EmailNotValidError, validate_email
 from jose import JWTError, jwt
@@ -29,6 +28,20 @@ class LoginFailed(Exception):
 class TokenMetadata(BaseModel):
     user_id: int
     session_id: int
+
+
+async def _check_user_exists(*, conn: Connection, username: str, email: str):
+    user_exists = await conn.fetchrow(
+        "select "
+        "exists(select from usr where username = $1) as username_exists, "
+        "exists(select from usr where email = $2) as email_exists",
+        username,
+        email,
+    )
+    if user_exists["username_exists"]:
+        raise InvalidCommand("A user with this username already exists")
+    if user_exists["email_exists"]:
+        raise InvalidCommand("A user with this email already exists")
 
 
 class UserService(Service):
@@ -97,18 +110,6 @@ class UserService(Service):
             return self._check_password(password, user["hashed_password"])
 
     @with_db_transaction
-    async def is_session_token_valid(self, *, conn: Connection, token: str) -> Optional[tuple[int, int]]:
-        """returns the session id"""
-        row = await conn.fetchrow(
-            "select user_id, id from session where token = $1 and valid_until is null or valid_until > now()",
-            token,
-        )
-        if row:
-            await conn.execute("update session set last_seen = now() where token = $1", token)
-
-        return row
-
-    @with_db_transaction
     async def login_user(
         self, *, conn: Connection, username: str, password: str, session_name: str
     ) -> tuple[int, int, str]:
@@ -154,9 +155,10 @@ class UserService(Service):
 
     @with_db_transaction
     async def demo_register_user(self, *, conn: Connection, username: str, email: str, password: str) -> int:
+        await _check_user_exists(conn=conn, username=username, email=email)
         hashed_password = self._hash_password(password)
         user_id = await conn.fetchval(
-            "insert into usr (username, email, hashed_password, pending) " "values ($1, $2, $3, false) returning id",
+            "insert into usr (username, email, hashed_password, pending) values ($1, $2, $3, false) returning id",
             username,
             email,
             hashed_password,
@@ -166,7 +168,8 @@ class UserService(Service):
 
         return user_id
 
-    def _validate_email_address(self, email: str) -> str:
+    @staticmethod
+    def _validate_email_address(email: str) -> str:
         try:
             valid = validate_email(email)
             email = valid.email
@@ -200,6 +203,8 @@ class UserService(Service):
         if not self.enable_registration:
             raise PermissionError(f"User registrations are disabled on this server")
 
+        await _check_user_exists(conn=conn, username=username, email=email)
+
         email = self._validate_email_address(email)
 
         is_guest_user = False
@@ -207,7 +212,7 @@ class UserService(Service):
 
         if invite_token is not None and self.allow_guest_users and not has_valid_email:
             invite = await conn.fetchval(
-                "select id " "from group_invite where token = $1 and valid_until > now()",
+                "select id from group_invite where token = $1 and valid_until > now()",
                 invite_token,
             )
             if invite is None:

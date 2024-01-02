@@ -68,6 +68,8 @@ export const PositionValidator = z
         { message: "a position must either be shared or assigned to an account" }
     );
 
+export type PositionValidationErrors = z.inferFlattenedErrors<typeof PositionValidator>;
+
 export interface TransactionAccountBalance {
     total: number;
     positions: number;

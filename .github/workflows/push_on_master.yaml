@@ -184,7 +184,7 @@ jobs:
         with:
           files: |
             debs/*.deb
-            frontend/apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+            frontend/apps/mobile/android/app/build/outputs/apk/release/app-release.apk
           # if it's not already published, keep the release as a draft.
           draft: true
           # mark it as a prerelease if the tag contains 'rc'.

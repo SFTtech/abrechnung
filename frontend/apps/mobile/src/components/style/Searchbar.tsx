@@ -12,9 +12,7 @@ import {
     View,
     ViewStyle,
 } from "react-native";
-
 import color from "color";
-
 import { ActivityIndicator, IconButton, Surface, useTheme } from "react-native-paper";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 
@@ -222,8 +220,8 @@ const Searchbar = React.forwardRef<TextInputHandles, Props>(
                                 rest.clearButtonMode === "always"
                                     ? iconColor
                                     : value
-                                    ? iconColor
-                                    : "rgba(255, 255, 255, 0)"
+                                      ? iconColor
+                                      : "rgba(255, 255, 255, 0)"
                             }
                             rippleColor={rippleColor}
                             onPress={handleClearPress}

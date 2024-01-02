@@ -6,8 +6,8 @@ i18n.use(initReactI18next).init({
     ns: [defaultNS],
     resources,
     defaultNS,
-    lng: "en",
-    fallbackLng: "en",
+    lng: "en-US",
+    fallbackLng: "en-US",
     debug: true,
     interpolation: { escapeValue: false },
 });

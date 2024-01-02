@@ -4,13 +4,15 @@ import React from "react";
 import { List } from "react-native-paper";
 import { useApi } from "../core/ApiProvider";
 import { changeActiveGroup, selectGroupSlice, useAppDispatch, useAppSelector } from "../store";
+import { RootDrawerParamList } from "../navigation/types";
+import { DrawerNavigationProp } from "@react-navigation/drawer";
 
 interface Props {
     groupId: number;
 }
 
 export const GroupListItem: React.FC<Props> = ({ groupId }) => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<DrawerNavigationProp<RootDrawerParamList>>();
     const dispatch = useAppDispatch();
     const { api } = useApi();
     const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
@@ -29,8 +31,11 @@ export const GroupListItem: React.FC<Props> = ({ groupId }) => {
                     .unwrap()
                     .then(() => {
                         navigation.navigate("GroupStackNavigator", {
-                            screen: "TransactionList",
-                            params: { groupId },
+                            screen: "BottomTabNavigator",
+                            params: {
+                                screen: "TransactionList",
+                                params: { groupId },
+                            },
                         });
                     });
             }}

@@ -4,9 +4,11 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { persistStore } from "redux-persist";
 import { settingsReducer } from "./settingsSlice";
 import { uiReducer } from "./uiSlice";
-import FilesystemStorage from "redux-persist-filesystem-storage";
+// import FilesystemStorage from "redux-persist-filesystem-storage";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const rootReducer = getAbrechnungReducer(FilesystemStorage, { settings: settingsReducer, ui: uiReducer });
+// const rootReducer = getAbrechnungReducer(FilesystemStorage, { settings: settingsReducer, ui: uiReducer });
+const rootReducer = getAbrechnungReducer(AsyncStorage, { settings: settingsReducer, ui: uiReducer });
 
 export const store = configureStore({
     reducer: rootReducer,

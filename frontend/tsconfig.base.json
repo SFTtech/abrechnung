@@ -22,7 +22,7 @@
             "@abrechnung/types": ["libs/types/src/index.ts"],
             "@abrechnung/utils": ["libs/utils/src/index.ts"]
         },
-        "strict": false
+        "strict": true
     },
     "exclude": ["node_modules", "tmp"]
 }

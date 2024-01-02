@@ -133,6 +133,7 @@ export const TransactionList: React.FC<Props> = ({ navigation }) => {
     };
 
     if (transactionStatus === "loading") {
+        console.log("loading in transaction list");
         return (
             <View style={styles.container}>
                 <LoadingIndicator />

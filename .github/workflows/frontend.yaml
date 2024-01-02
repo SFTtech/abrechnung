@@ -108,20 +108,28 @@ jobs:
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v2
 
+      - name: Write gradle.properties to include signing key configuration for android release build
+        if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/heads/master')}}
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          KEYSTORE_ALIAS: ${{ secrets.ANDROID_KEY_STORE_ALIAS }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          echo "${KEYSTORE}" | base64 --decode > abrechnung-app-upload.keystore
+          ls -lah .
+          mkdir -p ~/.gradle
+          echo "ABRECHNUNG_UPLOAD_STORE_FILE=$(pwd)/abrechnung-app-upload.keystore" >> ~/.gradle/gradle.properties
+          echo "ABRECHNUNG_UPLOAD_KEY_ALIAS=${KEYSTORE_ALIAS}" >> ~/.gradle/gradle.properties
+          echo "ABRECHNUNG_UPLOAD_STORE_PASSWORD=${KEYSTORE_PASSWORD}" >> ~/.gradle/gradle.properties
+          echo "ABRECHNUNG_UPLOAD_KEY_PASSWORD=${KEY_PASSWORD}" >> ~/.gradle/gradle.properties
+          cat ~/.gradle/gradle.properties
+
       - name: Build App APK
         run: npx nx build-android mobile --tasks assembleRelease
 
-#      - name: Sign App APK
-#        id: sign_app_apk
-#        uses: r0adkll/sign-android-release@v1
-#        with:
-#          releaseDirectory: frontend/apps/mobile/android/app/build/outputs/apk/release
-#          signingKeyBase64: ${{ secrets.ANDROID_SIGNING_KEY }}
-#          alias: ${{ secrets.ANDROID_KEY_STORE_ALIAS }}
-#          keyStorePassword: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
-
-#      - name: Upload APK
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: app-release-apk
-#          path: ${{steps.sign_app_apk.outputs.signedReleaseFile}}
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-release-apk
+          path: frontend/apps/mobile/android/app/build/outputs/apk/release/app-release.apk

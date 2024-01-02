@@ -7,12 +7,13 @@ import PositionDialog from "./PositionDialog";
 
 interface Props {
     groupId: number;
+    transactionId: number;
     currency_symbol: string;
     position: TransactionPosition;
     editing: boolean;
 }
 
-export const PositionListItem: React.FC<Props> = ({ groupId, currency_symbol, position, editing }) => {
+export const PositionListItem: React.FC<Props> = ({ groupId, transactionId, currency_symbol, position, editing }) => {
     const theme = useTheme();
     const dispatch = useAppDispatch();
     const [showPositionDialog, setShowPositionDialog] = useState(false);
@@ -26,11 +27,11 @@ export const PositionListItem: React.FC<Props> = ({ groupId, currency_symbol, po
     const closeMenu = () => setShowMenu(false);
 
     const onDeletePosition = () => {
-        dispatch(positionDeleted({ groupId, transactionId: position.transactionID, positionId: position.id }));
+        dispatch(positionDeleted({ groupId, transactionId, positionId: position.id }));
     };
 
     const onCopyPosition = () => {
-        dispatch(wipPositionAdded({ groupId, transactionId: position.transactionID, position }));
+        dispatch(wipPositionAdded({ groupId, transactionId, position }));
     };
 
     return (
@@ -64,6 +65,7 @@ export const PositionListItem: React.FC<Props> = ({ groupId, currency_symbol, po
             <Portal>
                 <PositionDialog
                     groupId={groupId}
+                    transactionId={transactionId}
                     position={position}
                     editing={editing}
                     showDialog={showPositionDialog}
@@ -74,5 +76,3 @@ export const PositionListItem: React.FC<Props> = ({ groupId, currency_symbol, po
         </>
     );
 };
-
-export default PositionListItem;

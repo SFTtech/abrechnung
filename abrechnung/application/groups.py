@@ -155,6 +155,14 @@ class GroupService(Service):
         if not group:
             raise PermissionError(f"Invalid invite token")
 
+        user_is_already_member = await conn.fetchval(
+            "select exists (select user_id from group_membership where user_id = $1 and group_id = $2)",
+            user.id,
+            invite["group_id"],
+        )
+        if user_is_already_member:
+            raise InvalidCommand(f"User is already a member of this group")
+
         await conn.execute(
             "insert into group_membership (user_id, group_id, invited_by, can_write, is_owner) "
             "values ($1, $2, $3, $4, false)",

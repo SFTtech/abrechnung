@@ -17,11 +17,13 @@ export const GroupList: React.FC<RootDrawerScreenProps<"GroupList">> = ({ naviga
     const { api } = useApi();
 
     const onRefresh = () => {
-        console.debug("refreshing groups");
         setRefreshing(true);
         dispatch(fetchGroups({ api })).then(() => setRefreshing(false));
     };
-    console.log("rendering group list");
+
+    if (groupStatus === "loading") {
+        console.log("group status loading");
+    }
 
     return (
         <>
@@ -34,15 +36,13 @@ export const GroupList: React.FC<RootDrawerScreenProps<"GroupList">> = ({ naviga
                 ) : (
                     groupIds.map((groupId) => <GroupListItem key={groupId} groupId={groupId} />)
                 )}
-                {/* <Portal> */}
-                {/* </Portal> */}
             </ScrollView>
             <View>
                 <FAB
                     style={styles.fab}
                     icon="add"
                     onPress={() => {
-                        navigation.navigate("AddGroup");
+                        navigation.navigate("GroupStackNavigator", { screen: "AddGroup" });
                     }}
                 />
             </View>

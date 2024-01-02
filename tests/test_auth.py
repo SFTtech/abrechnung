@@ -64,6 +64,6 @@ class TransactionLogicTest(BaseTestCase):
         with self.assertRaises(PermissionError):
             await user_service.register_user(
                 username="invalid user",
-                email="foobar@something.com",
+                email="invalid-something@something.com",
                 password="asdf1234",
             )
