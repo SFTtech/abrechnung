@@ -22,8 +22,8 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Optional, Sequence
 
 DISTS = (
-    "debian:bullseye",
     "debian:bookworm",
+    "debian:trixie",
     "ubuntu:jammy",  # 22.04
 )
 
