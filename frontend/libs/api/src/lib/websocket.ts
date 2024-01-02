@@ -55,6 +55,7 @@ type SubscriptionCallback = (payload: NotificationPayload) => void;
 
 const parseNotificationPayload = (
     subscriptionType: SubscriptionType,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     payload: any
 ): NotificationPayload | undefined => {
     switch (subscriptionType) {

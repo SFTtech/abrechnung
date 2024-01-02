@@ -22,10 +22,9 @@ import {
     useMediaQuery,
     useTheme,
 } from "@mui/material";
-import memoize from "proxy-memoize";
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { RootState, selectAccountSlice, useAppSelector } from "../store";
+import { selectAccountSlice, useAppSelector } from "../store";
 import { getAccountLink } from "../utils";
 import { NumericInput } from "./NumericInput";
 import { getAccountIcon } from "./style/AbrechnungIcons";

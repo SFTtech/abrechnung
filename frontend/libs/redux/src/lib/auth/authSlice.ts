@@ -79,6 +79,7 @@ export const logout = createAsyncThunk<void, { api: Api }>("logout", async ({ ap
     api.resetAuthState();
     dispatch({
         type: PURGE,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         result: (purgeResult: any) => {
             console.log("successfully purged state", purgeResult);
             return;

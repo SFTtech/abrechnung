@@ -4,7 +4,7 @@ import memoize from "proxy-memoize";
 import * as React from "react";
 import { useState } from "react";
 import { ScrollView } from "react-native";
-import { Button, Checkbox, Dialog, List, Text, Searchbar } from "react-native-paper";
+import { Button, Checkbox, Dialog, List, Searchbar } from "react-native-paper";
 import { getAccountIcon } from "../../constants/Icons";
 import { RootState, selectAccountSlice, useAppSelector } from "../../store";
 import { KeyboardAvoidingDialog } from "../style/KeyboardAvoidingDialog";

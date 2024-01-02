@@ -15,7 +15,6 @@ import { ScrollView, StyleSheet, View } from "react-native";
 import {
     ActivityIndicator,
     Button,
-    Chip,
     Dialog,
     Divider,
     IconButton,

@@ -13,7 +13,7 @@ export const urlValidator = (url: string) => {
     if (!url || url.length <= 0) return "URL cannot be empty.";
 
     try {
-        const tmp = new URL(url);
+        new URL(url);
     } catch (_) {
         return "Invalid URL";
     }

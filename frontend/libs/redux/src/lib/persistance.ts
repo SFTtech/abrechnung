@@ -22,18 +22,22 @@ export const getAbrechnungReducer = <S, A extends Action = AnyAction>(
 ) => {
     return combineReducers({
         accounts: persistReducer(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             getPersistConfig("accounts", accountSliceVersion, persistStorage, accountMigrations as any),
             accountReducer
         ),
         groups: persistReducer(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             getPersistConfig("groups", groupSliceVersion, persistStorage, groupMigrations as any),
             groupReducer
         ),
         transactions: persistReducer(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             getPersistConfig("transactions", transactionSliceVersion, persistStorage, transactionMigrations as any),
             transactionReducer
         ),
         auth: persistReducer(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             getPersistConfig("auth", authSliceVersion, persistStorage, authMigrations as any),
             authReducer
         ),
