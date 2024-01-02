@@ -79,7 +79,7 @@ jobs:
 
     - name: Build Frontend
       working-directory: frontend
-      run: npx build web
+      run: npx nx build web
 
     - name: Build Frontend Image
       id: build-frontend-image
