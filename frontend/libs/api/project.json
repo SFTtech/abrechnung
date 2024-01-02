@@ -33,17 +33,13 @@
         },
         "lint": {
             "executor": "@nx/eslint:lint",
-            "outputs": ["{options.outputFile}"],
-            "options": {
-                "lintFilePatterns": ["libs/api/**/*.ts"]
-            }
+            "outputs": ["{options.outputFile}"]
         },
         "test": {
             "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/libs/api"],
             "options": {
-                "jestConfig": "libs/api/jest.config.ts",
-                "passWithNoTests": true
+                "jestConfig": "libs/api/jest.config.ts"
             }
         }
     },

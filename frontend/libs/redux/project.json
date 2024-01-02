@@ -27,17 +27,13 @@
         },
         "lint": {
             "executor": "@nx/eslint:lint",
-            "outputs": ["{options.outputFile}"],
-            "options": {
-                "lintFilePatterns": ["libs/redux/**/*.{ts,tsx,js,jsx}"]
-            }
+            "outputs": ["{options.outputFile}"]
         },
         "test": {
             "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/libs/redux"],
             "options": {
-                "jestConfig": "libs/redux/jest.config.ts",
-                "passWithNoTests": true
+                "jestConfig": "libs/redux/jest.config.ts"
             }
         }
     }

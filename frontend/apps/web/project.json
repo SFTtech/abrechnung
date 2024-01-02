@@ -74,18 +74,14 @@
         "lint": {
             "executor": "@nx/eslint:lint",
             "outputs": ["{options.outputFile}"],
-            "dependsOn": ["collect-assets"],
-            "options": {
-                "lintFilePatterns": ["apps/web/**/*.{ts,tsx,js,jsx}"]
-            }
+            "dependsOn": ["collect-assets"]
         },
         "test": {
             "executor": "@nx/jest:jest",
             "outputs": ["{workspaceRoot}/coverage/apps/web"],
             "dependsOn": ["collect-assets"],
             "options": {
-                "jestConfig": "apps/web/jest.config.ts",
-                "passWithNoTests": true
+                "jestConfig": "apps/web/jest.config.ts"
             }
         }
     },
