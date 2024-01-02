@@ -48,6 +48,14 @@ jobs:
     - get-distros
     steps:
     - uses: actions/checkout@master
+    - name: Set up Nodejs
+      uses: actions/setup-node@v2
+      with:
+        node-version: "18"
+        cache: "npm"
+        cache-dependency-path: frontend/package-lock.json
+    - name: Install dependencies
+      run: npm ci
 
     - name: Build API Image
       id: build-api-image
@@ -67,6 +75,10 @@ jobs:
         registry: quay.io/abrechnung
         username: ${{ secrets.DOCKERHUB_REGISTRY_USER }}
         password: ${{ secrets.DOCKERHUB_REGISTRY_PASSWORD }}
+
+    - name: Build Frontend
+      working-directory: frontend
+      run: npx build web
 
     - name: Build Frontend Image
       id: build-frontend-image
