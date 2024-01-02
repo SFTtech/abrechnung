@@ -17,14 +17,14 @@ type FormSchema = z.infer<typeof validationSchema>;
 
 export const ChangeEmail: React.FC = () => {
     const { t } = useTranslation();
-    useTitle(t("Abrechnung - Change E-Mail"));
+    useTitle(t("profile.changeEmail.tabTitle"));
 
     const handleSubmit = (values: FormSchema, { setSubmitting, resetForm }: FormikHelpers<FormSchema>) => {
         api.client.auth
             .changeEmail({ requestBody: { password: values.password, email: values.newEmail } })
             .then(() => {
                 setSubmitting(false);
-                toast.success(t("Requested email change, you should receive an email with a confirmation link soon"));
+                toast.success(t("profile.changeEmail.success"));
                 resetForm();
             })
             .catch((error) => {
@@ -36,7 +36,7 @@ export const ChangeEmail: React.FC = () => {
     return (
         <MobilePaper>
             <Typography component="h3" variant="h5">
-                {t("Change E-Mail")}
+                {t("profile.changeEmail.pageTitle")}
             </Typography>
             <Formik
                 validationSchema={toFormikValidationSchema(validationSchema)}
@@ -55,7 +55,7 @@ export const ChangeEmail: React.FC = () => {
                             value={values.password}
                             onChange={handleChange}
                             onBlur={handleBlur}
-                            label={t("Password")}
+                            label={t("common.password")}
                             error={touched.password && !!errors.password}
                             helperText={touched.password && errors.password}
                         />
@@ -69,14 +69,14 @@ export const ChangeEmail: React.FC = () => {
                             value={values.newEmail}
                             onChange={handleChange}
                             onBlur={handleBlur}
-                            label={t("New E-Mail")}
+                            label={t("profile.changeEmail.newEmail")}
                             error={touched.newEmail && !!errors.newEmail}
                             helperText={touched.newEmail && errors.newEmail}
                         />
 
                         {isSubmitting && <LinearProgress />}
                         <Button type="submit" color="primary" disabled={isSubmitting}>
-                            {t("Save")}
+                            {t("common.save")}
                         </Button>
                     </Form>
                 )}

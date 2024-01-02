@@ -45,6 +45,7 @@ import { useTheme } from "@mui/material/styles";
 import { Banner } from "../../components/style/Banner";
 import Loading from "../../components/style/Loading";
 import styles from "./AuthenticatedLayout.module.css";
+import { LanguageSelect } from "@/components/LanguageSelect";
 
 const drawerWidth = 240;
 const AUTH_FALLBACK = "/login";
@@ -216,6 +217,7 @@ export const AuthenticatedLayout: React.FC = () => {
                         </RouterLink>
                     </Typography>
                     <div>
+                        <LanguageSelect />
                         <IconButton
                             aria-label="account of current user"
                             aria-controls="menu-appbar"

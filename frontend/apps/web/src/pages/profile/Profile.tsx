@@ -5,37 +5,34 @@ import { selectAuthSlice, useAppSelector } from "@/store";
 import { selectProfile } from "@abrechnung/redux";
 import { Alert, List, ListItem, ListItemText, Typography } from "@mui/material";
 import { DateTime } from "luxon";
-import React from "react";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
 
 export const Profile: React.FC = () => {
+    const { t } = useTranslation();
     const profile = useAppSelector((state) => selectProfile({ state: selectAuthSlice(state) }));
-    useTitle("Abrechnung - Profile");
+    useTitle(t("profile.index.tabTitle"));
 
     return (
         <MobilePaper>
             <Typography component="h3" variant="h5">
-                Profile
+                {t("profile.index.pageTitle")}
             </Typography>
             {profile === undefined ? (
                 <Loading />
             ) : (
                 <>
-                    {profile.is_guest_user && (
-                        <Alert severity="info">
-                            You are a guest user on this Abrechnung and therefore not permitted to create new groups or
-                            group invites.
-                        </Alert>
-                    )}
+                    {profile.is_guest_user && <Alert severity="info">{t("profile.index.guestUserDisclaimer")}</Alert>}
                     <List>
                         <ListItem>
-                            <ListItemText primary="Username" secondary={profile.username} />
+                            <ListItemText primary={t("common.username")} secondary={profile.username} />
                         </ListItem>
                         <ListItem>
-                            <ListItemText primary="E-Mail" secondary={profile.email} />
+                            <ListItemText primary={t("common.email")} secondary={profile.email} />
                         </ListItem>
                         <ListItem>
                             <ListItemText
-                                primary="Registered"
+                                primary={t("profile.index.registered")}
                                 secondary={DateTime.fromISO(profile.registered_at).toLocaleString(
                                     DateTime.DATETIME_FULL
                                 )}
@@ -47,5 +44,3 @@ export const Profile: React.FC = () => {
         </MobilePaper>
     );
 };
-
-export default Profile;

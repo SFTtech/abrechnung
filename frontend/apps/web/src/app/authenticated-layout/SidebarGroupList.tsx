@@ -1,16 +1,18 @@
-import { Grid, IconButton, List, ListItem, ListItemText } from "@mui/material";
-import ListItemLink from "../../components/style/ListItemLink";
-import GroupCreateModal from "../../components/groups/GroupCreateModal";
-import React, { useState } from "react";
-import { Add } from "@mui/icons-material";
+import GroupCreateModal from "@/components/groups/GroupCreateModal";
+import ListItemLink from "@/components/style/ListItemLink";
+import { selectAuthSlice, selectGroupSlice, useAppSelector } from "@/store";
 import { selectGroups, selectIsGuestUser } from "@abrechnung/redux";
-import { selectGroupSlice, useAppSelector, selectAuthSlice } from "../../store";
+import { Add } from "@mui/icons-material";
+import { Grid, IconButton, List, ListItem, ListItemText, Tooltip } from "@mui/material";
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     activeGroupId?: number;
 }
 
 export const SidebarGroupList: React.FC<Props> = ({ activeGroupId }) => {
+    const { t } = useTranslation();
     const isGuest = useAppSelector((state) => selectIsGuestUser({ state: selectAuthSlice(state) }));
     const groups = useAppSelector((state) => selectGroups({ state: selectGroupSlice(state) }));
     const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
@@ -45,9 +47,11 @@ export const SidebarGroupList: React.FC<Props> = ({ activeGroupId }) => {
                 {!isGuest && (
                     <ListItem sx={{ padding: 0 }}>
                         <Grid container justifyContent="center">
-                            <IconButton size="small" onClick={openGroupCreateModal}>
-                                <Add />
-                            </IconButton>
+                            <Tooltip title={t("groups.addGroup")}>
+                                <IconButton size="small" onClick={openGroupCreateModal}>
+                                    <Add />
+                                </IconButton>
+                            </Tooltip>
                         </Grid>
                     </ListItem>
                 )}
