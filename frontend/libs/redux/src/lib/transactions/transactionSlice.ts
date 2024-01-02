@@ -18,7 +18,7 @@ import { toISODateString } from "@abrechnung/utils";
 import { createAsyncThunk, createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
 import memoize from "proxy-memoize";
 import { leaveGroup } from "../groups";
-import { IRootState, ITransactionRootState, StateStatus, TransactionSliceState, TransactionState } from "../types";
+import { IRootState, StateStatus, TransactionSliceState, TransactionState } from "../types";
 import { addEntity, getGroupScopedState, removeEntity } from "../utils";
 
 export const initializeGroupState = (state: Draft<TransactionSliceState>, groupId: number) => {

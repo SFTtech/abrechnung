@@ -9,9 +9,9 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Nodejs
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "npm"
@@ -27,9 +27,9 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Nodejs
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "npm"
@@ -45,9 +45,9 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Nodejs
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "npm"
@@ -63,9 +63,9 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Set up Nodejs
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "npm"
@@ -81,10 +81,9 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v3
-
+      - uses: actions/checkout@v4
       - name: Set up Nodejs
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v4
         with:
           node-version: "18"
           cache: "npm"
@@ -109,7 +108,6 @@ jobs:
         uses: gradle/gradle-build-action@v2
 
       - name: Write gradle.properties to include signing key configuration for android release build
-        if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/heads/master')}}
         env:
           KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_B64 }}
           KEYSTORE_ALIAS: ${{ secrets.ANDROID_KEY_STORE_ALIAS }}
@@ -129,7 +127,7 @@ jobs:
         run: npx nx build-android mobile --tasks assembleRelease
 
       - name: Upload APK
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
           path: frontend/apps/mobile/android/app/build/outputs/apk/release/app-release.apk
