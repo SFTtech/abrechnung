@@ -116,10 +116,7 @@ const RootNavigator: React.FC = () => {
                         options={{ ...propsWithHeader, headerTitle: "Groups" }}
                         component={GroupList}
                     />
-                    <Drawer.Screen
-                        name="GroupStackNavigator"
-                        component={activeGroupId === undefined ? SplashScreen : GroupStackNavigator}
-                    />
+                    <Drawer.Screen name="GroupStackNavigator" component={GroupStackNavigator} />
                     <Drawer.Screen
                         name="Home"
                         options={{ ...propsWithHeader, headerTitle: "Home" }}

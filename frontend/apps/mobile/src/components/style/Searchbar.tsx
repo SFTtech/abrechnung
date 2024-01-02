@@ -12,9 +12,7 @@ import {
     View,
     ViewStyle,
 } from "react-native";
-
 import color from "color";
-
 import { ActivityIndicator, IconButton, Surface, useTheme } from "react-native-paper";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 

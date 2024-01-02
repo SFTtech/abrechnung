@@ -2,9 +2,9 @@ import { selectSortedAccounts } from "@abrechnung/redux";
 import { TransactionShare } from "@abrechnung/types";
 import memoize from "proxy-memoize";
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ScrollView } from "react-native";
-import { Button, Checkbox, Dialog, List, Searchbar } from "react-native-paper";
+import { Button, Checkbox, Dialog, List, Text, Searchbar } from "react-native-paper";
 import { getAccountIcon } from "../../constants/Icons";
 import { RootState, selectAccountSlice, useAppSelector } from "../../store";
 import { KeyboardAvoidingDialog } from "../style/KeyboardAvoidingDialog";
@@ -12,7 +12,7 @@ import { KeyboardAvoidingDialog } from "../style/KeyboardAvoidingDialog";
 interface Props {
     groupId: number;
     value: TransactionShare;
-    onChange: (share: TransactionShare) => void;
+    onChange?: (share: TransactionShare) => void;
     showDialog: boolean;
     onHideDialog: () => void;
     title: string;
@@ -30,11 +30,9 @@ export const TransactionShareDialog: React.FC<Props> = ({
     onHideDialog,
     title,
     disabled = false,
-    enableAdvanced = false,
     multiSelect = true,
     excludedAccounts = [],
 }) => {
-    const [shares, setShares] = useState<TransactionShare>({});
     const [searchTerm, setSearchTerm] = useState("");
     const selector = React.useCallback(
         memoize((state: RootState) => {
@@ -45,39 +43,33 @@ export const TransactionShareDialog: React.FC<Props> = ({
                 searchTerm,
             });
             if (disabled) {
-                return sorted.filter((acc) => (shares[acc.id] ?? 0) > 0 && !excludedAccounts.includes(acc.id));
+                return sorted.filter((acc) => (value[acc.id] ?? 0) > 0 && !excludedAccounts.includes(acc.id));
             }
             return sorted.filter((acc) => !excludedAccounts.includes(acc.id));
         }),
-        [groupId, searchTerm, disabled, shares, excludedAccounts]
+        [groupId, searchTerm, disabled, value, excludedAccounts]
     );
     const accounts = useAppSelector(selector);
 
     const toggleShare = (account_id: number) => {
-        const currVal = shares[account_id] !== undefined ? shares[account_id] : 0;
+        if (!onChange) {
+            return;
+        }
+        const currVal = value[account_id] !== undefined ? value[account_id] : 0;
         if (multiSelect) {
-            setShares((shares) => {
-                const newShares = { ...shares };
-                if (currVal > 0) {
-                    delete newShares[account_id];
-                } else {
-                    newShares[account_id] = 1;
-                }
-                return newShares;
-            });
+            const newShares = { ...value };
+            if (currVal > 0) {
+                delete newShares[account_id];
+            } else {
+                newShares[account_id] = 1;
+            }
+            onChange(newShares);
         } else {
-            setShares(currVal > 0 ? {} : { [account_id]: 1 });
+            onChange(currVal > 0 ? {} : { [account_id]: 1 });
         }
     };
 
-    useEffect(() => {
-        setShares(value);
-    }, [value, setShares]);
-
     const finishDialog = () => {
-        if (!disabled) {
-            onChange(shares);
-        }
         onHideDialog();
     };
 
@@ -99,10 +91,10 @@ export const TransactionShareDialog: React.FC<Props> = ({
                             title={account.name}
                             onPress={() => !disabled && toggleShare(account.id)}
                             left={(props) => <List.Icon {...props} icon={getAccountIcon(account.type)} />}
-                            right={(props) => (
+                            right={() => (
                                 <Checkbox.Android
                                     status={
-                                        shares[account.id] !== undefined && shares[account.id] > 0
+                                        value[account.id] !== undefined && value[account.id] > 0
                                             ? "checked"
                                             : "unchecked"
                                     }
@@ -120,5 +112,3 @@ export const TransactionShareDialog: React.FC<Props> = ({
         </KeyboardAvoidingDialog>
     );
 };
-
-export default TransactionShareDialog;

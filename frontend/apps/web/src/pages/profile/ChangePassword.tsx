@@ -93,7 +93,7 @@ export const ChangePassword: React.FC = () => {
                             margin="normal"
                             type="password"
                             name="newPassword2"
-                            label={t("profile.changePassword.repeatPassword")}
+                            label={t("common.repeatPassword")}
                             error={touched.newPassword2 && !!errors.newPassword2}
                             helperText={touched.newPassword2 && errors.newPassword2}
                         />

@@ -1,6 +1,6 @@
 import React from "react";
 import { Portal, Text, useTheme } from "react-native-paper";
-import TransactionShareDialog from "./TransactionShareDialog";
+import { TransactionShareDialog } from "./TransactionShareDialog";
 import { useEffect, useState } from "react";
 import { TouchableHighlight, View } from "react-native";
 import { TransactionShare } from "@abrechnung/types";
@@ -13,7 +13,7 @@ interface Props {
     multiSelect: boolean;
     enableAdvanced: boolean;
     value: TransactionShare;
-    onChange: (newValue: TransactionShare) => void;
+    onChange?: (newValue: TransactionShare) => void;
     disabled: boolean;
     error?: boolean | undefined;
     excludedAccounts?: number[];
@@ -58,8 +58,8 @@ export const TransactionShareInput: React.FC<Props> = ({
                         borderBottomColor: error
                             ? theme.colors.error
                             : showDialog
-                            ? theme.colors.primary
-                            : theme.colors.secondary,
+                              ? theme.colors.primary
+                              : theme.colors.secondary,
                         borderBottomWidth: showDialog ? 2 : 0.5,
                         marginBottom: showDialog ? 2.5 : 4,
                         padding: 10,

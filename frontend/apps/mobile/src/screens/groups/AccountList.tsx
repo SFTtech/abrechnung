@@ -16,7 +16,7 @@ import { useLayoutEffect, useState } from "react";
 import { FlatList, StyleSheet, View } from "react-native";
 import { Appbar, FAB, List, Menu, Portal, RadioButton, Text, useTheme } from "react-native-paper";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
-import LoadingIndicator from "../../components/LoadingIndicator";
+import { LoadingIndicator } from "../../components";
 import Searchbar from "../../components/style/Searchbar";
 import { getAccountIcon } from "../../constants/Icons";
 import { useApi } from "../../core/ApiProvider";

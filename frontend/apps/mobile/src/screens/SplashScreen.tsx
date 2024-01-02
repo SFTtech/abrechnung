@@ -1,11 +1,12 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
-import { ActivityIndicator } from "react-native-paper";
+import { ActivityIndicator, Text } from "react-native-paper";
 
 export const SplashScreen: React.FC = () => {
     return (
         <View style={styles.container}>
             <ActivityIndicator animating={true} />
+            <Text>Splash screen</Text>
         </View>
     );
 };

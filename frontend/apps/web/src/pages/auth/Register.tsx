@@ -23,12 +23,17 @@ import { useQuery, useTitle } from "@/core/utils";
 import { selectAuthSlice, useAppSelector } from "@/store";
 import { toFormikValidationSchema } from "@abrechnung/utils";
 
-const validationSchema = z.object({
-    username: z.string({ required_error: "username is required" }),
-    email: z.string({ required_error: "email is required" }),
-    password: z.string({ required_error: "password is required" }),
-    password2: z.string(),
-});
+const validationSchema = z
+    .object({
+        username: z.string({ required_error: "username is required" }),
+        email: z.string({ required_error: "email is required" }),
+        password: z.string({ required_error: "password is required" }),
+        password2: z.string(),
+    })
+    .refine((data) => data.password === data.password2, {
+        message: "Passwords do not match",
+        path: ["password2"],
+    });
 
 type FormValues = z.infer<typeof validationSchema>;
 
@@ -89,13 +94,6 @@ export const Register: React.FC = () => {
             });
     };
 
-    const validate = (values: FormValues) => {
-        const errors = {};
-        if (values.password !== values.password2) {
-            errors["password2"] = "Passwords do not match";
-        }
-        return errors;
-    };
     if (loading) {
         return <Loading />;
     }
@@ -117,7 +115,6 @@ export const Register: React.FC = () => {
                     Register a new account
                 </Typography>
                 <Formik
-                    validate={validate}
                     validationSchema={toFormikValidationSchema(validationSchema)}
                     initialValues={{
                         username: "",

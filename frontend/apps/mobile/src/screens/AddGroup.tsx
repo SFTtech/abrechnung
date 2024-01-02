@@ -30,7 +30,7 @@ export const AddGroup: React.FC<GroupStackScreenProps<"AddGroup">> = ({ navigati
                 .unwrap()
                 .then(() => {
                     setSubmitting(false);
-                    navigation.pop(1);
+                    navigation.goBack();
                 })
                 .catch(() => {
                     setSubmitting(false);
@@ -40,7 +40,7 @@ export const AddGroup: React.FC<GroupStackScreenProps<"AddGroup">> = ({ navigati
 
     const cancel = React.useCallback(() => {
         formik.resetForm();
-        navigation.pop(1);
+        navigation.goBack();
     }, [formik, navigation]);
 
     React.useLayoutEffect(() => {
@@ -52,7 +52,7 @@ export const AddGroup: React.FC<GroupStackScreenProps<"AddGroup">> = ({ navigati
                         <Button onPress={cancel} textColor={theme.colors.error}>
                             Cancel
                         </Button>
-                        <Button onPress={() => formik.handleSubmit}>Save</Button>
+                        <Button onPress={() => formik.handleSubmit()}>Save</Button>
                     </>
                 );
             },

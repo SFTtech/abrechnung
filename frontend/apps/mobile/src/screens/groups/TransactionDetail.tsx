@@ -4,8 +4,8 @@ import {
     saveTransaction,
     selectCurrentUserPermissions,
     selectTransactionById,
+    selectTransactionHasPositions,
     selectWipTransactionPositions,
-    wipPositionAdded,
     wipTransactionUpdated,
 } from "@abrechnung/redux";
 import { TransactionPosition, TransactionValidator } from "@abrechnung/types";
@@ -16,7 +16,6 @@ import * as React from "react";
 import { useEffect, useLayoutEffect } from "react";
 import { BackHandler, ScrollView, StyleSheet, View } from "react-native";
 import {
-    ActivityIndicator,
     Button,
     Chip,
     Dialog,
@@ -31,15 +30,14 @@ import {
     TextInput,
     useTheme,
 } from "react-native-paper";
-import DateTimeInput from "../../components/DateTimeInput";
-import { NumericInput } from "../../components/NumericInput";
-import PositionListItem from "../../components/PositionListItem";
-import { TagSelect } from "../../components/tag-select";
-import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
+import { DateTimeInput, LoadingIndicator, NumericInput, TagSelect } from "../../components";
+import { PositionListItem } from "../../components/PositionListItem";
+import { TransactionShareInput } from "../../components/transaction-shares/TransactionShareInput";
 import { useApi } from "../../core/ApiProvider";
 import { GroupStackScreenProps } from "../../navigation/types";
 import { notify } from "../../notifications";
 import { selectTransactionSlice, useAppDispatch, useAppSelector } from "../../store";
+import { SerializedError } from "@reduxjs/toolkit";
 
 export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetail">> = ({ route, navigation }) => {
     const theme = useTheme();
@@ -51,6 +49,10 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
 
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
+    );
+    const [showPositions, setShowPositions] = React.useState(false);
+    const hasPositions = useAppSelector((state) =>
+        selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId })
     );
     const positions = useAppSelector((state) =>
         selectWipTransactionPositions({ state: selectTransactionSlice(state), groupId, transactionId })
@@ -110,7 +112,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                       name: transaction.name,
                       value: transaction.value,
                       currency_symbol: transaction.currency_symbol,
-                      currencyConversionRate: transaction.currency_conversion_rate,
+                      currency_conversion_rate: transaction.currency_conversion_rate,
                       description: transaction.description ?? "",
                       creditor_shares: transaction.creditor_shares,
                       debitor_shares: transaction.debitor_shares,
@@ -128,14 +130,15 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
             dispatch(saveTransaction({ api, transactionId, groupId }))
                 .unwrap()
                 .then(({ transaction }) => {
-                    navigation.navigate("TransactionDetail", {
+                    navigation.replace("TransactionDetail", {
                         transactionId: transaction.id,
                         groupId: groupId,
                         editing: false,
                     });
                     setSubmitting(false);
                 })
-                .catch(() => {
+                .catch((e: SerializedError) => {
+                    notify({ text: `Error while saving transaction: ${e.message}` });
                     setSubmitting(false);
                 });
         },
@@ -201,36 +204,14 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
         });
     }, [theme, editing, permissions, navigation, formik, onGoBack, cancelEdit, edit, transaction, onDeleteTransaction]);
 
-    const onCreatePosition = () => {
-        dispatch(
-            wipPositionAdded({
-                groupId,
-                transactionId,
-                position: {
-                    name: "",
-                    price: 0,
-                    usages: {},
-                    communist_shares: 0,
-                    is_changed: false,
-                    only_local: true,
-                },
-            })
-        );
-    };
-
     if (transaction == null) {
-        return (
-            <View>
-                <ActivityIndicator animating={true} />
-            </View>
-        );
+        return <LoadingIndicator />;
     }
 
     const inputStyles = editing
         ? styles.input
         : {
               marginBottom: 4,
-              // color: theme.colors.onBackground,
               backgroundColor: theme.colors.background,
           };
 
@@ -241,7 +222,6 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 label="Name"
                 value={formik.values.name ?? ""}
                 editable={editing}
-                // disabled={!editing}
                 onChangeText={(val) => formik.setFieldValue("name", val)}
                 onBlur={onUpdate}
                 style={inputStyles}
@@ -252,7 +232,6 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 label="Description"
                 value={formik.values.description ?? ""}
                 editable={editing}
-                // disabled={!editing}
                 onChangeText={(val) => formik.setFieldValue("description", val)}
                 onBlur={onUpdate}
                 style={inputStyles}
@@ -374,46 +353,44 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 <HelperText type="error">{formik.errors.debitor_shares}</HelperText>
             )}
 
-            {positions.length > 0 && (
-                <Surface style={{ marginTop: 8 }} elevation={1}>
-                    <List.Item title="Postions" />
-                    <>
-                        <Divider />
-                        {positions.map((position: TransactionPosition) => (
-                            <PositionListItem
-                                key={position.id}
-                                groupId={groupId}
-                                currency_symbol={transaction.currency_symbol}
-                                position={position}
-                                editing={editing}
-                            />
-                        ))}
-                        <Divider />
-                        <List.Item
-                            title="Total"
-                            right={(props) => (
-                                <Text>
-                                    {totalPositionValue.toFixed(2)} {transaction.currency_symbol}
-                                </Text>
-                            )}
-                        />
-                        <List.Item
-                            title="Remaining"
-                            right={(props) => (
-                                <Text>
-                                    {((formik.values?.value ?? 0) - totalPositionValue).toFixed(2)}{" "}
-                                    {transaction.currency_symbol}
-                                </Text>
-                            )}
-                        />
-                    </>
-                </Surface>
-            )}
-            {transaction.type === "purchase" && editing && (
-                <Button icon="add" onPress={onCreatePosition}>
+            {transaction.type === "purchase" && !showPositions && editing && !hasPositions ? (
+                <Button icon="add" onPress={() => setShowPositions(true)}>
                     Add Position
                 </Button>
-            )}
+            ) : (showPositions && editing) || hasPositions ? (
+                <Surface style={{ marginTop: 8 }} elevation={1}>
+                    <List.Item title="Postions" />
+                    <Divider />
+                    {positions.map((position: TransactionPosition) => (
+                        <PositionListItem
+                            key={position.id}
+                            transactionId={transactionId}
+                            groupId={groupId}
+                            currency_symbol={transaction.currency_symbol}
+                            position={position}
+                            editing={editing}
+                        />
+                    ))}
+                    <Divider />
+                    <List.Item
+                        title="Total"
+                        right={() => (
+                            <Text>
+                                {totalPositionValue.toFixed(2)} {transaction.currency_symbol}
+                            </Text>
+                        )}
+                    />
+                    <List.Item
+                        title="Remaining"
+                        right={() => (
+                            <Text>
+                                {((formik.values?.value ?? 0) - totalPositionValue).toFixed(2)}{" "}
+                                {transaction.currency_symbol}
+                            </Text>
+                        )}
+                    />
+                </Surface>
+            ) : null}
             <Portal>
                 <Dialog visible={confirmDeleteModalOpen} onDismiss={closeConfirmDeleteModal}>
                     <Dialog.Content>

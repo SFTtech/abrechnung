@@ -11,6 +11,7 @@ import { useInitApi } from "../core/ApiProvider";
 import { RootDrawerScreenProps } from "../navigation/types";
 import { notify } from "../notifications";
 import { useAppDispatch } from "../store";
+import { useTranslation } from "react-i18next";
 
 const validationSchema = z.object({
     server: z.string({ required_error: "server is required" }).url({ message: "invalid server url" }),
@@ -19,7 +20,14 @@ const validationSchema = z.object({
 });
 type FormSchema = z.infer<typeof validationSchema>;
 
+const initialValues: FormSchema = {
+    server: "https://demo.abrechnung.sft.lol",
+    username: "",
+    password: "",
+};
+
 export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigation }) => {
+    const { t } = useTranslation();
     const theme = useTheme();
     const dispatch = useAppDispatch();
     const initApi = useInitApi();
@@ -31,7 +39,6 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
     };
 
     const handleSubmit = (values: FormSchema, { setSubmitting }: FormikHelpers<FormSchema>) => {
-        console.log("submitting and logging in");
         const { api } = initApi(values.server);
         dispatch(
             login({
@@ -57,43 +64,37 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
     return (
         <>
             <Appbar.Header theme={{ colors: { primary: theme.colors.surface } }}>
-                <Appbar.Content title="Abrechnung" />
+                <Appbar.Content title={t("app.name")} />
             </Appbar.Header>
             <Formik
                 validationSchema={toFormikValidationSchema(validationSchema)}
-                validateOnBlur={false}
-                validateOnChange={false}
-                initialValues={{
-                    server: "https://demo.abrechnung.sft.lol",
-                    username: "",
-                    password: "",
-                }}
+                initialValues={initialValues}
                 onSubmit={handleSubmit}
             >
                 {({ values, touched, handleSubmit, handleBlur, isSubmitting, errors, setFieldValue }) => (
                     <View style={styles.container}>
                         <TextInput
-                            label="Server"
+                            label={t("common.server")}
                             style={styles.input}
                             returnKeyType="next"
                             autoCapitalize="none"
                             textContentType="URL"
                             keyboardType="url"
                             value={values.server}
-                            onBlur={handleBlur("server")}
+                            onBlur={() => handleBlur("server")}
                             onChangeText={(val) => setFieldValue("server", val)}
                             error={touched.server && !!errors.server}
                         />
                         {touched.server && !!errors.server && <HelperText type="error">{errors.server}</HelperText>}
 
                         <TextInput
-                            label="Username"
+                            label={t("common.username")}
                             style={styles.input}
                             returnKeyType="next"
                             autoCapitalize="none"
                             textContentType="username"
                             value={values.username}
-                            onBlur={handleBlur("username")}
+                            onBlur={() => handleBlur("username")}
                             onChangeText={(val) => setFieldValue("username", val)}
                             error={touched.username && !!errors.username}
                         />
@@ -102,13 +103,13 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                         )}
 
                         <TextInput
-                            label="Password"
+                            label={t("common.password")}
                             style={styles.input}
                             returnKeyType="done"
                             textContentType="password"
                             autoCapitalize="none"
                             value={values.password}
-                            onBlur={handleBlur("password")}
+                            onBlur={() => handleBlur("password")}
                             onChangeText={(val) => setFieldValue("password", val)}
                             error={touched.password && !!errors.password}
                             secureTextEntry={!showPassword}
@@ -130,7 +131,7 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
                         )}
 
                         {isSubmitting ? <ProgressBar indeterminate={true} /> : null}
-                        <Button mode="contained" style={styles.submit} onPress={handleSubmit}>
+                        <Button mode="contained" style={styles.submit} onPress={() => handleSubmit()}>
                             Login
                         </Button>
 
