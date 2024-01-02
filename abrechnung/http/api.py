@@ -49,15 +49,17 @@ class Api:
             allow_headers=["*"],
         )
 
-        self.api.add_exception_handler(NotFoundError, self._not_found_exception_handler)
-        self.api.add_exception_handler(PermissionError, self._permission_error_exception_handler)
-        self.api.add_exception_handler(asyncpg.DataError, self._bad_request_exception_handler)
-        self.api.add_exception_handler(asyncpg.RaiseError, self._bad_request_exception_handler)
+        bad_request_handler = self.make_generic_exception_handler(status.HTTP_400_BAD_REQUEST)
+
+        self.api.add_exception_handler(NotFoundError, self.make_generic_exception_handler(status.HTTP_404_NOT_FOUND))
+        self.api.add_exception_handler(PermissionError, self.make_generic_exception_handler(status.HTTP_403_FORBIDDEN))
+        self.api.add_exception_handler(asyncpg.DataError, bad_request_handler)
+        self.api.add_exception_handler(asyncpg.RaiseError, bad_request_handler)
         self.api.add_exception_handler(
             asyncpg.IntegrityConstraintViolationError,
-            self._bad_request_exception_handler,
+            bad_request_handler,
         )
-        self.api.add_exception_handler(InvalidCommand, self._bad_request_exception_handler)
+        self.api.add_exception_handler(InvalidCommand, bad_request_handler)
         self.api.add_exception_handler(StarletteHTTPException, self._http_exception_handler)
 
         self.uvicorn_config = uvicorn.Config(
@@ -77,17 +79,15 @@ class Api:
             },
         )
 
-    async def _not_found_exception_handler(self, request: Request, exc: NotFoundError):
-        return self._format_error_message(status.HTTP_404_NOT_FOUND, str(exc))
+    def make_generic_exception_handler(self, status_code: int):
+        async def handler(request: Request, exc: Exception):
+            return self._format_error_message(status_code, str(exc))
 
-    async def _permission_error_exception_handler(self, request: Request, exc: PermissionError):
-        return self._format_error_message(status.HTTP_403_FORBIDDEN, str(exc))
+        return handler
 
-    async def _bad_request_exception_handler(self, request: Request, exc):
-        return self._format_error_message(status.HTTP_400_BAD_REQUEST, str(exc))
-
-    async def _http_exception_handler(self, request: Request, exc: StarletteHTTPException):
-        return self._format_error_message(exc.status_code, exc.detail)
+    async def _http_exception_handler(self, request: Request, exc: Exception):
+        if isinstance(exc, StarletteHTTPException):
+            return self._format_error_message(exc.status_code, exc.detail)
 
     async def _setup(self):
         self.db_pool = await create_db_pool(self.cfg.database)

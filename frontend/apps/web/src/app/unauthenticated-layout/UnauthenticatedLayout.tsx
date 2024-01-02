@@ -4,6 +4,7 @@ import { AppBar, Box, Button, Container, CssBaseline, Toolbar, Typography } from
 import { Banner } from "../../components/style/Banner";
 import { selectIsAuthenticated } from "@abrechnung/redux";
 import { useAppSelector, selectAuthSlice } from "../../store";
+import { LanguageSelect } from "@/components/LanguageSelect";
 
 export const UnauthenticatedLayout: React.FC = () => {
     const authenticated = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
@@ -27,6 +28,7 @@ export const UnauthenticatedLayout: React.FC = () => {
                             Abrechnung
                         </RouterLink>
                     </Typography>
+                    <LanguageSelect />
                     <Button component={RouterLink} color="inherit" to="/login">
                         Login
                     </Button>

@@ -1,4 +1,14 @@
-import React, { useState } from "react";
+import { MobilePaper } from "@/components/style/mobile";
+import { useTitle } from "@/core/utils";
+import {
+    ThemeMode,
+    persistor,
+    selectSettingsSlice,
+    selectTheme,
+    themeChanged,
+    useAppDispatch,
+    useAppSelector,
+} from "@/store";
 import {
     Alert,
     Box,
@@ -8,32 +18,24 @@ import {
     DialogContent,
     DialogContentText,
     DialogTitle,
-    Divider,
     FormControl,
     FormGroup,
     FormLabel,
     MenuItem,
     Select,
+    Stack,
     Typography,
 } from "@mui/material";
-import { MobilePaper } from "../../components/style/mobile";
-import { useTitle } from "../../core/utils";
-import {
-    useAppDispatch,
-    useAppSelector,
-    themeChanged,
-    selectTheme,
-    persistor,
-    ThemeMode,
-    selectSettingsSlice,
-} from "../../store";
+import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 
 export const Settings: React.FC = () => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const themeMode = useAppSelector((state) => selectTheme({ state: selectSettingsSlice(state) }));
 
-    useTitle("Abrechnung - Settings");
+    useTitle(t("profile.settings.tabTitle"));
 
     const [confirmClearCacheOpen, setConfirmClearCacheOpen] = useState(false);
 
@@ -62,44 +64,36 @@ export const Settings: React.FC = () => {
 
     return (
         <MobilePaper>
-            <Typography component="h3" variant="h5">
-                Settings
-            </Typography>
-            <Alert sx={{ mt: 1 }} severity="info">
-                These settings are stored locally on your device. Clearing your Browser&apos;s local storage will reset
-                them.
-            </Alert>
-            <Box sx={{ mt: 2 }}>
-                <FormControl sx={{ width: 200 }}>
-                    <FormGroup>
-                        <FormLabel component="legend">Theme</FormLabel>
-                        <Select
-                            id="dark-mode-select"
-                            labelId="dark-mode-select-label"
-                            value={themeMode}
-                            label="Dark Mode"
-                            variant="standard"
-                            onChange={handleDarkModeChange}
-                        >
-                            <MenuItem value="browser">System Default</MenuItem>
-                            <MenuItem value="dark">Dark Mode</MenuItem>
-                            <MenuItem value="light">Light Mode</MenuItem>
-                        </Select>
-                    </FormGroup>
-                </FormControl>
-            </Box>
-            <Divider sx={{ mt: 1 }} />
-            <Box sx={{ mt: 1 }}>
-                <FormControl component="fieldset" variant="standard">
-                    <FormLabel component="legend">Clear Cache</FormLabel>
-                    <FormGroup>
-                        <Button variant="contained" color="error" onClick={handleConfirmClearCacheOpen}>
-                            Clear
-                        </Button>
-                    </FormGroup>
-                    {/*<FormHelperText>ACHTUNG!</FormHelperText>*/}
-                </FormControl>
-            </Box>
+            <Stack spacing={2}>
+                <Typography component="h3" variant="h5">
+                    {t("profile.settings.pageTitle")}
+                </Typography>
+                <Alert severity="info">{t("profile.settings.info")}</Alert>
+                <Box>
+                    <FormControl sx={{ width: 200 }}>
+                        <FormGroup>
+                            <FormLabel component="legend">{t("profile.settings.theme")}</FormLabel>
+                            <Select
+                                id="dark-mode-select"
+                                labelId="dark-mode-select-label"
+                                value={themeMode}
+                                label="Dark Mode"
+                                variant="standard"
+                                onChange={handleDarkModeChange}
+                            >
+                                <MenuItem value="browser">{t("profile.settings.themeSystemDefault")}</MenuItem>
+                                <MenuItem value="dark">{t("profile.settings.themeDarkMode")}</MenuItem>
+                                <MenuItem value="light">{t("profile.settings.themeLightMode")}</MenuItem>
+                            </Select>
+                        </FormGroup>
+                    </FormControl>
+                </Box>
+                <Box>
+                    <Button variant="contained" color="error" onClick={handleConfirmClearCacheOpen}>
+                        {t("profile.settings.clearCache")}
+                    </Button>
+                </Box>
+            </Stack>
 
             <Dialog
                 open={confirmClearCacheOpen}
@@ -110,14 +104,14 @@ export const Settings: React.FC = () => {
                 <DialogTitle id="dialog-confirm-clear-cache">{"Clear Cache?"}</DialogTitle>
                 <DialogContent>
                     <DialogContentText id="dialog-confirm-clear-cache-description">
-                        This action will clear your local cache. All your settings (this page) will not be reset.
+                        {t("profile.settings.confirmClearCache")}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={handleConfirmClearCache} autoFocus>
-                        Yes
+                        {t("common.yes")}
                     </Button>
-                    <Button onClick={handleConfirmClearCacheClose}>Cancel</Button>
+                    <Button onClick={handleConfirmClearCacheClose}>{t("common.cancel")}</Button>
                 </DialogActions>
             </Dialog>
         </MobilePaper>

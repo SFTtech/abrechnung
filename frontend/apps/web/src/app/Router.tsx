@@ -1,24 +1,23 @@
 import React from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Register from "../pages/auth/Register";
-import Login from "../pages/auth/Login";
-import Logout from "../pages/auth/Logout";
-import Group from "../pages/groups/Group";
-import PageNotFound from "../pages/PageNotFound";
-import ChangeEmail from "../pages/profile/ChangeEmail";
-import ChangePassword from "../pages/profile/ChangePassword";
-import GroupList from "../pages/groups/GroupList";
-import SessionList from "../pages/profile/SessionList";
-import ConfirmPasswordRecovery from "../pages/auth/ConfirmPasswordRecovery";
-import RequestPasswordRecovery from "../pages/auth/RequestPasswordRecovery";
-import Settings from "../pages/profile/Settings";
+import { ConfirmEmailChange } from "../pages/auth/ConfirmEmailChange";
+import { ConfirmPasswordRecovery } from "../pages/auth/ConfirmPasswordRecovery";
+import { ConfirmRegistration } from "../pages/auth/ConfirmRegistration";
+import { Login } from "../pages/auth/Login";
+import { Logout } from "../pages/auth/Logout";
+import { Register } from "../pages/auth/Register";
+import { RequestPasswordRecovery } from "../pages/auth/RequestPasswordRecovery";
+import { Group } from "../pages/groups/Group";
+import { GroupInvite } from "../pages/groups/GroupInvite";
+import { GroupList } from "../pages/groups/GroupList";
+import { PageNotFound } from "../pages/PageNotFound";
+import { ChangeEmail } from "../pages/profile/ChangeEmail";
+import { ChangePassword } from "../pages/profile/ChangePassword";
+import { Profile } from "../pages/profile/Profile";
+import { SessionList } from "../pages/profile/SessionList";
+import { Settings } from "../pages/profile/Settings";
 import { AuthenticatedLayout } from "./authenticated-layout/AuthenticatedLayout";
 import { UnauthenticatedLayout } from "./unauthenticated-layout/UnauthenticatedLayout";
-
-const Profile = React.lazy(() => import("../pages/profile/Profile"));
-const ConfirmEmailChange = React.lazy(() => import("../pages/auth/ConfirmEmailChange"));
-const ConfirmRegistration = React.lazy(() => import("../pages/auth/ConfirmRegistration"));
-const GroupInvite = React.lazy(() => import("../pages/groups/GroupInvite"));
 
 const router = createBrowserRouter([
     {

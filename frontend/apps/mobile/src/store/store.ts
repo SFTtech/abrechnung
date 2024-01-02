@@ -1,12 +1,12 @@
 import { getAbrechnungReducer } from "@abrechnung/redux";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { configureStore } from "@reduxjs/toolkit";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { persistStore } from "redux-persist";
 import { settingsReducer } from "./settingsSlice";
 import { uiReducer } from "./uiSlice";
+import FilesystemStorage from "redux-persist-filesystem-storage";
 
-const rootReducer = getAbrechnungReducer(AsyncStorage, { settings: settingsReducer, ui: uiReducer });
+const rootReducer = getAbrechnungReducer(FilesystemStorage, { settings: settingsReducer, ui: uiReducer });
 
 export const store = configureStore({
     reducer: rootReducer,

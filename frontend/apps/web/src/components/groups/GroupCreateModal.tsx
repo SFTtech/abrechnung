@@ -80,7 +80,6 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
                         errors,
                         handleBlur,
                         handleChange,
-                        handleSubmit,
                         isSubmitting,
                         setFieldValue,
                     }: FormikProps<FormValues>) => (

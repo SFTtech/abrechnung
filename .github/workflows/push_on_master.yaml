@@ -142,6 +142,8 @@ jobs:
     environment: demo
     if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/heads/master')}}
     needs:
+      - build_and_test_frontend
+      - build_and_test_backend
       - build-debs
     runs-on: ubuntu-latest
     steps:
@@ -155,6 +157,8 @@ jobs:
     name: "Attach assets to release"
     if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/tags/') }}
     needs:
+      - build_and_test_frontend
+      - build_and_test_backend
       - build-debs
     runs-on: ubuntu-latest
     steps:

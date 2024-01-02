@@ -47,9 +47,10 @@ async def hook(request: web.Request):
 
     await copy_file_to_container(request, "/tmp/abrechnung_latest.deb", archive_name)
     await run_in_container(request, ["apt-get", "install", "-y", "--reinstall", archive_name])
-    await run_in_container(request, ["abrechnung", "-vvv", "db", "migrate"])
+    await run_in_container(request, ["abrechnung", "-vvv", "db", "rebuild"])
     await run_in_container(request, ["systemctl", "daemon-reload"])
     await run_in_container(request, ["systemctl", "restart", "abrechnung-api.service"])
+    await run_in_container(request, ["systemctl", "restart", "abrechnung-mailer.service"])
 
     return web.Response(text="Successful deploy")
 

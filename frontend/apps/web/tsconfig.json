@@ -19,6 +19,7 @@
             "@abrechnung/redux": ["../../libs/redux/src/index.ts"],
             "@abrechnung/types": ["../../libs/types/src/index.ts"],
             "@abrechnung/utils": ["../../libs/utils/src/index.ts"],
+            "@abrechnung/translations": ["../../libs/translations/src/index.ts"],
             "@/*": ["src/*"]
         }
     },
