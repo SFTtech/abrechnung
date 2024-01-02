@@ -275,10 +275,11 @@ export const createTransaction = createAsyncThunk<
             >
         >;
     },
-    { state: ITransactionRootState }
+    { state: IRootState }
 >("createPurchase", async ({ groupId, type, data }, { getState, dispatch }) => {
     const state = getState();
     const transactionId = state.transactions.nextLocalTransactionId;
+    const group = state.groups.groups.byId[groupId];
     const transactionBase = {
         id: transactionId,
         group_id: groupId,
@@ -286,7 +287,7 @@ export const createTransaction = createAsyncThunk<
         description: "",
         value: 0,
         currency_conversion_rate: 1.0,
-        currency_symbol: "€",
+        currency_symbol: group.currency_symbol,
         billed_at: toISODateString(new Date()),
         creditor_shares: {},
         debitor_shares: {},
