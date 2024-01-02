@@ -15,6 +15,7 @@ from abrechnung.application.users import UserService
 from abrechnung.config import Config
 from abrechnung.core.errors import InvalidCommand, NotFoundError
 from abrechnung.framework.database import create_db_pool
+
 from .middleware import ContextMiddleware
 from .routers import accounts, auth, common, groups, transactions, websocket
 from .routers.websocket import NotificationManager
