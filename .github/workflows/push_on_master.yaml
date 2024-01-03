@@ -149,7 +149,7 @@ jobs:
       - name: Upload debs as artifacts
         uses: actions/upload-artifact@v2
         with:
-          name: deb-${{ matrix.distro }}
+          name: debs
           path: debs/*
 
   deploy-demo:
