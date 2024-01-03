@@ -147,9 +147,9 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
       - name: Upload debs as artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: debs
+          name: deb-${{ matrix.distro }}
           path: debs/*
 
   deploy-demo:
@@ -179,15 +179,21 @@ jobs:
     steps:
       - name: Download all workflow run artifacts
         uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+      - name: List files
+        run: |
+          ls -lah artifacts
       - name: Attach to release
         uses: softprops/action-gh-release@a929a66f232c1b11af63782948aa2210f981808a  # PR#109
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
-            debs/*.deb
-            app-release-apk/app-release.apk
+            artifacts/*.deb
+            artifacts/*.apk
           # if it's not already published, keep the release as a draft.
           draft: true
           # mark it as a prerelease if the tag contains 'rc'.
-          prerelease: ${{ contains(github.ref, 'rc') }}
+          prerelease: ${{ contains(github.ref, 'rc') || contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
