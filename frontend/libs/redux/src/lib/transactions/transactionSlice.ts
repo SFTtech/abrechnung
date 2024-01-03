@@ -58,7 +58,7 @@ export const selectGroupTransactionsWithoutWipInternal = (args: {
 }): Transaction[] => {
     const { state, groupId } = args;
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-    return s.transactions.ids.map((id) => s.transactions.byId[id]);
+    return s.transactions.ids.map((id) => s.transactions.byId[id]).filter((t) => !t.deleted);
 };
 export const selectGroupTransactionsWithoutWip = memoize(selectGroupTransactionsWithoutWipInternal, { size: 5 });
 
@@ -223,6 +223,7 @@ export const selectTransactionsInvolvingAccount = memoize(
         const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
         return transactionIds
             .map((id) => s.wipTransactions.byId[id] ?? s.transactions.byId[id])
+            .filter((t) => !t.deleted)
             .sort(getTransactionSortFunc(sortMode ?? "last_changed"));
     }
 );
