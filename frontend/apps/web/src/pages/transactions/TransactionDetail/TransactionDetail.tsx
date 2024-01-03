@@ -22,6 +22,7 @@ import { typeToFlattenedError, z } from "zod";
 import { TransactionActions } from "./TransactionActions";
 import { TransactionMetadata } from "./TransactionMetadata";
 import { ValidationErrors as PositionValidationErrors, TransactionPositions } from "./purchase/TransactionPositions";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
@@ -31,6 +32,7 @@ const emptyErrors = { fieldErrors: {}, formErrors: [] };
 const emptyPositionErrors = {};
 
 export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
+    const { t } = useTranslation();
     const params = useParams();
     const dispatch = useAppDispatch();
     const query = useQuery();
@@ -163,7 +165,7 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
             {transaction.type === "purchase" && !showPositions && transaction.is_wip && !hasPositions ? (
                 <Grid container justifyContent="center" sx={{ marginTop: 2 }}>
                     <Button startIcon={<AddIcon />} onClick={() => setShowPositions(true)}>
-                        Add Positions
+                        {t("transactions.positions.addPositions")}
                     </Button>
                 </Grid>
             ) : (showPositions && transaction.is_wip) || hasPositions ? (

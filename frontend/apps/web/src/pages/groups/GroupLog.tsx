@@ -21,17 +21,19 @@ import {
 import { DateTime } from "luxon";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { Loading } from "../../components/style/Loading";
-import { MobilePaper } from "../../components/style/mobile";
-import { api, ws } from "../../core/api";
-import { useTitle } from "../../core/utils";
-import { selectGroupSlice, useAppDispatch, useAppSelector } from "../../store";
+import { Loading } from "@/components/style/Loading";
+import { MobilePaper } from "@/components/style/mobile";
+import { api, ws } from "@/core/api";
+import { useTitle } from "@/core/utils";
+import { selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
 }
 
 export const GroupLog: React.FC<Props> = ({ groupId }) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
     const members = useAppSelector((state) => selectGroupMembers({ state: selectGroupSlice(state), groupId }));
@@ -43,7 +45,7 @@ export const GroupLog: React.FC<Props> = ({ groupId }) => {
     const [showAllLogs, setShowAllLogs] = useState(false);
     const [message, setMessage] = useState("");
 
-    useTitle(`${group.name} - Log`);
+    useTitle(t("groups.log.tabTitle", "", { groupName: group.name }));
 
     useEffect(() => {
         dispatch(fetchGroupLog({ groupId, api }));
@@ -86,7 +88,7 @@ export const GroupLog: React.FC<Props> = ({ groupId }) => {
     return (
         <MobilePaper>
             <Typography component="h3" variant="h5">
-                Group Log
+                {t("groups.log.header")}
             </Typography>
             <FormControlLabel
                 control={
@@ -97,13 +99,13 @@ export const GroupLog: React.FC<Props> = ({ groupId }) => {
                         onChange={(e) => setShowAllLogs(e.target.checked)}
                     />
                 }
-                label="Show all Logs"
+                label={t("groups.log.showAllLogs")}
             />
             <TextField
                 required
                 fullWidth
                 name="newMessage"
-                placeholder="Write a message to the group ..."
+                placeholder={t("groups.log.writeAMessage")}
                 value={message}
                 variant="outlined"
                 onKeyUp={onKeyUp}
@@ -111,7 +113,7 @@ export const GroupLog: React.FC<Props> = ({ groupId }) => {
                 onChange={(e) => setMessage(e.target.value)}
             />
             <Button type="submit" color="primary" onClick={sendMessage}>
-                Send
+                {t("common.send")}
             </Button>
             <Divider variant="middle" />
             <List>
@@ -122,8 +124,12 @@ export const GroupLog: React.FC<Props> = ({ groupId }) => {
                         <ListItem key={logEntry.id}>
                             <ListItemText
                                 primary={`${logEntry.type} - ${logEntry.message}`}
-                                secondary={`by ${getMemberUsername(logEntry.user_id)}
-                            on ${DateTime.fromISO(logEntry.logged_at).toLocaleString(DateTime.DATETIME_FULL)}`}
+                                secondary={t("groups.log.messageInfo", "", {
+                                    username: getMemberUsername(logEntry.user_id),
+                                    datetime: DateTime.fromISO(logEntry.logged_at).toLocaleString(
+                                        DateTime.DATETIME_FULL
+                                    ),
+                                })}
                             />
                         </ListItem>
                     ))
@@ -132,5 +138,3 @@ export const GroupLog: React.FC<Props> = ({ groupId }) => {
         </MobilePaper>
     );
 };
-
-export default GroupLog;

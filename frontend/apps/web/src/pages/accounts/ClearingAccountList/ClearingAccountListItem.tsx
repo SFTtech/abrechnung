@@ -96,5 +96,3 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, s
         </ListItem>
     );
 };
-
-export default ClearingAccountListItem;

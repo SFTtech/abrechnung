@@ -2,6 +2,7 @@ import { AccountSelect } from "@/components/AccountSelect";
 import { NumericInput } from "@/components/NumericInput";
 import { TextInput } from "@/components/TextInput";
 import { MobilePaper } from "@/components/style/mobile";
+import { useFormatCurrency } from "@/hooks";
 import { RootState, selectAccountSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
 import {
     positionDeleted,
@@ -31,6 +32,7 @@ import {
 } from "@mui/material";
 import memoize from "proxy-memoize";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { typeToFlattenedError, z } from "zod";
 
 interface PositionTableRowProps {
@@ -196,6 +198,8 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     transactionId,
     validationErrors,
 }) => {
+    const { t } = useTranslation();
+    const formatCurrency = useFormatCurrency();
     const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
@@ -276,13 +280,13 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     return (
         <MobilePaper sx={{ marginTop: 2 }}>
             <Grid container direction="row" justifyContent="space-between">
-                <Typography>Positions</Typography>
+                <Typography>{t("transactions.positions.positions")}</Typography>
                 {transaction.is_wip && (
                     <FormControlLabel
-                        control={<Checkbox name={`show-advanced`} />}
+                        control={<Checkbox name="show-advanced" />}
                         checked={showAdvanced}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>) => setShowAdvanced(event.target.checked)}
-                        label="Advanced"
+                        label={t("common.advanced")}
                     />
                 )}
             </Grid>
@@ -290,8 +294,8 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                 <Table sx={{ minWidth: 650 }} stickyHeader aria-label="purchase items" size="small">
                     <TableHead>
                         <TableRow>
-                            <TableCell>Name</TableCell>
-                            <TableCell align="right">Price</TableCell>
+                            <TableCell>{t("common.name")}</TableCell>
+                            <TableCell align="right">{t("common.price")}</TableCell>
                             {(transaction.is_wip ? transactionAccounts : positionAccounts).map((accountID) => (
                                 <TableCell align="right" sx={{ minWidth: 80 }} key={accountID}>
                                     {accounts.find((account) => account.id === accountID).name}
@@ -317,7 +321,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                     )}
                                 </>
                             )}
-                            <TableCell align="right">Shared</TableCell>
+                            <TableCell align="right">{t("common.shared")}</TableCell>
                             {transaction.is_wip && <TableCell></TableCell>}
                         </TableRow>
                     </TableHead>
@@ -342,7 +346,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                   <TableRow hover key={position.id}>
                                       <TableCell>{position.name}</TableCell>
                                       <TableCell align="right" style={{ minWidth: 80 }}>
-                                          {position.price.toFixed(2)} {transaction.currency_symbol}
+                                          {formatCurrency(position.price, transaction.currency_symbol)}
                                       </TableCell>
                                       {positionAccounts.map((accountID) => (
                                           <TableCell align="right" key={accountID}>
@@ -371,34 +375,36 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                               ))}
                         <TableRow hover>
                             <TableCell>
-                                <Typography sx={{ fontWeight: "bold" }}>Total:</Typography>
+                                <Typography sx={{ fontWeight: "bold" }}>{t("common.totalWithColon")}</Typography>
                             </TableCell>
                             <TableCell align="right">
-                                {totalPositionValue.toFixed(2)} {transaction.currency_symbol}
+                                {formatCurrency(totalPositionValue, transaction.currency_symbol)}
                             </TableCell>
                             {(transaction.is_wip ? transactionAccounts : positionAccounts).map((accountID) => (
                                 <TableCell align="right" key={accountID}>
-                                    {purchaseItemSumForAccount(accountID).toFixed(2)} {transaction.currency_symbol}
+                                    {formatCurrency(purchaseItemSumForAccount(accountID), transaction.currency_symbol)}
                                 </TableCell>
                             ))}
                             <TableCell align="right" colSpan={showAddAccount ? 2 : 1}>
-                                {(
+                                {formatCurrency(
                                     positions.reduce((acc, curr) => acc + curr.price, 0) -
-                                    Object.values(transactionBalanceEffect).reduce(
-                                        (acc, curr) => acc + curr.positions,
-                                        0
-                                    )
-                                ).toFixed(2)}{" "}
-                                {transaction.currency_symbol}
+                                        Object.values(transactionBalanceEffect).reduce(
+                                            (acc, curr) => acc + curr.positions,
+                                            0
+                                        ),
+                                    transaction.currency_symbol
+                                )}
                             </TableCell>
                             {transaction.is_wip && <TableCell></TableCell>}
                         </TableRow>
                         <TableRow hover>
                             <TableCell>
-                                <Typography sx={{ fontWeight: "bold" }}>Remaining:</Typography>
+                                <Typography sx={{ fontWeight: "bold" }}>
+                                    {t("transactions.positions.remaining")}
+                                </Typography>
                             </TableCell>
                             <TableCell align="right">
-                                {sharedTransactionValue.toFixed(2)} {transaction.currency_symbol}
+                                {formatCurrency(sharedTransactionValue, transaction.currency_symbol)}
                             </TableCell>
                             {(transaction.is_wip ? transactionAccounts : positionAccounts).map((accountID) => (
                                 <TableCell align="right" key={accountID}></TableCell>
@@ -412,5 +418,3 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
         </MobilePaper>
     );
 };
-
-export default TransactionPositions;

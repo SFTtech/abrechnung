@@ -6,5 +6,7 @@ declare module "i18next" {
         defaultNS: typeof defaultNS;
         nsSeparator: "";
         resources: { "": (typeof resources)["en"]["translations"] };
+        // the following should be working but has apparently been broken in i18next 23.x
+        // resources: (typeof resources)["en"];
     }
 }

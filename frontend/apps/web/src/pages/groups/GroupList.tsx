@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import ListItemLink from "../../components/style/ListItemLink";
-import GroupCreateModal from "../../components/groups/GroupCreateModal";
-import GroupDeleteModal from "../../components/groups/GroupDeleteModal";
+import ListItemLink from "@/components/style/ListItemLink";
+import GroupCreateModal from "@/components/groups/GroupCreateModal";
+import GroupDeleteModal from "@/components/groups/GroupDeleteModal";
 import {
     Alert,
     Grid,
@@ -13,13 +13,15 @@ import {
     Typography,
 } from "@mui/material";
 import { Add, Delete } from "@mui/icons-material";
-import { MobilePaper } from "../../components/style/mobile";
+import { MobilePaper } from "@/components/style/mobile";
 import { selectIsGuestUser, selectGroups } from "@abrechnung/redux";
-import { useAppSelector, selectGroupSlice, selectAuthSlice } from "../../store";
-import { useTitle } from "../../core/utils";
+import { useAppSelector, selectGroupSlice, selectAuthSlice } from "@/store";
+import { useTitle } from "@/core/utils";
+import { useTranslation } from "react-i18next";
 
 export const GroupList: React.FC = () => {
-    useTitle("Abrechnung - Groups");
+    const { t } = useTranslation();
+    useTitle(t("groups.list.tabTitle"));
     const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
     const [showGroupDeletionModal, setShowGroupDeletionModal] = useState(false);
     const [groupToDelete, setGroupToDelete] = useState(null);
@@ -49,17 +51,13 @@ export const GroupList: React.FC = () => {
     return (
         <MobilePaper>
             <Typography component="h3" variant="h5">
-                Groups
+                {t("groups.list.header")}
             </Typography>
-            {isGuest && (
-                <Alert severity="info">
-                    You are a guest user on this Abrechnung and therefore not permitted to create new groups.
-                </Alert>
-            )}
+            {isGuest && <Alert severity="info">{t("groups.list.guestUserDisclaimer")}</Alert>}
             <List>
                 {groups.length === 0 ? (
                     <ListItem key={0}>
-                        <span>No Groups</span>
+                        <span>{t("groups.list.noGroups")}</span>
                     </ListItem>
                 ) : (
                     groups.map((group) => {
@@ -100,5 +98,3 @@ export const GroupList: React.FC = () => {
         </MobilePaper>
     );
 };
-
-export default GroupList;

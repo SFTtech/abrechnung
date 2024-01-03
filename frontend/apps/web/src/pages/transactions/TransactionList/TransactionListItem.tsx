@@ -6,6 +6,8 @@ import React from "react";
 import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
 import { ListItemLink } from "@/components/style/ListItemLink";
 import { selectAccountSlice, selectTransactionSlice, useAppSelector } from "@/store";
+import { useTranslation } from "react-i18next";
+import { useFormatCurrency } from "@/hooks";
 
 interface Props {
     groupId: number;
@@ -14,6 +16,8 @@ interface Props {
 }
 
 export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, style }) => {
+    const { t } = useTranslation();
+    const formatCurrency = useFormatCurrency();
     const accounts = useAppSelector((state) =>
         selectAccountIdToAccountMap({ state: selectAccountSlice(state), groupId })
     );
@@ -45,11 +49,11 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
             <ListItemLink to={`/groups/${groupId}/transactions/${transactionId}`} style={style}>
                 <ListItemAvatar sx={{ minWidth: { xs: "40px", md: "56px" } }}>
                     {transaction.type === "purchase" ? (
-                        <Tooltip title="Purchase">
+                        <Tooltip title={t("transactions.purchase")}>
                             <PurchaseIcon color="primary" />
                         </Tooltip>
                     ) : transaction.type === "transfer" ? (
-                        <Tooltip title="Money Transfer">
+                        <Tooltip title={t("transactions.transfer")}>
                             <TransferIcon color="primary" />
                         </Tooltip>
                     ) : (
@@ -74,7 +78,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
                     secondary={
                         <>
                             <Typography variant="body2" component="span" sx={{ color: "text.primary" }}>
-                                by {creditorNames}, for {debitorNames}
+                                {t("transactions.byFor", "", { by: creditorNames, for: debitorNames })}
                             </Typography>
                             <br />
                             {DateTime.fromISO(transaction.billed_at).toLocaleString(DateTime.DATE_FULL)}
@@ -86,11 +90,14 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
                 />
                 <ListItemText>
                     <Typography align="right" variant="body2">
-                        {transaction.value.toFixed(2)} {transaction.currency_symbol}
+                        {formatCurrency(transaction.value, transaction.currency_symbol)}
                         <br />
                         <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
-                            last changed:{" "}
-                            {DateTime.fromISO(transaction.last_changed).toLocaleString(DateTime.DATETIME_FULL)}
+                            {t("common.lastChangedWithTime", "", {
+                                datetime: DateTime.fromISO(transaction.last_changed).toLocaleString(
+                                    DateTime.DATETIME_FULL
+                                ),
+                            })}
                         </Typography>
                     </Typography>
                 </ListItemText>

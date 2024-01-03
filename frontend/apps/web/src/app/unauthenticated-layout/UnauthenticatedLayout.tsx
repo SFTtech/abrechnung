@@ -1,12 +1,14 @@
 import * as React from "react";
 import { Link as RouterLink, Outlet, Navigate } from "react-router-dom";
 import { AppBar, Box, Button, Container, CssBaseline, Toolbar, Typography } from "@mui/material";
-import { Banner } from "../../components/style/Banner";
+import { Banner } from "@/components/style/Banner";
 import { selectIsAuthenticated } from "@abrechnung/redux";
 import { useAppSelector, selectAuthSlice } from "../../store";
 import { LanguageSelect } from "@/components/LanguageSelect";
+import { useTranslation } from "react-i18next";
 
 export const UnauthenticatedLayout: React.FC = () => {
+    const { t } = useTranslation();
     const authenticated = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
 
     if (authenticated) {
@@ -25,12 +27,12 @@ export const UnauthenticatedLayout: React.FC = () => {
                 <Toolbar>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         <RouterLink to="/" style={{ textDecoration: "none", color: "inherit" }}>
-                            Abrechnung
+                            {t("app.name")}
                         </RouterLink>
                     </Typography>
                     <LanguageSelect />
                     <Button component={RouterLink} color="inherit" to="/login">
-                        Login
+                        {t("navbar.login")}
                     </Button>
                 </Toolbar>
             </AppBar>

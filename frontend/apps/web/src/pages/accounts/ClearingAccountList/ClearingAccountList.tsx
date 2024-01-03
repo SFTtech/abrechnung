@@ -30,6 +30,7 @@ import { useTitle } from "@/core/utils";
 import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
 import { getAccountLink } from "@/utils";
 import { ClearingAccountListItem } from "./ClearingAccountListItem";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
@@ -39,6 +40,7 @@ const emptyList = [];
 const MAX_ITEMS_PER_PAGE = 40;
 
 export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
@@ -70,7 +72,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
         (currentPage + 1) * MAX_ITEMS_PER_PAGE
     );
 
-    useTitle(`${group.name} - Events`);
+    useTitle(t("events.list.tabTitle", "", { groupName: group.name }));
 
     const [accountDeleteId, setAccountDeleteId] = useState<number | null>(null);
     const showDeleteModal = accountDeleteId !== null;
@@ -112,7 +114,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                             <Input
                                 value={searchValue}
                                 onChange={(e) => setSearchValue(e.target.value)}
-                                placeholder="Search…"
+                                placeholder={t("common.search")}
                                 inputProps={{
                                     "aria-label": "search",
                                 }}
@@ -130,23 +132,23 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                                 }
                             />
                             <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
-                                <InputLabel id="select-sort-by-label">Sort by</InputLabel>
+                                <InputLabel id="select-sort-by-label">{t("common.sortBy")}</InputLabel>
                                 <Select
                                     labelId="select-sort-by-label"
                                     id="select-sort-by"
-                                    label="Sort by"
+                                    label={t("common.sortBy")}
                                     onChange={(evt) => setSortMode(evt.target.value as AccountSortMode)}
                                     value={sortMode}
                                 >
-                                    <MenuItem value="last_changed">Last changed</MenuItem>
-                                    <MenuItem value="name">Name</MenuItem>
-                                    <MenuItem value="description">Description</MenuItem>
-                                    <MenuItem value="dateInfo">Date</MenuItem>
+                                    <MenuItem value="last_changed">{t("common.lastChanged")}</MenuItem>
+                                    <MenuItem value="name">{t("common.name")}</MenuItem>
+                                    <MenuItem value="description">{t("common.description")}</MenuItem>
+                                    <MenuItem value="dateInfo">{t("common.date")}</MenuItem>
                                 </Select>
                             </FormControl>
                             <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
                                 <TagSelector
-                                    label="Filter by tags"
+                                    label={t("common.filterByTags")}
                                     groupId={groupId}
                                     editable={true}
                                     value={tagFilter}
@@ -158,7 +160,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                         </Box>
                         {!isSmallScreen && (
                             <Box sx={{ display: "flex-item" }}>
-                                <Tooltip title="Create Event">
+                                <Tooltip title={t("events.createEvent")}>
                                     <IconButton color="primary" onClick={onCreateEvent}>
                                         <AddIcon />
                                     </IconButton>
@@ -169,7 +171,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                     <Divider />
                     <List>
                         {paginatedAccounts.length === 0 ? (
-                            <Alert severity="info">No Events</Alert>
+                            <Alert severity="info">{t("events.noEvents")}</Alert>
                         ) : (
                             paginatedAccounts.map((account) => (
                                 <ClearingAccountListItem

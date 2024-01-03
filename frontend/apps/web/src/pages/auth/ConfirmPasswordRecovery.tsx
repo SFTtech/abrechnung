@@ -5,6 +5,9 @@ import React, { useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import { z } from "zod";
 import { api } from "@/core/api";
+import i18n from "@/i18n";
+import { Trans, useTranslation } from "react-i18next";
+import { useTitle } from "@/core/utils";
 
 const validationSchema = z
     .object({
@@ -12,15 +15,18 @@ const validationSchema = z
         password2: z.string({ required_error: "please repeat your desired password" }),
     })
     .refine((data) => data.password === data.password2, {
-        message: "passwords don't match",
+        message: i18n.t("common.passwordsDoNotMatch"),
         path: ["password2"],
     });
 type FormSchema = z.infer<typeof validationSchema>;
 
 export const ConfirmPasswordRecovery: React.FC = () => {
+    const { t } = useTranslation();
     const [status, setStatus] = useState("idle");
     const [error, setError] = useState(null);
     const { token } = useParams();
+
+    useTitle(t("auth.confirmPasswordRecovery.tabTitle"));
 
     const handleSubmit = (values: FormSchema, { setSubmitting, resetForm }: FormikHelpers<FormSchema>) => {
         api.client.auth
@@ -50,7 +56,7 @@ export const ConfirmPasswordRecovery: React.FC = () => {
                 }}
             >
                 <Typography component="h1" variant="h5">
-                    Confirm Password Recovery
+                    {t("auth.confirmPasswordRecovery.header")}
                 </Typography>
                 {error && (
                     <Alert sx={{ mt: 4 }} severity="error">
@@ -59,11 +65,13 @@ export const ConfirmPasswordRecovery: React.FC = () => {
                 )}
                 {status === "success" ? (
                     <Alert sx={{ mt: 4 }} severity="success">
-                        Password recovery successful, please{" "}
-                        <Link to="/login" component={RouterLink}>
-                            login
-                        </Link>{" "}
-                        using your new password.
+                        <Trans i18nKey="auth.confirmPasswordRecovery.successfulLinkToLogin">
+                            Password recovery successful, please
+                            <Link to="/login" component={RouterLink}>
+                                login
+                            </Link>
+                            using your new password.
+                        </Trans>
                     </Alert>
                 ) : (
                     <Formik
@@ -90,7 +98,7 @@ export const ConfirmPasswordRecovery: React.FC = () => {
                                     autoFocus
                                     type="password"
                                     name="password"
-                                    label="Password"
+                                    label={t("common.password")}
                                     onBlur={handleBlur}
                                     onChange={handleChange}
                                     value={values.password}
@@ -104,7 +112,7 @@ export const ConfirmPasswordRecovery: React.FC = () => {
                                     fullWidth
                                     type="password"
                                     name="password2"
-                                    label="Repeat Password"
+                                    label={t("common.repeatPassword")}
                                     onBlur={handleBlur}
                                     onChange={handleChange}
                                     value={values.password2}
@@ -121,7 +129,7 @@ export const ConfirmPasswordRecovery: React.FC = () => {
                                     disabled={isSubmitting}
                                     sx={{ margin: "3 0 2 0" }}
                                 >
-                                    Confirm
+                                    {t("common.confirm")}
                                 </Button>
                             </Form>
                         )}
@@ -131,5 +139,3 @@ export const ConfirmPasswordRecovery: React.FC = () => {
         </Container>
     );
 };
-
-export default ConfirmPasswordRecovery;

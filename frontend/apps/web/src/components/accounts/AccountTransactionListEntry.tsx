@@ -7,6 +7,7 @@ import { balanceColor } from "@/core/utils";
 import { selectGroupSlice, selectTransactionSlice, useAppSelector } from "@/store";
 import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 import ListItemLink from "../style/ListItemLink";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transactionId, accountId }) => {
+    const { t } = useTranslation();
     const balanceEffect = useAppSelector((state) =>
         selectTransactionBalanceEffect({ state: selectTransactionSlice(state), groupId, transactionId })
     );
@@ -29,11 +31,11 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transact
         <ListItemLink to={`/groups/${groupId}/transactions/${transaction.id}`}>
             <ListItemAvatar sx={{ minWidth: { xs: "40px", md: "56px" } }}>
                 {transaction.type === "purchase" ? (
-                    <Tooltip title="Purchase">
+                    <Tooltip title={t("transactions.purchase")}>
                         <PurchaseIcon color="primary" />
                     </Tooltip>
                 ) : transaction.type === "transfer" ? (
-                    <Tooltip title="Money Transfer">
+                    <Tooltip title={t("transactions.transfer")}>
                         <TransferIcon color="primary" />
                     </Tooltip>
                 ) : (
@@ -67,13 +69,12 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transact
                     </Typography>
                     <br />
                     <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
-                        last changed:{" "}
-                        {DateTime.fromISO(transaction.last_changed).toLocaleString(DateTime.DATETIME_FULL)}
+                        {t("common.lastChangedWithTime", "", {
+                            datetime: DateTime.fromISO(transaction.last_changed).toLocaleString(DateTime.DATETIME_FULL),
+                        })}
                     </Typography>
                 </Typography>
             </ListItemText>
         </ListItemLink>
     );
 };
-
-export default AccountTransactionListEntry;

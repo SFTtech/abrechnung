@@ -5,12 +5,14 @@ import { toast } from "react-toastify";
 import { Loading } from "@/components/style/Loading";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
+import { Trans, useTranslation } from "react-i18next";
 
 export const ConfirmEmailChange: React.FC = () => {
+    const { t } = useTranslation();
     const [status, setStatus] = useState("idle");
     const { token } = useParams();
 
-    useTitle("Abrechnung - Confirm E-Mail Change");
+    useTitle(t("auth.confirmEmailChange.tabTitle"));
 
     const confirmEmail = (e) => {
         e.preventDefault();
@@ -28,7 +30,7 @@ export const ConfirmEmailChange: React.FC = () => {
     if (status === "success") {
         return (
             <Typography component="h4" variant="h5">
-                Confirmation successful
+                {t("auth.confirmEmailChange.confirmSuccessful")}
             </Typography>
         );
     }
@@ -36,21 +38,21 @@ export const ConfirmEmailChange: React.FC = () => {
     return (
         <div>
             <Typography component="h4" variant="h5">
-                Confirm your new E-Mail
+                {t("auth.confirmEmailChange.header")}
             </Typography>
             {status === "loading" ? (
                 <Loading />
             ) : (
                 <p>
-                    Click{" "}
-                    <Button color="primary" onClick={confirmEmail}>
-                        here
-                    </Button>{" "}
-                    to confirm your new email.
+                    <Trans i18nKey="auth.confirmEmailChange.clickHereToConfirm">
+                        Click
+                        <Button color="primary" onClick={confirmEmail}>
+                            here
+                        </Button>
+                        to confirm your new email.
+                    </Trans>
                 </p>
             )}
         </div>
     );
 };
-
-export default ConfirmEmailChange;

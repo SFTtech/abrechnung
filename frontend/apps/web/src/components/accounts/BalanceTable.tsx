@@ -3,12 +3,14 @@ import { selectAccountBalances, selectGroupById, selectSortedAccounts } from "@a
 import { DataGrid, GridColDef, GridToolbar } from "@mui/x-data-grid";
 import React from "react";
 import { renderCurrency } from "../style/datagrid/renderCurrency";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
 }
 
 export const BalanceTable: React.FC<Props> = ({ groupId }) => {
+    const { t } = useTranslation();
     const personalAccounts = useAppSelector((state) =>
         selectSortedAccounts({ state: selectAccountSlice(state), groupId, type: "personal", sortMode: "name" })
     );
@@ -32,17 +34,17 @@ export const BalanceTable: React.FC<Props> = ({ groupId }) => {
         { field: "description", headerName: "Description", width: 200 },
         {
             field: "totalConsumed",
-            headerName: "Received / Consumed",
+            headerName: t("balanceTable.totalConsumed"),
             renderCell: renderCurrency(group.currency_symbol, "red"),
         },
         {
             field: "totalPaid",
-            headerName: "Paid",
+            headerName: t("balanceTable.totalPaid"),
             renderCell: renderCurrency(group.currency_symbol, "green"),
         },
         {
             field: "balance",
-            headerName: "Balance",
+            headerName: t("balanceTable.balance"),
             renderCell: renderCurrency(group.currency_symbol),
         },
     ];
@@ -69,5 +71,3 @@ export const BalanceTable: React.FC<Props> = ({ groupId }) => {
         </div>
     );
 };
-
-export default BalanceTable;

@@ -2,6 +2,7 @@ import { DatePicker } from "@mui/x-date-pickers";
 import { DateTime } from "luxon";
 import * as React from "react";
 import { DisabledTextField } from "./style/DisabledTextField";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     value: string;
@@ -12,6 +13,7 @@ interface Props {
 }
 
 export const DateInput: React.FC<Props> = ({ value, onChange, helperText, error, disabled = false }) => {
+    const { t } = useTranslation();
     const handleChange = (value: DateTime) => {
         if (value.toISODate()) {
             onChange(value.toISODate());
@@ -21,7 +23,7 @@ export const DateInput: React.FC<Props> = ({ value, onChange, helperText, error,
     if (disabled) {
         return (
             <DisabledTextField
-                label="Date"
+                label={t("common.date")}
                 variant="standard"
                 fullWidth
                 value={DateTime.fromISO(value).toISODate()}
@@ -32,7 +34,7 @@ export const DateInput: React.FC<Props> = ({ value, onChange, helperText, error,
 
     return (
         <DatePicker
-            label="Date"
+            label={t("common.date")}
             format="yyyy-MM-dd"
             value={DateTime.fromISO(value)}
             onChange={handleChange}

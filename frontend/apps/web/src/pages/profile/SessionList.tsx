@@ -18,13 +18,15 @@ import {
 import { DateTime } from "luxon";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import Loading from "../../components/style/Loading";
-import { MobilePaper } from "../../components/style/mobile";
-import { api } from "../../core/api";
-import { useTitle } from "../../core/utils";
-import { selectAuthSlice, useAppSelector } from "../../store";
+import Loading from "@/components/style/Loading";
+import { MobilePaper } from "@/components/style/mobile";
+import { api } from "@/core/api";
+import { useTitle } from "@/core/utils";
+import { selectAuthSlice, useAppSelector } from "@/store";
+import { useTranslation } from "react-i18next";
 
 export const SessionList: React.FC = () => {
+    const { t } = useTranslation();
     // TODO: fix editing functions
     const [editedSessions, setEditedSessions] = useState({});
     const [sessionToDelete, setSessionToDelete] = useState({
@@ -33,7 +35,7 @@ export const SessionList: React.FC = () => {
     });
     const profile = useAppSelector((state) => selectProfile({ state: selectAuthSlice(state) }));
 
-    useTitle("Abrechnung - Sessions");
+    useTitle(t("profile.sessions.tabTitle"));
 
     const editSession = (id) => {
         if (editedSessions[id] === undefined) {
@@ -95,7 +97,7 @@ export const SessionList: React.FC = () => {
     return (
         <MobilePaper>
             <Typography component="h3" variant="h5">
-                Login Sessions
+                {t("profile.sessions.header")}
             </Typography>
             {profile === undefined ? (
                 <Loading />
@@ -161,29 +163,29 @@ export const SessionList: React.FC = () => {
                 </List>
             )}
             <Dialog open={sessionToDelete.show} onClose={closeDeleteSessionModal}>
-                <DialogTitle>Delete Session?</DialogTitle>
+                <DialogTitle>{t("profile.sessions.confirmDeleteSession")}</DialogTitle>
 
                 <DialogContent>
                     <DialogContentText>
                         {sessionToDelete.toDelete !== null
-                            ? `Are you sure you want to delete session ${profile?.sessions.find(
-                                  (session) => session.id === sessionToDelete.toDelete
-                              )?.name}`
+                            ? t("profile.sessions.areYouSureToDelete", "", {
+                                  sessionName: profile?.sessions.find(
+                                      (session) => session.id === sessionToDelete.toDelete
+                                  )?.name,
+                              })
                             : null}
                     </DialogContentText>
                 </DialogContent>
 
                 <DialogActions>
                     <Button color="secondary" onClick={confirmDeleteSession}>
-                        Yes pls
+                        {t("common.yes")}
                     </Button>
                     <Button color="primary" onClick={closeDeleteSessionModal}>
-                        No
+                        {t("common.no")}
                     </Button>
                 </DialogActions>
             </Dialog>
         </MobilePaper>
     );
 };
-
-export default SessionList;

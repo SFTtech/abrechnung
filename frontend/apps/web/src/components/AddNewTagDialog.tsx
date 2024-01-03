@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Dialog, DialogTitle, DialogContent, TextField, DialogActions, Button } from "@mui/material";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     open: boolean;
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export const AddNewTagDialog: React.FC<Props> = ({ open, onCreate, onClose }) => {
+    const { t } = useTranslation();
     const [tag, setTag] = React.useState("");
     const [error, setError] = React.useState(false);
 
@@ -43,12 +45,12 @@ export const AddNewTagDialog: React.FC<Props> = ({ open, onCreate, onClose }) =>
 
     return (
         <Dialog open={open} onClose={handleCloseDialog}>
-            <DialogTitle>Add new tag</DialogTitle>
+            <DialogTitle>{t("common.addNewTag")}</DialogTitle>
             <DialogContent>
                 <TextField
                     autoFocus
                     fullWidth
-                    label="Tag name"
+                    label={t("common.name")}
                     variant="standard"
                     value={tag}
                     error={error}
@@ -59,10 +61,10 @@ export const AddNewTagDialog: React.FC<Props> = ({ open, onCreate, onClose }) =>
             </DialogContent>
             <DialogActions>
                 <Button onClick={handleSave} color="primary">
-                    Save
+                    {t("common.save")}
                 </Button>
                 <Button onClick={handleCloseDialog} color="error">
-                    Cancel
+                    {t("common.cancel")}
                 </Button>
             </DialogActions>
         </Dialog>

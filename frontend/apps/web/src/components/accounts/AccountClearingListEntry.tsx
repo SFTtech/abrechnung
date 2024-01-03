@@ -7,6 +7,8 @@ import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
 import { getAccountLink } from "@/utils";
 import { ClearingAccountIcon } from "../style/AbrechnungIcons";
 import ListItemLink from "../style/ListItemLink";
+import { useTranslation } from "react-i18next";
+import { useFormatCurrency } from "@/hooks";
 
 interface Props {
     groupId: number;
@@ -15,6 +17,8 @@ interface Props {
 }
 
 export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, clearingAccountId }) => {
+    const { t } = useTranslation();
+    const formatCurrency = useFormatCurrency();
     const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
     const currency_symbol = useAppSelector((state) =>
         selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
@@ -56,17 +60,18 @@ export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, 
                                 balanceColor(balances[clearingAccount.id]?.clearingResolution[accountId], theme),
                         }}
                     >
-                        {balances[clearingAccount.id]?.clearingResolution[accountId]?.toFixed(2)} {currency_symbol}
+                        {formatCurrency(balances[clearingAccount.id]?.clearingResolution[accountId], currency_symbol)}
                     </Typography>
                     <br />
                     <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
-                        last changed:{" "}
-                        {DateTime.fromISO(clearingAccount.last_changed).toLocaleString(DateTime.DATETIME_FULL)}
+                        {t("common.lastChangedWithTime", "", {
+                            datetime: DateTime.fromISO(clearingAccount.last_changed).toLocaleString(
+                                DateTime.DATETIME_FULL
+                            ),
+                        })}
                     </Typography>
                 </Typography>
             </ListItemText>
         </ListItemLink>
     );
 };
-
-export default AccountClearingListEntry;

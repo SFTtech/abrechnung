@@ -60,5 +60,3 @@ export const SidebarGroupList: React.FC<Props> = ({ activeGroupId }) => {
         </>
     );
 };
-
-export default SidebarGroupList;

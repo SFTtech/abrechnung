@@ -91,5 +91,3 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
         </ListItem>
     );
 };
-
-export default PersonalAccountListItem;

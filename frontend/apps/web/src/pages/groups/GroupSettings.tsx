@@ -24,6 +24,7 @@ import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
 import { toFormikValidationSchema } from "@abrechnung/utils";
+import { useTranslation } from "react-i18next";
 
 const validationSchema = z.object({
     name: z.string({ required_error: "group name is required" }),
@@ -40,6 +41,7 @@ interface Props {
 }
 
 export const GroupSettings: React.FC<Props> = ({ groupId }) => {
+    const { t } = useTranslation();
     const [showLeaveModal, setShowLeaveModal] = useState(false);
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
@@ -49,7 +51,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
 
     const [isEditing, setIsEditing] = useState(false);
 
-    useTitle(`${group.name} - Settings`);
+    useTitle(t("groups.settings.tabTitle", "", { groupName: group.name }));
 
     const startEdit = () => {
         setIsEditing(true);
@@ -98,9 +100,9 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
     return (
         <MobilePaper>
             {permissions.isOwner ? (
-                <Alert severity="info">You are an owner of this group</Alert>
+                <Alert severity="info">{t("groups.settings.ownerDisclaimer")}</Alert>
             ) : !permissions.canWrite ? (
-                <Alert severity="info">You only have read access to this group</Alert>
+                <Alert severity="info">{t("groups.settings.readAccessDisclaimer")}</Alert>
             ) : null}
 
             <Formik
@@ -123,7 +125,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                             required
                             fullWidth
                             type="text"
-                            label="Name"
+                            label={t("common.name")}
                             name="name"
                             disabled={!permissions.canWrite || !isEditing}
                             onBlur={handleBlur}
@@ -137,7 +139,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                             fullWidth
                             type="text"
                             name="description"
-                            label="Description"
+                            label={t("common.description")}
                             disabled={!permissions.canWrite || !isEditing}
                             onBlur={handleBlur}
                             onChange={handleChange}
@@ -150,7 +152,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                             fullWidth
                             type="text"
                             name="currency_symbol"
-                            label="Currency"
+                            label={t("common.currency")}
                             disabled={!permissions.canWrite || !isEditing}
                             onBlur={handleBlur}
                             onChange={handleChange}
@@ -163,7 +165,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                             fullWidth
                             type="text"
                             name="terms"
-                            label="Terms"
+                            label={t("groups.settings.terms")}
                             disabled={!permissions.canWrite || !isEditing}
                             onBlur={handleBlur}
                             onChange={handleChange}
@@ -180,7 +182,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                                         checked={values.addUserAccountOnJoin}
                                     />
                                 }
-                                label="Automatically add accounts for newly joined group members"
+                                label={t("groups.settings.autoAddAccounts")}
                             />
                         </FormGroup>
 
@@ -196,7 +198,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                                             disabled={isSubmitting}
                                             startIcon={<Save />}
                                         >
-                                            Save
+                                            {t("common.save")}
                                         </Button>
                                         <Button
                                             variant="contained"
@@ -206,7 +208,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                                             startIcon={<Cancel />}
                                             sx={{ ml: 1 }}
                                         >
-                                            Cancel
+                                            {t("common.cancel")}
                                         </Button>
                                     </>
                                 )}
@@ -218,12 +220,12 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                                         onClick={startEdit}
                                         startIcon={<Edit />}
                                     >
-                                        Edit
+                                        {t("common.edit")}
                                     </Button>
                                 )}
                             </div>
                             <Button variant="contained" onClick={() => setShowLeaveModal(true)}>
-                                Leave Group
+                                {t("groups.settings.leaveGroup")}
                             </Button>
                         </Grid>
                     </Form>
@@ -240,26 +242,21 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
             {/*</List>*/}
 
             <Dialog open={showLeaveModal} onClose={() => setShowLeaveModal(false)}>
-                <DialogTitle>Leave Group</DialogTitle>
+                <DialogTitle>{t("groups.settings.leaveGroup")}</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        <span>
-                            Are you sure you want to leave the group {group.name}. If you are the last member to leave
-                            this group it will be deleted and its transaction will be lost forever...
-                        </span>
+                        <span>{t("groups.settings.leaveGroupConfirm", "", { group })}</span>
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
                     <Button color="secondary" onClick={confirmLeaveGroup}>
-                        Yes pls
+                        {t("common.yes")}
                     </Button>
                     <Button color="primary" onClick={() => setShowLeaveModal(false)}>
-                        No
+                        {t("common.no")}
                     </Button>
                 </DialogActions>
             </Dialog>
         </MobilePaper>
     );
 };
-
-export default GroupSettings;

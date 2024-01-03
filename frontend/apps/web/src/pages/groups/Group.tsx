@@ -12,8 +12,8 @@ import React, { Suspense } from "react";
 import { batch } from "react-redux";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import Balances from "../accounts/Balances";
-import Loading from "../../components/style/Loading";
+import { Balances } from "../accounts/Balances";
+import { Loading } from "../../components/style/Loading";
 import { api, ws } from "../../core/api";
 import {
     selectAccountSlice,
@@ -27,10 +27,10 @@ import { PersonalAccountList } from "../accounts/PersonalAccountList";
 import { ClearingAccountList } from "../accounts/ClearingAccountList";
 import { TransactionList } from "../transactions/TransactionList";
 import { SettlementPlanDisplay } from "../accounts/SettlementPlanDisplay";
-import GroupInvites from "./GroupInvites";
-import GroupLog from "./GroupLog";
-import GroupMemberList from "./GroupMemberList";
-import GroupSettings from "./GroupSettings";
+import { GroupInvites } from "./GroupInvites";
+import { GroupLog } from "./GroupLog";
+import { GroupMemberList } from "./GroupMemberList";
+import { GroupSettings } from "./GroupSettings";
 import { TransactionDetail } from "../transactions/TransactionDetail";
 
 export const Group: React.FC = () => {

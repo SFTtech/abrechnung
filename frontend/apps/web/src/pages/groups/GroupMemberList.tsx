@@ -27,16 +27,18 @@ import { Form, Formik } from "formik";
 import { DateTime } from "luxon";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { MobilePaper } from "../../components/style/mobile";
-import { api } from "../../core/api";
-import { useTitle } from "../../core/utils";
-import { selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "../../store";
+import { MobilePaper } from "@/components/style/mobile";
+import { api } from "@/core/api";
+import { useTitle } from "@/core/utils";
+import { selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
 }
 
 export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const currentUserId = useAppSelector((state) => selectCurrentUserId({ state: selectAuthSlice(state) }));
     const members = useAppSelector((state) => selectGroupMembers({ state: selectGroupSlice(state), groupId }));
@@ -45,7 +47,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
 
     const [memberToEdit, setMemberToEdit] = useState<GroupMember | undefined>(undefined);
 
-    useTitle(`${group.name} - Members`);
+    useTitle(t("groups.memberList.tabTitle", "", { groupName: group.name }));
 
     const handleEditMemberSubmit = (values, { setSubmitting }) => {
         dispatch(
@@ -57,7 +59,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
             })
         )
             .unwrap()
-            .then((result) => {
+            .then(() => {
                 setSubmitting(false);
                 setMemberToEdit(undefined);
                 toast.success("Successfully updated group member permissions");
@@ -106,7 +108,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
                                                 sx={{ mr: 1 }}
                                                 component="span"
                                                 color="primary"
-                                                label="owner"
+                                                label={t("groups.memberList.owner")}
                                                 variant="outlined"
                                             />
                                         ) : member.can_write ? (
@@ -115,20 +117,18 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
                                                 sx={{ mr: 1 }}
                                                 component="span"
                                                 color="primary"
-                                                label="editor"
+                                                label={t("groups.memberList.editor")}
                                                 variant="outlined"
                                             />
                                         ) : null}
-                                        {member.user_id === currentUserId ? (
+                                        {member.user_id === currentUserId && (
                                             <Chip
                                                 size="small"
                                                 sx={{ mr: 1 }}
                                                 component="span"
                                                 color="primary"
-                                                label="it's you"
+                                                label={t("groups.memberList.itsYou")}
                                             />
-                                        ) : (
-                                            ""
                                         )}
                                     </>
                                 }
@@ -136,25 +136,27 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
                                     <>
                                         {member.invited_by && (
                                             <small className="text-muted">
-                                                invited by {getMemberUsername(member.invited_by)}
-                                                {", "}
+                                                {t("groups.memberList.invitedBy", "", {
+                                                    username: getMemberUsername(member.invited_by),
+                                                })}
                                             </small>
                                         )}
                                         <small className="text-muted">
-                                            joined{" "}
-                                            {DateTime.fromISO(member.joined_at).toLocaleString(DateTime.DATETIME_FULL)}
+                                            {t("groups.memberList.joined", "", {
+                                                datetime: DateTime.fromISO(member.joined_at).toLocaleString(
+                                                    DateTime.DATETIME_FULL
+                                                ),
+                                            })}
                                         </small>
                                     </>
                                 }
                             />
-                            {permissions.isOwner || permissions.canWrite ? (
+                            {(permissions.isOwner || permissions.canWrite) && (
                                 <ListItemSecondaryAction>
                                     <IconButton onClick={() => openEditMemberModal(member.user_id)}>
                                         <Edit />
                                     </IconButton>
                                 </ListItemSecondaryAction>
-                            ) : (
-                                ""
                             )}
                         </ListItem>
                     ))
@@ -172,7 +174,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
                         onSubmit={handleEditMemberSubmit}
                         enableReinitialize={true}
                     >
-                        {({ values, handleBlur, handleChange, isSubmitting, setFieldValue }) => (
+                        {({ values, handleBlur, isSubmitting, setFieldValue }) => (
                             <Form>
                                 <FormControlLabel
                                     control={
@@ -183,7 +185,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
                                             checked={values.canWrite}
                                         />
                                     }
-                                    label="Can Write"
+                                    label={t("groups.memberList.canWrite")}
                                 />
                                 <FormControlLabel
                                     control={
@@ -194,16 +196,16 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
                                             checked={values.isOwner}
                                         />
                                     }
-                                    label="Is Owner"
+                                    label={t("groups.memberList.isOwner")}
                                 />
 
                                 {isSubmitting && <LinearProgress />}
                                 <DialogActions>
                                     <Button type="submit" color="primary">
-                                        Save
+                                        {t("common.save")}
                                     </Button>
                                     <Button color="error" onClick={closeEditMemberModal}>
-                                        Close
+                                        {t("common.cancel")}
                                     </Button>
                                 </DialogActions>
                             </Form>
@@ -214,5 +216,3 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
         </MobilePaper>
     );
 };
-
-export default GroupMemberList;
