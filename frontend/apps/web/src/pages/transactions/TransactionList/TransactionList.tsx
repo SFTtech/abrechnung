@@ -37,6 +37,7 @@ import { MobilePaper } from "@/components/style/mobile";
 import { useTitle } from "@/core/utils";
 import { selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
 import { TransactionListItem } from "./TransactionListItem";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
@@ -46,6 +47,7 @@ const emptyList = [];
 const MAX_ITEMS_PER_PAGE = 40;
 
 export const TransactionList: React.FC<Props> = ({ groupId }) => {
+    const { t } = useTranslation();
     const theme: Theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
@@ -77,7 +79,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
         (currentPage + 1) * MAX_ITEMS_PER_PAGE
     );
 
-    useTitle(`${group.name} - Transactions`);
+    useTitle(t("transactions.list.tabTitle", "", { groupName: group.name }));
 
     const onCreatePurchase = () => {
         dispatch(createTransaction({ groupId, type: "purchase" }))
@@ -116,7 +118,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                             <Input
                                 value={searchValue}
                                 onChange={(e) => setSearchValue(e.target.value)}
-                                placeholder="Search…"
+                                placeholder={t("common.search")}
                                 inputProps={{
                                     "aria-label": "search",
                                 }}
@@ -134,23 +136,23 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                                 }
                             />
                             <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
-                                <InputLabel id="select-sort-by-label">Sort by</InputLabel>
+                                <InputLabel id="select-sort-by-label">{t("common.sortBy")}</InputLabel>
                                 <Select
                                     labelId="select-sort-by-label"
                                     id="select-sort-by"
-                                    label="Sort by"
+                                    label={t("common.sortBy")}
                                     onChange={(evt) => setSortMode(evt.target.value as TransactionSortMode)}
                                     value={sortMode}
                                 >
-                                    <MenuItem value="last_changed">Last changed</MenuItem>
-                                    <MenuItem value="description">Description</MenuItem>
-                                    <MenuItem value="value">Value</MenuItem>
-                                    <MenuItem value="billed_at">Date</MenuItem>
+                                    <MenuItem value="last_changed">{t("common.lastChanged")}</MenuItem>
+                                    <MenuItem value="description">{t("common.description")}</MenuItem>
+                                    <MenuItem value="value">{t("common.value")}</MenuItem>
+                                    <MenuItem value="billed_at">{t("common.date")}</MenuItem>
                                 </Select>
                             </FormControl>
                             <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
                                 <TagSelector
-                                    label="Filter by tags"
+                                    label={t("common.filterByTags")}
                                     groupId={groupId}
                                     editable={true}
                                     value={tagFilter}
@@ -165,12 +167,12 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                                 <div style={{ padding: "8px" }}>
                                     <Add color="primary" />
                                 </div>
-                                <Tooltip title="Create Purchase">
+                                <Tooltip title={t("transactions.createPurchase")}>
                                     <IconButton color="primary" onClick={onCreatePurchase}>
                                         <PurchaseIcon />
                                     </IconButton>
                                 </Tooltip>
-                                <Tooltip title="Create Transfer">
+                                <Tooltip title={t("transactions.createTransfer")}>
                                     <IconButton color="primary" onClick={onCreateTransfer}>
                                         <TransferIcon />
                                     </IconButton>
@@ -181,7 +183,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                     <Divider />
                     <List>
                         {paginatedTransactions.length === 0 ? (
-                            <Alert severity="info">No Transactions</Alert>
+                            <Alert severity="info">{t("transactions.noTransactions")}</Alert>
                         ) : (
                             paginatedTransactions.map((transaction) => (
                                 <TransactionListItem
@@ -208,7 +210,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
             </MobilePaper>
             {permissions.canWrite && (
                 <SpeedDial
-                    ariaLabel="Create Account"
+                    ariaLabel={t("transactions.createTransaction")}
                     sx={{ position: "fixed", bottom: 20, right: 20 }}
                     icon={<SpeedDialIcon />}
                     // onClose={() => setSpeedDialOpen(false)}
@@ -218,13 +220,13 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                 >
                     <SpeedDialAction
                         icon={<PurchaseIcon />}
-                        tooltipTitle="Purchase"
+                        tooltipTitle={t("transactions.purchase")}
                         tooltipOpen
                         onClick={onCreatePurchase}
                     />
                     <SpeedDialAction
                         icon={<TransferIcon />}
-                        tooltipTitle="Transfer"
+                        tooltipTitle={t("transactions.transfer")}
                         tooltipOpen
                         onClick={onCreateTransfer}
                     />
@@ -233,5 +235,3 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
         </>
     );
 };
-
-export default TransactionList;

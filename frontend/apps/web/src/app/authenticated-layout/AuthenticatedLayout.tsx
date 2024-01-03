@@ -1,10 +1,10 @@
 import * as React from "react";
 import { selectIsAuthenticated } from "@abrechnung/redux";
 import { Link as RouterLink, Navigate, Outlet, useLocation, useParams } from "react-router-dom";
-import { selectAuthSlice, useAppSelector } from "../../store";
+import { selectAuthSlice, useAppSelector } from "@/store";
 import { useRecoilValue } from "recoil";
-import ListItemLink from "../../components/style/ListItemLink";
-import SidebarGroupList from "../../app/authenticated-layout/SidebarGroupList";
+import { ListItemLink } from "@/components/style/ListItemLink";
+import { SidebarGroupList } from "@/app/authenticated-layout/SidebarGroupList";
 import {
     AppBar,
     Box,
@@ -40,17 +40,19 @@ import {
     Paid,
     People,
 } from "@mui/icons-material";
-import { config } from "../../state/config";
+import { config } from "@/state/config";
 import { useTheme } from "@mui/material/styles";
-import { Banner } from "../../components/style/Banner";
-import Loading from "../../components/style/Loading";
+import { Banner } from "@/components/style/Banner";
+import { Loading } from "@/components/style/Loading";
 import styles from "./AuthenticatedLayout.module.css";
 import { LanguageSelect } from "@/components/LanguageSelect";
+import { useTranslation } from "react-i18next";
 
 const drawerWidth = 240;
 const AUTH_FALLBACK = "/login";
 
 export const AuthenticatedLayout: React.FC = () => {
+    const { t } = useTranslation();
     const authenticated = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
     const location = useLocation();
     const params = useParams();
@@ -94,7 +96,7 @@ export const AuthenticatedLayout: React.FC = () => {
                             <ListItemIcon>
                                 <Paid />
                             </ListItemIcon>
-                            <ListItemText primary="Transactions" />
+                            <ListItemText primary={t("navbar.transactions")} />
                         </ListItemLink>
                         <ListItemLink
                             to={`/groups/${groupId}/events`}
@@ -103,7 +105,7 @@ export const AuthenticatedLayout: React.FC = () => {
                             <ListItemIcon>
                                 <EventIcon />
                             </ListItemIcon>
-                            <ListItemText primary="Events" />
+                            <ListItemText primary={t("navbar.events")} />
                         </ListItemLink>
                         <ListItemLink
                             to={`/groups/${groupId}/balances`}
@@ -112,7 +114,7 @@ export const AuthenticatedLayout: React.FC = () => {
                             <ListItemIcon>
                                 <BarChart />
                             </ListItemIcon>
-                            <ListItemText primary="Balances" />
+                            <ListItemText primary={t("navbar.balances")} />
                         </ListItemLink>
                         <ListItemLink
                             to={`/groups/${groupId}/accounts`}
@@ -121,7 +123,7 @@ export const AuthenticatedLayout: React.FC = () => {
                             <ListItemIcon>
                                 <AccountBalance />
                             </ListItemIcon>
-                            <ListItemText primary="Accounts" />
+                            <ListItemText primary={t("navbar.accounts")} />
                         </ListItemLink>
                         <ListItemLink
                             to={`/groups/${groupId}/detail`}
@@ -130,7 +132,7 @@ export const AuthenticatedLayout: React.FC = () => {
                             <ListItemIcon>
                                 <AdminPanelSettings />
                             </ListItemIcon>
-                            <ListItemText primary="Group Settings" />
+                            <ListItemText primary={t("navbar.groupSettings")} />
                         </ListItemLink>
                         <ListItemLink
                             to={`/groups/${groupId}/members`}
@@ -139,7 +141,7 @@ export const AuthenticatedLayout: React.FC = () => {
                             <ListItemIcon>
                                 <People />
                             </ListItemIcon>
-                            <ListItemText primary="Group Members" />
+                            <ListItemText primary={t("navbar.groupMembers")} />
                         </ListItemLink>
                         <ListItemLink
                             to={`/groups/${groupId}/invites`}
@@ -148,7 +150,7 @@ export const AuthenticatedLayout: React.FC = () => {
                             <ListItemIcon>
                                 <Mail />
                             </ListItemIcon>
-                            <ListItemText primary="Group Invites" />
+                            <ListItemText primary={t("navbar.groupInvites")} />
                         </ListItemLink>
                         <ListItemLink
                             to={`/groups/${groupId}/log`}
@@ -157,7 +159,7 @@ export const AuthenticatedLayout: React.FC = () => {
                             <ListItemIcon>
                                 <Message />
                             </ListItemIcon>
-                            <ListItemText primary="Group Log" />
+                            <ListItemText primary={t("navbar.groupLog")} />
                         </ListItemLink>
                         <Divider />
                     </List>
@@ -173,7 +175,7 @@ export const AuthenticatedLayout: React.FC = () => {
             >
                 {cfg.imprintURL && (
                     <Link href={cfg.imprintURL} target="_blank" sx={{ mr: 2 }}>
-                        imprint
+                        {t("navbar.imprint")}
                     </Link>
                 )}
                 <Tooltip title="Source Code">
@@ -213,7 +215,7 @@ export const AuthenticatedLayout: React.FC = () => {
                     </IconButton>
                     <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
                         <RouterLink to="/" style={{ textDecoration: "none", color: "inherit" }}>
-                            Abrechnung
+                            {t("app.name")}
                         </RouterLink>
                     </Typography>
                     <div>
@@ -243,26 +245,26 @@ export const AuthenticatedLayout: React.FC = () => {
                             onClose={handleDotsMenuClose}
                         >
                             <MenuItem component={RouterLink} to="/profile">
-                                Profile
+                                {t("navbar.profile")}
                             </MenuItem>
                             <MenuItem component={RouterLink} to="/profile/settings">
-                                Settings
+                                {t("navbar.settings")}
                             </MenuItem>
                             <MenuItem component={RouterLink} to="/profile/sessions">
-                                Sessions
+                                {t("navbar.sessions")}
                             </MenuItem>
                             <MenuItem component={RouterLink} to="/profile/change-email">
-                                Change E-Mail
+                                {t("navbar.changeEmail")}
                             </MenuItem>
                             <MenuItem component={RouterLink} to="/profile/change-password">
-                                Change Password
+                                {t("navbar.changePassword")}
                             </MenuItem>
                             <Divider />
                             <MenuItem component={RouterLink} to="/logout">
                                 <ListItemIcon>
                                     <Logout fontSize="small" />
                                 </ListItemIcon>
-                                <ListItemText>Sign out</ListItemText>
+                                <ListItemText>{t("navbar.signOut")}</ListItemText>
                             </MenuItem>
                         </Menu>
                     </div>

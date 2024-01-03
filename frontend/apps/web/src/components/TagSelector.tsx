@@ -5,6 +5,7 @@ import * as React from "react";
 import { useAppSelector } from "@/store";
 import { AddNewTagDialog } from "./AddNewTagDialog";
 import { DisabledTextField } from "./style/DisabledTextField";
+import { useTranslation } from "react-i18next";
 
 interface Props extends Omit<TextFieldProps, "value" | "onChange" | "disabled" | "select" | "SelectProps"> {
     groupId: number;
@@ -26,6 +27,7 @@ export const TagSelector: React.FC<Props> = ({
     addCreateNewOption = true,
     ...props
 }) => {
+    const { t } = useTranslation();
     const [addTagDialogOpen, setAddTagDialogOpen] = React.useState(false);
 
     const possibleTags = useAppSelector((state) => selectTagsInGroup({ state, groupId }));
@@ -36,7 +38,6 @@ export const TagSelector: React.FC<Props> = ({
         }
         const newTags = event.target.value;
         if (newTags.indexOf(CREATE_TAG) > -1) {
-            console.log("add new tag");
             openAddTagDialog();
             return;
         }
@@ -86,7 +87,7 @@ export const TagSelector: React.FC<Props> = ({
                         <ListItemIcon>
                             <AddIcon color="primary" />
                         </ListItemIcon>
-                        <ListItemText>Add new tag</ListItemText>
+                        <ListItemText>{t("common.addNewTag")}</ListItemText>
                     </MenuItem>
                 )}
             </DisabledTextField>

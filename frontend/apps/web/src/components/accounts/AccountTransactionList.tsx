@@ -2,10 +2,10 @@ import { selectClearingAccountsInvolvingAccounts, selectTransactionsInvolvingAcc
 import { Account, Transaction } from "@abrechnung/types";
 import { Alert, List } from "@mui/material";
 import { DateTime } from "luxon";
-import React from "react";
+import * as React from "react";
 import { selectAccountSlice, selectTransactionSlice, useAppSelector } from "@/store";
-import AccountClearingListEntry from "./AccountClearingListEntry";
-import AccountTransactionListEntry from "./AccountTransactionListEntry";
+import { AccountClearingListEntry } from "./AccountClearingListEntry";
+import { AccountTransactionListEntry } from "./AccountTransactionListEntry";
 
 type ArrayAccountsAndTransactions = Array<Transaction | Account>;
 

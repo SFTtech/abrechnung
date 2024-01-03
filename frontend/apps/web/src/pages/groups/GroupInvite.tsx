@@ -5,16 +5,18 @@ import { useTitle } from "@/core/utils";
 import { GroupPreview } from "@abrechnung/api";
 import { Alert, Button, Grid, List, ListItem, ListItemText, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router-dom";
 
 export const GroupInvite: React.FC = () => {
+    const { t } = useTranslation();
     const [group, setGroup] = useState<GroupPreview | null>(null);
     const [error, setError] = useState<string | null>(null);
     const params = useParams();
     const navigate = useNavigate();
     const inviteToken = params["inviteToken"];
 
-    useTitle("Abrechnung - Join Group");
+    useTitle(t("groups.join.tabTitle"));
 
     useEffect(() => {
         api.client.groups
@@ -32,7 +34,7 @@ export const GroupInvite: React.FC = () => {
     const join = () => {
         api.client.groups
             .joinGroup({ requestBody: { invite_token: inviteToken } })
-            .then((value) => {
+            .then(() => {
                 setError(null);
                 navigate("/");
             })
@@ -50,34 +52,40 @@ export const GroupInvite: React.FC = () => {
             ) : (
                 <>
                     <Typography variant="h5">
-                        <h4>You have been invited to group {group.name}</h4>
+                        <h4>{t("groups.join.youHaveBeenInvited", "", { group })}</h4>
                     </Typography>
                     <List>
                         <ListItem>
-                            <ListItemText primary="Name" secondary={group.name} />
+                            <ListItemText primary={t("common.name")} secondary={group.name} />
                         </ListItem>
                         <ListItem>
-                            <ListItemText primary="Description" secondary={group.description} />
+                            <ListItemText primary={t("common.description")} secondary={group.description} />
                         </ListItem>
                         <ListItem>
-                            <ListItemText primary="Created At" secondary={group.created_at} />
-                        </ListItem>
-                        <ListItem>
-                            <ListItemText primary="Invitation Description" secondary={group.invite_description} />
-                        </ListItem>
-                        <ListItem>
-                            <ListItemText primary="Invitation Valid Until" secondary={group.invite_valid_until} />
+                            <ListItemText primary={t("common.createdAt")} secondary={group.created_at} />
                         </ListItem>
                         <ListItem>
                             <ListItemText
-                                primary="Invitation Single Use"
+                                primary={t("groups.join.invitationDescription")}
+                                secondary={group.invite_description}
+                            />
+                        </ListItem>
+                        <ListItem>
+                            <ListItemText
+                                primary={t("groups.join.invitationValidUntil")}
+                                secondary={group.invite_valid_until}
+                            />
+                        </ListItem>
+                        <ListItem>
+                            <ListItemText
+                                primary={t("groups.join.invitationSingleUse")}
                                 secondary={group.invite_single_use ? "yes" : "no"}
                             />
                         </ListItem>
                     </List>
                     <Grid container={true} sx={{ justifyContent: "center" }}>
                         <Button color="primary" onClick={join}>
-                            Join
+                            {t("groups.join.join")}
                         </Button>
                     </Grid>
                 </>
@@ -85,5 +93,3 @@ export const GroupInvite: React.FC = () => {
         </MobilePaper>
     );
 };
-
-export default GroupInvite;

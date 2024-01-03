@@ -5,9 +5,9 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { z } from "zod";
-import { MobilePaper } from "../../components/style/mobile";
-import { api } from "../../core/api";
-import { useTitle } from "../../core/utils";
+import { MobilePaper } from "@/components/style/mobile";
+import { api } from "@/core/api";
+import { useTitle } from "@/core/utils";
 
 const validationSchema = z.object({
     password: z.string({ required_error: "password is required" }),
@@ -84,5 +84,3 @@ export const ChangeEmail: React.FC = () => {
         </MobilePaper>
     );
 };
-
-export default ChangeEmail;

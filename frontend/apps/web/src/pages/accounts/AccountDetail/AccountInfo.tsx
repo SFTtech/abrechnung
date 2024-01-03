@@ -4,6 +4,7 @@ import { TagSelector } from "@/components/TagSelector";
 import { TextInput } from "@/components/TextInput";
 import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
 import { api } from "@/core/api";
+import { useFormatCurrency } from "@/hooks";
 import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
 import { getAccountLink, getAccountListLink } from "@/utils";
 import {
@@ -19,7 +20,8 @@ import {
 import { Account, AccountValidator } from "@abrechnung/types";
 import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
 import { Button, Chip, Divider, Grid, IconButton, LinearProgress, TableCell } from "@mui/material";
-import React from "react";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { typeToFlattenedError, z } from "zod";
@@ -32,6 +34,8 @@ interface Props {
 const emptyErrors = { fieldErrors: {}, formErrors: [] };
 
 export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
+    const { t } = useTranslation();
+    const formatCurrency = useFormatCurrency();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
@@ -128,10 +132,10 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                             {account.is_wip ? (
                                 <>
                                     <Button color="primary" onClick={save}>
-                                        Save
+                                        {t("common.save")}
                                     </Button>
                                     <Button color="error" onClick={abortEdit}>
-                                        Cancel
+                                        {t("common.cancel")}
                                     </Button>
                                 </>
                             ) : (
@@ -151,7 +155,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
             <Grid container>
                 <Grid item xs={12}>
                     <TextInput
-                        label="Name"
+                        label={t("common.name")}
                         variant="standard"
                         margin="dense"
                         fullWidth
@@ -165,7 +169,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                     />
                     {!account.is_wip && account.description === "" ? null : (
                         <TextInput
-                            label="Description"
+                            label={t("common.description")}
                             variant="standard"
                             margin="dense"
                             fullWidth
@@ -184,7 +188,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                                 <TagSelector
                                     margin="dense"
                                     fullWidth
-                                    label="Tags"
+                                    label={t("common.tag", "", { count: 2 })}
                                     groupId={groupId}
                                     value={account.tags || []}
                                     editable={account.is_wip}
@@ -205,11 +209,11 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                     <Grid item xs={12}>
                         <ShareSelect
                             groupId={groupId}
-                            label="Participated"
+                            label={t("accounts.participated")}
                             value={account.clearing_shares}
                             additionalShareInfoHeader={
                                 <TableCell width="100px" align="right">
-                                    Shared
+                                    {t("common.shared")}
                                 </TableCell>
                             }
                             error={!!validationErrors.fieldErrors.clearing_shares}
@@ -217,10 +221,10 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
                             excludeAccounts={[account.id]}
                             renderAdditionalShareInfo={({ account: participatingAccount }) => (
                                 <TableCell width="100px" align="right">
-                                    {(balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0).toFixed(
-                                        2
-                                    )}{" "}
-                                    {currencySymbol}
+                                    {formatCurrency(
+                                        balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0,
+                                        currencySymbol
+                                    )}
                                 </TableCell>
                             )}
                             onChange={(value) => pushChanges({ clearing_shares: value })}

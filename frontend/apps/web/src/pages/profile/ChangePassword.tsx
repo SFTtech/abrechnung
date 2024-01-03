@@ -5,9 +5,10 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { z } from "zod";
-import { MobilePaper } from "../../components/style/mobile";
-import { api } from "../../core/api";
-import { useTitle } from "../../core/utils";
+import { MobilePaper } from "@/components/style/mobile";
+import { api } from "@/core/api";
+import { useTitle } from "@/core/utils";
+import i18n from "@/i18n";
 
 const validationSchema = z
     .object({
@@ -16,7 +17,7 @@ const validationSchema = z
         newPassword2: z.string({ required_error: "please repeat your desired new password" }),
     })
     .refine((data) => data.newPassword === data.newPassword2, {
-        message: "passwords don't match",
+        message: i18n.t("common.passwordsDoNotMatch"),
         path: ["newPassword2"],
     });
 type FormSchema = z.infer<typeof validationSchema>;
@@ -108,5 +109,3 @@ export const ChangePassword: React.FC = () => {
         </MobilePaper>
     );
 };
-
-export default ChangePassword;

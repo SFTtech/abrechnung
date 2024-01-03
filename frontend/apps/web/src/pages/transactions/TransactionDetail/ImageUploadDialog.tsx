@@ -17,6 +17,7 @@ import imageCompression from "browser-image-compression";
 import React, { useState } from "react";
 import { useAppDispatch } from "@/store";
 import placeholderImg from "./PlaceholderImage.svg";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
@@ -28,6 +29,7 @@ interface Props {
 const MAX_FILESIZE_MB = 1;
 
 export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, show, onClose }) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const [selectedFile, setSelectedFile] = useState<NewFile | undefined>(undefined);
     const [compressionProgress, setCompressionProgress] = useState<number | undefined>(undefined);
@@ -90,7 +92,7 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
 
     return (
         <Dialog open={show} onClose={onClose} scroll="body">
-            <DialogTitle>Upload Image</DialogTitle>
+            <DialogTitle>{t("images.uploadImage")}</DialogTitle>
             <DialogContent>
                 <Box sx={{ padding: 1 }}>
                     {selectedFile ? (
@@ -112,14 +114,14 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
                                 >{`${compressionProgress}%`}</Typography>
                             </Box>
                         </Box>
-                        <Alert severity="info">compressing ...</Alert>
+                        <Alert severity="info">{t("images.compressing")}</Alert>
                     </>
                 )}
 
                 {selectedFile && (
                     <TextField
                         name="filename"
-                        label="File Name"
+                        label={t("images.filename")}
                         fullWidth
                         variant="standard"
                         value={selectedFile.filename}
@@ -140,15 +142,13 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
                         accept="image/*"
                         onChange={selectFile}
                     />
-                    <Button component="span">Choose Image</Button>
+                    <Button component="span">{t("images.chooseImage")}</Button>
                 </label>
 
                 <Button color="primary" component="span" onClick={upload}>
-                    Add
+                    {t("common.add")}
                 </Button>
             </DialogActions>
         </Dialog>
     );
 };
-
-export default ImageUploadDialog;

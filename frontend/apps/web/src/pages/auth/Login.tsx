@@ -21,6 +21,7 @@ import { z } from "zod";
 import { useAppDispatch, useAppSelector, selectAuthSlice } from "@/store";
 import { selectIsAuthenticated, login } from "@abrechnung/redux";
 import { toFormikValidationSchema } from "@abrechnung/utils";
+import { useTranslation } from "react-i18next";
 
 const validationSchema = z.object({
     username: z.string({ required_error: "username is required" }),
@@ -30,6 +31,7 @@ const validationSchema = z.object({
 type FormValues = z.infer<typeof validationSchema>;
 
 export const Login: React.FC = () => {
+    const { t } = useTranslation();
     const isLoggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
     const dispatch = useAppDispatch();
     const query = useQuery();
@@ -37,7 +39,7 @@ export const Login: React.FC = () => {
 
     const queryArgsForward = query.get("next") != null ? "?next=" + query.get("next") : "";
 
-    useTitle("Abrechnung - Login");
+    useTitle(t("auth.login.tabTitle"));
 
     useEffect(() => {
         if (isLoggedIn) {
@@ -54,7 +56,7 @@ export const Login: React.FC = () => {
         dispatch(login({ username: values.username, password: values.password, sessionName, api }))
             .unwrap()
             .then((res) => {
-                toast.success(`Logged in...`);
+                toast.success(t("auth.login.loginSuccess"));
                 setSubmitting(false);
             })
             .catch((err) => {
@@ -71,7 +73,7 @@ export const Login: React.FC = () => {
                     <LockOutlined />
                 </Avatar>
                 <Typography component="h1" variant="h5">
-                    Sign in
+                    {t("auth.login.header")}
                 </Typography>
                 <Formik
                     initialValues={{ password: "", username: "" }}
@@ -88,7 +90,7 @@ export const Login: React.FC = () => {
                                 fullWidth
                                 autoFocus
                                 type="text"
-                                label="Username"
+                                label={t("common.username")}
                                 name="username"
                                 onBlur={handleBlur}
                                 onChange={handleChange}
@@ -102,7 +104,7 @@ export const Login: React.FC = () => {
                                 fullWidth
                                 type="password"
                                 name="password"
-                                label="Password"
+                                label={t("common.password")}
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                                 value={values.password}
@@ -117,19 +119,19 @@ export const Login: React.FC = () => {
                                 disabled={isSubmitting}
                                 sx={{ mt: 1 }}
                             >
-                                Login
+                                {t("auth.login.confirmButton")}
                             </Button>
                             <Grid container={true} sx={{ justifyContent: "flex-end" }}>
                                 <Grid item>
                                     <Link to={`/register${queryArgsForward}`} component={RouterLink} variant="body2">
-                                        No account? register
+                                        {t("auth.login.noAccountRegister")}
                                     </Link>
                                 </Grid>
                             </Grid>
                             <Grid container={true} sx={{ justifyContent: "flex-end" }}>
                                 <Grid item>
                                     <Link to="/recover-password" component={RouterLink} variant="body2">
-                                        Forgot your password?
+                                        {t("auth.login.forgotPassword")}
                                     </Link>
                                 </Grid>
                             </Grid>
@@ -140,5 +142,3 @@ export const Login: React.FC = () => {
         </Container>
     );
 };
-
-export default Login;

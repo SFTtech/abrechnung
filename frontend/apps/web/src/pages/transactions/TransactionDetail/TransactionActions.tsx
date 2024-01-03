@@ -14,6 +14,7 @@ import {
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { selectTransactionSlice, useAppSelector } from "@/store";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
@@ -34,6 +35,7 @@ export const TransactionActions: React.FC<Props> = ({
     onAbortEdit,
     showProgress = false,
 }) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
 
@@ -64,10 +66,10 @@ export const TransactionActions: React.FC<Props> = ({
                             {transaction.is_wip ? (
                                 <>
                                     <Button color="primary" onClick={onCommitEdit}>
-                                        Save
+                                        {t("common.save")}
                                     </Button>
                                     <Button color="error" onClick={onAbortEdit}>
-                                        Cancel
+                                        {t("common.cancel")}
                                     </Button>
                                 </>
                             ) : (
@@ -84,21 +86,19 @@ export const TransactionActions: React.FC<Props> = ({
             </Grid>
             {showProgress && <LinearProgress />}
             <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={confirmDeleteDialogOpen}>
-                <DialogTitle id="confirmation-dialog-title">Confirm delete transaction</DialogTitle>
+                <DialogTitle id="confirmation-dialog-title">{t("transactions.confirmDeleteTransaction")}</DialogTitle>
                 <DialogContent dividers>
-                    Are you sure you want to delete the transaction &quot;{transaction.name}&quot;
+                    {t("transactions.confirmDeleteTransactionInfo", "", { transaction })}
                 </DialogContent>
                 <DialogActions>
                     <Button autoFocus onClick={() => setConfirmDeleteDialogOpen(false)} color="primary">
-                        Cancel
+                        {t("common.cancel")}
                     </Button>
                     <Button onClick={onDelete} color="error">
-                        Ok
+                        {t("common.ok")}
                     </Button>
                 </DialogActions>
             </Dialog>
         </>
     );
 };
-
-export default TransactionActions;

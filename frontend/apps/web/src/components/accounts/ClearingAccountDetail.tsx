@@ -3,6 +3,8 @@ import { TableCell } from "@mui/material";
 import React from "react";
 import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
 import { ShareSelect } from "../ShareSelect";
+import { useTranslation } from "react-i18next";
+import { useFormatCurrency } from "@/hooks";
 
 interface Props {
     groupId: number;
@@ -10,6 +12,8 @@ interface Props {
 }
 
 export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) => {
+    const { t } = useTranslation();
+    const formatCurrency = useFormatCurrency();
     const account = useAppSelector((state) =>
         selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
     );
@@ -28,14 +32,16 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) =
             value={account.clearing_shares}
             additionalShareInfoHeader={
                 <TableCell width="100px" align="right">
-                    Shared
+                    {t("common.shared")}
                 </TableCell>
             }
             excludeAccounts={[account.id]}
             renderAdditionalShareInfo={({ account: participatingAccount }) => (
                 <TableCell width="100px" align="right">
-                    {(balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0).toFixed(2)}{" "}
-                    {currency_symbol}
+                    {formatCurrency(
+                        balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0,
+                        currency_symbol
+                    )}
                 </TableCell>
             )}
             onChange={(value) => undefined}
@@ -43,5 +49,3 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) =
         />
     );
 };
-
-export default ClearingAccountDetail;

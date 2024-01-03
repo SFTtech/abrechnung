@@ -22,6 +22,8 @@ import { api } from "@/core/api";
 import { useQuery, useTitle } from "@/core/utils";
 import { selectAuthSlice, useAppSelector } from "@/store";
 import { toFormikValidationSchema } from "@abrechnung/utils";
+import { useTranslation } from "react-i18next";
+import i18n from "@/i18n";
 
 const validationSchema = z
     .object({
@@ -31,13 +33,14 @@ const validationSchema = z
         password2: z.string(),
     })
     .refine((data) => data.password === data.password2, {
-        message: "Passwords do not match",
+        message: i18n.t("common.passwordsDoNotMatch"),
         path: ["password2"],
     });
 
 type FormValues = z.infer<typeof validationSchema>;
 
 export const Register: React.FC = () => {
+    const { t } = useTranslation();
     const loggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
     const [loading, setLoading] = useState(true);
     const query = useQuery();
@@ -45,7 +48,7 @@ export const Register: React.FC = () => {
 
     const queryArgsForward = query.get("next") != null ? "?next=" + query.get("next") : "";
 
-    useTitle("Abrechnung - Register");
+    useTitle(t("auth.register.tabTitle"));
 
     useEffect(() => {
         if (loggedIn) {
@@ -81,8 +84,8 @@ export const Register: React.FC = () => {
                     invite_token: inviteToken,
                 },
             })
-            .then((res) => {
-                toast.success(`Registered successfully, please confirm your email before logging in...`, {
+            .then(() => {
+                toast.success(t("auth.register.registrationSuccess"), {
                     autoClose: 20000,
                 });
                 setSubmitting(false);
@@ -112,7 +115,7 @@ export const Register: React.FC = () => {
                     <LockOutlined />
                 </Avatar>
                 <Typography component="h1" variant="h5">
-                    Register a new account
+                    {t("auth.register.header")}
                 </Typography>
                 <Formik
                     validationSchema={toFormikValidationSchema(validationSchema)}
@@ -133,7 +136,7 @@ export const Register: React.FC = () => {
                                 fullWidth
                                 autoFocus
                                 type="text"
-                                label="Username"
+                                label={t("common.username")}
                                 name="username"
                                 onBlur={handleBlur}
                                 onChange={handleChange}
@@ -146,7 +149,7 @@ export const Register: React.FC = () => {
                                 fullWidth
                                 type="email"
                                 name="email"
-                                label="E-Mail"
+                                label={t("common.email")}
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                                 value={values.email}
@@ -158,8 +161,7 @@ export const Register: React.FC = () => {
                                 required
                                 fullWidth
                                 type="password"
-                                name="password"
-                                label="Password"
+                                label={t("common.password")}
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                                 value={values.password}
@@ -172,7 +174,7 @@ export const Register: React.FC = () => {
                                 fullWidth
                                 type="password"
                                 name="password2"
-                                label="Repeat Password"
+                                label={t("common.repeatPassword")}
                                 onBlur={handleBlur}
                                 onChange={handleChange}
                                 value={values.password2}
@@ -187,12 +189,12 @@ export const Register: React.FC = () => {
                                 disabled={isSubmitting}
                                 sx={{ mt: 1 }}
                             >
-                                Register
+                                {t("auth.register.confirmButton")}
                             </Button>
                             <Grid container={true} sx={{ justifyContent: "flex-end" }}>
                                 <Grid item>
                                     <Link to={`/login${queryArgsForward}`} component={RouterLink} variant="body2">
-                                        Already have an account? Sign in
+                                        {t("auth.register.alreadyHasAccount")}
                                     </Link>
                                 </Grid>
                             </Grid>
@@ -203,5 +205,3 @@ export const Register: React.FC = () => {
         </Container>
     );
 };
-
-export default Register;

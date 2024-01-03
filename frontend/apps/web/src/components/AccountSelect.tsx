@@ -77,5 +77,3 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
         />
     );
 };
-
-export default AccountSelect;

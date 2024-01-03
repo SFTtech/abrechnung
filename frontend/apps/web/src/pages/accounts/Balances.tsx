@@ -1,7 +1,8 @@
-import BalanceTable from "@/components/accounts/BalanceTable";
-import ListItemLink from "@/components/style/ListItemLink";
+import { BalanceTable } from "@/components/accounts/BalanceTable";
+import { ListItemLink } from "@/components/style/ListItemLink";
 import { MobilePaper } from "@/components/style/mobile";
 import { useTitle } from "@/core/utils";
+import { useFormatCurrency } from "@/hooks";
 import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
 import {
     selectAccountBalances,
@@ -25,6 +26,7 @@ import {
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
@@ -33,6 +35,8 @@ interface Props {
 }
 
 export const Balances: React.FC<Props> = ({ groupId }) => {
+    const { t } = useTranslation();
+    const formatCurrency = useFormatCurrency();
     const theme: Theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
     const navigate = useNavigate();
@@ -53,7 +57,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
     const colorGreenInverted = theme.palette.mode === "dark" ? theme.palette.success.light : theme.palette.success.dark;
     const colorRedInverted = theme.palette.mode === "dark" ? theme.palette.error.light : theme.palette.error.dark;
 
-    useTitle(`${group.name} - Balances`);
+    useTitle(t("accounts.balances.tabTitle", "", { groupName: group.name }));
 
     const roundTwoDecimals = (val: number) => +val.toFixed(2);
 
@@ -100,10 +104,10 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                     </TabList>
                 </Box>
                 <TabPanel value="1" sx={{ padding: { xs: 1, md: 2 } }}>
-                    {personalAccounts.length === 0 && <Alert severity="info">No Accounts</Alert>}
+                    {personalAccounts.length === 0 && <Alert severity="info">{t("accounts.noAccounts")}</Alert>}
                     {unbalancedClearingAccounts.length !== 0 && (
                         <Alert severity="info">
-                            <AlertTitle>Some Clearing Accounts have remaining balances.</AlertTitle>
+                            <AlertTitle>{t("accounts.balances.clearingAccountsRemainingBalances")}</AlertTitle>
                             {unbalancedClearingAccounts.map((account) => (
                                 <Typography variant="body2" key={account.id} component="span">
                                     <>{account.name}:</>
@@ -114,7 +118,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                             color: account.balance < 0 ? colorRedInverted : colorGreenInverted,
                                         }}
                                     >
-                                        {account.balance.toFixed(2)} {group.currency_symbol}
+                                        {formatCurrency(account.balance, group.currency_symbol)}
                                     </Typography>
                                 </Typography>
                             ))}
@@ -136,7 +140,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                                         : colorGreenInverted,
                                             }}
                                         >
-                                            {balances[account.id]?.balance.toFixed(2)} {group.currency_symbol}
+                                            {formatCurrency(balances[account.id]?.balance, group.currency_symbol)}
                                         </Typography>
                                     </ListItemLink>
                                     <Divider key={account.id * 2} component="li" />
@@ -170,7 +174,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                     />
                                     <Tooltip
                                         formatter={(label) =>
-                                            parseFloat(String(label)).toFixed(2) + ` ${group.currency_symbol}`
+                                            formatCurrency(parseFloat(String(label)), group.currency_symbol)
                                         }
                                         labelStyle={{
                                             color: theme.palette.text.primary,
@@ -194,9 +198,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                             );
                                         })}
                                         <LabelList
-                                            dataKey={(entry) =>
-                                                `${entry["balance"].toFixed(2)}${group.currency_symbol}`
-                                            }
+                                            dataKey={(entry) => formatCurrency(entry["balance"], group.currency_symbol)}
                                             position="insideLeft"
                                             fill={theme.palette.text.primary}
                                         />
@@ -213,11 +215,9 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
             <Divider />
             <Box sx={{ display: "flex", justifyContent: "center" }}>
                 <Button component={RouterLink} to={`/groups/${group.id}/settlement-plan`}>
-                    Settle up
+                    {t("accounts.settleUp")}
                 </Button>
             </Box>
         </MobilePaper>
     );
 };
-
-export default Balances;

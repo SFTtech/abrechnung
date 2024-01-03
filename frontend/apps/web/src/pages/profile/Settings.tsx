@@ -117,5 +117,3 @@ export const Settings: React.FC = () => {
         </MobilePaper>
     );
 };
-
-export default Settings;

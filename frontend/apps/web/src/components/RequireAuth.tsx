@@ -17,5 +17,3 @@ export const RequireAuth: React.FC<Props> = ({ authFallback = "/login", children
 
     return children;
 };
-
-export default RequireAuth;

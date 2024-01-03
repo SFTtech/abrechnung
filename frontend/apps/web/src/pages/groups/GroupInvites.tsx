@@ -24,18 +24,20 @@ import {
 import { DateTime } from "luxon";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import InviteLinkCreate from "../../components/groups/InviteLinkCreate";
-import Loading from "../../components/style/Loading";
-import { MobilePaper } from "../../components/style/mobile";
-import { api, ws } from "../../core/api";
-import { useTitle } from "../../core/utils";
-import { selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "../../store";
+import { InviteLinkCreate } from "@/components/groups/InviteLinkCreate";
+import { Loading } from "@/components/style/Loading";
+import { MobilePaper } from "@/components/style/mobile";
+import { api, ws } from "@/core/api";
+import { useTitle } from "@/core/utils";
+import { selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
 }
 
 export const GroupInvites: React.FC<Props> = ({ groupId }) => {
+    const { t } = useTranslation();
     const [showModal, setShowModal] = useState(false);
     const dispatch = useAppDispatch();
     const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
@@ -48,7 +50,7 @@ export const GroupInvites: React.FC<Props> = ({ groupId }) => {
 
     const isGuest = useAppSelector((state) => selectIsGuestUser({ state: selectAuthSlice(state) }));
 
-    useTitle(`${group.name} - Invite Links`);
+    useTitle(t("groups.invites.tabTitle", "", { groupName: group.name }));
 
     useEffect(() => {
         dispatch(fetchGroupInvites({ groupId, api }));
@@ -91,13 +93,9 @@ export const GroupInvites: React.FC<Props> = ({ groupId }) => {
     return (
         <MobilePaper>
             <Typography component="h3" variant="h5">
-                Active Invite Links
+                {t("groups.invites.header")}
             </Typography>
-            {isGuest && (
-                <Alert severity="info">
-                    You are a guest user on this Abrechnung and therefore not permitted to create group invites.
-                </Alert>
-            )}
+            {isGuest && <Alert severity="info">{t("groups.invites.guestUserDisclaimer")}</Alert>}
             {invitesLoadingStatus === "loading" ? (
                 <Loading />
             ) : (
@@ -112,7 +110,7 @@ export const GroupInvites: React.FC<Props> = ({ groupId }) => {
                                 <ListItemText
                                     primary={
                                         invite.token === null ? (
-                                            <span>token hidden, was created by another member</span>
+                                            <span>{t("groups.invites.tokenHidden")}</span>
                                         ) : (
                                             <span onClick={selectLink}>
                                                 {window.location.origin}/invite/
@@ -165,5 +163,3 @@ export const GroupInvites: React.FC<Props> = ({ groupId }) => {
         </MobilePaper>
     );
 };
-
-export default GroupInvites;

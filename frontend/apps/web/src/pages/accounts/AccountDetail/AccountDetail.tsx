@@ -1,15 +1,16 @@
-import AccountTransactionList from "@/components/accounts/AccountTransactionList";
-import BalanceHistoryGraph from "@/components/accounts/BalanceHistoryGraph";
-import ClearingAccountDetail from "@/components/accounts/ClearingAccountDetail";
+import { AccountTransactionList } from "@/components/accounts/AccountTransactionList";
+import { BalanceHistoryGraph } from "@/components/accounts/BalanceHistoryGraph";
+import { ClearingAccountDetail } from "@/components/accounts/ClearingAccountDetail";
 import { Loading } from "@/components/style/Loading";
 import { MobilePaper } from "@/components/style/mobile";
 import { useQuery, useTitle } from "@/core/utils";
 import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
 import { selectAccountById, selectGroupById } from "@abrechnung/redux";
 import { Grid, Typography } from "@mui/material";
-import React from "react";
+import * as React from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { AccountInfo } from "./AccountInfo";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
@@ -28,6 +29,7 @@ const AccountEdit: React.FC<{ groupId: number; accountId: number }> = ({ groupId
 };
 
 export const AccountDetail: React.FC<Props> = ({ groupId }) => {
+    const { t } = useTranslation();
     const params = useParams();
     const accountId = Number(params["id"]);
 
@@ -37,7 +39,12 @@ export const AccountDetail: React.FC<Props> = ({ groupId }) => {
     );
     const query = useQuery();
 
-    useTitle(`${group.name} - ${account?.type === "clearing" ? "Event" : "Account"} ${account?.name}`);
+    useTitle(
+        t(account?.type === "clearing" ? "accounts.detail.tabTitleEvent" : "accounts.detail.tabTitleAccount", "", {
+            group,
+            account,
+        })
+    );
 
     if (account === undefined) {
         if (query.get("no-redirect") === "true") {
@@ -61,7 +68,7 @@ export const AccountDetail: React.FC<Props> = ({ groupId }) => {
             {account.type === "personal" && (
                 <Grid item xs={12}>
                     <MobilePaper>
-                        <Typography variant="h6">Balance of {account.name}</Typography>
+                        <Typography variant="h6">{t("accounts.balanceOf", "", { account })}</Typography>
                         <BalanceHistoryGraph groupId={groupId} accountId={accountId} />
                     </MobilePaper>
                 </Grid>
@@ -69,14 +76,14 @@ export const AccountDetail: React.FC<Props> = ({ groupId }) => {
             {account.type === "clearing" && (
                 <Grid item xs={12}>
                     <MobilePaper>
-                        <Typography variant="h6">Clearing distribution of {account.name}</Typography>
+                        <Typography variant="h6">{t("accounts.clearingDistributionOf", "", { account })}</Typography>
                         <ClearingAccountDetail groupId={groupId} accountId={accountId} />
                     </MobilePaper>
                 </Grid>
             )}
             <Grid item xs={12}>
                 <MobilePaper>
-                    <Typography variant="h6">Transactions involving {account.name}</Typography>
+                    <Typography variant="h6">{t("accounts.transactionsInvolving", "", { account })}</Typography>
                     <AccountTransactionList groupId={groupId} accountId={accountId} />
                 </MobilePaper>
             </Grid>

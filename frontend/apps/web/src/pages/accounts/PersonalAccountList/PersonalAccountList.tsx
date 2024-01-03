@@ -35,6 +35,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { PersonalAccountListItem } from "./PersonalAccountListItem";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
@@ -43,6 +44,7 @@ interface Props {
 const MAX_ITEMS_PER_PAGE = 40;
 
 export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
@@ -74,7 +76,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
         (currentPage + 1) * MAX_ITEMS_PER_PAGE
     );
 
-    useTitle(`${group.name} - Accounts`);
+    useTitle(t("accounts.list.tabTitle", "", { groupName: group.name }));
 
     const [accountDeleteId, setAccountDeleteId] = useState<number | null>(null);
     const showDeleteModal = accountDeleteId !== null;
@@ -117,7 +119,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                             <Input
                                 value={searchValue}
                                 onChange={(e) => setSearchValue(e.target.value)}
-                                placeholder="Search…"
+                                placeholder={t("common.search")}
                                 inputProps={{
                                     "aria-label": "search",
                                 }}
@@ -143,9 +145,9 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                                     onChange={(evt) => setSortMode(evt.target.value as AccountSortMode)}
                                     value={sortMode}
                                 >
-                                    <MenuItem value="name">Name</MenuItem>
-                                    <MenuItem value="description">Description</MenuItem>
-                                    <MenuItem value="last_changed">Last changed</MenuItem>
+                                    <MenuItem value="name">{t("common.name")}</MenuItem>
+                                    <MenuItem value="description">{t("common.description")}</MenuItem>
+                                    <MenuItem value="last_changed">{t("common.lastChanged")}</MenuItem>
                                 </Select>
                             </FormControl>
                         </Box>
@@ -162,7 +164,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                     <Divider />
                     <List>
                         {paginatedAccounts.length === 0 ? (
-                            <Alert severity="info">No Accounts</Alert>
+                            <Alert severity="info">{t("accounts.noAccounts")}</Alert>
                         ) : (
                             paginatedAccounts.map((account) => (
                                 <PersonalAccountListItem

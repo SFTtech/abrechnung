@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { api } from "@/core/api";
 import { selectAuthSlice, useAppSelector } from "@/store";
+import { useTranslation } from "react-i18next";
+import { useTitle } from "@/core/utils";
 
 const validationSchema = z.object({
     email: z.string({ required_error: "email is required" }).email("please enter a valid email address"),
@@ -14,10 +16,13 @@ const validationSchema = z.object({
 type FormSchema = z.infer<typeof validationSchema>;
 
 export const RequestPasswordRecovery: React.FC = () => {
+    const { t } = useTranslation();
     const isLoggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
     const [status, setStatus] = useState("initial");
     const [error, setError] = useState(null);
     const navigate = useNavigate();
+
+    useTitle(t("auth.recoverPassword.tabTitle"));
 
     useEffect(() => {
         if (isLoggedIn) {
@@ -53,10 +58,10 @@ export const RequestPasswordRecovery: React.FC = () => {
                 }}
             >
                 <Typography component="h1" variant="h5">
-                    Recover Password
+                    {t("auth.recoverPassword.header")}
                 </Typography>
                 <Typography component="p" variant="body1">
-                    Please enter your email. A recovery link will be sent shortly after.
+                    {t("auth.recoverPassword.body")}
                 </Typography>
                 {error && (
                     <Alert sx={{ mt: 4 }} severity="error">
@@ -65,7 +70,7 @@ export const RequestPasswordRecovery: React.FC = () => {
                 )}
                 {status === "success" ? (
                     <Alert sx={{ mt: 4 }} severity="success">
-                        A recovery link has been sent to you via email.
+                        {t("auth.recoverPassword.emailSent")}
                     </Alert>
                 ) : (
                     <Formik
@@ -89,7 +94,7 @@ export const RequestPasswordRecovery: React.FC = () => {
                                     fullWidth
                                     autoFocus
                                     type="text"
-                                    label="E-Mail"
+                                    label={t("common.email")}
                                     name="email"
                                     onBlur={handleBlur}
                                     onChange={handleChange}
@@ -106,7 +111,7 @@ export const RequestPasswordRecovery: React.FC = () => {
                                     disabled={isSubmitting}
                                     sx={{ margin: "3 0 2 0" }}
                                 >
-                                    Confirm
+                                    {t("common.confirm")}
                                 </Button>
                             </Form>
                         )}
@@ -116,5 +121,3 @@ export const RequestPasswordRecovery: React.FC = () => {
         </Container>
     );
 };
-
-export default RequestPasswordRecovery;

@@ -21,5 +21,3 @@ export const Logout: React.FC = () => {
 
     return <Loading />;
 };
-
-export default Logout;

@@ -182,5 +182,3 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
         </div>
     );
 };
-
-export default BalanceHistoryGraph;

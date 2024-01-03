@@ -11,6 +11,7 @@ import { toast } from "react-toastify";
 import { Transition } from "react-transition-group";
 import { ImageUploadDialog } from "./ImageUploadDialog";
 import placeholderImg from "./PlaceholderImage.svg";
+import { useTranslation } from "react-i18next";
 
 const duration = 200;
 
@@ -86,6 +87,7 @@ export interface FileGalleryProps {
 }
 
 export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transactionId }) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
@@ -274,7 +276,7 @@ export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transactionId
                 {transaction.is_wip && (
                     <DialogActions>
                         <Button startIcon={<Delete />} onClick={deleteSelectedFile} variant="outlined" color="error">
-                            Delete
+                            {t("common.delete")}
                         </Button>
                     </DialogActions>
                 )}
@@ -282,5 +284,3 @@ export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transactionId
         </>
     );
 };
-
-export default FileGallery;

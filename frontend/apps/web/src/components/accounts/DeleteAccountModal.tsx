@@ -4,6 +4,7 @@ import { Dialog, DialogTitle, DialogActions, DialogContent, Button, LinearProgre
 import { selectAccountSlice, useAppDispatch, useAppSelector } from "@/store";
 import { deleteAccount, selectAccountById } from "@abrechnung/redux";
 import { toast } from "react-toastify";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     show: boolean;
@@ -14,13 +15,14 @@ interface Props {
 }
 
 export const DeleteAccountModal: React.FC<Props> = ({ show, onClose, groupId, accountId, onAccountDeleted }) => {
+    const { t } = useTranslation();
     const account = useAppSelector((state) =>
         selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
     );
     const dispatch = useAppDispatch();
     const [showProgress, setShowProgress] = React.useState(false);
 
-    const accountTypeLabel = account?.type === "clearing" ? "event" : "account";
+    const accountTypeLabel = account?.type === "clearing" ? t("accounts.event") : t("accounts.account");
 
     const confirmDeleteAccount = () => {
         if (!account) {
@@ -50,16 +52,18 @@ export const DeleteAccountModal: React.FC<Props> = ({ show, onClose, groupId, ac
     return (
         <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={show}>
             {showProgress && <LinearProgress />}
-            <DialogTitle id="confirmation-dialog-title">Confirm delete {accountTypeLabel}</DialogTitle>
+            <DialogTitle id="confirmation-dialog-title">
+                {t("accounts.deleteConfirm", "", { accountType: accountTypeLabel })}
+            </DialogTitle>
             <DialogContent dividers>
-                Are you sure you want to delete the {accountTypeLabel} &quot;{account?.name}&quot;
+                {t("accounts.deleteConfirmBody", "", { accountType: accountTypeLabel, accountName: account?.name })}
             </DialogContent>
             <DialogActions>
                 <Button autoFocus onClick={onClose} color="primary">
-                    Cancel
+                    {t("common.cancel")}
                 </Button>
                 <Button onClick={confirmDeleteAccount} color="error">
-                    Ok
+                    {t("common.ok")}
                 </Button>
             </DialogActions>
         </Dialog>

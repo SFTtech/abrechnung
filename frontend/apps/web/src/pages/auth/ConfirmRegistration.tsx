@@ -5,20 +5,22 @@ import { Loading } from "@/components/style/Loading";
 import { MobilePaper } from "@/components/style/mobile";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
+import { Trans, useTranslation } from "react-i18next";
 
 export const ConfirmRegistration: React.FC = () => {
+    const { t } = useTranslation();
     const [error, setError] = useState(null);
     const [status, setStatus] = useState("idle");
     const { token } = useParams();
 
-    useTitle("Abrechnung - Confirm Registration");
+    useTitle(t("auth.confirmRegistration.tabTitle"));
 
     const confirmEmail = (e) => {
         e.preventDefault();
         setStatus("loading");
         api.client.auth
             .confirmRegistration({ requestBody: { token } })
-            .then((value) => {
+            .then(() => {
                 setError(null);
                 setStatus("success");
             })
@@ -32,34 +34,36 @@ export const ConfirmRegistration: React.FC = () => {
         <Container maxWidth="xs">
             <MobilePaper>
                 <Typography component="h1" variant="h5">
-                    Confirm Registration
+                    {t("auth.confirmRegistration.header")}
                 </Typography>
                 {error && <Alert severity="error">{error}</Alert>}
                 {status === "success" ? (
                     <>
-                        <Alert severity="success">Confirmation successful</Alert>
+                        <Alert severity="success">{t("auth.confirmRegistration.confirmSuccessful")}</Alert>
                         <p>
-                            Please{" "}
-                            <Link to="/login" component={RouterLink}>
-                                login
-                            </Link>{" "}
-                            using your credentials.
+                            <Trans i18nKey="auth.confirmRegistration.successfulLinkToLogin">
+                                Please
+                                <Link to="/login" component={RouterLink}>
+                                    login
+                                </Link>
+                                using your credentials.
+                            </Trans>
                         </p>
                     </>
                 ) : status === "loading" ? (
                     <Loading />
                 ) : (
                     <p>
-                        Click{" "}
-                        <Button color="primary" onClick={confirmEmail}>
-                            here
-                        </Button>{" "}
-                        to confirm your registration.
+                        <Trans i18nKey="auth.confirmRegistration.clickHereToConfirm">
+                            Click
+                            <Button color="primary" onClick={confirmEmail}>
+                                here
+                            </Button>
+                            to confirm your registration.
+                        </Trans>
                     </p>
                 )}
             </MobilePaper>
         </Container>
     );
 };
-
-export default ConfirmRegistration;

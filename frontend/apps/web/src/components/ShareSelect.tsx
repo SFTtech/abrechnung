@@ -29,6 +29,7 @@ import { getAccountLink } from "../utils";
 import { NumericInput } from "./NumericInput";
 import { getAccountIcon } from "./style/AbrechnungIcons";
 import { getAccountSortFunc } from "@abrechnung/core";
+import { useTranslation } from "react-i18next";
 
 interface RowProps {
     account: Account;
@@ -127,6 +128,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
     helperText,
     editable = false,
 }) => {
+    const { t } = useTranslation();
     const theme = useTheme();
     const isSmallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
 
@@ -214,8 +216,20 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
             <Grid container direction="row" justifyContent="space-between">
                 <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "0.5em", marginY: 1 }}>
                     <Typography variant="subtitle1">{label}</Typography>
-                    {nSelectedPeople > 0 && <Chip label={`${nSelectedPeople} People`} size="small" color="primary" />}
-                    {nSelectedEvents > 0 && <Chip label={`${nSelectedEvents} Events`} size="small" color="primary" />}
+                    {nSelectedPeople > 0 && (
+                        <Chip
+                            label={t("shareSelect.selectedPeople", "", { count: nSelectedPeople })}
+                            size="small"
+                            color="primary"
+                        />
+                    )}
+                    {nSelectedEvents > 0 && (
+                        <Chip
+                            label={t("shareSelect.selectedEvent", "", { count: nSelectedEvents })}
+                            size="small"
+                            color="primary"
+                        />
+                    )}
                 </Box>
                 {editable && (
                     <Box>
@@ -225,7 +239,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                                 setShowEvents(event.target.checked)
                             }
-                            label="Show Events"
+                            label={t("shareSelect.showEvents")}
                         />
                         <FormControlLabel
                             control={<Checkbox name="show-advanced" />}
@@ -233,7 +247,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                                 setShowAdvanced(event.target.checked)
                             }
-                            label="Advanced"
+                            label={t("common.advanced")}
                         />
                     </Box>
                 )}
@@ -257,10 +271,10 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                         <TableRow>
                             <TableCell>
                                 {!showSearch ? (
-                                    "Account / Event"
+                                    t("shareSelect.accountSlashEvent")
                                 ) : (
                                     <TextField
-                                        placeholder="Search ..."
+                                        placeholder={t("common.search")}
                                         margin="none"
                                         size="small"
                                         value={searchValue}
@@ -287,7 +301,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                                     />
                                 )}
                             </TableCell>
-                            <TableCell width="100px">Shares</TableCell>
+                            <TableCell width="100px">{t("common.shares")}</TableCell>
                             {additionalShareInfoHeader ?? null}
                         </TableRow>
                     </TableHead>
