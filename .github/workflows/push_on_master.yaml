@@ -50,12 +50,19 @@ jobs:
     - get-distros
     steps:
     - uses: actions/checkout@v4
+
+    - name: Install qemu dependency
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y qemu-user-static
+
     - name: Set up Nodejs
       uses: actions/setup-node@v4
       with:
         node-version: "18"
         cache: "npm"
         cache-dependency-path: frontend/package-lock.json
+
     - name: Install dependencies
       run: npm ci
       working-directory: frontend
@@ -66,8 +73,8 @@ jobs:
       with:
         image: ${{ env.DOCKER_IMAGE_NAME_API }}
         tags: ${{ needs.get-distros.outputs.tags }}
-        containerfiles: |
-          ./docker/Dockerfile-api
+        platforms: linux/arm64/v8, linux/amd64
+        containerfiles: ./docker/Dockerfile-api
 
     - name: Push API Image To quay.io
       id: push-to-quay-api
@@ -89,8 +96,8 @@ jobs:
       with:
         image: ${{ env.DOCKER_IMAGE_NAME_FRONTEND }}
         tags: ${{ needs.get-distros.outputs.tags }}
-        containerfiles: |
-          ./docker/Dockerfile-frontend
+        platforms: linux/arm64/v8, linux/amd64
+        containerfiles: ./docker/Dockerfile-frontend
 
     - name: Push Frontend Image To quay.io
       id: push-to-quay-frontend

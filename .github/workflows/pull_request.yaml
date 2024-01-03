@@ -2,6 +2,11 @@ name: Pull Request
 on:
   pull_request:
 
+env:
+    DOCKER_IMAGE_NAME_API: api
+    DOCKER_IMAGE_NAME_FRONTEND: frontend
+    DOCKER_IMAGE_TAGS: latest ${{ github.sha }} ${{github.ref_name}}
+
 jobs:
   build_and_test_frontend:
     uses: ./.github/workflows/frontend.yaml
