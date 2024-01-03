@@ -1,9 +1,15 @@
 # syntax=docker/dockerfile:1.3
+FROM python:3.10-alpine as builder
+RUN apk add --no-cache build-base libffi-dev
+RUN python3 -m venv /opt/abrechnung-venv
+ADD . /src
+RUN /opt/abrechnung-venv/bin/python3 -m pip install /src
+
 FROM python:3.10-alpine
-RUN addgroup -S abrechnung && adduser -S abrechnung -G abrechnung \
-  && apk add --no-cache curl
-ADD . /usr/share/abrechnung
-RUN pip install --editable /usr/share/abrechnung
+RUN addgroup -S abrechnung && adduser -S abrechnung -G abrechnung && apk add --no-cache curl
+COPY --from=builder /opt/abrechnung-venv/ /opt/abrechnung-venv/
+ADD --chmod=644 --chown=abrechnung:abrechnung config/abrechnung.yaml /etc/abrechnung/abrechnung.yaml
 ADD --chmod=755 ./docker/entrypoint.py /
 COPY --chown=abrechnung:abrechnung ./docker/crontab /var/spool/cron/crontabs/abrechnung
-ENTRYPOINT ["/entrypoint.py"]
+USER abrechnung
+ENTRYPOINT ["/opt/abrechnung-venv/bin/python3", "/entrypoint.py"]

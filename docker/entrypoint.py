@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import subprocess
 import sys
 from os import execlp, execvp, getenv, makedirs
@@ -17,20 +16,22 @@ def to_bool(data: str):
     ]
 
 
+abrechnung_venv_python = "/opt/abrechnung-venv/bin/python3"
+
 print("generating config")
-config = dict()
-filename = "/usr/share/abrechnung/config/abrechnung.yaml"
+config = {}
+filename = "/etc/abrechnung/abrechnung.yaml"
 with open(filename, "r", encoding="utf-8") as filehandle:
     config = safe_load(filehandle)
 
 if not "service" in config:
-    config["service"] = dict()
+    config["service"] = {}
 if not "database" in config:
-    config["database"] = dict()
+    config["database"] = {}
 if not "registration" in config:
-    config["registration"] = dict()
+    config["registration"] = {}
 if not "email" in config:
-    config["email"] = dict()
+    config["email"] = {}
 
 config["service"]["url"] = getenv("SERVICE_URL", "https://localhost")
 config["service"]["api_url"] = getenv("SERVICE_API_URL", "https://localhost/api")
@@ -70,12 +71,12 @@ sys.stdout.flush()
 if sys.argv[1] == "api":
     print("migrating")
     sys.stdout.flush()
-    subprocess.run("abrechnung db migrate", shell=True, check=True)
+    subprocess.run([abrechnung_venv_python, "-m", "abrechnung", "db", "migrate"], shell=True, check=True)
     print("migrated")
 if sys.argv[1] == "cron":
     print("running cron...")
     sys.stdout.flush()
     execlp("crond", "crond", "-f")
-print("starting abrechnung...")
+print(f"starting abrechnung with forwarded argv {sys.argv}")
 sys.stdout.flush()
-execvp("abrechnung", sys.argv)
+execvp(abrechnung_venv_python, [abrechnung_venv_python, "-m", "abrechnung"] + sys.argv[1:])
