@@ -7,7 +7,7 @@ import {
     selectAccountBalances,
     selectClearingAccounts,
     selectGroupById,
-    selectPersonalAccounts,
+    selectSortedAccounts,
 } from "@abrechnung/redux";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import {
@@ -39,7 +39,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
 
     const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
     const personalAccounts = useAppSelector((state) =>
-        selectPersonalAccounts({ state: selectAccountSlice(state), groupId })
+        selectSortedAccounts({ state: selectAccountSlice(state), groupId, sortMode: "name", type: "personal" })
     );
     const clearingAccounts = useAppSelector((state) =>
         selectClearingAccounts({ state: selectAccountSlice(state), groupId })

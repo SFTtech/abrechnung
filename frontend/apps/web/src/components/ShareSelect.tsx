@@ -28,6 +28,7 @@ import { selectAccountSlice, useAppSelector } from "../store";
 import { getAccountLink } from "../utils";
 import { NumericInput } from "./NumericInput";
 import { getAccountIcon } from "./style/AbrechnungIcons";
+import { getAccountSortFunc } from "@abrechnung/core";
 
 interface RowProps {
     account: Account;
@@ -137,35 +138,38 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
         selectGroupAccounts({ state: selectAccountSlice(state), groupId })
     );
     const accounts = React.useMemo(() => {
-        return unfilteredAccounts.filter((a) => {
-            const isAccountShown = (accountId: number) => {
-                if (value[accountId] !== undefined) {
-                    return true;
-                }
+        const sortFn = getAccountSortFunc("name");
+        return unfilteredAccounts
+            .filter((a) => {
+                const isAccountShown = (accountId: number) => {
+                    if (value[accountId] !== undefined) {
+                        return true;
+                    }
 
-                if (editable) {
-                    return !(!showEvents && a.type === "clearing");
+                    if (editable) {
+                        return !(!showEvents && a.type === "clearing");
+                    }
+                    if (shouldDisplayAccount) {
+                        return shouldDisplayAccount(accountId);
+                    }
+                    return false;
+                };
+                if (excludeAccounts && excludeAccounts.includes(a.id)) {
+                    return false;
                 }
-                if (shouldDisplayAccount) {
-                    return shouldDisplayAccount(accountId);
+                if (!isAccountShown(a.id)) {
+                    return false;
                 }
-                return false;
-            };
-            if (excludeAccounts && excludeAccounts.includes(a.id)) {
-                return false;
-            }
-            if (!isAccountShown(a.id)) {
-                return false;
-            }
-            if (searchValue && searchValue !== "") {
-                return (
-                    a.name.toLowerCase().includes(searchValue.toLowerCase()) ||
-                    a.description.toLowerCase().includes(searchValue.toLowerCase()) ||
-                    (a.type === "clearing" && a.date_info && a.date_info.includes(searchValue.toLowerCase()))
-                );
-            }
-            return true;
-        });
+                if (searchValue && searchValue !== "") {
+                    return (
+                        a.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+                        a.description.toLowerCase().includes(searchValue.toLowerCase()) ||
+                        (a.type === "clearing" && a.date_info && a.date_info.includes(searchValue.toLowerCase()))
+                    );
+                }
+                return true;
+            })
+            .sort(sortFn);
     }, [value, showEvents, editable, searchValue, unfilteredAccounts, excludeAccounts, shouldDisplayAccount]);
 
     React.useEffect(() => {

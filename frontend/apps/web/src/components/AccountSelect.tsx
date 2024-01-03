@@ -1,4 +1,4 @@
-import { selectGroupAccounts } from "@abrechnung/redux";
+import { selectSortedAccounts } from "@abrechnung/redux";
 import { Account } from "@abrechnung/types";
 import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
 import { styled } from "@mui/material/styles";
@@ -31,7 +31,9 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
     noDisabledStyling = false,
     ...props
 }) => {
-    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
+    const accounts = useAppSelector((state) =>
+        selectSortedAccounts({ state: selectAccountSlice(state), groupId, sortMode: "name" })
+    );
 
     const [filteredAccounts, setFilteredAccounts] = React.useState<Account[]>([]);
 
