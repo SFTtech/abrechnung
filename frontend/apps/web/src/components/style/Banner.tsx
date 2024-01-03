@@ -1,10 +1,9 @@
 import React from "react";
 import { Alert, AlertTitle } from "@mui/material";
-import { useRecoilValue } from "recoil";
-import { config } from "@/state/config";
+import { useConfig } from "@/core/config";
 
 export const Banner: React.FC = () => {
-    const cfg = useRecoilValue(config);
+    const cfg = useConfig();
     if (cfg.error) {
         return (
             <Alert sx={{ borderRadius: 0 }} color="error">
@@ -23,5 +22,3 @@ export const Banner: React.FC = () => {
         </>
     );
 };
-
-export default Banner;
