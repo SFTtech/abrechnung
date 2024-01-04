@@ -12,6 +12,7 @@ import { RootDrawerScreenProps } from "../navigation/types";
 import { notify } from "../notifications";
 import { useAppDispatch } from "../store";
 import { useTranslation } from "react-i18next";
+import LogoSvg from "../assets/logo.svg";
 
 const validationSchema = z.object({
     server: z.string({ required_error: "server is required" }).url({ message: "invalid server url" }),
@@ -66,6 +67,9 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
             <Appbar.Header theme={{ colors: { primary: theme.colors.surface } }}>
                 <Appbar.Content title={t("app.name")} />
             </Appbar.Header>
+            <View style={styles.logoContainer}>
+                <LogoSvg height="100%" />
+            </View>
             <Formik
                 validationSchema={toFormikValidationSchema(validationSchema)}
                 initialValues={initialValues}
@@ -149,6 +153,11 @@ export const LoginScreen: React.FC<RootDrawerScreenProps<"Login">> = ({ navigati
 };
 
 const styles = StyleSheet.create({
+    logoContainer: {
+        alignItems: "center",
+        justifyContent: "center",
+        height: 100,
+    },
     container: {
         padding: 8,
     },

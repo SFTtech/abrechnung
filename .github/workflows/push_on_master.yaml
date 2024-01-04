@@ -31,10 +31,10 @@ jobs:
         run: |
           # if we're running from a tag, get the full list of distros; otherwise just use debian:sid
           dists='["debian:bookworm"]'
-          tags="latest $GITHUB_SHA"
+          tags="master $GITHUB_SHA"
           if [[ $GITHUB_REF == refs/tags/* ]]; then
               dists=$(tools/build_debian_packages.py --show-dists-json)
-              tags="latest $GITHUB_SHA latest-release $GITHUB_REF_NAME"
+              tags="master $GITHUB_SHA latest latest-release $GITHUB_REF_NAME"
           fi
           echo "::set-output name=distros::$dists"
           echo "::set-output name=tags::$tags"

@@ -12,4 +12,4 @@ ADD --chmod=644 --chown=abrechnung:abrechnung config/abrechnung.yaml /etc/abrech
 ADD --chmod=755 ./docker/entrypoint.py /
 COPY --chown=abrechnung:abrechnung ./docker/crontab /var/spool/cron/crontabs/abrechnung
 USER abrechnung
-ENTRYPOINT ["/opt/abrechnung-venv/bin/python3", "/entrypoint.py"]
+ENTRYPOINT ["/opt/abrechnung-venv/bin/python3", "-u", "/entrypoint.py"]

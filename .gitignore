@@ -123,5 +123,6 @@ Sessionx.vim
 [._]*.un~
 
 ### Docker ###
+.env
 docker-compose.yaml
 docker-compose.yml

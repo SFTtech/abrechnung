@@ -67,16 +67,15 @@ makedirs("/etc/abrechnung/", exist_ok=True)
 with open("/etc/abrechnung/abrechnung.yaml", "w", encoding="utf-8") as file:
     file.write(output)
 print("config done")
-sys.stdout.flush()
+
 if sys.argv[1] == "api":
-    print("migrating")
-    sys.stdout.flush()
-    subprocess.run([abrechnung_venv_python, "-m", "abrechnung", "db", "migrate"], shell=True, check=True)
+    print("migrating ...")
+    subprocess.run([abrechnung_venv_python, "-m", "abrechnung", "-vvv", "db", "migrate"], check=True, stdout=sys.stdout)
     print("migrated")
+
 if sys.argv[1] == "cron":
     print("running cron...")
-    sys.stdout.flush()
     execlp("crond", "crond", "-f")
+
 print(f"starting abrechnung with forwarded argv {sys.argv}")
-sys.stdout.flush()
 execvp(abrechnung_venv_python, [abrechnung_venv_python, "-m", "abrechnung"] + sys.argv[1:])
