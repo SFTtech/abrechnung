@@ -58,5 +58,3 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, accountId }) 
         </List>
     );
 };
-
-export default AccountTransactionList;
