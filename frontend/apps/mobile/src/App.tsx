@@ -15,10 +15,10 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { ApiProvider } from "./core/ApiProvider";
 import { createApi } from "./core/api";
-import useColorScheme from "./hooks/useColorScheme";
+import { useColorScheme } from "./hooks/useColorScheme";
 import { Navigation } from "./navigation";
 import { NotificationProvider } from "./notifications";
-import SplashScreen from "./screens/SplashScreen";
+import { SplashScreen } from "./screens/SplashScreen";
 import {
     selectAuthSlice,
     selectSettingsSlice,

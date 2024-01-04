@@ -161,6 +161,7 @@ export const Register: React.FC = () => {
                                 required
                                 fullWidth
                                 type="password"
+                                name="password"
                                 label={t("common.password")}
                                 onBlur={handleBlur}
                                 onChange={handleChange}
