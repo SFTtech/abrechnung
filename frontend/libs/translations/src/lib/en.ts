@@ -169,7 +169,7 @@ const translations = {
         event: "Event",
         account: "Account",
         balanceOf: "Balance of {{account.name}}",
-        clearingDistributionOf: "Clearing distribution of {{account.name}}",
+        clearingDistributionOf: "Participants of {{account.name}}",
         transactionsInvolving: "Transactions involving {{account.name}}",
         participated: "Participated",
         settleUp: "Settle Up",

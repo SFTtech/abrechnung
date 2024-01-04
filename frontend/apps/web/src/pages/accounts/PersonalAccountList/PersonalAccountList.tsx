@@ -137,11 +137,11 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                                 }
                             />
                             <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
-                                <InputLabel id="select-sort-by-label">Sort by</InputLabel>
+                                <InputLabel id="select-sort-by-label">{t("common.sortBy")}</InputLabel>
                                 <Select
                                     labelId="select-sort-by-label"
                                     id="select-sort-by"
-                                    label="Sort by"
+                                    label={t("common.sortBy")}
                                     onChange={(evt) => setSortMode(evt.target.value as AccountSortMode)}
                                     value={sortMode}
                                 >

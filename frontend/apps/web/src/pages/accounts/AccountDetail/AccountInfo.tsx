@@ -60,7 +60,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
         navigate(getAccountListLink(groupId, account.type));
     };
 
-    const accountTypeLabel = account.type === "clearing" ? "event" : "account";
+    const accountTypeLabel = account.type === "clearing" ? t("accounts.event") : t("accounts.account");
 
     const navigateBack = () => {
         navigate(-1);
