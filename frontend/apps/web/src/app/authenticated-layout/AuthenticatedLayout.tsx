@@ -2,7 +2,6 @@ import * as React from "react";
 import { selectIsAuthenticated } from "@abrechnung/redux";
 import { Link as RouterLink, Navigate, Outlet, useLocation, useParams } from "react-router-dom";
 import { selectAuthSlice, useAppSelector } from "@/store";
-import { useRecoilValue } from "recoil";
 import { ListItemLink } from "@/components/style/ListItemLink";
 import { SidebarGroupList } from "@/app/authenticated-layout/SidebarGroupList";
 import {
@@ -40,13 +39,13 @@ import {
     Paid,
     People,
 } from "@mui/icons-material";
-import { config } from "@/state/config";
 import { useTheme } from "@mui/material/styles";
 import { Banner } from "@/components/style/Banner";
 import { Loading } from "@/components/style/Loading";
 import styles from "./AuthenticatedLayout.module.css";
 import { LanguageSelect } from "@/components/LanguageSelect";
 import { useTranslation } from "react-i18next";
+import { useConfig } from "@/core/config";
 
 const drawerWidth = 240;
 const AUTH_FALLBACK = "/login";
@@ -60,7 +59,7 @@ export const AuthenticatedLayout: React.FC = () => {
     const [anchorEl, setAnchorEl] = React.useState(null);
     const theme: Theme = useTheme();
     const dotsMenuOpen = Boolean(anchorEl);
-    const cfg = useRecoilValue(config);
+    const cfg = useConfig();
     const isLargeScreen = useMediaQuery(theme.breakpoints.up("sm"));
 
     const [mobileOpen, setMobileOpen] = React.useState(true);
