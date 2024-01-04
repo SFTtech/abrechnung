@@ -67,3 +67,17 @@ class TransactionLogicTest(BaseTestCase):
                 email="invalid-something@something.com",
                 password="asdf1234",
             )
+
+    async def test_register_without_email_confirmation(self):
+        config = TEST_CONFIG.model_copy(deep=True)
+        config.registration.require_email_confirmation = False
+        user_service = UserService(self.db_pool, config=config)
+
+        user_id = await user_service.register_user(
+            username="guest user 1",
+            email="foobar@something.com",
+            password="asdf1234",
+        )
+        self.assertIsNotNone(user_id)
+        user = await user_service.get_user(user_id=user_id)
+        self.assertFalse(user.pending)

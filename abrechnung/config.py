@@ -37,6 +37,7 @@ class RegistrationConfig(BaseModel):
     enabled: bool = False
     allow_guest_users: bool = False
     valid_email_domains: Optional[List[str]] = None
+    require_email_confirmation: bool = True
 
 
 class EmailConfig(BaseModel):

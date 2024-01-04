@@ -53,6 +53,7 @@ class UserService(Service):
         super().__init__(db_pool=db_pool, config=config)
 
         self.enable_registration = self.cfg.registration.enabled
+        self.require_email_confirmation = self.cfg.registration.require_email_confirmation
         self.allow_guest_users = self.cfg.registration.allow_guest_users
         self.valid_email_domains = self.cfg.registration.valid_email_domains
 
@@ -172,7 +173,7 @@ class UserService(Service):
     def _validate_email_address(email: str) -> str:
         try:
             valid = validate_email(email)
-            email = valid.email
+            email = valid.normalized
         except EmailNotValidError as e:
             raise InvalidCommand(str(e))
 
@@ -202,6 +203,8 @@ class UserService(Service):
         """Register a new user, returning the newly created user id and creating a pending registration entry"""
         if not self.enable_registration:
             raise PermissionError(f"User registrations are disabled on this server")
+
+        requires_email_confirmation = self.require_email_confirmation and requires_email_confirmation
 
         await _check_user_exists(conn=conn, username=username, email=email)
 

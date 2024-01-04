@@ -67,8 +67,7 @@ The config will then look like
     port: 8080
     id: default
 
-In most cases there is no need to adjust either the ``host``, ``port`` or ``id`` options. For an overview of all
-possible options see :ref:`abrechnung-config-all-options`.
+In most cases there is no need to adjust either the ``host``, ``port`` or ``id`` options.
 
 E-Mail Delivery
 ---------------
@@ -96,10 +95,39 @@ Currently supported ``mode`` options are
 The ``auth`` section is optional, if omitted the mail delivery daemon will try to connect to the mail server
 without authentication.
 
-.. _abrechnung-config-all-options:
+User Registration
+-----------------
+
+This section allows to configure how users can register at the abrechnung instance.
+By default open registration is disabled.
+
+When enabling registration without any additional settings any user will be able to create an account and use it after
+a successful email confirmation.
+
+E-mail confirmation can be turned of by setting the respective config variable to ``false``.
+
+.. code-block:: yaml
+
+  registration:
+    enabled: true
+    require_email_confirmation: true
+
+Additionally open registration can be restricted adding domains to the ``valid_email_domains`` config variable.
+This will restrict account creation to users who possess an email from one of the configured domains.
+To still allow outside users to take part the ``allow_guest_users`` flag can be set which enables users to create a
+"guest" account when in possession of a valid group invite link.
+Guest users will not be able to create new groups themselves but can take part in groups they are invited to normally.
+
+.. code-block:: yaml
+
+  registration:
+    enabled: true
+    require_email_confirmation: true
+    valid_email_domains: ["some-domain.com"]
+    allow_guest_users: true
 
 Configuration via Environment Variables
-----------------------
+---------------------------------------
 
 All of the configuration options set in the config yaml file can also be set via environment variables.
 The respective environment variable name for a config variable is in the pattern ``ABRECHNUNG_<config section>__<variable name in capslock>``.
