@@ -1,9 +1,14 @@
 from datetime import timedelta
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Literal, Optional, Tuple, Type
 
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
 
 from abrechnung.framework.database import DatabaseConfig
 
@@ -39,14 +44,16 @@ class EmailConfig(BaseModel):
         username: str
         password: str
 
-    address: str
+    address: EmailStr
     host: str
     port: int
-    mode: str = "smtp"  # oneof "local" "smtp-ssl" "smtp-starttls" "smtp"
+    mode: Literal["local", "smtp-ssl", "smtp", "smtp-starttls"] = "smtp"
     auth: Optional[AuthConfig] = None
 
 
-class Config(BaseModel):
+class Config(BaseSettings):
+    model_config = SettingsConfigDict(env_prefix="ABRECHNUNG_", env_nested_delimiter="__")
+
     service: ServiceConfig
     api: ApiConfig
     database: DatabaseConfig
@@ -55,8 +62,20 @@ class Config(BaseModel):
     demo: DemoConfig = DemoConfig()
     registration: RegistrationConfig = RegistrationConfig()
 
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: Type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+        return env_settings, init_settings, dotenv_settings, file_secret_settings
+
 
 def read_config(config_path: Path) -> Config:
     content = config_path.read_text("utf-8")
-    config = Config(**yaml.safe_load(content))
+    loaded = yaml.safe_load(content)
+    config = Config(**loaded)
     return config

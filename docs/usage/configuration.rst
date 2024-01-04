@@ -98,6 +98,21 @@ without authentication.
 
 .. _abrechnung-config-all-options:
 
+Configuration via Environment Variables
+----------------------
+
+All of the configuration options set in the config yaml file can also be set via environment variables.
+The respective environment variable name for a config variable is in the pattern ``ABRECHNUNG_<config section>__<variable name in capslock>``.
+
+E.g. to set the email auth username from the config yaml as below we'd use the environment variable ``ABRECHNUNG_EMAIL__AUTH__USERNAME``.
+
+.. code-block:: yaml
+
+  email:
+    auth:
+      username: "..."
+
+
 Frontend Configuration
 -------------------------
 

@@ -2,13 +2,13 @@ services:
   api:
     build:
       context: .
-      dockerfile: docker/Dockerfile-devel
-      target: api
+      dockerfile: docker/Dockerfile-api
     extends:
       file: docker-compose.base.yaml
       service: api
+    env_file: .env
     environment:
-      DB_HOST: postgres
+      ABRECHNUNG_DATABASE__HOST: postgres
     depends_on:
       postgres:
         condition: service_healthy
@@ -40,30 +40,38 @@ services:
       - "8080:80"
 
   mailer:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile-api
     extends:
       file: docker-compose.base.yaml
       service: mailer
+    env_file: .env
     environment:
-      SMTP_HOST: mail
-      SMTP_PORT: 1025
-      SMTP_MODE: smtp
-      DB_HOST: postgres
-
+      ABRECHNUNG_DATABASE__HOST: postgres
+      ABRECHNUNG_EMAIL__HOST: mail
+      ABRECHNUNG_EMAIL__PORT: 1025
+      ABRECHNUNG_EMAIL__MODE: smtp
     depends_on:
       api:
         condition: service_healthy
     links:
       - postgres
       - "mailhog:mail"
+
   cron:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile-api
     extends:
       file: docker-compose.base.yaml
       service: cron
+    env_file: .env
     environment:
-      SMTP_HOST: mail
-      SMTP_PORT: 1025
-      SMTP_MODE: smtp
-      DB_HOST: postgres
+      ABRECHNUNG_DATABASE__HOST: postgres
+      ABRECHNUNG_EMAIL__HOST: mail
+      ABRECHNUNG_EMAIL__PORT: 1025
+      ABRECHNUNG_EMAIL__MODE: smtp
     links:
       - postgres
       - "mailhog:mail"
