@@ -58,18 +58,3 @@ Then a simple simple ::
   docker-compose -f docker-compose.prod.yaml up 
 
 Should suffice to get you up and running.
-
-Pip
----------------
-
-TODO
-
-From Release Tarball
---------------------
-
-TODO
-
-From Source
----------------
-
-TODO

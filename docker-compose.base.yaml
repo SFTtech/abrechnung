@@ -18,5 +18,3 @@ services:
     command: cron
     healthcheck:
       disable: true
-
-
