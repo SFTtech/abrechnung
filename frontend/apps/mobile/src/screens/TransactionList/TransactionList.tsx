@@ -4,6 +4,7 @@ import {
     createTransaction,
     fetchTransactions,
     selectCurrentUserPermissions,
+    selectGroupById,
     selectGroupTransactionsStatus,
     selectSortedTransactions,
 } from "@abrechnung/redux";
@@ -20,6 +21,7 @@ import { useApi } from "../../core/ApiProvider";
 import { GroupTabScreenProps } from "../../navigation/types";
 import {
     selectActiveGroupId,
+    selectGroupSlice,
     selectTransactionSlice,
     selectUiSlice,
     useAppDispatch,
@@ -35,6 +37,7 @@ export const TransactionList: React.FC<Props> = ({ navigation }) => {
     const { api } = useApi();
 
     const groupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) })) as number; // TODO: proper typing
+    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
     const [search, setSearch] = useState<string>("");
     const [sortMode, setSortMode] = useState<TransactionSortMode>("last_changed");
     const transactions = useAppSelector((state) =>
@@ -79,7 +82,7 @@ export const TransactionList: React.FC<Props> = ({ navigation }) => {
             return;
         }
         navigation.getParent()?.setOptions({
-            headerTitle: "Transactions",
+            headerTitle: group?.name ?? "",
             titleShown: !showSearchInput,
             headerRight: () => {
                 if (showSearchInput) {
@@ -118,7 +121,7 @@ export const TransactionList: React.FC<Props> = ({ navigation }) => {
                 );
             },
         });
-    }, [isFocused, showSearchInput, isMenuOpen, search, sortMode, theme, navigation]);
+    }, [group, isFocused, showSearchInput, isMenuOpen, search, sortMode, theme, navigation]);
 
     const createNewTransaction = (type: TransactionType) => {
         dispatch(createTransaction({ groupId, type }))
