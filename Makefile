@@ -40,6 +40,10 @@ package:
 docs:
 	$(MAKE) -C docs html
 
+.PHONY: serve-docs
+serve-docs:
+	python3 -m http.server -d docs/_build/html 8888
+
 .PHONY: generate-openapi
 generate-openapi:
 	mkdir -p api

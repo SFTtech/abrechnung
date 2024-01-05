@@ -9,19 +9,12 @@ import {
     unsubscribe,
 } from "@abrechnung/redux";
 import React, { Suspense } from "react";
-import { batch } from "react-redux";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Balances } from "../accounts/Balances";
-import { Loading } from "../../components/style/Loading";
-import { api, ws } from "../../core/api";
-import {
-    selectAccountSlice,
-    selectGroupSlice,
-    selectTransactionSlice,
-    useAppDispatch,
-    useAppSelector,
-} from "../../store";
+import { Loading } from "@/components/style/Loading";
+import { api, ws } from "@/core/api";
+import { selectAccountSlice, selectGroupSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
 import { AccountDetail } from "../accounts/AccountDetail";
 import { PersonalAccountList } from "../accounts/PersonalAccountList";
 import { ClearingAccountList } from "../accounts/ClearingAccountList";
@@ -32,6 +25,7 @@ import { GroupLog } from "./GroupLog";
 import { GroupMemberList } from "./GroupMemberList";
 import { GroupSettings } from "./GroupSettings";
 import { TransactionDetail } from "../transactions/TransactionDetail";
+import { SerializedError } from "@reduxjs/toolkit";
 
 export const Group: React.FC = () => {
     const params = useParams();
@@ -69,14 +63,12 @@ export const Group: React.FC = () => {
 
     React.useEffect(() => {
         if (groupExists) {
-            batch(() => {
-                dispatch(fetchGroupDependencies({ groupId, api, fetchAnyway: true }))
-                    .unwrap()
-                    .catch((err) => {
-                        console.warn(err);
-                        toast.error(`Error while loading transactions and accounts: ${err}`);
-                    });
-            });
+            dispatch(fetchGroupDependencies({ groupId, api, fetchAnyway: true }))
+                .unwrap()
+                .catch((err: SerializedError) => {
+                    console.warn(err);
+                    toast.error(`Error while loading transactions and accounts: ${err.message}`);
+                });
         }
     }, [groupExists, groupId, dispatch]);
 

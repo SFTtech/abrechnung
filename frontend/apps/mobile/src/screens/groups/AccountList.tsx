@@ -6,7 +6,7 @@ import {
     selectAccountBalances,
     selectCurrentUserPermissions,
     selectGroupAccountsStatus,
-    selectGroupCurrencySymbol,
+    selectGroupById,
     selectSortedAccounts,
 } from "@abrechnung/redux";
 import { Account, AccountBalance } from "@abrechnung/types";
@@ -40,6 +40,7 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
     const accountType: AccountType = route.name === "AccountList" ? "personal" : "clearing";
 
     const groupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) })) as number; // TODO: proper typing
+    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
     const [search, setSearch] = useState<string>("");
     const [sortMode, setSortMode] = useState<AccountSortMode>("name");
     const accounts = useAppSelector((state) =>
@@ -53,9 +54,7 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
     );
     const accountBalances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
-    const currency_symbol = useAppSelector((state) =>
-        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
-    );
+    const currency_symbol = group?.currency_symbol;
     const accountStatus = useAppSelector((state) =>
         selectGroupAccountsStatus({ state: selectAccountSlice(state), groupId })
     );
@@ -87,7 +86,7 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
         }
 
         navigation.getParent()?.setOptions({
-            headerTitle: accountType === "personal" ? "People" : "Events",
+            headerTitle: group?.name ?? "",
             titleShown: !showSearchInput,
             headerRight: () => {
                 if (showSearchInput) {
@@ -125,7 +124,7 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
                 );
             },
         });
-    }, [isFocused, showSearchInput, isMenuOpen, setMenuOpen, sortMode, theme, navigation, accountType, search]);
+    }, [group, isFocused, showSearchInput, isMenuOpen, setMenuOpen, sortMode, theme, navigation, accountType, search]);
 
     const createNewAccount = () => {
         dispatch(
