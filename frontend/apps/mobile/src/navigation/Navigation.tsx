@@ -1,11 +1,4 @@
-import {
-    fetchGroupDependencies,
-    selectGroupById,
-    selectGroups,
-    selectIsAuthenticated,
-    subscribe,
-    unsubscribe,
-} from "@abrechnung/redux";
+import { fetchGroupDependencies, selectGroups, selectIsAuthenticated, subscribe, unsubscribe } from "@abrechnung/redux";
 import { createDrawerNavigator } from "@react-navigation/drawer";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { NavigationContainer } from "@react-navigation/native";
