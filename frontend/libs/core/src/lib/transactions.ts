@@ -1,5 +1,5 @@
-import { Transaction, TransactionBalanceEffect } from "@abrechnung/types";
-import { fromISOString } from "@abrechnung/utils";
+import { Account, Transaction, TransactionBalanceEffect } from "@abrechnung/types";
+import { buildCsv, fromISOString } from "@abrechnung/utils";
 
 export type TransactionSortMode = "last_changed" | "value" | "name" | "description" | "billed_at";
 
@@ -103,4 +103,57 @@ export const computeTransactionBalanceEffect = (transaction: Transaction): Trans
     }
 
     return accountBalances;
+};
+
+export const transactionCsvDump = (
+    transactions: Transaction[],
+    balanceEffects: { [id: number]: TransactionBalanceEffect },
+    accounts: Account[]
+): string => {
+    const transactionsSorted = [...transactions]
+        .filter((t) => !t.is_wip)
+        .sort((t1, t2) => t1.billed_at.localeCompare(t2.billed_at));
+
+    const accountMap = Object.fromEntries(
+        accounts.filter((acc) => !acc.deleted).map((acc) => [`account-${acc.id}`, acc.name])
+    );
+
+    const csvHeaders = {
+        id: "ID",
+        date: "Date",
+        payer: "Payer",
+        name: "Name",
+        description: "Description",
+        currency_symbol: "Currency",
+        currency_conversion_rate: "Currency Conversion Rate",
+        tags: "Tags",
+        value: "Value",
+        ...accountMap,
+    };
+
+    const data = [];
+
+    for (const transaction of transactionsSorted) {
+        const balanceEffect = balanceEffects[transaction.id];
+        const creditorId = Object.keys(transaction.creditor_shares)[0];
+        const creditorName = accountMap[`account-${creditorId}`];
+        const tags = transaction.tags.join(",");
+
+        const rowData = {
+            id: transaction.id,
+            date: transaction.billed_at,
+            payer: creditorName,
+            name: transaction.name,
+            description: transaction.description,
+            currency_symbol: transaction.currency_symbol,
+            currency_conversion_rate: transaction.currency_conversion_rate,
+            tags: tags,
+            value: transaction.value.toFixed(2),
+            ...Object.fromEntries(
+                accounts.map((acc) => [`account-${acc.id}`, balanceEffect[acc.id]?.total.toFixed(2) ?? ""])
+            ),
+        };
+        data.push(rowData);
+    }
+    return buildCsv(csvHeaders, data);
 };

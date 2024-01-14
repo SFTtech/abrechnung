@@ -1,10 +1,11 @@
-import { TransactionSortMode } from "@abrechnung/core";
+import { TransactionSortMode, transactionCsvDump } from "@abrechnung/core";
 import {
     createTransaction,
     selectCurrentUserPermissions,
     selectGroupById,
     selectSortedTransactions,
-    selectAccountIdToAccountMap,
+    selectGroupAccounts,
+    selectTransactionBalanceEffects,
 } from "@abrechnung/redux";
 import { Add, Clear } from "@mui/icons-material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -37,9 +38,10 @@ import { TagSelector } from "@/components/TagSelector";
 import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
 import { MobilePaper } from "@/components/style/mobile";
 import { useTitle } from "@/core/utils";
-import { selectGroupSlice, useAppDispatch, useAppSelector, selectAccountSlice } from "@/store";
+import { selectGroupSlice, useAppDispatch, useAppSelector, selectAccountSlice, selectTransactionSlice } from "@/store";
 import { TransactionListItem } from "./TransactionListItem";
 import { useTranslation } from "react-i18next";
+import { Transaction } from "@abrechnung/types";
 
 interface Props {
     groupId: number;
@@ -48,78 +50,28 @@ interface Props {
 const emptyList = [];
 const MAX_ITEMS_PER_PAGE = 40;
 
-function exportCsv(groupId) {
-    const accounts = useAppSelector((state) =>
-        selectAccountIdToAccountMap({ state: selectAccountSlice(state), groupId })
-    );
-
-    let transactionsSorted = useAppSelector((state) =>
-        selectSortedTransactions({ state, groupId, searchTerm: "", sortMode: "billed_at", tags: [] })
-    );
-    transactionsSorted = [...transactionsSorted].reverse();
-
-    const accountIds = Object.keys(accounts).filter(id => !accounts[id].deleted);
-    const accountNames = accountIds.map(id => accounts[id].name);
-    const accountIndexById = Object.fromEntries(accountIds.map((id, index) => [id, index]));
-
-    let exportedCsv = "ID,Date,Payer,Name,Tags,Value," + accountNames.join(",") + ",Description\n";
-    for (const transaction of transactionsSorted) {
-        if (transaction.is_wip) continue;
-
-        const creditorId = Object.entries(transaction.creditor_shares)[0][0];
-        const creditorName = accounts[creditorId].name;
-        let tags = "";
-        if (transaction.tags.length == 1) {
-            tags = transaction.tags[0];
-        } else if (transaction.tags.length > 1) {
-            tags = JSON.stringify(transaction.tags.join(","));
-        }
-
-        let value = transaction.value;
-        let total = accountIds.map(() => 0);
-
-        if (transaction.type == "transfer") {
-            total[accountIndexById[creditorId]] = transaction.value;
-            const debitorId = Object.entries(transaction.debitor_shares)[0][0];
-            total[accountIndexById[debitorId]] = -transaction.value;
-            value = 0
-        } else {
-            let extraFromPositions = 0;
-            let totalPositions = 0;
-            for (let position of Object.values(transaction.positions)) {
-                const totalShares = Object.values(position.usages).reduce((a, b) => a + b, 0) + position.communist_shares;
-                for (let [accountId, shares] of Object.entries(position.usages)) {
-                    let value = position.price*shares/totalShares;
-                    total[accountIndexById[accountId]] += value;
-                    totalPositions += value;
-                }
-                extraFromPositions += position.price*position.communist_shares/totalShares;
-            }
-            totalPositions += extraFromPositions;
-            const valueMinusPositions = transaction.value - totalPositions;
-            const totalShares = Object.values(transaction.debitor_shares).reduce((a, b) => a + b, 0);
-            const numberOfDebitors = Object.values(transaction.debitor_shares).length;
-            for (let [accountId, debitorShares] of Object.entries(transaction.debitor_shares)) {
-                total[accountIndexById[accountId]] += valueMinusPositions*debitorShares/totalShares + extraFromPositions/numberOfDebitors;
-            }
-        }
-        exportedCsv += `${transaction.id},${transaction.billed_at},${creditorName},${JSON.stringify(transaction.name)},${tags},${value.toFixed(2)},`;
-        exportedCsv += total.map((value) => value.toFixed(2)).join(",");
-        exportedCsv += "," + JSON.stringify(transaction.description) + "\n";
-    }
-    return exportedCsv;
-}
-
-function downloadCsv(str, filename) {
-    let blob = new Blob([str], {type: "text/csv;charset=utf-8"});
-    let url = URL.createObjectURL(blob);
-    let link = document.createElement("a");
+const downloadFile = (content: string, filename: string, mimetype: string) => {
+    const blob = new Blob([content], { type: `${mimetype};charset=utf-8` });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
     link.download = filename;
     link.href = url;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-}
+};
+
+const useDownloadCsv = (groupId: number, transactions: Transaction[]) => {
+    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
+    const balanceEffects = useAppSelector((state) =>
+        selectTransactionBalanceEffects({ state: selectTransactionSlice(state), groupId })
+    );
+
+    return React.useCallback(() => {
+        const csv = transactionCsvDump(transactions, balanceEffects, accounts);
+        downloadFile(csv, "transactions.csv", "text/csv");
+    }, [accounts, balanceEffects, transactions]);
+};
 
 export const TransactionList: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
@@ -173,7 +125,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
 
     const handleChangeTagFilter = (newTags: string[]) => setTagFilter(newTags);
 
-    const exportedCsv = exportCsv(groupId);
+    const downloadCsv = useDownloadCsv(groupId, transactions);
 
     return (
         <>
@@ -239,28 +191,30 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                                 />
                             </FormControl>
                         </Box>
-                        <Box sx={{ display: "flex-item" }}>
-                            <div style={{ padding: "8px" }}>
-                                <Tooltip title="Export CSV">
-                                    <IconButton size="small" color="primary" onClick={() => {downloadCsv(exportedCsv, "transactions.csv");}}><SaveAlt /></IconButton>
-                                </Tooltip>
-                            </div>
-                        </Box>
                         {!isSmallScreen && permissions.canWrite && (
                             <Box sx={{ display: "flex-item" }}>
-                                <div style={{ padding: "8px" }}>
-                                    <Add color="primary" />
-                                </div>
-                                <Tooltip title={t("transactions.createPurchase")}>
-                                    <IconButton color="primary" onClick={onCreatePurchase}>
-                                        <PurchaseIcon />
+                                <Tooltip title={t("common.exportAsCsv")}>
+                                    <IconButton size="small" color="primary" onClick={downloadCsv}>
+                                        <SaveAlt />
                                     </IconButton>
                                 </Tooltip>
-                                <Tooltip title={t("transactions.createTransfer")}>
-                                    <IconButton color="primary" onClick={onCreateTransfer}>
-                                        <TransferIcon />
-                                    </IconButton>
-                                </Tooltip>
+                                {permissions.canWrite && (
+                                    <>
+                                        <div style={{ padding: "8px" }}>
+                                            <Add color="primary" />
+                                        </div>
+                                        <Tooltip title={t("transactions.createPurchase")}>
+                                            <IconButton color="primary" onClick={onCreatePurchase}>
+                                                <PurchaseIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title={t("transactions.createTransfer")}>
+                                            <IconButton color="primary" onClick={onCreateTransfer}>
+                                                <TransferIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </>
+                                )}
                             </Box>
                         )}
                     </Box>

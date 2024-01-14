@@ -4,6 +4,8 @@
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.12.1...HEAD)
 
+- Add CSV exports for transactions in web by @ymeiron
+
 ## 0.12.1 (2024-01-05)
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.12.0...v0.12.1)

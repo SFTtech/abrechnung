@@ -44,6 +44,7 @@ const translations = {
         send: "Senden",
         currency: "Währung",
         addNewTag: "Neuen Tag hinzufügen",
+        exportAsCsv: "Als CSV Datei exportieren",
     },
     shareSelect: {
         selectedPeople_one: "{{count}} Person",
