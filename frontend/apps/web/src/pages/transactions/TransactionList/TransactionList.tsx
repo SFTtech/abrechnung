@@ -1,9 +1,11 @@
-import { TransactionSortMode } from "@abrechnung/core";
+import { TransactionSortMode, transactionCsvDump } from "@abrechnung/core";
 import {
     createTransaction,
     selectCurrentUserPermissions,
     selectGroupById,
     selectSortedTransactions,
+    selectGroupAccounts,
+    selectTransactionBalanceEffects,
 } from "@abrechnung/redux";
 import { Add, Clear } from "@mui/icons-material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -29,15 +31,17 @@ import {
     useMediaQuery,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import { SaveAlt } from "@mui/icons-material";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TagSelector } from "@/components/TagSelector";
 import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
 import { MobilePaper } from "@/components/style/mobile";
 import { useTitle } from "@/core/utils";
-import { selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { selectGroupSlice, useAppDispatch, useAppSelector, selectAccountSlice, selectTransactionSlice } from "@/store";
 import { TransactionListItem } from "./TransactionListItem";
 import { useTranslation } from "react-i18next";
+import { Transaction } from "@abrechnung/types";
 
 interface Props {
     groupId: number;
@@ -45,6 +49,29 @@ interface Props {
 
 const emptyList = [];
 const MAX_ITEMS_PER_PAGE = 40;
+
+const downloadFile = (content: string, filename: string, mimetype: string) => {
+    const blob = new Blob([content], { type: `${mimetype};charset=utf-8` });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.download = filename;
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
+const useDownloadCsv = (groupId: number, transactions: Transaction[]) => {
+    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
+    const balanceEffects = useAppSelector((state) =>
+        selectTransactionBalanceEffects({ state: selectTransactionSlice(state), groupId })
+    );
+
+    return React.useCallback(() => {
+        const csv = transactionCsvDump(transactions, balanceEffects, accounts);
+        downloadFile(csv, "transactions.csv", "text/csv");
+    }, [accounts, balanceEffects, transactions]);
+};
 
 export const TransactionList: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
@@ -97,6 +124,8 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
     };
 
     const handleChangeTagFilter = (newTags: string[]) => setTagFilter(newTags);
+
+    const downloadCsv = useDownloadCsv(groupId, transactions);
 
     return (
         <>
@@ -164,19 +193,28 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                         </Box>
                         {!isSmallScreen && permissions.canWrite && (
                             <Box sx={{ display: "flex-item" }}>
-                                <div style={{ padding: "8px" }}>
-                                    <Add color="primary" />
-                                </div>
-                                <Tooltip title={t("transactions.createPurchase")}>
-                                    <IconButton color="primary" onClick={onCreatePurchase}>
-                                        <PurchaseIcon />
+                                <Tooltip title={t("common.exportAsCsv")}>
+                                    <IconButton size="small" color="primary" onClick={downloadCsv}>
+                                        <SaveAlt />
                                     </IconButton>
                                 </Tooltip>
-                                <Tooltip title={t("transactions.createTransfer")}>
-                                    <IconButton color="primary" onClick={onCreateTransfer}>
-                                        <TransferIcon />
-                                    </IconButton>
-                                </Tooltip>
+                                {permissions.canWrite && (
+                                    <>
+                                        <div style={{ padding: "8px" }}>
+                                            <Add color="primary" />
+                                        </div>
+                                        <Tooltip title={t("transactions.createPurchase")}>
+                                            <IconButton color="primary" onClick={onCreatePurchase}>
+                                                <PurchaseIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title={t("transactions.createTransfer")}>
+                                            <IconButton color="primary" onClick={onCreateTransfer}>
+                                                <TransferIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    </>
+                                )}
                             </Box>
                         )}
                     </Box>
