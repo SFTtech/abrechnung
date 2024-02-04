@@ -106,7 +106,7 @@ source = [
 ]
 
 [tool.bumpversion]
-current_version = "0.13.0"
+current_version = "0.13.1"
 commit = false
 files = [
     { filename = "abrechnung/__init__.py" },
