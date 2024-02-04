@@ -5,6 +5,8 @@
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.12.1...HEAD)
 
 - Add CSV exports for transactions in web by @ymeiron
+- Add german translations
+- Add multi-arch docker builds
 
 ## 0.12.1 (2024-01-05)
 
