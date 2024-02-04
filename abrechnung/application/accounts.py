@@ -155,9 +155,11 @@ class AccountService(Service):
             group_id,
         )
         return [
-            ClearingAccount.model_validate(dict(row))
-            if row["type"] == AccountType.clearing.value
-            else PersonalAccount.model_validate(dict(row))
+            (
+                ClearingAccount.model_validate(dict(row))
+                if row["type"] == AccountType.clearing.value
+                else PersonalAccount.model_validate(dict(row))
+            )
             for row in rows
         ]
 
