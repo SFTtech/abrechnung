@@ -133,6 +133,7 @@ const translations = {
     transactions: {
         createTransaction: "Create Transaction",
         createPurchase: "Create Purchase",
+        createPurchaseForAccount: "Create purchase with {{accountName}} as participant",
         createTransfer: "Create Transfer",
         noTransactions: "No Transactions",
         purchase: "Purchase",

@@ -1,5 +1,5 @@
 import { selectAccountBalances, selectAccountById, selectGroupCurrencySymbol } from "@abrechnung/redux";
-import { TableCell } from "@mui/material";
+import { TableCell, Typography } from "@mui/material";
 import React from "react";
 import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
 import { ShareSelect } from "../ShareSelect";
@@ -26,26 +26,29 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) =
     }
 
     return (
-        <ShareSelect
-            groupId={groupId}
-            label={t("accounts.participated")}
-            value={account.clearing_shares}
-            additionalShareInfoHeader={
-                <TableCell width="100px" align="right">
-                    {t("common.shared")}
-                </TableCell>
-            }
-            excludeAccounts={[account.id]}
-            renderAdditionalShareInfo={({ account: participatingAccount }) => (
-                <TableCell width="100px" align="right">
-                    {formatCurrency(
-                        balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0,
-                        currency_symbol
-                    )}
-                </TableCell>
-            )}
-            onChange={(value) => undefined}
-            editable={false}
-        />
+        <>
+            <Typography variant="h6">{t("accounts.clearingDistributionOf", "", { account })}</Typography>
+            <ShareSelect
+                groupId={groupId}
+                label={t("accounts.participated")}
+                value={account.clearing_shares}
+                additionalShareInfoHeader={
+                    <TableCell width="100px" align="right">
+                        {t("common.shared")}
+                    </TableCell>
+                }
+                excludeAccounts={[account.id]}
+                renderAdditionalShareInfo={({ account: participatingAccount }) => (
+                    <TableCell width="100px" align="right">
+                        {formatCurrency(
+                            balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0,
+                            currency_symbol
+                        )}
+                    </TableCell>
+                )}
+                onChange={(value) => undefined}
+                editable={false}
+            />
+        </>
     );
 };
