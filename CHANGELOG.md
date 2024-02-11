@@ -4,6 +4,8 @@
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.13.1...HEAD)
 
+- fix frontend docker container startup
+
 ## 0.13.0 (2024-02-04)
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.13.0...v0.13.1)
