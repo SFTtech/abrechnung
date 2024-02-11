@@ -76,15 +76,13 @@ export const AccountDetail: React.FC<Props> = ({ groupId }) => {
             {account.type === "clearing" && (
                 <Grid item xs={12}>
                     <MobilePaper>
-                        <Typography variant="h6">{t("accounts.clearingDistributionOf", "", { account })}</Typography>
                         <ClearingAccountDetail groupId={groupId} accountId={accountId} />
                     </MobilePaper>
                 </Grid>
             )}
             <Grid item xs={12}>
                 <MobilePaper>
-                    <Typography variant="h6">{t("accounts.transactionsInvolving", "", { account })}</Typography>
-                    <AccountTransactionList groupId={groupId} accountId={accountId} />
+                    <AccountTransactionList groupId={groupId} account={account} />
                 </MobilePaper>
             </Grid>
         </Grid>

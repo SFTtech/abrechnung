@@ -4,6 +4,8 @@
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.13.2...HEAD)
 
+- web: add button to add a new purchase for an account from the account detail page
+
 ## 0.13.1 (2024-02-11)
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.13.1...v0.13.2)
