@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.13.1...HEAD)
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.13.2...HEAD)
+
+## 0.13.1 (2024-02-11)
+
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.13.1...v0.13.2)
 
 - fix frontend docker container startup
 
