@@ -12,8 +12,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    links:
-      - postgres
 
   frontend-dev:
     build:
@@ -23,17 +21,12 @@ services:
     depends_on:
       api:
         condition: service_healthy
-    links:
-      - api
 
   nginx:
     image: docker.io/nginx:stable-alpine
     depends_on:
       api:
         condition: service_healthy
-    links:
-      - api
-      - frontend-dev
     volumes:
       - "./docker/nginx-dynamic:/etc/nginx/conf.d/default.conf"
     ports:
@@ -55,9 +48,6 @@ services:
     depends_on:
       api:
         condition: service_healthy
-    links:
-      - postgres
-      - "mailhog:mail"
 
   cron:
     build:
@@ -72,9 +62,6 @@ services:
       ABRECHNUNG_EMAIL__HOST: mail
       ABRECHNUNG_EMAIL__PORT: 1025
       ABRECHNUNG_EMAIL__MODE: smtp
-    links:
-      - postgres
-      - "mailhog:mail"
 
   postgres:
     image: docker.io/postgres:14-alpine
