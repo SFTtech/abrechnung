@@ -106,11 +106,11 @@ source = [
 ]
 
 [tool.bumpversion]
-current_version = "0.13.2"
+current_version = "0.13.3"
 commit = false
 files = [
     { filename = "abrechnung/__init__.py" },
     { filename = "frontend/apps/mobile/android/app/build.gradle" },
-    { filename = "CHANGELOG.md", search = "Unreleased", replace = "{current_version} ({now:%Y-%m-%d})"},
+    { filename = "CHANGELOG.md", search = "Unreleased", replace = "{new_version} ({now:%Y-%m-%d})"},
     { filename = "CHANGELOG.md", search = "v{current_version}...HEAD", replace = "v{current_version}...v{new_version}"},
 ]
