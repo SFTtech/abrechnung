@@ -614,8 +614,8 @@ const transactionSlice = createSlice({
             state.nextLocalPositionId = positionId - 1;
             wipTransaction.position_ids.push(positionId);
             wipTransaction.positions[positionId] = {
-                id: positionId,
                 ...position,
+                id: positionId,
                 deleted: false,
                 only_local: true,
                 is_changed: true,
