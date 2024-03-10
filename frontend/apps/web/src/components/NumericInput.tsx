@@ -45,6 +45,7 @@ export const NumericInput: React.FC<NumericInputProps> = ({ value, onChange, ...
             onBlur={onInternalBlur}
             onKeyUp={onKeyUp}
             variant="standard"
+            inputProps={{ inputmode: "numeric" }}
             {...props}
         />
     );
