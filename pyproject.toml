@@ -10,7 +10,7 @@ authors = [
     { name = "Michael Enßlin", email = "mic@sft.lol" }
 ]
 license = { file = "LICENSE" }
-dynamic = ["version", "readme"]
+dynamic = ["version", "description"]
 classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
@@ -67,7 +67,7 @@ exclude = ["tests*"]
 
 [tool.setuptools.dynamic]
 version = { attr = "abrechnung.__version__" }
-readme = { file = ["README.md"] }
+description = { file = ["README.md"] }
 
 [tool.pylint.MASTER]
 extension-pkg-whitelist = [
