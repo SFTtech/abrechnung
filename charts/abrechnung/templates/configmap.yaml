@@ -1,0 +1,43 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "abrechnung.fullname" . }}-nginx-config
+  labels:
+    {{- include "abrechnung.labels" . | nindent 4 }}
+data:
+  nginx.conf: |
+    upstream abrechnung_api {
+        server localhost:8080;
+    }
+
+    server {
+        listen 80;
+        listen [::]:80;
+
+        server_name _;
+
+        charset utf-8;
+
+        access_log /dev/stdout;
+        error_log /dev/stderr;
+
+        location /api {
+            proxy_pass http://localhost:8080;
+
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+
+            proxy_set_header Host $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_buffering off;
+            proxy_redirect off;
+        }
+
+        root /var/www/abrechnung/;
+        index index.html;
+        location / {
+            try_files $uri /index.html =404;
+        }
+    }
