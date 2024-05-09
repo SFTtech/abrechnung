@@ -6,14 +6,15 @@ import { parseAbrechnungFloat } from "@abrechnung/utils";
 export type NumericInputProps = {
     onChange: (value: number) => void;
     value?: number | undefined;
+    isCurrency?: boolean | false;
 } & Omit<TextFieldProps, "value" | "onChange" | "onBlur" | "onKeyUp">;
 
-export const NumericInput: React.FC<NumericInputProps> = ({ value, onChange, ...props }) => {
+export const NumericInput: React.FC<NumericInputProps> = ({ value, isCurrency, onChange, ...props }) => {
     const [internalValue, setInternalValue] = React.useState("");
 
     React.useEffect(() => {
-        setInternalValue(String(value));
-    }, [value, setInternalValue]);
+        setInternalValue(isCurrency ? value.toFixed(2) : String(value));
+    }, [value, setInternalValue, isCurrency]);
 
     const onInternalChange = (event) => {
         setInternalValue(event.target.value);
@@ -23,7 +24,7 @@ export const NumericInput: React.FC<NumericInputProps> = ({ value, onChange, ...
     const propagateChange = () => {
         const parsedValue = parseAbrechnungFloat(internalValue);
         if (!isNaN(parsedValue)) {
-            setInternalValue(String(parsedValue));
+            setInternalValue(isCurrency ? parsedValue.toFixed(2) : String(parsedValue));
             onChange(parsedValue);
         }
     };

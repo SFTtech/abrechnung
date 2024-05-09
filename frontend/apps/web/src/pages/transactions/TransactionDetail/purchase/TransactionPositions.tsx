@@ -104,6 +104,7 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
             <TableCell align="right">
                 <NumericInput
                     value={position.price}
+                    isCurrency={true}
                     style={{ width: 70 }}
                     error={validationError && !!validationError.fieldErrors.price}
                     helperText={validationError && validationError.fieldErrors.price}
