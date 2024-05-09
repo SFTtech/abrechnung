@@ -149,6 +149,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                     helperText={validationErrors.fieldErrors.value}
                     onChange={(value) => pushChanges({ value })}
                     value={transaction.value}
+                    isCurrency={true}
                     disabled={!transaction.is_wip}
                     InputProps={{
                         endAdornment: <InputAdornment position="end">{transaction.currency_symbol}</InputAdornment>,
