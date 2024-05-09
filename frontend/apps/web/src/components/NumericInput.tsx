@@ -24,7 +24,7 @@ export const NumericInput: React.FC<NumericInputProps> = ({ value, isCurrency, o
     const propagateChange = () => {
         const parsedValue = parseAbrechnungFloat(internalValue);
         if (!isNaN(parsedValue)) {
-            setInternalValue(isCurrency ? value.toFixed(2) : String(value));
+            setInternalValue(isCurrency ? parsedValue.toFixed(2) : String(parsedValue));
             onChange(parsedValue);
         }
     };
