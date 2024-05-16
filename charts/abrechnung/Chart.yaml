@@ -1,0 +1,13 @@
+apiVersion: v2
+name: abrechnung
+description: A Helm chart for abrechnung
+type: application
+version: 0.1.0
+appVersion: "v0.11.0"
+keywords:
+- docker
+- registry
+- harbor
+home: https://github.com/SFTtech/abrechnung
+sources:
+- https://github.com/SFTtech/abrechnung
