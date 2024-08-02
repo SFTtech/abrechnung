@@ -116,7 +116,7 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
                     {showAdvanced ? (
                         <NumericInput
                             sx={{ maxWidth: 50 }}
-                            value={position.usages[accountID] !== undefined ? position.usages[String(accountID)] : 0}
+                            value={(position.usages[accountID] ?? 0) !== 0 ? position.usages[accountID] : 0}
                             error={validationError && !!validationError.fieldErrors.usages}
                             onChange={(value) => updatePositionUsage(position, accountID, value)}
                             inputProps={{ tabIndex: -1 }}
@@ -124,7 +124,7 @@ const PositionTableRow: React.FC<PositionTableRowProps> = ({
                     ) : (
                         <Checkbox
                             name={`${accountID}-checked`}
-                            checked={position.usages[accountID] !== undefined}
+                            checked={(position.usages[accountID] ?? 0) !== 0}
                             onChange={(event) => updatePositionUsage(position, accountID, event.target.checked ? 1 : 0)}
                             inputProps={{ tabIndex: -1 }}
                         />
