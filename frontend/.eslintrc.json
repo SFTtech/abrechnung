@@ -30,13 +30,18 @@
             "files": ["*.ts", "*.tsx"],
             "extends": ["plugin:@nx/typescript"],
             "rules": {
-                "@typescript-eslint/no-explicit-any": ["warn"]
+                "@typescript-eslint/no-explicit-any": ["warn"],
+                "@typescript-eslint/no-extra-semi": "error",
+                "no-extra-semi": "off"
             }
         },
         {
             "files": ["*.js", "*.jsx"],
             "extends": ["plugin:@nx/javascript"],
-            "rules": {}
+            "rules": {
+                "@typescript-eslint/no-extra-semi": "error",
+                "no-extra-semi": "off"
+            }
         },
         {
             "files": ["*.jsx", "*.tsx"],

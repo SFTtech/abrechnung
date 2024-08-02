@@ -44,7 +44,7 @@ export const ConfirmEmailChange: React.FC = () => {
                 <Loading />
             ) : (
                 <p>
-                    <Trans i18nKey="auth.confirmEmailChange.clickHereToConfirm">
+                    <Trans Key="auth.confirmEmailChange.clickHereToConfirm">
                         Click
                         <Button color="primary" onClick={confirmEmail}>
                             here

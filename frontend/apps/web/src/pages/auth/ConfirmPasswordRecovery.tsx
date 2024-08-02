@@ -65,7 +65,7 @@ export const ConfirmPasswordRecovery: React.FC = () => {
                 )}
                 {status === "success" ? (
                     <Alert sx={{ mt: 4 }} severity="success">
-                        <Trans i18nKey="auth.confirmPasswordRecovery.successfulLinkToLogin">
+                        <Trans Key="auth.confirmPasswordRecovery.successfulLinkToLogin">
                             Password recovery successful, please
                             <Link to="/login" component={RouterLink}>
                                 login
