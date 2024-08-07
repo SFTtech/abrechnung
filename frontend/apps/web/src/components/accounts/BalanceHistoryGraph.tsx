@@ -63,7 +63,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
 
             const graphData: Serie[] = [];
             let lastPoint = balanceHistory[0];
-            const makeSerie = (): Serie => {
+            const makeSerie = () => {
                 return {
                     id: `serie-${graphData.length}`,
                     data: [],
@@ -167,7 +167,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
                 areaBaselineValue={areaBaselineValue}
                 tooltip={renderTooltip}
                 onClick={onClick}
-                pointLabel={(p) => `${toISODateString(p.x as Date)}: ${p.y}`}
+                pointLabel={(p) => `${toISODateString(p.data.x as Date)}: ${p.data.y}`}
                 useMesh={true}
                 axisLeft={{
                     format: (value: number) => `${value.toFixed(2)} ${currency_symbol}`,

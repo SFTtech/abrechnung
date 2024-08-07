@@ -41,7 +41,7 @@ export const ConfirmRegistration: React.FC = () => {
                     <>
                         <Alert severity="success">{t("auth.confirmRegistration.confirmSuccessful")}</Alert>
                         <p>
-                            <Trans i18nKey="auth.confirmRegistration.successfulLinkToLogin">
+                            <Trans Key="auth.confirmRegistration.successfulLinkToLogin">
                                 Please
                                 <Link to="/login" component={RouterLink}>
                                     login
@@ -54,7 +54,7 @@ export const ConfirmRegistration: React.FC = () => {
                     <Loading />
                 ) : (
                     <p>
-                        <Trans i18nKey="auth.confirmRegistration.clickHereToConfirm">
+                        <Trans Key="auth.confirmRegistration.clickHereToConfirm">
                             Click
                             <Button color="primary" onClick={confirmEmail}>
                                 here

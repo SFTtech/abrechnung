@@ -46,7 +46,7 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
             options={filteredAccounts}
             getOptionLabel={(acc: Account) => acc.name}
             multiple={false}
-            value={value !== undefined ? accounts.find((acc) => acc.id === value) ?? null : null}
+            value={value !== undefined ? (accounts.find((acc) => acc.id === value) ?? null) : null}
             disabled={disabled}
             openOnFocus
             fullWidth
