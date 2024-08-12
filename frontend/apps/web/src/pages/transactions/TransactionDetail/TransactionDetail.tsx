@@ -21,7 +21,8 @@ import { toast } from "react-toastify";
 import { typeToFlattenedError, z } from "zod";
 import { TransactionActions } from "./TransactionActions";
 import { TransactionMetadata } from "./TransactionMetadata";
-import { ValidationErrors as PositionValidationErrors, TransactionPositions } from "./purchase/TransactionPositions";
+import { TransactionPositions } from "./purchase/TransactionPositions";
+import { ValidationErrors as PositionValidationErrors } from "./purchase/types";
 import { useTranslation } from "react-i18next";
 
 interface Props {
