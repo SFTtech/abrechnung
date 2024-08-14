@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { Form, Formik, FormikHelpers } from "formik";
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import { DisabledFormControlLabel, DisabledTextField } from "@/components/style/DisabledTextField";
@@ -28,10 +28,10 @@ import { useTranslation } from "react-i18next";
 
 const validationSchema = z.object({
     name: z.string({ required_error: "group name is required" }),
-    description: z.string().optional(),
-    terms: z.string().optional(),
-    currency_symbol: z.string().optional(),
-    addUserAccountOnJoin: z.boolean().optional(),
+    description: z.string(),
+    terms: z.string(),
+    currency_symbol: z.string(),
+    addUserAccountOnJoin: z.boolean(),
 });
 
 type FormValues = z.infer<typeof validationSchema>;
@@ -51,7 +51,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
 
     const [isEditing, setIsEditing] = useState(false);
 
-    useTitle(t("groups.settings.tabTitle", "", { groupName: group.name }));
+    useTitle(t("groups.settings.tabTitle", "", { groupName: group?.name }));
 
     const startEdit = () => {
         setIsEditing(true);
@@ -62,6 +62,9 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
     };
 
     const handleSubmit = (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
+        if (!group) {
+            return;
+        }
         dispatch(
             updateGroup({
                 group: {
@@ -96,6 +99,10 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                 toast.error(err);
             });
     };
+
+    if (!permissions || !group) {
+        return <Navigate to="/404" />;
+    }
 
     return (
         <MobilePaper>

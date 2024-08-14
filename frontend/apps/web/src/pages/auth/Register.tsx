@@ -12,7 +12,7 @@ import {
     TextField,
     Typography,
 } from "@mui/material";
-import { Form, Formik } from "formik";
+import { Form, Formik, FormikHelpers } from "formik";
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -53,23 +53,20 @@ export const Register: React.FC = () => {
     useEffect(() => {
         if (loggedIn) {
             setLoading(false);
-            if (query.get("next") !== null && query.get("next") !== undefined) {
-                navigate(query.get("next"));
-            } else {
-                navigate("/");
-            }
+            const next = query.get("next");
+            navigate(next ?? "/");
         } else {
             setLoading(false);
         }
     }, [loggedIn, navigate, query]);
 
-    const handleSubmit = (values: FormValues, { setSubmitting }) => {
+    const handleSubmit = (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
         // extract a potential invite token (which should be a uuid) from the query args
         let inviteToken = undefined;
         console.log(query.get("next"));
         if (query.get("next") !== null && query.get("next") !== undefined) {
             const re = /\/invite\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/;
-            const m = query.get("next").match(re);
+            const m = query.get("next")?.match(re);
             if (m != null) {
                 inviteToken = m[1];
             }

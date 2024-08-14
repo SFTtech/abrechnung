@@ -33,7 +33,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { SaveAlt } from "@mui/icons-material";
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { TagSelector } from "@/components/TagSelector";
 import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
 import { MobilePaper } from "@/components/style/mobile";
@@ -47,7 +47,7 @@ interface Props {
     groupId: number;
 }
 
-const emptyList = [];
+const emptyList: string[] = [];
 const MAX_ITEMS_PER_PAGE = 40;
 
 const downloadFile = (content: string, filename: string, mimetype: string) => {
@@ -106,7 +106,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
         (currentPage + 1) * MAX_ITEMS_PER_PAGE
     );
 
-    useTitle(t("transactions.list.tabTitle", "", { groupName: group.name }));
+    useTitle(t("transactions.list.tabTitle", "", { groupName: group?.name }));
 
     const onCreatePurchase = () => {
         dispatch(createTransaction({ groupId, type: "purchase" }))
@@ -126,6 +126,10 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
     const handleChangeTagFilter = (newTags: string[]) => setTagFilter(newTags);
 
     const downloadCsv = useDownloadCsv(groupId, transactions);
+
+    if (!permissions) {
+        return <Navigate to="/404" />;
+    }
 
     return (
         <>

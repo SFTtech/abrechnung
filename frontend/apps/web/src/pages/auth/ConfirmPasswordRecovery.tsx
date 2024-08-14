@@ -29,6 +29,10 @@ export const ConfirmPasswordRecovery: React.FC = () => {
     useTitle(t("auth.confirmPasswordRecovery.tabTitle"));
 
     const handleSubmit = (values: FormSchema, { setSubmitting, resetForm }: FormikHelpers<FormSchema>) => {
+        if (!token) {
+            return;
+        }
+
         api.client.auth
             .confirmPasswordRecovery({ requestBody: { new_password: values.password, token } })
             .then(() => {

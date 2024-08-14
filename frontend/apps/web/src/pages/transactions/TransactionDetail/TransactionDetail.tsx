@@ -45,7 +45,7 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
     const transaction: Transaction | undefined = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
     );
-    useTitle(`${group.name} - ${transaction?.name}`);
+    useTitle(`${group?.name} - ${transaction?.name}`);
 
     const hasPositions = useAppSelector((state) =>
         selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId })
@@ -64,12 +64,19 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
     }, [transaction, setValidationErrors]);
 
     const edit = React.useCallback(() => {
+        if (!transaction) {
+            return;
+        }
+
         if (!transaction.is_wip) {
             dispatch(transactionEditStarted({ groupId, transactionId }));
         }
     }, [transaction, dispatch, groupId, transactionId]);
 
     const abortEdit = React.useCallback(() => {
+        if (!transaction) {
+            return;
+        }
         if (!transaction.is_wip) {
             toast.error("Cannot save as there are not changes made");
             return;
@@ -95,12 +102,15 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
     }, [setShowProgress, dispatch, navigate, groupId, transactionId]);
 
     const save = React.useCallback(() => {
+        if (!transaction) {
+            return;
+        }
         if (!transaction.is_wip) {
             toast.error("Cannot cancel editing as there are not changes made");
             return;
         }
         const validated = TransactionValidator.safeParse(transaction);
-        const positionErrors = {};
+        const positionErrors: PositionValidationErrors = {};
         for (const position of Object.values(transaction.positions)) {
             const v = PositionValidator.safeParse(position);
             if (!v.success) {
@@ -148,7 +158,7 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
             <MobilePaper>
                 <TransactionActions
                     groupId={groupId}
-                    transactionId={transactionId}
+                    transaction={transaction}
                     onStartEdit={edit}
                     onCommitEdit={save}
                     onAbortEdit={abortEdit}
@@ -156,11 +166,7 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
                     showProgress={showProgress}
                 />
                 <Divider sx={{ marginBottom: 1, marginTop: 1 }} />
-                <TransactionMetadata
-                    groupId={groupId}
-                    transactionId={transactionId}
-                    validationErrors={validationErrors}
-                />
+                <TransactionMetadata groupId={groupId} transaction={transaction} validationErrors={validationErrors} />
             </MobilePaper>
 
             {transaction.type === "purchase" && !showPositions && transaction.is_wip && !hasPositions ? (

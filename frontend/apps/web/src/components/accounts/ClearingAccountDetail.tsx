@@ -1,26 +1,27 @@
-import { selectAccountBalances, selectAccountById, selectGroupCurrencySymbol } from "@abrechnung/redux";
+import { selectAccountBalances, selectGroupCurrencySymbol } from "@abrechnung/redux";
 import { TableCell, Typography } from "@mui/material";
 import React from "react";
-import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
+import { selectGroupSlice, useAppSelector } from "@/store";
 import { ShareSelect } from "../ShareSelect";
 import { useTranslation } from "react-i18next";
 import { useFormatCurrency } from "@/hooks";
+import { Account } from "@abrechnung/types";
 
 interface Props {
     groupId: number;
-    accountId: number;
+    account: Account;
 }
 
-export const ClearingAccountDetail: React.FC<Props> = ({ groupId, accountId }) => {
+export const ClearingAccountDetail: React.FC<Props> = ({ groupId, account }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
-    const account = useAppSelector((state) =>
-        selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
-    );
     const currency_symbol = useAppSelector((state) =>
         selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
     );
     const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
+    if (!currency_symbol) {
+        return null;
+    }
     if (account.type !== "clearing") {
         throw new Error("expected a clearing account to render ClearingAccountDetail, but got a personal account");
     }

@@ -8,7 +8,7 @@ function pnlFormatter(value: number, currency_symbol: string) {
 interface CurrencyValueProps {
     currency_symbol: string;
     value?: number;
-    forceColor: string;
+    forceColor?: string;
 }
 
 const CurrencyValue = React.memo(({ currency_symbol, value = 0, forceColor }: CurrencyValueProps) => {
@@ -36,7 +36,7 @@ CurrencyValue.displayName = "CurrencyValue";
 
 export function renderCurrency(
     currency_symbol: string,
-    forceColor = undefined
+    forceColor?: string
 ): (params: { value?: number }) => React.ReactNode {
     const component: React.FC<{ value?: number }> = (params) => {
         return <CurrencyValue currency_symbol={currency_symbol} value={params.value} forceColor={forceColor} />;

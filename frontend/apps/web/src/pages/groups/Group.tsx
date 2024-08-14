@@ -78,6 +78,7 @@ export const Group: React.FC = () => {
     }
 
     if (
+        group === undefined ||
         accountStatus === undefined ||
         transactionStatus === undefined ||
         groupMemberStatus === undefined ||

@@ -1,8 +1,8 @@
-import { Group } from "@abrechnung/types";
 import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from "@mui/material";
 import React from "react";
 import { toast } from "react-toastify";
 import { api } from "@/core/api";
+import { Group } from "@abrechnung/api";
 
 interface Props {
     show: boolean;

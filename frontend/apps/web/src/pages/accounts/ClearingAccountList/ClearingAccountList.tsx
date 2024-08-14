@@ -22,7 +22,7 @@ import {
     useTheme,
 } from "@mui/material";
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { TagSelector } from "@/components/TagSelector";
 import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
 import { MobilePaper } from "@/components/style/mobile";
@@ -31,12 +31,13 @@ import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } 
 import { getAccountLink } from "@/utils";
 import { ClearingAccountListItem } from "./ClearingAccountListItem";
 import { useTranslation } from "react-i18next";
+import { Account } from "@abrechnung/types";
 
 interface Props {
     groupId: number;
 }
 
-const emptyList = [];
+const emptyList: string[] = [];
 const MAX_ITEMS_PER_PAGE = 40;
 
 export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
@@ -72,16 +73,13 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
         (currentPage + 1) * MAX_ITEMS_PER_PAGE
     );
 
-    useTitle(t("events.list.tabTitle", "", { groupName: group.name }));
+    useTitle(t("events.list.tabTitle", "", { groupName: group?.name }));
 
-    const [accountDeleteId, setAccountDeleteId] = useState<number | null>(null);
-    const showDeleteModal = accountDeleteId !== null;
+    const [accountDelete, setAccountDelete] = useState<Account | null>(null);
+    const showDeleteModal = accountDelete !== null;
 
-    const onShowDeleteModal = (accountId: number) => {
-        setAccountDeleteId(accountId);
-    };
     const onCloseDeleteModal = () => {
-        setAccountDeleteId(null);
+        setAccountDelete(null);
     };
 
     const handleChangeTagFilter = (newTags: string[]) => setTagFilter(newTags);
@@ -93,6 +91,10 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                 navigate(getAccountLink(groupId, account.type, account.id) + "?no-redirect=true");
             });
     };
+
+    if (!permissions) {
+        return <Navigate to="/404" />;
+    }
 
     return (
         <>
@@ -177,8 +179,8 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                                 <ClearingAccountListItem
                                     key={account.id}
                                     groupId={groupId}
-                                    accountId={account.id}
-                                    setAccountToDelete={onShowDeleteModal}
+                                    account={account}
+                                    setAccountToDelete={setAccountDelete}
                                 />
                             ))
                         )}
@@ -204,7 +206,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                         show={showDeleteModal}
                         onAccountDeleted={onCloseDeleteModal}
                         onClose={onCloseDeleteModal}
-                        accountId={accountDeleteId}
+                        account={accountDelete}
                     />
                     <Fab color="primary" onClick={onCreateEvent} sx={{ position: "fixed", bottom: 16, right: 16 }}>
                         <AddIcon />

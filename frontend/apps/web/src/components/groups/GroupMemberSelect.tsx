@@ -24,7 +24,7 @@ export const GroupMemberSelect: React.FC<Props> = ({
     value = null,
     disabled = false,
     noDisabledStyling = false,
-    className = null,
+    className,
     ...props
 }) => {
     const memberIds = useAppSelector((state) => selectGroupMemberIds({ state: selectGroupSlice(state), groupId }));

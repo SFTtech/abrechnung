@@ -69,9 +69,10 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     const accountIDMap = useAppSelector((state) =>
         selectAccountIdToAccountMap({ state: selectAccountSlice(state), groupId })
     );
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
-    );
+    )!;
     const { positions, positionsHaveComplexShares } = useAppSelector((state) =>
         selectPositions({ state, groupId, transactionId })
     );
@@ -85,7 +86,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     // find all accounts that take part in the transaction, either via debitor shares or purchase items
     // TODO: should we add creditor accounts as well?
 
-    const [additionalPurchaseItemAccounts, setAdditionalPurchaseItemAccounts] = useState([]);
+    const [additionalPurchaseItemAccounts, setAdditionalPurchaseItemAccounts] = useState<number[]>([]);
 
     const { shownAccounts, shownAccountIDs } = React.useMemo(() => {
         let accountIDsToShow: number[] = Array.from(
@@ -120,7 +121,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     const totalPositionValue = positions.reduce((acc, curr) => acc + curr.price, 0);
     const sharedTransactionValue = transaction.value - totalPositionValue;
 
-    const purchaseItemSumForAccount = (accountID) => {
+    const purchaseItemSumForAccount = (accountID: number) => {
         return transactionBalanceEffect[accountID] !== undefined ? transactionBalanceEffect[accountID].positions : 0;
     };
 
@@ -150,7 +151,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
 
     const addPurchaseItemAccount = (account: Account) => {
         setShowAccountSelect(false);
-        setAdditionalPurchaseItemAccounts((currAdditionalAccounts) =>
+        setAdditionalPurchaseItemAccounts((currAdditionalAccounts: number[]) =>
             Array.from(new Set<number>([...currAdditionalAccounts, account.id]))
         );
     };
@@ -161,9 +162,13 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                 <Typography>{t("transactions.positions.positions")}</Typography>
                 {transaction.is_wip && (
                     <FormControlLabel
-                        control={<Checkbox name="show-advanced" />}
+                        control={
+                            <Checkbox
+                                name="show-advanced"
+                                onChange={(event) => setShowAdvanced(event.target.checked)}
+                            />
+                        }
                         checked={showAdvanced}
-                        onChange={(event: React.ChangeEvent<HTMLInputElement>) => setShowAdvanced(event.target.checked)}
                         label={t("common.advanced")}
                     />
                 )}
@@ -218,7 +223,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                       showAdvanced={showAdvanced}
                                       showAccountSelect={showAccountSelect}
                                       showAddAccount={showAddAccount}
-                                      validationError={validationErrors[position.id]}
+                                      validationError={validationErrors?.[position.id]}
                                   />
                               ))
                             : positions.map((position) => (

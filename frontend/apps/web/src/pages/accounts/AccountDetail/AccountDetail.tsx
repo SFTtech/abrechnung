@@ -11,17 +11,18 @@ import * as React from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { AccountInfo } from "./AccountInfo";
 import { useTranslation } from "react-i18next";
+import { Account } from "@abrechnung/types";
 
 interface Props {
     groupId: number;
 }
 
-const AccountEdit: React.FC<{ groupId: number; accountId: number }> = ({ groupId, accountId }) => {
+const AccountEdit: React.FC<{ groupId: number; account: Account }> = ({ groupId, account }) => {
     return (
         <Grid container spacing={2}>
             <Grid item xs={12}>
                 <MobilePaper>
-                    <AccountInfo groupId={groupId} accountId={accountId} />
+                    <AccountInfo groupId={groupId} account={account} />
                 </MobilePaper>
             </Grid>
         </Grid>
@@ -55,14 +56,14 @@ export const AccountDetail: React.FC<Props> = ({ groupId }) => {
     }
 
     if (account.is_wip) {
-        return <AccountEdit groupId={groupId} accountId={accountId} />;
+        return <AccountEdit groupId={groupId} account={account} />;
     }
 
     return (
         <Grid container spacing={2}>
             <Grid item xs={12}>
                 <MobilePaper>
-                    <AccountInfo groupId={groupId} accountId={accountId} />
+                    <AccountInfo groupId={groupId} account={account} />
                 </MobilePaper>
             </Grid>
             {account.type === "personal" && (
@@ -76,7 +77,7 @@ export const AccountDetail: React.FC<Props> = ({ groupId }) => {
             {account.type === "clearing" && (
                 <Grid item xs={12}>
                     <MobilePaper>
-                        <ClearingAccountDetail groupId={groupId} accountId={accountId} />
+                        <ClearingAccountDetail groupId={groupId} account={account} />
                     </MobilePaper>
                 </Grid>
             )}

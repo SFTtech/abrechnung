@@ -13,7 +13,7 @@ const configSchema = z.object({
         .array(
             z.object({
                 type: z.union([z.literal("info"), z.literal("error"), z.literal("warning"), z.literal("success")]),
-                title: z.string().default(null).nullable(),
+                title: z.string().nullable().default(null),
                 body: z.string(),
             })
         )
@@ -29,7 +29,7 @@ export interface StatusMessage {
 
 export type Config = z.infer<typeof configSchema>;
 
-const ConfigContext = React.createContext<Config>(null as Config);
+const ConfigContext = React.createContext<Config>(null as unknown as Config);
 
 export type ConfigProviderProps = {
     children: React.ReactNode;

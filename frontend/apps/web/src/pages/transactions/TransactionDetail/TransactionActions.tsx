@@ -1,4 +1,4 @@
-import { selectCurrentUserPermissions, selectTransactionById } from "@abrechnung/redux";
+import { selectCurrentUserPermissions } from "@abrechnung/redux";
 import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
 import {
     Button,
@@ -12,13 +12,14 @@ import {
     LinearProgress,
 } from "@mui/material";
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { selectTransactionSlice, useAppSelector } from "@/store";
+import { Navigate, useNavigate } from "react-router-dom";
+import { useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
+import { Transaction } from "@abrechnung/types";
 
 interface Props {
     groupId: number;
-    transactionId: number;
+    transaction: Transaction;
     showProgress?: boolean | undefined;
     onDelete: () => void;
     onStartEdit: () => void;
@@ -28,7 +29,7 @@ interface Props {
 
 export const TransactionActions: React.FC<Props> = ({
     groupId,
-    transactionId,
+    transaction,
     onDelete,
     onStartEdit,
     onCommitEdit,
@@ -41,9 +42,9 @@ export const TransactionActions: React.FC<Props> = ({
 
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
 
-    const transaction = useAppSelector((state) =>
-        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
-    );
+    if (!permissions) {
+        return <Navigate to="/404" />;
+    }
 
     const transactionTypeLabel = transaction.type === "purchase" ? "purchase" : "transfer";
 

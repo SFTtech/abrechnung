@@ -28,8 +28,8 @@ import { useTranslation } from "react-i18next";
 export const SessionList: React.FC = () => {
     const { t } = useTranslation();
     // TODO: fix editing functions
-    const [editedSessions, setEditedSessions] = useState({});
-    const [sessionToDelete, setSessionToDelete] = useState({
+    const [editedSessions, setEditedSessions] = useState<Record<number, string>>({});
+    const [sessionToDelete, setSessionToDelete] = useState<{ show: boolean; toDelete: number | null }>({
         show: false,
         toDelete: null,
     });
@@ -37,17 +37,20 @@ export const SessionList: React.FC = () => {
 
     useTitle(t("profile.sessions.tabTitle"));
 
-    const editSession = (id) => {
+    const editSession = (id: number) => {
         if (editedSessions[id] === undefined) {
+            const sessionName = profile?.sessions.find((session) => session.id === id)?.name;
             const newSessions = {
                 ...editedSessions,
-                [id]: profile?.sessions.find((session) => session.id === id)?.name,
             };
+            if (sessionName) {
+                newSessions[id] = sessionName;
+            }
             setEditedSessions(newSessions);
         }
     };
 
-    const stopEditSession = (id) => {
+    const stopEditSession = (id: number) => {
         if (editedSessions[id] !== undefined) {
             const newEditedSessions = { ...editedSessions };
             delete newEditedSessions[id];
@@ -59,7 +62,7 @@ export const SessionList: React.FC = () => {
         setSessionToDelete({ show: false, toDelete: null });
     };
 
-    const performRename = (id) => {
+    const performRename = (id: number) => {
         if (editedSessions[id] !== undefined) {
             api.client.auth
                 .renameSession({ requestBody: { session_id: id, name: editedSessions[id] } })
@@ -70,7 +73,7 @@ export const SessionList: React.FC = () => {
         }
     };
 
-    const openDeleteSessionModal = (id) => {
+    const openDeleteSessionModal = (id: number) => {
         setSessionToDelete({ show: true, toDelete: id });
     };
 
@@ -83,12 +86,12 @@ export const SessionList: React.FC = () => {
         }
     };
 
-    const handleEditChange = (id, value) => {
+    const handleEditChange = (id: number, value: string) => {
         const newEditedSessions = { ...editedSessions, [id]: value };
         setEditedSessions(newEditedSessions);
     };
 
-    const onKeyUp = (id) => (key) => {
+    const onKeyUp = (id: number) => (key: React.KeyboardEvent) => {
         if (key.keyCode === 13) {
             performRename(id);
         }
@@ -132,13 +135,15 @@ export const SessionList: React.FC = () => {
                                         primary={session.name}
                                         secondary={
                                             <>
-                                                <span>
-                                                    Valid until{" "}
-                                                    {DateTime.fromISO(session.valid_until).toLocaleString(
-                                                        DateTime.DATETIME_FULL
-                                                    ) && "indefinitely"}
-                                                    ,{" "}
-                                                </span>
+                                                {session.valid_until != null && (
+                                                    <span>
+                                                        Valid until{" "}
+                                                        {DateTime.fromISO(session.valid_until).toLocaleString(
+                                                            DateTime.DATETIME_FULL
+                                                        ) && "indefinitely"}
+                                                        ,{" "}
+                                                    </span>
+                                                )}
                                                 <span>
                                                     Last seen on{" "}
                                                     {DateTime.fromISO(session.last_seen).toLocaleString(

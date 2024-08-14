@@ -15,7 +15,11 @@ export const ConfirmRegistration: React.FC = () => {
 
     useTitle(t("auth.confirmRegistration.tabTitle"));
 
-    const confirmEmail = (e) => {
+    const confirmEmail = (e: React.MouseEvent) => {
+        if (!token) {
+            return;
+        }
+
         e.preventDefault();
         setStatus("loading");
         api.client.auth

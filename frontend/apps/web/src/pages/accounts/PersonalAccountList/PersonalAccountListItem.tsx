@@ -1,39 +1,36 @@
-import {
-    accountEditStarted,
-    selectAccountById,
-    selectCurrentUserPermissions,
-    selectGroupMemberIdToUsername,
-} from "@abrechnung/redux";
+import { accountEditStarted, selectCurrentUserPermissions, selectGroupMemberIdToUsername } from "@abrechnung/redux";
 import { Delete, Edit } from "@mui/icons-material";
 import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText } from "@mui/material";
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { ListItemLink } from "@/components/style/ListItemLink";
-import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
 import { getAccountLink } from "@/utils";
+import { Account } from "@abrechnung/types";
 
 interface Props {
     groupId: number;
     currentUserId: number;
-    accountId: number;
-    setAccountToDelete: (accountId: number) => void;
+    account: Account;
+    setAccountToDelete: (account: Account) => void;
 }
 
-export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserId, accountId, setAccountToDelete }) => {
+export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserId, account, setAccountToDelete }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const account = useAppSelector((state) =>
-        selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
-    );
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
     const memberIDToUsername = useAppSelector((state) =>
         selectGroupMemberIdToUsername({ state: selectGroupSlice(state), groupId })
     );
 
+    if (!permissions || !account) {
+        return <Navigate to="/404" />;
+    }
+
     const edit = () => {
         if (!account.is_wip) {
-            dispatch(accountEditStarted({ groupId, accountId }));
+            dispatch(accountEditStarted({ groupId, accountId: account.id }));
         }
         navigate(getAccountLink(groupId, account.type, account.id));
     };
@@ -83,7 +80,7 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
                     <IconButton color="primary" onClick={edit}>
                         <Edit />
                     </IconButton>
-                    <IconButton color="error" onClick={() => setAccountToDelete(account.id)}>
+                    <IconButton color="error" onClick={() => setAccountToDelete(account)}>
                         <Delete />
                     </IconButton>
                 </ListItemSecondaryAction>

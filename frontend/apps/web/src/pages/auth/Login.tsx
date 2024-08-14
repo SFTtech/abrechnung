@@ -43,11 +43,8 @@ export const Login: React.FC = () => {
 
     useEffect(() => {
         if (isLoggedIn) {
-            if (query.get("next") !== null && query.get("next") !== undefined) {
-                navigate(query.get("next"));
-            } else {
-                navigate("/");
-            }
+            const next = query.get("next");
+            navigate(next ?? "/");
         }
     }, [isLoggedIn, navigate, query]);
 

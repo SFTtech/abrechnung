@@ -21,7 +21,7 @@ export const SidebarGroupList: React.FC<Props> = ({ activeGroupId }) => {
         setShowGroupCreationModal(true);
     };
 
-    const closeGroupCreateModal = (evt, reason) => {
+    const closeGroupCreateModal = (reason: string) => {
         if (reason !== "backdropClick") {
             setShowGroupCreationModal(false);
         }
@@ -38,7 +38,7 @@ export const SidebarGroupList: React.FC<Props> = ({ activeGroupId }) => {
                         <ListItemLink
                             key={it.id}
                             to={`/groups/${it.id}`}
-                            selected={activeGroupId && activeGroupId === it.id}
+                            selected={activeGroupId != null && activeGroupId === it.id}
                         >
                             <ListItemText primary={it.name} />
                         </ListItemLink>

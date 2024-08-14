@@ -12,13 +12,15 @@ export const GroupInvite: React.FC = () => {
     const { t } = useTranslation();
     const [group, setGroup] = useState<GroupPreview | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const params = useParams();
+    const { inviteToken } = useParams();
     const navigate = useNavigate();
-    const inviteToken = params["inviteToken"];
 
     useTitle(t("groups.join.tabTitle"));
 
     useEffect(() => {
+        if (!inviteToken) {
+            return;
+        }
         api.client.groups
             .previewGroup({ requestBody: { invite_token: inviteToken } })
             .then((res) => {
@@ -32,6 +34,9 @@ export const GroupInvite: React.FC = () => {
     }, [setGroup, setError, inviteToken]);
 
     const join = () => {
+        if (!inviteToken) {
+            return;
+        }
         api.client.groups
             .joinGroup({ requestBody: { invite_token: inviteToken } })
             .then(() => {

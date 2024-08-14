@@ -14,7 +14,7 @@ export const TextInput: React.FC<TextInputProps> = ({ value, onChange, ...props 
         setInternalValue(String(value));
     }, [value, setInternalValue]);
 
-    const onInternalChange = (event) => {
+    const onInternalChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setInternalValue(event.target.value);
     };
 

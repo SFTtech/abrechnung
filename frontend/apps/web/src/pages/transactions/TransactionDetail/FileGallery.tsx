@@ -2,8 +2,8 @@ import Loading from "@/components/style/Loading";
 import { api } from "@/core/api";
 import { selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
 import { FileAttachment as BackendFileAttachment, NewFile } from "@abrechnung/api";
-import { selectTransactionById, selectTransactionFiles, wipFileDeleted } from "@abrechnung/redux";
-import { FileAttachment, UpdatedFileAttachment } from "@abrechnung/types";
+import { selectTransactionFiles, wipFileDeleted } from "@abrechnung/redux";
+import { FileAttachment, Transaction, UpdatedFileAttachment } from "@abrechnung/types";
 import { AddCircle, ChevronLeft, ChevronRight, Delete } from "@mui/icons-material";
 import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
 import React, { useEffect, useState } from "react";
@@ -24,7 +24,9 @@ const transitionStyles = {
     entering: { opacity: 0, display: "none" },
     entered: { opacity: 1, display: "block" },
     exited: { opacity: 0, display: "none" },
-};
+    exiting: {},
+    unmounted: {},
+} as const;
 
 interface ImageDisplayProps {
     isActive: boolean;
@@ -83,17 +85,14 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ file, isActive, onShowImage
 
 export interface FileGalleryProps {
     groupId: number;
-    transactionId: number;
+    transaction: Transaction;
 }
 
-export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transactionId }) => {
+export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transaction }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
-    const transaction = useAppSelector((state) =>
-        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
-    );
     const attachments = useAppSelector((state) =>
-        selectTransactionFiles({ state: selectTransactionSlice(state), groupId, transactionId })
+        selectTransactionFiles({ state: selectTransactionSlice(state), groupId, transactionId: transaction.id })
     );
     // map of file id to blob object url
     const [objectUrls, setObjectUrls] = useState<Record<number, string>>({});
@@ -109,6 +108,9 @@ export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transactionId
         )[];
         Promise.all(
             backendAttachments.map((attachment) => {
+                if (attachment.blob_id == null) {
+                    return null;
+                }
                 return api.fetchFile(attachment.id, attachment.blob_id).then((objectUrl) => {
                     return {
                         fileId: attachment.id,
@@ -119,7 +121,11 @@ export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transactionId
             })
         )
             .then((loadedBlobs) => {
-                const urlMap = Object.fromEntries(loadedBlobs.map((objInfo) => [objInfo.fileId, objInfo.objectUrl]));
+                const urlMap = Object.fromEntries(
+                    loadedBlobs
+                        .filter((objInfo) => objInfo != null)
+                        .map((objInfo) => [objInfo.fileId, objInfo.objectUrl])
+                );
                 setObjectUrls(urlMap);
             })
             .catch((err) => {
@@ -147,7 +153,7 @@ export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transactionId
 
     const deleteSelectedFile = () => {
         if (active < attachments.length) {
-            dispatch(wipFileDeleted({ groupId, transactionId, fileId: attachments[active].id }));
+            dispatch(wipFileDeleted({ groupId, transactionId: transaction.id, fileId: attachments[active].id }));
             setShowImage(false);
         }
     };
@@ -207,7 +213,7 @@ export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transactionId
                         </IconButton>
                         <ImageUploadDialog
                             groupId={groupId}
-                            transactionId={transactionId}
+                            transactionId={transaction.id}
                             show={showUploadDialog}
                             onClose={() => setShowUploadDialog(false)}
                         />
