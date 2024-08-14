@@ -7,12 +7,11 @@ import { TextInput } from "@/components/TextInput";
 import { selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
 import {
     selectTransactionBalanceEffect,
-    selectTransactionById,
     selectTransactionHasFiles,
     selectTransactionHasPositions,
     wipTransactionUpdated,
 } from "@abrechnung/redux";
-import { Transaction, TransactionShare, TransactionValidator } from "@abrechnung/types";
+import { Account, Transaction, TransactionShare, TransactionValidator } from "@abrechnung/types";
 import { Grid, InputAdornment, TableCell } from "@mui/material";
 import * as React from "react";
 import { typeToFlattenedError, z } from "zod";
@@ -22,35 +21,32 @@ import { useFormatCurrency } from "@/hooks";
 
 interface Props {
     groupId: number;
-    transactionId: number;
+    transaction: Transaction;
     validationErrors: typeToFlattenedError<z.infer<typeof TransactionValidator>>;
     showPositions?: boolean | undefined;
 }
 
 export const TransactionMetadata: React.FC<Props> = ({
     groupId,
-    transactionId,
+    transaction,
     validationErrors,
     showPositions = false,
 }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
     const dispatch = useAppDispatch();
-    const transaction = useAppSelector((state) =>
-        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
-    );
     const hasAttachments = useAppSelector((state) =>
-        selectTransactionHasFiles({ state: selectTransactionSlice(state), groupId, transactionId })
+        selectTransactionHasFiles({ state: selectTransactionSlice(state), groupId, transactionId: transaction.id })
     );
     const hasPositions = useAppSelector((state) =>
-        selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId })
+        selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId: transaction.id })
     );
     const balanceEffect = useAppSelector((state) =>
-        selectTransactionBalanceEffect({ state: selectTransactionSlice(state), groupId, transactionId })
+        selectTransactionBalanceEffect({ state: selectTransactionSlice(state), groupId, transactionId: transaction.id })
     );
 
     const renderShareInfo = React.useCallback(
-        ({ account }) =>
+        ({ account }: { account: Account }) =>
             showPositions || hasPositions ? (
                 <>
                     <TableCell align="right">
@@ -182,7 +178,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                     }
                     value={
                         Object.keys(transaction.creditor_shares).length === 0
-                            ? null
+                            ? undefined
                             : Number(Object.keys(transaction.creditor_shares)[0])
                     }
                     onChange={(newValue) => pushChanges({ creditor_shares: { [newValue.id]: 1.0 } })}
@@ -199,7 +195,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                         label={t("transactions.transferredTo")}
                         value={
                             Object.keys(transaction.debitor_shares).length === 0
-                                ? null
+                                ? undefined
                                 : Number(Object.keys(transaction.debitor_shares)[0])
                         }
                         onChange={(newValue) => pushChanges({ debitor_shares: { [newValue.id]: 1.0 } })}
@@ -213,7 +209,7 @@ export const TransactionMetadata: React.FC<Props> = ({
 
             {(transaction.is_wip || hasAttachments) && (
                 <Grid item xs={6}>
-                    <FileGallery groupId={groupId} transactionId={transactionId} />
+                    <FileGallery groupId={groupId} transaction={transaction} />
                 </Grid>
             )}
             {transaction.type === "purchase" && (

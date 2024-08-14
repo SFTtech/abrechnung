@@ -5,14 +5,13 @@ import { TextInput } from "@/components/TextInput";
 import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
 import { api } from "@/core/api";
 import { useFormatCurrency } from "@/hooks";
-import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
 import { getAccountLink, getAccountListLink } from "@/utils";
 import {
     accountEditStarted,
     discardAccountChange,
     saveAccount,
     selectAccountBalances,
-    selectAccountById,
     selectCurrentUserPermissions,
     selectGroupCurrencySymbol,
     wipAccountUpdated,
@@ -22,27 +21,24 @@ import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
 import { Button, Chip, Divider, Grid, IconButton, LinearProgress, TableCell } from "@mui/material";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { typeToFlattenedError, z } from "zod";
 
 interface Props {
     groupId: number;
-    accountId: number;
+    account: Account;
 }
 
 const emptyErrors = { fieldErrors: {}, formErrors: [] };
 
-export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
+export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
-    const account = useAppSelector((state) =>
-        selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
-    );
     const currencySymbol = useAppSelector((state) =>
         selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
     );
@@ -68,7 +64,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
 
     const edit = () => {
         if (!account.is_wip) {
-            dispatch(accountEditStarted({ groupId, accountId }));
+            dispatch(accountEditStarted({ groupId, accountId: account.id }));
         }
     };
 
@@ -112,10 +108,14 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
             return;
         }
         setShowProgress(true);
-        dispatch(discardAccountChange({ groupId, accountId }));
+        dispatch(discardAccountChange({ groupId, accountId: account.id }));
         setShowProgress(false);
         navigate(`/groups/${groupId}/${account.type === "clearing" ? "events" : "accounts"}`);
     };
+
+    if (!permissions || !currencySymbol) {
+        return <Navigate to="/404" />;
+    }
 
     return (
         <>
@@ -237,7 +237,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, accountId }) => {
             <DeleteAccountModal
                 show={confirmDeleteDialogOpen}
                 onClose={onCloseDeleteDialog}
-                accountId={account.id}
+                account={account}
                 groupId={groupId}
                 onAccountDeleted={onAccountDeleted}
             />

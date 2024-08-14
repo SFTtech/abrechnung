@@ -50,14 +50,14 @@ export const EditableField: React.FC<Props> = ({
         }
     };
 
-    const onValueChange = (event) => {
+    const onValueChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setValue(event.target.value);
         if (validate) {
             setError(!validate(event.target.value));
         }
     };
 
-    const onKeyUp = (key) => {
+    const onKeyUp = (key: React.KeyboardEvent) => {
         if (key.keyCode === 13) {
             onSave();
         }

@@ -26,12 +26,15 @@ const validationSchema = z.object({
 
 type FormValues = z.infer<typeof validationSchema>;
 
+const initialValues: FormValues = {
+    name: "",
+    description: "",
+    addUserAccountOnJoin: false,
+};
+
 interface Props {
     show: boolean;
-    onClose: (
-        event: Record<string, never>,
-        reason: "escapeKeyDown" | "backdropClick" | "completed" | "closeButton"
-    ) => void;
+    onClose: (reason: "escapeKeyDown" | "backdropClick" | "completed" | "closeButton") => void;
 }
 
 export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
@@ -53,7 +56,7 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
             .unwrap()
             .then(() => {
                 setSubmitting(false);
-                onClose({}, "completed");
+                onClose("completed");
             })
             .catch((err) => {
                 toast.error(err);
@@ -62,15 +65,11 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
     };
 
     return (
-        <Dialog open={show} onClose={onClose}>
+        <Dialog open={show} onClose={(_, reason) => onClose(reason)}>
             <DialogTitle>Create Group</DialogTitle>
             <DialogContent>
                 <Formik
-                    initialValues={{
-                        name: "",
-                        description: "",
-                        addUserAccountOnJoin: false,
-                    }}
+                    initialValues={initialValues}
                     onSubmit={handleSubmit}
                     validationSchema={toFormikValidationSchema(validationSchema)}
                 >
@@ -127,7 +126,7 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
                                 <Button type="submit" color="primary" disabled={isSubmitting}>
                                     Save
                                 </Button>
-                                <Button color="error" onClick={() => onClose({}, "closeButton")}>
+                                <Button color="error" onClick={() => onClose("closeButton")}>
                                     Cancel
                                 </Button>
                             </DialogActions>

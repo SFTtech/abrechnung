@@ -107,7 +107,7 @@ const parseNotificationPayload = (
 };
 
 export class AbrechnungWebSocket {
-    private ws: WebSocket;
+    private ws?: WebSocket;
     private msgQueue: object[] = [];
 
     // subscription type -> element id -> callback
@@ -121,13 +121,7 @@ export class AbrechnungWebSocket {
     constructor(
         private url: string,
         private api: Api
-    ) {
-        // cannot reuse init() here as otherwise ws will be uninitialized
-        // this.ws = new WebSocket(this.url);
-        // this.ws.onopen = this.onopen;
-        // this.ws.onclose = this.onclose;
-        // this.ws.onmessage = this.onmessage;
-    }
+    ) {}
 
     public setUrl = (url: string) => {
         this.url = url;
@@ -206,7 +200,7 @@ export class AbrechnungWebSocket {
     };
 
     private send = (msg: object) => {
-        if (this.ws.readyState !== 1) {
+        if (this.ws === undefined || this.ws.readyState !== 1) {
             this.msgQueue.push(msg);
         } else {
             // console.log("WS Sent message with args: ", msg);

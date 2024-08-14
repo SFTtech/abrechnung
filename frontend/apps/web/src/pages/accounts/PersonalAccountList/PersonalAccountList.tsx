@@ -32,10 +32,11 @@ import {
     useTheme,
 } from "@mui/material";
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { PersonalAccountListItem } from "./PersonalAccountListItem";
 import { useTranslation } from "react-i18next";
+import { Account } from "@abrechnung/types";
 
 interface Props {
     groupId: number;
@@ -76,16 +77,13 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
         (currentPage + 1) * MAX_ITEMS_PER_PAGE
     );
 
-    useTitle(t("accounts.list.tabTitle", "", { groupName: group.name }));
+    useTitle(t("accounts.list.tabTitle", "", { groupName: group?.name }));
 
-    const [accountDeleteId, setAccountDeleteId] = useState<number | null>(null);
-    const showDeleteModal = accountDeleteId !== null;
+    const [accountDelete, setAccountDelete] = useState<Account | null>(null);
+    const showDeleteModal = accountDelete !== null;
 
-    const onShowDeleteModal = (accountId: number) => {
-        setAccountDeleteId(accountId);
-    };
     const onCloseDeleteModal = () => {
-        setAccountDeleteId(null);
+        setAccountDelete(null);
     };
 
     const onCreateEvent = () => {
@@ -98,6 +96,10 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                 toast.error(`Error while creating account: ${err}`);
             });
     };
+
+    if (!group || !permissions || currentUserId == null) {
+        return <Navigate to="/404" />;
+    }
 
     return (
         <>
@@ -170,9 +172,9 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                                 <PersonalAccountListItem
                                     key={account.id}
                                     groupId={groupId}
-                                    accountId={account.id}
+                                    account={account}
                                     currentUserId={currentUserId}
-                                    setAccountToDelete={onShowDeleteModal}
+                                    setAccountToDelete={setAccountDelete}
                                 />
                             ))
                         )}
@@ -197,7 +199,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                         groupId={groupId}
                         show={showDeleteModal}
                         onClose={onCloseDeleteModal}
-                        accountId={accountDeleteId}
+                        account={accountDelete}
                     />
                     <Fab color="primary" sx={{ position: "fixed", bottom: 16, right: 16 }} onClick={onCreateEvent}>
                         <AddIcon />

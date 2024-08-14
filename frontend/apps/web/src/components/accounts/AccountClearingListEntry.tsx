@@ -1,33 +1,30 @@
-import { selectAccountBalances, selectAccountById, selectGroupCurrencySymbol } from "@abrechnung/redux";
+import { selectAccountBalances, selectGroupCurrencySymbol } from "@abrechnung/redux";
 import { Box, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
 import { balanceColor } from "@/core/utils";
-import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
+import { selectGroupSlice, useAppSelector } from "@/store";
 import { getAccountLink } from "@/utils";
 import { ClearingAccountIcon } from "../style/AbrechnungIcons";
 import ListItemLink from "../style/ListItemLink";
 import { useTranslation } from "react-i18next";
 import { useFormatCurrency } from "@/hooks";
+import { ClearingAccount } from "@abrechnung/types";
 
 interface Props {
     groupId: number;
     accountId: number;
-    clearingAccountId: number;
+    clearingAccount: ClearingAccount;
 }
 
-export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, clearingAccountId }) => {
+export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, clearingAccount }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
     const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
     const currency_symbol = useAppSelector((state) =>
         selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
     );
-    const clearingAccount = useAppSelector((state) =>
-        selectAccountById({ state: selectAccountSlice(state), groupId, accountId: clearingAccountId })
-    );
-    if (clearingAccount.type !== "clearing") {
-        console.error("expected a clearing account but received a personal account");
+    if (!currency_symbol) {
         return null;
     }
 

@@ -53,7 +53,7 @@ const ShareSelectRow: React.FC<RowProps> = ({
         onChange(account.id, newValue);
     };
 
-    const handleToggleShare = (event) => {
+    const handleToggleShare = (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.checked) {
             onChange(account.id, 1);
         } else {
@@ -234,19 +234,27 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                 {editable && (
                     <Box>
                         <FormControlLabel
-                            control={<Checkbox name="show-events" />}
-                            checked={showEvents}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                                setShowEvents(event.target.checked)
+                            control={
+                                <Checkbox
+                                    name="show-events"
+                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                                        setShowEvents(event.target.checked)
+                                    }
+                                />
                             }
+                            checked={showEvents}
                             label={t("shareSelect.showEvents")}
                         />
                         <FormControlLabel
-                            control={<Checkbox name="show-advanced" />}
-                            checked={showAdvanced}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                                setShowAdvanced(event.target.checked)
+                            control={
+                                <Checkbox
+                                    name="show-advanced"
+                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                                        setShowAdvanced(event.target.checked)
+                                    }
+                                />
                             }
+                            checked={showAdvanced}
                             label={t("common.advanced")}
                         />
                     </Box>

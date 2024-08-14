@@ -9,7 +9,7 @@ import {
 } from "@abrechnung/redux";
 import { Button, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useFormatCurrency } from "@/hooks";
 
@@ -23,12 +23,16 @@ export const SettlementPlanDisplay: React.FC<Props> = ({ groupId }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const settlementPlan = useAppSelector((state) => selectSettlementPlan({ state, groupId }));
-    const currency_symbol = useAppSelector((state) =>
+    const currencySymbol = useAppSelector((state) =>
         selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
     );
     const accountMap = useAppSelector((state) =>
         selectAccountIdToAccountMap({ state: selectAccountSlice(state), groupId })
     );
+
+    if (!currencySymbol) {
+        return <Navigate to="/404" />;
+    }
 
     const onSettleClicked = (planItem: SettlementPlanItem) => {
         dispatch(
@@ -61,7 +65,7 @@ export const SettlementPlanDisplay: React.FC<Props> = ({ groupId }) => {
                                     {t("accounts.settlement.whoPaysWhom", "", {
                                         from: accountMap[planItem.creditorId].name,
                                         to: accountMap[planItem.debitorId].name,
-                                        money: formatCurrency(planItem.paymentAmount, currency_symbol),
+                                        money: formatCurrency(planItem.paymentAmount, currencySymbol),
                                     })}
                                 </span>
                             }

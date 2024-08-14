@@ -31,6 +31,7 @@ import { api, ws } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
+import { Navigate } from "react-router-dom";
 
 interface Props {
     groupId: number;
@@ -50,7 +51,7 @@ export const GroupInvites: React.FC<Props> = ({ groupId }) => {
 
     const isGuest = useAppSelector((state) => selectIsGuestUser({ state: selectAuthSlice(state) }));
 
-    useTitle(t("groups.invites.tabTitle", "", { groupName: group.name }));
+    useTitle(t("groups.invites.tabTitle", "", { groupName: group?.name }));
 
     useEffect(() => {
         dispatch(fetchGroupInvites({ groupId, api }));
@@ -60,7 +61,7 @@ export const GroupInvites: React.FC<Props> = ({ groupId }) => {
         };
     }, [dispatch, groupId]);
 
-    const deleteToken = (id) => {
+    const deleteToken = (id: number) => {
         dispatch(deleteGroupInvite({ groupId, inviteId: id, api }))
             .unwrap()
             .catch((err) => {
@@ -68,7 +69,7 @@ export const GroupInvites: React.FC<Props> = ({ groupId }) => {
             });
     };
 
-    const getMemberUsername = (memberID) => {
+    const getMemberUsername = (memberID: number) => {
         const member = members.find((member) => member.user_id === memberID);
         if (member === undefined) {
             return "unknown";
@@ -76,19 +77,23 @@ export const GroupInvites: React.FC<Props> = ({ groupId }) => {
         return member.username;
     };
 
-    const selectLink = (event) => {
+    const selectLink = (event: React.MouseEvent<HTMLLinkElement>) => {
         const node = event.target;
         const selection = window.getSelection();
         const range = document.createRange();
-        range.selectNodeContents(node);
-        selection.removeAllRanges();
-        selection.addRange(range);
+        range.selectNodeContents(node as HTMLElement);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
     };
 
-    const copyToClipboard = (content) => {
+    const copyToClipboard = (content: string) => {
         navigator.clipboard.writeText(content);
         toast.info("Link copied to clipboard!");
     };
+
+    if (!permissions || !group) {
+        return <Navigate to="/404" />;
+    }
 
     return (
         <MobilePaper>

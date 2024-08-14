@@ -56,7 +56,7 @@ export const AuthenticatedLayout: React.FC = () => {
     const location = useLocation();
     const params = useParams();
     const groupId = params["groupId"] ? Number(params["groupId"]) : undefined;
-    const [anchorEl, setAnchorEl] = React.useState(null);
+    const [anchorEl, setAnchorEl] = React.useState<Element | null>(null);
     const theme: Theme = useTheme();
     const dotsMenuOpen = Boolean(anchorEl);
     const cfg = useConfig();
@@ -67,11 +67,11 @@ export const AuthenticatedLayout: React.FC = () => {
         return <Navigate to={`${AUTH_FALLBACK}?next=${location.pathname}`} />;
     }
 
-    const handleProfileMenuOpen = (event) => {
+    const handleProfileMenuOpen = (event: React.MouseEvent) => {
         setAnchorEl(event.currentTarget);
     };
 
-    const handleDotsMenuClose = (event) => {
+    const handleDotsMenuClose = () => {
         setAnchorEl(null);
     };
 

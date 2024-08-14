@@ -45,7 +45,7 @@ export const GroupLog: React.FC<Props> = ({ groupId }) => {
     const [showAllLogs, setShowAllLogs] = useState(false);
     const [message, setMessage] = useState("");
 
-    useTitle(t("groups.log.tabTitle", "", { groupName: group.name }));
+    useTitle(t("groups.log.tabTitle", "", { groupName: group?.name }));
 
     useEffect(() => {
         dispatch(fetchGroupLog({ groupId, api }));
@@ -68,7 +68,7 @@ export const GroupLog: React.FC<Props> = ({ groupId }) => {
             });
     };
 
-    const getMemberUsername = (member_id) => {
+    const getMemberUsername = (member_id: number) => {
         const member = members.find((member) => member.user_id === member_id);
         if (member === undefined) {
             return "unknown";
@@ -76,7 +76,7 @@ export const GroupLog: React.FC<Props> = ({ groupId }) => {
         return member.username;
     };
 
-    const onKeyUp = (key) => {
+    const onKeyUp = (key: React.KeyboardEvent) => {
         key.preventDefault();
         if (key.keyCode === 13) {
             sendMessage();

@@ -11,14 +11,10 @@ export const Banner: React.FC = () => {
             </Alert>
         );
     }
-    return (
-        <>
-            {cfg.messages.map((message, idx) => (
-                <Alert key={idx} sx={{ borderRadius: 0 }} color={message.type}>
-                    {message.title && <AlertTitle>{message.title}</AlertTitle>}
-                    {message.body}
-                </Alert>
-            ))}
-        </>
-    );
+    return cfg.messages?.map((message, idx) => (
+        <Alert key={idx} sx={{ borderRadius: 0 }} color={message.type}>
+            {message.title && <AlertTitle>{message.title}</AlertTitle>}
+            {message.body}
+        </Alert>
+    ));
 };

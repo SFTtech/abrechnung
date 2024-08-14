@@ -4,6 +4,7 @@ import { DataGrid, GridColDef, GridToolbar } from "@mui/x-data-grid";
 import React from "react";
 import { renderCurrency } from "../style/datagrid/renderCurrency";
 import { useTranslation } from "react-i18next";
+import { Navigate } from "react-router-dom";
 
 interface Props {
     groupId: number;
@@ -16,6 +17,10 @@ export const BalanceTable: React.FC<Props> = ({ groupId }) => {
     );
     const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
     const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
+
+    if (!group) {
+        return <Navigate to="/404" />;
+    }
 
     const tableData = personalAccounts.map((acc) => {
         return {

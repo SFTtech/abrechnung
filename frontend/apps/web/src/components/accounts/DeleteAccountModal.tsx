@@ -1,24 +1,22 @@
 import React from "react";
 import { api } from "@/core/api";
 import { Dialog, DialogTitle, DialogActions, DialogContent, Button, LinearProgress } from "@mui/material";
-import { selectAccountSlice, useAppDispatch, useAppSelector } from "@/store";
-import { deleteAccount, selectAccountById } from "@abrechnung/redux";
+import { useAppDispatch } from "@/store";
+import { deleteAccount } from "@abrechnung/redux";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
+import { Account } from "@abrechnung/types";
 
 interface Props {
     show: boolean;
     onClose: () => void;
     onAccountDeleted?: () => void;
     groupId: number;
-    accountId: number | null;
+    account: Account | null;
 }
 
-export const DeleteAccountModal: React.FC<Props> = ({ show, onClose, groupId, accountId, onAccountDeleted }) => {
+export const DeleteAccountModal: React.FC<Props> = ({ show, onClose, groupId, account, onAccountDeleted }) => {
     const { t } = useTranslation();
-    const account = useAppSelector((state) =>
-        selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
-    );
     const dispatch = useAppDispatch();
     const [showProgress, setShowProgress] = React.useState(false);
 
@@ -30,7 +28,7 @@ export const DeleteAccountModal: React.FC<Props> = ({ show, onClose, groupId, ac
             return;
         }
         setShowProgress(true);
-        dispatch(deleteAccount({ groupId, accountId, api }))
+        dispatch(deleteAccount({ groupId, accountId: account.id, api }))
             .unwrap()
             .then(() => {
                 if (onAccountDeleted) {

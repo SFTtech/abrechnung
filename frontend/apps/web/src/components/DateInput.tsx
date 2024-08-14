@@ -14,9 +14,10 @@ interface Props {
 
 export const DateInput: React.FC<Props> = ({ value, onChange, helperText, error, disabled = false }) => {
     const { t } = useTranslation();
-    const handleChange = (value: DateTime) => {
-        if (value.toISODate()) {
-            onChange(value.toISODate());
+    const handleChange = (value: DateTime | null) => {
+        const stringified = value?.toISODate();
+        if (stringified) {
+            onChange(stringified);
         }
     };
 

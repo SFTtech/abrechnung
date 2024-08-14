@@ -32,11 +32,11 @@ export const TagSelector: React.FC<Props> = ({
 
     const possibleTags = useAppSelector((state) => selectTagsInGroup({ state, groupId }));
 
-    const handleChange = (event) => {
+    const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         if (!editable) {
             return;
         }
-        const newTags = event.target.value;
+        const newTags = event.target.value as unknown as string[];
         if (newTags.indexOf(CREATE_TAG) > -1) {
             openAddTagDialog();
             return;
@@ -64,9 +64,9 @@ export const TagSelector: React.FC<Props> = ({
                 value={value}
                 SelectProps={{
                     multiple: true,
-                    renderValue: (selected: string[]) => (
+                    renderValue: (selected: unknown) => (
                         <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                            {selected.map((value) => (
+                            {(selected as string[]).map((value) => (
                                 <Chip key={value} label={value} variant="outlined" {...chipProps} />
                             ))}
                         </Box>

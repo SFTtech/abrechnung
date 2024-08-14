@@ -27,12 +27,21 @@ import {
 import { useTheme } from "@mui/material/styles";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Navigate, Link as RouterLink, useNavigate } from "react-router-dom";
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CategoricalChartFunc } from "recharts/types/chart/generateCategoricalChart";
 
 interface Props {
     groupId: number;
 }
+
+type Data = {
+    name: string;
+    id: number;
+    balance: number;
+    totalPaid: number;
+    totalConsumed: number;
+};
 
 export const Balances: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
@@ -57,11 +66,15 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
     const colorGreenInverted = theme.palette.mode === "dark" ? theme.palette.success.light : theme.palette.success.dark;
     const colorRedInverted = theme.palette.mode === "dark" ? theme.palette.error.light : theme.palette.error.dark;
 
-    useTitle(t("accounts.balances.tabTitle", "", { groupName: group.name }));
+    useTitle(t("accounts.balances.tabTitle", "", { groupName: group?.name }));
+
+    if (!group) {
+        return <Navigate to="/404" />;
+    }
 
     const roundTwoDecimals = (val: number) => +val.toFixed(2);
 
-    const chartData = personalAccounts.map((account) => {
+    const chartData: Data[] = personalAccounts.map((account) => {
         const balance = balances[account.id];
         return {
             name: account.name,
@@ -89,8 +102,8 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
         ? Math.max(Math.max(...personalAccounts.map((account) => account.name.length)), 20)
         : Math.max(...personalAccounts.map((account) => account.name.length)) * 7 + 5;
 
-    const handleBarClick = (data, event) => {
-        const id = data.activePayload[0].payload.id;
+    const handleBarClick: CategoricalChartFunc = (data) => {
+        const id = data.activePayload?.[0].payload.id;
         navigate(`/groups/${group.id}/accounts/${id}`);
     };
 
@@ -198,7 +211,9 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                             );
                                         })}
                                         <LabelList
-                                            dataKey={(entry) => formatCurrency(entry["balance"], group.currency_symbol)}
+                                            dataKey={(entry) =>
+                                                formatCurrency((entry as Data).balance, group.currency_symbol)
+                                            }
                                             position="insideLeft"
                                             fill={theme.palette.text.primary}
                                         />

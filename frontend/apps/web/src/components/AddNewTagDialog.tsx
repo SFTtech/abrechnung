@@ -29,13 +29,13 @@ export const AddNewTagDialog: React.FC<Props> = ({ open, onCreate, onClose }) =>
         setError(false);
     };
 
-    const onKeyUp = (key) => {
+    const onKeyUp = (key: React.KeyboardEvent) => {
         if (key.keyCode === 13) {
             handleSave();
         }
     };
 
-    const handleChange = (evt) => {
+    const handleChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = evt.target.value;
         if (newValue !== null && newValue !== "") {
             setError(false);

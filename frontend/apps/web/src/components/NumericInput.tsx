@@ -13,10 +13,10 @@ export const NumericInput: React.FC<NumericInputProps> = ({ value, isCurrency, o
     const [internalValue, setInternalValue] = React.useState("");
 
     React.useEffect(() => {
-        setInternalValue(isCurrency ? value.toFixed(2) : String(value));
+        setInternalValue(isCurrency ? (value?.toFixed(2) ?? "") : String(value));
     }, [value, setInternalValue, isCurrency]);
 
-    const onInternalChange = (event) => {
+    const onInternalChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setInternalValue(event.target.value);
         // TODO: validate input
     };
@@ -46,7 +46,7 @@ export const NumericInput: React.FC<NumericInputProps> = ({ value, isCurrency, o
             onBlur={onInternalBlur}
             onKeyUp={onKeyUp}
             variant="standard"
-            inputProps={{ inputmode: "numeric" }}
+            inputProps={{ inputMode: "numeric" }}
             {...props}
         />
     );

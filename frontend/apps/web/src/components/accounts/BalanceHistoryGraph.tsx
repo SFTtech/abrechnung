@@ -63,7 +63,10 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
 
             const graphData: Serie[] = [];
             let lastPoint = balanceHistory[0];
-            const makeSerie = () => {
+            const makeSerie = (): {
+                id: string;
+                data: Array<{ x: Date; y: number; changeOrigin: BalanceChangeOrigin }>;
+            } => {
                 return {
                     id: `serie-${graphData.length}`,
                     data: [],

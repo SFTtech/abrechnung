@@ -23,6 +23,7 @@ import {
     FormLabel,
     MenuItem,
     Select,
+    SelectChangeEvent,
     Stack,
     Typography,
 } from "@mui/material";
@@ -57,7 +58,7 @@ export const Settings: React.FC = () => {
             .catch((err) => toast.error(`Error while clearing cache: ${err}`));
     };
 
-    const handleDarkModeChange = (event) => {
+    const handleDarkModeChange = (event: SelectChangeEvent<ThemeMode>) => {
         const val = event.target.value;
         dispatch(themeChanged(val as ThemeMode));
     };

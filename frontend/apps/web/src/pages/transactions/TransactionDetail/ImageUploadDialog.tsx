@@ -49,16 +49,22 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
             return compressedImage;
         } catch (error) {
             setCompressionProgress(undefined);
-            setError(`Failed to compress image! ${error.message}`);
+            setError(`Failed to compress image! ${(error as any).message}`);
             return undefined;
         }
     };
 
-    const selectFile = async (event) => {
-        const file: File = event.target.files[0];
-        const strippedFilename = event.target.files[0].name.split(".")[0];
+    const selectFile: React.ChangeEventHandler<HTMLInputElement> = async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+            return;
+        }
+        const strippedFilename = file.name.split(".")[0];
         const renamedFile = new File([file], strippedFilename, { type: file.type });
         const compressedFile = await compressImage(renamedFile);
+        if (!compressedFile) {
+            return;
+        }
         try {
             const imageAsBase64 = await toBase64(compressedFile);
             setSelectedFile({
@@ -67,7 +73,7 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
                 mime_type: compressedFile.type,
             });
         } catch (e) {
-            setError(`Error during image upload: ${e.message}`);
+            setError(`Error during image upload: ${(e as any).message}`);
             setSelectedFile(undefined);
         }
     };
@@ -76,7 +82,13 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
         if (event.target.value == null) {
             return;
         }
-        setSelectedFile((prev) => ({ ...prev, filename: event.target.value }));
+        setSelectedFile((prev) => {
+            if (!prev) {
+                return prev;
+            }
+
+            return { ...prev, filename: event.target.value };
+        });
     };
 
     const upload = () => {

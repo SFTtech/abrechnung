@@ -18,23 +18,24 @@ import { selectIsGuestUser, selectGroups } from "@abrechnung/redux";
 import { useAppSelector, selectGroupSlice, selectAuthSlice } from "@/store";
 import { useTitle } from "@/core/utils";
 import { useTranslation } from "react-i18next";
+import { Group } from "@abrechnung/api";
 
 export const GroupList: React.FC = () => {
     const { t } = useTranslation();
     useTitle(t("groups.list.tabTitle"));
     const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
-    const [showGroupDeletionModal, setShowGroupDeletionModal] = useState(false);
-    const [groupToDelete, setGroupToDelete] = useState(null);
+    const [groupToDelete, setGroupToDelete] = useState<Group | null>(null);
     const groups = useAppSelector((state) => selectGroups({ state: selectGroupSlice(state) }));
     const isGuest = useAppSelector((state) => selectIsGuestUser({ state: selectAuthSlice(state) }));
 
-    const openGroupDeletionModal = (groupID) => {
-        setGroupToDelete(groups.find((group) => group.id === groupID));
-        setShowGroupDeletionModal(true);
+    const openGroupDeletionModal = (groupID: number) => {
+        const g = groups.find((group) => group.id === groupID);
+        if (g) {
+            setGroupToDelete(g);
+        }
     };
 
     const closeGroupDeletionModal = () => {
-        setShowGroupDeletionModal(false);
         setGroupToDelete(null);
     };
 
@@ -42,7 +43,7 @@ export const GroupList: React.FC = () => {
         setShowGroupCreationModal(true);
     };
 
-    const closeGroupCreateModal = (evt, reason) => {
+    const closeGroupCreateModal = (reason: string) => {
         if (reason !== "backdropClick") {
             setShowGroupCreationModal(false);
         }
@@ -90,11 +91,13 @@ export const GroupList: React.FC = () => {
                     <GroupCreateModal show={showGroupCreationModal} onClose={closeGroupCreateModal} />
                 </>
             )}
-            <GroupDeleteModal
-                show={showGroupDeletionModal}
-                onClose={closeGroupDeletionModal}
-                groupToDelete={groupToDelete}
-            />
+            {groupToDelete != null && (
+                <GroupDeleteModal
+                    show={groupToDelete != null}
+                    onClose={closeGroupDeletionModal}
+                    groupToDelete={groupToDelete}
+                />
+            )}
         </MobilePaper>
     );
 };

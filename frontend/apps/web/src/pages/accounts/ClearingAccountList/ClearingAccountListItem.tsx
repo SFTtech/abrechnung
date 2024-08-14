@@ -4,10 +4,10 @@ import { getAccountLink } from "@/utils";
 import {
     accountEditStarted,
     copyAccount,
-    selectAccountById,
     selectAccountIdToAccountMap,
     selectCurrentUserPermissions,
 } from "@abrechnung/redux";
+import { Account } from "@abrechnung/types";
 import { ContentCopy, Delete, Edit } from "@mui/icons-material";
 import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
 import { DateTime } from "luxon";
@@ -16,11 +16,11 @@ import { useNavigate } from "react-router-dom";
 
 interface Props {
     groupId: number;
-    accountId: number;
-    setAccountToDelete: (accountID: number) => void;
+    account: Account;
+    setAccountToDelete: (account: Account) => void;
 }
 
-export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, setAccountToDelete }) => {
+export const ClearingAccountListItem: React.FC<Props> = ({ groupId, account, setAccountToDelete }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
@@ -28,11 +28,8 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, s
     const accounts = useAppSelector((state) =>
         selectAccountIdToAccountMap({ state: selectAccountSlice(state), groupId })
     );
-    const account = useAppSelector((state) =>
-        selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
-    );
 
-    if (account.type !== "clearing") {
+    if (!permissions || account.type !== "clearing") {
         return null;
     }
 
@@ -40,13 +37,13 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, s
 
     const edit = () => {
         if (!account.is_wip) {
-            dispatch(accountEditStarted({ groupId, accountId }));
+            dispatch(accountEditStarted({ groupId, accountId: account.id }));
         }
         navigate(getAccountLink(groupId, account.type, account.id));
     };
 
     const copy = () => {
-        dispatch(copyAccount({ groupId, accountId }));
+        dispatch(copyAccount({ groupId, accountId: account.id }));
     };
 
     return (
@@ -88,7 +85,7 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, accountId, s
                     <IconButton color="primary" onClick={copy}>
                         <ContentCopy />
                     </IconButton>
-                    <IconButton color="error" onClick={() => setAccountToDelete(account.id)}>
+                    <IconButton color="error" onClick={() => setAccountToDelete(account)}>
                         <Delete />
                     </IconButton>
                 </ListItemSecondaryAction>

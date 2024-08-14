@@ -11,7 +11,7 @@ import {
     TextField,
 } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers";
-import { Form, Formik } from "formik";
+import { Form, Formik, FormikHelpers } from "formik";
 import { DateTime } from "luxon";
 import React from "react";
 import { toast } from "react-toastify";
@@ -26,14 +26,21 @@ interface Props {
     ) => void;
 }
 
+type FormValues = {
+    description: string;
+    validUntil: DateTime;
+    singleUse: boolean;
+    joinAsEditor: boolean;
+};
+
 export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
-    const handleSubmit = (values, { setSubmitting }) => {
+    const handleSubmit = (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
         api.client.groups
             .createInvite({
                 groupId: group.id,
                 requestBody: {
                     description: values.description,
-                    valid_until: values.validUntil,
+                    valid_until: values.validUntil.toISO()!,
                     single_use: values.singleUse,
                     join_as_editor: values.joinAsEditor,
                 },

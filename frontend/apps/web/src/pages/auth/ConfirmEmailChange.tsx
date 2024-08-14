@@ -14,7 +14,10 @@ export const ConfirmEmailChange: React.FC = () => {
 
     useTitle(t("auth.confirmEmailChange.tabTitle"));
 
-    const confirmEmail = (e) => {
+    const confirmEmail = (e: React.MouseEvent) => {
+        if (!token) {
+            return;
+        }
         e.preventDefault();
         setStatus("loading");
         api.client.auth

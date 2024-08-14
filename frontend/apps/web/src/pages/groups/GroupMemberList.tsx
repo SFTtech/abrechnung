@@ -23,7 +23,7 @@ import {
     ListItemSecondaryAction,
     ListItemText,
 } from "@mui/material";
-import { Form, Formik } from "formik";
+import { Form, Formik, FormikHelpers } from "formik";
 import { DateTime } from "luxon";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
@@ -32,10 +32,17 @@ import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
+import { Navigate } from "react-router-dom";
 
 interface Props {
     groupId: number;
 }
+
+type FormValues = {
+    userId: number;
+    isOwner: boolean;
+    canWrite: boolean;
+};
 
 export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
@@ -47,9 +54,9 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
 
     const [memberToEdit, setMemberToEdit] = useState<GroupMember | undefined>(undefined);
 
-    useTitle(t("groups.memberList.tabTitle", "", { groupName: group.name }));
+    useTitle(t("groups.memberList.tabTitle", "", { groupName: group?.name }));
 
-    const handleEditMemberSubmit = (values, { setSubmitting }) => {
+    const handleEditMemberSubmit = (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
         dispatch(
             updateGroupMemberPrivileges({
                 groupId,
@@ -70,7 +77,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
             });
     };
 
-    const getMemberUsername = (member_id) => {
+    const getMemberUsername = (member_id: number) => {
         const member = members.find((member) => member.user_id === member_id);
         if (member === undefined) {
             return "unknown";
@@ -82,11 +89,15 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
         setMemberToEdit(undefined);
     };
 
-    const openEditMemberModal = (userID) => {
+    const openEditMemberModal = (userID: number) => {
         const user = members.find((member) => member.user_id === userID);
         // TODO: maybe deal with disappearing users in the list
         setMemberToEdit(user);
     };
+
+    if (!permissions) {
+        return <Navigate to="/404" />;
+    }
 
     return (
         <MobilePaper>
