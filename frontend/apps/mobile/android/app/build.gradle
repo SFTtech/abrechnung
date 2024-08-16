@@ -79,8 +79,8 @@ android {
         applicationId "lol.sft.abrechnung"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 7
-        versionName "0.13.3"
+        versionCode 8
+        versionName "0.14.0"
         
         testBuildType System.getProperty('testBuildType', 'debug')
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'

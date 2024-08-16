@@ -2,7 +2,13 @@
 
 ## Unreleased
 
-[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.13.3...HEAD)
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.14.0...HEAD)
+
+## 0.14.0 (2024-08-16)
+
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.13.3...v0.14.0)
+
+- fix non-interactible transaction position shares #209
 
 ## 0.13.3 (2024-03-02)
 
