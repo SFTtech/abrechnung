@@ -1,3 +1,4 @@
+import * as React from "react";
 import {
     Api,
     NewFile,
@@ -20,6 +21,7 @@ import memoize from "proxy-memoize";
 import { leaveGroup } from "../groups";
 import { IRootState, StateStatus, TransactionSliceState, TransactionState } from "../types";
 import { addEntity, getGroupScopedState, removeEntity } from "../utils";
+import { useSelector } from "react-redux";
 
 export const initializeGroupState = (state: Draft<TransactionSliceState>, groupId: number) => {
     if (state.byGroupId[groupId]) {
@@ -101,17 +103,16 @@ export const selectNextLocalPositionId = memoize((args: { state: TransactionSlic
     return state.nextLocalPositionId;
 });
 
-export const selectWipTransactionPositions = memoize(
-    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): TransactionPosition[] => {
-        const { state, groupId, transactionId } = args;
-        const transaction = selectTransactionByIdInternal({ state, groupId, transactionId });
+export const useWipTransactionPositions = (transaction: Transaction): TransactionPosition[] => {
+    const nextLocalPositionId = useSelector((state: IRootState) => state.transactions.nextLocalPositionId);
+    return React.useMemo(() => {
         const positions =
             transaction?.position_ids.map((id) => transaction.positions[id]).filter((p) => !p.deleted) ?? [];
         if (transaction?.is_wip) {
             return [
                 ...positions,
                 {
-                    id: state.nextLocalPositionId,
+                    id: nextLocalPositionId,
                     name: "",
                     communist_shares: 0,
                     is_changed: false,
@@ -124,8 +125,8 @@ export const selectWipTransactionPositions = memoize(
         } else {
             return positions;
         }
-    }
-);
+    }, [transaction, nextLocalPositionId]);
+};
 
 export const selectTransactionHasPositions = memoize(
     (args: { state: TransactionSliceState; groupId: number; transactionId: number }): boolean => {

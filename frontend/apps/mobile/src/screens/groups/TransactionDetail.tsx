@@ -5,7 +5,7 @@ import {
     selectCurrentUserPermissions,
     selectTransactionById,
     selectTransactionHasPositions,
-    selectWipTransactionPositions,
+    useWipTransactionPositions,
     wipTransactionUpdated,
 } from "@abrechnung/redux";
 import { TransactionPosition, TransactionValidator } from "@abrechnung/types";
@@ -49,14 +49,12 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
 
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
-    );
+    )!;
     const [showPositions, setShowPositions] = React.useState(false);
     const hasPositions = useAppSelector((state) =>
         selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId })
     );
-    const positions = useAppSelector((state) =>
-        selectWipTransactionPositions({ state: selectTransactionSlice(state), groupId, transactionId })
-    );
+    const positions = useWipTransactionPositions(transaction);
     const totalPositionValue = positions.reduce((acc, curr) => acc + curr.price, 0);
 
     const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));

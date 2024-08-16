@@ -1,7 +1,7 @@
 import { AccountSelect } from "@/components/AccountSelect";
 import { MobilePaper } from "@/components/style/mobile";
 import { useFormatCurrency } from "@/hooks";
-import { RootState, selectAccountSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
+import { selectAccountSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
 import { getAccountSortFunc } from "@abrechnung/core";
 import {
     positionDeleted,
@@ -9,7 +9,7 @@ import {
     selectGroupAccounts,
     selectTransactionBalanceEffect,
     selectTransactionById,
-    selectWipTransactionPositions,
+    useWipTransactionPositions,
     wipPositionAdded,
     wipPositionUpdated,
 } from "@abrechnung/redux";
@@ -28,7 +28,6 @@ import {
     TableRow,
     Typography,
 } from "@mui/material";
-import memoize from "proxy-memoize";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ValidationErrors } from "./types";
@@ -39,24 +38,6 @@ interface TransactionPositionsProps {
     transactionId: number;
     validationErrors?: ValidationErrors;
 }
-
-const selectPositions = memoize(
-    ({ state, groupId, transactionId }: { state: RootState; groupId: number; transactionId: number }) => {
-        const positions = selectWipTransactionPositions({
-            state: selectTransactionSlice(state),
-            groupId,
-            transactionId,
-        });
-        const positionsHaveComplexShares = positions.reduce(
-            (hasComplex, position) =>
-                hasComplex ||
-                (position.communist_shares !== 0 && position.communist_shares !== 1) ||
-                Object.values(position.usages).reduce((nonOne, usage) => nonOne || (usage !== 0 && usage !== 1), false),
-            false
-        );
-        return { positions, positionsHaveComplexShares };
-    }
-);
 
 export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     groupId,
@@ -73,9 +54,17 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     const transaction = useAppSelector((state) =>
         selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
     )!;
-    const { positions, positionsHaveComplexShares } = useAppSelector((state) =>
-        selectPositions({ state, groupId, transactionId })
-    );
+    const positions = useWipTransactionPositions(transaction);
+    const positionsHaveComplexShares = React.useMemo(() => {
+        return positions.reduce(
+            (hasComplex, position) =>
+                hasComplex ||
+                (position.communist_shares !== 0 && position.communist_shares !== 1) ||
+                Object.values(position.usages).reduce((nonOne, usage) => nonOne || (usage !== 0 && usage !== 1), false),
+            false
+        );
+    }, [positions]);
+
     const transactionBalanceEffect = useAppSelector((state) =>
         selectTransactionBalanceEffect({ state: selectTransactionSlice(state), groupId, transactionId })
     );
@@ -210,7 +199,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                     </TableHead>
                     <TableBody>
                         {transaction.is_wip
-                            ? positions.map((position, idx) => (
+                            ? positions.map((position) => (
                                   <PositionTableRow
                                       key={position.id}
                                       position={position}
