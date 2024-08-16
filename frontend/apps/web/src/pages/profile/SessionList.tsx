@@ -18,8 +18,7 @@ import {
 import { DateTime } from "luxon";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import Loading from "@/components/style/Loading";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper, Loading } from "@/components/style";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { selectAuthSlice, useAppSelector } from "@/store";

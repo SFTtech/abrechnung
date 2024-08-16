@@ -1,5 +1,5 @@
 import { AccountSelect } from "@/components/AccountSelect";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper } from "@/components/style";
 import { useFormatCurrency } from "@/hooks";
 import { selectAccountSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
 import { getAccountSortFunc } from "@abrechnung/core";

@@ -13,7 +13,7 @@ import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
 import * as React from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Loading from "../components/style/Loading";
+import { Loading } from "@/components/style";
 import { api, ws } from "../core/api";
 import { selectAuthSlice, selectSettingsSlice, selectTheme, useAppDispatch, useAppSelector } from "../store";
 import { Router } from "./Router";

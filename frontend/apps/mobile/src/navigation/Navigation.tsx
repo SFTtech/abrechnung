@@ -11,17 +11,17 @@ import { useOptionalApi } from "../core/ApiProvider";
 import { notify } from "../notifications";
 import { AddGroup } from "../screens/AddGroup";
 import { GroupList } from "../screens/GroupList";
-import HomeScreen from "../screens/HomeScreen";
-import LoginScreen from "../screens/Login";
-import PreferencesScreen from "../screens/PreferencesScreen";
-import ProfileScreen from "../screens/ProfileScreen";
-import RegisterScreen from "../screens/Register";
+import { HomeScreen } from "../screens/HomeScreen";
+import { LoginScreen } from "../screens/Login";
+import { PreferencesScreen } from "../screens/PreferencesScreen";
+import { ProfileScreen } from "../screens/ProfileScreen";
+import { RegisterScreen } from "../screens/Register";
 import { SplashScreen } from "../screens/SplashScreen";
 import { TransactionList } from "../screens/TransactionList";
-import AccountDetail from "../screens/groups/AccountDetail";
-import AccountEdit from "../screens/groups/AccountEdit";
-import AccountList from "../screens/groups/AccountList";
-import TransactionDetail from "../screens/groups/TransactionDetail";
+import { AccountDetail } from "../screens/groups/AccountDetail";
+import { AccountEdit } from "../screens/groups/AccountEdit";
+import { AccountList } from "../screens/groups/AccountList";
+import { TransactionDetail } from "../screens/groups/TransactionDetail";
 import {
     changeActiveGroup,
     selectActiveGroupId,
@@ -32,7 +32,7 @@ import {
     useAppSelector,
 } from "../store";
 import { Theme } from "../theme";
-import DrawerContent from "./DrawerContent";
+import { DrawerContent } from "./DrawerContent";
 import { Header } from "./Header";
 import { linkingOptions } from "./LinkingConfiguration";
 import { GroupStackParamList, GroupTabParamList, RootDrawerParamList } from "./types";

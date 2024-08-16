@@ -1,5 +1,5 @@
-import GroupCreateModal from "@/components/groups/GroupCreateModal";
-import ListItemLink from "@/components/style/ListItemLink";
+import { GroupCreateModal } from "@/components/groups/GroupCreateModal";
+import { ListItemLink } from "@/components/style";
 import { selectAuthSlice, selectGroupSlice, useAppSelector } from "@/store";
 import { selectGroups, selectIsGuestUser } from "@abrechnung/redux";
 import { Add } from "@mui/icons-material";

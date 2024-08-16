@@ -5,8 +5,7 @@ import { DateTime } from "luxon";
 import React from "react";
 import { balanceColor } from "@/core/utils";
 import { selectGroupSlice, selectTransactionSlice, useAppSelector } from "@/store";
-import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
-import ListItemLink from "../style/ListItemLink";
+import { ListItemLink, PurchaseIcon, TransferIcon } from "../style";
 import { useTranslation } from "react-i18next";
 import { Transaction } from "@abrechnung/types";
 

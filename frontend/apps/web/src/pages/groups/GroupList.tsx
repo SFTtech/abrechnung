@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import ListItemLink from "@/components/style/ListItemLink";
-import GroupCreateModal from "@/components/groups/GroupCreateModal";
-import GroupDeleteModal from "@/components/groups/GroupDeleteModal";
+import { GroupCreateModal } from "@/components/groups/GroupCreateModal";
+import { GroupDeleteModal } from "@/components/groups/GroupDeleteModal";
 import {
     Alert,
     Grid,
@@ -13,7 +12,7 @@ import {
     Typography,
 } from "@mui/material";
 import { Add, Delete } from "@mui/icons-material";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper, ListItemLink } from "@/components/style";
 import { selectIsGuestUser, selectGroups } from "@abrechnung/redux";
 import { useAppSelector, selectGroupSlice, selectAuthSlice } from "@/store";
 import { useTitle } from "@/core/utils";

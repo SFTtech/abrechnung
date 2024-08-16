@@ -137,5 +137,3 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
         </Dialog>
     );
 };
-
-export default GroupCreateModal;

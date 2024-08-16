@@ -5,11 +5,11 @@ import { selectGroupSlice, useAppSelector } from "@/store";
 import { ShareSelect } from "../ShareSelect";
 import { useTranslation } from "react-i18next";
 import { useFormatCurrency } from "@/hooks";
-import { Account } from "@abrechnung/types";
+import { ClearingAccount } from "@abrechnung/types";
 
 interface Props {
     groupId: number;
-    account: Account;
+    account: ClearingAccount;
 }
 
 export const ClearingAccountDetail: React.FC<Props> = ({ groupId, account }) => {
@@ -22,10 +22,6 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, account }) => 
     if (!currency_symbol) {
         return null;
     }
-    if (account.type !== "clearing") {
-        throw new Error("expected a clearing account to render ClearingAccountDetail, but got a personal account");
-    }
-
     return (
         <>
             <Typography variant="h6">{t("accounts.clearingDistributionOf", "", { account })}</Typography>
@@ -47,7 +43,6 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, account }) => 
                         )}
                     </TableCell>
                 )}
-                onChange={(value) => undefined}
                 editable={false}
             />
         </>

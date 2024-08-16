@@ -1,4 +1,4 @@
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper } from "@/components/style";
 import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
 import { SettlementPlanItem } from "@abrechnung/core";
 import {

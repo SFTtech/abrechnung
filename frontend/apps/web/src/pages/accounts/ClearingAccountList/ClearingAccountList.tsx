@@ -25,7 +25,7 @@ import React, { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { TagSelector } from "@/components/TagSelector";
 import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
 import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
 import { getAccountLink } from "@/utils";

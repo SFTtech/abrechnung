@@ -1,6 +1,5 @@
 import { BalanceTable } from "@/components/accounts/BalanceTable";
-import { ListItemLink } from "@/components/style/ListItemLink";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper, ListItemLink } from "@/components/style";
 import { useTitle } from "@/core/utils";
 import { useFormatCurrency } from "@/hooks";
 import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
@@ -224,7 +223,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                     )}
                 </TabPanel>
                 <TabPanel value="2" sx={{ padding: { xs: 1, md: 2 } }}>
-                    <BalanceTable groupId={groupId} />
+                    <BalanceTable group={group} />
                 </TabPanel>
             </TabContext>
             <Divider />

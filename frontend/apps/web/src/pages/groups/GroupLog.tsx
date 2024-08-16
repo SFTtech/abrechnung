@@ -22,7 +22,7 @@ import { DateTime } from "luxon";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Loading } from "@/components/style/Loading";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper } from "@/components/style";
 import { api, ws } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";

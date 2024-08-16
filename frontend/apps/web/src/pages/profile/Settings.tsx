@@ -1,4 +1,4 @@
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
 import {
     ThemeMode,

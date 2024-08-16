@@ -2,7 +2,7 @@ import { Alert, Button, Container, Link, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import { Loading } from "@/components/style/Loading";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper } from "@/components/style";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { Trans, useTranslation } from "react-i18next";

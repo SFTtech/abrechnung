@@ -1,8 +1,7 @@
 import { AccountTransactionList } from "@/components/accounts/AccountTransactionList";
 import { BalanceHistoryGraph } from "@/components/accounts/BalanceHistoryGraph";
 import { ClearingAccountDetail } from "@/components/accounts/ClearingAccountDetail";
-import { Loading } from "@/components/style/Loading";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper, Loading } from "@/components/style";
 import { useQuery, useTitle } from "@/core/utils";
 import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
 import { selectAccountById, selectGroupById } from "@abrechnung/redux";

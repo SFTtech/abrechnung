@@ -93,5 +93,3 @@ export const EditableField: React.FC<Props> = ({
         </div>
     );
 };
-
-export default EditableField;

@@ -1,5 +1,4 @@
-import Loading from "@/components/style/Loading";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper, Loading } from "@/components/style";
 import { useTitle } from "@/core/utils";
 import { selectAuthSlice, useAppSelector } from "@/store";
 import { selectProfile } from "@abrechnung/redux";

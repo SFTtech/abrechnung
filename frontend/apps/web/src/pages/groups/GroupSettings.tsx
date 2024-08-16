@@ -19,7 +19,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import { DisabledFormControlLabel, DisabledTextField } from "@/components/style/DisabledTextField";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper } from "@/components/style";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";

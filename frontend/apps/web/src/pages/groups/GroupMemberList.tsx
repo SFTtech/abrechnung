@@ -27,7 +27,7 @@ import { Form, Formik, FormikHelpers } from "formik";
 import { DateTime } from "luxon";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper } from "@/components/style";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";

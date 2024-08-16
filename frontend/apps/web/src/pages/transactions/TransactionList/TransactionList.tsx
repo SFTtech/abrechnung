@@ -36,7 +36,7 @@ import React, { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { TagSelector } from "@/components/TagSelector";
 import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
 import { selectGroupSlice, useAppDispatch, useAppSelector, selectAccountSlice, selectTransactionSlice } from "@/store";
 import { TransactionListItem } from "./TransactionListItem";

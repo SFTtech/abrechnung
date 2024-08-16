@@ -1,4 +1,4 @@
-import Loading from "@/components/style/Loading";
+import { Loading } from "@/components/style";
 import { api } from "@/core/api";
 import { selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
 import { FileAttachment as BackendFileAttachment, NewFile } from "@abrechnung/api";

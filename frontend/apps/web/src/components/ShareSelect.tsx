@@ -105,7 +105,7 @@ interface ShareSelectProps {
     groupId: number;
     label: string;
     value: TransactionShare;
-    onChange: (newShares: TransactionShare) => void;
+    onChange?: (newShares: TransactionShare) => void;
     error?: boolean | undefined;
     helperText?: React.ReactNode | undefined;
     shouldDisplayAccount?: (accountId: number) => boolean | undefined;
@@ -204,10 +204,10 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
         const newValue = { ...value };
         if (shareValue === 0) {
             delete newValue[accountId];
-            return onChange(newValue);
+            return onChange?.(newValue);
         } else {
             newValue[accountId] = shareValue;
-            return onChange(newValue);
+            return onChange?.(newValue);
         }
     };
 

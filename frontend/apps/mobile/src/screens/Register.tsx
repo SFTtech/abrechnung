@@ -34,7 +34,7 @@ const initialValues: FormSchema = {
     password2: "",
 };
 
-export const Register: React.FC<RootDrawerScreenProps<"Register">> = ({ navigation }) => {
+export const RegisterScreen: React.FC<RootDrawerScreenProps<"Register">> = ({ navigation }) => {
     const { t } = useTranslation();
     const theme = useTheme();
     const loggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
@@ -182,5 +182,3 @@ const styles = StyleSheet.create({
         // color: theme.colors.primary,
     },
 });
-
-export default Register;
