@@ -92,10 +92,11 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                 )
             );
         }
+        const accs = accountIDsToShow.map((id) => accountIDMap[id]).sort(getAccountSortFunc("name"));
 
         return {
-            shownAccounts: accountIDsToShow.map((id) => accountIDMap[id]).sort(getAccountSortFunc("name")),
-            shownAccountIDs: accountIDsToShow,
+            shownAccounts: accs,
+            shownAccountIDs: accs.map((a) => a.id),
         };
     }, [transaction, positions, additionalPurchaseItemAccounts, accountIDMap]);
 
