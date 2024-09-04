@@ -30,7 +30,7 @@ export const TagSelector: React.FC<Props> = ({
     const { t } = useTranslation();
     const [addTagDialogOpen, setAddTagDialogOpen] = React.useState(false);
 
-    const possibleTags = useAppSelector((state) => selectTagsInGroup({ state, groupId }));
+    const possibleTags = useAppSelector((state) => selectTagsInGroup(state, groupId));
 
     const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         if (!editable) {

@@ -4,10 +4,10 @@ import {
     createAccount,
     fetchAccounts,
     selectAccountBalances,
-    selectCurrentUserPermissions,
     selectGroupAccountsStatus,
-    selectGroupById,
-    selectSortedAccounts,
+    useCurrentUserPermissions,
+    useGroup,
+    useSortedAccounts,
 } from "@abrechnung/redux";
 import { Account, AccountBalance } from "@abrechnung/types";
 import { useIsFocused } from "@react-navigation/native";
@@ -21,14 +21,7 @@ import Searchbar from "../../components/style/Searchbar";
 import { getAccountIcon } from "../../constants/Icons";
 import { useApi } from "../../core/ApiProvider";
 import { GroupTabScreenProps } from "../../navigation/types";
-import {
-    selectAccountSlice,
-    selectActiveGroupId,
-    selectGroupSlice,
-    selectUiSlice,
-    useAppDispatch,
-    useAppSelector,
-} from "../../store";
+import { selectActiveGroupId, useAppDispatch, useAppSelector } from "../../store";
 import { successColor } from "../../theme";
 
 type Props = GroupTabScreenProps<"AccountList" | "ClearingAccountList">;
@@ -39,25 +32,16 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
     const { api } = useApi();
     const accountType: AccountType = route.name === "AccountList" ? "personal" : "clearing";
 
-    const groupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) })) as number; // TODO: proper typing
-    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const groupId = useAppSelector((state) => selectActiveGroupId(state))!;
+    const group = useGroup(groupId);
     const [search, setSearch] = useState<string>("");
     const [sortMode, setSortMode] = useState<AccountSortMode>("name");
-    const accounts = useAppSelector((state) =>
-        selectSortedAccounts({
-            state: selectAccountSlice(state),
-            groupId,
-            type: accountType,
-            sortMode,
-            searchTerm: search,
-        })
-    );
-    const accountBalances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const accounts = useSortedAccounts(groupId, sortMode, accountType, search);
+    const accountBalances = useAppSelector((state) => selectAccountBalances(state, groupId));
+    const permissions = useCurrentUserPermissions(groupId);
     const currency_symbol = group?.currency_symbol;
-    const accountStatus = useAppSelector((state) =>
-        selectGroupAccountsStatus({ state: selectAccountSlice(state), groupId })
-    );
+    const accountStatus = useAppSelector((state) => selectGroupAccountsStatus(state, groupId));
 
     const [isMenuOpen, setMenuOpen] = useState<boolean>(false);
     const [showSearchInput, setShowSearchInput] = useState<boolean>(false);
@@ -204,7 +188,7 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
             data={accounts}
             renderItem={renderItem}
             ListFooterComponent={
-                permissions?.canWrite ? (
+                permissions?.can_write ? (
                     <Portal>
                         <FAB style={styles.fab} visible={isFocused} icon="add" onPress={createNewAccount} />
                     </Portal>

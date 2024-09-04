@@ -1,6 +1,5 @@
-import { selectSortedAccounts, wipPositionUpdated } from "@abrechnung/redux";
+import { useSortedAccounts, wipPositionUpdated } from "@abrechnung/redux";
 import { TransactionPosition, PositionValidator, PositionValidationErrors } from "@abrechnung/types";
-import memoize from "proxy-memoize";
 import React, { useCallback, useEffect, useState } from "react";
 import { ScrollView, StyleSheet } from "react-native";
 import {
@@ -15,7 +14,7 @@ import {
     TextInput,
     useTheme,
 } from "react-native-paper";
-import { RootState, selectAccountSlice, useAppDispatch, useAppSelector } from "../store";
+import { useAppDispatch } from "../store";
 import { NumericInput } from "./NumericInput";
 import { KeyboardAvoidingDialog } from "./style/KeyboardAvoidingDialog";
 
@@ -59,22 +58,13 @@ export const PositionDialog: React.FC<Props> = ({
 
     const [localEditingState, setLocalEditingState] = useState<localEditingState>(initialEditingState);
     const [searchTerm, setSearchTerm] = useState("");
-    const selector = React.useCallback(
-        memoize((state: RootState) => {
-            const sorted = selectSortedAccounts({
-                state: selectAccountSlice(state),
-                groupId,
-                sortMode: "name",
-                searchTerm,
-            });
-            if (!editing) {
-                return sorted.filter((acc) => (localEditingState.usages[acc.id] ?? 0) > 0);
-            }
-            return sorted;
-        }),
-        [groupId, searchTerm, editing, localEditingState]
-    );
-    const accounts = useAppSelector(selector);
+    const sortedAccounts = useSortedAccounts(groupId, "name", undefined, searchTerm);
+    const accounts = React.useMemo(() => {
+        if (!editing) {
+            return sortedAccounts.filter((acc) => (localEditingState.usages[acc.id] ?? 0) > 0);
+        }
+        return sortedAccounts;
+    }, [sortedAccounts, localEditingState, editing]);
     const [errors, setErrors] = useState<PositionValidationErrors>(emptyFormErrors);
 
     const toggleShare = (accountID: number) => {

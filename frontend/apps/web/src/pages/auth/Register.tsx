@@ -20,7 +20,7 @@ import { z } from "zod";
 import { Loading } from "@/components/style/Loading";
 import { api } from "@/core/api";
 import { useQuery, useTitle } from "@/core/utils";
-import { selectAuthSlice, useAppSelector } from "@/store";
+import { useAppSelector } from "@/store";
 import { toFormikValidationSchema } from "@abrechnung/utils";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
@@ -41,7 +41,7 @@ type FormValues = z.infer<typeof validationSchema>;
 
 export const Register: React.FC = () => {
     const { t } = useTranslation();
-    const loggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
+    const loggedIn = useAppSelector(selectIsAuthenticated);
     const [loading, setLoading] = useState(true);
     const query = useQuery();
     const navigate = useNavigate();

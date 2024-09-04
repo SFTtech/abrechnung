@@ -2,7 +2,7 @@ import * as React from "react";
 import { z } from "zod";
 import { environment } from "@/environments/environment";
 import { AlertColor } from "@mui/material/Alert/Alert";
-import Loading from "@/components/style/Loading";
+import { Loading } from "@/components/style";
 import { Alert, AlertTitle } from "@mui/material";
 
 const configSchema = z.object({

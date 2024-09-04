@@ -8,5 +8,3 @@ export const Loading: React.FC = () => {
         </Grid>
     );
 };
-
-export default Loading;

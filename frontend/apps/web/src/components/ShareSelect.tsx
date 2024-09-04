@@ -1,4 +1,4 @@
-import { selectGroupAccounts } from "@abrechnung/redux";
+import { useGroupAccounts } from "@abrechnung/redux";
 import { Account, TransactionShare } from "@abrechnung/types";
 import { Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import {
@@ -24,7 +24,6 @@ import {
 } from "@mui/material";
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { selectAccountSlice, useAppSelector } from "../store";
 import { getAccountLink } from "../utils";
 import { NumericInput } from "./NumericInput";
 import { getAccountIcon } from "./style/AbrechnungIcons";
@@ -105,7 +104,7 @@ interface ShareSelectProps {
     groupId: number;
     label: string;
     value: TransactionShare;
-    onChange: (newShares: TransactionShare) => void;
+    onChange?: (newShares: TransactionShare) => void;
     error?: boolean | undefined;
     helperText?: React.ReactNode | undefined;
     shouldDisplayAccount?: (accountId: number) => boolean | undefined;
@@ -136,9 +135,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
     const [showAdvanced, setShowAdvanced] = React.useState(false);
     const [searchValue, setSearchValue] = React.useState("");
 
-    const unfilteredAccounts = useAppSelector((state) =>
-        selectGroupAccounts({ state: selectAccountSlice(state), groupId })
-    );
+    const unfilteredAccounts = useGroupAccounts(groupId);
     const accounts = React.useMemo(() => {
         const sortFn = getAccountSortFunc("name");
         return unfilteredAccounts
@@ -204,10 +201,10 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
         const newValue = { ...value };
         if (shareValue === 0) {
             delete newValue[accountId];
-            return onChange(newValue);
+            return onChange?.(newValue);
         } else {
             newValue[accountId] = shareValue;
-            return onChange(newValue);
+            return onChange?.(newValue);
         }
     };
 

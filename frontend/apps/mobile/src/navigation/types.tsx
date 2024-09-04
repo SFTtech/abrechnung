@@ -19,6 +19,14 @@ export type RootDrawerParamList = {
     NotFound: undefined;
 };
 
+export type RootDrawerScreenProps<Screen extends keyof RootDrawerParamList> = DrawerScreenProps<
+    RootDrawerParamList,
+    Screen
+>;
+
+export type RootDrawerNavigationProp<Screen extends keyof RootDrawerParamList> =
+    RootDrawerScreenProps<Screen>["navigation"];
+
 export type GroupStackParamList = {
     BottomTabNavigator: NavigatorScreenParams<GroupTabParamList>;
     TransactionDetail: {
@@ -31,25 +39,18 @@ export type GroupStackParamList = {
     AddGroup: undefined;
 };
 
-export type GroupTabParamList = {
-    TransactionList: { groupId: number };
-    AccountList: { groupId: number };
-    ClearingAccountList: { groupId: number };
-};
-
-export type RootDrawerScreenProps<Screen extends keyof RootDrawerParamList> = DrawerScreenProps<
-    RootDrawerParamList,
-    Screen
->;
-export type RootDrawerNavigationProp<Screen extends keyof RootDrawerParamList> =
-    RootDrawerScreenProps<Screen>["navigation"];
-
 export type GroupStackScreenProps<Screen extends keyof GroupStackParamList> = CompositeScreenProps<
     StackScreenProps<GroupStackParamList, Screen>,
     RootDrawerScreenProps<keyof RootDrawerParamList>
 >;
 export type GroupStackNavigationProp<Screen extends keyof GroupStackParamList> =
     GroupStackScreenProps<Screen>["navigation"];
+
+export type GroupTabParamList = {
+    TransactionList: { groupId: number };
+    AccountList: { groupId: number };
+    ClearingAccountList: { groupId: number };
+};
 
 export type GroupTabScreenProps<Screen extends keyof GroupTabParamList> = CompositeScreenProps<
     MaterialTopTabScreenProps<GroupTabParamList, Screen>,

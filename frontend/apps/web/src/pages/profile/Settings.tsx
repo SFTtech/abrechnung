@@ -1,14 +1,6 @@
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
-import {
-    ThemeMode,
-    persistor,
-    selectSettingsSlice,
-    selectTheme,
-    themeChanged,
-    useAppDispatch,
-    useAppSelector,
-} from "@/store";
+import { ThemeMode, persistor, selectTheme, themeChanged, useAppDispatch, useAppSelector } from "@/store";
 import {
     Alert,
     Box,
@@ -34,7 +26,7 @@ import { toast } from "react-toastify";
 export const Settings: React.FC = () => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
-    const themeMode = useAppSelector((state) => selectTheme({ state: selectSettingsSlice(state) }));
+    const themeMode = useAppSelector(selectTheme);
 
     useTitle(t("profile.settings.tabTitle"));
 

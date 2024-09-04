@@ -6,13 +6,13 @@ import { GroupListItem } from "../components/GroupListItem";
 import LoadingIndicator from "../components/LoadingIndicator";
 import { useApi } from "../core/ApiProvider";
 import { RootDrawerScreenProps } from "../navigation/types";
-import { selectGroupSlice, useAppDispatch, useAppSelector } from "../store";
+import { useAppDispatch, useAppSelector } from "../store";
 
 export const GroupList: React.FC<RootDrawerScreenProps<"GroupList">> = ({ navigation, route }) => {
     const dispatch = useAppDispatch();
     const [refreshing, setRefreshing] = React.useState<boolean>(false);
     const groupStatus = useAppSelector((state) => state.groups.status);
-    const groupIds = useAppSelector((state) => selectGroupIds({ state: selectGroupSlice(state) }));
+    const groupIds = useAppSelector(selectGroupIds);
 
     const { api } = useApi();
 

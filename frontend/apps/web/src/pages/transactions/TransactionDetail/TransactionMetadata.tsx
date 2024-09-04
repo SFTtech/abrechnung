@@ -4,7 +4,7 @@ import { NumericInput } from "@/components/NumericInput";
 import { ShareSelect } from "@/components/ShareSelect";
 import { TagSelector } from "@/components/TagSelector";
 import { TextInput } from "@/components/TextInput";
-import { selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import {
     selectTransactionBalanceEffect,
     selectTransactionHasFiles,
@@ -35,15 +35,9 @@ export const TransactionMetadata: React.FC<Props> = ({
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
     const dispatch = useAppDispatch();
-    const hasAttachments = useAppSelector((state) =>
-        selectTransactionHasFiles({ state: selectTransactionSlice(state), groupId, transactionId: transaction.id })
-    );
-    const hasPositions = useAppSelector((state) =>
-        selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId: transaction.id })
-    );
-    const balanceEffect = useAppSelector((state) =>
-        selectTransactionBalanceEffect({ state: selectTransactionSlice(state), groupId, transactionId: transaction.id })
-    );
+    const hasAttachments = useAppSelector((state) => selectTransactionHasFiles(state, groupId, transaction.id));
+    const hasPositions = useAppSelector((state) => selectTransactionHasPositions(state, groupId, transaction.id));
+    const balanceEffect = useAppSelector((state) => selectTransactionBalanceEffect(state, groupId, transaction.id));
 
     const renderShareInfo = React.useCallback(
         ({ account }: { account: Account }) =>

@@ -1,26 +1,19 @@
-import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
-import { selectAccountBalances, selectGroupById, selectSortedAccounts } from "@abrechnung/redux";
+import { useAppSelector } from "@/store";
+import { selectAccountBalances, useSortedAccounts } from "@abrechnung/redux";
 import { DataGrid, GridColDef, GridToolbar } from "@mui/x-data-grid";
 import React from "react";
 import { renderCurrency } from "../style/datagrid/renderCurrency";
 import { useTranslation } from "react-i18next";
-import { Navigate } from "react-router-dom";
+import { Group } from "@abrechnung/api";
 
 interface Props {
-    groupId: number;
+    group: Group;
 }
 
-export const BalanceTable: React.FC<Props> = ({ groupId }) => {
+export const BalanceTable: React.FC<Props> = ({ group }) => {
     const { t } = useTranslation();
-    const personalAccounts = useAppSelector((state) =>
-        selectSortedAccounts({ state: selectAccountSlice(state), groupId, type: "personal", sortMode: "name" })
-    );
-    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
-    const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
-
-    if (!group) {
-        return <Navigate to="/404" />;
-    }
+    const personalAccounts = useSortedAccounts(group.id, "name", "personal");
+    const balances = useAppSelector((state) => selectAccountBalances(state, group.id));
 
     const tableData = personalAccounts.map((acc) => {
         return {

@@ -1,10 +1,10 @@
 import { GroupMember } from "@abrechnung/api";
 import {
     selectCurrentUserId,
-    selectCurrentUserPermissions,
-    selectGroupById,
     selectGroupMembers,
     updateGroupMemberPrivileges,
+    useCurrentUserPermissions,
+    useGroup,
 } from "@abrechnung/redux";
 import { Edit } from "@mui/icons-material";
 import {
@@ -27,10 +27,10 @@ import { Form, Formik, FormikHelpers } from "formik";
 import { DateTime } from "luxon";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper } from "@/components/style";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
-import { selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router-dom";
 
@@ -47,10 +47,10 @@ type FormValues = {
 export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
-    const currentUserId = useAppSelector((state) => selectCurrentUserId({ state: selectAuthSlice(state) }));
-    const members = useAppSelector((state) => selectGroupMembers({ state: selectGroupSlice(state), groupId }));
-    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const currentUserId = useAppSelector(selectCurrentUserId);
+    const members = useAppSelector((state) => selectGroupMembers(state, groupId));
+    const group = useGroup(groupId);
+    const permissions = useCurrentUserPermissions(groupId);
 
     const [memberToEdit, setMemberToEdit] = useState<GroupMember | undefined>(undefined);
 
@@ -162,7 +162,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
                                     </>
                                 }
                             />
-                            {(permissions.isOwner || permissions.canWrite) && (
+                            {(permissions.is_owner || permissions.can_write) && (
                                 <ListItemSecondaryAction>
                                     <IconButton onClick={() => openEditMemberModal(member.user_id)}>
                                         <Edit />

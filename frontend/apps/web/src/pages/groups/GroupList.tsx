@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import ListItemLink from "@/components/style/ListItemLink";
-import GroupCreateModal from "@/components/groups/GroupCreateModal";
-import GroupDeleteModal from "@/components/groups/GroupDeleteModal";
+import { GroupCreateModal } from "@/components/groups/GroupCreateModal";
+import { GroupDeleteModal } from "@/components/groups/GroupDeleteModal";
 import {
     Alert,
     Grid,
@@ -13,9 +12,9 @@ import {
     Typography,
 } from "@mui/material";
 import { Add, Delete } from "@mui/icons-material";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper, ListItemLink } from "@/components/style";
 import { selectIsGuestUser, selectGroups } from "@abrechnung/redux";
-import { useAppSelector, selectGroupSlice, selectAuthSlice } from "@/store";
+import { useAppSelector } from "@/store";
 import { useTitle } from "@/core/utils";
 import { useTranslation } from "react-i18next";
 import { Group } from "@abrechnung/api";
@@ -25,8 +24,8 @@ export const GroupList: React.FC = () => {
     useTitle(t("groups.list.tabTitle"));
     const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
     const [groupToDelete, setGroupToDelete] = useState<Group | null>(null);
-    const groups = useAppSelector((state) => selectGroups({ state: selectGroupSlice(state) }));
-    const isGuest = useAppSelector((state) => selectIsGuestUser({ state: selectAuthSlice(state) }));
+    const groups = useAppSelector((state) => selectGroups(state));
+    const isGuest = useAppSelector(selectIsGuestUser);
 
     const openGroupDeletionModal = (groupID: number) => {
         const g = groups.find((group) => group.id === groupID);

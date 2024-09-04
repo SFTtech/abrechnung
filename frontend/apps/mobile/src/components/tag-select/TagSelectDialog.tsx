@@ -30,7 +30,7 @@ const EMPTY_LIST: string[] = [];
 
 export const TagSelectDialog: React.FC<Props> = ({ groupId, value, onChange, showDialog, onHideDialog, title }) => {
     const theme = useTheme();
-    const usedTags = useAppSelector((state) => selectTagsInGroup({ state, groupId }));
+    const usedTags = useAppSelector((state) => selectTagsInGroup(state, groupId));
 
     const [tags, setTags] = useState<string[]>(EMPTY_LIST);
     const [searchTerm, setSearchTerm] = useState("");

@@ -13,9 +13,9 @@ import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
 import * as React from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Loading from "../components/style/Loading";
+import { Loading } from "@/components/style";
 import { api, ws } from "../core/api";
-import { selectAuthSlice, selectSettingsSlice, selectTheme, useAppDispatch, useAppSelector } from "../store";
+import { selectTheme, useAppDispatch, useAppSelector } from "../store";
 import { Router } from "./Router";
 
 export const App = () => {
@@ -23,10 +23,10 @@ export const App = () => {
     const dispatch = useAppDispatch();
     const groupStoreStatus = useAppSelector((state) => state.groups.status);
     const [apiInitialized, setApiInitialized] = React.useState(false);
-    const accessToken = useAppSelector((state) => selectAccessToken({ state: selectAuthSlice(state) }));
-    const themeMode = useAppSelector((state) => selectTheme({ state: selectSettingsSlice(state) }));
+    const accessToken = useAppSelector(selectAccessToken);
+    const themeMode = useAppSelector(selectTheme);
     const isAuthenticated = accessToken !== undefined;
-    const userId = useAppSelector((state) => selectCurrentUserId({ state: selectAuthSlice(state) }));
+    const userId = useAppSelector(selectCurrentUserId);
 
     const useDarkMode: PaletteMode = themeMode === "browser" ? (darkModeSystem ? "dark" : "light") : themeMode;
 

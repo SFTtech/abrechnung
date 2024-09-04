@@ -1,31 +1,25 @@
-import { selectAccountBalances, selectGroupCurrencySymbol } from "@abrechnung/redux";
+import { selectAccountBalances, useGroupCurrencySymbol } from "@abrechnung/redux";
 import { TableCell, Typography } from "@mui/material";
 import React from "react";
-import { selectGroupSlice, useAppSelector } from "@/store";
+import { useAppSelector } from "@/store";
 import { ShareSelect } from "../ShareSelect";
 import { useTranslation } from "react-i18next";
 import { useFormatCurrency } from "@/hooks";
-import { Account } from "@abrechnung/types";
+import { ClearingAccount } from "@abrechnung/types";
 
 interface Props {
     groupId: number;
-    account: Account;
+    account: ClearingAccount;
 }
 
 export const ClearingAccountDetail: React.FC<Props> = ({ groupId, account }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
-    const currency_symbol = useAppSelector((state) =>
-        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
-    );
-    const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
+    const currency_symbol = useGroupCurrencySymbol(groupId);
+    const balances = useAppSelector((state) => selectAccountBalances(state, groupId));
     if (!currency_symbol) {
         return null;
     }
-    if (account.type !== "clearing") {
-        throw new Error("expected a clearing account to render ClearingAccountDetail, but got a personal account");
-    }
-
     return (
         <>
             <Typography variant="h6">{t("accounts.clearingDistributionOf", "", { account })}</Typography>
@@ -47,7 +41,6 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, account }) => 
                         )}
                     </TableCell>
                 )}
-                onChange={(value) => undefined}
                 editable={false}
             />
         </>

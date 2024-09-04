@@ -2,8 +2,8 @@ import {
     deleteAccount,
     discardAccountChange,
     saveAccount,
-    selectAccountById,
-    selectCurrentUserPermissions,
+    useAccount,
+    useCurrentUserPermissions,
     wipAccountUpdated,
 } from "@abrechnung/redux";
 import { AccountValidator } from "@abrechnung/types";
@@ -17,7 +17,7 @@ import { TransactionShareInput } from "../../components/transaction-shares/Trans
 import { useApi } from "../../core/ApiProvider";
 import { GroupStackScreenProps } from "../../navigation/types";
 import { notify } from "../../notifications";
-import { selectAccountSlice, useAppDispatch, useAppSelector } from "../../store";
+import { useAppDispatch } from "../../store";
 import { LoadingIndicator, TagSelect, DateTimeInput } from "../../components";
 
 export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ route, navigation }) => {
@@ -27,15 +27,14 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
 
     const { groupId, accountId } = route.params;
 
-    const account = useAppSelector((state) =>
-        selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
-    );
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const account = useAccount(groupId, accountId);
+    const permissions = useCurrentUserPermissions(groupId);
 
     const onGoBack = React.useCallback(async () => {
         if (account) {
             return dispatch(discardAccountChange({ groupId, accountId: account.id }));
         }
+        return;
     }, [dispatch, account, groupId]);
 
     const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
@@ -69,7 +68,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
     );
 
     useEffect(() => {
-        if (permissions === undefined || !permissions.canWrite) {
+        if (permissions === undefined || !permissions.can_write) {
             navigation.replace("AccountDetail", { accountId, groupId });
         }
     }, [navigation, accountId, permissions, groupId]);
@@ -157,7 +156,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                     </>
                 );
             },
-        });
+        } as any);
     }, [theme, account, navigation, formik, cancelEdit, onGoBack]);
 
     if (account == null) {
@@ -234,7 +233,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                         error={formik.touched.clearing_shares && !!formik.errors.clearing_shares}
                     />
                     {formik.touched.clearing_shares && !!formik.errors.clearing_shares && (
-                        <HelperText type="error">{formik.errors.clearing_shares}</HelperText>
+                        <HelperText type="error">{formik.errors.clearing_shares as string}</HelperText>
                     )}
                 </>
             )}
@@ -264,7 +263,7 @@ const styles = StyleSheet.create({
     },
     shareContainer: {
         padding: 16,
-        borderBottomStyle: "solid",
+        borderStyle: "solid",
         borderBottomColor: "#bebebe",
         borderBottomWidth: 1,
         borderTopRightRadius: 4,

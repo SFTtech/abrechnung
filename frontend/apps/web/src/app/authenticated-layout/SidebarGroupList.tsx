@@ -1,6 +1,6 @@
-import GroupCreateModal from "@/components/groups/GroupCreateModal";
-import ListItemLink from "@/components/style/ListItemLink";
-import { selectAuthSlice, selectGroupSlice, useAppSelector } from "@/store";
+import { GroupCreateModal } from "@/components/groups/GroupCreateModal";
+import { ListItemLink } from "@/components/style";
+import { useAppSelector } from "@/store";
 import { selectGroups, selectIsGuestUser } from "@abrechnung/redux";
 import { Add } from "@mui/icons-material";
 import { Grid, IconButton, List, ListItem, ListItemText, Tooltip } from "@mui/material";
@@ -13,8 +13,8 @@ interface Props {
 
 export const SidebarGroupList: React.FC<Props> = ({ activeGroupId }) => {
     const { t } = useTranslation();
-    const isGuest = useAppSelector((state) => selectIsGuestUser({ state: selectAuthSlice(state) }));
-    const groups = useAppSelector((state) => selectGroups({ state: selectGroupSlice(state) }));
+    const isGuest = useAppSelector(selectIsGuestUser);
+    const groups = useAppSelector((state) => selectGroups(state));
     const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
 
     const openGroupCreateModal = () => {

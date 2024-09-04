@@ -1,11 +1,11 @@
-import { MobilePaper } from "@/components/style/mobile";
-import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { MobilePaper } from "@/components/style";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { SettlementPlanItem } from "@abrechnung/core";
 import {
     createTransaction,
     selectAccountIdToAccountMap,
-    selectGroupCurrencySymbol,
     selectSettlementPlan,
+    useGroupCurrencySymbol,
 } from "@abrechnung/redux";
 import { Button, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
 import * as React from "react";
@@ -22,13 +22,9 @@ export const SettlementPlanDisplay: React.FC<Props> = ({ groupId }) => {
     const formatCurrency = useFormatCurrency();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const settlementPlan = useAppSelector((state) => selectSettlementPlan({ state, groupId }));
-    const currencySymbol = useAppSelector((state) =>
-        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
-    );
-    const accountMap = useAppSelector((state) =>
-        selectAccountIdToAccountMap({ state: selectAccountSlice(state), groupId })
-    );
+    const settlementPlan = useAppSelector((state) => selectSettlementPlan(state, groupId));
+    const currencySymbol = useGroupCurrencySymbol(groupId);
+    const accountMap = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
 
     if (!currencySymbol) {
         return <Navigate to="/404" />;

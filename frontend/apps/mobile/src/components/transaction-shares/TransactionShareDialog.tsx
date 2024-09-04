@@ -1,12 +1,10 @@
-import { selectSortedAccounts } from "@abrechnung/redux";
+import { useSortedAccounts } from "@abrechnung/redux";
 import { TransactionShare } from "@abrechnung/types";
-import memoize from "proxy-memoize";
 import * as React from "react";
 import { useState } from "react";
 import { ScrollView } from "react-native";
 import { Button, Checkbox, Dialog, List, Searchbar } from "react-native-paper";
 import { getAccountIcon } from "../../constants/Icons";
-import { RootState, selectAccountSlice, useAppSelector } from "../../store";
 import { KeyboardAvoidingDialog } from "../style/KeyboardAvoidingDialog";
 
 interface Props {
@@ -34,22 +32,13 @@ export const TransactionShareDialog: React.FC<Props> = ({
     excludedAccounts = [],
 }) => {
     const [searchTerm, setSearchTerm] = useState("");
-    const selector = React.useCallback(
-        memoize((state: RootState) => {
-            const sorted = selectSortedAccounts({
-                state: selectAccountSlice(state),
-                groupId,
-                sortMode: "name",
-                searchTerm,
-            });
-            if (disabled) {
-                return sorted.filter((acc) => (value[acc.id] ?? 0) > 0 && !excludedAccounts.includes(acc.id));
-            }
-            return sorted.filter((acc) => !excludedAccounts.includes(acc.id));
-        }),
-        [groupId, searchTerm, disabled, value, excludedAccounts]
-    );
-    const accounts = useAppSelector(selector);
+    const sortedAccounts = useSortedAccounts(groupId, "name", undefined, searchTerm);
+    const accounts = React.useMemo(() => {
+        if (disabled) {
+            return sortedAccounts.filter((acc) => (value[acc.id] ?? 0) > 0 && !excludedAccounts.includes(acc.id));
+        }
+        return sortedAccounts.filter((acc) => !excludedAccounts.includes(acc.id));
+    }, [sortedAccounts, excludedAccounts, value, disabled]);
 
     const toggleShare = (account_id: number) => {
         if (!onChange) {

@@ -1,14 +1,14 @@
 import {
     deleteGroupInvite,
     fetchGroupInvites,
-    selectCurrentUserPermissions,
-    selectGroupById,
     selectGroupInviteStatus,
     selectGroupInvites,
     selectGroupMembers,
     selectIsGuestUser,
     subscribe,
     unsubscribe,
+    useCurrentUserPermissions,
+    useGroup,
 } from "@abrechnung/redux";
 import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import {
@@ -26,10 +26,10 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { InviteLinkCreate } from "@/components/groups/InviteLinkCreate";
 import { Loading } from "@/components/style/Loading";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper } from "@/components/style";
 import { api, ws } from "@/core/api";
 import { useTitle } from "@/core/utils";
-import { selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router-dom";
 
@@ -41,15 +41,13 @@ export const GroupInvites: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
     const [showModal, setShowModal] = useState(false);
     const dispatch = useAppDispatch();
-    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
-    const invites = useAppSelector((state) => selectGroupInvites({ state: selectGroupSlice(state), groupId }));
-    const members = useAppSelector((state) => selectGroupMembers({ state: selectGroupSlice(state), groupId }));
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
-    const invitesLoadingStatus = useAppSelector((state) =>
-        selectGroupInviteStatus({ state: selectGroupSlice(state), groupId })
-    );
+    const group = useGroup(groupId);
+    const invites = useAppSelector((state) => selectGroupInvites(state, groupId));
+    const members = useAppSelector((state) => selectGroupMembers(state, groupId));
+    const permissions = useCurrentUserPermissions(groupId);
+    const invitesLoadingStatus = useAppSelector((state) => selectGroupInviteStatus(state, groupId));
 
-    const isGuest = useAppSelector((state) => selectIsGuestUser({ state: selectAuthSlice(state) }));
+    const isGuest = useAppSelector(selectIsGuestUser);
 
     useTitle(t("groups.invites.tabTitle", "", { groupName: group?.name }));
 
@@ -135,7 +133,7 @@ export const GroupInvites: React.FC<Props> = ({ groupId }) => {
                                         </>
                                     }
                                 />
-                                {permissions.canWrite && (
+                                {permissions.can_write && (
                                     <ListItemSecondaryAction>
                                         <IconButton
                                             color="primary"
@@ -155,7 +153,7 @@ export const GroupInvites: React.FC<Props> = ({ groupId }) => {
                     )}
                 </List>
             )}
-            {permissions.canWrite && !isGuest && (
+            {permissions.can_write && !isGuest && (
                 <>
                     <Grid container justifyContent="center">
                         <IconButton color="primary" onClick={() => setShowModal(true)}>

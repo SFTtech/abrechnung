@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import { LockOutlined } from "@mui/icons-material";
 import { z } from "zod";
-import { useAppDispatch, useAppSelector, selectAuthSlice } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { selectIsAuthenticated, login } from "@abrechnung/redux";
 import { toFormikValidationSchema } from "@abrechnung/utils";
 import { useTranslation } from "react-i18next";
@@ -32,7 +32,7 @@ type FormValues = z.infer<typeof validationSchema>;
 
 export const Login: React.FC = () => {
     const { t } = useTranslation();
-    const isLoggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
+    const isLoggedIn = useAppSelector(selectIsAuthenticated);
     const dispatch = useAppDispatch();
     const query = useQuery();
     const navigate = useNavigate();

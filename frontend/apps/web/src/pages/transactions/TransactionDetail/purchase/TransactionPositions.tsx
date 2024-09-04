@@ -1,14 +1,14 @@
 import { AccountSelect } from "@/components/AccountSelect";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper } from "@/components/style";
 import { useFormatCurrency } from "@/hooks";
-import { selectAccountSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { getAccountSortFunc } from "@abrechnung/core";
 import {
     positionDeleted,
     selectAccountIdToAccountMap,
-    selectGroupAccounts,
     selectTransactionBalanceEffect,
-    selectTransactionById,
+    useGroupAccounts,
+    useTransaction,
     useWipTransactionPositions,
     wipPositionAdded,
     wipPositionUpdated,
@@ -46,15 +46,11 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
 }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
-    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
-    const accountIDMap = useAppSelector((state) =>
-        selectAccountIdToAccountMap({ state: selectAccountSlice(state), groupId })
-    );
+    const accounts = useGroupAccounts(groupId);
+    const accountIDMap = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const transaction = useAppSelector((state) =>
-        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
-    )!;
-    const positions = useWipTransactionPositions(transaction);
+    const transaction = useTransaction(groupId, transactionId)!;
+    const positions = useWipTransactionPositions(groupId, transactionId);
     const positionsHaveComplexShares = React.useMemo(() => {
         return positions.reduce(
             (hasComplex, position) =>
@@ -66,7 +62,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     }, [positions]);
 
     const transactionBalanceEffect = useAppSelector((state) =>
-        selectTransactionBalanceEffect({ state: selectTransactionSlice(state), groupId, transactionId })
+        selectTransactionBalanceEffect(state, groupId, transactionId)
     );
 
     const dispatch = useAppDispatch();

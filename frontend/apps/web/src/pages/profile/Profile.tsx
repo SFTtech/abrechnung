@@ -1,7 +1,6 @@
-import Loading from "@/components/style/Loading";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper, Loading } from "@/components/style";
 import { useTitle } from "@/core/utils";
-import { selectAuthSlice, useAppSelector } from "@/store";
+import { useAppSelector } from "@/store";
 import { selectProfile } from "@abrechnung/redux";
 import { Alert, List, ListItem, ListItemText, Typography } from "@mui/material";
 import { DateTime } from "luxon";
@@ -10,7 +9,7 @@ import { useTranslation } from "react-i18next";
 
 export const Profile: React.FC = () => {
     const { t } = useTranslation();
-    const profile = useAppSelector((state) => selectProfile({ state: selectAuthSlice(state) }));
+    const profile = useAppSelector(selectProfile);
     useTitle(t("profile.index.tabTitle"));
 
     return (

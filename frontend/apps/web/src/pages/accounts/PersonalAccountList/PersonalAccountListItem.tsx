@@ -1,10 +1,10 @@
-import { accountEditStarted, selectCurrentUserPermissions, selectGroupMemberIdToUsername } from "@abrechnung/redux";
+import { accountEditStarted, selectGroupMemberIdToUsername, useCurrentUserPermissions } from "@abrechnung/redux";
 import { Delete, Edit } from "@mui/icons-material";
 import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText } from "@mui/material";
 import React from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { ListItemLink } from "@/components/style/ListItemLink";
-import { selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { getAccountLink } from "@/utils";
 import { Account } from "@abrechnung/types";
 
@@ -19,10 +19,8 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
-    const memberIDToUsername = useAppSelector((state) =>
-        selectGroupMemberIdToUsername({ state: selectGroupSlice(state), groupId })
-    );
+    const permissions = useCurrentUserPermissions(groupId);
+    const memberIDToUsername = useAppSelector((state) => selectGroupMemberIdToUsername(state, groupId));
 
     if (!permissions || !account) {
         return <Navigate to="/404" />;
@@ -75,7 +73,7 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
                     secondary={account.description}
                 />
             </ListItemLink>
-            {permissions.canWrite && (
+            {permissions.can_write && (
                 <ListItemSecondaryAction>
                     <IconButton color="primary" onClick={edit}>
                         <Edit />

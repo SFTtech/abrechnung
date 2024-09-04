@@ -1,5 +1,6 @@
 import { PaletteMode } from "@mui/material";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type { RootState } from "./store";
 
 export type ThemeMode = "browser" | PaletteMode;
 
@@ -12,9 +13,8 @@ const initialState: SettingsSliceState = {
 };
 
 // selectors
-export const selectTheme = (args: { state: SettingsSliceState }): ThemeMode => {
-    const { state } = args;
-    return state.theme;
+export const selectTheme = (state: RootState): ThemeMode => {
+    return state.settings.theme;
 };
 
 const settingsSlice = createSlice({

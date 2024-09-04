@@ -1,7 +1,7 @@
 import { Api, Session, User } from "@abrechnung/api";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import { PURGE } from "redux-persist";
-import { AuthSliceState } from "../types";
+import { AuthSliceState, IRootState } from "../types";
 
 const initialState: AuthSliceState = {
     baseUrl: undefined,
@@ -11,45 +11,38 @@ const initialState: AuthSliceState = {
 };
 
 // selectors
-export const selectAccessToken = (args: { state: AuthSliceState }): string | undefined => {
-    const { state } = args;
-    return state.accessToken;
+export const selectAccessToken = (state: IRootState): string | undefined => {
+    return state.auth.accessToken;
 };
 
-export const selectBaseUrl = (args: { state: AuthSliceState }): string | undefined => {
-    const { state } = args;
-    return state.baseUrl;
+export const selectBaseUrl = (state: IRootState): string | undefined => {
+    return state.auth.baseUrl;
 };
 
-export const selectIsAuthenticated = (args: { state: AuthSliceState }): boolean => {
-    const { state } = args;
-    return state.accessToken !== undefined && state.baseUrl !== undefined;
+export const selectIsAuthenticated = (state: IRootState): boolean => {
+    return state.auth.accessToken !== undefined && state.auth.baseUrl !== undefined;
 };
 
-export const selectProfile = (args: { state: AuthSliceState }): User | undefined => {
-    const { state } = args;
-    return state.profile;
+export const selectProfile = (state: IRootState): User | undefined => {
+    return state.auth.profile;
 };
 
-export const selectCurrentUserId = (args: { state: AuthSliceState }): number | undefined => {
-    const { state } = args;
-    return state.profile?.id;
+export const selectCurrentUserId = (state: IRootState): number | undefined => {
+    return state.auth.profile?.id;
 };
 
-export const selectIsGuestUser = (args: { state: AuthSliceState }): boolean | undefined => {
-    const { state } = args;
-    if (state.profile === undefined) {
+export const selectIsGuestUser = (state: IRootState): boolean | undefined => {
+    if (state.auth.profile === undefined) {
         return undefined;
     }
-    return state.profile.is_guest_user;
+    return state.auth.profile.is_guest_user;
 };
 
-export const selectLoginSessions = (args: { state: AuthSliceState }): Session[] => {
-    const { state } = args;
-    if (state.profile === undefined) {
+export const selectLoginSessions = (state: IRootState): Session[] => {
+    if (state.auth.profile === undefined) {
         return [];
     }
-    return state.profile.sessions;
+    return state.auth.profile.sessions;
 };
 
 // async thunks

@@ -1,11 +1,11 @@
 import { TransactionSortMode, transactionCsvDump } from "@abrechnung/core";
 import {
     createTransaction,
-    selectCurrentUserPermissions,
-    selectGroupById,
-    selectSortedTransactions,
-    selectGroupAccounts,
     selectTransactionBalanceEffects,
+    useCurrentUserPermissions,
+    useGroup,
+    useGroupAccounts,
+    useSortedTransactions,
 } from "@abrechnung/redux";
 import { Add, Clear } from "@mui/icons-material";
 import SearchIcon from "@mui/icons-material/Search";
@@ -36,9 +36,9 @@ import React, { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { TagSelector } from "@/components/TagSelector";
 import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
-import { selectGroupSlice, useAppDispatch, useAppSelector, selectAccountSlice, selectTransactionSlice } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { TransactionListItem } from "./TransactionListItem";
 import { useTranslation } from "react-i18next";
 import { Transaction } from "@abrechnung/types";
@@ -62,10 +62,8 @@ const downloadFile = (content: string, filename: string, mimetype: string) => {
 };
 
 const useDownloadCsv = (groupId: number, transactions: Transaction[]) => {
-    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
-    const balanceEffects = useAppSelector((state) =>
-        selectTransactionBalanceEffects({ state: selectTransactionSlice(state), groupId })
-    );
+    const accounts = useGroupAccounts(groupId);
+    const balanceEffects = useAppSelector((state) => selectTransactionBalanceEffects(state, groupId));
 
     return React.useCallback(() => {
         const csv = transactionCsvDump(transactions, balanceEffects, accounts);
@@ -81,21 +79,19 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
 
-    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
+    const group = useGroup(groupId);
 
     const [speedDialOpen, setSpeedDialOpen] = useState(false);
     const toggleSpeedDial = () => setSpeedDialOpen((currValue) => !currValue);
 
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const permissions = useCurrentUserPermissions(groupId);
 
     const [searchValue, setSearchValue] = useState("");
     const [tagFilter, setTagFilter] = useState<string[]>(emptyList);
 
     const [sortMode, setSortMode] = useState<TransactionSortMode>("last_changed");
 
-    const transactions = useAppSelector((state) =>
-        selectSortedTransactions({ state, groupId, searchTerm: searchValue, sortMode, tags: tagFilter })
-    );
+    const transactions = useSortedTransactions(groupId, sortMode, searchValue, tagFilter);
 
     const [currentPage, setCurrentPage] = useState(0);
     const shouldShowPagination = transactions.length > MAX_ITEMS_PER_PAGE;
@@ -195,14 +191,14 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                                 />
                             </FormControl>
                         </Box>
-                        {!isSmallScreen && permissions.canWrite && (
+                        {!isSmallScreen && permissions.can_write && (
                             <Box sx={{ display: "flex-item" }}>
                                 <Tooltip title={t("common.exportAsCsv")}>
                                     <IconButton size="small" color="primary" onClick={downloadCsv}>
                                         <SaveAlt />
                                     </IconButton>
                                 </Tooltip>
-                                {permissions.canWrite && (
+                                {permissions.can_write && (
                                     <>
                                         <div style={{ padding: "8px" }}>
                                             <Add color="primary" />
@@ -250,7 +246,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                     )}
                 </Stack>
             </MobilePaper>
-            {permissions.canWrite && (
+            {permissions.can_write && (
                 <SpeedDial
                     ariaLabel={t("transactions.createTransaction")}
                     sx={{ position: "fixed", bottom: 20, right: 20 }}

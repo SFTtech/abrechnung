@@ -1,5 +1,4 @@
-import Loading from "@/components/style/Loading";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper, Loading } from "@/components/style";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { GroupPreview } from "@abrechnung/api";

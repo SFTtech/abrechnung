@@ -1,11 +1,11 @@
-import { selectAccountIdToAccountMap, selectTransactionById } from "@abrechnung/redux";
+import { selectAccountIdToAccountMap, useTransaction } from "@abrechnung/redux";
 import { HelpOutline } from "@mui/icons-material";
 import { Chip, Divider, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
 import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
 import { ListItemLink } from "@/components/style/ListItemLink";
-import { selectAccountSlice, selectTransactionSlice, useAppSelector } from "@/store";
+import { useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 import { useFormatCurrency } from "@/hooks";
 
@@ -18,12 +18,8 @@ interface Props {
 export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, style }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
-    const accounts = useAppSelector((state) =>
-        selectAccountIdToAccountMap({ state: selectAccountSlice(state), groupId })
-    );
-    const transaction = useAppSelector((state) =>
-        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
-    );
+    const accounts = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
+    const transaction = useTransaction(groupId, transactionId);
     if (transaction === undefined) {
         // TODO: HACKY WORKAROUND
         // when switching between groups which are already loaded into the redux store we will land on the transaction list page

@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import memoize from "proxy-memoize";
+import type { RootState } from "./store";
 
 export type ThemeMode = "light" | "dark" | "system";
 
@@ -12,10 +12,9 @@ const initialState: SettingsSliceState = {
 };
 
 // selectors
-export const selectTheme = memoize((args: { state: SettingsSliceState }): ThemeMode => {
-    const { state } = args;
-    return state.theme;
-});
+export const selectTheme = (state: RootState): ThemeMode => {
+    return state.settings.theme;
+};
 
 const settingsSlice = createSlice({
     name: "settings",

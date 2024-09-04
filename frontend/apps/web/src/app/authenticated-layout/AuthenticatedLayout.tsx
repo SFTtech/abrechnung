@@ -1,7 +1,7 @@
 import * as React from "react";
 import { selectIsAuthenticated } from "@abrechnung/redux";
 import { Link as RouterLink, Navigate, Outlet, useLocation, useParams } from "react-router-dom";
-import { selectAuthSlice, useAppSelector } from "@/store";
+import { useAppSelector } from "@/store";
 import { ListItemLink } from "@/components/style/ListItemLink";
 import { SidebarGroupList } from "@/app/authenticated-layout/SidebarGroupList";
 import {
@@ -52,7 +52,7 @@ const AUTH_FALLBACK = "/login";
 
 export const AuthenticatedLayout: React.FC = () => {
     const { t } = useTranslation();
-    const authenticated = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
+    const authenticated = useAppSelector(selectIsAuthenticated);
     const location = useLocation();
     const params = useParams();
     const groupId = params["groupId"] ? Number(params["groupId"]) : undefined;

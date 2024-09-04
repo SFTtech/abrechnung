@@ -10,10 +10,8 @@ type Props = {
 
 export const ListItemLink: React.FC<Props> = ({ to, children, selected = false, ...props }) => {
     return (
-        <ListItemButton component={RouterLink as any} selected={selected} to={to} {...props}>
+        <ListItemButton component={RouterLink} selected={selected} to={to} {...props}>
             {children}
         </ListItemButton>
     );
 };
-
-export default ListItemLink;

@@ -18,11 +18,10 @@ import {
 import { DateTime } from "luxon";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import Loading from "@/components/style/Loading";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper, Loading } from "@/components/style";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
-import { selectAuthSlice, useAppSelector } from "@/store";
+import { useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 
 export const SessionList: React.FC = () => {
@@ -33,7 +32,7 @@ export const SessionList: React.FC = () => {
         show: false,
         toDelete: null,
     });
-    const profile = useAppSelector((state) => selectProfile({ state: selectAuthSlice(state) }));
+    const profile = useAppSelector(selectProfile);
 
     useTitle(t("profile.sessions.tabTitle"));
 

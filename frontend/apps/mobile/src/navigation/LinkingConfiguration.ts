@@ -12,7 +12,7 @@ import { RootDrawerParamList } from "./types";
 // const prefix = Linking.createURL("/");
 
 export const linkingOptions: LinkingOptions<RootDrawerParamList> = {
-    // prefixes: [prefix],
+    prefixes: [],
     config: {
         screens: {
             GroupList: "groups",
@@ -21,7 +21,7 @@ export const linkingOptions: LinkingOptions<RootDrawerParamList> = {
                 initialRouteName: "BottomTabNavigator",
                 screens: {
                     BottomTabNavigator: {
-                        initialRouteName: "TransactionList",
+                        // initialRouteName: "TransactionList",
                         screens: {
                             TransactionList: "transactions",
                             AccountList: "personal-accounts",

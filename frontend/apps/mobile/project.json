@@ -59,6 +59,14 @@
             "dependsOn": ["ensure-symlink", "sync-deps", "pod-install", "collect-assets"],
             "options": {}
         },
+        "tsc-watch": {
+            "executor": "nx:run-commands",
+            "options": {
+                "commands": ["npx tsc -p tsconfig.app.json --noEmit --watch"],
+                "cwd": "apps/mobile",
+                "parallel": false
+            }
+        },
         "pod-install": {
             "executor": "@nx/react-native:pod-install",
             "options": {}

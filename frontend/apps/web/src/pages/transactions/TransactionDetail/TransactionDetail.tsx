@@ -1,16 +1,15 @@
-import Loading from "@/components/style/Loading";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper, Loading } from "@/components/style";
 import { api } from "@/core/api";
 import { useQuery, useTitle } from "@/core/utils";
-import { selectGroupSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import {
     deleteTransaction,
     discardTransactionChange,
     saveTransaction,
-    selectGroupById,
-    selectTransactionById,
     selectTransactionHasPositions,
     transactionEditStarted,
+    useGroup,
+    useTransaction,
 } from "@abrechnung/redux";
 import { PositionValidator, Transaction, TransactionValidator } from "@abrechnung/types";
 import { Add as AddIcon } from "@mui/icons-material";
@@ -41,15 +40,11 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
     const transactionId = Number(params["id"]);
 
     const [showPositions, setShowPositions] = React.useState(false);
-    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
-    const transaction: Transaction | undefined = useAppSelector((state) =>
-        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
-    );
+    const group = useGroup(groupId);
+    const transaction: Transaction | undefined = useTransaction(groupId, transactionId);
     useTitle(`${group?.name} - ${transaction?.name}`);
 
-    const hasPositions = useAppSelector((state) =>
-        selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId })
-    );
+    const hasPositions = useAppSelector((state) => selectTransactionHasPositions(state, groupId, transactionId));
 
     const [showProgress, setShowProgress] = React.useState(false);
 

@@ -1,30 +1,21 @@
 import { selectGroups } from "@abrechnung/redux";
-import { DrawerContentScrollView, DrawerNavigationProp } from "@react-navigation/drawer";
+import { DrawerContentComponentProps, DrawerContentScrollView, DrawerNavigationProp } from "@react-navigation/drawer";
 import { useNavigation } from "@react-navigation/native";
 import * as React from "react";
-import { ScrollView, ScrollViewProps, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { ActivityIndicator, Drawer, IconButton, useTheme } from "react-native-paper";
 import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import { useOptionalApi } from "../core/ApiProvider";
-import {
-    changeActiveGroup,
-    selectActiveGroupId,
-    selectGroupSlice,
-    selectUiSlice,
-    useAppDispatch,
-    useAppSelector,
-} from "../store";
+import { changeActiveGroup, selectActiveGroupId, useAppDispatch, useAppSelector } from "../store";
 import { RootDrawerParamList } from "./types";
 
-type Props = React.ForwardRefExoticComponent<ScrollViewProps & React.RefAttributes<ScrollView>>;
-
-export const DrawerContent: React.FC<Props> = (props) => {
+export const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
     const theme = useTheme();
     const { api } = useOptionalApi();
     const dispatch = useAppDispatch();
     const navigation = useNavigation<DrawerNavigationProp<RootDrawerParamList>>();
-    const activeGroupID = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) }));
-    const groups = useAppSelector((state) => selectGroups({ state: selectGroupSlice(state) }));
+    const activeGroupID = useAppSelector(selectActiveGroupId);
+    const groups = useAppSelector(selectGroups);
 
     if (!api) {
         return null;

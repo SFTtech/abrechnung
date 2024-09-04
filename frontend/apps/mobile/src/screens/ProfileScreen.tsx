@@ -3,10 +3,10 @@ import * as React from "react";
 import { ScrollView, View } from "react-native";
 import { Banner, Divider, List } from "react-native-paper";
 import { RootDrawerScreenProps } from "../navigation/types";
-import { selectAuthSlice, useAppSelector } from "../store";
+import { useAppSelector } from "../store";
 
 export const ProfileScreen: React.FC<RootDrawerScreenProps<"Profile">> = () => {
-    const profile = useAppSelector((state) => selectProfile({ state: selectAuthSlice(state) }));
+    const profile = useAppSelector(selectProfile);
 
     if (!profile) {
         return (

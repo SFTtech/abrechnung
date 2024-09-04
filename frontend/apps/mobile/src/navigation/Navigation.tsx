@@ -1,5 +1,5 @@
 import { fetchGroupDependencies, selectGroups, selectIsAuthenticated, subscribe, unsubscribe } from "@abrechnung/redux";
-import { createDrawerNavigator } from "@react-navigation/drawer";
+import { createDrawerNavigator, DrawerNavigationOptions } from "@react-navigation/drawer";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -11,28 +11,20 @@ import { useOptionalApi } from "../core/ApiProvider";
 import { notify } from "../notifications";
 import { AddGroup } from "../screens/AddGroup";
 import { GroupList } from "../screens/GroupList";
-import HomeScreen from "../screens/HomeScreen";
-import LoginScreen from "../screens/Login";
-import PreferencesScreen from "../screens/PreferencesScreen";
-import ProfileScreen from "../screens/ProfileScreen";
-import RegisterScreen from "../screens/Register";
+import { HomeScreen } from "../screens/HomeScreen";
+import { LoginScreen } from "../screens/Login";
+import { PreferencesScreen } from "../screens/PreferencesScreen";
+import { ProfileScreen } from "../screens/ProfileScreen";
+import { RegisterScreen } from "../screens/Register";
 import { SplashScreen } from "../screens/SplashScreen";
 import { TransactionList } from "../screens/TransactionList";
-import AccountDetail from "../screens/groups/AccountDetail";
-import AccountEdit from "../screens/groups/AccountEdit";
-import AccountList from "../screens/groups/AccountList";
-import TransactionDetail from "../screens/groups/TransactionDetail";
-import {
-    changeActiveGroup,
-    selectActiveGroupId,
-    selectAuthSlice,
-    selectGroupSlice,
-    selectUiSlice,
-    useAppDispatch,
-    useAppSelector,
-} from "../store";
+import { AccountDetail } from "../screens/groups/AccountDetail";
+import { AccountEdit } from "../screens/groups/AccountEdit";
+import { AccountList } from "../screens/groups/AccountList";
+import { TransactionDetail } from "../screens/groups/TransactionDetail";
+import { changeActiveGroup, selectActiveGroupId, useAppDispatch, useAppSelector } from "../store";
 import { Theme } from "../theme";
-import DrawerContent from "./DrawerContent";
+import { DrawerContent } from "./DrawerContent";
 import { Header } from "./Header";
 import { linkingOptions } from "./LinkingConfiguration";
 import { GroupStackParamList, GroupTabParamList, RootDrawerParamList } from "./types";
@@ -50,9 +42,9 @@ const Drawer = createDrawerNavigator<RootDrawerParamList>();
 const RootNavigator: React.FC = () => {
     const { api, websocket } = useOptionalApi();
     const dispatch = useAppDispatch();
-    const activeGroupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) }));
-    const groups = useAppSelector((state) => selectGroups({ state: selectGroupSlice(state) }));
-    const isAuthenticated = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
+    const activeGroupId = useAppSelector(selectActiveGroupId);
+    const groups = useAppSelector(selectGroups);
+    const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
     useEffect(() => {
         if (!isAuthenticated || !api) {
@@ -91,7 +83,7 @@ const RootNavigator: React.FC = () => {
         };
     }, [websocket, isAuthenticated, activeGroupId, dispatch]);
 
-    const propsWithHeader = {
+    const propsWithHeader: DrawerNavigationOptions = {
         headerShown: true,
         header: (props) => <Header {...props} />,
     };
@@ -146,7 +138,7 @@ const RootNavigator: React.FC = () => {
 const GroupStack = createStackNavigator<GroupStackParamList>();
 
 const GroupStackNavigator = () => {
-    const groupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) }));
+    const groupId = useAppSelector(selectActiveGroupId);
 
     return (
         <GroupStack.Navigator
@@ -173,7 +165,7 @@ const GroupStackNavigator = () => {
 const BottomTab = createMaterialTopTabNavigator<GroupTabParamList>();
 
 const BottomTabNavigator: React.FC = () => {
-    const activeGroupID = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) }));
+    const activeGroupID = useAppSelector(selectActiveGroupId);
 
     return (
         <BottomTab.Navigator id="BottomTab" initialRouteName="TransactionList" tabBarPosition="bottom">

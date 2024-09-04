@@ -1,12 +1,13 @@
+import * as React from "react";
 import { AccountType, Api } from "@abrechnung/api";
 import { AccountSortMode, getAccountSortFunc } from "@abrechnung/core";
 import { Account, BackendAccount, ClearingAccount, PersonalAccount } from "@abrechnung/types";
 import { fromISOString, toISODateString } from "@abrechnung/utils";
-import { Draft, PayloadAction, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import memoize from "proxy-memoize";
+import { Draft, PayloadAction, createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
 import { leaveGroup } from "../groups";
 import { AccountSliceState, AccountState, IRootState, StateStatus } from "../types";
 import { addEntity, getGroupScopedState, removeEntity } from "../utils";
+import { useSelector } from "react-redux";
 
 const initializeGroupState = (state: Draft<AccountSliceState>, groupId: number) => {
     if (state.byGroupId[groupId]) {
@@ -33,59 +34,69 @@ const initialState: AccountSliceState = {
 };
 
 // selectors
-export const selectGroupAccountsStatus = (args: {
-    state: AccountSliceState;
-    groupId: number;
-}): StateStatus | undefined => {
-    const { state, groupId } = args;
-    if (!state.byGroupId[groupId]) {
+export const selectGroupAccountsStatus = (state: IRootState, groupId: number): StateStatus | undefined => {
+    if (!state.accounts.byGroupId[groupId]) {
         return undefined;
     }
-    return state.byGroupId[groupId].status;
+    return state.accounts.byGroupId[groupId].status;
 };
 
-export const selectGroupAccountsInternal = (args: { state: AccountSliceState; groupId: number }): Account[] => {
-    const { state, groupId } = args;
-    const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
-    const wipAccounts = s.wipAccounts.ids.map((id) => s.wipAccounts.byId[id]);
-    const accounts = s.accounts.ids.filter((id) => !(id in s.wipAccounts.byId)).map((id) => s.accounts.byId[id]);
-    return wipAccounts.concat(accounts).filter((acc) => !acc.deleted);
+const selectGroupAccountSlice = (state: IRootState, groupId: number) =>
+    getGroupScopedState<AccountState, AccountSliceState>(state.accounts, groupId);
+
+export const selectGroupAccounts = createSelector(
+    selectGroupAccountSlice,
+    (state: IRootState, groupId: number, type?: AccountType) => type,
+    (s: AccountState, type?: AccountType): Account[] => {
+        const wipAccounts = s.wipAccounts.ids.map((id) => s.wipAccounts.byId[id]);
+        const accounts = s.accounts.ids.filter((id) => !(id in s.wipAccounts.byId)).map((id) => s.accounts.byId[id]);
+        const allAccounts = wipAccounts.concat(accounts).filter((acc) => !acc.deleted);
+        if (type != null) {
+            return allAccounts.filter((a) => a.type === type);
+        }
+        return allAccounts;
+    }
+);
+
+export const useGroupAccounts = <T extends AccountType>(
+    groupId: number,
+    type?: T
+): T extends "clearing" ? ClearingAccount[] : T extends "personal" ? PersonalAccount[] : Account[] => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return useSelector((state: IRootState) => selectGroupAccounts(state, groupId, type)) as any;
 };
 
-export const selectGroupAccounts = memoize(selectGroupAccountsInternal);
+const emptyList: string[] = [];
 
-export const selectClearingAccountsInternal = (args: {
-    state: AccountSliceState;
-    groupId: number;
-}): ClearingAccount[] => {
-    const accounts = selectGroupAccountsInternal(args);
-    return accounts.filter((acc) => acc.type === "clearing") as ClearingAccount[];
-};
-
-export const selectClearingAccounts = memoize(selectClearingAccountsInternal);
-
-export const selectPersonalAccountsInternal = (args: {
-    state: AccountSliceState;
-    groupId: number;
-}): PersonalAccount[] => {
-    const accounts = selectGroupAccountsInternal(args);
-    return accounts.filter((acc) => acc.type === "personal") as PersonalAccount[];
-};
-
-export const selectPersonalAccounts = memoize(selectPersonalAccountsInternal);
-
-export const selectSortedAccounts = memoize(
-    (args: {
-        state: AccountSliceState;
-        groupId: number;
-        sortMode: AccountSortMode;
-        type?: AccountType;
-        searchTerm?: string;
-        tags?: string[];
-        wipAtTop?: boolean;
-    }): Account[] => {
-        const { state, groupId, type, sortMode, searchTerm, wipAtTop = false, tags = [] } = args;
-        const accounts = selectGroupAccountsInternal({ state, groupId });
+const selectSortedAccounts = createSelector(
+    selectGroupAccounts,
+    (state: IRootState, groupId: number, type: AccountType | undefined, sortMode: AccountSortMode) => sortMode,
+    (state: IRootState, groupId: number, type: AccountType | undefined, sortMode: AccountSortMode) => type,
+    (
+        state: IRootState,
+        groupId: number,
+        type: AccountType | undefined,
+        sortMode: AccountSortMode,
+        searchTerm?: string
+    ) => searchTerm,
+    (
+        state: IRootState,
+        groupId: number,
+        type: AccountType | undefined,
+        sortMode: AccountSortMode,
+        searchTerm?: string,
+        wipAtTop?: boolean
+    ) => wipAtTop,
+    (
+        state: IRootState,
+        groupId: number,
+        type: AccountType | undefined,
+        sortMode: AccountSortMode,
+        searchTerm?: string,
+        wipAtTop?: boolean,
+        tags?: string[]
+    ) => tags ?? emptyList,
+    (accounts, sortMode, type, searchTerm, wipAtTop, tags) => {
         const compareFunction = getAccountSortFunc(sortMode, wipAtTop);
         // TODO: this has optimization potential
         const filterFn = (a: Account): boolean => {
@@ -120,52 +131,51 @@ export const selectSortedAccounts = memoize(
     }
 );
 
-const selectAccountByIdInternal = (args: {
-    state: AccountSliceState;
-    groupId: number;
-    accountId: number;
-}): Account | undefined => {
-    const { state, groupId, accountId } = args;
-    const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
-    return s.wipAccounts.byId[accountId] ?? s.accounts.byId[accountId];
+export const useSortedAccounts = <T extends AccountType>(
+    groupId: number,
+    sortMode: AccountSortMode,
+    type?: T,
+    searchTerm?: string,
+    wipAtTop?: boolean,
+    tags: string[] = []
+): T extends "personal" ? PersonalAccount[] : T extends "clearing" ? ClearingAccount[] : Account[] => {
+    return useSelector((state: IRootState) =>
+        selectSortedAccounts(state, groupId, type, sortMode, searchTerm, wipAtTop, tags)
+    ) as any;
 };
-export const selectAccountById = memoize(selectAccountByIdInternal);
 
-export const selectWipAccountById = memoize(
-    (args: { state: AccountSliceState; groupId: number; accountId: number }): Account | undefined => {
-        const { state, groupId, accountId } = args;
-        const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
-        return s.wipAccounts.byId[accountId];
-    }
-);
+const selectAccountById = (state: AccountState, accountId: number) => {
+    return state.wipAccounts.byId[accountId] ?? state.accounts.byId[accountId];
+};
 
-export const selectAccountsOwnedByUser = memoize(
-    (args: { state: AccountSliceState; groupId: number; userId: number }): Account[] => {
-        const { state, groupId, userId } = args;
-        const accounts = selectGroupAccountsInternal({ state, groupId });
+export const useAccount = (groupId: number, accountId: number) => {
+    const s = useSelector((state: IRootState) =>
+        getGroupScopedState<AccountState, AccountSliceState>(state.accounts, groupId)
+    );
+
+    return React.useMemo(() => {
+        return selectAccountById(s, accountId);
+    }, [s, accountId]);
+};
+
+export const useAccountsOwnedByUser = (groupId: number, userId: number): Account[] => {
+    const accounts = useGroupAccounts(groupId);
+
+    return React.useMemo(() => {
         return accounts.filter((acc: Account) => acc.type === "personal" && acc.owning_user_id === userId);
-    }
-);
+    }, [userId, accounts]);
+};
 
-export const selectClearingAccountsInvolvingAccounts = memoize(
-    (args: { state: AccountSliceState; groupId: number; accountId: number }): Account[] => {
-        const { state, groupId, accountId } = args;
-        const accounts = selectGroupAccountsInternal({ state, groupId });
-        return accounts.filter(
-            (acc: Account) =>
-                acc.type === "clearing" && acc.clearing_shares && acc.clearing_shares[accountId] !== undefined
-        );
-    }
-);
+export const useClearingAccountsInvolvingAccount = (groupId: number, accountId: number): Account[] => {
+    const accounts = useGroupAccounts(groupId, "clearing");
 
-export const selectAccountIdToAccountMap = ({
-    state,
-    groupId,
-}: {
-    state: AccountSliceState;
-    groupId: number;
-}): { [k: number]: Account } => {
-    const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
+    return React.useMemo(() => {
+        return accounts.filter((acc) => acc.clearing_shares && acc.clearing_shares[accountId] !== undefined);
+    }, [accounts, accountId]);
+};
+
+export const selectAccountIdToAccountMap = (state: IRootState, groupId: number): { [k: number]: Account } => {
+    const s = getGroupScopedState<AccountState, AccountSliceState>(state.accounts, groupId);
     return s.accounts.byId;
 };
 
@@ -340,7 +350,7 @@ const accountSlice = createSlice({
         copyAccount: (sliceState, action: PayloadAction<{ groupId: number; accountId: number }>) => {
             const { groupId, accountId } = action.payload;
             const state = getGroupScopedState<AccountState, AccountSliceState>(sliceState, groupId);
-            const account = selectAccountByIdInternal({ state: sliceState, groupId, accountId });
+            const account = selectAccountById(state, accountId);
             if (!account) {
                 return;
             }

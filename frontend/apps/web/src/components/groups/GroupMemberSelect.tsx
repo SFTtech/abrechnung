@@ -2,7 +2,7 @@ import React from "react";
 import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
 import { DisabledTextField } from "../style/DisabledTextField";
 import { styled } from "@mui/material/styles";
-import { selectGroupSlice, useAppSelector } from "@/store";
+import { useAppSelector } from "@/store";
 import { selectGroupMemberIds, selectGroupMemberIdToUsername } from "@abrechnung/redux";
 
 const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
@@ -27,10 +27,8 @@ export const GroupMemberSelect: React.FC<Props> = ({
     className,
     ...props
 }) => {
-    const memberIds = useAppSelector((state) => selectGroupMemberIds({ state: selectGroupSlice(state), groupId }));
-    const memberIDToUsername = useAppSelector((state) =>
-        selectGroupMemberIdToUsername({ state: selectGroupSlice(state), groupId })
-    );
+    const memberIds = useAppSelector((state) => selectGroupMemberIds(state, groupId));
+    const memberIDToUsername = useAppSelector((state) => selectGroupMemberIdToUsername(state, groupId));
 
     return (
         <Autocomplete

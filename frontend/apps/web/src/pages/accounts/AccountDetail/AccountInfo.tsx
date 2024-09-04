@@ -5,15 +5,15 @@ import { TextInput } from "@/components/TextInput";
 import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
 import { api } from "@/core/api";
 import { useFormatCurrency } from "@/hooks";
-import { selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { getAccountLink, getAccountListLink } from "@/utils";
 import {
     accountEditStarted,
     discardAccountChange,
     saveAccount,
     selectAccountBalances,
-    selectCurrentUserPermissions,
-    selectGroupCurrencySymbol,
+    useCurrentUserPermissions,
+    useGroupCurrencySymbol,
     wipAccountUpdated,
 } from "@abrechnung/redux";
 import { Account, AccountValidator } from "@abrechnung/types";
@@ -38,11 +38,9 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
-    const currencySymbol = useAppSelector((state) =>
-        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
-    );
-    const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
+    const permissions = useCurrentUserPermissions(groupId);
+    const currencySymbol = useGroupCurrencySymbol(groupId);
+    const balances = useAppSelector((state) => selectAccountBalances(state, groupId));
 
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = React.useState(false);
     const [showProgress, setShowProgress] = React.useState(false);
@@ -127,7 +125,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                     <Chip color="primary" label={accountTypeLabel} />
                 </Grid>
                 <Grid item>
-                    {permissions.canWrite && (
+                    {permissions.can_write && (
                         <>
                             {account.is_wip ? (
                                 <>

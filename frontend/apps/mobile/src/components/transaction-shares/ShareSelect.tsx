@@ -4,7 +4,7 @@ import { ScrollView, View } from "react-native";
 import { useEffect, useState } from "react";
 import { createComparator, lambdaComparator } from "@abrechnung/utils";
 import { Account, TransactionShare } from "@abrechnung/types";
-import { useAppSelector, selectAccountSlice } from "../../store";
+import { useAppSelector } from "../../store";
 import { selectGroupAccounts } from "@abrechnung/redux";
 
 interface Props {
@@ -28,7 +28,7 @@ export const ShareSelect: React.FC<Props> = ({
 }) => {
     const [shares, setShares] = useState<TransactionShare>({});
     const [searchTerm, setSearchTerm] = useState("");
-    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
+    const accounts = useAppSelector((state) => selectGroupAccounts(state, groupId));
     const [filteredAccounts, setFilteredAccounts] = useState<Account[]>([]);
 
     const toggleShare = (accountID: number) => {

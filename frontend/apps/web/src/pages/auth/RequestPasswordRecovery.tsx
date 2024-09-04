@@ -6,7 +6,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { api } from "@/core/api";
-import { selectAuthSlice, useAppSelector } from "@/store";
+import { useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 import { useTitle } from "@/core/utils";
 
@@ -17,7 +17,7 @@ type FormSchema = z.infer<typeof validationSchema>;
 
 export const RequestPasswordRecovery: React.FC = () => {
     const { t } = useTranslation();
-    const isLoggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
+    const isLoggedIn = useAppSelector(selectIsAuthenticated);
     const [status, setStatus] = useState("initial");
     const [error, setError] = useState(null);
     const navigate = useNavigate();

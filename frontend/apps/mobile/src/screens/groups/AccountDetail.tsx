@@ -1,11 +1,11 @@
 import {
     deleteAccount,
     selectAccountBalances,
-    selectAccountById,
-    selectClearingAccountsInvolvingAccounts,
-    selectCurrentUserPermissions,
-    selectGroupCurrencySymbol,
     selectTransactionsInvolvingAccount,
+    useAccount,
+    useClearingAccountsInvolvingAccount,
+    useCurrentUserPermissions,
+    useGroupCurrencySymbol,
 } from "@abrechnung/redux";
 import { Account, AccountBalance, Transaction, TransactionShare } from "@abrechnung/types";
 import { fromISOString } from "@abrechnung/utils";
@@ -28,13 +28,7 @@ import { clearingAccountIcon, getTransactionIcon } from "../../constants/Icons";
 import { useApi } from "../../core/ApiProvider";
 import { GroupStackScreenProps } from "../../navigation/types";
 import { notify } from "../../notifications";
-import {
-    selectAccountSlice,
-    selectGroupSlice,
-    selectTransactionSlice,
-    useAppDispatch,
-    useAppSelector,
-} from "../../store";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { successColor } from "../../theme";
 
 type ArrayAccountsAndTransactions = Array<Transaction | Account>;
@@ -46,26 +40,18 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
 
     const { groupId, accountId } = route.params;
 
-    const account = useAppSelector((state) =>
-        selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
-    );
-    const accountBalances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
-    const transactions = useAppSelector((state) =>
-        selectTransactionsInvolvingAccount({ state: selectTransactionSlice(state), groupId, accountId })
-    );
+    const account = useAccount(groupId, accountId);
+    const accountBalances = useAppSelector((state) => selectAccountBalances(state, groupId));
+    const transactions = useAppSelector((state) => selectTransactionsInvolvingAccount(state, groupId, accountId));
 
-    const clearingAccounts = useAppSelector((state) =>
-        selectClearingAccountsInvolvingAccounts({ state: selectAccountSlice(state), groupId, accountId })
-    );
+    const clearingAccounts = useClearingAccountsInvolvingAccount(groupId, accountId);
 
     const combinedList: ArrayAccountsAndTransactions = (transactions as ArrayAccountsAndTransactions)
         .concat(clearingAccounts)
         .sort((f1, f2) => fromISOString(f2.last_changed).getTime() - fromISOString(f1.last_changed).getTime());
 
-    const currency_symbol = useAppSelector((state) =>
-        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
-    );
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const currency_symbol = useGroupCurrencySymbol(groupId);
+    const permissions = useCurrentUserPermissions(groupId);
 
     const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
 
@@ -94,7 +80,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
         navigation.setOptions({
             headerTitle: account?.name || "",
             headerRight: () => {
-                if (permissions === undefined || !permissions.canWrite) {
+                if (permissions === undefined || !permissions.can_write) {
                     return null;
                 }
                 return (
@@ -244,7 +230,7 @@ const styles = StyleSheet.create({
     },
     shareContainer: {
         padding: 16,
-        borderBottomStyle: "solid",
+        borderStyle: "solid",
         borderBottomColor: "#bebebe",
         borderBottomWidth: 1,
         borderTopRightRadius: 4,

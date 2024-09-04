@@ -4,7 +4,7 @@ import { View } from "react-native";
 import { Dialog, Divider, List, Portal, RadioButton, useTheme } from "react-native-paper";
 import { useApi } from "../core/ApiProvider";
 import { RootDrawerScreenProps } from "../navigation/types";
-import { ThemeMode, selectSettingsSlice, selectTheme, themeChanged, useAppDispatch, useAppSelector } from "../store";
+import { ThemeMode, selectTheme, themeChanged, useAppDispatch, useAppSelector } from "../store";
 
 const themeModes: ThemeMode[] = ["system", "dark", "light"];
 
@@ -12,7 +12,7 @@ export const PreferencesScreen: React.FC<RootDrawerScreenProps<"Preferences">> =
     const dispatch = useAppDispatch();
     const theme = useTheme();
     const { api } = useApi();
-    const themeMode = useAppSelector((state) => selectTheme({ state: selectSettingsSlice(state) }));
+    const themeMode = useAppSelector((state) => selectTheme(state));
     const [themeSelectOpen, setThemeSelectOpen] = React.useState(false);
 
     const onLogout = () => {

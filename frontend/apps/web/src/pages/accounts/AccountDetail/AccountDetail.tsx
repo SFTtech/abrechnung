@@ -1,17 +1,15 @@
 import { AccountTransactionList } from "@/components/accounts/AccountTransactionList";
 import { BalanceHistoryGraph } from "@/components/accounts/BalanceHistoryGraph";
 import { ClearingAccountDetail } from "@/components/accounts/ClearingAccountDetail";
-import { Loading } from "@/components/style/Loading";
-import { MobilePaper } from "@/components/style/mobile";
+import { MobilePaper, Loading } from "@/components/style";
 import { useQuery, useTitle } from "@/core/utils";
-import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
-import { selectAccountById, selectGroupById } from "@abrechnung/redux";
 import { Grid, Typography } from "@mui/material";
 import * as React from "react";
 import { Navigate, useParams } from "react-router-dom";
 import { AccountInfo } from "./AccountInfo";
 import { useTranslation } from "react-i18next";
 import { Account } from "@abrechnung/types";
+import { useAccount, useGroup } from "@abrechnung/redux";
 
 interface Props {
     groupId: number;
@@ -34,10 +32,8 @@ export const AccountDetail: React.FC<Props> = ({ groupId }) => {
     const params = useParams();
     const accountId = Number(params["id"]);
 
-    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
-    const account = useAppSelector((state) =>
-        selectAccountById({ state: selectAccountSlice(state), groupId, accountId })
-    );
+    const group = useGroup(groupId);
+    const account = useAccount(groupId, accountId);
     const query = useQuery();
 
     useTitle(

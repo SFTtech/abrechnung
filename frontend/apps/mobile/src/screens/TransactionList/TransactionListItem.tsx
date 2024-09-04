@@ -4,7 +4,8 @@ import React from "react";
 import { List, Text, useTheme } from "react-native-paper";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 import { getTransactionIcon } from "../../constants/Icons";
-import { selectTransactionSlice, useAppSelector } from "../../store";
+import { useAppSelector } from "../../store";
+import { GroupTabNavigationProp } from "../../navigation/types";
 
 interface Props {
     groupId: number;
@@ -12,12 +13,10 @@ interface Props {
 }
 
 export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId }) => {
-    const navigation = useNavigation();
+    const navigation = useNavigation<GroupTabNavigationProp<"TransactionList">>();
     const theme = useTheme();
 
-    const transaction = useAppSelector((state) =>
-        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
-    );
+    const transaction = useAppSelector((state) => selectTransactionById(state, groupId, transactionId));
 
     if (transaction === undefined) {
         return null;

@@ -1,12 +1,11 @@
-import { selectAccountBalances, selectGroupCurrencySymbol } from "@abrechnung/redux";
+import { selectAccountBalances, useGroupCurrencySymbol } from "@abrechnung/redux";
 import { Box, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
 import { balanceColor } from "@/core/utils";
-import { selectGroupSlice, useAppSelector } from "@/store";
+import { useAppSelector } from "@/store";
 import { getAccountLink } from "@/utils";
-import { ClearingAccountIcon } from "../style/AbrechnungIcons";
-import ListItemLink from "../style/ListItemLink";
+import { ListItemLink, ClearingAccountIcon } from "../style";
 import { useTranslation } from "react-i18next";
 import { useFormatCurrency } from "@/hooks";
 import { ClearingAccount } from "@abrechnung/types";
@@ -20,10 +19,8 @@ interface Props {
 export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, clearingAccount }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
-    const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
-    const currency_symbol = useAppSelector((state) =>
-        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
-    );
+    const balances = useAppSelector((state) => selectAccountBalances(state, groupId));
+    const currency_symbol = useGroupCurrencySymbol(groupId);
     if (!currency_symbol) {
         return null;
     }
