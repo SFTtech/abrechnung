@@ -101,7 +101,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - uses: actions/cache@v3
+      - uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
@@ -133,7 +133,7 @@ jobs:
         run: npx nx build-android mobile --tasks assembleRelease
 
       - name: Upload APK
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: app-release-apk
           path: frontend/apps/mobile/android/app/build/outputs/apk/release/app-release.apk
