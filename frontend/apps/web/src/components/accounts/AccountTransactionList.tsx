@@ -1,14 +1,14 @@
 import {
     createTransaction,
-    selectClearingAccountsInvolvingAccounts,
     selectTransactionsInvolvingAccount,
+    useClearingAccountsInvolvingAccount,
 } from "@abrechnung/redux";
 import { Add as AddIcon } from "@mui/icons-material";
 import { Account, Transaction } from "@abrechnung/types";
 import { Alert, Box, IconButton, List, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import * as React from "react";
-import { selectAccountSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { AccountClearingListEntry } from "./AccountClearingListEntry";
 import { AccountTransactionListEntry } from "./AccountTransactionListEntry";
 import { useTranslation } from "react-i18next";
@@ -27,12 +27,8 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, account }) =>
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const transactions = useAppSelector((state) =>
-        selectTransactionsInvolvingAccount({ state: selectTransactionSlice(state), groupId, accountId: account.id })
-    );
-    const clearingAccounts = useAppSelector((state) =>
-        selectClearingAccountsInvolvingAccounts({ state: selectAccountSlice(state), groupId, accountId: account.id })
-    );
+    const transactions = useAppSelector((state) => selectTransactionsInvolvingAccount(state, groupId, account.id));
+    const clearingAccounts = useClearingAccountsInvolvingAccount(groupId, account.id);
 
     const combinedList: ArrayAccountsAndTransactions = (transactions as ArrayAccountsAndTransactions)
         .concat(clearingAccounts)

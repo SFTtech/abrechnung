@@ -3,13 +3,13 @@ import { Link as RouterLink, Outlet, Navigate } from "react-router-dom";
 import { AppBar, Box, Button, Container, CssBaseline, Toolbar, Typography } from "@mui/material";
 import { Banner } from "@/components/style/Banner";
 import { selectIsAuthenticated } from "@abrechnung/redux";
-import { useAppSelector, selectAuthSlice } from "../../store";
+import { useAppSelector } from "../../store";
 import { LanguageSelect } from "@/components/LanguageSelect";
 import { useTranslation } from "react-i18next";
 
 export const UnauthenticatedLayout: React.FC = () => {
     const { t } = useTranslation();
-    const authenticated = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
+    const authenticated = useAppSelector(selectIsAuthenticated);
 
     if (authenticated) {
         return <Navigate to="/" />;

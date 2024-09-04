@@ -19,14 +19,7 @@ import { useColorScheme } from "./hooks/useColorScheme";
 import { Navigation } from "./navigation";
 import { NotificationProvider } from "./notifications";
 import { SplashScreen } from "./screens/SplashScreen";
-import {
-    selectAuthSlice,
-    selectSettingsSlice,
-    selectTheme,
-    setGlobalInfo,
-    useAppDispatch,
-    useAppSelector,
-} from "./store";
+import { selectTheme, setGlobalInfo, useAppDispatch, useAppSelector } from "./store";
 import { CustomDarkTheme, CustomLightTheme } from "./theme";
 
 export const App: React.FC = () => {
@@ -34,12 +27,12 @@ export const App: React.FC = () => {
     const dispatch = useAppDispatch();
     const [api, setApi] = React.useState<{ api: Api; websocket: AbrechnungWebSocket } | undefined>(undefined);
 
-    const accessToken = useAppSelector((state) => selectAccessToken({ state: selectAuthSlice(state) }));
-    const baseUrl = useAppSelector((state) => selectBaseUrl({ state: selectAuthSlice(state) }));
+    const accessToken = useAppSelector(selectAccessToken);
+    const baseUrl = useAppSelector(selectBaseUrl);
     const isAuthenticated = accessToken !== undefined;
-    const userId = useAppSelector((state) => selectCurrentUserId({ state: selectAuthSlice(state) }));
+    const userId = useAppSelector(selectCurrentUserId);
     const groupStoreStatus = useAppSelector((state) => state.groups.status);
-    const themeMode = useAppSelector((state) => selectTheme({ state: selectSettingsSlice(state) }));
+    const themeMode = useAppSelector(selectTheme);
     const useDarkTheme = themeMode === "system" ? colorScheme === "dark" : themeMode === "dark";
     const theme = useDarkTheme ? CustomDarkTheme : CustomLightTheme;
 

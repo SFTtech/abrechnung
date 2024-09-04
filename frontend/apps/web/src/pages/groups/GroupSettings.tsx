@@ -1,4 +1,4 @@
-import { leaveGroup, selectCurrentUserPermissions, selectGroupById, updateGroup } from "@abrechnung/redux";
+import { leaveGroup, updateGroup, useCurrentUserPermissions, useGroup } from "@abrechnung/redux";
 import { Cancel, Edit, Save } from "@mui/icons-material";
 import {
     Alert,
@@ -22,7 +22,7 @@ import { DisabledFormControlLabel, DisabledTextField } from "@/components/style/
 import { MobilePaper } from "@/components/style";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
-import { selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch } from "@/store";
 import { toFormikValidationSchema } from "@abrechnung/utils";
 import { useTranslation } from "react-i18next";
 
@@ -46,8 +46,8 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
 
-    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const group = useGroup(groupId);
+    const permissions = useCurrentUserPermissions(groupId);
 
     const [isEditing, setIsEditing] = useState(false);
 
@@ -106,9 +106,9 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
 
     return (
         <MobilePaper>
-            {permissions.isOwner ? (
+            {permissions.is_owner ? (
                 <Alert severity="info">{t("groups.settings.ownerDisclaimer")}</Alert>
-            ) : !permissions.canWrite ? (
+            ) : !permissions.can_write ? (
                 <Alert severity="info">{t("groups.settings.readAccessDisclaimer")}</Alert>
             ) : null}
 
@@ -134,7 +134,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                             type="text"
                             label={t("common.name")}
                             name="name"
-                            disabled={!permissions.canWrite || !isEditing}
+                            disabled={!permissions.can_write || !isEditing}
                             onBlur={handleBlur}
                             onChange={handleChange}
                             value={values.name}
@@ -147,7 +147,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                             type="text"
                             name="description"
                             label={t("common.description")}
-                            disabled={!permissions.canWrite || !isEditing}
+                            disabled={!permissions.can_write || !isEditing}
                             onBlur={handleBlur}
                             onChange={handleChange}
                             value={values.description}
@@ -160,7 +160,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                             type="text"
                             name="currency_symbol"
                             label={t("common.currency")}
-                            disabled={!permissions.canWrite || !isEditing}
+                            disabled={!permissions.can_write || !isEditing}
                             onBlur={handleBlur}
                             onChange={handleChange}
                             value={values.currency_symbol}
@@ -173,7 +173,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                             type="text"
                             name="terms"
                             label={t("groups.settings.terms")}
-                            disabled={!permissions.canWrite || !isEditing}
+                            disabled={!permissions.can_write || !isEditing}
                             onBlur={handleBlur}
                             onChange={handleChange}
                             value={values.terms}
@@ -183,7 +183,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                                 control={
                                     <Checkbox
                                         name="addUserAccountOnJoin"
-                                        disabled={!permissions.canWrite || !isEditing}
+                                        disabled={!permissions.can_write || !isEditing}
                                         onBlur={handleBlur}
                                         onChange={handleChange}
                                         checked={values.addUserAccountOnJoin}
@@ -196,7 +196,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                         {isSubmitting && <LinearProgress />}
                         <Grid container justifyContent="space-between" style={{ marginTop: 10 }}>
                             <div>
-                                {permissions.canWrite && isEditing && (
+                                {permissions.can_write && isEditing && (
                                     <>
                                         <Button
                                             type="submit"
@@ -219,7 +219,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                                         </Button>
                                     </>
                                 )}
-                                {permissions.canWrite && !isEditing && (
+                                {permissions.can_write && !isEditing && (
                                     <Button
                                         variant="contained"
                                         color="primary"

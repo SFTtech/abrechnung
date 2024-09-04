@@ -1,4 +1,4 @@
-import { DrawerNavigationProp } from "@react-navigation/drawer";
+import { DrawerHeaderProps, DrawerNavigationProp } from "@react-navigation/drawer";
 import { HeaderTitleProps } from "@react-navigation/elements";
 import { MaterialTopTabNavigationProp } from "@react-navigation/material-top-tabs";
 import { Route } from "@react-navigation/native";
@@ -8,8 +8,6 @@ import { Appbar, Banner, useTheme } from "react-native-paper";
 import { selectGlobalInfo, useAppSelector } from "../store";
 import { GroupStackParamList, GroupTabParamList, RootDrawerParamList } from "./types";
 
-type Props = StackHeaderProps;
-
 export interface HeaderOptions {
     title?: string;
     headerTitle?: string | ((props: HeaderTitleProps) => React.ReactNode);
@@ -18,7 +16,22 @@ export interface HeaderOptions {
     headerRight?: (props: Record<string, never>) => React.ReactNode;
 }
 
-export interface HeaderProps {
+// export interface HeaderProps {
+//     back?: {
+//         /**
+//          * Title of the previous screen.
+//          */
+//         title: string;
+//     };
+//     options: HeaderOptions;
+//     navigation:
+//         | DrawerNavigationProp<RootDrawerParamList>
+//         | MaterialTopTabNavigationProp<GroupTabParamList>
+//         | StackNavigationProp<GroupStackParamList>;
+//     route: Route<string>;
+// }
+
+export type HeaderProps = (StackHeaderProps | DrawerHeaderProps) & {
     back?: {
         /**
          * Title of the previous screen.
@@ -26,29 +39,34 @@ export interface HeaderProps {
         title: string;
     };
     options: HeaderOptions;
-    navigation:
-        | DrawerNavigationProp<RootDrawerParamList>
-        | MaterialTopTabNavigationProp<GroupTabParamList>
-        | StackNavigationProp<GroupStackParamList>;
-    route: Route<string>;
-}
+};
 
-export const Header: React.FC<Props> = ({ navigation, route, options, back, ...props }) => {
+export const Header: React.FC<HeaderProps> = ({ navigation, route, options, back }) => {
     const theme = useTheme();
-    const title =
-        options.headerTitle !== undefined
-            ? options.headerTitle
-            : options.title !== undefined
-              ? options.title
-              : route.name;
     const showTitle = options.titleShown ?? true;
-    const globalInfo = useAppSelector((state) => selectGlobalInfo({ state: state.ui }));
+    const globalInfo = useAppSelector(selectGlobalInfo);
+
+    const title = React.useMemo<React.ReactNode>(() => {
+        const actualTitle =
+            options.headerTitle !== undefined
+                ? options.headerTitle
+                : options.title !== undefined
+                  ? options.title
+                  : route.name;
+
+        if (typeof actualTitle === "function") {
+            return actualTitle({ children: "" });
+        }
+        return actualTitle;
+    }, [options, route.name]);
 
     const openDrawer = () => {
-        if (navigation.openDrawer !== undefined) {
-            navigation.openDrawer();
-        } else if (navigation.getParent("Drawer") !== undefined) {
-            navigation.getParent("Drawer").openDrawer();
+        if ((navigation as any).openDrawer !== undefined) {
+            (navigation as any).openDrawer();
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        } else if ((navigation as any).getParent("Drawer") !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (navigation as any).getParent("Drawer").openDrawer();
         } else {
             console.error("cannot open drawer, unexpected location in navigation tree");
         }

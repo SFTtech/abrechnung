@@ -8,7 +8,7 @@ import { z } from "zod";
 import { useInitApi } from "../core/ApiProvider";
 import { RootDrawerScreenProps } from "../navigation/types";
 import { notify } from "../notifications";
-import { selectAuthSlice, useAppSelector } from "../store";
+import { useAppSelector } from "../store";
 import { useTranslation } from "react-i18next";
 import { ApiError } from "@abrechnung/api";
 
@@ -37,12 +37,12 @@ const initialValues: FormSchema = {
 export const RegisterScreen: React.FC<RootDrawerScreenProps<"Register">> = ({ navigation }) => {
     const { t } = useTranslation();
     const theme = useTheme();
-    const loggedIn = useAppSelector((state) => selectIsAuthenticated({ state: selectAuthSlice(state) }));
+    const loggedIn = useAppSelector(selectIsAuthenticated);
     const initApi = useInitApi();
 
     React.useEffect(() => {
         if (loggedIn) {
-            navigation.navigate("GroupStackNavigator");
+            navigation.navigate("GroupList");
         }
     }, [loggedIn, navigation]);
 

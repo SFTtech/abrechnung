@@ -155,16 +155,13 @@ const Searchbar = React.forwardRef<TextInputHandles, Props>(
             }
         };
 
-        const { colors, roundness, dark, isV3 } = theme;
-        const textColor = isV3 ? theme.colors.onSurface : theme.colors.text;
+        const { colors, roundness, dark } = theme;
+        const textColor = theme.colors.onSurface;
         const iconColor = customIconColor || (dark ? textColor : color(textColor).alpha(0.54).rgb().string());
         const rippleColor = color(textColor).alpha(0.32).rgb().string();
 
         return (
-            <Surface
-                style={[{ borderRadius: roundness }, !isV3 && styles.elevation, styles.container, style]}
-                {...(theme.isV3 && { elevation })}
-            >
+            <Surface style={[{ borderRadius: roundness }, styles.container, style]} {...(theme.isV3 && { elevation })}>
                 <IconButton
                     accessibilityRole="button"
                     borderless
@@ -186,13 +183,13 @@ const Searchbar = React.forwardRef<TextInputHandles, Props>(
                         styles.input,
                         {
                             color: textColor,
-                            ...(theme.isV3 ? theme.fonts.default : theme.fonts.regular),
+                            ...theme.fonts.default,
                             ...Platform.select({ web: { outline: "none" } }),
                         },
                         inputStyle,
                     ]}
                     placeholder={placeholder || ""}
-                    placeholderTextColor={theme.isV3 ? theme.colors.onSurface : theme.colors?.placeholder}
+                    placeholderTextColor={theme.colors.onSurface}
                     selectionColor={colors?.primary}
                     underlineColorAndroid="transparent"
                     returnKeyType="search"

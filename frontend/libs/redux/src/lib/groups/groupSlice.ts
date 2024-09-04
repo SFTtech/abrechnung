@@ -1,11 +1,11 @@
 import { Api, Group, GroupInvite, GroupLog, GroupMember, GroupPayload } from "@abrechnung/api";
 import { GroupPermissions } from "@abrechnung/types";
 import { lambdaComparator } from "@abrechnung/utils";
-import { Draft, createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import memoize from "proxy-memoize";
+import { Draft, createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
 import { GroupInfo, GroupSliceState, IRootState, StateStatus } from "../types";
 import { addEntity, getGroupScopedState, removeEntity } from "../utils";
 import { leaveGroup } from "./actions";
+import { useSelector } from "react-redux";
 
 const initialState: GroupSliceState = {
     groups: {
@@ -40,127 +40,92 @@ const initializeGroupState = (state: Draft<GroupSliceState>, groupId: number) =>
     };
 };
 
+const selectGroupSlice = (state: IRootState, groupId: number) =>
+    getGroupScopedState<GroupInfo, GroupSliceState>(state.groups, groupId);
+
 // selectors
-export const selectGroups = memoize((args: { state: GroupSliceState }): Group[] => {
-    const { state } = args;
-    return state.groups.ids.map((id) => state.groups.byId[id]);
-});
+export const selectGroups = createSelector(
+    (state: IRootState) => state.groups,
+    (state: GroupSliceState) => {
+        return state.groups.ids.map((id) => state.groups.byId[id]);
+    }
+);
 
-export const selectGroupIds = memoize((args: { state: GroupSliceState }): number[] => {
-    const { state } = args;
-    return state.groups.ids;
-});
+export const selectGroupIds = (state: IRootState): number[] => {
+    return state.groups.groups.ids;
+};
 
-export const selectGroupExists = memoize((args: { state: GroupSliceState; groupId: number | undefined }): boolean => {
-    const { state, groupId } = args;
+export const selectGroupExists = (state: IRootState, groupId: number | undefined): boolean => {
     if (groupId === undefined) {
         return false;
     }
-    return state.groups.byId[groupId] !== undefined;
-});
-
-const selectGroupByIdInternal = (args: { state: GroupSliceState; groupId: number }): Group | undefined => {
-    const { state, groupId } = args;
-    return state.groups.byId[groupId];
+    return state.groups.groups.byId[groupId] !== undefined;
 };
 
-export const selectGroupById = memoize(selectGroupByIdInternal);
+const selectGroupById = (state: IRootState, groupId: number): Group | undefined => {
+    return state.groups.groups.byId[groupId];
+};
 
-export const selectGroupCurrencySymbol = memoize(
-    (args: { state: GroupSliceState; groupId: number }): string | undefined => {
-        const { state, groupId } = args;
-        const group = selectGroupByIdInternal({ state, groupId });
-        return group?.currency_symbol;
+export const useGroup = (groupId: number): Group | undefined => {
+    return useSelector((state: IRootState) => selectGroupById(state, groupId));
+};
+
+export const useGroupCurrencySymbol = (groupId: number): string | undefined => {
+    return useSelector((state: IRootState) => selectGroupById(state, groupId)?.currency_symbol);
+};
+
+export const selectGroupMember = (state: IRootState, groupId: number, userId: number): GroupMember | undefined => {
+    const s = getGroupScopedState<GroupInfo, GroupSliceState>(state.groups, groupId);
+    if (s.groupMembers.byId[userId] === undefined) {
+        return undefined;
     }
-);
+    return s.groupMembers.byId[userId];
+};
 
-export const selectGroupMember = memoize(
-    (args: { state: GroupSliceState; groupId: number; userId: number }): GroupMember | undefined => {
-        const { state, groupId, userId } = args;
-        const s = getGroupScopedState<GroupInfo, GroupSliceState>(state, groupId);
-        if (s.groupMembers.byId[userId] === undefined) {
-            return undefined;
-        }
-        return s.groupMembers.byId[userId];
-    }
-);
-
-export const selectGroupMemberIds = memoize((args: { state: GroupSliceState; groupId: number }): number[] => {
-    const { state, groupId } = args;
-    const s = getGroupScopedState<GroupInfo, GroupSliceState>(state, groupId);
+export const selectGroupMemberIds = (state: IRootState, groupId: number): number[] => {
+    const s = getGroupScopedState<GroupInfo, GroupSliceState>(state.groups, groupId);
     return s.groupMembers.ids;
+};
+
+export const selectGroupMembers = createSelector(selectGroupSlice, (state: GroupInfo) => {
+    return state.groupMembers.ids.map((id) => state.groupMembers.byId[id]);
 });
 
-export const selectGroupMembers = memoize((args: { state: GroupSliceState; groupId: number }): GroupMember[] => {
-    const { state, groupId } = args;
-    const s = getGroupScopedState<GroupInfo, GroupSliceState>(state, groupId);
-    return s.groupMembers.ids.map((id) => s.groupMembers.byId[id]);
+export const selectGroupMemberIdToUsername = createSelector(selectGroupSlice, (s: GroupInfo) => {
+    return s.groupMembers.ids.reduce<{ [k: number]: string }>((map, id) => {
+        map[id] = s.groupMembers.byId[id].username;
+        return map;
+    }, {});
 });
 
-export const selectGroupMemberIdToUsername = memoize(
-    (args: { state: GroupSliceState; groupId: number }): { [k: number]: string } => {
-        const { state, groupId } = args;
-        const s = getGroupScopedState<GroupInfo, GroupSliceState>(state, groupId);
-        return s.groupMembers.ids.reduce<{ [k: number]: string }>((map, id) => {
-            map[id] = s.groupMembers.byId[id].username;
-            return map;
-        }, {});
+export const selectGroupMemberStatus = (state: IRootState, groupId: number): StateStatus | undefined => {
+    if (state.groups.byGroupId[groupId] === undefined) {
+        return undefined;
     }
-);
+    return state.groups.byGroupId[groupId].groupMembersStatus;
+};
 
-export const selectGroupMemberStatus = memoize(
-    (args: { state: GroupSliceState; groupId: number }): StateStatus | undefined => {
-        const { state, groupId } = args;
-        if (state.byGroupId[groupId] === undefined) {
-            return undefined;
-        }
-        return state.byGroupId[groupId].groupMembersStatus;
-    }
-);
-
-export const selectGroupInviteIds = memoize((args: { state: GroupSliceState; groupId: number }): number[] => {
-    const { state, groupId } = args;
-    const s = getGroupScopedState<GroupInfo, GroupSliceState>(state, groupId);
-    return s.groupInvites.ids;
-});
-
-export const selectGroupInvites = memoize((args: { state: GroupSliceState; groupId: number }): GroupInvite[] => {
-    const { state, groupId } = args;
-    const s = getGroupScopedState<GroupInfo, GroupSliceState>(state, groupId);
+export const selectGroupInvites = createSelector(selectGroupSlice, (s: GroupInfo): GroupInvite[] => {
     return s.groupInvites.ids.map((id) => s.groupInvites.byId[id]);
 });
 
-export const selectGroupInviteStatus = memoize(
-    (args: { state: GroupSliceState; groupId: number }): StateStatus | undefined => {
-        const { state, groupId } = args;
-        if (state.byGroupId[groupId] === undefined) {
-            return undefined;
-        }
-        return state.byGroupId[groupId].groupInvitesStatus;
+export const selectGroupInviteStatus = (state: IRootState, groupId: number): StateStatus | undefined => {
+    if (state.groups.byGroupId[groupId] === undefined) {
+        return undefined;
     }
-);
+    return state.groups.byGroupId[groupId].groupInvitesStatus;
+};
 
-export const selectGroupLogIds = memoize((args: { state: GroupSliceState; groupId: number }): number[] => {
-    const { state, groupId } = args;
-    const s = getGroupScopedState<GroupInfo, GroupSliceState>(state, groupId);
-    return s.groupLog.ids;
-});
-
-export const selectGroupLogs = memoize((args: { state: GroupSliceState; groupId: number }): GroupLog[] => {
-    const { state, groupId } = args;
-    const s = getGroupScopedState<GroupInfo, GroupSliceState>(state, groupId);
+export const selectGroupLogs = createSelector(selectGroupSlice, (s: GroupInfo): GroupLog[] => {
     return s.groupLog.ids.map((id) => s.groupLog.byId[id]).sort(lambdaComparator((t) => t.logged_at, true));
 });
 
-export const selectGroupLogStatus = memoize(
-    (args: { state: GroupSliceState; groupId: number }): StateStatus | undefined => {
-        const { state, groupId } = args;
-        if (state.byGroupId[groupId] === undefined) {
-            return undefined;
-        }
-        return state.byGroupId[groupId].groupLogStatus;
+export const selectGroupLogStatus = (state: IRootState, groupId: number): StateStatus | undefined => {
+    if (state.groups.byGroupId[groupId] === undefined) {
+        return undefined;
     }
-);
+    return state.groups.byGroupId[groupId].groupLogStatus;
+};
 
 // async thunks
 export const fetchGroups = createAsyncThunk<Group[], { api: Api }>(

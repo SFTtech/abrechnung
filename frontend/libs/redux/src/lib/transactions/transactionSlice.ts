@@ -16,8 +16,7 @@ import {
     TransactionType,
 } from "@abrechnung/types";
 import { toISODateString } from "@abrechnung/utils";
-import { createAsyncThunk, createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
-import memoize from "proxy-memoize";
+import { createAsyncThunk, createSelector, createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
 import { leaveGroup } from "../groups";
 import { IRootState, StateStatus, TransactionSliceState, TransactionState } from "../types";
 import { addEntity, getGroupScopedState, removeEntity } from "../utils";
@@ -43,69 +42,60 @@ export const initializeGroupState = (state: Draft<TransactionSliceState>, groupI
     };
 };
 
-export const selectGroupTransactionsStatus = (args: {
-    state: TransactionSliceState;
-    groupId: number;
-}): StateStatus | undefined => {
-    const { state, groupId } = args;
-    if (!state.byGroupId[groupId]) {
+const selectGroupTransactionSlice = (state: IRootState, groupId: number) =>
+    getGroupScopedState<TransactionState, TransactionSliceState>(state.transactions, groupId);
+
+export const selectGroupTransactionsStatus = (state: IRootState, groupId: number): StateStatus | undefined => {
+    if (!state.transactions.byGroupId[groupId]) {
         return undefined;
     }
-    return state.byGroupId[groupId].status;
+    return state.transactions.byGroupId[groupId].status;
 };
 
-export const selectGroupTransactionsWithoutWipInternal = (args: {
-    state: TransactionSliceState;
-    groupId: number;
-}): Transaction[] => {
-    const { state, groupId } = args;
-    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
-    return s.transactions.ids.map((id) => s.transactions.byId[id]).filter((t) => !t.deleted);
-};
-export const selectGroupTransactionsWithoutWip = memoize(selectGroupTransactionsWithoutWipInternal, { size: 5 });
+export const selectGroupTransactionsWithoutWip = createSelector(
+    selectGroupTransactionSlice,
+    (s: TransactionState): Transaction[] => {
+        return s.transactions.ids.map((id) => s.transactions.byId[id]).filter((t) => !t.deleted);
+    }
+);
 
-export const selectGroupTransactionsWithWipInternal = (args: {
-    state: TransactionSliceState;
-    groupId: number;
-}): Transaction[] => {
-    const { state, groupId } = args;
-    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+export const selectGroupTransactionsWithWip = createSelector(selectGroupTransactionSlice, (s: TransactionState) => {
     const transactions = s.transactions.ids
         .filter((id) => !(id in s.wipTransactions.byId))
         .map((id) => s.transactions.byId[id]);
     const wipTransactions = s.wipTransactions.ids.map((id) => s.wipTransactions.byId[id]);
     return transactions.concat(wipTransactions).filter((t) => !t.deleted);
-};
-export const selectGroupTransactionsWithWip = memoize(selectGroupTransactionsWithWipInternal, { size: 5 });
+});
 
-export const selectTransactionByIdMap = (args: {
-    state: TransactionSliceState;
-    groupId: number;
-}): { [k: number]: Transaction } => {
-    const { state, groupId } = args;
-    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+export const selectTransactionByIdMap = (state: IRootState, groupId: number): { [k: number]: Transaction } => {
+    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state.transactions, groupId);
     return s.transactions.byId;
 };
 
-export const selectTransactionByIdInternal = (args: {
-    state: TransactionSliceState;
-    groupId: number;
-    transactionId: number;
-}): Transaction | undefined => {
-    const { state, groupId, transactionId } = args;
-    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+export const selectTransactionById = (
+    state: IRootState,
+    groupId: number,
+    transactionId: number
+): Transaction | undefined => {
+    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state.transactions, groupId);
     return s.wipTransactions.byId[transactionId] ?? s.transactions.byId[transactionId];
 };
-export const selectTransactionById = memoize(selectTransactionByIdInternal);
 
-export const selectNextLocalPositionId = memoize((args: { state: TransactionSliceState }): number => {
-    const { state } = args;
+export const useTransaction = (groupId: number, transactionId: number): Transaction | undefined => {
+    return useSelector((state: IRootState) => selectTransactionById(state, groupId, transactionId));
+};
+
+export const selectNextLocalPositionId = (state: TransactionSliceState): number => {
     return state.nextLocalPositionId;
-});
+};
 
-export const useWipTransactionPositions = (transaction: Transaction): TransactionPosition[] => {
-    const nextLocalPositionId = useSelector((state: IRootState) => state.transactions.nextLocalPositionId);
-    return React.useMemo(() => {
+const selectWipTransactionPositions = createSelector(
+    selectTransactionById,
+    (state: IRootState) => state.transactions.nextLocalPositionId,
+    (transaction: Transaction | undefined, nextLocalPositionId: number) => {
+        if (!transaction) {
+            return [];
+        }
         const positions =
             transaction?.position_ids.map((id) => transaction.positions[id]).filter((p) => !p.deleted) ?? [];
         if (transaction?.is_wip) {
@@ -125,13 +115,16 @@ export const useWipTransactionPositions = (transaction: Transaction): Transactio
         } else {
             return positions;
         }
-    }, [transaction, nextLocalPositionId]);
+    }
+);
+
+export const useWipTransactionPositions = (groupId: number, transactionId: number): TransactionPosition[] => {
+    return useSelector((state: IRootState) => selectWipTransactionPositions(state, groupId, transactionId));
 };
 
-export const selectTransactionHasPositions = memoize(
-    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): boolean => {
-        const { state, groupId, transactionId } = args;
-        const transaction = selectTransactionByIdInternal({ state, groupId, transactionId });
+export const selectTransactionHasPositions = createSelector(
+    selectTransactionById,
+    (transaction: Transaction | undefined): boolean => {
         if (!transaction) {
             return false;
         }
@@ -141,10 +134,9 @@ export const selectTransactionHasPositions = memoize(
     }
 );
 
-export const selectTransactionFiles = memoize(
-    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): FileAttachment[] => {
-        const { state, groupId, transactionId } = args;
-        const transaction = selectTransactionByIdInternal({ state, groupId, transactionId });
+export const selectTransactionFiles = createSelector(
+    selectTransactionById,
+    (transaction: Transaction | undefined): FileAttachment[] => {
         if (!transaction) {
             return [];
         }
@@ -160,10 +152,9 @@ export const selectTransactionFiles = memoize(
     }
 );
 
-export const selectTransactionHasFiles = memoize(
-    (args: { state: TransactionSliceState; groupId: number; transactionId: number }): boolean => {
-        const { state, groupId, transactionId } = args;
-        const transaction = selectTransactionByIdInternal({ state, groupId, transactionId });
+export const selectTransactionHasFiles = createSelector(
+    selectTransactionById,
+    (transaction: Transaction | undefined): boolean => {
         if (!transaction) {
             return false;
         }
@@ -177,51 +168,35 @@ export const selectTransactionHasFiles = memoize(
     }
 );
 
-export const selectTransactionBalanceEffect = (args: {
-    state: TransactionSliceState;
-    groupId: number;
-    transactionId: number;
-}): TransactionBalanceEffect => {
-    const { state, groupId, transactionId } = args;
-    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+export const selectTransactionBalanceEffect = (
+    state: IRootState,
+    groupId: number,
+    transactionId: number
+): TransactionBalanceEffect => {
+    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state.transactions, groupId);
     return s.wipTransactions.balanceEffects[transactionId] ?? s.transactions.balanceEffects[transactionId];
 };
 
-export const selectTransactionBalanceEffects = (args: {
-    state: TransactionSliceState;
-    groupId: number;
-}): { [k: number]: TransactionBalanceEffect } => {
-    const { state, groupId } = args;
-    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+export const selectTransactionBalanceEffects = (
+    state: IRootState,
+    groupId: number
+): { [k: number]: TransactionBalanceEffect } => {
+    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state.transactions, groupId);
     return s.transactions.balanceEffects;
 };
 
-const selectTransactionIdsInvolvingAccountInternal = (args: {
-    state: TransactionSliceState;
-    groupId: number;
-    accountId: number;
-}): number[] => {
-    const { state, groupId, accountId } = args;
-    const balanceEffects = selectTransactionBalanceEffects({ state, groupId });
-    return Object.entries(balanceEffects)
-        .filter(([transactionId, balanceEffect]) => {
-            return balanceEffect[accountId] !== undefined;
-        })
-        .map(([transactionId]) => Number(transactionId));
-};
+export const selectTransactionsInvolvingAccount = createSelector(
+    selectGroupTransactionSlice,
+    selectTransactionBalanceEffects,
+    (state: IRootState, groupId: number, accountId: number) => accountId,
+    (state: IRootState, groupId: number, accountId: number, sortMode?: TransactionSortMode) => sortMode,
+    (s: TransactionState, balanceEffects, accountId: number, sortMode?: TransactionSortMode): Transaction[] => {
+        const transactionIds = Object.entries(balanceEffects)
+            .filter(([transactionId, balanceEffect]) => {
+                return balanceEffect[accountId] !== undefined;
+            })
+            .map(([transactionId]) => Number(transactionId));
 
-export const selectTransactionIdsInvolvingAccount = memoize(selectTransactionIdsInvolvingAccountInternal);
-
-export const selectTransactionsInvolvingAccount = memoize(
-    (args: {
-        state: TransactionSliceState;
-        groupId: number;
-        accountId: number;
-        sortMode?: TransactionSortMode;
-    }): Transaction[] => {
-        const transactionIds = selectTransactionIdsInvolvingAccountInternal(args);
-        const { state, groupId, sortMode } = args;
-        const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
         return transactionIds
             .map((id) => s.wipTransactions.byId[id] ?? s.transactions.byId[id])
             .filter((t) => !t.deleted)

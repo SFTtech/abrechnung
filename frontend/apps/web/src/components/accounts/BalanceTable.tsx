@@ -1,5 +1,5 @@
-import { selectAccountSlice, useAppSelector } from "@/store";
-import { selectAccountBalances, selectSortedAccounts } from "@abrechnung/redux";
+import { useAppSelector } from "@/store";
+import { selectAccountBalances, useSortedAccounts } from "@abrechnung/redux";
 import { DataGrid, GridColDef, GridToolbar } from "@mui/x-data-grid";
 import React from "react";
 import { renderCurrency } from "../style/datagrid/renderCurrency";
@@ -12,15 +12,8 @@ interface Props {
 
 export const BalanceTable: React.FC<Props> = ({ group }) => {
     const { t } = useTranslation();
-    const personalAccounts = useAppSelector((state) =>
-        selectSortedAccounts({
-            state: selectAccountSlice(state),
-            groupId: group.id,
-            type: "personal",
-            sortMode: "name",
-        })
-    );
-    const balances = useAppSelector((state) => selectAccountBalances({ state, groupId: group.id }));
+    const personalAccounts = useSortedAccounts(group.id, "name", "personal");
+    const balances = useAppSelector((state) => selectAccountBalances(state, group.id));
 
     const tableData = personalAccounts.map((acc) => {
         return {

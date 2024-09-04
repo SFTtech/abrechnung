@@ -1,6 +1,6 @@
 import { Loading } from "@/components/style";
 import { api } from "@/core/api";
-import { selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { FileAttachment as BackendFileAttachment, NewFile } from "@abrechnung/api";
 import { selectTransactionFiles, wipFileDeleted } from "@abrechnung/redux";
 import { FileAttachment, Transaction, UpdatedFileAttachment } from "@abrechnung/types";
@@ -91,9 +91,7 @@ export interface FileGalleryProps {
 export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transaction }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
-    const attachments = useAppSelector((state) =>
-        selectTransactionFiles({ state: selectTransactionSlice(state), groupId, transactionId: transaction.id })
-    );
+    const attachments = useAppSelector((state) => selectTransactionFiles(state, groupId, transaction.id));
     // map of file id to blob object url
     const [objectUrls, setObjectUrls] = useState<Record<number, string>>({});
     const [active, setActive] = useState(0);

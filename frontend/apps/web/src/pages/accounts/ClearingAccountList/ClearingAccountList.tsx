@@ -1,5 +1,5 @@
 import { AccountSortMode } from "@abrechnung/core";
-import { createAccount, selectCurrentUserPermissions, selectGroupById, selectSortedAccounts } from "@abrechnung/redux";
+import { createAccount, useCurrentUserPermissions, useGroup, useSortedAccounts } from "@abrechnung/redux";
 import { Add as AddIcon, Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import {
     Alert,
@@ -27,7 +27,7 @@ import { TagSelector } from "@/components/TagSelector";
 import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
 import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
-import { selectAccountSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch } from "@/store";
 import { getAccountLink } from "@/utils";
 import { ClearingAccountListItem } from "./ClearingAccountListItem";
 import { useTranslation } from "react-i18next";
@@ -44,25 +44,15 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
+    const group = useGroup(groupId);
     const theme: Theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
     const [searchValue, setSearchValue] = useState("");
     const [tagFilter, setTagFilter] = useState<string[]>(emptyList);
     const [sortMode, setSortMode] = useState<AccountSortMode>("last_changed");
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
-    const clearingAccounts = useAppSelector((state) =>
-        selectSortedAccounts({
-            state: selectAccountSlice(state),
-            groupId,
-            type: "clearing",
-            searchTerm: searchValue,
-            sortMode,
-            tags: tagFilter,
-            wipAtTop: true,
-        })
-    );
+    const permissions = useCurrentUserPermissions(groupId);
+    const clearingAccounts = useSortedAccounts(groupId, sortMode, "clearing", searchValue, true, tagFilter);
 
     const [currentPage, setCurrentPage] = useState(0);
     const shouldShowPagination = clearingAccounts.length > MAX_ITEMS_PER_PAGE;
@@ -199,7 +189,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                     )}
                 </Stack>
             </MobilePaper>
-            {permissions.canWrite && (
+            {permissions.can_write && (
                 <>
                     <DeleteAccountModal
                         groupId={groupId}

@@ -1,4 +1,3 @@
-import { selectCurrentUserPermissions } from "@abrechnung/redux";
 import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
 import {
     Button,
@@ -13,9 +12,9 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 import { Transaction } from "@abrechnung/types";
+import { useCurrentUserPermissions } from "@abrechnung/redux";
 
 interface Props {
     groupId: number;
@@ -40,7 +39,7 @@ export const TransactionActions: React.FC<Props> = ({
     const navigate = useNavigate();
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
 
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const permissions = useCurrentUserPermissions(groupId);
 
     if (!permissions) {
         return <Navigate to="/404" />;
@@ -62,7 +61,7 @@ export const TransactionActions: React.FC<Props> = ({
                     <Chip color="primary" label={transactionTypeLabel} />
                 </Grid>
                 <Grid item>
-                    {permissions.canWrite && (
+                    {permissions.can_write && (
                         <>
                             {transaction.is_wip ? (
                                 <>

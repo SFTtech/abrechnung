@@ -2,13 +2,8 @@ import { BalanceTable } from "@/components/accounts/BalanceTable";
 import { MobilePaper, ListItemLink } from "@/components/style";
 import { useTitle } from "@/core/utils";
 import { useFormatCurrency } from "@/hooks";
-import { selectAccountSlice, selectGroupSlice, useAppSelector } from "@/store";
-import {
-    selectAccountBalances,
-    selectClearingAccounts,
-    selectGroupById,
-    selectSortedAccounts,
-} from "@abrechnung/redux";
+import { useAppSelector } from "@/store";
+import { selectAccountBalances, useGroup, useGroupAccounts, useSortedAccounts } from "@abrechnung/redux";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import {
     Alert,
@@ -49,14 +44,10 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
     const navigate = useNavigate();
 
-    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
-    const personalAccounts = useAppSelector((state) =>
-        selectSortedAccounts({ state: selectAccountSlice(state), groupId, sortMode: "name", type: "personal" })
-    );
-    const clearingAccounts = useAppSelector((state) =>
-        selectClearingAccounts({ state: selectAccountSlice(state), groupId })
-    );
-    const balances = useAppSelector((state) => selectAccountBalances({ state, groupId }));
+    const group = useGroup(groupId);
+    const personalAccounts = useSortedAccounts(groupId, "name", "personal");
+    const clearingAccounts = useGroupAccounts(groupId, "clearing");
+    const balances = useAppSelector((state) => selectAccountBalances(state, groupId));
 
     const [selectedTab, setSelectedTab] = useState("1");
 

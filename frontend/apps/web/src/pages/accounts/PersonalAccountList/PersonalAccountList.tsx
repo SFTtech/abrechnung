@@ -1,14 +1,14 @@
 import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
 import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
-import { selectAccountSlice, selectAuthSlice, selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { AccountSortMode } from "@abrechnung/core";
 import {
     createAccount,
     selectCurrentUserId,
-    selectCurrentUserPermissions,
-    selectGroupById,
-    selectSortedAccounts,
+    useCurrentUserPermissions,
+    useGroup,
+    useSortedAccounts,
 } from "@abrechnung/redux";
 import { Add as AddIcon, Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import {
@@ -48,25 +48,17 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
-    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
+    const group = useGroup(groupId);
     const theme: Theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
     const [searchValue, setSearchValue] = useState("");
     const [sortMode, setSortMode] = useState<AccountSortMode>("name");
 
-    const personalAccounts = useAppSelector((state) =>
-        selectSortedAccounts({
-            state: selectAccountSlice(state),
-            groupId,
-            type: "personal",
-            searchTerm: searchValue,
-            sortMode,
-        })
-    );
+    const personalAccounts = useSortedAccounts(groupId, sortMode, "personal", searchValue);
 
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state, groupId }));
-    const currentUserId = useAppSelector((state) => selectCurrentUserId({ state: selectAuthSlice(state) }));
+    const permissions = useCurrentUserPermissions(groupId);
+    const currentUserId = useAppSelector(selectCurrentUserId);
 
     const [currentPage, setCurrentPage] = useState(0);
     const shouldShowPagination = personalAccounts.length > MAX_ITEMS_PER_PAGE;
@@ -193,7 +185,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                     )}
                 </Stack>
             </MobilePaper>
-            {permissions.canWrite && (
+            {permissions.can_write && (
                 <>
                     <DeleteAccountModal
                         groupId={groupId}

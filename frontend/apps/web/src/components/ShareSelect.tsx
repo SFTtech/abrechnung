@@ -1,4 +1,4 @@
-import { selectGroupAccounts } from "@abrechnung/redux";
+import { useGroupAccounts } from "@abrechnung/redux";
 import { Account, TransactionShare } from "@abrechnung/types";
 import { Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import {
@@ -24,7 +24,6 @@ import {
 } from "@mui/material";
 import * as React from "react";
 import { Link } from "react-router-dom";
-import { selectAccountSlice, useAppSelector } from "../store";
 import { getAccountLink } from "../utils";
 import { NumericInput } from "./NumericInput";
 import { getAccountIcon } from "./style/AbrechnungIcons";
@@ -136,9 +135,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
     const [showAdvanced, setShowAdvanced] = React.useState(false);
     const [searchValue, setSearchValue] = React.useState("");
 
-    const unfilteredAccounts = useAppSelector((state) =>
-        selectGroupAccounts({ state: selectAccountSlice(state), groupId })
-    );
+    const unfilteredAccounts = useGroupAccounts(groupId);
     const accounts = React.useMemo(() => {
         const sortFn = getAccountSortFunc("name");
         return unfilteredAccounts

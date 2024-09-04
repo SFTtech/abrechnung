@@ -1,10 +1,10 @@
-import { selectGroupCurrencySymbol, selectTransactionBalanceEffect } from "@abrechnung/redux";
+import { selectTransactionBalanceEffect, useGroupCurrencySymbol } from "@abrechnung/redux";
 import { HelpOutline } from "@mui/icons-material";
 import { Chip, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
 import { balanceColor } from "@/core/utils";
-import { selectGroupSlice, selectTransactionSlice, useAppSelector } from "@/store";
+import { useAppSelector } from "@/store";
 import { ListItemLink, PurchaseIcon, TransferIcon } from "../style";
 import { useTranslation } from "react-i18next";
 import { Transaction } from "@abrechnung/types";
@@ -17,12 +17,8 @@ interface Props {
 
 export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transaction, accountId }) => {
     const { t } = useTranslation();
-    const balanceEffect = useAppSelector((state) =>
-        selectTransactionBalanceEffect({ state: selectTransactionSlice(state), groupId, transactionId: transaction.id })
-    );
-    const currency_symbol = useAppSelector((state) =>
-        selectGroupCurrencySymbol({ state: selectGroupSlice(state), groupId })
-    );
+    const balanceEffect = useAppSelector((state) => selectTransactionBalanceEffect(state, groupId, transaction.id));
+    const currency_symbol = useGroupCurrencySymbol(groupId);
 
     return (
         <ListItemLink to={`/groups/${groupId}/transactions/${transaction.id}`}>

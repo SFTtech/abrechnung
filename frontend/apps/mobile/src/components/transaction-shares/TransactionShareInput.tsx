@@ -4,7 +4,7 @@ import { TransactionShareDialog } from "./TransactionShareDialog";
 import { useEffect, useState } from "react";
 import { TouchableHighlight, View } from "react-native";
 import { TransactionShare } from "@abrechnung/types";
-import { useAppSelector, selectAccountSlice } from "../../store";
+import { useAppSelector } from "../../store";
 import { selectGroupAccounts } from "@abrechnung/redux";
 
 interface Props {
@@ -33,7 +33,7 @@ export const TransactionShareInput: React.FC<Props> = ({
     const [showDialog, setShowDialog] = useState(false);
     const [stringifiedValue, setStringifiedValue] = useState("");
     const theme = useTheme();
-    const accounts = useAppSelector((state) => selectGroupAccounts({ state: selectAccountSlice(state), groupId }));
+    const accounts = useAppSelector((state) => selectGroupAccounts(state, groupId));
 
     useEffect(() => {
         if (!value) {

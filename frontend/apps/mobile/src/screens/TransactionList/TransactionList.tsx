@@ -3,10 +3,10 @@ import { TransactionSortMode } from "@abrechnung/core";
 import {
     createTransaction,
     fetchTransactions,
-    selectCurrentUserPermissions,
-    selectGroupById,
     selectGroupTransactionsStatus,
-    selectSortedTransactions,
+    useCurrentUserPermissions,
+    useGroup,
+    useSortedTransactions,
 } from "@abrechnung/redux";
 import { Transaction, TransactionType } from "@abrechnung/types";
 import { useIsFocused } from "@react-navigation/native";
@@ -19,14 +19,7 @@ import Searchbar from "../../components/style/Searchbar";
 import { purchaseIcon, transferIcon } from "../../constants/Icons";
 import { useApi } from "../../core/ApiProvider";
 import { GroupTabScreenProps } from "../../navigation/types";
-import {
-    selectActiveGroupId,
-    selectGroupSlice,
-    selectTransactionSlice,
-    selectUiSlice,
-    useAppDispatch,
-    useAppSelector,
-} from "../../store";
+import { selectActiveGroupId, useAppDispatch, useAppSelector } from "../../store";
 import TransactionListItem from "./TransactionListItem";
 
 type Props = GroupTabScreenProps<"TransactionList">;
@@ -36,17 +29,14 @@ export const TransactionList: React.FC<Props> = ({ navigation }) => {
     const dispatch = useAppDispatch();
     const { api } = useApi();
 
-    const groupId = useAppSelector((state) => selectActiveGroupId({ state: selectUiSlice(state) })) as number; // TODO: proper typing
-    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const groupId = useAppSelector((state) => selectActiveGroupId(state))!;
+    const group = useGroup(groupId);
     const [search, setSearch] = useState<string>("");
     const [sortMode, setSortMode] = useState<TransactionSortMode>("last_changed");
-    const transactions = useAppSelector((state) =>
-        selectSortedTransactions({ state: state, groupId, searchTerm: search, sortMode })
-    );
-    const transactionStatus = useAppSelector((state) =>
-        selectGroupTransactionsStatus({ state: selectTransactionSlice(state), groupId })
-    );
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const transactions = useSortedTransactions(groupId, sortMode, search);
+    const transactionStatus = useAppSelector((state) => selectGroupTransactionsStatus(state, groupId));
+    const permissions = useCurrentUserPermissions(groupId);
 
     const [refreshing, setRefreshing] = useState<boolean>(false);
     const [isFapOpen, setFabOpen] = useState<boolean>(false);
@@ -154,7 +144,7 @@ export const TransactionList: React.FC<Props> = ({ navigation }) => {
             onRefresh={onRefresh}
             refreshing={refreshing}
             ListFooterComponent={
-                permissions?.canWrite ? (
+                permissions?.can_write ? (
                     <Portal>
                         <FAB.Group
                             style={styles.fab}

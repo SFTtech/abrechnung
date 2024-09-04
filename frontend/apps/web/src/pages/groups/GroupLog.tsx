@@ -1,11 +1,11 @@
 import {
     fetchGroupLog,
-    selectGroupById,
     selectGroupLogStatus,
     selectGroupLogs,
     selectGroupMembers,
     subscribe,
     unsubscribe,
+    useGroup,
 } from "@abrechnung/redux";
 import {
     Button,
@@ -25,7 +25,7 @@ import { Loading } from "@/components/style/Loading";
 import { MobilePaper } from "@/components/style";
 import { api, ws } from "@/core/api";
 import { useTitle } from "@/core/utils";
-import { selectGroupSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 
 interface Props {
@@ -35,12 +35,10 @@ interface Props {
 export const GroupLog: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
-    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
-    const members = useAppSelector((state) => selectGroupMembers({ state: selectGroupSlice(state), groupId }));
-    const logEntries = useAppSelector((state) => selectGroupLogs({ state: selectGroupSlice(state), groupId }));
-    const logLoadingStatus = useAppSelector((state) =>
-        selectGroupLogStatus({ state: selectGroupSlice(state), groupId })
-    );
+    const group = useGroup(groupId);
+    const members = useAppSelector((state) => selectGroupMembers(state, groupId));
+    const logEntries = useAppSelector((state) => selectGroupLogs(state, groupId));
+    const logLoadingStatus = useAppSelector((state) => selectGroupLogStatus(state, groupId));
 
     const [showAllLogs, setShowAllLogs] = useState(false);
     const [message, setMessage] = useState("");

@@ -1,12 +1,11 @@
 import {
     fetchGroupDependencies,
     selectGroupAccountsStatus,
-    selectGroupById,
-    selectGroupExists,
     selectGroupMemberStatus,
     selectGroupTransactionsStatus,
     subscribe,
     unsubscribe,
+    useGroup,
 } from "@abrechnung/redux";
 import React, { Suspense } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
@@ -14,7 +13,7 @@ import { toast } from "react-toastify";
 import { Balances } from "../accounts/Balances";
 import { Loading } from "@/components/style/Loading";
 import { api, ws } from "@/core/api";
-import { selectAccountSlice, selectGroupSlice, selectTransactionSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { AccountDetail } from "../accounts/AccountDetail";
 import { PersonalAccountList } from "../accounts/PersonalAccountList";
 import { ClearingAccountList } from "../accounts/ClearingAccountList";
@@ -31,17 +30,11 @@ export const Group: React.FC = () => {
     const params = useParams();
     const dispatch = useAppDispatch();
     const groupId = Number(params["groupId"]);
-    const group = useAppSelector((state) => selectGroupById({ state: selectGroupSlice(state), groupId }));
-    const groupExists = useAppSelector((state) => selectGroupExists({ state: selectGroupSlice(state), groupId }));
-    const transactionStatus = useAppSelector((state) =>
-        selectGroupTransactionsStatus({ state: selectTransactionSlice(state), groupId })
-    );
-    const accountStatus = useAppSelector((state) =>
-        selectGroupAccountsStatus({ state: selectAccountSlice(state), groupId })
-    );
-    const groupMemberStatus = useAppSelector((state) =>
-        selectGroupMemberStatus({ state: selectGroupSlice(state), groupId })
-    );
+    const group = useGroup(groupId);
+    const groupExists = group !== undefined;
+    const transactionStatus = useAppSelector((state) => selectGroupTransactionsStatus(state, groupId));
+    const accountStatus = useAppSelector((state) => selectGroupAccountsStatus(state, groupId));
+    const groupMemberStatus = useAppSelector((state) => selectGroupMemberStatus(state, groupId));
 
     React.useEffect(() => {
         if (!groupExists) {

@@ -1,11 +1,11 @@
 import { ListItemLink } from "@/components/style/ListItemLink";
-import { selectAccountSlice, useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { getAccountLink } from "@/utils";
 import {
     accountEditStarted,
     copyAccount,
     selectAccountIdToAccountMap,
-    selectCurrentUserPermissions,
+    useCurrentUserPermissions,
 } from "@abrechnung/redux";
 import { Account } from "@abrechnung/types";
 import { ContentCopy, Delete, Edit } from "@mui/icons-material";
@@ -24,10 +24,8 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, account, set
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
-    const accounts = useAppSelector((state) =>
-        selectAccountIdToAccountMap({ state: selectAccountSlice(state), groupId })
-    );
+    const permissions = useCurrentUserPermissions(groupId);
+    const accounts = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
 
     if (!permissions || account.type !== "clearing") {
         return null;
@@ -77,7 +75,7 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, account, set
                     }
                 />
             </ListItemLink>
-            {permissions.canWrite && (
+            {permissions.can_write && (
                 <ListItemSecondaryAction>
                     <IconButton color="primary" onClick={edit}>
                         <Edit />

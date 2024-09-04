@@ -9,6 +9,7 @@ import { CurrencySelect } from "../components/CurrencySelect";
 import { useApi } from "../core/ApiProvider";
 import { GroupStackScreenProps } from "../navigation/types";
 import { useAppDispatch } from "../store";
+import { StackNavigationOptions } from "@react-navigation/stack";
 
 export const AddGroup: React.FC<GroupStackScreenProps<"AddGroup">> = ({ navigation }) => {
     const theme = useTheme();
@@ -56,7 +57,7 @@ export const AddGroup: React.FC<GroupStackScreenProps<"AddGroup">> = ({ navigati
                     </>
                 );
             },
-        });
+        } as any);
     }, [theme, navigation, formik, cancel]);
 
     return (

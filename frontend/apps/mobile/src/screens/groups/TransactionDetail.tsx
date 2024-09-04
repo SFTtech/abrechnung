@@ -2,9 +2,9 @@ import {
     deleteTransaction,
     discardTransactionChange,
     saveTransaction,
-    selectCurrentUserPermissions,
-    selectTransactionById,
     selectTransactionHasPositions,
+    useCurrentUserPermissions,
+    useTransaction,
     useWipTransactionPositions,
     wipTransactionUpdated,
 } from "@abrechnung/redux";
@@ -36,7 +36,7 @@ import { TransactionShareInput } from "../../components/transaction-shares/Trans
 import { useApi } from "../../core/ApiProvider";
 import { GroupStackScreenProps } from "../../navigation/types";
 import { notify } from "../../notifications";
-import { selectTransactionSlice, useAppDispatch, useAppSelector } from "../../store";
+import { useAppDispatch, useAppSelector } from "../../store";
 import { SerializedError } from "@reduxjs/toolkit";
 
 export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetail">> = ({ route, navigation }) => {
@@ -47,17 +47,14 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
 
     const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
 
-    const transaction = useAppSelector((state) =>
-        selectTransactionById({ state: selectTransactionSlice(state), groupId, transactionId })
-    )!;
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const transaction = useTransaction(groupId, transactionId)!;
     const [showPositions, setShowPositions] = React.useState(false);
-    const hasPositions = useAppSelector((state) =>
-        selectTransactionHasPositions({ state: selectTransactionSlice(state), groupId, transactionId })
-    );
-    const positions = useWipTransactionPositions(transaction);
+    const hasPositions = useAppSelector((state) => selectTransactionHasPositions(state, groupId, transactionId));
+    const positions = useWipTransactionPositions(groupId, transaction.id);
     const totalPositionValue = positions.reduce((acc, curr) => acc + curr.price, 0);
 
-    const permissions = useAppSelector((state) => selectCurrentUserPermissions({ state: state, groupId }));
+    const permissions = useCurrentUserPermissions(groupId);
 
     const onGoBack = React.useCallback(async () => {
         if (editing && transaction != null) {
@@ -96,7 +93,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
     );
 
     useEffect(() => {
-        if (editing && (permissions === undefined || !permissions.canWrite)) {
+        if (editing && (permissions === undefined || !permissions.can_write)) {
             navigation.replace("TransactionDetail", { transactionId, groupId, editing: false });
         }
     }, [editing, permissions, transactionId, groupId, navigation]);
@@ -178,7 +175,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
             onGoBack: onGoBack,
             headerTitle: formik.values?.name ?? transaction?.name ?? "",
             headerRight: () => {
-                if (permissions === undefined || !permissions.canWrite) {
+                if (permissions === undefined || !permissions.can_write) {
                     return null;
                 }
                 if (editing) {
@@ -199,7 +196,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                     </>
                 );
             },
-        });
+        } as any);
     }, [theme, editing, permissions, navigation, formik, onGoBack, cancelEdit, edit, transaction, onDeleteTransaction]);
 
     if (transaction == null) {
@@ -335,7 +332,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 error={formik.touched.creditor_shares && !!formik.errors.creditor_shares}
             />
             {formik.touched.creditor_shares && !!formik.errors.creditor_shares && (
-                <HelperText type="error">{formik.errors.creditor_shares}</HelperText>
+                <HelperText type="error">{formik.errors.creditor_shares as string}</HelperText>
             )}
             <TransactionShareInput
                 title="For"
@@ -348,7 +345,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 error={formik.touched.debitor_shares && !!formik.errors.debitor_shares}
             />
             {formik.touched.debitor_shares && !!formik.errors.debitor_shares && (
-                <HelperText type="error">{formik.errors.debitor_shares}</HelperText>
+                <HelperText type="error">{formik.errors.debitor_shares as string}</HelperText>
             )}
 
             {transaction.type === "purchase" && !showPositions && editing && !hasPositions ? (
@@ -415,7 +412,7 @@ const styles = StyleSheet.create({
     },
     shareContainer: {
         padding: 16,
-        borderBottomStyle: "solid",
+        borderStyle: "solid",
         borderBottomColor: "#bebebe",
         borderBottomWidth: 1,
         borderTopRightRadius: 4,

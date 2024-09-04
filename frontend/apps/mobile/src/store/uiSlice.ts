@@ -1,7 +1,6 @@
 import { Api } from "@abrechnung/api";
 import { fetchGroupDependencies } from "@abrechnung/redux";
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
-import memoize from "proxy-memoize";
 import { notify } from "../notifications";
 import { RootState } from "./store";
 
@@ -20,14 +19,12 @@ const initialState: UiSliceState = {
 };
 
 // selectors
-export const selectActiveGroupId = memoize((args: { state: UiSliceState }): number | undefined => {
-    const { state } = args;
-    return state.activeGroupId;
-});
+export const selectActiveGroupId = (state: RootState): number | undefined => {
+    return state.ui.activeGroupId;
+};
 
-export const selectGlobalInfo = (args: { state: UiSliceState }): GlobalInfo | undefined => {
-    const { state } = args;
-    return state.globalInfo;
+export const selectGlobalInfo = (state: RootState): GlobalInfo | undefined => {
+    return state.ui.globalInfo;
 };
 
 export const changeActiveGroup = createAsyncThunk<
