@@ -132,7 +132,7 @@ jobs:
           install: true
 
       - name: Set up docker layer caching
-        uses: actions/cache@v2
+        uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -154,7 +154,7 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
       - name: Upload debs as artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: debs
           path: debs/*
@@ -170,7 +170,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
       - name: Trigger demo deployment via webhook
         run: curl ${{ secrets.DEMO_DEPLOY_WEBHOOK_URL }} -F "archive=@$(find -name 'abrechnung_*bookworm*_amd64.deb')" --fail
 
@@ -185,7 +185,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
           merge-multiple: true
@@ -193,7 +193,7 @@ jobs:
         run: |
           ls -lah artifacts
       - name: Attach to release
-        uses: softprops/action-gh-release@a929a66f232c1b11af63782948aa2210f981808a  # PR#109
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
