@@ -19,7 +19,7 @@ import { PersonalAccountList } from "../accounts/PersonalAccountList";
 import { ClearingAccountList } from "../accounts/ClearingAccountList";
 import { TransactionList } from "../transactions/TransactionList";
 import { SettlementPlanDisplay } from "../accounts/SettlementPlanDisplay";
-import { GroupLog } from "./GroupLog";
+import { GroupActivity } from "./GroupActivity";
 import { GroupSettingsPage } from "./settings";
 import { TransactionDetail } from "../transactions/TransactionDetail";
 import { SerializedError } from "@reduxjs/toolkit";
@@ -79,7 +79,7 @@ export const Group: React.FC = () => {
     return (
         <Suspense fallback={<Loading />}>
             <Routes>
-                <Route path="log" element={<GroupLog groupId={groupId} />} />
+                <Route path="log" element={<GroupActivity groupId={groupId} />} />
                 <Route path="accounts" element={<PersonalAccountList groupId={groupId} />} />
                 <Route path="events" element={<ClearingAccountList groupId={groupId} />} />
                 <Route path="detail" element={<GroupSettingsPage groupId={groupId} />} />

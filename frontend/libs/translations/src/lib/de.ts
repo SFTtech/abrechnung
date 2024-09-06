@@ -80,10 +80,8 @@ const translations = {
             noGroups: "Keine Gruppen",
         },
         log: {
-            tabTitle: "{{groupName}} - Protokoll",
-            header: "Gruppenprotokoll",
-            showAllLogs: "Alle Protokolle anzeigen",
-            writeAMessage: "Schreiben Sie eine Nachricht an die Gruppe ...",
+            tabTitle: "{{groupName}} - Aktivität",
+            header: "Aktivität",
             messageInfo: "von {{username}} am {{datetime}}",
         },
         memberList: {

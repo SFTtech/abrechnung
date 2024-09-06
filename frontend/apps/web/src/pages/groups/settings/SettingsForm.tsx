@@ -221,7 +221,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
                                     </Button>
                                 )}
                             </div>
-                            <Button variant="contained" onClick={() => setShowLeaveModal(true)}>
+                            <Button variant="contained" color="error" onClick={() => setShowLeaveModal(true)}>
                                 {t("groups.settings.leaveGroup")}
                             </Button>
                         </Grid>
@@ -232,7 +232,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
                 <DialogTitle>{t("groups.settings.leaveGroup")}</DialogTitle>
                 <DialogContent>
                     <DialogContentText>
-                        <span>{t("groups.settings.leaveGroupConfirm", "", { group })}</span>
+                        <span>{t("groups.settings.leaveGroupConfirm", { group })}</span>
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>

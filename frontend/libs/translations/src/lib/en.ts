@@ -75,10 +75,8 @@ const translations = {
             noGroups: "No Groups",
         },
         log: {
-            tabTitle: "{{groupName}} - Log",
-            header: "Group Log",
-            showAllLogs: "Show all logs",
-            writeAMessage: "Write a message to the group ...",
+            tabTitle: "{{groupName}} - Activity",
+            header: "Group Activity",
             messageInfo: "by {{username}} on {{datetime}}",
         },
         memberList: {
