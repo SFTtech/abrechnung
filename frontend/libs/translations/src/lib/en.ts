@@ -231,6 +231,7 @@ const translations = {
     },
     auth: {
         register: {
+            title: "Register",
             tabTitle: "Abrechnung - Register",
             header: "Register a new account",
             confirmButton: "Register",
