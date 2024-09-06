@@ -1,4 +1,5 @@
-import { leaveGroup, updateGroup, useCurrentUserPermissions, useGroup } from "@abrechnung/redux";
+import * as React from "react";
+import { leaveGroup, updateGroup, useCurrentUserPermissions } from "@abrechnung/redux";
 import { Cancel, Edit, Save } from "@mui/icons-material";
 import {
     Alert,
@@ -14,17 +15,19 @@ import {
     LinearProgress,
 } from "@mui/material";
 import { Form, Formik, FormikHelpers } from "formik";
-import React, { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import { DisabledFormControlLabel, DisabledTextField } from "@/components/style/DisabledTextField";
-import { MobilePaper } from "@/components/style";
 import { api } from "@/core/api";
-import { useTitle } from "@/core/utils";
 import { useAppDispatch } from "@/store";
 import { toFormikValidationSchema } from "@abrechnung/utils";
 import { useTranslation } from "react-i18next";
+import { Group } from "@abrechnung/api";
+
+type SettingsFormProps = {
+    group: Group;
+};
 
 const validationSchema = z.object({
     name: z.string({ required_error: "group name is required" }),
@@ -36,22 +39,15 @@ const validationSchema = z.object({
 
 type FormValues = z.infer<typeof validationSchema>;
 
-interface Props {
-    groupId: number;
-}
-
-export const GroupSettings: React.FC<Props> = ({ groupId }) => {
+export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
     const { t } = useTranslation();
-    const [showLeaveModal, setShowLeaveModal] = useState(false);
-    const navigate = useNavigate();
+    const [showLeaveModal, setShowLeaveModal] = React.useState(false);
     const dispatch = useAppDispatch();
+    const navigate = useNavigate();
 
-    const group = useGroup(groupId);
-    const permissions = useCurrentUserPermissions(groupId);
+    const permissions = useCurrentUserPermissions(group.id);
 
-    const [isEditing, setIsEditing] = useState(false);
-
-    useTitle(t("groups.settings.tabTitle", "", { groupName: group?.name }));
+    const [isEditing, setIsEditing] = React.useState(false);
 
     const startEdit = () => {
         setIsEditing(true);
@@ -90,7 +86,7 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
     };
 
     const confirmLeaveGroup = () => {
-        dispatch(leaveGroup({ groupId, api }))
+        dispatch(leaveGroup({ groupId: group.id, api }))
             .unwrap()
             .then(() => {
                 navigate("/");
@@ -101,17 +97,11 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
     };
 
     if (!permissions || !group) {
-        return <Navigate to="/404" />;
+        return <Alert severity="error">Error loading group permissions</Alert>;
     }
 
     return (
-        <MobilePaper>
-            {permissions.is_owner ? (
-                <Alert severity="info">{t("groups.settings.ownerDisclaimer")}</Alert>
-            ) : !permissions.can_write ? (
-                <Alert severity="info">{t("groups.settings.readAccessDisclaimer")}</Alert>
-            ) : null}
-
+        <>
             <Formik
                 initialValues={{
                     name: group.name,
@@ -238,16 +228,6 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                     </Form>
                 )}
             </Formik>
-
-            {/*<List>*/}
-            {/*    <ListItem>*/}
-            {/*        <ListItemText primary="Created" secondary={group.created}/>*/}
-            {/*    </ListItem>*/}
-            {/*    <ListItem>*/}
-            {/*        <ListItemText primary="Joined" secondary={group.joined}/>*/}
-            {/*    </ListItem>*/}
-            {/*</List>*/}
-
             <Dialog open={showLeaveModal} onClose={() => setShowLeaveModal(false)}>
                 <DialogTitle>{t("groups.settings.leaveGroup")}</DialogTitle>
                 <DialogContent>
@@ -264,6 +244,6 @@ export const GroupSettings: React.FC<Props> = ({ groupId }) => {
                     </Button>
                 </DialogActions>
             </Dialog>
-        </MobilePaper>
+        </>
     );
 };

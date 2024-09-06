@@ -28,16 +28,14 @@ import {
     AccountBalance,
     Event as EventIcon,
     AccountCircle as AccountCircleIcon,
-    AdminPanelSettings,
     BarChart,
     BugReport,
     GitHub,
     Logout,
-    Mail,
     Menu as MenuIcon,
     Message,
     Paid,
-    People,
+    Settings as SettingsIcon,
 } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import { Banner } from "@/components/style/Banner";
@@ -129,27 +127,9 @@ export const AuthenticatedLayout: React.FC = () => {
                             selected={location.pathname.startsWith(`/groups/${groupId}/detail`)}
                         >
                             <ListItemIcon>
-                                <AdminPanelSettings />
+                                <SettingsIcon />
                             </ListItemIcon>
                             <ListItemText primary={t("navbar.groupSettings")} />
-                        </ListItemLink>
-                        <ListItemLink
-                            to={`/groups/${groupId}/members`}
-                            selected={location.pathname.startsWith(`/groups/${groupId}/members`)}
-                        >
-                            <ListItemIcon>
-                                <People />
-                            </ListItemIcon>
-                            <ListItemText primary={t("navbar.groupMembers")} />
-                        </ListItemLink>
-                        <ListItemLink
-                            to={`/groups/${groupId}/invites`}
-                            selected={location.pathname.startsWith(`/groups/${groupId}/invites`)}
-                        >
-                            <ListItemIcon>
-                                <Mail />
-                            </ListItemIcon>
-                            <ListItemText primary={t("navbar.groupInvites")} />
                         </ListItemLink>
                         <ListItemLink
                             to={`/groups/${groupId}/log`}
@@ -158,7 +138,7 @@ export const AuthenticatedLayout: React.FC = () => {
                             <ListItemIcon>
                                 <Message />
                             </ListItemIcon>
-                            <ListItemText primary={t("navbar.groupLog")} />
+                            <ListItemText primary={t("navbar.activity")} />
                         </ListItemLink>
                         <Divider />
                     </List>

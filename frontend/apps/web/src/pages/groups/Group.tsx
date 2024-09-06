@@ -19,10 +19,8 @@ import { PersonalAccountList } from "../accounts/PersonalAccountList";
 import { ClearingAccountList } from "../accounts/ClearingAccountList";
 import { TransactionList } from "../transactions/TransactionList";
 import { SettlementPlanDisplay } from "../accounts/SettlementPlanDisplay";
-import { GroupInvites } from "./GroupInvites";
 import { GroupLog } from "./GroupLog";
-import { GroupMemberList } from "./GroupMemberList";
-import { GroupSettings } from "./GroupSettings";
+import { GroupSettingsPage } from "./settings";
 import { TransactionDetail } from "../transactions/TransactionDetail";
 import { SerializedError } from "@reduxjs/toolkit";
 
@@ -84,9 +82,7 @@ export const Group: React.FC = () => {
                 <Route path="log" element={<GroupLog groupId={groupId} />} />
                 <Route path="accounts" element={<PersonalAccountList groupId={groupId} />} />
                 <Route path="events" element={<ClearingAccountList groupId={groupId} />} />
-                <Route path="members" element={<GroupMemberList groupId={groupId} />} />
-                <Route path="detail" element={<GroupSettings groupId={groupId} />} />
-                <Route path="invites" element={<GroupInvites groupId={groupId} />} />
+                <Route path="detail" element={<GroupSettingsPage groupId={groupId} />} />
                 <Route path="balances" element={<Balances groupId={groupId} />} />
                 <Route path="settlement-plan" element={<SettlementPlanDisplay groupId={group.id} />} />
                 <Route path="/" element={<TransactionList groupId={groupId} />} />
