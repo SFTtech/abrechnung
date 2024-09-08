@@ -1,29 +1,17 @@
-import * as React from "react";
-import { leaveGroup, updateGroup, useCurrentUserPermissions } from "@abrechnung/redux";
-import { Cancel, Edit, Save } from "@mui/icons-material";
-import {
-    Alert,
-    Button,
-    Checkbox,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogContentText,
-    DialogTitle,
-    FormGroup,
-    Grid,
-    LinearProgress,
-} from "@mui/material";
-import { Form, Formik, FormikHelpers } from "formik";
-import { useNavigate } from "react-router-dom";
-import { toast } from "react-toastify";
-import { z } from "zod";
-import { DisabledFormControlLabel, DisabledTextField } from "@/components/style/DisabledTextField";
+import { DisabledFormControlLabel } from "@/components/style/DisabledTextField";
 import { api } from "@/core/api";
 import { useAppDispatch } from "@/store";
-import { toFormikValidationSchema } from "@abrechnung/utils";
-import { useTranslation } from "react-i18next";
 import { Group } from "@abrechnung/api";
+import { updateGroup, useCurrentUserPermissions } from "@abrechnung/redux";
+import { Cancel, Edit, Save } from "@mui/icons-material";
+import { Alert, Button, Checkbox, FormGroup, Grid } from "@mui/material";
+import * as React from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
+import { z } from "zod";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { DisabledFormTextField } from "@/components";
 
 type SettingsFormProps = {
     group: Group;
@@ -41,9 +29,7 @@ type FormValues = z.infer<typeof validationSchema>;
 
 export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
     const { t } = useTranslation();
-    const [showLeaveModal, setShowLeaveModal] = React.useState(false);
     const dispatch = useAppDispatch();
-    const navigate = useNavigate();
 
     const permissions = useCurrentUserPermissions(group.id);
 
@@ -57,7 +43,18 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
         setIsEditing(false);
     };
 
-    const handleSubmit = (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
+    const { control, handleSubmit } = useForm<FormValues>({
+        resolver: zodResolver(validationSchema),
+        defaultValues: {
+            name: group.name,
+            description: group.description,
+            terms: group.terms,
+            currency_symbol: group.currency_symbol,
+            addUserAccountOnJoin: group.add_user_account_on_join,
+        },
+    });
+
+    const onSubmit: SubmitHandler<FormValues> = (values: FormValues) => {
         if (!group) {
             return;
         }
@@ -76,20 +73,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
         )
             .unwrap()
             .then(() => {
-                setSubmitting(false);
                 setIsEditing(false);
-            })
-            .catch((err) => {
-                setSubmitting(false);
-                toast.error(err);
-            });
-    };
-
-    const confirmLeaveGroup = () => {
-        dispatch(leaveGroup({ groupId: group.id, api }))
-            .unwrap()
-            .then(() => {
-                navigate("/");
             })
             .catch((err) => {
                 toast.error(err);
@@ -101,149 +85,96 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
     }
 
     return (
-        <>
-            <Formik
-                initialValues={{
-                    name: group.name,
-                    description: group.description,
-                    terms: group.terms,
-                    currency_symbol: group.currency_symbol,
-                    addUserAccountOnJoin: group.add_user_account_on_join,
-                }}
-                onSubmit={handleSubmit}
-                validationSchema={toFormikValidationSchema(validationSchema)}
-                enableReinitialize={true}
-            >
-                {({ values, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
-                    <Form onSubmit={handleSubmit}>
-                        <DisabledTextField
-                            variant="standard"
-                            margin="normal"
-                            required
-                            fullWidth
-                            type="text"
-                            label={t("common.name")}
-                            name="name"
-                            disabled={!permissions.can_write || !isEditing}
-                            onBlur={handleBlur}
-                            onChange={handleChange}
-                            value={values.name}
-                        />
+        <form onSubmit={handleSubmit(onSubmit)}>
+            <DisabledFormTextField
+                variant="standard"
+                margin="normal"
+                required
+                fullWidth
+                type="text"
+                label={t("common.name")}
+                name="name"
+                disabled={!permissions.can_write || !isEditing}
+                control={control}
+            />
 
-                        <DisabledTextField
-                            variant="standard"
-                            margin="normal"
-                            fullWidth
-                            type="text"
-                            name="description"
-                            label={t("common.description")}
-                            disabled={!permissions.can_write || !isEditing}
-                            onBlur={handleBlur}
-                            onChange={handleChange}
-                            value={values.description}
+            <DisabledFormTextField
+                variant="standard"
+                margin="normal"
+                fullWidth
+                type="text"
+                name="description"
+                label={t("common.description")}
+                disabled={!permissions.can_write || !isEditing}
+                control={control}
+            />
+            <DisabledFormTextField
+                variant="standard"
+                margin="normal"
+                required
+                fullWidth
+                type="text"
+                name="currency_symbol"
+                label={t("common.currency")}
+                disabled={!permissions.can_write || !isEditing}
+                control={control}
+            />
+            <DisabledFormTextField
+                variant="standard"
+                multiline={true}
+                margin="normal"
+                fullWidth
+                type="text"
+                name="terms"
+                label={t("groups.settings.terms")}
+                disabled={!permissions.can_write || !isEditing}
+                control={control}
+            />
+            <FormGroup>
+                <DisabledFormControlLabel
+                    control={
+                        <Controller
+                            name="addUserAccountOnJoin"
+                            control={control}
+                            render={({ field }) => (
+                                <Checkbox
+                                    disabled={!permissions.can_write || !isEditing || field.disabled}
+                                    onBlur={field.onBlur}
+                                    onChange={field.onChange}
+                                    checked={field.value}
+                                />
+                            )}
                         />
-                        <DisabledTextField
-                            variant="standard"
-                            margin="normal"
-                            required
-                            fullWidth
-                            type="text"
-                            name="currency_symbol"
-                            label={t("common.currency")}
-                            disabled={!permissions.can_write || !isEditing}
-                            onBlur={handleBlur}
-                            onChange={handleChange}
-                            value={values.currency_symbol}
-                        />
-                        <DisabledTextField
-                            variant="standard"
-                            multiline={true}
-                            margin="normal"
-                            fullWidth
-                            type="text"
-                            name="terms"
-                            label={t("groups.settings.terms")}
-                            disabled={!permissions.can_write || !isEditing}
-                            onBlur={handleBlur}
-                            onChange={handleChange}
-                            value={values.terms}
-                        />
-                        <FormGroup>
-                            <DisabledFormControlLabel
-                                control={
-                                    <Checkbox
-                                        name="addUserAccountOnJoin"
-                                        disabled={!permissions.can_write || !isEditing}
-                                        onBlur={handleBlur}
-                                        onChange={handleChange}
-                                        checked={values.addUserAccountOnJoin}
-                                    />
-                                }
-                                label={t("groups.settings.autoAddAccounts")}
-                            />
-                        </FormGroup>
+                    }
+                    label={t("groups.settings.autoAddAccounts")}
+                />
+            </FormGroup>
 
-                        {isSubmitting && <LinearProgress />}
-                        <Grid container justifyContent="space-between" style={{ marginTop: 10 }}>
-                            <div>
-                                {permissions.can_write && isEditing && (
-                                    <>
-                                        <Button
-                                            type="submit"
-                                            variant="contained"
-                                            color="primary"
-                                            disabled={isSubmitting}
-                                            startIcon={<Save />}
-                                        >
-                                            {t("common.save")}
-                                        </Button>
-                                        <Button
-                                            variant="contained"
-                                            color="error"
-                                            disabled={isSubmitting}
-                                            onClick={stopEdit}
-                                            startIcon={<Cancel />}
-                                            sx={{ ml: 1 }}
-                                        >
-                                            {t("common.cancel")}
-                                        </Button>
-                                    </>
-                                )}
-                                {permissions.can_write && !isEditing && (
-                                    <Button
-                                        variant="contained"
-                                        color="primary"
-                                        disabled={isSubmitting}
-                                        onClick={startEdit}
-                                        startIcon={<Edit />}
-                                    >
-                                        {t("common.edit")}
-                                    </Button>
-                                )}
-                            </div>
-                            <Button variant="contained" color="error" onClick={() => setShowLeaveModal(true)}>
-                                {t("groups.settings.leaveGroup")}
+            <Grid container justifyContent="space-between" style={{ marginTop: 10 }}>
+                <div>
+                    {permissions.can_write && isEditing && (
+                        <>
+                            <Button type="submit" variant="contained" color="primary" startIcon={<Save />}>
+                                {t("common.save")}
                             </Button>
-                        </Grid>
-                    </Form>
-                )}
-            </Formik>
-            <Dialog open={showLeaveModal} onClose={() => setShowLeaveModal(false)}>
-                <DialogTitle>{t("groups.settings.leaveGroup")}</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        <span>{t("groups.settings.leaveGroupConfirm", { group })}</span>
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                    <Button color="secondary" onClick={confirmLeaveGroup}>
-                        {t("common.yes")}
-                    </Button>
-                    <Button color="primary" onClick={() => setShowLeaveModal(false)}>
-                        {t("common.no")}
-                    </Button>
-                </DialogActions>
-            </Dialog>
-        </>
+                            <Button
+                                variant="contained"
+                                color="error"
+                                onClick={stopEdit}
+                                startIcon={<Cancel />}
+                                sx={{ ml: 1 }}
+                            >
+                                {t("common.cancel")}
+                            </Button>
+                        </>
+                    )}
+                    {permissions.can_write && !isEditing && (
+                        <Button variant="contained" color="primary" onClick={startEdit} startIcon={<Edit />}>
+                            {t("common.edit")}
+                        </Button>
+                    )}
+                </div>
+            </Grid>
+        </form>
     );
 };
