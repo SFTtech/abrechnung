@@ -2,12 +2,12 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { NewTransaction } from '../models/NewTransaction';
-import type { Transaction } from '../models/Transaction';
-import type { UpdatePositionsPayload } from '../models/UpdatePositionsPayload';
-import type { UpdateTransaction } from '../models/UpdateTransaction';
-import type { CancelablePromise } from '../core/CancelablePromise';
-import type { BaseHttpRequest } from '../core/BaseHttpRequest';
+import type { NewTransaction } from "../models/NewTransaction";
+import type { Transaction } from "../models/Transaction";
+import type { UpdatePositionsPayload } from "../models/UpdatePositionsPayload";
+import type { UpdateTransaction } from "../models/UpdateTransaction";
+import type { CancelablePromise } from "../core/CancelablePromise";
+import type { BaseHttpRequest } from "../core/BaseHttpRequest";
 export class TransactionsService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
@@ -20,19 +20,19 @@ export class TransactionsService {
         minLastChanged,
         transactionIds,
     }: {
-        groupId: number,
-        minLastChanged?: (string | null),
-        transactionIds?: (string | null),
+        groupId: number;
+        minLastChanged?: string | null;
+        transactionIds?: string | null;
     }): CancelablePromise<Array<Transaction>> {
         return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/v1/groups/{group_id}/transactions',
+            method: "GET",
+            url: "/api/v1/groups/{group_id}/transactions",
             path: {
-                'group_id': groupId,
+                group_id: groupId,
             },
             query: {
-                'min_last_changed': minLastChanged,
-                'transaction_ids': transactionIds,
+                min_last_changed: minLastChanged,
+                transaction_ids: transactionIds,
             },
             errors: {
                 401: `unauthorized`,
@@ -51,17 +51,17 @@ export class TransactionsService {
         groupId,
         requestBody,
     }: {
-        groupId: number,
-        requestBody: NewTransaction,
+        groupId: number;
+        requestBody: NewTransaction;
     }): CancelablePromise<Transaction> {
         return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups/{group_id}/transactions',
+            method: "POST",
+            url: "/api/v1/groups/{group_id}/transactions",
             path: {
-                'group_id': groupId,
+                group_id: groupId,
             },
             body: requestBody,
-            mediaType: 'application/json',
+            mediaType: "application/json",
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,
@@ -79,15 +79,15 @@ export class TransactionsService {
         groupId,
         transactionId,
     }: {
-        groupId: number,
-        transactionId: number,
+        groupId: number;
+        transactionId: number;
     }): CancelablePromise<Transaction> {
         return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/v1/groups/{group_id}/transactions/{transaction_id}',
+            method: "GET",
+            url: "/api/v1/groups/{group_id}/transactions/{transaction_id}",
             path: {
-                'group_id': groupId,
-                'transaction_id': transactionId,
+                group_id: groupId,
+                transaction_id: transactionId,
             },
             errors: {
                 401: `unauthorized`,
@@ -107,19 +107,19 @@ export class TransactionsService {
         transactionId,
         requestBody,
     }: {
-        groupId: number,
-        transactionId: number,
-        requestBody: UpdateTransaction,
+        groupId: number;
+        transactionId: number;
+        requestBody: UpdateTransaction;
     }): CancelablePromise<Transaction> {
         return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups/{group_id}/transactions/{transaction_id}',
+            method: "POST",
+            url: "/api/v1/groups/{group_id}/transactions/{transaction_id}",
             path: {
-                'group_id': groupId,
-                'transaction_id': transactionId,
+                group_id: groupId,
+                transaction_id: transactionId,
             },
             body: requestBody,
-            mediaType: 'application/json',
+            mediaType: "application/json",
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,
@@ -137,15 +137,15 @@ export class TransactionsService {
         groupId,
         transactionId,
     }: {
-        groupId: number,
-        transactionId: number,
+        groupId: number;
+        transactionId: number;
     }): CancelablePromise<Transaction> {
         return this.httpRequest.request({
-            method: 'DELETE',
-            url: '/api/v1/groups/{group_id}/transactions/{transaction_id}',
+            method: "DELETE",
+            url: "/api/v1/groups/{group_id}/transactions/{transaction_id}",
             path: {
-                'group_id': groupId,
-                'transaction_id': transactionId,
+                group_id: groupId,
+                transaction_id: transactionId,
             },
             errors: {
                 401: `unauthorized`,
@@ -165,19 +165,19 @@ export class TransactionsService {
         transactionId,
         requestBody,
     }: {
-        groupId: number,
-        transactionId: number,
-        requestBody: UpdatePositionsPayload,
+        groupId: number;
+        transactionId: number;
+        requestBody: UpdatePositionsPayload;
     }): CancelablePromise<Transaction> {
         return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups/{group_id}/transactions/{transaction_id}/positions',
+            method: "POST",
+            url: "/api/v1/groups/{group_id}/transactions/{transaction_id}/positions",
             path: {
-                'group_id': groupId,
-                'transaction_id': transactionId,
+                group_id: groupId,
+                transaction_id: transactionId,
             },
             body: requestBody,
-            mediaType: 'application/json',
+            mediaType: "application/json",
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,
@@ -191,19 +191,13 @@ export class TransactionsService {
      * @returns any Successful Response
      * @throws ApiError
      */
-    public getFileContents({
-        fileId,
-        blobId,
-    }: {
-        fileId: number,
-        blobId: number,
-    }): CancelablePromise<any> {
+    public getFileContents({ fileId, blobId }: { fileId: number; blobId: number }): CancelablePromise<any> {
         return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/v1/files/{file_id}/{blob_id}',
+            method: "GET",
+            url: "/api/v1/files/{file_id}/{blob_id}",
             path: {
-                'file_id': fileId,
-                'blob_id': blobId,
+                file_id: fileId,
+                blob_id: blobId,
             },
             errors: {
                 401: `unauthorized`,

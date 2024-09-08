@@ -14,4 +14,3 @@ export type Group = {
     last_changed: string;
     archived: boolean;
 };
-

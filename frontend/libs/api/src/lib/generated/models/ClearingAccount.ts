@@ -14,4 +14,3 @@ export type ClearingAccount = {
     last_changed: string;
     deleted: boolean;
 };
-

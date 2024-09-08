@@ -10,4 +10,3 @@ export type TransactionPosition = {
     id: number;
     deleted: boolean;
 };
-

@@ -2,8 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { TransactionPosition } from './TransactionPosition';
+import type { TransactionPosition } from "./TransactionPosition";
 export type UpdatePositionsPayload = {
     positions: Array<TransactionPosition>;
 };
-

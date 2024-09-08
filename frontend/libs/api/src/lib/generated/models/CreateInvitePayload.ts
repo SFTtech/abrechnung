@@ -8,4 +8,3 @@ export type CreateInvitePayload = {
     join_as_editor: boolean;
     valid_until: string;
 };
-

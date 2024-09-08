@@ -2,18 +2,18 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { CreateInvitePayload } from '../models/CreateInvitePayload';
-import type { Group } from '../models/Group';
-import type { GroupInvite } from '../models/GroupInvite';
-import type { GroupLog } from '../models/GroupLog';
-import type { GroupMember } from '../models/GroupMember';
-import type { GroupMessage } from '../models/GroupMessage';
-import type { GroupPayload } from '../models/GroupPayload';
-import type { GroupPreview } from '../models/GroupPreview';
-import type { PreviewGroupPayload } from '../models/PreviewGroupPayload';
-import type { UpdateGroupMemberPayload } from '../models/UpdateGroupMemberPayload';
-import type { CancelablePromise } from '../core/CancelablePromise';
-import type { BaseHttpRequest } from '../core/BaseHttpRequest';
+import type { CreateInvitePayload } from "../models/CreateInvitePayload";
+import type { Group } from "../models/Group";
+import type { GroupInvite } from "../models/GroupInvite";
+import type { GroupLog } from "../models/GroupLog";
+import type { GroupMember } from "../models/GroupMember";
+import type { GroupMessage } from "../models/GroupMessage";
+import type { GroupPayload } from "../models/GroupPayload";
+import type { GroupPreview } from "../models/GroupPreview";
+import type { PreviewGroupPayload } from "../models/PreviewGroupPayload";
+import type { UpdateGroupMemberPayload } from "../models/UpdateGroupMemberPayload";
+import type { CancelablePromise } from "../core/CancelablePromise";
+import type { BaseHttpRequest } from "../core/BaseHttpRequest";
 export class GroupsService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
     /**
@@ -21,16 +21,12 @@ export class GroupsService {
      * @returns GroupPreview Successful Response
      * @throws ApiError
      */
-    public previewGroup({
-        requestBody,
-    }: {
-        requestBody: PreviewGroupPayload,
-    }): CancelablePromise<GroupPreview> {
+    public previewGroup({ requestBody }: { requestBody: PreviewGroupPayload }): CancelablePromise<GroupPreview> {
         return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups/preview',
+            method: "POST",
+            url: "/api/v1/groups/preview",
             body: requestBody,
-            mediaType: 'application/json',
+            mediaType: "application/json",
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,
@@ -44,16 +40,12 @@ export class GroupsService {
      * @returns Group Successful Response
      * @throws ApiError
      */
-    public joinGroup({
-        requestBody,
-    }: {
-        requestBody: PreviewGroupPayload,
-    }): CancelablePromise<Group> {
+    public joinGroup({ requestBody }: { requestBody: PreviewGroupPayload }): CancelablePromise<Group> {
         return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups/join',
+            method: "POST",
+            url: "/api/v1/groups/join",
             body: requestBody,
-            mediaType: 'application/json',
+            mediaType: "application/json",
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,
@@ -69,8 +61,8 @@ export class GroupsService {
      */
     public listGroups(): CancelablePromise<Array<Group>> {
         return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/v1/groups',
+            method: "GET",
+            url: "/api/v1/groups",
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,
@@ -83,16 +75,12 @@ export class GroupsService {
      * @returns Group Successful Response
      * @throws ApiError
      */
-    public createGroup({
-        requestBody,
-    }: {
-        requestBody: GroupPayload,
-    }): CancelablePromise<Group> {
+    public createGroup({ requestBody }: { requestBody: GroupPayload }): CancelablePromise<Group> {
         return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups',
+            method: "POST",
+            url: "/api/v1/groups",
             body: requestBody,
-            mediaType: 'application/json',
+            mediaType: "application/json",
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,
@@ -106,16 +94,12 @@ export class GroupsService {
      * @returns Group Successful Response
      * @throws ApiError
      */
-    public getGroup({
-        groupId,
-    }: {
-        groupId: number,
-    }): CancelablePromise<Group> {
+    public getGroup({ groupId }: { groupId: number }): CancelablePromise<Group> {
         return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/v1/groups/{group_id}',
+            method: "GET",
+            url: "/api/v1/groups/{group_id}",
             path: {
-                'group_id': groupId,
+                group_id: groupId,
             },
             errors: {
                 401: `unauthorized`,
@@ -134,17 +118,17 @@ export class GroupsService {
         groupId,
         requestBody,
     }: {
-        groupId: number,
-        requestBody: GroupPayload,
+        groupId: number;
+        requestBody: GroupPayload;
     }): CancelablePromise<Group> {
         return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups/{group_id}',
+            method: "POST",
+            url: "/api/v1/groups/{group_id}",
             path: {
-                'group_id': groupId,
+                group_id: groupId,
             },
             body: requestBody,
-            mediaType: 'application/json',
+            mediaType: "application/json",
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,
@@ -158,16 +142,12 @@ export class GroupsService {
      * @returns void
      * @throws ApiError
      */
-    public deleteGroup({
-        groupId,
-    }: {
-        groupId: number,
-    }): CancelablePromise<void> {
+    public deleteGroup({ groupId }: { groupId: number }): CancelablePromise<void> {
         return this.httpRequest.request({
-            method: 'DELETE',
-            url: '/api/v1/groups/{group_id}',
+            method: "DELETE",
+            url: "/api/v1/groups/{group_id}",
             path: {
-                'group_id': groupId,
+                group_id: groupId,
             },
             errors: {
                 401: `unauthorized`,
@@ -182,16 +162,12 @@ export class GroupsService {
      * @returns void
      * @throws ApiError
      */
-    public leaveGroup({
-        groupId,
-    }: {
-        groupId: number,
-    }): CancelablePromise<void> {
+    public leaveGroup({ groupId }: { groupId: number }): CancelablePromise<void> {
         return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups/{group_id}/leave',
+            method: "POST",
+            url: "/api/v1/groups/{group_id}/leave",
             path: {
-                'group_id': groupId,
+                group_id: groupId,
             },
             errors: {
                 401: `unauthorized`,
@@ -206,16 +182,12 @@ export class GroupsService {
      * @returns GroupMember Successful Response
      * @throws ApiError
      */
-    public listMembers({
-        groupId,
-    }: {
-        groupId: number,
-    }): CancelablePromise<Array<GroupMember>> {
+    public listMembers({ groupId }: { groupId: number }): CancelablePromise<Array<GroupMember>> {
         return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/v1/groups/{group_id}/members',
+            method: "GET",
+            url: "/api/v1/groups/{group_id}/members",
             path: {
-                'group_id': groupId,
+                group_id: groupId,
             },
             errors: {
                 401: `unauthorized`,
@@ -234,17 +206,17 @@ export class GroupsService {
         groupId,
         requestBody,
     }: {
-        groupId: number,
-        requestBody: UpdateGroupMemberPayload,
+        groupId: number;
+        requestBody: UpdateGroupMemberPayload;
     }): CancelablePromise<GroupMember> {
         return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups/{group_id}/members',
+            method: "POST",
+            url: "/api/v1/groups/{group_id}/members",
             path: {
-                'group_id': groupId,
+                group_id: groupId,
             },
             body: requestBody,
-            mediaType: 'application/json',
+            mediaType: "application/json",
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,
@@ -258,16 +230,12 @@ export class GroupsService {
      * @returns GroupLog Successful Response
      * @throws ApiError
      */
-    public listLog({
-        groupId,
-    }: {
-        groupId: number,
-    }): CancelablePromise<Array<GroupLog>> {
+    public listLog({ groupId }: { groupId: number }): CancelablePromise<Array<GroupLog>> {
         return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/v1/groups/{group_id}/logs',
+            method: "GET",
+            url: "/api/v1/groups/{group_id}/logs",
             path: {
-                'group_id': groupId,
+                group_id: groupId,
             },
             errors: {
                 401: `unauthorized`,
@@ -286,17 +254,17 @@ export class GroupsService {
         groupId,
         requestBody,
     }: {
-        groupId: number,
-        requestBody: GroupMessage,
+        groupId: number;
+        requestBody: GroupMessage;
     }): CancelablePromise<void> {
         return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups/{group_id}/send_message',
+            method: "POST",
+            url: "/api/v1/groups/{group_id}/send_message",
             path: {
-                'group_id': groupId,
+                group_id: groupId,
             },
             body: requestBody,
-            mediaType: 'application/json',
+            mediaType: "application/json",
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,
@@ -310,16 +278,12 @@ export class GroupsService {
      * @returns GroupInvite Successful Response
      * @throws ApiError
      */
-    public listInvites({
-        groupId,
-    }: {
-        groupId: number,
-    }): CancelablePromise<Array<GroupInvite>> {
+    public listInvites({ groupId }: { groupId: number }): CancelablePromise<Array<GroupInvite>> {
         return this.httpRequest.request({
-            method: 'GET',
-            url: '/api/v1/groups/{group_id}/invites',
+            method: "GET",
+            url: "/api/v1/groups/{group_id}/invites",
             path: {
-                'group_id': groupId,
+                group_id: groupId,
             },
             errors: {
                 401: `unauthorized`,
@@ -338,17 +302,17 @@ export class GroupsService {
         groupId,
         requestBody,
     }: {
-        groupId: number,
-        requestBody: CreateInvitePayload,
+        groupId: number;
+        requestBody: CreateInvitePayload;
     }): CancelablePromise<GroupInvite> {
         return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups/{group_id}/invites',
+            method: "POST",
+            url: "/api/v1/groups/{group_id}/invites",
             path: {
-                'group_id': groupId,
+                group_id: groupId,
             },
             body: requestBody,
-            mediaType: 'application/json',
+            mediaType: "application/json",
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,
@@ -362,19 +326,13 @@ export class GroupsService {
      * @returns void
      * @throws ApiError
      */
-    public deleteInvite({
-        groupId,
-        inviteId,
-    }: {
-        groupId: number,
-        inviteId: number,
-    }): CancelablePromise<void> {
+    public deleteInvite({ groupId, inviteId }: { groupId: number; inviteId: number }): CancelablePromise<void> {
         return this.httpRequest.request({
-            method: 'DELETE',
-            url: '/api/v1/groups/{group_id}/invites/{invite_id}',
+            method: "DELETE",
+            url: "/api/v1/groups/{group_id}/invites/{invite_id}",
             path: {
-                'group_id': groupId,
-                'invite_id': inviteId,
+                group_id: groupId,
+                invite_id: inviteId,
             },
             errors: {
                 401: `unauthorized`,
@@ -389,16 +347,12 @@ export class GroupsService {
      * @returns any Successful Response
      * @throws ApiError
      */
-    public archiveGroup({
-        groupId,
-    }: {
-        groupId: number,
-    }): CancelablePromise<any> {
+    public archiveGroup({ groupId }: { groupId: number }): CancelablePromise<any> {
         return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups/{group_id}/archive',
+            method: "POST",
+            url: "/api/v1/groups/{group_id}/archive",
             path: {
-                'group_id': groupId,
+                group_id: groupId,
             },
             errors: {
                 401: `unauthorized`,
@@ -413,16 +367,12 @@ export class GroupsService {
      * @returns any Successful Response
      * @throws ApiError
      */
-    public unarchiveGroup({
-        groupId,
-    }: {
-        groupId: number,
-    }): CancelablePromise<any> {
+    public unarchiveGroup({ groupId }: { groupId: number }): CancelablePromise<any> {
         return this.httpRequest.request({
-            method: 'POST',
-            url: '/api/v1/groups/{group_id}/un-archive',
+            method: "POST",
+            url: "/api/v1/groups/{group_id}/un-archive",
             path: {
-                'group_id': groupId,
+                group_id: groupId,
             },
             errors: {
                 401: `unauthorized`,

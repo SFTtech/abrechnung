@@ -8,8 +8,7 @@ export type PersonalAccount = {
     type: "personal";
     name: string;
     description: string;
-    owning_user_id: (number | null);
+    owning_user_id: number | null;
     deleted: boolean;
     last_changed: string;
 };
-

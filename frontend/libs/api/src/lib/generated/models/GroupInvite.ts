@@ -5,10 +5,9 @@
 export type GroupInvite = {
     id: number;
     created_by: number;
-    token: (string | null);
+    token: string | null;
     single_use: boolean;
     join_as_editor: boolean;
     description: string;
     valid_until: string;
 };
-

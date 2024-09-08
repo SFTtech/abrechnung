@@ -6,4 +6,3 @@ export type RenameSessionPayload = {
     session_id: number;
     name: string;
 };
-

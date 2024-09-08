@@ -6,4 +6,3 @@ export type ConfirmPasswordRecoveryPayload = {
     token: string;
     new_password: string;
 };
-

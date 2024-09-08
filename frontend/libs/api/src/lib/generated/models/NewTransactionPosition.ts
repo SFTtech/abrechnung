@@ -8,4 +8,3 @@ export type NewTransactionPosition = {
     communist_shares: number;
     usages: Record<string, number>;
 };
-

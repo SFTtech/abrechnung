@@ -1,5 +1,5 @@
 from functools import wraps
-from inspect import signature, Parameter
+from inspect import Parameter, signature
 from typing import Awaitable, Callable, TypeVar
 
 from abrechnung.core.auth import check_group_permissions
@@ -11,7 +11,9 @@ def _add_arg_to_signature(original_func, new_func, name: str, annotation):
     sig = signature(original_func)
     if name in sig.parameters:
         return
-    new_parameters = tuple(sig.parameters.values()) + (Parameter(name, kind=Parameter.KEYWORD_ONLY, annotation=annotation),)
+    new_parameters = tuple(sig.parameters.values()) + (
+        Parameter(name, kind=Parameter.KEYWORD_ONLY, annotation=annotation),
+    )
     sig = sig.replace(parameters=new_parameters)
     new_func.__signature__ = sig  # type: ignore
 
@@ -78,6 +80,7 @@ def with_group_last_changed_update(func: Callable[..., Awaitable[R]]) -> Callabl
             kwargs["group_id"] = group_id
 
         return await func(*args, **kwargs)
+
     _add_arg_to_signature(func, wrapper, "group_id", int)
 
     return wrapper

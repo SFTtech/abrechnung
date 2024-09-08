@@ -7,4 +7,3 @@ export type NewFile = {
     mime_type: string;
     content: string;
 };
-

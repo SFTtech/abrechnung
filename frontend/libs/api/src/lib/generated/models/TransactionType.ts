@@ -2,4 +2,4 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type TransactionType = 'mimo' | 'purchase' | 'transfer';
+export type TransactionType = "mimo" | "purchase" | "transfer";

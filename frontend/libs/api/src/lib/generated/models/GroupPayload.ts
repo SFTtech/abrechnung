@@ -9,4 +9,3 @@ export type GroupPayload = {
     add_user_account_on_join?: boolean;
     terms?: string;
 };
-

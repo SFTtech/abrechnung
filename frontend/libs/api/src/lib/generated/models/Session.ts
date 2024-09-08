@@ -5,7 +5,6 @@
 export type Session = {
     id: number;
     name: string;
-    valid_until: (string | null);
+    valid_until: string | null;
     last_seen: string;
 };
-
