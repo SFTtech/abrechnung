@@ -1,22 +1,13 @@
 import { createGroup } from "@abrechnung/redux";
-import {
-    Button,
-    Checkbox,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    FormControlLabel,
-    LinearProgress,
-    TextField,
-} from "@mui/material";
-import { Form, Formik, FormikHelpers, FormikProps } from "formik";
-import React, { ReactNode } from "react";
+import { Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel } from "@mui/material";
+import * as React from "react";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import { api } from "@/core/api";
 import { useAppDispatch } from "@/store";
-import { toFormikValidationSchema } from "@abrechnung/utils";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormTextField } from "../FormTextField";
 
 const validationSchema = z.object({
     name: z.string({ required_error: "Name is required" }),
@@ -39,8 +30,12 @@ interface Props {
 
 export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
     const dispatch = useAppDispatch();
+    const { control, handleSubmit } = useForm<FormValues>({
+        resolver: zodResolver(validationSchema),
+        defaultValues: initialValues,
+    });
 
-    const handleSubmit = (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
+    const onSubmit = (values: FormValues) => {
         dispatch(
             createGroup({
                 api,
@@ -55,12 +50,10 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
         )
             .unwrap()
             .then(() => {
-                setSubmitting(false);
                 onClose("completed");
             })
             .catch((err) => {
                 toast.error(err);
-                setSubmitting(false);
             });
     };
 
@@ -68,71 +61,46 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
         <Dialog open={show} onClose={(_, reason) => onClose(reason)}>
             <DialogTitle>Create Group</DialogTitle>
             <DialogContent>
-                <Formik
-                    initialValues={initialValues}
-                    onSubmit={handleSubmit}
-                    validationSchema={toFormikValidationSchema(validationSchema)}
-                >
-                    {({
-                        values,
-                        touched,
-                        errors,
-                        handleBlur,
-                        handleChange,
-                        isSubmitting,
-                        setFieldValue,
-                    }: FormikProps<FormValues>) => (
-                        <Form>
-                            <TextField
-                                margin="normal"
-                                required
-                                fullWidth
-                                autoFocus
-                                variant="standard"
-                                type="text"
-                                name="name"
-                                label="Group Name"
-                                value={values.name}
-                                onBlur={handleBlur}
-                                onChange={handleChange}
-                                error={touched.name && Boolean(errors.name)}
-                                helperText={touched.name && (errors.name as ReactNode)}
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <FormTextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        autoFocus
+                        variant="standard"
+                        type="text"
+                        name="name"
+                        label="Group Name"
+                        control={control}
+                    />
+                    <FormTextField
+                        margin="normal"
+                        fullWidth
+                        variant="standard"
+                        type="text"
+                        name="description"
+                        label="Description"
+                        control={control}
+                    />
+                    <FormControlLabel
+                        label="Automatically add accounts for newly joined group members"
+                        control={
+                            <Controller
+                                name="addUserAccountOnJoin"
+                                control={control}
+                                render={({ field }) => <Checkbox checked={field.value} {...field} />}
                             />
-                            <TextField
-                                margin="normal"
-                                fullWidth
-                                variant="standard"
-                                type="text"
-                                name="description"
-                                label="Description"
-                                value={values.description}
-                                onBlur={handleBlur}
-                                onChange={handleChange}
-                                error={touched.description && Boolean(errors.description)}
-                                helperText={touched.description && (errors.description as ReactNode)}
-                            />
-                            <FormControlLabel
-                                control={
-                                    <Checkbox
-                                        name="addUserAccountOnJoin"
-                                        onChange={(e) => setFieldValue("addUserAccountOnJoin", e.target.checked)}
-                                        checked={values.addUserAccountOnJoin}
-                                    />
-                                }
-                                label="Automatically add accounts for newly joined group members"
-                            />
-                            {isSubmitting && <LinearProgress />}
-                            <DialogActions>
-                                <Button type="submit" color="primary" disabled={isSubmitting}>
-                                    Save
-                                </Button>
-                                <Button color="error" onClick={() => onClose("closeButton")}>
-                                    Cancel
-                                </Button>
-                            </DialogActions>
-                        </Form>
-                    )}
-                </Formik>
+                        }
+                    />
+                    <DialogActions>
+                        <Button type="submit" color="primary">
+                            Save
+                        </Button>
+                        <Button color="error" onClick={() => onClose("closeButton")}>
+                            Cancel
+                        </Button>
+                    </DialogActions>
+                </form>
             </DialogContent>
         </Dialog>
     );

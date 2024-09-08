@@ -4,7 +4,7 @@ import { TextField, TextFieldProps } from "@mui/material";
 
 export type FormTextFieldProps = Omit<TextFieldProps, "onChange" | "name"> & {
     name: string;
-    control: Control;
+    control: Control<any, any>;
 };
 
 export const FormTextField = ({ name, control, ...props }: FormTextFieldProps) => {
