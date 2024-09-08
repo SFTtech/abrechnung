@@ -1,4 +1,4 @@
-# pylint: disable=missing-kwoa
+# pylint: disable=missing-kwoa,unexpected-keyword-arg
 
 from datetime import date, datetime
 
@@ -159,6 +159,7 @@ class TransactionAPITest(BaseTestCase):
         )
         await self.transaction_service.update_transaction(
             user=self.test_user,
+            group_id=group_id,
             transaction_id=transaction_id,
             transaction=UpdateTransaction(
                 type=TransactionType.purchase,
@@ -175,7 +176,8 @@ class TransactionAPITest(BaseTestCase):
         )
 
         t: Transaction = await self.transaction_service.get_transaction(
-            user=self.test_user, transaction_id=transaction_id
+            user=self.test_user,
+            transaction_id=transaction_id,
         )
         self.assertEqual(200.0, t.value)
         self.assertEqual(
@@ -187,6 +189,7 @@ class TransactionAPITest(BaseTestCase):
 
         await self.transaction_service.update_transaction(
             user=self.test_user,
+            group_id=group_id,
             transaction_id=transaction_id,
             transaction=UpdateTransaction(
                 type=TransactionType.purchase,
@@ -257,12 +260,13 @@ class TransactionAPITest(BaseTestCase):
         )
 
         # we can delete the account when nothing depends on it
-        await self.account_service.delete_account(user=self.test_user, account_id=account1_id)
+        await self.account_service.delete_account(user=self.test_user, group_id=group_id, account_id=account1_id)
 
         # the account has been deleted, we should not be able to add more shares to it
         with self.assertRaises(Exception):
             await self.transaction_service.update_transaction(
                 user=self.test_user,
+                group_id=group_id,
                 transaction_id=transaction_id,
                 transaction=UpdateTransaction(
                     type=TransactionType.purchase,
@@ -283,6 +287,7 @@ class TransactionAPITest(BaseTestCase):
 
         await self.transaction_service.update_transaction(
             user=self.test_user,
+            group_id=group_id,
             transaction_id=transaction_id,
             transaction=UpdateTransaction(
                 type=TransactionType.purchase,
@@ -298,7 +303,7 @@ class TransactionAPITest(BaseTestCase):
             ),
         )
         # we should not be able to delete this account as changes depend on it
-        await self.account_service.delete_account(user=self.test_user, account_id=account2_id)
+        await self.account_service.delete_account(user=self.test_user, group_id=group_id, account_id=account2_id)
 
     async def test_purchase_items(self):
         group_id = await self._create_group()
@@ -350,6 +355,7 @@ class TransactionAPITest(BaseTestCase):
         position_id = t.positions[0].id
         await self.transaction_service.update_transaction(
             user=self.test_user,
+            group_id=group_id,
             transaction_id=transaction_id,
             transaction=UpdateTransaction(
                 type=TransactionType.purchase,

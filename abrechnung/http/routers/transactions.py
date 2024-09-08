@@ -75,7 +75,7 @@ async def create_transaction(
         transaction=payload,
     )
 
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
+    return await transaction_service.get_transaction(user=user, group_id=group_id, transaction_id=transaction_id)
 
 
 @router.get(
@@ -90,7 +90,7 @@ async def get_transaction(
     user: User = Depends(get_current_user),
     transaction_service: TransactionService = Depends(get_transaction_service),
 ):
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
+    return await transaction_service.get_transaction(user=user, group_id=group_id, transaction_id=transaction_id)
 
 
 @router.post(
@@ -109,7 +109,7 @@ async def update_transaction(
     await transaction_service.update_transaction(
         user=user, transaction_id=transaction_id, transaction=payload, group_id=group_id
     )
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
+    return await transaction_service.get_transaction(user=user, group_id=group_id, transaction_id=transaction_id)
 
 
 class UpdatePositionsPayload(BaseModel):
@@ -135,7 +135,7 @@ async def update_transaction_positions(
         transaction_id=transaction_id,
         positions=payload.positions,
     )
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
+    return await transaction_service.get_transaction(user=user, group_id=group_id, transaction_id=transaction_id)
 
 
 @router.delete(
@@ -155,7 +155,7 @@ async def delete_transaction(
         user=user,
         transaction_id=transaction_id,
     )
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
+    return await transaction_service.get_transaction(user=user, group_id=group_id, transaction_id=transaction_id)
 
 
 @router.get(

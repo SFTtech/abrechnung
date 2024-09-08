@@ -14,7 +14,8 @@
                     "sed -i 's/type: any/type: \"clearing\"/' src/lib/generated/models/ClearingAccount.ts",
                     "echo \"/* eslint-disable */\\n$(cat src/lib/generated/schema.ts)\" > src/lib/generated/schema.ts",
                     "echo \"/* tslint:disable */\\n$(cat src/lib/generated/schema.ts)\" > src/lib/generated/schema.ts",
-                    "echo \"/* istanbul ignore file */\\n$(cat src/lib/generated/schema.ts)\" > src/lib/generated/schema.ts"
+                    "echo \"/* istanbul ignore file */\\n$(cat src/lib/generated/schema.ts)\" > src/lib/generated/schema.ts",
+                    "npx prettier --write src/lib/generated"
                 ],
                 "parallel": false,
                 "cwd": "libs/api"

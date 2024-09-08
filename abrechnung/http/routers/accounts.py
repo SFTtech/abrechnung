@@ -1,11 +1,9 @@
-from datetime import date
-from typing import List, Optional
+from typing import List
 
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel
 
 from abrechnung.application.accounts import AccountService
-from abrechnung.domain.accounts import Account, ClearingShares, NewAccount
+from abrechnung.domain.accounts import Account, NewAccount
 from abrechnung.domain.users import User
 from abrechnung.http.auth import get_current_user
 from abrechnung.http.dependencies import get_account_service
@@ -53,7 +51,7 @@ async def create_account(
         account=payload,
     )
 
-    return await account_service.get_account(user=user, account_id=account_id)
+    return await account_service.get_account(user=user, group_id=group_id, account_id=account_id)
 
 
 @router.get(
@@ -68,7 +66,7 @@ async def get_account(
     user: User = Depends(get_current_user),
     account_service: AccountService = Depends(get_account_service),
 ):
-    return await account_service.get_account(user=user, account_id=account_id)
+    return await account_service.get_account(user=user, group_id=group_id, account_id=account_id)
 
 
 @router.post(
@@ -91,7 +89,7 @@ async def update_account(
         account=payload,
     )
 
-    return await account_service.get_account(user=user, account_id=account_id)
+    return await account_service.get_account(user=user, group_id=group_id, account_id=account_id)
 
 
 @router.delete(
@@ -111,4 +109,4 @@ async def delete_account(
         user=user,
         account_id=account_id,
     )
-    return await account_service.get_account(user=user, account_id=account_id)
+    return await account_service.get_account(user=user, group_id=group_id, account_id=account_id)

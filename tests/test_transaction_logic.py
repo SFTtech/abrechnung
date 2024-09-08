@@ -1,4 +1,4 @@
-# pylint: disable=attribute-defined-outside-init,missing-kwoa
+# pylint: disable=attribute-defined-outside-init,missing-kwoa,unexpected-keyword-arg
 import base64
 from datetime import datetime
 from pathlib import Path
@@ -76,13 +76,16 @@ class TransactionLogicTest(BaseTestCase):
             ),
         )
 
-        account: ClearingAccount = await self.account_service.get_account(user=self.user, account_id=account_id)
+        account: ClearingAccount = await self.account_service.get_account(
+            user=self.user, group_id=self.group_id, account_id=account_id
+        )
         self.assertEqual(account_id, account.id)
         self.assertEqual(2.0, account.clearing_shares[basic_account_id2])
         self.assertEqual(1.0, account.clearing_shares[basic_account_id1])
 
         await self.account_service.update_account(
             user=self.user,
+            group_id=self.group_id,
             account_id=account_id,
             account=NewAccount(
                 name="Clearing",
@@ -92,7 +95,7 @@ class TransactionLogicTest(BaseTestCase):
                 clearing_shares={basic_account_id1: 1.0},
             ),
         )
-        account = await self.account_service.get_account(user=self.user, account_id=account_id)
+        account = await self.account_service.get_account(user=self.user, group_id=self.group_id, account_id=account_id)
         self.assertTrue(basic_account_id2 not in account.clearing_shares)
 
     async def test_no_circular_clearing_accounts(self):
@@ -121,6 +124,7 @@ class TransactionLogicTest(BaseTestCase):
         with self.assertRaises(Exception) as ctx:
             await self.account_service.update_account(
                 user=self.user,
+                group_id=self.group_id,
                 account_id=account1_id,
                 account=NewAccount(
                     name="account1",
@@ -137,6 +141,7 @@ class TransactionLogicTest(BaseTestCase):
         with self.assertRaises(Exception) as ctx:
             await self.account_service.update_account(
                 user=self.user,
+                group_id=self.group_id,
                 account_id=account1_id,
                 account=NewAccount(
                     name="account1",
@@ -186,6 +191,7 @@ class TransactionLogicTest(BaseTestCase):
 
         await self.transaction_service.update_transaction(
             user=self.user,
+            group_id=self.group_id,
             transaction_id=transaction_id,
             transaction=UpdateTransaction(
                 type=TransactionType.purchase,
