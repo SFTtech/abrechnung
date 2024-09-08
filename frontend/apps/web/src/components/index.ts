@@ -7,3 +7,4 @@ export * from "./TextInput";
 export * from "./NumericInput";
 export * from "./FormTextField";
 export * from "./DisabledFormTextField";
+export * from "./GroupArchivedDisclaimer";

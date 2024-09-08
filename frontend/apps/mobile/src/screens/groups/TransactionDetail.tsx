@@ -3,7 +3,7 @@ import {
     discardTransactionChange,
     saveTransaction,
     selectTransactionHasPositions,
-    useCurrentUserPermissions,
+    useIsGroupWritable,
     useTransaction,
     useWipTransactionPositions,
     wipTransactionUpdated,
@@ -54,7 +54,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
     const positions = useWipTransactionPositions(groupId, transaction.id);
     const totalPositionValue = positions.reduce((acc, curr) => acc + curr.price, 0);
 
-    const permissions = useCurrentUserPermissions(groupId);
+    const isGroupWritable = useIsGroupWritable(groupId);
 
     const onGoBack = React.useCallback(async () => {
         if (editing && transaction != null) {
@@ -93,10 +93,10 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
     );
 
     useEffect(() => {
-        if (editing && (permissions === undefined || !permissions.can_write)) {
+        if (editing && !isGroupWritable) {
             navigation.replace("TransactionDetail", { transactionId, groupId, editing: false });
         }
-    }, [editing, permissions, transactionId, groupId, navigation]);
+    }, [editing, isGroupWritable, transactionId, groupId, navigation]);
 
     const formik = useFormik({
         initialValues:
@@ -175,7 +175,7 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
             onGoBack: onGoBack,
             headerTitle: formik.values?.name ?? transaction?.name ?? "",
             headerRight: () => {
-                if (permissions === undefined || !permissions.can_write) {
+                if (!isGroupWritable) {
                     return null;
                 }
                 if (editing) {
@@ -197,7 +197,18 @@ export const TransactionDetail: React.FC<GroupStackScreenProps<"TransactionDetai
                 );
             },
         } as any);
-    }, [theme, editing, permissions, navigation, formik, onGoBack, cancelEdit, edit, transaction, onDeleteTransaction]);
+    }, [
+        theme,
+        editing,
+        isGroupWritable,
+        navigation,
+        formik,
+        onGoBack,
+        cancelEdit,
+        edit,
+        transaction,
+        onDeleteTransaction,
+    ]);
 
     if (transaction == null) {
         return <LoadingIndicator />;

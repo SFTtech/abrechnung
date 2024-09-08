@@ -57,9 +57,13 @@ async def create_account(
 
 
 @router.get(
-    r"/v1/accounts/{account_id}", summary="fetch a group account", response_model=Account, operation_id="get_account"
+    r"/v1/groups/{group_id}/accounts/{account_id}",
+    summary="fetch a group account",
+    response_model=Account,
+    operation_id="get_account",
 )
 async def get_account(
+    group_id: int,
     account_id: int,
     user: User = Depends(get_current_user),
     account_service: AccountService = Depends(get_account_service),
@@ -68,15 +72,20 @@ async def get_account(
 
 
 @router.post(
-    r"/v1/accounts/{account_id}", summary="update an account", response_model=Account, operation_id="update_account"
+    r"/v1/groups/{group_id}/accounts/{account_id}",
+    summary="update an account",
+    response_model=Account,
+    operation_id="update_account",
 )
 async def update_account(
+    group_id: int,
     account_id: int,
     payload: NewAccount,
     user: User = Depends(get_current_user),
     account_service: AccountService = Depends(get_account_service),
 ):
     await account_service.update_account(
+        group_id=group_id,
         user=user,
         account_id=account_id,
         account=payload,
@@ -86,14 +95,19 @@ async def update_account(
 
 
 @router.delete(
-    r"/v1/accounts/{account_id}", summary="delete an account", response_model=Account, operation_id="delete_account"
+    r"/v1/groups/{group_id}/accounts/{account_id}",
+    summary="delete an account",
+    response_model=Account,
+    operation_id="delete_account",
 )
 async def delete_account(
+    group_id: int,
     account_id: int,
     user: User = Depends(get_current_user),
     account_service: AccountService = Depends(get_account_service),
 ):
     await account_service.delete_account(
+        group_id=group_id,
         user=user,
         account_id=account_id,
     )

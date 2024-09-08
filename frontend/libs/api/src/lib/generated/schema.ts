@@ -6,1514 +6,1573 @@
  * Do not make direct changes to the file.
  */
 
-import { z } from "zod";
+
+import { z } from 'zod';
 
 export namespace components.schemas {
-    /**
-     * AccountType
-     * @enum {string}
-     */
-    export const AccountType = z.enum(["personal", "clearing"]);
-    /** Body_get_token */
-    export const Body_get_token = z.object({
-        grant_type: z.union([z.string(), z.null()]).optional(),
-        username: z.string(),
-        password: z.string(),
-        scope: z.string().optional(),
-        client_id: z.union([z.string(), z.null()]).optional(),
-        client_secret: z.union([z.string(), z.null()]).optional(),
-    });
-    /** ChangeEmailPayload */
-    export const ChangeEmailPayload = z.object({
-        email: z.string(),
-        password: z.string(),
-    });
-    /** ChangePasswordPayload */
-    export const ChangePasswordPayload = z.object({
-        new_password: z.string(),
-        old_password: z.string(),
-    });
-    /** ClearingAccount */
-    export const ClearingAccount = z.object({
-        id: z.number().int(),
-        group_id: z.number().int(),
-        type: z.literal("clearing"),
-        name: z.string(),
-        description: z.string(),
-        date_info: z.string(),
-        tags: z.array(z.string()),
-        clearing_shares: z.record(z.number()),
-        last_changed: z.string(),
-        deleted: z.boolean(),
-    });
-    /** ConfirmEmailChangePayload */
-    export const ConfirmEmailChangePayload = z.object({
-        token: z.string(),
-    });
-    /** ConfirmPasswordRecoveryPayload */
-    export const ConfirmPasswordRecoveryPayload = z.object({
-        token: z.string(),
-        new_password: z.string(),
-    });
-    /** ConfirmRegistrationPayload */
-    export const ConfirmRegistrationPayload = z.object({
-        token: z.string(),
-    });
-    /** CreateInvitePayload */
-    export const CreateInvitePayload = z.object({
-        description: z.string(),
-        single_use: z.boolean(),
-        join_as_editor: z.boolean(),
-        valid_until: z.string(),
-    });
-    /** DeleteSessionPayload */
-    export const DeleteSessionPayload = z.object({
-        session_id: z.number().int(),
-    });
-    /** FileAttachment */
-    export const FileAttachment = z.object({
-        id: z.number().int(),
-        filename: z.string(),
-        blob_id: z.union([z.number().int(), z.null()]),
-        mime_type: z.union([z.string(), z.null()]),
-        host_url: z.union([z.string(), z.null()]).optional(),
-        deleted: z.boolean(),
-    });
-    /** Group */
-    export const Group = z.object({
-        id: z.number().int(),
-        name: z.string(),
-        description: z.string(),
-        currency_symbol: z.string(),
-        terms: z.string(),
-        add_user_account_on_join: z.boolean(),
-        created_at: z.string(),
-        created_by: z.number().int(),
-    });
-    /** GroupInvite */
-    export const GroupInvite = z.object({
-        id: z.number().int(),
-        created_by: z.number().int(),
-        token: z.union([z.string(), z.null()]),
-        single_use: z.boolean(),
-        join_as_editor: z.boolean(),
-        description: z.string(),
-        valid_until: z.string(),
-    });
-    /** GroupLog */
-    export const GroupLog = z.object({
-        id: z.number().int(),
-        user_id: z.number().int(),
-        logged_at: z.string(),
-        type: z.string(),
-        message: z.string(),
-        affected: z.union([z.number().int(), z.null()]),
-    });
-    /** GroupMember */
-    export const GroupMember = z.object({
-        user_id: z.number().int(),
-        username: z.string(),
-        is_owner: z.boolean(),
-        can_write: z.boolean(),
-        description: z.string(),
-        joined_at: z.string(),
-        invited_by: z.union([z.number().int(), z.null()]),
-    });
-    /** GroupMessage */
-    export const GroupMessage = z.object({
-        message: z.string(),
-    });
-    /** GroupPayload */
-    export const GroupPayload = z.object({
-        name: z.string(),
-        description: z.string().optional(),
-        currency_symbol: z.string(),
-        add_user_account_on_join: z.boolean().optional(),
-        terms: z.string().optional(),
-    });
-    /** GroupPreview */
-    export const GroupPreview = z.object({
-        id: z.number().int(),
-        name: z.string(),
-        description: z.string(),
-        currency_symbol: z.string(),
-        terms: z.string(),
-        created_at: z.string(),
-        invite_single_use: z.boolean(),
-        invite_valid_until: z.string(),
-        invite_description: z.string(),
-    });
-    /** HTTPValidationError */
-    export const HTTPValidationError = z.object({
-        detail: z.array(components["schemas"]["ValidationError"]).optional(),
-    });
-    /** LoginPayload */
-    export const LoginPayload = z.object({
-        username: z.string(),
-        password: z.string(),
-        session_name: z.string(),
-    });
-    /** NewAccount */
-    export const NewAccount = z.object({
-        type: components["schemas"]["AccountType"],
-        name: z.string(),
-        description: z.string().optional(),
-        owning_user_id: z.union([z.number().int(), z.null()]).optional(),
-        date_info: z.union([z.string(), z.null()]).optional(),
-        deleted: z.boolean().optional(),
-        tags: z.array(z.string()).optional(),
-        clearing_shares: z.record(z.number()).optional(),
-    });
-    /** NewFile */
-    export const NewFile = z.object({
-        filename: z.string(),
-        mime_type: z.string(),
-        content: z.string(),
-    });
-    /** NewTransaction */
-    export const NewTransaction = z.object({
-        type: components["schemas"]["TransactionType"],
-        name: z.string(),
-        description: z.string(),
-        value: z.number(),
-        currency_symbol: z.string(),
-        currency_conversion_rate: z.number(),
-        billed_at: z.string(),
-        tags: z.array(z.string()).optional(),
-        creditor_shares: z.record(z.number()),
-        debitor_shares: z.record(z.number()),
-        new_files: z.array(components["schemas"]["NewFile"]).optional(),
-        new_positions: z.array(components["schemas"]["NewTransactionPosition"]).optional(),
-    });
-    /** NewTransactionPosition */
-    export const NewTransactionPosition = z.object({
-        name: z.string(),
-        price: z.number(),
-        communist_shares: z.number(),
-        usages: z.record(z.number()),
-    });
-    /** PersonalAccount */
-    export const PersonalAccount = z.object({
-        id: z.number().int(),
-        group_id: z.number().int(),
-        type: z.literal("personal"),
-        name: z.string(),
-        description: z.string(),
-        owning_user_id: z.union([z.number().int(), z.null()]),
-        deleted: z.boolean(),
-        last_changed: z.string(),
-    });
-    /** PreviewGroupPayload */
-    export const PreviewGroupPayload = z.object({
-        invite_token: z.string(),
-    });
-    /** RecoverPasswordPayload */
-    export const RecoverPasswordPayload = z.object({
-        email: z.string(),
-    });
-    /** RegisterPayload */
-    export const RegisterPayload = z.object({
-        username: z.string(),
-        password: z.string(),
-        email: z.string(),
-        invite_token: z.union([z.string(), z.null()]).optional(),
-    });
-    /** RegisterResponse */
-    export const RegisterResponse = z.object({
-        user_id: z.number().int(),
-    });
-    /** RenameSessionPayload */
-    export const RenameSessionPayload = z.object({
-        session_id: z.number().int(),
-        name: z.string(),
-    });
-    /** Session */
-    export const Session = z.object({
-        id: z.number().int(),
-        name: z.string(),
-        valid_until: z.union([z.string(), z.null()]),
-        last_seen: z.string(),
-    });
-    /** Token */
-    export const Token = z.object({
-        user_id: z.number().int(),
-        access_token: z.string(),
-    });
-    /** Transaction */
-    export const Transaction = z.object({
-        id: z.number().int(),
-        group_id: z.number().int(),
-        type: components["schemas"]["TransactionType"],
-        name: z.string(),
-        description: z.string(),
-        value: z.number(),
-        currency_symbol: z.string(),
-        currency_conversion_rate: z.number(),
-        billed_at: z.string(),
-        tags: z.array(z.string()),
-        deleted: z.boolean(),
-        creditor_shares: z.record(z.number()),
-        debitor_shares: z.record(z.number()),
-        last_changed: z.string(),
-        positions: z.array(components["schemas"]["TransactionPosition"]),
-        files: z.array(components["schemas"]["FileAttachment"]),
-    });
-    /** TransactionPosition */
-    export const TransactionPosition = z.object({
-        name: z.string(),
-        price: z.number(),
-        communist_shares: z.number(),
-        usages: z.record(z.number()),
-        id: z.number().int(),
-        deleted: z.boolean(),
-    });
-    /**
-     * TransactionType
-     * @enum {string}
-     */
-    export const TransactionType = z.enum(["mimo", "purchase", "transfer"]);
-    /** UpdateFile */
-    export const UpdateFile = z.object({
-        id: z.number().int(),
-        filename: z.string(),
-        deleted: z.boolean(),
-    });
-    /** UpdateGroupMemberPayload */
-    export const UpdateGroupMemberPayload = z.object({
-        user_id: z.number().int(),
-        can_write: z.boolean(),
-        is_owner: z.boolean(),
-    });
-    /** UpdatePositionsPayload */
-    export const UpdatePositionsPayload = z.object({
-        positions: z.array(components["schemas"]["TransactionPosition"]),
-    });
-    /** UpdateTransaction */
-    export const UpdateTransaction = z.object({
-        type: components["schemas"]["TransactionType"],
-        name: z.string(),
-        description: z.string(),
-        value: z.number(),
-        currency_symbol: z.string(),
-        currency_conversion_rate: z.number(),
-        billed_at: z.string(),
-        tags: z.array(z.string()).optional(),
-        creditor_shares: z.record(z.number()),
-        debitor_shares: z.record(z.number()),
-        new_files: z.array(components["schemas"]["NewFile"]).optional(),
-        new_positions: z.array(components["schemas"]["NewTransactionPosition"]).optional(),
-        changed_files: z.array(components["schemas"]["UpdateFile"]).optional(),
-        changed_positions: z.array(components["schemas"]["TransactionPosition"]).optional(),
-    });
-    /** User */
-    export const User = z.object({
-        id: z.number().int(),
-        username: z.string(),
-        email: z.string(),
-        registered_at: z.string(),
-        deleted: z.boolean(),
-        pending: z.boolean(),
-        sessions: z.array(components["schemas"]["Session"]),
-        is_guest_user: z.boolean(),
-    });
-    /** ValidationError */
-    export const ValidationError = z.object({
-        loc: z.array(z.union([z.string(), z.number().int()])),
-        msg: z.string(),
-        type: z.string(),
-    });
-    /**
-     * VersionResponse
-     * @example {
-     *   "major_version": 1,
-     *   "minor_version": 3,
-     *   "patch_version": 2,
-     *   "version": "1.3.2"
-     * }
-     */
-    export const VersionResponse = z.object({
-        version: z.string(),
-        major_version: z.number().int(),
-        minor_version: z.number().int(),
-        patch_version: z.number().int(),
-    });
+  /**
+   * AccountType 
+   * @enum {string}
+   */
+  export const AccountType = z.enum(["personal", "clearing"]);
+  /** Body_get_token */
+  export const Body_get_token = z.object({
+    grant_type: z.union([z.string(), z.null()]).optional(),
+    username: z.string(),
+    password: z.string(),
+    scope: z.string().optional(),
+    client_id: z.union([z.string(), z.null()]).optional(),
+    client_secret: z.union([z.string(), z.null()]).optional(),
+  });
+  /** ChangeEmailPayload */
+  export const ChangeEmailPayload = z.object({
+    email: z.string(),
+    password: z.string(),
+  });
+  /** ChangePasswordPayload */
+  export const ChangePasswordPayload = z.object({
+    new_password: z.string(),
+    old_password: z.string(),
+  });
+  /** ClearingAccount */
+  export const ClearingAccount = z.object({
+    id: z.number().int(),
+    group_id: z.number().int(),
+    type: z.literal("clearing"),
+    name: z.string(),
+    description: z.string(),
+    date_info: z.string(),
+    tags: z.array(z.string()),
+    clearing_shares: z.record(z.number()),
+    last_changed: z.string(),
+    deleted: z.boolean(),
+  });
+  /** ConfirmEmailChangePayload */
+  export const ConfirmEmailChangePayload = z.object({
+    token: z.string(),
+  });
+  /** ConfirmPasswordRecoveryPayload */
+  export const ConfirmPasswordRecoveryPayload = z.object({
+    token: z.string(),
+    new_password: z.string(),
+  });
+  /** ConfirmRegistrationPayload */
+  export const ConfirmRegistrationPayload = z.object({
+    token: z.string(),
+  });
+  /** CreateInvitePayload */
+  export const CreateInvitePayload = z.object({
+    description: z.string(),
+    single_use: z.boolean(),
+    join_as_editor: z.boolean(),
+    valid_until: z.string(),
+  });
+  /** DeleteSessionPayload */
+  export const DeleteSessionPayload = z.object({
+    session_id: z.number().int(),
+  });
+  /** FileAttachment */
+  export const FileAttachment = z.object({
+    id: z.number().int(),
+    filename: z.string(),
+    blob_id: z.union([z.number().int(), z.null()]),
+    mime_type: z.union([z.string(), z.null()]),
+    host_url: z.union([z.string(), z.null()]).optional(),
+    deleted: z.boolean(),
+  });
+  /** Group */
+  export const Group = z.object({
+    id: z.number().int(),
+    name: z.string(),
+    description: z.string(),
+    currency_symbol: z.string(),
+    terms: z.string(),
+    add_user_account_on_join: z.boolean(),
+    created_at: z.string(),
+    created_by: z.number().int(),
+    last_changed: z.string(),
+    archived: z.boolean(),
+  });
+  /** GroupInvite */
+  export const GroupInvite = z.object({
+    id: z.number().int(),
+    created_by: z.number().int(),
+    token: z.union([z.string(), z.null()]),
+    single_use: z.boolean(),
+    join_as_editor: z.boolean(),
+    description: z.string(),
+    valid_until: z.string(),
+  });
+  /** GroupLog */
+  export const GroupLog = z.object({
+    id: z.number().int(),
+    user_id: z.number().int(),
+    logged_at: z.string(),
+    type: z.string(),
+    message: z.string(),
+    affected: z.union([z.number().int(), z.null()]),
+  });
+  /** GroupMember */
+  export const GroupMember = z.object({
+    user_id: z.number().int(),
+    username: z.string(),
+    is_owner: z.boolean(),
+    can_write: z.boolean(),
+    description: z.string(),
+    joined_at: z.string(),
+    invited_by: z.union([z.number().int(), z.null()]),
+  });
+  /** GroupMessage */
+  export const GroupMessage = z.object({
+    message: z.string(),
+  });
+  /** GroupPayload */
+  export const GroupPayload = z.object({
+    name: z.string(),
+    description: z.string().optional(),
+    currency_symbol: z.string(),
+    add_user_account_on_join: z.boolean().optional(),
+    terms: z.string().optional(),
+  });
+  /** GroupPreview */
+  export const GroupPreview = z.object({
+    id: z.number().int(),
+    name: z.string(),
+    description: z.string(),
+    currency_symbol: z.string(),
+    terms: z.string(),
+    created_at: z.string(),
+    invite_single_use: z.boolean(),
+    invite_valid_until: z.string(),
+    invite_description: z.string(),
+  });
+  /** HTTPValidationError */
+  export const HTTPValidationError = z.object({
+    detail: z.array(components["schemas"]["ValidationError"]).optional(),
+  });
+  /** LoginPayload */
+  export const LoginPayload = z.object({
+    username: z.string(),
+    password: z.string(),
+    session_name: z.string(),
+  });
+  /** NewAccount */
+  export const NewAccount = z.object({
+    type: components["schemas"]["AccountType"],
+    name: z.string(),
+    description: z.string().optional(),
+    owning_user_id: z.union([z.number().int(), z.null()]).optional(),
+    date_info: z.union([z.string(), z.null()]).optional(),
+    deleted: z.boolean().optional(),
+    tags: z.array(z.string()).optional(),
+    clearing_shares: z.record(z.number()).optional(),
+  });
+  /** NewFile */
+  export const NewFile = z.object({
+    filename: z.string(),
+    mime_type: z.string(),
+    content: z.string(),
+  });
+  /** NewTransaction */
+  export const NewTransaction = z.object({
+    type: components["schemas"]["TransactionType"],
+    name: z.string(),
+    description: z.string(),
+    value: z.number(),
+    currency_symbol: z.string(),
+    currency_conversion_rate: z.number(),
+    billed_at: z.string(),
+    tags: z.array(z.string()).optional(),
+    creditor_shares: z.record(z.number()),
+    debitor_shares: z.record(z.number()),
+    new_files: z.array(components["schemas"]["NewFile"]).optional(),
+    new_positions: z.array(components["schemas"]["NewTransactionPosition"]).optional(),
+  });
+  /** NewTransactionPosition */
+  export const NewTransactionPosition = z.object({
+    name: z.string(),
+    price: z.number(),
+    communist_shares: z.number(),
+    usages: z.record(z.number()),
+  });
+  /** PersonalAccount */
+  export const PersonalAccount = z.object({
+    id: z.number().int(),
+    group_id: z.number().int(),
+    type: z.literal("personal"),
+    name: z.string(),
+    description: z.string(),
+    owning_user_id: z.union([z.number().int(), z.null()]),
+    deleted: z.boolean(),
+    last_changed: z.string(),
+  });
+  /** PreviewGroupPayload */
+  export const PreviewGroupPayload = z.object({
+    invite_token: z.string(),
+  });
+  /** RecoverPasswordPayload */
+  export const RecoverPasswordPayload = z.object({
+    email: z.string(),
+  });
+  /** RegisterPayload */
+  export const RegisterPayload = z.object({
+    username: z.string(),
+    password: z.string(),
+    email: z.string(),
+    invite_token: z.union([z.string(), z.null()]).optional(),
+  });
+  /** RegisterResponse */
+  export const RegisterResponse = z.object({
+    user_id: z.number().int(),
+  });
+  /** RenameSessionPayload */
+  export const RenameSessionPayload = z.object({
+    session_id: z.number().int(),
+    name: z.string(),
+  });
+  /** Session */
+  export const Session = z.object({
+    id: z.number().int(),
+    name: z.string(),
+    valid_until: z.union([z.string(), z.null()]),
+    last_seen: z.string(),
+  });
+  /** Token */
+  export const Token = z.object({
+    user_id: z.number().int(),
+    access_token: z.string(),
+  });
+  /** Transaction */
+  export const Transaction = z.object({
+    id: z.number().int(),
+    group_id: z.number().int(),
+    type: components["schemas"]["TransactionType"],
+    name: z.string(),
+    description: z.string(),
+    value: z.number(),
+    currency_symbol: z.string(),
+    currency_conversion_rate: z.number(),
+    billed_at: z.string(),
+    tags: z.array(z.string()),
+    deleted: z.boolean(),
+    creditor_shares: z.record(z.number()),
+    debitor_shares: z.record(z.number()),
+    last_changed: z.string(),
+    positions: z.array(components["schemas"]["TransactionPosition"]),
+    files: z.array(components["schemas"]["FileAttachment"]),
+  });
+  /** TransactionPosition */
+  export const TransactionPosition = z.object({
+    name: z.string(),
+    price: z.number(),
+    communist_shares: z.number(),
+    usages: z.record(z.number()),
+    id: z.number().int(),
+    deleted: z.boolean(),
+  });
+  /**
+   * TransactionType 
+   * @enum {string}
+   */
+  export const TransactionType = z.enum(["mimo", "purchase", "transfer"]);
+  /** UpdateFile */
+  export const UpdateFile = z.object({
+    id: z.number().int(),
+    filename: z.string(),
+    deleted: z.boolean(),
+  });
+  /** UpdateGroupMemberPayload */
+  export const UpdateGroupMemberPayload = z.object({
+    user_id: z.number().int(),
+    can_write: z.boolean(),
+    is_owner: z.boolean(),
+  });
+  /** UpdatePositionsPayload */
+  export const UpdatePositionsPayload = z.object({
+    positions: z.array(components["schemas"]["TransactionPosition"]),
+  });
+  /** UpdateTransaction */
+  export const UpdateTransaction = z.object({
+    type: components["schemas"]["TransactionType"],
+    name: z.string(),
+    description: z.string(),
+    value: z.number(),
+    currency_symbol: z.string(),
+    currency_conversion_rate: z.number(),
+    billed_at: z.string(),
+    tags: z.array(z.string()).optional(),
+    creditor_shares: z.record(z.number()),
+    debitor_shares: z.record(z.number()),
+    new_files: z.array(components["schemas"]["NewFile"]).optional(),
+    new_positions: z.array(components["schemas"]["NewTransactionPosition"]).optional(),
+    changed_files: z.array(components["schemas"]["UpdateFile"]).optional(),
+    changed_positions: z.array(components["schemas"]["TransactionPosition"]).optional(),
+  });
+  /** User */
+  export const User = z.object({
+    id: z.number().int(),
+    username: z.string(),
+    email: z.string(),
+    registered_at: z.string(),
+    deleted: z.boolean(),
+    pending: z.boolean(),
+    sessions: z.array(components["schemas"]["Session"]),
+    is_guest_user: z.boolean(),
+  });
+  /** ValidationError */
+  export const ValidationError = z.object({
+    loc: z.array(z.union([z.string(), z.number().int()])),
+    msg: z.string(),
+    type: z.string(),
+  });
+  /**
+   * VersionResponse 
+   * @example {
+   *   "major_version": 1,
+   *   "minor_version": 3,
+   *   "patch_version": 2,
+   *   "version": "1.3.2"
+   * }
+   */
+  export const VersionResponse = z.object({
+    version: z.string(),
+    major_version: z.number().int(),
+    minor_version: z.number().int(),
+    patch_version: z.number().int(),
+  });
 }
 
 export const operations = {
-    list_transactions: {
-        /** list all transactions in a group */
-        parameters: {
-            query: z
-                .object({
-                    min_last_changed: z.union([z.string(), z.null()]).optional(),
-                    transaction_ids: z.union([z.string(), z.null()]).optional(),
-                })
-                .optional(),
-            path: z.object({
-                group_id: z.number().int(),
-            }),
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": z.array(components["schemas"]["Transaction"]),
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+
+  list_transactions: {
+    /** list all transactions in a group */
+    parameters: {
+      query: z.object({
+        min_last_changed: z.union([z.string(), z.null()]).optional(),
+        transaction_ids: z.union([z.string(), z.null()]).optional(),
+      }).optional(),
+      path: z.object({
+        group_id: z.number().int(),
+      }),
     },
-    create_transaction: {
-        /** create a new transaction */
-        parameters: {
-            path: z.object({
-                group_id: z.number().int(),
-            }),
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": z.array(components["schemas"]["Transaction"]),
         },
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["NewTransaction"],
-            },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["Transaction"],
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+      },
     },
-    get_transaction: {
-        /** get transaction details */
-        parameters: {
-            path: z.object({
-                transaction_id: z.number().int(),
-            }),
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["Transaction"],
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  create_transaction: {
+    /** create a new transaction */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
     },
-    update_transaction: {
-        /** update transaction details */
-        parameters: {
-            path: z.object({
-                transaction_id: z.number().int(),
-            }),
-        },
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateTransaction"],
-            },
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["Transaction"],
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["NewTransaction"],
+      },
     },
-    delete_transaction: {
-        /** delete a transaction */
-        parameters: {
-            path: z.object({
-                transaction_id: z.number().int(),
-            }),
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Transaction"],
         },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["Transaction"],
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
+      },
     },
-    update_transaction_positions: {
-        /** update transaction positions */
-        parameters: {
-            path: z.object({
-                transaction_id: z.number().int(),
-            }),
-        },
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdatePositionsPayload"],
-            },
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["Transaction"],
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  get_transaction: {
+    /** get transaction details */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+        transaction_id: z.number().int(),
+      }),
     },
-    get_file_contents: {
-        /** fetch the (binary) contents of a transaction attachment */
-        parameters: {
-            path: z.object({
-                file_id: z.number().int(),
-                blob_id: z.number().int(),
-            }),
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Transaction"],
         },
-        responses: {
-            /** @description Successful Response */
-            200: z.never(),
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
+      },
     },
-    preview_group: {
-        /** preview a group before joining using an invite token */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PreviewGroupPayload"],
-            },
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["GroupPreview"],
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  update_transaction: {
+    /** update transaction details */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+        transaction_id: z.number().int(),
+      }),
     },
-    join_group: {
-        /** join a group using an invite token */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PreviewGroupPayload"],
-            },
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["Group"],
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateTransaction"],
+      },
     },
-    list_groups: {
-        /** list the current users groups */
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": z.array(components["schemas"]["Group"]),
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Transaction"],
         },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
     },
-    create_group: {
-        /** create a group */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["GroupPayload"],
-            },
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["Group"],
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  delete_transaction: {
+    /** delete a transaction */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+        transaction_id: z.number().int(),
+      }),
     },
-    get_group: {
-        /** fetch group details */
-        parameters: {
-            path: z.object({
-                group_id: z.number().int(),
-            }),
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Transaction"],
         },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["Group"],
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
+      },
     },
-    update_group: {
-        /** update group details */
-        parameters: {
-            path: z.object({
-                group_id: z.number().int(),
-            }),
-        },
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["GroupPayload"],
-            },
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["Group"],
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  update_transaction_positions: {
+    /** update transaction positions */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+        transaction_id: z.number().int(),
+      }),
     },
-    delete_group: {
-        /** delete a group */
-        parameters: {
-            path: z.object({
-                group_id: z.number().int(),
-            }),
-        },
-        responses: {
-            /** @description Successful Response */
-            204: z.never(),
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdatePositionsPayload"],
+      },
     },
-    leave_group: {
-        /** leave a group */
-        parameters: {
-            path: z.object({
-                group_id: z.number().int(),
-            }),
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Transaction"],
         },
-        responses: {
-            /** @description Successful Response */
-            204: z.never(),
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
+      },
     },
-    list_members: {
-        /** list all members of a group */
-        parameters: {
-            path: z.object({
-                group_id: z.number().int(),
-            }),
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": z.array(components["schemas"]["GroupMember"]),
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  get_file_contents: {
+    /** fetch the (binary) contents of a transaction attachment */
+    parameters: {
+      path: z.object({
+        file_id: z.number().int(),
+        blob_id: z.number().int(),
+      }),
     },
-    update_member_permissions: {
-        /** update the permissions of a group member */
-        parameters: {
-            path: z.object({
-                group_id: z.number().int(),
-            }),
+    responses: {
+      /** @description Successful Response */
+      200: z.never(),
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["UpdateGroupMemberPayload"],
-            },
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["GroupMember"],
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+      },
     },
-    list_log: {
-        /** fetch the group log */
-        parameters: {
-            path: z.object({
-                group_id: z.number().int(),
-            }),
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": z.array(components["schemas"]["GroupLog"]),
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  preview_group: {
+    /** preview a group before joining using an invite token */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PreviewGroupPayload"],
+      },
     },
-    send_group_message: {
-        /** post a message to the group log */
-        parameters: {
-            path: z.object({
-                group_id: z.number().int(),
-            }),
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["GroupPreview"],
         },
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["GroupMessage"],
-            },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
-        responses: {
-            /** @description Successful Response */
-            204: z.never(),
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+      },
     },
-    list_invites: {
-        /** list all invite links of a group */
-        parameters: {
-            path: z.object({
-                group_id: z.number().int(),
-            }),
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": z.array(components["schemas"]["GroupInvite"]),
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  join_group: {
+    /** join a group using an invite token */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["PreviewGroupPayload"],
+      },
     },
-    create_invite: {
-        /** create a new group invite link */
-        parameters: {
-            path: z.object({
-                group_id: z.number().int(),
-            }),
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Group"],
         },
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreateInvitePayload"],
-            },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["GroupInvite"],
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+      },
     },
-    delete_invite: {
-        /** delete a group invite link */
-        parameters: {
-            path: z.object({
-                group_id: z.number().int(),
-                invite_id: z.number().int(),
-            }),
+  },
+  list_groups: {
+    /** list the current users groups */
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": z.array(components["schemas"]["Group"]),
         },
-        responses: {
-            /** @description Successful Response */
-            204: z.never(),
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
     },
-    get_token: {
-        /** login with username and password */
-        requestBody: {
-            content: {
-                "application/x-www-form-urlencoded": components["schemas"]["Body_get_token"],
-            },
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["Token"],
-                },
-            },
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  create_group: {
+    /** create a group */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["GroupPayload"],
+      },
     },
-    login: {
-        /** login with username and password */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginPayload"],
-            },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Group"],
         },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["Token"],
-                },
-            },
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
+      },
     },
-    logout: {
-        /** sign out of the current session */
-        responses: {
-            /** @description Successful Response */
-            204: z.never(),
-        },
+  },
+  get_group: {
+    /** fetch group details */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
     },
-    register: {
-        /** register a new user */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterPayload"],
-            },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Group"],
         },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["RegisterResponse"],
-                },
-            },
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
+      },
     },
-    confirm_registration: {
-        /** confirm a pending registration */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ConfirmRegistrationPayload"],
-            },
-        },
-        responses: {
-            /** @description Successful Response */
-            204: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  update_group: {
+    /** update group details */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
     },
-    get_profile: {
-        /** fetch user profile information */
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["User"],
-                },
-            },
-        },
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["GroupPayload"],
+      },
     },
-    change_password: {
-        /** change password */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ChangePasswordPayload"],
-            },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Group"],
         },
-        responses: {
-            /** @description Successful Response */
-            204: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
+      },
     },
-    change_email: {
-        /** change email */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ChangeEmailPayload"],
-            },
-        },
-        responses: {
-            /** @description Successful Response */
-            204: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  delete_group: {
+    /** delete a group */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
     },
-    confirm_email_change: {
-        /** confirm a pending email change */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ConfirmEmailChangePayload"],
-            },
+    responses: {
+      /** @description Successful Response */
+      204: z.never(),
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
-        responses: {
-            /** @description Successful Response */
-            204: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+      },
     },
-    recover_password: {
-        /** recover password */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RecoverPasswordPayload"],
-            },
-        },
-        responses: {
-            /** @description Successful Response */
-            204: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  leave_group: {
+    /** leave a group */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
     },
-    confirm_password_recovery: {
-        /** confirm a pending password recovery */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ConfirmPasswordRecoveryPayload"],
-            },
+    responses: {
+      /** @description Successful Response */
+      204: z.never(),
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
-        responses: {
-            /** @description Successful Response */
-            204: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+      },
     },
-    delete_session: {
-        /** delete a given user session */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DeleteSessionPayload"],
-            },
-        },
-        responses: {
-            /** @description Successful Response */
-            204: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  list_members: {
+    /** list all members of a group */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
     },
-    rename_session: {
-        /** rename a given user session */
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RenameSessionPayload"],
-            },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": z.array(components["schemas"]["GroupMember"]),
         },
-        responses: {
-            /** @description Successful Response */
-            204: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
+      },
     },
-    list_accounts: {
-        /** list all accounts in a group */
-        parameters: {
-            path: z.object({
-                group_id: z.number().int(),
-            }),
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": z.array(
-                        z.union([components["schemas"]["ClearingAccount"], components["schemas"]["PersonalAccount"]])
-                    ),
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  update_member_permissions: {
+    /** update the permissions of a group member */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
     },
-    create_account: {
-        /** create a new group account */
-        parameters: {
-            path: z.object({
-                group_id: z.number().int(),
-            }),
-        },
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["NewAccount"],
-            },
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": z.union([
-                        components["schemas"]["ClearingAccount"],
-                        components["schemas"]["PersonalAccount"],
-                    ]),
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["UpdateGroupMemberPayload"],
+      },
     },
-    get_account: {
-        /** fetch a group account */
-        parameters: {
-            path: z.object({
-                account_id: z.number().int(),
-            }),
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["GroupMember"],
         },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": z.union([
-                        components["schemas"]["ClearingAccount"],
-                        components["schemas"]["PersonalAccount"],
-                    ]),
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
+      },
     },
-    update_account: {
-        /** update an account */
-        parameters: {
-            path: z.object({
-                account_id: z.number().int(),
-            }),
-        },
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["NewAccount"],
-            },
-        },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": z.union([
-                        components["schemas"]["ClearingAccount"],
-                        components["schemas"]["PersonalAccount"],
-                    ]),
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
-        },
+  },
+  list_log: {
+    /** fetch the group log */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
     },
-    delete_account: {
-        /** delete an account */
-        parameters: {
-            path: z.object({
-                account_id: z.number().int(),
-            }),
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": z.array(components["schemas"]["GroupLog"]),
         },
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": z.union([
-                        components["schemas"]["ClearingAccount"],
-                        components["schemas"]["PersonalAccount"],
-                    ]),
-                },
-            },
-            /** @description unauthorized */
-            401: z.never(),
-            /** @description forbidden */
-            403: z.never(),
-            /** @description Not found */
-            404: z.never(),
-            /** @description Validation Error */
-            422: {
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"],
-                },
-            },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
         },
+      },
     },
-    get_version: {
-        /** Get Version */
-        responses: {
-            /** @description Successful Response */
-            200: {
-                content: {
-                    "application/json": components["schemas"]["VersionResponse"],
-                },
-            },
-        },
+  },
+  send_group_message: {
+    /** post a message to the group log */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
     },
-};
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["GroupMessage"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      204: z.never(),
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  list_invites: {
+    /** list all invite links of a group */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
+    },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": z.array(components["schemas"]["GroupInvite"]),
+        },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  create_invite: {
+    /** create a new group invite link */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
+    },
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CreateInvitePayload"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["GroupInvite"],
+        },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  delete_invite: {
+    /** delete a group invite link */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+        invite_id: z.number().int(),
+      }),
+    },
+    responses: {
+      /** @description Successful Response */
+      204: z.never(),
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  archive_group: {
+    /** archive a group */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
+    },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": z.record(z.any()),
+        },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  unarchive_group: {
+    /** un-archive a group */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
+    },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": z.record(z.any()),
+        },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  get_token: {
+    /** login with username and password */
+    requestBody: {
+      content: {
+        "application/x-www-form-urlencoded": components["schemas"]["Body_get_token"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Token"],
+        },
+      },
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  login: {
+    /** login with username and password */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["LoginPayload"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["Token"],
+        },
+      },
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  logout: {
+    /** sign out of the current session */
+    responses: {
+      /** @description Successful Response */
+      204: z.never(),
+    },
+  },
+  register: {
+    /** register a new user */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RegisterPayload"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["RegisterResponse"],
+        },
+      },
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  confirm_registration: {
+    /** confirm a pending registration */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ConfirmRegistrationPayload"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      204: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  get_profile: {
+    /** fetch user profile information */
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["User"],
+        },
+      },
+    },
+  },
+  change_password: {
+    /** change password */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ChangePasswordPayload"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      204: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  change_email: {
+    /** change email */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ChangeEmailPayload"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      204: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  confirm_email_change: {
+    /** confirm a pending email change */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ConfirmEmailChangePayload"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      204: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  recover_password: {
+    /** recover password */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RecoverPasswordPayload"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      204: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  confirm_password_recovery: {
+    /** confirm a pending password recovery */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["ConfirmPasswordRecoveryPayload"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      204: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  delete_session: {
+    /** delete a given user session */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["DeleteSessionPayload"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      204: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  rename_session: {
+    /** rename a given user session */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["RenameSessionPayload"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      204: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  list_accounts: {
+    /** list all accounts in a group */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
+    },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": z.array(z.union([components["schemas"]["ClearingAccount"], components["schemas"]["PersonalAccount"]])),
+        },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  create_account: {
+    /** create a new group account */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+      }),
+    },
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["NewAccount"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": z.union([components["schemas"]["ClearingAccount"], components["schemas"]["PersonalAccount"]]),
+        },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  get_account: {
+    /** fetch a group account */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+        account_id: z.number().int(),
+      }),
+    },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": z.union([components["schemas"]["ClearingAccount"], components["schemas"]["PersonalAccount"]]),
+        },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  update_account: {
+    /** update an account */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+        account_id: z.number().int(),
+      }),
+    },
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["NewAccount"],
+      },
+    },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": z.union([components["schemas"]["ClearingAccount"], components["schemas"]["PersonalAccount"]]),
+        },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  delete_account: {
+    /** delete an account */
+    parameters: {
+      path: z.object({
+        group_id: z.number().int(),
+        account_id: z.number().int(),
+      }),
+    },
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": z.union([components["schemas"]["ClearingAccount"], components["schemas"]["PersonalAccount"]]),
+        },
+      },
+      /** @description unauthorized */
+      401: z.never(),
+      /** @description forbidden */
+      403: z.never(),
+      /** @description Not found */
+      404: z.never(),
+      /** @description Validation Error */
+      422: {
+        content: {
+          "application/json": components["schemas"]["HTTPValidationError"],
+        },
+      },
+    },
+  },
+  get_version: {
+    /** Get Version */
+    responses: {
+      /** @description Successful Response */
+      200: {
+        content: {
+          "application/json": components["schemas"]["VersionResponse"],
+        },
+      },
+    },
+  },
+}
 
 export const paths = {
-    "/api/v1/groups/{group_id}/transactions": {
-        /** list all transactions in a group */
-        get: operations["list_transactions"],
-        /** create a new transaction */
-        post: operations["create_transaction"],
-    },
-    "/api/v1/transactions/{transaction_id}": {
-        /** get transaction details */
-        get: operations["get_transaction"],
-        /** update transaction details */
-        post: operations["update_transaction"],
-        /** delete a transaction */
-        delete: operations["delete_transaction"],
-    },
-    "/api/v1/transactions/{transaction_id}/positions": {
-        /** update transaction positions */
-        post: operations["update_transaction_positions"],
-    },
-    "/api/v1/files/{file_id}/{blob_id}": {
-        /** fetch the (binary) contents of a transaction attachment */
-        get: operations["get_file_contents"],
-    },
-    "/api/v1/groups/preview": {
-        /** preview a group before joining using an invite token */
-        post: operations["preview_group"],
-    },
-    "/api/v1/groups/join": {
-        /** join a group using an invite token */
-        post: operations["join_group"],
-    },
-    "/api/v1/groups": {
-        /** list the current users groups */
-        get: operations["list_groups"],
-        /** create a group */
-        post: operations["create_group"],
-    },
-    "/api/v1/groups/{group_id}": {
-        /** fetch group details */
-        get: operations["get_group"],
-        /** update group details */
-        post: operations["update_group"],
-        /** delete a group */
-        delete: operations["delete_group"],
-    },
-    "/api/v1/groups/{group_id}/leave": {
-        /** leave a group */
-        post: operations["leave_group"],
-    },
-    "/api/v1/groups/{group_id}/members": {
-        /** list all members of a group */
-        get: operations["list_members"],
-        /** update the permissions of a group member */
-        post: operations["update_member_permissions"],
-    },
-    "/api/v1/groups/{group_id}/logs": {
-        /** fetch the group log */
-        get: operations["list_log"],
-    },
-    "/api/v1/groups/{group_id}/send_message": {
-        /** post a message to the group log */
-        post: operations["send_group_message"],
-    },
-    "/api/v1/groups/{group_id}/invites": {
-        /** list all invite links of a group */
-        get: operations["list_invites"],
-        /** create a new group invite link */
-        post: operations["create_invite"],
-    },
-    "/api/v1/groups/{group_id}/invites/{invite_id}": {
-        /** delete a group invite link */
-        delete: operations["delete_invite"],
-    },
-    "/api/v1/auth/token": {
-        /** login with username and password */
-        post: operations["get_token"],
-    },
-    "/api/v1/auth/login": {
-        /** login with username and password */
-        post: operations["login"],
-    },
-    "/api/v1/auth/logout": {
-        /** sign out of the current session */
-        post: operations["logout"],
-    },
-    "/api/v1/auth/register": {
-        /** register a new user */
-        post: operations["register"],
-    },
-    "/api/v1/auth/confirm_registration": {
-        /** confirm a pending registration */
-        post: operations["confirm_registration"],
-    },
-    "/api/v1/profile": {
-        /** fetch user profile information */
-        get: operations["get_profile"],
-    },
-    "/api/v1/profile/change_password": {
-        /** change password */
-        post: operations["change_password"],
-    },
-    "/api/v1/profile/change_email": {
-        /** change email */
-        post: operations["change_email"],
-    },
-    "/api/v1/auth/confirm_email_change": {
-        /** confirm a pending email change */
-        post: operations["confirm_email_change"],
-    },
-    "/api/v1/auth/recover_password": {
-        /** recover password */
-        post: operations["recover_password"],
-    },
-    "/api/v1/auth/confirm_password_recovery": {
-        /** confirm a pending password recovery */
-        post: operations["confirm_password_recovery"],
-    },
-    "/api/v1/auth/delete_session": {
-        /** delete a given user session */
-        post: operations["delete_session"],
-    },
-    "/api/v1/auth/rename_session": {
-        /** rename a given user session */
-        post: operations["rename_session"],
-    },
-    "/api/v1/groups/{group_id}/accounts": {
-        /** list all accounts in a group */
-        get: operations["list_accounts"],
-        /** create a new group account */
-        post: operations["create_account"],
-    },
-    "/api/v1/accounts/{account_id}": {
-        /** fetch a group account */
-        get: operations["get_account"],
-        /** update an account */
-        post: operations["update_account"],
-        /** delete an account */
-        delete: operations["delete_account"],
-    },
-    "/api/version": {
-        /** Get Version */
-        get: operations["get_version"],
-    },
-};
+  "/api/v1/groups/{group_id}/transactions": {
+    /** list all transactions in a group */
+    get: operations["list_transactions"],
+    /** create a new transaction */
+    post: operations["create_transaction"],
+  },
+  "/api/v1/groups/{group_id}/transactions/{transaction_id}": {
+    /** get transaction details */
+    get: operations["get_transaction"],
+    /** update transaction details */
+    post: operations["update_transaction"],
+    /** delete a transaction */
+    delete: operations["delete_transaction"],
+  },
+  "/api/v1/groups/{group_id}/transactions/{transaction_id}/positions": {
+    /** update transaction positions */
+    post: operations["update_transaction_positions"],
+  },
+  "/api/v1/files/{file_id}/{blob_id}": {
+    /** fetch the (binary) contents of a transaction attachment */
+    get: operations["get_file_contents"],
+  },
+  "/api/v1/groups/preview": {
+    /** preview a group before joining using an invite token */
+    post: operations["preview_group"],
+  },
+  "/api/v1/groups/join": {
+    /** join a group using an invite token */
+    post: operations["join_group"],
+  },
+  "/api/v1/groups": {
+    /** list the current users groups */
+    get: operations["list_groups"],
+    /** create a group */
+    post: operations["create_group"],
+  },
+  "/api/v1/groups/{group_id}": {
+    /** fetch group details */
+    get: operations["get_group"],
+    /** update group details */
+    post: operations["update_group"],
+    /** delete a group */
+    delete: operations["delete_group"],
+  },
+  "/api/v1/groups/{group_id}/leave": {
+    /** leave a group */
+    post: operations["leave_group"],
+  },
+  "/api/v1/groups/{group_id}/members": {
+    /** list all members of a group */
+    get: operations["list_members"],
+    /** update the permissions of a group member */
+    post: operations["update_member_permissions"],
+  },
+  "/api/v1/groups/{group_id}/logs": {
+    /** fetch the group log */
+    get: operations["list_log"],
+  },
+  "/api/v1/groups/{group_id}/send_message": {
+    /** post a message to the group log */
+    post: operations["send_group_message"],
+  },
+  "/api/v1/groups/{group_id}/invites": {
+    /** list all invite links of a group */
+    get: operations["list_invites"],
+    /** create a new group invite link */
+    post: operations["create_invite"],
+  },
+  "/api/v1/groups/{group_id}/invites/{invite_id}": {
+    /** delete a group invite link */
+    delete: operations["delete_invite"],
+  },
+  "/api/v1/groups/{group_id}/archive": {
+    /** archive a group */
+    post: operations["archive_group"],
+  },
+  "/api/v1/groups/{group_id}/un-archive": {
+    /** un-archive a group */
+    post: operations["unarchive_group"],
+  },
+  "/api/v1/auth/token": {
+    /** login with username and password */
+    post: operations["get_token"],
+  },
+  "/api/v1/auth/login": {
+    /** login with username and password */
+    post: operations["login"],
+  },
+  "/api/v1/auth/logout": {
+    /** sign out of the current session */
+    post: operations["logout"],
+  },
+  "/api/v1/auth/register": {
+    /** register a new user */
+    post: operations["register"],
+  },
+  "/api/v1/auth/confirm_registration": {
+    /** confirm a pending registration */
+    post: operations["confirm_registration"],
+  },
+  "/api/v1/profile": {
+    /** fetch user profile information */
+    get: operations["get_profile"],
+  },
+  "/api/v1/profile/change_password": {
+    /** change password */
+    post: operations["change_password"],
+  },
+  "/api/v1/profile/change_email": {
+    /** change email */
+    post: operations["change_email"],
+  },
+  "/api/v1/auth/confirm_email_change": {
+    /** confirm a pending email change */
+    post: operations["confirm_email_change"],
+  },
+  "/api/v1/auth/recover_password": {
+    /** recover password */
+    post: operations["recover_password"],
+  },
+  "/api/v1/auth/confirm_password_recovery": {
+    /** confirm a pending password recovery */
+    post: operations["confirm_password_recovery"],
+  },
+  "/api/v1/auth/delete_session": {
+    /** delete a given user session */
+    post: operations["delete_session"],
+  },
+  "/api/v1/auth/rename_session": {
+    /** rename a given user session */
+    post: operations["rename_session"],
+  },
+  "/api/v1/groups/{group_id}/accounts": {
+    /** list all accounts in a group */
+    get: operations["list_accounts"],
+    /** create a new group account */
+    post: operations["create_account"],
+  },
+  "/api/v1/groups/{group_id}/accounts/{account_id}": {
+    /** fetch a group account */
+    get: operations["get_account"],
+    /** update an account */
+    post: operations["update_account"],
+    /** delete an account */
+    delete: operations["delete_account"],
+  },
+  "/api/version": {
+    /** Get Version */
+    get: operations["get_version"],
+  },
+}

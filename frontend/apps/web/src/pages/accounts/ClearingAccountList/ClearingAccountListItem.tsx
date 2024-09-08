@@ -1,12 +1,8 @@
 import { ListItemLink } from "@/components/style/ListItemLink";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { getAccountLink } from "@/utils";
-import {
-    accountEditStarted,
-    copyAccount,
-    selectAccountIdToAccountMap,
-    useCurrentUserPermissions,
-} from "@abrechnung/redux";
+import { Group } from "@abrechnung/api";
+import { accountEditStarted, copyAccount, selectAccountIdToAccountMap, useIsGroupWritable } from "@abrechnung/redux";
 import { Account } from "@abrechnung/types";
 import { ContentCopy, Delete, Edit } from "@mui/icons-material";
 import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
@@ -15,19 +11,19 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 interface Props {
-    groupId: number;
+    group: Group;
     account: Account;
     setAccountToDelete: (account: Account) => void;
 }
 
-export const ClearingAccountListItem: React.FC<Props> = ({ groupId, account, setAccountToDelete }) => {
+export const ClearingAccountListItem: React.FC<Props> = ({ group, account, setAccountToDelete }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const permissions = useCurrentUserPermissions(groupId);
-    const accounts = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
+    const isGroupWritable = useIsGroupWritable(group.id);
+    const accounts = useAppSelector((state) => selectAccountIdToAccountMap(state, group.id));
 
-    if (!permissions || account.type !== "clearing") {
+    if (account.type !== "clearing") {
         return null;
     }
 
@@ -35,18 +31,18 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, account, set
 
     const edit = () => {
         if (!account.is_wip) {
-            dispatch(accountEditStarted({ groupId, accountId: account.id }));
+            dispatch(accountEditStarted({ groupId: group.id, accountId: account.id }));
         }
-        navigate(getAccountLink(groupId, account.type, account.id));
+        navigate(getAccountLink(group.id, account.type, account.id));
     };
 
     const copy = () => {
-        dispatch(copyAccount({ groupId, accountId: account.id }));
+        dispatch(copyAccount({ groupId: group.id, accountId: account.id }));
     };
 
     return (
         <ListItem sx={{ padding: 0 }} key={account.id}>
-            <ListItemLink sx={{ paddingRight: 17 }} to={getAccountLink(groupId, account.type, account.id)}>
+            <ListItemLink sx={{ paddingRight: 17 }} to={getAccountLink(group.id, account.type, account.id)}>
                 <ListItemText
                     primaryTypographyProps={{ component: "div" }}
                     secondaryTypographyProps={{ component: "div" }}
@@ -75,7 +71,7 @@ export const ClearingAccountListItem: React.FC<Props> = ({ groupId, account, set
                     }
                 />
             </ListItemLink>
-            {permissions.can_write && (
+            {isGroupWritable && (
                 <ListItemSecondaryAction>
                     <IconButton color="primary" onClick={edit}>
                         <Edit />

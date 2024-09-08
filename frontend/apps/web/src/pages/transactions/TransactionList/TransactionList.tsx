@@ -2,9 +2,9 @@ import { TransactionSortMode, transactionCsvDump } from "@abrechnung/core";
 import {
     createTransaction,
     selectTransactionBalanceEffects,
-    useCurrentUserPermissions,
     useGroup,
     useGroupAccounts,
+    useIsGroupWritable,
     useSortedTransactions,
 } from "@abrechnung/redux";
 import { Add, Clear } from "@mui/icons-material";
@@ -42,6 +42,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { TransactionListItem } from "./TransactionListItem";
 import { useTranslation } from "react-i18next";
 import { Transaction } from "@abrechnung/types";
+import { GroupArchivedDisclaimer } from "@/components";
 
 interface Props {
     groupId: number;
@@ -84,7 +85,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
     const [speedDialOpen, setSpeedDialOpen] = useState(false);
     const toggleSpeedDial = () => setSpeedDialOpen((currValue) => !currValue);
 
-    const permissions = useCurrentUserPermissions(groupId);
+    const isGroupWritable = useIsGroupWritable(groupId);
 
     const [searchValue, setSearchValue] = useState("");
     const [tagFilter, setTagFilter] = useState<string[]>(emptyList);
@@ -123,7 +124,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
 
     const downloadCsv = useDownloadCsv(groupId, transactions);
 
-    if (!permissions) {
+    if (!group) {
         return <Navigate to="/404" />;
     }
 
@@ -131,6 +132,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
         <>
             <MobilePaper>
                 <Stack spacing={1}>
+                    <GroupArchivedDisclaimer group={group} />
                     <Box
                         sx={{
                             display: "flex",
@@ -191,14 +193,14 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                                 />
                             </FormControl>
                         </Box>
-                        {!isSmallScreen && permissions.can_write && (
+                        {!isSmallScreen && (
                             <Box sx={{ display: "flex-item" }}>
                                 <Tooltip title={t("common.exportAsCsv")}>
                                     <IconButton size="small" color="primary" onClick={downloadCsv}>
                                         <SaveAlt />
                                     </IconButton>
                                 </Tooltip>
-                                {permissions.can_write && (
+                                {isGroupWritable && (
                                     <>
                                         <div style={{ padding: "8px" }}>
                                             <Add color="primary" />
@@ -246,7 +248,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                     )}
                 </Stack>
             </MobilePaper>
-            {permissions.can_write && (
+            {isGroupWritable && (
                 <SpeedDial
                     ariaLabel={t("transactions.createTransaction")}
                     sx={{ position: "fixed", bottom: 20, right: 20 }}

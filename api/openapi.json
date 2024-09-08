@@ -6,7 +6,7 @@
       "name": "AGPL-3.0",
       "identifier": "AGPL-3.0"
     },
-    "version": "0.10.1"
+    "version": "0.14.0"
   },
   "paths": {
     "/api/v1/groups/{group_id}/transactions": {
@@ -166,7 +166,7 @@
         }
       }
     },
-    "/api/v1/transactions/{transaction_id}": {
+    "/api/v1/groups/{group_id}/transactions/{transaction_id}": {
       "get": {
         "tags": [
           "transactions"
@@ -179,6 +179,15 @@
           }
         ],
         "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Group Id"
+            }
+          },
           {
             "name": "transaction_id",
             "in": "path",
@@ -233,6 +242,15 @@
           }
         ],
         "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Group Id"
+            }
+          },
           {
             "name": "transaction_id",
             "in": "path",
@@ -298,6 +316,15 @@
         ],
         "parameters": [
           {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Group Id"
+            }
+          },
+          {
             "name": "transaction_id",
             "in": "path",
             "required": true,
@@ -340,7 +367,7 @@
         }
       }
     },
-    "/api/v1/transactions/{transaction_id}/positions": {
+    "/api/v1/groups/{group_id}/transactions/{transaction_id}/positions": {
       "post": {
         "tags": [
           "transactions"
@@ -353,6 +380,15 @@
           }
         ],
         "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Group Id"
+            }
+          },
           {
             "name": "transaction_id",
             "in": "path",
@@ -1302,6 +1338,114 @@
         }
       }
     },
+    "/api/v1/groups/{group_id}/archive": {
+      "post": {
+        "tags": [
+          "groups"
+        ],
+        "summary": "archive a group",
+        "operationId": "archive_group",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Group Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized"
+          },
+          "403": {
+            "description": "forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/groups/{group_id}/un-archive": {
+      "post": {
+        "tags": [
+          "groups"
+        ],
+        "summary": "un-archive a group",
+        "operationId": "unarchive_group",
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Group Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "unauthorized"
+          },
+          "403": {
+            "description": "forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/token": {
       "post": {
         "tags": [
@@ -1901,7 +2045,7 @@
         }
       }
     },
-    "/api/v1/accounts/{account_id}": {
+    "/api/v1/groups/{group_id}/accounts/{account_id}": {
       "get": {
         "tags": [
           "accounts"
@@ -1914,6 +2058,15 @@
           }
         ],
         "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Group Id"
+            }
+          },
           {
             "name": "account_id",
             "in": "path",
@@ -1976,6 +2129,15 @@
           }
         ],
         "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Group Id"
+            }
+          },
           {
             "name": "account_id",
             "in": "path",
@@ -2048,6 +2210,15 @@
           }
         ],
         "parameters": [
+          {
+            "name": "group_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Group Id"
+            }
+          },
           {
             "name": "account_id",
             "in": "path",
@@ -2469,6 +2640,15 @@
           "created_by": {
             "type": "integer",
             "title": "Created By"
+          },
+          "last_changed": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Changed"
+          },
+          "archived": {
+            "type": "boolean",
+            "title": "Archived"
           }
         },
         "type": "object",
@@ -2480,7 +2660,9 @@
           "terms",
           "add_user_account_on_join",
           "created_at",
-          "created_by"
+          "created_by",
+          "last_changed",
+          "archived"
         ],
         "title": "Group"
       },

@@ -1,13 +1,13 @@
-import { accountEditStarted, useCurrentUserPermissions } from "@abrechnung/redux";
-import { Delete, Edit } from "@mui/icons-material";
-import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText } from "@mui/material";
-import React from "react";
-import { Navigate, useNavigate } from "react-router-dom";
 import { ListItemLink } from "@/components/style/ListItemLink";
 import { useAppDispatch } from "@/store";
 import { getAccountLink } from "@/utils";
+import { accountEditStarted, useIsGroupWritable } from "@abrechnung/redux";
 import { Account } from "@abrechnung/types";
+import { Delete, Edit } from "@mui/icons-material";
+import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText } from "@mui/material";
+import React from "react";
 import { useTranslation } from "react-i18next";
+import { Navigate, useNavigate } from "react-router-dom";
 
 interface Props {
     groupId: number;
@@ -21,9 +21,9 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const permissions = useCurrentUserPermissions(groupId);
+    const isGroupWritable = useIsGroupWritable(groupId);
 
-    if (!permissions || !account) {
+    if (!account) {
         return <Navigate to="/404" />;
     }
 
@@ -58,7 +58,7 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
                     secondary={account.description}
                 />
             </ListItemLink>
-            {permissions.can_write && (
+            {isGroupWritable && (
                 <ListItemSecondaryAction>
                     <IconButton color="primary" onClick={edit}>
                         <Edit />

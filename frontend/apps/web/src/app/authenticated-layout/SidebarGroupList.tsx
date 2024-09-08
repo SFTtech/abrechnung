@@ -14,7 +14,7 @@ interface Props {
 export const SidebarGroupList: React.FC<Props> = ({ activeGroupId }) => {
     const { t } = useTranslation();
     const isGuest = useAppSelector(selectIsGuestUser);
-    const groups = useAppSelector((state) => selectGroups(state));
+    const groups = useAppSelector((state) => selectGroups(state, false));
     const [showGroupCreationModal, setShowGroupCreationModal] = useState(false);
 
     const openGroupCreateModal = () => {
@@ -30,9 +30,9 @@ export const SidebarGroupList: React.FC<Props> = ({ activeGroupId }) => {
     return (
         <>
             <List sx={{ pt: 0 }}>
-                <ListItem sx={{ pt: 0, pb: 0 }}>
+                <ListItemLink to="/" sx={{ pt: 0, pb: 0 }}>
                     <ListItemText secondary="Groups" />
-                </ListItem>
+                </ListItemLink>
                 <div>
                     {groups.map((it) => (
                         <ListItemLink

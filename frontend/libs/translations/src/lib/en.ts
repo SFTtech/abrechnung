@@ -40,6 +40,7 @@ const translations = {
         currency: "Currency",
         addNewTag: "Add new Tag",
         exportAsCsv: "Export as CSV",
+        noneSoFar: "None so far",
     },
     shareSelect: {
         selectedPeople_one: "{{count}} Person",
@@ -67,9 +68,11 @@ const translations = {
     },
     groups: {
         addGroup: "Add Group",
+        archivedDisclaimer: "This group is archived and therefore read-only.",
         list: {
             tabTitle: "Abrechnung - Groups",
             header: "Groups",
+            archivedGroups: "Archived",
             guestUserDisclaimer:
                 "You are a guest user on this Abrechnung and therefore not permitted to create new groups.",
             noGroups: "No Groups",
@@ -99,6 +102,12 @@ const translations = {
             leaveGroup: "Leave Group",
             leaveGroupConfirm:
                 "Are you sure you want to leave the group {{group.name}}. If you are the last member to leave this group it will be deleted and its transaction will be lost forever...",
+            archiveGroup: "Archive Group",
+            archiveGroupConfirm:
+                "Are you sure you want to archive the group {{group.name}}. No modifications can be made to archived groups and they will be hidden in group lists. Only a group owner can reverse this action.",
+            unarchiveGroup: "Unarchive Group",
+            unarchiveGroupConfirm:
+                "Are you sure you want to unarchive the group {{group.name}}. The group will no longer be read-only.",
         },
         join: {
             tabTitle: "Abrechnung - Join Group",

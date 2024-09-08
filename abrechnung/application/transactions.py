@@ -5,7 +5,11 @@ from typing import Optional, Union
 import asyncpg
 
 from abrechnung.application.common import _get_or_create_tag_ids
-from abrechnung.core.auth import check_group_permissions, create_group_log
+from abrechnung.core.auth import create_group_log
+from abrechnung.core.decorators import (
+    requires_group_permissions,
+    with_group_last_changed_update,
+)
 from abrechnung.core.errors import InvalidCommand, NotFoundError
 from abrechnung.core.service import Service
 from abrechnung.domain.transactions import (
@@ -54,6 +58,7 @@ class TransactionService(Service):
         return result["group_id"]
 
     @with_db_transaction
+    @requires_group_permissions()
     async def list_transactions(
         self,
         *,
@@ -63,8 +68,6 @@ class TransactionService(Service):
         min_last_changed: Optional[datetime] = None,
         additional_transactions: Optional[list[int]] = None,
     ) -> list[Transaction]:
-        await check_group_permissions(conn=conn, group_id=group_id, user=user)
-
         if min_last_changed:
             # if a minimum last changed value is specified we must also return all transactions the current
             # user has pending changes with to properly sync state across different devices of the user
@@ -81,7 +84,7 @@ class TransactionService(Service):
         else:
             transactions = await conn.fetch_many(
                 Transaction,
-                "select * " "from full_transaction_state_valid_at(now()) " "where group_id = $1",
+                "select * from full_transaction_state_valid_at(now()) where group_id = $1",
                 group_id,
             )
         for transaction in transactions:
@@ -94,7 +97,7 @@ class TransactionService(Service):
         group_id = await self._check_transaction_permissions(conn=conn, user=user, transaction_id=transaction_id)
         transaction = await conn.fetch_one(
             Transaction,
-            "select * " "from full_transaction_state_valid_at(now()) " "where group_id = $1 and id = $2",
+            "select * from full_transaction_state_valid_at(now()) where group_id = $1 and id = $2",
             group_id,
             transaction_id,
         )
@@ -182,7 +185,6 @@ class TransactionService(Service):
         group_id: int,
         transaction: NewTransaction,
     ) -> int:
-        await check_group_permissions(conn=conn, group_id=group_id, user=user)
         transaction_id = await conn.fetchval(
             "insert into transaction (group_id, type) values ($1, $2) returning id",
             group_id,
@@ -250,6 +252,8 @@ class TransactionService(Service):
         return transaction_id
 
     @with_db_transaction
+    @requires_group_permissions(requires_write=True)
+    @with_group_last_changed_update
     async def create_transaction(
         self,
         *,
@@ -546,6 +550,8 @@ class TransactionService(Service):
         await self._commit_revision(conn=conn, revision_id=revision_id)
 
     @with_db_transaction
+    @requires_group_permissions(requires_write=True)
+    @with_group_last_changed_update
     async def update_transaction(
         self,
         *,
@@ -562,6 +568,8 @@ class TransactionService(Service):
         )
 
     @with_db_transaction
+    @requires_group_permissions(requires_write=True)
+    @with_group_last_changed_update
     async def update_transaction_positions(
         self,
         *,
@@ -589,6 +597,8 @@ class TransactionService(Service):
             )
 
     @with_db_transaction
+    @requires_group_permissions(requires_write=True)
+    @with_group_last_changed_update
     async def delete_transaction(self, *, conn: Connection, user: User, transaction_id: int):
         group_id = await self._check_transaction_permissions(
             conn=conn,

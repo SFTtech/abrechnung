@@ -1,5 +1,5 @@
 from datetime import datetime, timezone
-from typing import List, Optional
+from typing import List
 
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
@@ -306,4 +306,36 @@ async def delete_invite(
         user=user,
         group_id=group_id,
         invite_id=invite_id,
+    )
+
+
+@router.post(
+    r"/v1/groups/{group_id}/archive",
+    summary="archive a group",
+    operation_id="archive_group",
+)
+async def archive_group(
+    group_id: int,
+    user: User = Depends(get_current_user),
+    group_service: GroupService = Depends(get_group_service),
+):
+    await group_service.archive_group(
+        user=user,
+        group_id=group_id,
+    )
+
+
+@router.post(
+    r"/v1/groups/{group_id}/un-archive",
+    summary="un-archive a group",
+    operation_id="unarchive_group",
+)
+async def unarchive_group(
+    group_id: int,
+    user: User = Depends(get_current_user),
+    group_service: GroupService = Depends(get_group_service),
+):
+    await group_service.unarchive_group(
+        user=user,
+        group_id=group_id,
     )

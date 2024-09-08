@@ -204,12 +204,13 @@ export const fetchAccounts = createAsyncThunk<
     }
 );
 
-export const fetchAccount = createAsyncThunk<BackendAccount, { accountId: number; api: Api }, { state: IRootState }>(
-    "fetchAccount",
-    async ({ accountId, api }) => {
-        return await api.client.accounts.getAccount({ accountId });
-    }
-);
+export const fetchAccount = createAsyncThunk<
+    BackendAccount,
+    { groupId: number; accountId: number; api: Api },
+    { state: IRootState }
+>("fetchAccount", async ({ groupId, accountId, api }) => {
+    return await api.client.accounts.getAccount({ groupId, accountId });
+});
 
 export const saveAccount = createAsyncThunk<
     { oldAccountId: number; account: BackendAccount },
@@ -231,6 +232,7 @@ export const saveAccount = createAsyncThunk<
             });
         } else {
             updatedAccount = await api.client.accounts.updateAccount({
+                groupId,
                 accountId: wipAccount.id,
                 requestBody: { owning_user_id: null, tags: [], date_info: null, ...wipAccount },
             });
@@ -295,7 +297,7 @@ export const deleteAccount = createAsyncThunk<
     const account = s.accounts.byId[accountId];
     if (account) {
         if (await api.hasConnection()) {
-            const backendAccount = await api.client.accounts.deleteAccount({ accountId });
+            const backendAccount = await api.client.accounts.deleteAccount({ groupId, accountId });
             return { account: backendAccount };
         } else {
             return rejectWithValue("no internet connection");

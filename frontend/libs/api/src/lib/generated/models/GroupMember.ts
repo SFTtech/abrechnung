@@ -1,8 +1,7 @@
-/* generated using openapi-typescript-codegen -- do no edit */
+/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 export type GroupMember = {
     user_id: number;
     username: string;
@@ -10,5 +9,6 @@ export type GroupMember = {
     can_write: boolean;
     description: string;
     joined_at: string;
-    invited_by: number | null;
+    invited_by: (number | null);
 };
+

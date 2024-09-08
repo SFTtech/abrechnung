@@ -3,7 +3,13 @@ import { MobilePaper, ListItemLink } from "@/components/style";
 import { useTitle } from "@/core/utils";
 import { useFormatCurrency } from "@/hooks";
 import { useAppSelector } from "@/store";
-import { selectAccountBalances, useGroup, useGroupAccounts, useSortedAccounts } from "@abrechnung/redux";
+import {
+    selectAccountBalances,
+    useGroup,
+    useGroupAccounts,
+    useIsGroupWritable,
+    useSortedAccounts,
+} from "@abrechnung/redux";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import {
     Alert,
@@ -23,6 +29,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, Link as RouterLink } from "react-router-dom";
 import { BalanceBarGraph } from "./BalanceBarGraph";
+import { GroupArchivedDisclaimer } from "@/components";
 
 interface Props {
     groupId: number;
@@ -38,6 +45,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
     const personalAccounts = useSortedAccounts(groupId, "name", "personal");
     const clearingAccounts = useGroupAccounts(groupId, "clearing");
     const balances = useAppSelector((state) => selectAccountBalances(state, groupId));
+    const isGroupWritable = useIsGroupWritable(groupId);
 
     const [selectedTab, setSelectedTab] = useState("1");
 
@@ -62,6 +70,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
 
     return (
         <MobilePaper>
+            <GroupArchivedDisclaimer group={group} />
             <TabContext value={selectedTab}>
                 <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                     <TabList onChange={(event, idx) => setSelectedTab(idx)} centered>
@@ -121,12 +130,16 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                     <BalanceTable group={group} />
                 </TabPanel>
             </TabContext>
-            <Divider />
-            <Box sx={{ display: "flex", justifyContent: "center" }}>
-                <Button component={RouterLink} to={`/groups/${group.id}/settlement-plan`}>
-                    {t("accounts.settleUp")}
-                </Button>
-            </Box>
+            {isGroupWritable && (
+                <>
+                    <Divider />
+                    <Box sx={{ display: "flex", justifyContent: "center" }}>
+                        <Button component={RouterLink} to={`/groups/${group.id}/settlement-plan`}>
+                            {t("accounts.settleUp")}
+                        </Button>
+                    </Box>
+                </>
+            )}
         </MobilePaper>
     );
 };

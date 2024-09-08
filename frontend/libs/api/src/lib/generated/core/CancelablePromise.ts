@@ -1,11 +1,12 @@
-/* generated using openapi-typescript-codegen -- do no edit */
+/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 export class CancelError extends Error {
+
     constructor(message: string) {
         super(message);
-        this.name = "CancelError";
+        this.name = 'CancelError';
     }
 
     public get isCancelled(): boolean {
@@ -50,7 +51,7 @@ export class CancelablePromise<T> implements Promise<T> {
                     return;
                 }
                 this.#isResolved = true;
-                this.#resolve?.(value);
+                if (this.#resolve) this.#resolve(value);
             };
 
             const onReject = (reason?: any): void => {
@@ -58,7 +59,7 @@ export class CancelablePromise<T> implements Promise<T> {
                     return;
                 }
                 this.#isRejected = true;
-                this.#reject?.(reason);
+                if (this.#reject) this.#reject(reason);
             };
 
             const onCancel = (cancelHandler: () => void): void => {
@@ -68,15 +69,15 @@ export class CancelablePromise<T> implements Promise<T> {
                 this.#cancelHandlers.push(cancelHandler);
             };
 
-            Object.defineProperty(onCancel, "isResolved", {
+            Object.defineProperty(onCancel, 'isResolved', {
                 get: (): boolean => this.#isResolved,
             });
 
-            Object.defineProperty(onCancel, "isRejected", {
+            Object.defineProperty(onCancel, 'isRejected', {
                 get: (): boolean => this.#isRejected,
             });
 
-            Object.defineProperty(onCancel, "isCancelled", {
+            Object.defineProperty(onCancel, 'isCancelled', {
                 get: (): boolean => this.#isCancelled,
             });
 
@@ -116,12 +117,12 @@ export class CancelablePromise<T> implements Promise<T> {
                     cancelHandler();
                 }
             } catch (error) {
-                console.warn("Cancellation threw an error", error);
+                console.warn('Cancellation threw an error', error);
                 return;
             }
         }
         this.#cancelHandlers.length = 0;
-        this.#reject?.(new CancelError("Request aborted"));
+        if (this.#reject) this.#reject(new CancelError('Request aborted'));
     }
 
     public get isCancelled(): boolean {

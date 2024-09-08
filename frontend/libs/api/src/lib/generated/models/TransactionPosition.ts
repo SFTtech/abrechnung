@@ -1,8 +1,7 @@
-/* generated using openapi-typescript-codegen -- do no edit */
+/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 export type TransactionPosition = {
     name: string;
     price: number;
@@ -11,3 +10,4 @@ export type TransactionPosition = {
     id: number;
     deleted: boolean;
 };
+

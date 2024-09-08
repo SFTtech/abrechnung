@@ -15,7 +15,7 @@ export const DrawerContent: React.FC<DrawerContentComponentProps> = (props) => {
     const dispatch = useAppDispatch();
     const navigation = useNavigation<DrawerNavigationProp<RootDrawerParamList>>();
     const activeGroupID = useAppSelector(selectActiveGroupId);
-    const groups = useAppSelector(selectGroups);
+    const groups = useAppSelector((state) => selectGroups(state, false));
 
     if (!api) {
         return null;

@@ -1,3 +1,4 @@
+from abrechnung.domain.groups import GroupMember
 from abrechnung.domain.users import User
 from abrechnung.framework.database import Connection
 
@@ -10,22 +11,25 @@ async def check_group_permissions(
     user: User,
     is_owner: bool = False,
     can_write: bool = False,
-) -> tuple[bool, bool]:
-    membership = await conn.fetchrow(
-        "select is_owner, can_write from group_membership where group_id = $1 and user_id = $2",
+) -> GroupMember:
+    membership = await conn.fetch_maybe_one(
+        GroupMember,
+        "select g.*, u.username from group_membership g "
+        "join usr u on g.user_id = u.id "
+        "where g.group_id = $1 and g.user_id = $2",
         group_id,
         user.id,
     )
     if membership is None:
         raise NotFoundError(f"group not found")
 
-    if can_write and not (membership["is_owner"] or membership["can_write"]):
+    if can_write and not (membership.is_owner or membership.can_write):
         raise PermissionError(f"write access to group denied")
 
-    if is_owner and not membership["is_owner"]:
+    if is_owner and not membership.is_owner:
         raise PermissionError(f"owner access to group denied")
 
-    return membership["can_write"], membership["is_owner"]
+    return membership
 
 
 async def create_group_log(

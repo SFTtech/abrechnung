@@ -71,7 +71,7 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, account }) =>
                 </Tooltip>
             </Box>
             <List>
-                {combinedList.length === 0 && <Alert severity="info">None so far.</Alert>}
+                {combinedList.length === 0 && <Alert severity="info">{t("common.noneSoFar")}</Alert>}
                 {combinedList.map((entry) => {
                     if (entry.type === "clearing") {
                         return (

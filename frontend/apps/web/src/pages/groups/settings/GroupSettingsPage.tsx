@@ -1,19 +1,157 @@
 import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
-import { useCurrentUserPermissions, useGroup } from "@abrechnung/redux";
-import { Alert, Box, Stack, Tab } from "@mui/material";
+import { Group, GroupMember } from "@abrechnung/api";
+import { archiveGroup, leaveGroup, unarchiveGroup, useCurrentUserPermissions, useGroup } from "@abrechnung/redux";
+import { useQueryVar } from "@abrechnung/utils";
+import { TabContext, TabList, TabPanel } from "@mui/lab";
+import {
+    Alert,
+    Box,
+    Button,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
+    Stack,
+    Tab,
+} from "@mui/material";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate } from "react-router-dom";
-import { SettingsForm } from "./SettingsForm";
-import { GroupMemberList } from "./GroupMemberList";
-import { TabContext, TabList, TabPanel } from "@mui/lab";
-import { useQueryVar } from "@abrechnung/utils";
+import { Navigate, useNavigate } from "react-router-dom";
 import { GroupInvites } from "./GroupInvites";
+import { GroupMemberList } from "./GroupMemberList";
+import { SettingsForm } from "./SettingsForm";
+import { useAppDispatch } from "@/store";
+import { api } from "@/core/api";
+import { toast } from "react-toastify";
+import { Archive as ArchiveIcon, Logout as LogoutIcon } from "@mui/icons-material";
+import { GroupArchivedDisclaimer } from "@/components";
 
 interface Props {
     groupId: number;
 }
+
+const GroupActions: React.FC<{ group: Group; permissions: GroupMember }> = ({ group, permissions }) => {
+    const { t } = useTranslation();
+    const [showLeaveModal, setShowLeaveModal] = React.useState(false);
+    const [showArchiveModal, setShowArchiveModal] = React.useState(false);
+    const [showUnarchiveModal, setShowUnarchiveModal] = React.useState(false);
+    const dispatch = useAppDispatch();
+    const navigate = useNavigate();
+
+    const confirmLeaveGroup = () => {
+        dispatch(leaveGroup({ groupId: group.id, api }))
+            .unwrap()
+            .then(() => {
+                navigate("/");
+            })
+            .catch((err) => {
+                toast.error(err);
+            });
+    };
+
+    const confirmArchiveGroup = () => {
+        dispatch(archiveGroup({ groupId: group.id, api }))
+            .unwrap()
+            .then(() => setShowArchiveModal(false))
+            .catch((err) => {
+                toast.error(err.message);
+            });
+    };
+
+    const confirmUnarchiveGroup = () => {
+        dispatch(unarchiveGroup({ groupId: group.id, api }))
+            .unwrap()
+            .then(() => setShowUnarchiveModal(false))
+            .catch((err) => {
+                toast.error(err.message);
+            });
+    };
+
+    return (
+        <>
+            <Stack direction="row" spacing={1}>
+                <Button
+                    variant="contained"
+                    color="error"
+                    onClick={() => setShowLeaveModal(true)}
+                    startIcon={<LogoutIcon />}
+                >
+                    {t("groups.settings.leaveGroup")}
+                </Button>
+                {permissions.is_owner && !group.archived && (
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => setShowArchiveModal(true)}
+                        startIcon={<ArchiveIcon />}
+                    >
+                        {t("groups.settings.archiveGroup")}
+                    </Button>
+                )}
+                {permissions.is_owner && group.archived && (
+                    <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => setShowUnarchiveModal(true)}
+                        startIcon={<ArchiveIcon />}
+                    >
+                        {t("groups.settings.unarchiveGroup")}
+                    </Button>
+                )}
+            </Stack>
+            <Dialog open={showLeaveModal} onClose={() => setShowLeaveModal(false)}>
+                <DialogTitle>{t("groups.settings.leaveGroup")}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        <span>{t("groups.settings.leaveGroupConfirm", { group })}</span>
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button color="error" onClick={confirmLeaveGroup}>
+                        {t("common.yes")}
+                    </Button>
+                    <Button color="primary" onClick={() => setShowLeaveModal(false)}>
+                        {t("common.no")}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            <Dialog open={showArchiveModal} onClose={() => setShowArchiveModal(false)}>
+                <DialogTitle>{t("groups.settings.archiveGroup")}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        <span>{t("groups.settings.archiveGroupConfirm", { group })}</span>
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button color="error" onClick={confirmArchiveGroup}>
+                        {t("common.yes")}
+                    </Button>
+                    <Button color="primary" onClick={() => setShowArchiveModal(false)}>
+                        {t("common.no")}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+            <Dialog open={showUnarchiveModal} onClose={() => setShowUnarchiveModal(false)}>
+                <DialogTitle>{t("groups.settings.unarchiveGroup")}</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        <span>{t("groups.settings.unarchiveGroupConfirm", { group })}</span>
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button color="error" onClick={confirmUnarchiveGroup}>
+                        {t("common.yes")}
+                    </Button>
+                    <Button color="primary" onClick={() => setShowUnarchiveModal(false)}>
+                        {t("common.no")}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+        </>
+    );
+};
 
 export const GroupSettingsPage: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
@@ -39,12 +177,18 @@ export const GroupSettingsPage: React.FC<Props> = ({ groupId }) => {
             <TabPanel value="settings">
                 <Stack spacing={2}>
                     <MobilePaper>
-                        {permissions.is_owner ? (
-                            <Alert severity="info">{t("groups.settings.ownerDisclaimer")}</Alert>
-                        ) : !permissions.can_write ? (
-                            <Alert severity="info">{t("groups.settings.readAccessDisclaimer")}</Alert>
-                        ) : null}
+                        <Stack spacing={1}>
+                            <GroupArchivedDisclaimer group={group} />
+                            {permissions.is_owner ? (
+                                <Alert severity="info">{t("groups.settings.ownerDisclaimer")}</Alert>
+                            ) : !permissions.can_write ? (
+                                <Alert severity="info">{t("groups.settings.readAccessDisclaimer")}</Alert>
+                            ) : null}
+                        </Stack>
                         <SettingsForm group={group} />
+                        <Box sx={{ mt: 1 }}>
+                            <GroupActions group={group} permissions={permissions} />
+                        </Box>
                     </MobilePaper>
                     <MobilePaper>
                         <GroupMemberList group={group} />
