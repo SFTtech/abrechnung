@@ -75,41 +75,41 @@ async def create_transaction(
         transaction=payload,
     )
 
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
+    return await transaction_service.get_transaction(user=user, group_id=group_id, transaction_id=transaction_id)
 
 
 @router.get(
-    "/v1/transactions/{transaction_id}",
+    "/v1/groups/{group_id}/transactions/{transaction_id}",
     summary="get transaction details",
     response_model=Transaction,
     operation_id="get_transaction",
 )
 async def get_transaction(
+    group_id: int,
     transaction_id: int,
     user: User = Depends(get_current_user),
     transaction_service: TransactionService = Depends(get_transaction_service),
 ):
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
+    return await transaction_service.get_transaction(user=user, group_id=group_id, transaction_id=transaction_id)
 
 
 @router.post(
-    "/v1/transactions/{transaction_id}",
+    "/v1/groups/{group_id}/transactions/{transaction_id}",
     summary="update transaction details",
     response_model=Transaction,
     operation_id="update_transaction",
 )
 async def update_transaction(
+    group_id: int,
     transaction_id: int,
     payload: UpdateTransaction,
     user: User = Depends(get_current_user),
     transaction_service: TransactionService = Depends(get_transaction_service),
 ):
     await transaction_service.update_transaction(
-        user=user,
-        transaction_id=transaction_id,
-        transaction=payload,
+        user=user, transaction_id=transaction_id, transaction=payload, group_id=group_id
     )
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
+    return await transaction_service.get_transaction(user=user, group_id=group_id, transaction_id=transaction_id)
 
 
 class UpdatePositionsPayload(BaseModel):
@@ -117,41 +117,45 @@ class UpdatePositionsPayload(BaseModel):
 
 
 @router.post(
-    "/v1/transactions/{transaction_id}/positions",
+    "/v1/groups/{group_id}/transactions/{transaction_id}/positions",
     summary="update transaction positions",
     response_model=Transaction,
     operation_id="update_transaction_positions",
 )
 async def update_transaction_positions(
+    group_id: int,
     transaction_id: int,
     payload: UpdatePositionsPayload,
     user: User = Depends(get_current_user),
     transaction_service: TransactionService = Depends(get_transaction_service),
 ):
     await transaction_service.update_transaction_positions(
+        group_id=group_id,
         user=user,
         transaction_id=transaction_id,
         positions=payload.positions,
     )
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
+    return await transaction_service.get_transaction(user=user, group_id=group_id, transaction_id=transaction_id)
 
 
 @router.delete(
-    "/v1/transactions/{transaction_id}",
+    "/v1/groups/{group_id}/transactions/{transaction_id}",
     summary="delete a transaction",
     response_model=Transaction,
     operation_id="delete_transaction",
 )
 async def delete_transaction(
+    group_id: int,
     transaction_id: int,
     user: User = Depends(get_current_user),
     transaction_service: TransactionService = Depends(get_transaction_service),
 ):
     await transaction_service.delete_transaction(
+        group_id=group_id,
         user=user,
         transaction_id=transaction_id,
     )
-    return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
+    return await transaction_service.get_transaction(user=user, group_id=group_id, transaction_id=transaction_id)
 
 
 @router.get(

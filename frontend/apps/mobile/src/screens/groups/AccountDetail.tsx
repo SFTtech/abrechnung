@@ -4,8 +4,8 @@ import {
     selectTransactionsInvolvingAccount,
     useAccount,
     useClearingAccountsInvolvingAccount,
-    useCurrentUserPermissions,
     useGroupCurrencySymbol,
+    useIsGroupWritable,
 } from "@abrechnung/redux";
 import { Account, AccountBalance, Transaction, TransactionShare } from "@abrechnung/types";
 import { fromISOString } from "@abrechnung/utils";
@@ -51,7 +51,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
         .sort((f1, f2) => fromISOString(f2.last_changed).getTime() - fromISOString(f1.last_changed).getTime());
 
     const currency_symbol = useGroupCurrencySymbol(groupId);
-    const permissions = useCurrentUserPermissions(groupId);
+    const isGroupWritable = useIsGroupWritable(groupId);
 
     const [confirmDeleteModalOpen, setConfirmDeleteModalOpen] = React.useState(false);
 
@@ -80,7 +80,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
         navigation.setOptions({
             headerTitle: account?.name || "",
             headerRight: () => {
-                if (permissions === undefined || !permissions.can_write) {
+                if (!isGroupWritable) {
                     return null;
                 }
                 return (
@@ -91,7 +91,7 @@ export const AccountDetail: React.FC<GroupStackScreenProps<"AccountDetail">> = (
                 );
             },
         });
-    }, [accountId, permissions, groupId, theme, account, navigation]);
+    }, [accountId, isGroupWritable, groupId, theme, account, navigation]);
 
     const renderTransactionListEntryTransaction = (transaction: Transaction) => (
         <List.Item

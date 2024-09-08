@@ -33,6 +33,8 @@ class Group(BaseModel):
     add_user_account_on_join: bool
     created_at: datetime
     created_by: int
+    last_changed: datetime
+    archived: bool
 
 
 class GroupLog(BaseModel):

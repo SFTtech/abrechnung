@@ -1,17 +1,14 @@
-/* generated using openapi-typescript-codegen -- do no edit */
+/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { ClearingAccount } from "../models/ClearingAccount";
 import type { NewAccount } from "../models/NewAccount";
 import type { PersonalAccount } from "../models/PersonalAccount";
-
 import type { CancelablePromise } from "../core/CancelablePromise";
 import type { BaseHttpRequest } from "../core/BaseHttpRequest";
-
 export class AccountsService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * list all accounts in a group
      * @returns any Successful Response
@@ -32,7 +29,6 @@ export class AccountsService {
             },
         });
     }
-
     /**
      * create a new group account
      * @returns any Successful Response
@@ -61,17 +57,23 @@ export class AccountsService {
             },
         });
     }
-
     /**
      * fetch a group account
      * @returns any Successful Response
      * @throws ApiError
      */
-    public getAccount({ accountId }: { accountId: number }): CancelablePromise<ClearingAccount | PersonalAccount> {
+    public getAccount({
+        groupId,
+        accountId,
+    }: {
+        groupId: number;
+        accountId: number;
+    }): CancelablePromise<ClearingAccount | PersonalAccount> {
         return this.httpRequest.request({
             method: "GET",
-            url: "/api/v1/accounts/{account_id}",
+            url: "/api/v1/groups/{group_id}/accounts/{account_id}",
             path: {
+                group_id: groupId,
                 account_id: accountId,
             },
             errors: {
@@ -82,23 +84,25 @@ export class AccountsService {
             },
         });
     }
-
     /**
      * update an account
      * @returns any Successful Response
      * @throws ApiError
      */
     public updateAccount({
+        groupId,
         accountId,
         requestBody,
     }: {
+        groupId: number;
         accountId: number;
         requestBody: NewAccount;
     }): CancelablePromise<ClearingAccount | PersonalAccount> {
         return this.httpRequest.request({
             method: "POST",
-            url: "/api/v1/accounts/{account_id}",
+            url: "/api/v1/groups/{group_id}/accounts/{account_id}",
             path: {
+                group_id: groupId,
                 account_id: accountId,
             },
             body: requestBody,
@@ -111,17 +115,23 @@ export class AccountsService {
             },
         });
     }
-
     /**
      * delete an account
      * @returns any Successful Response
      * @throws ApiError
      */
-    public deleteAccount({ accountId }: { accountId: number }): CancelablePromise<ClearingAccount | PersonalAccount> {
+    public deleteAccount({
+        groupId,
+        accountId,
+    }: {
+        groupId: number;
+        accountId: number;
+    }): CancelablePromise<ClearingAccount | PersonalAccount> {
         return this.httpRequest.request({
             method: "DELETE",
-            url: "/api/v1/accounts/{account_id}",
+            url: "/api/v1/groups/{group_id}/accounts/{account_id}",
             path: {
+                group_id: groupId,
                 account_id: accountId,
             },
             errors: {

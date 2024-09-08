@@ -4,8 +4,8 @@ import {
     createTransaction,
     fetchTransactions,
     selectGroupTransactionsStatus,
-    useCurrentUserPermissions,
     useGroup,
+    useIsGroupWritable,
     useSortedTransactions,
 } from "@abrechnung/redux";
 import { Transaction, TransactionType } from "@abrechnung/types";
@@ -36,7 +36,7 @@ export const TransactionList: React.FC<Props> = ({ navigation }) => {
     const [sortMode, setSortMode] = useState<TransactionSortMode>("last_changed");
     const transactions = useSortedTransactions(groupId, sortMode, search);
     const transactionStatus = useAppSelector((state) => selectGroupTransactionsStatus(state, groupId));
-    const permissions = useCurrentUserPermissions(groupId);
+    const isGroupWritable = useIsGroupWritable(groupId);
 
     const [refreshing, setRefreshing] = useState<boolean>(false);
     const [isFapOpen, setFabOpen] = useState<boolean>(false);
@@ -144,7 +144,7 @@ export const TransactionList: React.FC<Props> = ({ navigation }) => {
             onRefresh={onRefresh}
             refreshing={refreshing}
             ListFooterComponent={
-                permissions?.can_write ? (
+                isGroupWritable ? (
                     <Portal>
                         <FAB.Group
                             style={styles.fab}

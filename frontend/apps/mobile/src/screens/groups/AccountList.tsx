@@ -5,8 +5,8 @@ import {
     fetchAccounts,
     selectAccountBalances,
     selectGroupAccountsStatus,
-    useCurrentUserPermissions,
     useGroup,
+    useIsGroupWritable,
     useSortedAccounts,
 } from "@abrechnung/redux";
 import { Account, AccountBalance } from "@abrechnung/types";
@@ -39,7 +39,7 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
     const [sortMode, setSortMode] = useState<AccountSortMode>("name");
     const accounts = useSortedAccounts(groupId, sortMode, accountType, search);
     const accountBalances = useAppSelector((state) => selectAccountBalances(state, groupId));
-    const permissions = useCurrentUserPermissions(groupId);
+    const isGroupWritable = useIsGroupWritable(groupId);
     const currency_symbol = group?.currency_symbol;
     const accountStatus = useAppSelector((state) => selectGroupAccountsStatus(state, groupId));
 
@@ -188,7 +188,7 @@ export const AccountList: React.FC<Props> = ({ route, navigation }) => {
             data={accounts}
             renderItem={renderItem}
             ListFooterComponent={
-                permissions?.can_write ? (
+                isGroupWritable ? (
                     <Portal>
                         <FAB style={styles.fab} visible={isFocused} icon="add" onPress={createNewAccount} />
                     </Portal>

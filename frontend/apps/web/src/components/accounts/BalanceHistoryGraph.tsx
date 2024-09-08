@@ -8,12 +8,13 @@ import {
     useGroupCurrencySymbol,
 } from "@abrechnung/redux";
 import { fromISOString, toISODateString } from "@abrechnung/utils";
-import { Card, Divider, Theme, Typography, useTheme } from "@mui/material";
+import { Alert, Card, Divider, Theme, Typography, useTheme } from "@mui/material";
 import { PointMouseHandler, PointTooltipProps, ResponsiveLine, Serie } from "@nivo/line";
 import { DateTime } from "luxon";
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ClearingAccountIcon, PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
@@ -21,6 +22,7 @@ interface Props {
 }
 
 export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => {
+    const { t } = useTranslation();
     const theme: Theme = useTheme();
     const navigate = useNavigate();
 
@@ -140,6 +142,12 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
             </Card>
         );
     };
+
+    // workaround for errors in nivo when passed empty data arrays.
+    // Nivo throws an error when having set useMesh=true upon mouse hover for empty data arrays
+    if (graphData.length === 0) {
+        return <Alert severity="info">{t("common.noneSoFar")}</Alert>;
+    }
 
     return (
         <div style={{ width: "100%", height: "300px" }}>

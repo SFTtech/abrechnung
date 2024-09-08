@@ -1,6 +1,6 @@
 import { Api, Group, GroupInvite, GroupLog, GroupMember, GroupPayload } from "@abrechnung/api";
 import { GroupPermissions } from "@abrechnung/types";
-import { lambdaComparator } from "@abrechnung/utils";
+import { fromISOString, lambdaComparator } from "@abrechnung/utils";
 import { Draft, createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
 import { GroupInfo, GroupSliceState, IRootState, StateStatus } from "../types";
 import { addEntity, getGroupScopedState, removeEntity } from "../utils";
@@ -43,11 +43,19 @@ const initializeGroupState = (state: Draft<GroupSliceState>, groupId: number) =>
 const selectGroupSlice = (state: IRootState, groupId: number) =>
     getGroupScopedState<GroupInfo, GroupSliceState>(state.groups, groupId);
 
+const groupSortFn = (lhs: Group, rhs: Group): number => {
+    return fromISOString(rhs.last_changed).getTime() - fromISOString(lhs.last_changed).getTime();
+};
+
 // selectors
 export const selectGroups = createSelector(
     (state: IRootState) => state.groups,
-    (state: GroupSliceState) => {
-        return state.groups.ids.map((id) => state.groups.byId[id]);
+    (state: IRootState, archived: boolean) => archived,
+    (state: GroupSliceState, archived: boolean) => {
+        return state.groups.ids
+            .map((id) => state.groups.byId[id])
+            .filter((group) => group.archived === archived)
+            .sort(groupSortFn);
     }
 );
 

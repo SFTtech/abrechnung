@@ -1,4 +1,4 @@
-/* generated using openapi-typescript-codegen -- do no edit */
+/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
@@ -12,13 +12,10 @@ import type { GroupPayload } from "../models/GroupPayload";
 import type { GroupPreview } from "../models/GroupPreview";
 import type { PreviewGroupPayload } from "../models/PreviewGroupPayload";
 import type { UpdateGroupMemberPayload } from "../models/UpdateGroupMemberPayload";
-
 import type { CancelablePromise } from "../core/CancelablePromise";
 import type { BaseHttpRequest } from "../core/BaseHttpRequest";
-
 export class GroupsService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * preview a group before joining using an invite token
      * @returns GroupPreview Successful Response
@@ -38,7 +35,6 @@ export class GroupsService {
             },
         });
     }
-
     /**
      * join a group using an invite token
      * @returns Group Successful Response
@@ -58,7 +54,6 @@ export class GroupsService {
             },
         });
     }
-
     /**
      * list the current users groups
      * @returns Group Successful Response
@@ -75,7 +70,6 @@ export class GroupsService {
             },
         });
     }
-
     /**
      * create a group
      * @returns Group Successful Response
@@ -95,7 +89,6 @@ export class GroupsService {
             },
         });
     }
-
     /**
      * fetch group details
      * @returns Group Successful Response
@@ -116,7 +109,6 @@ export class GroupsService {
             },
         });
     }
-
     /**
      * update group details
      * @returns Group Successful Response
@@ -145,7 +137,6 @@ export class GroupsService {
             },
         });
     }
-
     /**
      * delete a group
      * @returns void
@@ -166,7 +157,6 @@ export class GroupsService {
             },
         });
     }
-
     /**
      * leave a group
      * @returns void
@@ -187,7 +177,6 @@ export class GroupsService {
             },
         });
     }
-
     /**
      * list all members of a group
      * @returns GroupMember Successful Response
@@ -208,7 +197,6 @@ export class GroupsService {
             },
         });
     }
-
     /**
      * update the permissions of a group member
      * @returns GroupMember Successful Response
@@ -237,7 +225,6 @@ export class GroupsService {
             },
         });
     }
-
     /**
      * fetch the group log
      * @returns GroupLog Successful Response
@@ -258,7 +245,6 @@ export class GroupsService {
             },
         });
     }
-
     /**
      * post a message to the group log
      * @returns void
@@ -287,7 +273,6 @@ export class GroupsService {
             },
         });
     }
-
     /**
      * list all invite links of a group
      * @returns GroupInvite Successful Response
@@ -308,7 +293,6 @@ export class GroupsService {
             },
         });
     }
-
     /**
      * create a new group invite link
      * @returns GroupInvite Successful Response
@@ -337,7 +321,6 @@ export class GroupsService {
             },
         });
     }
-
     /**
      * delete a group invite link
      * @returns void
@@ -350,6 +333,46 @@ export class GroupsService {
             path: {
                 group_id: groupId,
                 invite_id: inviteId,
+            },
+            errors: {
+                401: `unauthorized`,
+                403: `forbidden`,
+                404: `Not found`,
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * archive a group
+     * @returns any Successful Response
+     * @throws ApiError
+     */
+    public archiveGroup({ groupId }: { groupId: number }): CancelablePromise<any> {
+        return this.httpRequest.request({
+            method: "POST",
+            url: "/api/v1/groups/{group_id}/archive",
+            path: {
+                group_id: groupId,
+            },
+            errors: {
+                401: `unauthorized`,
+                403: `forbidden`,
+                404: `Not found`,
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * un-archive a group
+     * @returns any Successful Response
+     * @throws ApiError
+     */
+    public unarchiveGroup({ groupId }: { groupId: number }): CancelablePromise<any> {
+        return this.httpRequest.request({
+            method: "POST",
+            url: "/api/v1/groups/{group_id}/un-archive",
+            path: {
+                group_id: groupId,
             },
             errors: {
                 401: `unauthorized`,

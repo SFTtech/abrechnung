@@ -1,8 +1,6 @@
 {
     "$schema": "./node_modules/nx/schemas/nx-schema.json",
-    "affected": {
-        "defaultBase": "main"
-    },
+    "parallel": 8,
     "pluginsConfig": {
         "@nx/js": {
             "analyzeSourceFiles": false

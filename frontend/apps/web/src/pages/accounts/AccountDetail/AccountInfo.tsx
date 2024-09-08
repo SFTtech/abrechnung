@@ -12,8 +12,8 @@ import {
     discardAccountChange,
     saveAccount,
     selectAccountBalances,
-    useCurrentUserPermissions,
     useGroupCurrencySymbol,
+    useIsGroupWritable,
     wipAccountUpdated,
 } from "@abrechnung/redux";
 import { Account, AccountValidator } from "@abrechnung/types";
@@ -38,7 +38,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const permissions = useCurrentUserPermissions(groupId);
+    const isGroupWritable = useIsGroupWritable(groupId);
     const currencySymbol = useGroupCurrencySymbol(groupId);
     const balances = useAppSelector((state) => selectAccountBalances(state, groupId));
 
@@ -111,7 +111,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
         navigate(`/groups/${groupId}/${account.type === "clearing" ? "events" : "accounts"}`);
     };
 
-    if (!permissions || !currencySymbol) {
+    if (!currencySymbol) {
         return <Navigate to="/404" />;
     }
 
@@ -125,7 +125,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                     <Chip color="primary" label={accountTypeLabel} />
                 </Grid>
                 <Grid item>
-                    {permissions.can_write && (
+                    {isGroupWritable && (
                         <>
                             {account.is_wip ? (
                                 <>

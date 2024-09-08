@@ -1,14 +1,12 @@
-/* generated using openapi-typescript-codegen -- do no edit */
+/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 import type { NewFile } from "./NewFile";
 import type { NewTransactionPosition } from "./NewTransactionPosition";
 import type { TransactionPosition } from "./TransactionPosition";
 import type { TransactionType } from "./TransactionType";
 import type { UpdateFile } from "./UpdateFile";
-
 export type UpdateTransaction = {
     type: TransactionType;
     name: string;

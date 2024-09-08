@@ -1,12 +1,10 @@
-/* generated using openapi-typescript-codegen -- do no edit */
+/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-
 import type { FileAttachment } from "./FileAttachment";
 import type { TransactionPosition } from "./TransactionPosition";
 import type { TransactionType } from "./TransactionType";
-
 export type Transaction = {
     id: number;
     group_id: number;

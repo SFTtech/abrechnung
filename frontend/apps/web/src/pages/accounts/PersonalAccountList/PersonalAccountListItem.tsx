@@ -1,12 +1,13 @@
-import { accountEditStarted, selectGroupMemberIdToUsername, useCurrentUserPermissions } from "@abrechnung/redux";
+import { ListItemLink } from "@/components/style/ListItemLink";
+import { useAppDispatch } from "@/store";
+import { getAccountLink } from "@/utils";
+import { accountEditStarted, useIsGroupWritable } from "@abrechnung/redux";
+import { Account } from "@abrechnung/types";
 import { Delete, Edit } from "@mui/icons-material";
 import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText } from "@mui/material";
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router-dom";
-import { ListItemLink } from "@/components/style/ListItemLink";
-import { useAppDispatch, useAppSelector } from "@/store";
-import { getAccountLink } from "@/utils";
-import { Account } from "@abrechnung/types";
 
 interface Props {
     groupId: number;
@@ -16,13 +17,13 @@ interface Props {
 }
 
 export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserId, account, setAccountToDelete }) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
 
-    const permissions = useCurrentUserPermissions(groupId);
-    const memberIDToUsername = useAppSelector((state) => selectGroupMemberIdToUsername(state, groupId));
+    const isGroupWritable = useIsGroupWritable(groupId);
 
-    if (!permissions || !account) {
+    if (!account) {
         return <Navigate to="/404" />;
     }
 
@@ -33,26 +34,10 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
         navigate(getAccountLink(groupId, account.type, account.id));
     };
     let owningUserInfo = null;
-    if (account.type === "personal" && account.owning_user_id !== null) {
-        if (account.owning_user_id === currentUserId) {
-            owningUserInfo = (
-                <span>
-                    , owned by <Chip size="small" component="span" color="primary" label="you" />
-                </span>
-            );
-        } else {
-            owningUserInfo = (
-                <span>
-                    , owned by{" "}
-                    <Chip
-                        size="small"
-                        component="span"
-                        color="secondary"
-                        label={memberIDToUsername[account.owning_user_id]}
-                    />
-                </span>
-            );
-        }
+    if (account.type === "personal" && account.owning_user_id === currentUserId) {
+        owningUserInfo = (
+            <Chip size="small" component="span" color="primary" label={t("groups.memberList.itsYou")} sx={{ ml: 1 }} />
+        );
     }
 
     return (
@@ -73,7 +58,7 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
                     secondary={account.description}
                 />
             </ListItemLink>
-            {permissions.can_write && (
+            {isGroupWritable && (
                 <ListItemSecondaryAction>
                     <IconButton color="primary" onClick={edit}>
                         <Edit />

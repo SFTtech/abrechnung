@@ -1,4 +1,3 @@
-import * as React from "react";
 import {
     Api,
     NewFile,
@@ -234,10 +233,10 @@ export const fetchTransactions = createAsyncThunk<
 
 export const fetchTransaction = createAsyncThunk<
     BackendTransaction,
-    { transactionId: number; api: Api },
+    { groupId: number; transactionId: number; api: Api },
     { state: IRootState }
->("fetchTransaction", async ({ transactionId, api }) => {
-    return await api.client.transactions.getTransaction({ transactionId });
+>("fetchTransaction", async ({ groupId, transactionId, api }) => {
+    return await api.client.transactions.getTransaction({ groupId, transactionId });
 });
 
 export const createTransaction = createAsyncThunk<
@@ -363,6 +362,7 @@ export const saveTransaction = createAsyncThunk<
         });
     } else {
         updatedTransaction = await api.client.transactions.updateTransaction({
+            groupId,
             transactionId: wipTransaction.id,
             requestBody: {
                 ...body,
@@ -391,7 +391,7 @@ export const deleteTransaction = createAsyncThunk<
     const transaction = s.transactions.byId[transactionId];
     if (transaction) {
         if (await api.hasConnection()) {
-            const backendTransaction = await api.client.transactions.deleteTransaction({ transactionId });
+            const backendTransaction = await api.client.transactions.deleteTransaction({ groupId, transactionId });
             return { transaction: backendTransaction };
         } else {
             return rejectWithValue("no internet connection");

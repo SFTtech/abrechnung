@@ -1,11 +1,9 @@
-from datetime import date
-from typing import List, Optional
+from typing import List
 
 from fastapi import APIRouter, Depends, status
-from pydantic import BaseModel
 
 from abrechnung.application.accounts import AccountService
-from abrechnung.domain.accounts import Account, ClearingShares, NewAccount
+from abrechnung.domain.accounts import Account, NewAccount
 from abrechnung.domain.users import User
 from abrechnung.http.auth import get_current_user
 from abrechnung.http.dependencies import get_account_service
@@ -53,48 +51,62 @@ async def create_account(
         account=payload,
     )
 
-    return await account_service.get_account(user=user, account_id=account_id)
+    return await account_service.get_account(user=user, group_id=group_id, account_id=account_id)
 
 
 @router.get(
-    r"/v1/accounts/{account_id}", summary="fetch a group account", response_model=Account, operation_id="get_account"
+    r"/v1/groups/{group_id}/accounts/{account_id}",
+    summary="fetch a group account",
+    response_model=Account,
+    operation_id="get_account",
 )
 async def get_account(
+    group_id: int,
     account_id: int,
     user: User = Depends(get_current_user),
     account_service: AccountService = Depends(get_account_service),
 ):
-    return await account_service.get_account(user=user, account_id=account_id)
+    return await account_service.get_account(user=user, group_id=group_id, account_id=account_id)
 
 
 @router.post(
-    r"/v1/accounts/{account_id}", summary="update an account", response_model=Account, operation_id="update_account"
+    r"/v1/groups/{group_id}/accounts/{account_id}",
+    summary="update an account",
+    response_model=Account,
+    operation_id="update_account",
 )
 async def update_account(
+    group_id: int,
     account_id: int,
     payload: NewAccount,
     user: User = Depends(get_current_user),
     account_service: AccountService = Depends(get_account_service),
 ):
     await account_service.update_account(
+        group_id=group_id,
         user=user,
         account_id=account_id,
         account=payload,
     )
 
-    return await account_service.get_account(user=user, account_id=account_id)
+    return await account_service.get_account(user=user, group_id=group_id, account_id=account_id)
 
 
 @router.delete(
-    r"/v1/accounts/{account_id}", summary="delete an account", response_model=Account, operation_id="delete_account"
+    r"/v1/groups/{group_id}/accounts/{account_id}",
+    summary="delete an account",
+    response_model=Account,
+    operation_id="delete_account",
 )
 async def delete_account(
+    group_id: int,
     account_id: int,
     user: User = Depends(get_current_user),
     account_service: AccountService = Depends(get_account_service),
 ):
     await account_service.delete_account(
+        group_id=group_id,
         user=user,
         account_id=account_id,
     )
-    return await account_service.get_account(user=user, account_id=account_id)
+    return await account_service.get_account(user=user, group_id=group_id, account_id=account_id)

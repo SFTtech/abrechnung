@@ -1,5 +1,5 @@
 import { AccountSortMode } from "@abrechnung/core";
-import { createAccount, useCurrentUserPermissions, useGroup, useSortedAccounts } from "@abrechnung/redux";
+import { createAccount, useGroup, useIsGroupWritable, useSortedAccounts } from "@abrechnung/redux";
 import { Add as AddIcon, Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import {
     Alert,
@@ -32,6 +32,7 @@ import { getAccountLink } from "@/utils";
 import { ClearingAccountListItem } from "./ClearingAccountListItem";
 import { useTranslation } from "react-i18next";
 import { Account } from "@abrechnung/types";
+import { GroupArchivedDisclaimer } from "@/components";
 
 interface Props {
     groupId: number;
@@ -45,13 +46,13 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const group = useGroup(groupId);
+    const isGroupWritable = useIsGroupWritable(groupId);
     const theme: Theme = useTheme();
     const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
     const [searchValue, setSearchValue] = useState("");
     const [tagFilter, setTagFilter] = useState<string[]>(emptyList);
     const [sortMode, setSortMode] = useState<AccountSortMode>("last_changed");
-    const permissions = useCurrentUserPermissions(groupId);
     const clearingAccounts = useSortedAccounts(groupId, sortMode, "clearing", searchValue, true, tagFilter);
 
     const [currentPage, setCurrentPage] = useState(0);
@@ -82,7 +83,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
             });
     };
 
-    if (!permissions) {
+    if (!group) {
         return <Navigate to="/404" />;
     }
 
@@ -90,6 +91,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
         <>
             <MobilePaper>
                 <Stack spacing={1}>
+                    <GroupArchivedDisclaimer group={group} />
                     <Box
                         sx={{
                             display: "flex",
@@ -150,7 +152,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                                 />
                             </FormControl>
                         </Box>
-                        {!isSmallScreen && (
+                        {!isSmallScreen && isGroupWritable && (
                             <Box sx={{ display: "flex-item" }}>
                                 <Tooltip title={t("events.createEvent")}>
                                     <IconButton color="primary" onClick={onCreateEvent}>
@@ -168,7 +170,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                             paginatedAccounts.map((account) => (
                                 <ClearingAccountListItem
                                     key={account.id}
-                                    groupId={groupId}
+                                    group={group}
                                     account={account}
                                     setAccountToDelete={setAccountDelete}
                                 />
@@ -189,7 +191,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                     )}
                 </Stack>
             </MobilePaper>
-            {permissions.can_write && (
+            {isGroupWritable && (
                 <>
                     <DeleteAccountModal
                         groupId={groupId}

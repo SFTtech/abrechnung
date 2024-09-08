@@ -14,7 +14,7 @@ import React, { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Transaction } from "@abrechnung/types";
-import { useCurrentUserPermissions } from "@abrechnung/redux";
+import { useGroup, useIsGroupWritable } from "@abrechnung/redux";
 
 interface Props {
     groupId: number;
@@ -39,9 +39,10 @@ export const TransactionActions: React.FC<Props> = ({
     const navigate = useNavigate();
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
 
-    const permissions = useCurrentUserPermissions(groupId);
+    const isGroupWritable = useIsGroupWritable(groupId);
+    const group = useGroup(groupId);
 
-    if (!permissions) {
+    if (!group) {
         return <Navigate to="/404" />;
     }
 
@@ -61,7 +62,7 @@ export const TransactionActions: React.FC<Props> = ({
                     <Chip color="primary" label={transactionTypeLabel} />
                 </Grid>
                 <Grid item>
-                    {permissions.can_write && (
+                    {isGroupWritable && (
                         <>
                             {transaction.is_wip ? (
                                 <>

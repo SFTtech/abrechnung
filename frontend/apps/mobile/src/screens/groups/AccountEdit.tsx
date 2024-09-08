@@ -3,7 +3,7 @@ import {
     discardAccountChange,
     saveAccount,
     useAccount,
-    useCurrentUserPermissions,
+    useIsGroupWritable,
     wipAccountUpdated,
 } from "@abrechnung/redux";
 import { AccountValidator } from "@abrechnung/types";
@@ -28,7 +28,7 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
     const { groupId, accountId } = route.params;
 
     const account = useAccount(groupId, accountId);
-    const permissions = useCurrentUserPermissions(groupId);
+    const isGroupWritable = useIsGroupWritable(groupId);
 
     const onGoBack = React.useCallback(async () => {
         if (account) {
@@ -68,10 +68,10 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
     );
 
     useEffect(() => {
-        if (permissions === undefined || !permissions.can_write) {
+        if (!isGroupWritable) {
             navigation.replace("AccountDetail", { accountId, groupId });
         }
-    }, [navigation, accountId, permissions, groupId]);
+    }, [navigation, accountId, isGroupWritable, groupId]);
 
     const formik = useFormik({
         initialValues:

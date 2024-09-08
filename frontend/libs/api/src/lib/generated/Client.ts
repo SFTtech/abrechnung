@@ -1,32 +1,27 @@
-/* generated using openapi-typescript-codegen -- do no edit */
+/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
 import type { BaseHttpRequest } from "./core/BaseHttpRequest";
 import type { OpenAPIConfig } from "./core/OpenAPI";
 import { FetchHttpRequest } from "./core/FetchHttpRequest";
-
 import { AccountsService } from "./services/AccountsService";
 import { AuthService } from "./services/AuthService";
 import { CommonService } from "./services/CommonService";
 import { GroupsService } from "./services/GroupsService";
 import { TransactionsService } from "./services/TransactionsService";
-
 type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
-
 export class Client {
     public readonly accounts: AccountsService;
     public readonly auth: AuthService;
     public readonly common: CommonService;
     public readonly groups: GroupsService;
     public readonly transactions: TransactionsService;
-
     public readonly request: BaseHttpRequest;
-
     constructor(config?: Partial<OpenAPIConfig>, HttpRequest: HttpRequestConstructor = FetchHttpRequest) {
         this.request = new HttpRequest({
             BASE: config?.BASE ?? "",
-            VERSION: config?.VERSION ?? "0.10.1",
+            VERSION: config?.VERSION ?? "0.14.0",
             WITH_CREDENTIALS: config?.WITH_CREDENTIALS ?? false,
             CREDENTIALS: config?.CREDENTIALS ?? "include",
             TOKEN: config?.TOKEN,
@@ -35,7 +30,6 @@ export class Client {
             HEADERS: config?.HEADERS,
             ENCODE_PATH: config?.ENCODE_PATH,
         });
-
         this.accounts = new AccountsService(this.request);
         this.auth = new AuthService(this.request);
         this.common = new CommonService(this.request);

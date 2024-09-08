@@ -89,6 +89,8 @@ export namespace components.schemas {
         add_user_account_on_join: z.boolean(),
         created_at: z.string(),
         created_by: z.number().int(),
+        last_changed: z.string(),
+        archived: z.boolean(),
     });
     /** GroupInvite */
     export const GroupInvite = z.object({
@@ -411,6 +413,7 @@ export const operations = {
         /** get transaction details */
         parameters: {
             path: z.object({
+                group_id: z.number().int(),
                 transaction_id: z.number().int(),
             }),
         },
@@ -439,6 +442,7 @@ export const operations = {
         /** update transaction details */
         parameters: {
             path: z.object({
+                group_id: z.number().int(),
                 transaction_id: z.number().int(),
             }),
         },
@@ -472,6 +476,7 @@ export const operations = {
         /** delete a transaction */
         parameters: {
             path: z.object({
+                group_id: z.number().int(),
                 transaction_id: z.number().int(),
             }),
         },
@@ -500,6 +505,7 @@ export const operations = {
         /** update transaction positions */
         parameters: {
             path: z.object({
+                group_id: z.number().int(),
                 transaction_id: z.number().int(),
             }),
         },
@@ -968,6 +974,62 @@ export const operations = {
             },
         },
     },
+    archive_group: {
+        /** archive a group */
+        parameters: {
+            path: z.object({
+                group_id: z.number().int(),
+            }),
+        },
+        responses: {
+            /** @description Successful Response */
+            200: {
+                content: {
+                    "application/json": z.record(z.any()),
+                },
+            },
+            /** @description unauthorized */
+            401: z.never(),
+            /** @description forbidden */
+            403: z.never(),
+            /** @description Not found */
+            404: z.never(),
+            /** @description Validation Error */
+            422: {
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"],
+                },
+            },
+        },
+    },
+    unarchive_group: {
+        /** un-archive a group */
+        parameters: {
+            path: z.object({
+                group_id: z.number().int(),
+            }),
+        },
+        responses: {
+            /** @description Successful Response */
+            200: {
+                content: {
+                    "application/json": z.record(z.any()),
+                },
+            },
+            /** @description unauthorized */
+            401: z.never(),
+            /** @description forbidden */
+            403: z.never(),
+            /** @description Not found */
+            404: z.never(),
+            /** @description Validation Error */
+            422: {
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"],
+                },
+            },
+        },
+    },
     get_token: {
         /** login with username and password */
         requestBody: {
@@ -1266,6 +1328,7 @@ export const operations = {
         /** fetch a group account */
         parameters: {
             path: z.object({
+                group_id: z.number().int(),
                 account_id: z.number().int(),
             }),
         },
@@ -1297,6 +1360,7 @@ export const operations = {
         /** update an account */
         parameters: {
             path: z.object({
+                group_id: z.number().int(),
                 account_id: z.number().int(),
             }),
         },
@@ -1333,6 +1397,7 @@ export const operations = {
         /** delete an account */
         parameters: {
             path: z.object({
+                group_id: z.number().int(),
                 account_id: z.number().int(),
             }),
         },
@@ -1380,7 +1445,7 @@ export const paths = {
         /** create a new transaction */
         post: operations["create_transaction"],
     },
-    "/api/v1/transactions/{transaction_id}": {
+    "/api/v1/groups/{group_id}/transactions/{transaction_id}": {
         /** get transaction details */
         get: operations["get_transaction"],
         /** update transaction details */
@@ -1388,7 +1453,7 @@ export const paths = {
         /** delete a transaction */
         delete: operations["delete_transaction"],
     },
-    "/api/v1/transactions/{transaction_id}/positions": {
+    "/api/v1/groups/{group_id}/transactions/{transaction_id}/positions": {
         /** update transaction positions */
         post: operations["update_transaction_positions"],
     },
@@ -1445,6 +1510,14 @@ export const paths = {
     "/api/v1/groups/{group_id}/invites/{invite_id}": {
         /** delete a group invite link */
         delete: operations["delete_invite"],
+    },
+    "/api/v1/groups/{group_id}/archive": {
+        /** archive a group */
+        post: operations["archive_group"],
+    },
+    "/api/v1/groups/{group_id}/un-archive": {
+        /** un-archive a group */
+        post: operations["unarchive_group"],
     },
     "/api/v1/auth/token": {
         /** login with username and password */
@@ -1504,7 +1577,7 @@ export const paths = {
         /** create a new group account */
         post: operations["create_account"],
     },
-    "/api/v1/accounts/{account_id}": {
+    "/api/v1/groups/{group_id}/accounts/{account_id}": {
         /** fetch a group account */
         get: operations["get_account"],
         /** update an account */

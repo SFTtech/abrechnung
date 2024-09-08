@@ -1,10 +1,9 @@
-import { GroupMember } from "@abrechnung/api";
+import { Group, GroupMember } from "@abrechnung/api";
 import {
     selectCurrentUserId,
     selectGroupMembers,
     updateGroupMemberPrivileges,
     useCurrentUserPermissions,
-    useGroup,
 } from "@abrechnung/redux";
 import { Edit } from "@mui/icons-material";
 import {
@@ -27,15 +26,14 @@ import { Form, Formik, FormikHelpers } from "formik";
 import { DateTime } from "luxon";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { MobilePaper } from "@/components/style";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router-dom";
 
-interface Props {
-    groupId: number;
+interface GroupMemberListProps {
+    group: Group;
 }
 
 type FormValues = {
@@ -44,13 +42,12 @@ type FormValues = {
     canWrite: boolean;
 };
 
-export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
+export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const currentUserId = useAppSelector(selectCurrentUserId);
-    const members = useAppSelector((state) => selectGroupMembers(state, groupId));
-    const group = useGroup(groupId);
-    const permissions = useCurrentUserPermissions(groupId);
+    const members = useAppSelector((state) => selectGroupMembers(state, group.id));
+    const permissions = useCurrentUserPermissions(group.id);
 
     const [memberToEdit, setMemberToEdit] = useState<GroupMember | undefined>(undefined);
 
@@ -59,7 +56,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
     const handleEditMemberSubmit = (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
         dispatch(
             updateGroupMemberPrivileges({
-                groupId,
+                groupId: group.id,
                 memberId: values.userId,
                 permissions: { canWrite: values.canWrite, isOwner: values.isOwner },
                 api,
@@ -100,7 +97,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
     }
 
     return (
-        <MobilePaper>
+        <>
             <List>
                 {members.length === 0 ? (
                     <ListItem>
@@ -164,7 +161,7 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
                             />
                             {(permissions.is_owner || permissions.can_write) && (
                                 <ListItemSecondaryAction>
-                                    <IconButton onClick={() => openEditMemberModal(member.user_id)}>
+                                    <IconButton color="primary" onClick={() => openEditMemberModal(member.user_id)}>
                                         <Edit />
                                     </IconButton>
                                 </ListItemSecondaryAction>
@@ -224,6 +221,6 @@ export const GroupMemberList: React.FC<Props> = ({ groupId }) => {
                     </Formik>
                 </DialogContent>
             </Dialog>
-        </MobilePaper>
+        </>
     );
 };

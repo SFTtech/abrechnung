@@ -1,4 +1,4 @@
-/* generated using openapi-typescript-codegen -- do no edit */
+/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
@@ -6,13 +6,10 @@ import type { NewTransaction } from "../models/NewTransaction";
 import type { Transaction } from "../models/Transaction";
 import type { UpdatePositionsPayload } from "../models/UpdatePositionsPayload";
 import type { UpdateTransaction } from "../models/UpdateTransaction";
-
 import type { CancelablePromise } from "../core/CancelablePromise";
 import type { BaseHttpRequest } from "../core/BaseHttpRequest";
-
 export class TransactionsService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * list all transactions in a group
      * @returns Transaction Successful Response
@@ -45,7 +42,6 @@ export class TransactionsService {
             },
         });
     }
-
     /**
      * create a new transaction
      * @returns Transaction Successful Response
@@ -74,17 +70,23 @@ export class TransactionsService {
             },
         });
     }
-
     /**
      * get transaction details
      * @returns Transaction Successful Response
      * @throws ApiError
      */
-    public getTransaction({ transactionId }: { transactionId: number }): CancelablePromise<Transaction> {
+    public getTransaction({
+        groupId,
+        transactionId,
+    }: {
+        groupId: number;
+        transactionId: number;
+    }): CancelablePromise<Transaction> {
         return this.httpRequest.request({
             method: "GET",
-            url: "/api/v1/transactions/{transaction_id}",
+            url: "/api/v1/groups/{group_id}/transactions/{transaction_id}",
             path: {
+                group_id: groupId,
                 transaction_id: transactionId,
             },
             errors: {
@@ -95,23 +97,25 @@ export class TransactionsService {
             },
         });
     }
-
     /**
      * update transaction details
      * @returns Transaction Successful Response
      * @throws ApiError
      */
     public updateTransaction({
+        groupId,
         transactionId,
         requestBody,
     }: {
+        groupId: number;
         transactionId: number;
         requestBody: UpdateTransaction;
     }): CancelablePromise<Transaction> {
         return this.httpRequest.request({
             method: "POST",
-            url: "/api/v1/transactions/{transaction_id}",
+            url: "/api/v1/groups/{group_id}/transactions/{transaction_id}",
             path: {
+                group_id: groupId,
                 transaction_id: transactionId,
             },
             body: requestBody,
@@ -124,17 +128,23 @@ export class TransactionsService {
             },
         });
     }
-
     /**
      * delete a transaction
      * @returns Transaction Successful Response
      * @throws ApiError
      */
-    public deleteTransaction({ transactionId }: { transactionId: number }): CancelablePromise<Transaction> {
+    public deleteTransaction({
+        groupId,
+        transactionId,
+    }: {
+        groupId: number;
+        transactionId: number;
+    }): CancelablePromise<Transaction> {
         return this.httpRequest.request({
             method: "DELETE",
-            url: "/api/v1/transactions/{transaction_id}",
+            url: "/api/v1/groups/{group_id}/transactions/{transaction_id}",
             path: {
+                group_id: groupId,
                 transaction_id: transactionId,
             },
             errors: {
@@ -145,23 +155,25 @@ export class TransactionsService {
             },
         });
     }
-
     /**
      * update transaction positions
      * @returns Transaction Successful Response
      * @throws ApiError
      */
     public updateTransactionPositions({
+        groupId,
         transactionId,
         requestBody,
     }: {
+        groupId: number;
         transactionId: number;
         requestBody: UpdatePositionsPayload;
     }): CancelablePromise<Transaction> {
         return this.httpRequest.request({
             method: "POST",
-            url: "/api/v1/transactions/{transaction_id}/positions",
+            url: "/api/v1/groups/{group_id}/transactions/{transaction_id}/positions",
             path: {
+                group_id: groupId,
                 transaction_id: transactionId,
             },
             body: requestBody,
@@ -174,7 +186,6 @@ export class TransactionsService {
             },
         });
     }
-
     /**
      * fetch the (binary) contents of a transaction attachment
      * @returns any Successful Response

@@ -3,13 +3,7 @@ import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { AccountSortMode } from "@abrechnung/core";
-import {
-    createAccount,
-    selectCurrentUserId,
-    useCurrentUserPermissions,
-    useGroup,
-    useSortedAccounts,
-} from "@abrechnung/redux";
+import { createAccount, selectCurrentUserId, useGroup, useIsGroupWritable, useSortedAccounts } from "@abrechnung/redux";
 import { Add as AddIcon, Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import {
     Alert,
@@ -37,6 +31,7 @@ import { toast } from "react-toastify";
 import { PersonalAccountListItem } from "./PersonalAccountListItem";
 import { useTranslation } from "react-i18next";
 import { Account } from "@abrechnung/types";
+import { GroupArchivedDisclaimer } from "@/components";
 
 interface Props {
     groupId: number;
@@ -57,7 +52,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
 
     const personalAccounts = useSortedAccounts(groupId, sortMode, "personal", searchValue);
 
-    const permissions = useCurrentUserPermissions(groupId);
+    const isGroupWritable = useIsGroupWritable(groupId);
     const currentUserId = useAppSelector(selectCurrentUserId);
 
     const [currentPage, setCurrentPage] = useState(0);
@@ -89,7 +84,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
             });
     };
 
-    if (!group || !permissions || currentUserId == null) {
+    if (!group || currentUserId == null) {
         return <Navigate to="/404" />;
     }
 
@@ -97,6 +92,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
         <>
             <MobilePaper>
                 <Stack spacing={1}>
+                    <GroupArchivedDisclaimer group={group} />
                     <Box
                         sx={{
                             display: "flex",
@@ -145,7 +141,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                                 </Select>
                             </FormControl>
                         </Box>
-                        {!isSmallScreen && (
+                        {!isSmallScreen && isGroupWritable && (
                             <Box sx={{ display: "flex-item" }}>
                                 <Tooltip title="Create Account">
                                     <IconButton color="primary" onClick={onCreateEvent}>
@@ -185,7 +181,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                     )}
                 </Stack>
             </MobilePaper>
-            {permissions.can_write && (
+            {isGroupWritable && (
                 <>
                     <DeleteAccountModal
                         groupId={groupId}

@@ -37,10 +37,22 @@ export const AbrechnungUpdateProvider: React.FC<IAbrechnungUpdateProvider> = ({ 
         const callback = (notificationPayload: NotificationPayload) => {
             switch (notificationPayload.type) {
                 case "account":
-                    dispatch(fetchAccount({ api, accountId: notificationPayload.accountId }));
+                    dispatch(
+                        fetchAccount({
+                            api,
+                            groupId: notificationPayload.groupId,
+                            accountId: notificationPayload.accountId,
+                        })
+                    );
                     break;
                 case "transaction":
-                    dispatch(fetchTransaction({ api, transactionId: notificationPayload.transactionId }));
+                    dispatch(
+                        fetchTransaction({
+                            api,
+                            groupId: notificationPayload.groupId,
+                            transactionId: notificationPayload.transactionId,
+                        })
+                    );
                     break;
                 case "group":
                     dispatch(fetchGroups({ api }));

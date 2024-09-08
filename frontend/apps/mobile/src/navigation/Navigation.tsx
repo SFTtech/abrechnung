@@ -43,7 +43,7 @@ const RootNavigator: React.FC = () => {
     const { api, websocket } = useOptionalApi();
     const dispatch = useAppDispatch();
     const activeGroupId = useAppSelector(selectActiveGroupId);
-    const groups = useAppSelector(selectGroups);
+    const groups = useAppSelector((state) => selectGroups(state, false));
     const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
     useEffect(() => {

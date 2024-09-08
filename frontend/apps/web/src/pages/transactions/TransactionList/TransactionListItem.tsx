@@ -28,7 +28,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
         // get the new group id with the old transaction id => the transaction will be undefined as it does not exist in the new group
         //
         // a possible solution would be to track the currently active group in the redux store as well and not pass it to the selectors
-        // and components, unsure if this would work properly though. Additionally it leaves us with less flexibility when reuxing
+        // and components, unsure if this would work properly though. Additionally it leaves us with less flexibility when reusing
         // selectors as they will always work on the currently active group.
         return null;
     }

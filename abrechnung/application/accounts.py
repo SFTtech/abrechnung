@@ -1,9 +1,12 @@
-from datetime import datetime, timezone
 from typing import Optional, Union
 
 import asyncpg
 
 from abrechnung.core.auth import check_group_permissions, create_group_log
+from abrechnung.core.decorators import (
+    requires_group_permissions,
+    with_group_last_changed_update,
+)
 from abrechnung.core.errors import InvalidCommand, NotFoundError
 from abrechnung.core.service import Service
 from abrechnung.domain.accounts import (
@@ -13,6 +16,7 @@ from abrechnung.domain.accounts import (
     NewAccount,
     PersonalAccount,
 )
+from abrechnung.domain.groups import GroupMember
 from abrechnung.domain.users import User
 from abrechnung.framework.database import Connection
 from abrechnung.framework.decorators import with_db_connection, with_db_transaction
@@ -148,10 +152,10 @@ class AccountService(Service):
         return group_id, revision_id
 
     @with_db_transaction
+    @requires_group_permissions()
     async def list_accounts(self, *, conn: Connection, user: User, group_id: int) -> list[Account]:
-        await check_group_permissions(conn=conn, group_id=group_id, user=user)
         rows = await conn.fetch(
-            "select * " "from full_account_state_valid_at(now()) " "where group_id = $1",
+            "select * from full_account_state_valid_at(now()) where group_id = $1",
             group_id,
         )
         return [
@@ -164,10 +168,11 @@ class AccountService(Service):
         ]
 
     @with_db_connection
+    @requires_group_permissions()
     async def get_account(self, *, conn: Connection, user: User, account_id: int) -> Account:
         await self._check_account_permissions(conn=conn, user=user, account_id=account_id)
         row = await conn.fetchrow(
-            "select * " "from full_account_state_valid_at(now()) " "where id = $1",
+            "select * from full_account_state_valid_at(now()) where id = $1",
             account_id,
         )
         if row["type"] == AccountType.clearing.value:
@@ -186,21 +191,31 @@ class AccountService(Service):
             return
         for tag_id in tag_ids:
             await conn.execute(
-                "insert into account_to_tag (account_id, revision_id, tag_id) " "values ($1, $2, $3)",
+                "insert into account_to_tag (account_id, revision_id, tag_id) values ($1, $2, $3)",
                 account_id,
                 revision_id,
                 tag_id,
             )
 
-    async def _create_account(self, *, conn: asyncpg.Connection, user: User, group_id: int, account: NewAccount) -> int:
+    @with_db_transaction
+    @requires_group_permissions(requires_write=True)
+    @with_group_last_changed_update
+    async def create_account(
+        self,
+        *,
+        conn: Connection,
+        user: User,
+        group_id: int,
+        account: NewAccount,
+        group_membership: GroupMember,
+    ) -> int:
         if account.clearing_shares and account.type != AccountType.clearing:
             raise InvalidCommand(
                 f"'{account.type.value}' accounts cannot have associated settlement distribution shares"
             )
 
-        can_write, is_owner = await check_group_permissions(conn=conn, group_id=group_id, user=user, can_write=True)
         if account.owning_user_id is not None:
-            if not is_owner and account.owning_user_id != user.id:
+            if not group_membership.is_owner and account.owning_user_id != user.id:
                 raise PermissionError(f"only group owners can associate others with accounts")
 
         account_id = await conn.fetchval(
@@ -250,24 +265,11 @@ class AccountService(Service):
         return account_id
 
     @with_db_transaction
-    async def create_account(
+    @with_group_last_changed_update
+    async def update_account(
         self,
         *,
         conn: Connection,
-        user: User,
-        group_id: int,
-        account: NewAccount,
-    ) -> int:
-        return await self._create_account(
-            conn=conn,
-            user=user,
-            group_id=group_id,
-            account=account,
-        )
-
-    async def _update_account(
-        self,
-        conn: asyncpg.Connection,
         user: User,
         account_id: int,
         account: NewAccount,
@@ -275,7 +277,7 @@ class AccountService(Service):
         group_id, account_type = await self._check_account_permissions(
             conn=conn, user=user, account_id=account_id, can_write=True
         )
-        can_write, is_owner = await check_group_permissions(conn=conn, group_id=group_id, user=user, can_write=True)
+        membership = await check_group_permissions(conn=conn, group_id=group_id, user=user, can_write=True)
         if account.clearing_shares and account_type != AccountType.clearing.value:
             raise InvalidCommand(f"'{account_type}' accounts cannot have associated settlement distribution shares")
 
@@ -287,12 +289,12 @@ class AccountService(Service):
         )
 
         if account.owning_user_id is not None:
-            if not is_owner and account.owning_user_id != user.id:
+            if not membership.is_owner and account.owning_user_id != user.id:
                 raise PermissionError(f"only group owners can associate others with accounts")
         elif (
             committed_account["owning_user_id"] is not None
             and committed_account["owning_user_id"] != user.id
-            and not is_owner
+            and not membership.is_owner
         ):
             raise PermissionError(f"only group owners can remove other users as account owners")
 
@@ -334,22 +336,7 @@ class AccountService(Service):
         await self._commit_revision(conn=conn, revision_id=revision_id)
 
     @with_db_transaction
-    async def update_account(
-        self,
-        *,
-        conn: Connection,
-        user: User,
-        account_id: int,
-        account: NewAccount,
-    ):
-        return await self._update_account(
-            conn=conn,
-            user=user,
-            account_id=account_id,
-            account=account,
-        )
-
-    @with_db_transaction
+    @with_group_last_changed_update
     async def delete_account(
         self,
         *,
@@ -368,12 +355,13 @@ class AccountService(Service):
         # TODO: FIXME move this check into the database
 
         has_shares = await conn.fetchval(
-            "select 1 " "from transaction_state_valid_at() t " "where not deleted and $1 = any(involved_accounts)",
+            "select exists (select from transaction_state_valid_at() t "
+            "where not deleted and $1 = any(involved_accounts))",
             account_id,
         )
 
         has_clearing_shares = await conn.fetchval(
-            "select 1 " "from account_state_valid_at() a " "where not deleted and $1 = any(involved_accounts)",
+            "select exists(select from account_state_valid_at() a where not deleted and $1 = any(involved_accounts))",
             account_id,
         )
 
@@ -402,7 +390,7 @@ class AccountService(Service):
             raise InvalidCommand(f"Cannot delete an already deleted account")
 
         has_clearing_shares = await conn.fetchval(
-            "select 1 " "from account_state_valid_at() p " "where not p.deleted and $1 = any(p.involved_accounts)",
+            "select exists (select from account_state_valid_at() p where not p.deleted and $1 = any(p.involved_accounts))",
             account_id,
         )
 
@@ -410,7 +398,7 @@ class AccountService(Service):
             raise InvalidCommand(f"Cannot delete an account that is references by another clearing account")
 
         revision_id = await conn.fetchval(
-            "insert into account_revision (user_id, account_id) " "values ($1, $2) returning id",
+            "insert into account_revision (user_id, account_id) values ($1, $2) returning id",
             user.id,
             account_id,
         )

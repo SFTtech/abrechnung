@@ -1,4 +1,4 @@
-/* generated using openapi-typescript-codegen -- do no edit */
+/* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
@@ -16,13 +16,10 @@ import type { RegisterResponse } from "../models/RegisterResponse";
 import type { RenameSessionPayload } from "../models/RenameSessionPayload";
 import type { Token } from "../models/Token";
 import type { User } from "../models/User";
-
 import type { CancelablePromise } from "../core/CancelablePromise";
 import type { BaseHttpRequest } from "../core/BaseHttpRequest";
-
 export class AuthService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
-
     /**
      * login with username and password
      * @returns Token Successful Response
@@ -39,7 +36,6 @@ export class AuthService {
             },
         });
     }
-
     /**
      * login with username and password
      * @returns Token Successful Response
@@ -56,7 +52,6 @@ export class AuthService {
             },
         });
     }
-
     /**
      * sign out of the current session
      * @returns void
@@ -68,7 +63,6 @@ export class AuthService {
             url: "/api/v1/auth/logout",
         });
     }
-
     /**
      * register a new user
      * @returns RegisterResponse Successful Response
@@ -85,7 +79,6 @@ export class AuthService {
             },
         });
     }
-
     /**
      * confirm a pending registration
      * @returns void
@@ -102,7 +95,6 @@ export class AuthService {
             },
         });
     }
-
     /**
      * fetch user profile information
      * @returns User Successful Response
@@ -114,7 +106,6 @@ export class AuthService {
             url: "/api/v1/profile",
         });
     }
-
     /**
      * change password
      * @returns void
@@ -131,7 +122,6 @@ export class AuthService {
             },
         });
     }
-
     /**
      * change email
      * @returns void
@@ -148,7 +138,6 @@ export class AuthService {
             },
         });
     }
-
     /**
      * confirm a pending email change
      * @returns void
@@ -165,7 +154,6 @@ export class AuthService {
             },
         });
     }
-
     /**
      * recover password
      * @returns void
@@ -182,7 +170,6 @@ export class AuthService {
             },
         });
     }
-
     /**
      * confirm a pending password recovery
      * @returns void
@@ -203,7 +190,6 @@ export class AuthService {
             },
         });
     }
-
     /**
      * delete a given user session
      * @returns void
@@ -220,7 +206,6 @@ export class AuthService {
             },
         });
     }
-
     /**
      * rename a given user session
      * @returns void
