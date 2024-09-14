@@ -17,6 +17,7 @@ const duration = 200;
 
 const defaultStyle = {
     transition: `opacity ${duration}ms ease-in-out`,
+    margin: "10px",
     opacity: 0,
 };
 
@@ -45,6 +46,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ file, isActive, onShowImage
                     ) : (
                         <img
                             height="100%"
+                            width="100%"
                             style={{
                                 ...defaultStyle,
                                 ...transitionStyles[state],
@@ -66,6 +68,7 @@ const ImageDisplay: React.FC<ImageDisplayProps> = ({ file, isActive, onShowImage
                 {(state) => (
                     <img
                         height="100%"
+                        width="100%"
                         style={{
                             ...defaultStyle,
                             ...transitionStyles[state],
@@ -181,11 +184,13 @@ export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transaction }
                         />
                     ))
                 )}
-                <Chip
-                    sx={{ position: "absolute", top: "5px", right: "10px" }}
-                    size="small"
-                    label={`${active + 1} / ${attachments.length}`}
-                />
+                {attachments.length > 0 && (
+                    <Chip
+                        sx={{ position: "absolute", top: "5px", right: "10px" }}
+                        size="small"
+                        label={`${active + 1} / ${attachments.length}`}
+                    />
+                )}
                 {active > 0 && (
                     <IconButton onClick={toPrevImage} sx={{ position: "absolute", top: "40%", left: "10px" }}>
                         <ChevronLeft />
