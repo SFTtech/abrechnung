@@ -1,11 +1,11 @@
-import { en } from "./en";
-import { de } from "./de";
-export * from "./de";
-export * from "./en";
+import en from "./en.json";
+import de from "./de.json";
 
 export const defaultNS = "translations";
 
 export const resources = {
-    en: en,
-    de: de,
+    en: {
+        translations: en,
+    },
+    de: { translations: de },
 };
