@@ -1,6 +1,6 @@
 import * as React from "react";
 import { TextFieldProps } from "@mui/material";
-import { DisabledTextField } from "./style/DisabledTextField";
+import { DisabledTextField } from "@abrechnung/components";
 import { parseAbrechnungFloat } from "@abrechnung/utils";
 
 export type NumericInputProps = {

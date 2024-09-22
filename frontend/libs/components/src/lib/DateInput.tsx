@@ -1,7 +1,7 @@
 import { DatePicker } from "@mui/x-date-pickers";
 import { DateTime } from "luxon";
 import * as React from "react";
-import { DisabledTextField } from "./style/DisabledTextField";
+import { DisabledTextField } from "./DisabledTextField";
 import { useTranslation } from "react-i18next";
 
 interface Props {

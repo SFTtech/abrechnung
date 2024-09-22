@@ -1,6 +1,4 @@
-import { toFormikValidationSchema } from "@abrechnung/utils";
-import { Alert, Box, Button, Container, CssBaseline, LinearProgress, Link, TextField, Typography } from "@mui/material";
-import { Form, Formik, FormikHelpers, FormikProps } from "formik";
+import { Alert, Box, Button, Container, CssBaseline, Link, Stack, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { Link as RouterLink, useParams } from "react-router-dom";
 import { z } from "zod";
@@ -8,6 +6,9 @@ import { api } from "@/core/api";
 import i18n from "@/i18n";
 import { Trans, useTranslation } from "react-i18next";
 import { useTitle } from "@/core/utils";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormTextField } from "@abrechnung/components";
 
 const validationSchema = z
     .object({
@@ -28,7 +29,19 @@ export const ConfirmPasswordRecovery: React.FC = () => {
 
     useTitle(t("auth.confirmPasswordRecovery.tabTitle"));
 
-    const handleSubmit = (values: FormSchema, { setSubmitting, resetForm }: FormikHelpers<FormSchema>) => {
+    const {
+        control,
+        handleSubmit,
+        reset: resetForm,
+    } = useForm<FormSchema>({
+        resolver: zodResolver(validationSchema),
+        defaultValues: {
+            password: "",
+            password2: "",
+        },
+    });
+
+    const onSubmit = (values: FormSchema) => {
         if (!token) {
             return;
         }
@@ -38,13 +51,11 @@ export const ConfirmPasswordRecovery: React.FC = () => {
             .then(() => {
                 setStatus("success");
                 setError(null);
-                setSubmitting(false);
                 resetForm();
             })
             .catch((err) => {
                 setStatus("error");
                 setError(err.toString());
-                setSubmitting(false);
             });
     };
 
@@ -78,66 +89,40 @@ export const ConfirmPasswordRecovery: React.FC = () => {
                         </Trans>
                     </Alert>
                 ) : (
-                    <Formik
-                        validationSchema={toFormikValidationSchema(validationSchema)}
-                        initialValues={{
-                            password: "",
-                            password2: "",
-                        }}
-                        onSubmit={handleSubmit}
-                    >
-                        {({
-                            values,
-                            handleChange,
-                            handleBlur,
-                            isSubmitting,
-                            errors,
-                            touched,
-                        }: FormikProps<FormSchema>) => (
-                            <Form>
-                                <TextField
-                                    variant="outlined"
-                                    margin="normal"
-                                    fullWidth
-                                    autoFocus
-                                    type="password"
-                                    name="password"
-                                    label={t("common.password")}
-                                    onBlur={handleBlur}
-                                    onChange={handleChange}
-                                    value={values.password}
-                                    error={touched.password && !!errors.password}
-                                    helperText={touched.password && errors.password}
-                                />
+                    <form onSubmit={handleSubmit(onSubmit)}>
+                        <Stack spacing={2}>
+                            <FormTextField
+                                variant="outlined"
+                                margin="normal"
+                                fullWidth
+                                autoFocus
+                                type="password"
+                                name="password"
+                                label={t("common.password")}
+                                control={control}
+                            />
 
-                                <TextField
-                                    variant="outlined"
-                                    margin="normal"
-                                    fullWidth
-                                    type="password"
-                                    name="password2"
-                                    label={t("common.repeatPassword")}
-                                    onBlur={handleBlur}
-                                    onChange={handleChange}
-                                    value={values.password2}
-                                    error={touched.password2 && !!errors.password2}
-                                    helperText={touched.password2 && errors.password2}
-                                />
+                            <FormTextField
+                                variant="outlined"
+                                margin="normal"
+                                fullWidth
+                                type="password"
+                                name="password2"
+                                label={t("common.repeatPassword")}
+                                control={control}
+                            />
 
-                                {isSubmitting && <LinearProgress />}
-                                <Button
-                                    type="submit"
-                                    fullWidth
-                                    variant="contained"
-                                    color="primary"
-                                    disabled={isSubmitting}
-                                    sx={{ margin: "3 0 2 0" }}
-                                >
-                                    {t("common.confirm")}
-                                </Button>
-                            </Form>
-                        )}
-                    </Formik>
+                            <Button
+                                type="submit"
+                                fullWidth
+                                variant="contained"
+                                color="primary"
+                                sx={{ margin: "3 0 2 0" }}
+                            >
+                                {t("common.confirm")}
+                            </Button>
+                        </Stack>
+                    </form>
                 )}
             </Box>
         </Container>

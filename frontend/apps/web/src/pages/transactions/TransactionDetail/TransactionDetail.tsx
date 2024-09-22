@@ -1,4 +1,5 @@
-import { MobilePaper, Loading } from "@/components/style";
+import { MobilePaper } from "@/components/style";
+import { Loading } from "@abrechnung/components";
 import { api } from "@/core/api";
 import { useQuery, useTitle } from "@/core/utils";
 import { useAppDispatch, useAppSelector } from "@/store";

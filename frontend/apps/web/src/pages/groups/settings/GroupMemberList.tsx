@@ -8,21 +8,17 @@ import {
 import { Edit } from "@mui/icons-material";
 import {
     Button,
-    Checkbox,
     Chip,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
-    FormControlLabel,
     IconButton,
-    LinearProgress,
     List,
     ListItem,
     ListItemSecondaryAction,
     ListItemText,
 } from "@mui/material";
-import { Form, Formik, FormikHelpers } from "formik";
 import { DateTime } from "luxon";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
@@ -31,6 +27,8 @@ import { useTitle } from "@/core/utils";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { FormCheckbox } from "@abrechnung/components";
 
 interface GroupMemberListProps {
     group: Group;
@@ -42,18 +40,39 @@ type FormValues = {
     canWrite: boolean;
 };
 
-export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
+const EditMemberDialog: React.FC<{
+    group: Group;
+    memberToEdit: GroupMember | undefined;
+    setMemberToEdit: (member: GroupMember | undefined) => void;
+}> = ({ group, memberToEdit, setMemberToEdit }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
-    const currentUserId = useAppSelector(selectCurrentUserId);
-    const members = useAppSelector((state) => selectGroupMembers(state, group.id));
-    const permissions = useCurrentUserPermissions(group.id);
 
-    const [memberToEdit, setMemberToEdit] = useState<GroupMember | undefined>(undefined);
+    const closeEditMemberModal = () => {
+        setMemberToEdit(undefined);
+    };
 
-    useTitle(t("groups.memberList.tabTitle", "", { groupName: group?.name }));
+    const {
+        control,
+        handleSubmit,
+        reset: resetForm,
+    } = useForm<FormValues>({
+        defaultValues: {
+            userId: memberToEdit?.user_id ?? -1,
+            isOwner: memberToEdit?.is_owner ?? false,
+            canWrite: memberToEdit?.can_write ?? false,
+        },
+    });
 
-    const handleEditMemberSubmit = (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
+    React.useEffect(() => {
+        resetForm({
+            userId: memberToEdit?.user_id ?? -1,
+            isOwner: memberToEdit?.is_owner ?? false,
+            canWrite: memberToEdit?.can_write ?? false,
+        });
+    }, [memberToEdit, resetForm]);
+
+    const handleEditMemberSubmit = (values: FormValues) => {
         dispatch(
             updateGroupMemberPrivileges({
                 groupId: group.id,
@@ -64,15 +83,45 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
         )
             .unwrap()
             .then(() => {
-                setSubmitting(false);
-                setMemberToEdit(undefined);
+                closeEditMemberModal();
                 toast.success("Successfully updated group member permissions");
             })
             .catch((err) => {
-                setSubmitting(false);
                 toast.error(err);
             });
     };
+
+    return (
+        <Dialog open={memberToEdit !== undefined} onClose={closeEditMemberModal}>
+            <DialogTitle>Edit Group Member</DialogTitle>
+            <DialogContent>
+                <form onSubmit={handleSubmit(handleEditMemberSubmit)}>
+                    <FormCheckbox name="canWrite" label={t("groups.memberList.canWrite")} control={control} />
+                    <FormCheckbox name="isOwner" label={t("groups.memberList.isOwner")} control={control} />
+
+                    <DialogActions>
+                        <Button type="submit" color="primary">
+                            {t("common.save")}
+                        </Button>
+                        <Button color="error" onClick={closeEditMemberModal}>
+                            {t("common.cancel")}
+                        </Button>
+                    </DialogActions>
+                </form>
+            </DialogContent>
+        </Dialog>
+    );
+};
+
+export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
+    const { t } = useTranslation();
+    const currentUserId = useAppSelector(selectCurrentUserId);
+    const members = useAppSelector((state) => selectGroupMembers(state, group.id));
+    const permissions = useCurrentUserPermissions(group.id);
+
+    const [memberToEdit, setMemberToEdit] = useState<GroupMember | undefined>(undefined);
+
+    useTitle(t("groups.memberList.tabTitle", "", { groupName: group?.name }));
 
     const getMemberUsername = (member_id: number) => {
         const member = members.find((member) => member.user_id === member_id);
@@ -80,10 +129,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
             return "unknown";
         }
         return member.username;
-    };
-
-    const closeEditMemberModal = () => {
-        setMemberToEdit(undefined);
     };
 
     const openEditMemberModal = (userID: number) => {
@@ -170,57 +215,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
                     ))
                 )}
             </List>
-            <Dialog open={memberToEdit !== undefined} onClose={closeEditMemberModal}>
-                <DialogTitle>Edit Group Member</DialogTitle>
-                <DialogContent>
-                    <Formik
-                        initialValues={{
-                            userId: memberToEdit?.user_id ?? -1,
-                            isOwner: memberToEdit?.is_owner ?? false,
-                            canWrite: memberToEdit?.can_write ?? false,
-                        }}
-                        onSubmit={handleEditMemberSubmit}
-                        enableReinitialize={true}
-                    >
-                        {({ values, handleBlur, isSubmitting, setFieldValue }) => (
-                            <Form>
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            name="canWrite"
-                                            onBlur={handleBlur}
-                                            onChange={(evt) => setFieldValue("canWrite", evt.target.checked)}
-                                            checked={values.canWrite}
-                                        />
-                                    }
-                                    label={t("groups.memberList.canWrite")}
-                                />
-                                <FormControlLabel
-                                    control={
-                                        <Checkbox
-                                            name="isOwner"
-                                            onBlur={handleBlur}
-                                            onChange={(evt) => setFieldValue("isOwner", evt.target.checked)}
-                                            checked={values.isOwner}
-                                        />
-                                    }
-                                    label={t("groups.memberList.isOwner")}
-                                />
-
-                                {isSubmitting && <LinearProgress />}
-                                <DialogActions>
-                                    <Button type="submit" color="primary">
-                                        {t("common.save")}
-                                    </Button>
-                                    <Button color="error" onClick={closeEditMemberModal}>
-                                        {t("common.cancel")}
-                                    </Button>
-                                </DialogActions>
-                            </Form>
-                        )}
-                    </Formik>
-                </DialogContent>
-            </Dialog>
+            <EditMemberDialog group={group} memberToEdit={memberToEdit} setMemberToEdit={setMemberToEdit} />
         </>
     );
 };

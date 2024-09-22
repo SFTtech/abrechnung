@@ -7,7 +7,7 @@ import { api } from "@/core/api";
 import { useAppDispatch } from "@/store";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FormTextField } from "../FormTextField";
+import { FormTextField } from "@abrechnung/components";
 
 const validationSchema = z.object({
     name: z.string({ required_error: "Name is required" }),

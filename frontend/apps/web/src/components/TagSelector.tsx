@@ -4,7 +4,7 @@ import { Box, Checkbox, Chip, ChipProps, ListItemIcon, ListItemText, MenuItem, T
 import * as React from "react";
 import { useAppSelector } from "@/store";
 import { AddNewTagDialog } from "./AddNewTagDialog";
-import { DisabledTextField } from "./style/DisabledTextField";
+import { DisabledTextField } from "@abrechnung/components";
 import { useTranslation } from "react-i18next";
 
 interface Props extends Omit<TextFieldProps, "value" | "onChange" | "disabled" | "select" | "SelectProps"> {

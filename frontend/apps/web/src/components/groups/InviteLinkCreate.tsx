@@ -1,21 +1,14 @@
 import { Group } from "@abrechnung/api";
-import {
-    Button,
-    Checkbox,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    FormControlLabel,
-    LinearProgress,
-    TextField,
-} from "@mui/material";
+import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack } from "@mui/material";
 import { DateTimePicker } from "@mui/x-date-pickers";
-import { Form, Formik, FormikHelpers } from "formik";
 import { DateTime } from "luxon";
 import React from "react";
 import { toast } from "react-toastify";
 import { api } from "@/core/api";
+import { Controller, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { FormCheckbox, FormTextField } from "@abrechnung/components";
 
 interface Props {
     group: Group;
@@ -26,38 +19,47 @@ interface Props {
     ) => void;
 }
 
-type FormValues = {
-    description: string;
-    validUntil: DateTime;
-    singleUse: boolean;
-    joinAsEditor: boolean;
+const validationSchema = z.object({
+    description: z.string(),
+    singleUse: z.boolean(),
+    joinAsEditor: z.boolean(),
+    validUntil: z.string().datetime({ offset: true }),
+});
+
+type FormValues = z.infer<typeof validationSchema>;
+const nowPlusOneHour = () => {
+    return DateTime.now().plus({ hours: 1 });
 };
 
 export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
-    const handleSubmit = (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
+    const { control, handleSubmit } = useForm<FormValues>({
+        resolver: zodResolver(validationSchema),
+        defaultValues: {
+            description: "",
+            validUntil: nowPlusOneHour().toISO(),
+            singleUse: false,
+            joinAsEditor: false,
+        },
+    });
+
+    const onSubmit = (values: FormValues) => {
         api.client.groups
             .createInvite({
                 groupId: group.id,
                 requestBody: {
                     description: values.description,
-                    valid_until: values.validUntil.toISO()!,
+                    valid_until: values.validUntil,
                     single_use: values.singleUse,
                     join_as_editor: values.joinAsEditor,
                 },
             })
             .then((result) => {
                 toast.success("Successfully created invite token");
-                setSubmitting(false);
                 onClose({}, "completed");
             })
             .catch((err) => {
                 toast.error(err);
-                setSubmitting(false);
             });
-    };
-
-    const nowPlusOneHour = () => {
-        return DateTime.now().plus({ hours: 1 });
     };
 
     return (
@@ -65,79 +67,54 @@ export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
             <DialogTitle>Create Invite Link</DialogTitle>
 
             <DialogContent>
-                <Formik
-                    initialValues={{
-                        description: "",
-                        validUntil: nowPlusOneHour(),
-                        singleUse: false,
-                        joinAsEditor: false,
-                    }}
-                    onSubmit={handleSubmit}
-                >
-                    {({ values, setFieldValue, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
-                        <Form>
-                            <TextField
-                                margin="normal"
-                                required
-                                fullWidth
-                                autoFocus
-                                variant="standard"
-                                name="description"
-                                label="Description"
-                                value={values.description}
-                                onChange={handleChange}
-                                onBlur={handleBlur}
-                            />
-                            <DateTimePicker
-                                format="yyyy-MM-dd HH:mm"
-                                value={values.validUntil}
-                                onChange={(val) => setFieldValue("validUntil", val, true)}
-                                slotProps={{
-                                    textField: {
-                                        name: "validUntil",
-                                        sx: { marginTop: 2 },
-                                        variant: "standard",
-                                        fullWidth: true,
-                                    },
-                                }}
-                            />
-                            <FormControlLabel
-                                sx={{ mt: 2 }}
-                                label={"Single Use"}
-                                control={
-                                    <Checkbox
-                                        name="singleUse"
-                                        value={values.singleUse}
-                                        onChange={handleChange}
-                                        onBlur={handleBlur}
-                                    />
-                                }
-                            />
-                            <FormControlLabel
-                                sx={{ mt: 2 }}
-                                label={"New members join as editors"}
-                                control={
-                                    <Checkbox
-                                        name="joinAsEditor"
-                                        value={values.joinAsEditor}
-                                        onChange={handleChange}
-                                        onBlur={handleBlur}
-                                    />
-                                }
-                            />
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <Stack spacing={2}>
+                        <FormTextField
+                            margin="normal"
+                            required
+                            fullWidth
+                            autoFocus
+                            variant="standard"
+                            name="description"
+                            label="Description"
+                            control={control}
+                        />
+                        <Controller
+                            name="validUntil"
+                            control={control}
+                            render={({ field: { onChange, value } }) => (
+                                <DateTimePicker
+                                    format="yyyy-MM-dd HH:mm"
+                                    label="Valid until"
+                                    value={DateTime.fromISO(value)}
+                                    onChange={(val) => {
+                                        if (val != null && val.isValid) {
+                                            onChange(val.toISO());
+                                            console.log(val.toISO());
+                                        }
+                                    }}
+                                    slotProps={{
+                                        textField: {
+                                            variant: "standard",
+                                            fullWidth: true,
+                                        },
+                                    }}
+                                />
+                            )}
+                        />
+                        <FormCheckbox label="Single Use" control={control} name="singleUse" />
+                        <FormCheckbox label="New members join as editors" control={control} name="joinAsEditor" />
 
-                            {isSubmitting && <LinearProgress />}
-                            <DialogActions>
-                                <Button type="submit" color="primary" disabled={isSubmitting}>
-                                    Save
-                                </Button>
-                                <Button color="error" onClick={() => onClose({}, "closeButton")}>
-                                    Cancel
-                                </Button>
-                            </DialogActions>
-                        </Form>
-                    )}
-                </Formik>
+                        <DialogActions>
+                            <Button type="submit" color="primary">
+                                Save
+                            </Button>
+                            <Button color="error" onClick={() => onClose({}, "closeButton")}>
+                                Cancel
+                            </Button>
+                        </DialogActions>
+                    </Stack>
+                </form>
             </DialogContent>
         </Dialog>
     );

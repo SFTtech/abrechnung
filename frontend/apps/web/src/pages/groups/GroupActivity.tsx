@@ -10,7 +10,7 @@ import {
 import { List, ListItem, ListItemText, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import React, { useEffect } from "react";
-import { Loading } from "@/components/style/Loading";
+import { Loading } from "@abrechnung/components";
 import { MobilePaper } from "@/components/style";
 import { api, ws } from "@/core/api";
 import { useTitle } from "@/core/utils";

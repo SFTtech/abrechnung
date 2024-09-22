@@ -1,7 +1,8 @@
 import { AccountTransactionList } from "@/components/accounts/AccountTransactionList";
 import { BalanceHistoryGraph } from "@/components/accounts/BalanceHistoryGraph";
 import { ClearingAccountDetail } from "@/components/accounts/ClearingAccountDetail";
-import { MobilePaper, Loading } from "@/components/style";
+import { MobilePaper } from "@/components/style";
+import { Loading } from "@abrechnung/components";
 import { useQuery, useTitle } from "@/core/utils";
 import { Grid, Typography } from "@mui/material";
 import * as React from "react";

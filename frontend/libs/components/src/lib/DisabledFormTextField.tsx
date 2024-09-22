@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Control, Controller } from "react-hook-form";
 import { TextFieldProps } from "@mui/material";
-import { DisabledTextField } from "./style";
+import { DisabledTextField } from "./DisabledTextField";
 
 export type DisabledFormTextFieldProps = Omit<TextFieldProps, "onChange" | "name"> & {
     name: string;

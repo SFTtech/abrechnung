@@ -1,4 +1,4 @@
-import { NumericInput } from "@/components/NumericInput";
+import { NumericInput } from "@abrechnung/components";
 import { TextInput } from "@/components/TextInput";
 import { Account, TransactionPosition } from "@abrechnung/types";
 import { ContentCopy, Delete } from "@mui/icons-material";

@@ -1,6 +1,5 @@
 import { AccountSelect } from "@/components/AccountSelect";
-import { DateInput } from "@/components/DateInput";
-import { NumericInput } from "@/components/NumericInput";
+import { DateInput, NumericInput } from "@abrechnung/components";
 import { ShareSelect } from "@/components/ShareSelect";
 import { TagSelector } from "@/components/TagSelector";
 import { TextInput } from "@/components/TextInput";

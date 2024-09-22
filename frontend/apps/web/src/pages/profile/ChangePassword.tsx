@@ -1,6 +1,4 @@
-import { toFormikValidationSchema } from "@abrechnung/utils";
-import { Button, LinearProgress, TextField, Typography } from "@mui/material";
-import { Form, Formik, FormikHelpers, FormikProps } from "formik";
+import { Button, Typography } from "@mui/material";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
@@ -9,6 +7,9 @@ import { MobilePaper } from "@/components/style";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import i18n from "@/i18n";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormTextField } from "@abrechnung/components";
 
 const validationSchema = z
     .object({
@@ -26,16 +27,27 @@ export const ChangePassword: React.FC = () => {
     const { t } = useTranslation();
     useTitle(t("profile.changePassword.tabTitle"));
 
-    const handleSubmit = (values: FormSchema, { setSubmitting, resetForm }: FormikHelpers<FormSchema>) => {
+    const {
+        control,
+        handleSubmit,
+        reset: resetForm,
+    } = useForm<FormSchema>({
+        resolver: zodResolver(validationSchema),
+        defaultValues: {
+            password: "",
+            newPassword: "",
+            newPassword2: "",
+        },
+    });
+
+    const onSubmit = (values: FormSchema) => {
         api.client.auth
             .changePassword({ requestBody: { old_password: values.password, new_password: values.newPassword } })
             .then(() => {
-                setSubmitting(false);
                 toast.success(t("profile.changePassword.success"));
                 resetForm();
             })
             .catch((error) => {
-                setSubmitting(false);
                 toast.error(error.toString());
             });
     };
@@ -45,67 +57,42 @@ export const ChangePassword: React.FC = () => {
             <Typography component="h3" variant="h5">
                 {t("profile.changePassword.pageTitle")}
             </Typography>
-            <Formik
-                validationSchema={toFormikValidationSchema(validationSchema)}
-                initialValues={{
-                    password: "",
-                    newPassword: "",
-                    newPassword2: "",
-                }}
-                onSubmit={handleSubmit}
-            >
-                {({ values, handleChange, handleBlur, isSubmitting, errors, touched }: FormikProps<FormSchema>) => (
-                    <Form>
-                        <TextField
-                            fullWidth
-                            autoFocus
-                            margin="normal"
-                            type="password"
-                            name="password"
-                            label={t("common.password")}
-                            variant="standard"
-                            value={values.password}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            error={touched.password && !!errors.password}
-                            helperText={touched.password && errors.password}
-                        />
+            <form onSubmit={handleSubmit(onSubmit)}>
+                <FormTextField
+                    fullWidth
+                    autoFocus
+                    margin="normal"
+                    type="password"
+                    name="password"
+                    label={t("common.password")}
+                    variant="standard"
+                    control={control}
+                />
 
-                        <TextField
-                            fullWidth
-                            margin="normal"
-                            type="password"
-                            name="newPassword"
-                            label={t("profile.changePassword.newPassword")}
-                            variant="standard"
-                            value={values.newPassword}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            error={touched.newPassword && !!errors.newPassword}
-                            helperText={touched.newPassword && errors.newPassword}
-                        />
+                <FormTextField
+                    fullWidth
+                    margin="normal"
+                    type="password"
+                    name="newPassword"
+                    label={t("profile.changePassword.newPassword")}
+                    variant="standard"
+                    control={control}
+                />
 
-                        <TextField
-                            fullWidth
-                            variant="standard"
-                            value={values.newPassword2}
-                            onChange={handleChange}
-                            onBlur={handleBlur}
-                            margin="normal"
-                            type="password"
-                            name="newPassword2"
-                            label={t("common.repeatPassword")}
-                            error={touched.newPassword2 && !!errors.newPassword2}
-                            helperText={touched.newPassword2 && errors.newPassword2}
-                        />
+                <FormTextField
+                    fullWidth
+                    variant="standard"
+                    margin="normal"
+                    type="password"
+                    name="newPassword2"
+                    label={t("common.repeatPassword")}
+                    control={control}
+                />
 
-                        {isSubmitting && <LinearProgress />}
-                        <Button type="submit" color="primary" disabled={isSubmitting}>
-                            {t("common.save")}
-                        </Button>
-                    </Form>
-                )}
-            </Formik>
+                <Button type="submit" color="primary">
+                    {t("common.save")}
+                </Button>
+            </form>
         </MobilePaper>
     );
 };
