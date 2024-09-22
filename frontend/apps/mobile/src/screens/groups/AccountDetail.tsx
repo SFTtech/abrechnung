@@ -23,7 +23,7 @@ import {
     Text,
     useTheme,
 } from "react-native-paper";
-import TransactionShareInput from "../../components/transaction-shares/TransactionShareInput";
+import { TransactionShareInput } from "../../components/transaction-shares/TransactionShareInput";
 import { clearingAccountIcon, getTransactionIcon } from "../../constants/Icons";
 import { useApi } from "../../core/ApiProvider";
 import { GroupStackScreenProps } from "../../navigation/types";

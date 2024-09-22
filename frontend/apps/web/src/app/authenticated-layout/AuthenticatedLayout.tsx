@@ -39,7 +39,7 @@ import {
 } from "@mui/icons-material";
 import { useTheme } from "@mui/material/styles";
 import { Banner } from "@/components/style/Banner";
-import { Loading } from "@/components/style/Loading";
+import { Loading } from "@abrechnung/components";
 import styles from "./AuthenticatedLayout.module.css";
 import { LanguageSelect } from "@/components/LanguageSelect";
 import { useTranslation } from "react-i18next";

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Loading } from "@/components/style/Loading";
+import { Loading } from "@abrechnung/components";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { logout, selectIsAuthenticated } from "@abrechnung/redux";
 import { api } from "@/core/api";

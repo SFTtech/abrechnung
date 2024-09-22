@@ -1,4 +1,4 @@
-import { DisabledFormControlLabel } from "@/components/style/DisabledTextField";
+import { DisabledFormControlLabel, DisabledFormTextField } from "@abrechnung/components";
 import { api } from "@/core/api";
 import { useAppDispatch } from "@/store";
 import { Group } from "@abrechnung/api";
@@ -11,7 +11,6 @@ import { toast } from "react-toastify";
 import { z } from "zod";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { DisabledFormTextField } from "@/components";
 
 type SettingsFormProps = {
     group: Group;

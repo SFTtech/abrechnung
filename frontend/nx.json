@@ -55,9 +55,18 @@
             },
             "library": {
                 "style": "css",
-                "linter": "eslint"
+                "linter": "eslint",
+                "unitTestRunner": "jest"
             }
         }
     },
-    "defaultProject": "web"
+    "defaultProject": "web",
+    "plugins": [
+        {
+            "plugin": "@nx/eslint/plugin",
+            "options": {
+                "targetName": "eslint:lint"
+            }
+        }
+    ]
 }

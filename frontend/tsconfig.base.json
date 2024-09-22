@@ -25,6 +25,7 @@
         "baseUrl": ".",
         "paths": {
             "@abrechnung/api": ["libs/api/src/index.ts"],
+            "@abrechnung/components": ["libs/components/src/index.ts"],
             "@abrechnung/core": ["libs/core/src/index.ts"],
             "@abrechnung/redux": ["libs/redux/src/index.ts"],
             "@abrechnung/translations": ["libs/translations/src/index.ts"],

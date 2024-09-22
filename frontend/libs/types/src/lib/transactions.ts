@@ -19,12 +19,23 @@ const BaseTransactionValidator = z.object({
         .regex(/\d{4}-\d{2}-\d{2}/, "A valid date is required"),
     description: z.string().optional(),
     currency_symbol: z.string({ required_error: "Currency is required" }).min(1, "Currency is required"),
+    tags: z.array(z.string()),
     currency_conversion_rate: z
         .number({ required_error: "Currency conversion rate is required" })
         .positive("Currency conversion rate must be larger than 0"),
 });
 
 export const PurchaseValidator = z
+    .object({
+        creditor_shares: z
+            .record(z.number())
+            .refine((shares) => Object.keys(shares).length !== 1, "somebody has payed for this"),
+        debitor_shares: z.record(z.number()).refine((shares) => Object.keys(shares).length > 0, "select at least one"),
+    })
+    .merge(BaseTransactionValidator)
+    .passthrough();
+
+export const MimoValidator = z
     .object({
         creditor_shares: z
             .record(z.number())
@@ -49,6 +60,7 @@ export const TransferValidator = z
 export const TransactionValidator = z.discriminatedUnion("type", [
     PurchaseValidator.merge(z.object({ type: z.literal("purchase") })),
     TransferValidator.merge(z.object({ type: z.literal("transfer") })),
+    MimoValidator.merge(z.object({ type: z.literal("mimo") })),
 ]);
 
 export const PositionValidator = z

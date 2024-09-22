@@ -11,7 +11,7 @@ import React, { Suspense } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Balances } from "../accounts/Balances";
-import { Loading } from "@/components/style/Loading";
+import { Loading } from "@abrechnung/components";
 import { api, ws } from "@/core/api";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { AccountDetail } from "../accounts/AccountDetail";

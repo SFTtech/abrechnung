@@ -1,6 +1,6 @@
 import React from "react";
 import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
-import { DisabledTextField } from "../style/DisabledTextField";
+import { DisabledTextField } from "@abrechnung/components";
 import { styled } from "@mui/material/styles";
 import { useAppSelector } from "@/store";
 import { selectGroupMemberIds, selectGroupMemberIdToUsername } from "@abrechnung/redux";

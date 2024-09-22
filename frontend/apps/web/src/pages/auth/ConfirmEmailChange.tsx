@@ -2,7 +2,7 @@ import { Button, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { Loading } from "@/components/style/Loading";
+import { Loading } from "@abrechnung/components";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { Trans, useTranslation } from "react-i18next";

@@ -1,19 +1,20 @@
 import * as React from "react";
 import { Control, Controller } from "react-hook-form";
-import { TextField, TextFieldProps } from "@mui/material";
+import { TextFieldProps } from "@mui/material";
+import { DisabledTextField } from "./DisabledTextField";
 
-export type FormTextFieldProps = Omit<TextFieldProps, "onChange" | "name"> & {
+export type DisabledFormTextFieldProps = Omit<TextFieldProps, "onChange" | "name"> & {
     name: string;
     control: Control<any, any>;
 };
 
-export const FormTextField = ({ name, control, ...props }: FormTextFieldProps) => {
+export const DisabledFormTextField = ({ name, control, ...props }: DisabledFormTextFieldProps) => {
     return (
         <Controller
             name={name}
             control={control}
             render={({ field: { onChange, value }, fieldState: { error } }) => (
-                <TextField
+                <DisabledTextField
                     helperText={error ? error.message : null}
                     error={!!error}
                     onChange={onChange}

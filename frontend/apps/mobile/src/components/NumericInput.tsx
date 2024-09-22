@@ -2,12 +2,12 @@ import React from "react";
 import { TextInput } from "react-native-paper";
 import { parseAbrechnungFloat } from "@abrechnung/utils";
 
-type Props = Omit<React.ComponentProps<typeof TextInput>, "onChange" | "value"> & {
+export type NumericInputProps = Omit<React.ComponentProps<typeof TextInput>, "onChange" | "value"> & {
     value: number;
     onChange: (newValue: number) => void;
 };
 
-export const NumericInput: React.FC<Props> = ({ value, onChange, ...props }) => {
+export const NumericInput: React.FC<NumericInputProps> = ({ value, onChange, ...props }) => {
     const [internalValue, setInternalValue] = React.useState("");
     const { editable } = props;
 

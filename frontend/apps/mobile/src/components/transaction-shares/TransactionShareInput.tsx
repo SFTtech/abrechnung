@@ -7,7 +7,7 @@ import { TransactionShare } from "@abrechnung/types";
 import { useAppSelector } from "../../store";
 import { selectGroupAccounts } from "@abrechnung/redux";
 
-interface Props {
+export interface TransactionShareInputProps {
     groupId: number;
     title: string;
     multiSelect: boolean;
@@ -19,7 +19,7 @@ interface Props {
     excludedAccounts?: number[];
 }
 
-export const TransactionShareInput: React.FC<Props> = ({
+export const TransactionShareInput: React.FC<TransactionShareInputProps> = ({
     groupId,
     title,
     multiSelect,
@@ -103,5 +103,3 @@ export const TransactionShareInput: React.FC<Props> = ({
         </>
     );
 };
-
-export default TransactionShareInput;

@@ -1,7 +1,5 @@
 import { selectIsAuthenticated } from "@abrechnung/redux";
-import { toFormikValidationSchema } from "@abrechnung/utils";
-import { Alert, Box, Button, Container, CssBaseline, LinearProgress, TextField, Typography } from "@mui/material";
-import { Form, Formik, FormikHelpers, FormikProps } from "formik";
+import { Alert, Box, Button, Container, CssBaseline, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -9,6 +7,9 @@ import { api } from "@/core/api";
 import { useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 import { useTitle } from "@/core/utils";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FormTextField } from "@abrechnung/components";
 
 const validationSchema = z.object({
     email: z.string({ required_error: "email is required" }).email("please enter a valid email address"),
@@ -30,19 +31,26 @@ export const RequestPasswordRecovery: React.FC = () => {
         }
     }, [isLoggedIn, navigate]);
 
-    const handleSubmit = (values: FormSchema, { setSubmitting, resetForm }: FormikHelpers<FormSchema>) => {
+    const {
+        control,
+        handleSubmit,
+        reset: resetForm,
+    } = useForm<FormSchema>({
+        resolver: zodResolver(validationSchema),
+        defaultValues: { email: "" },
+    });
+
+    const onSubmit = (values: FormSchema) => {
         api.client.auth
             .recoverPassword({ requestBody: { email: values.email } })
             .then(() => {
                 setStatus("success");
                 setError(null);
-                setSubmitting(false);
                 resetForm();
             })
             .catch((err) => {
                 setStatus("error");
                 setError(err.toString());
-                setSubmitting(false);
             });
     };
 
@@ -73,49 +81,21 @@ export const RequestPasswordRecovery: React.FC = () => {
                         {t("auth.recoverPassword.emailSent")}
                     </Alert>
                 ) : (
-                    <Formik
-                        validationSchema={toFormikValidationSchema(validationSchema)}
-                        initialValues={{ email: "" }}
-                        onSubmit={handleSubmit}
-                    >
-                        {({
-                            values,
-                            handleChange,
-                            handleBlur,
-                            handleSubmit,
-                            isSubmitting,
-                            touched,
-                            errors,
-                        }: FormikProps<FormSchema>) => (
-                            <Form onSubmit={handleSubmit}>
-                                <TextField
-                                    variant="outlined"
-                                    margin="normal"
-                                    fullWidth
-                                    autoFocus
-                                    type="text"
-                                    label={t("common.email")}
-                                    name="email"
-                                    onBlur={handleBlur}
-                                    onChange={handleChange}
-                                    value={values.email}
-                                    error={touched.email && !!errors.email}
-                                    helperText={touched.email && errors.email}
-                                />
-                                {isSubmitting && <LinearProgress />}
-                                <Button
-                                    type="submit"
-                                    fullWidth
-                                    variant="contained"
-                                    color="primary"
-                                    disabled={isSubmitting}
-                                    sx={{ margin: "3 0 2 0" }}
-                                >
-                                    {t("common.confirm")}
-                                </Button>
-                            </Form>
-                        )}
-                    </Formik>
+                    <form onSubmit={handleSubmit(onSubmit)}>
+                        <FormTextField
+                            variant="outlined"
+                            margin="normal"
+                            fullWidth
+                            autoFocus
+                            type="text"
+                            label={t("common.email")}
+                            name="email"
+                            control={control}
+                        />
+                        <Button type="submit" fullWidth variant="contained" color="primary" sx={{ margin: "3 0 2 0" }}>
+                            {t("common.confirm")}
+                        </Button>
+                    </form>
                 )}
             </Box>
         </Container>

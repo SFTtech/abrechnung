@@ -1,29 +1,18 @@
 import { selectIsAuthenticated } from "@abrechnung/redux";
 import { LockOutlined } from "@mui/icons-material";
-import {
-    Avatar,
-    Box,
-    Button,
-    Container,
-    CssBaseline,
-    Grid,
-    LinearProgress,
-    Link,
-    TextField,
-    Typography,
-} from "@mui/material";
-import { Form, Formik, FormikHelpers } from "formik";
+import { Avatar, Box, Button, Container, CssBaseline, Grid, Link, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { z } from "zod";
-import { Loading } from "@/components/style/Loading";
+import { FormTextField, Loading } from "@abrechnung/components";
 import { api } from "@/core/api";
 import { useQuery, useTitle } from "@/core/utils";
 import { useAppSelector } from "@/store";
-import { toFormikValidationSchema } from "@abrechnung/utils";
 import { useTranslation } from "react-i18next";
 import i18n from "@/i18n";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 const validationSchema = z
     .object({
@@ -60,10 +49,19 @@ export const Register: React.FC = () => {
         }
     }, [loggedIn, navigate, query]);
 
-    const handleSubmit = (values: FormValues, { setSubmitting }: FormikHelpers<FormValues>) => {
+    const { control, handleSubmit } = useForm({
+        resolver: zodResolver(validationSchema),
+        defaultValues: {
+            username: "",
+            email: "",
+            password: "",
+            password2: "",
+        },
+    });
+
+    const onSubmit = (values: FormValues) => {
         // extract a potential invite token (which should be a uuid) from the query args
         let inviteToken = undefined;
-        console.log(query.get("next"));
         if (query.get("next") !== null && query.get("next") !== undefined) {
             const re = /\/invite\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/;
             const m = query.get("next")?.match(re);
@@ -85,12 +83,10 @@ export const Register: React.FC = () => {
                 toast.success(t("auth.register.registrationSuccess"), {
                     autoClose: 20000,
                 });
-                setSubmitting(false);
                 navigate(`/login${queryArgsForward}`);
             })
             .catch((err) => {
                 toast.error(err);
-                setSubmitting(false);
             });
     };
 
@@ -114,91 +110,62 @@ export const Register: React.FC = () => {
                 <Typography component="h1" variant="h5">
                     {t("auth.register.header")}
                 </Typography>
-                <Formik
-                    validationSchema={toFormikValidationSchema(validationSchema)}
-                    initialValues={{
-                        username: "",
-                        email: "",
-                        password: "",
-                        password2: "",
-                    }}
-                    onSubmit={handleSubmit}
-                >
-                    {({ values, handleBlur, handleChange, handleSubmit, isSubmitting }) => (
-                        <Form onSubmit={handleSubmit}>
-                            <TextField
-                                variant="outlined"
-                                margin="normal"
-                                required
-                                fullWidth
-                                autoFocus
-                                type="text"
-                                label={t("common.username")}
-                                name="username"
-                                onBlur={handleBlur}
-                                onChange={handleChange}
-                                value={values.username}
-                            />
-                            <TextField
-                                variant="outlined"
-                                margin="normal"
-                                required
-                                fullWidth
-                                type="email"
-                                name="email"
-                                label={t("common.email")}
-                                onBlur={handleBlur}
-                                onChange={handleChange}
-                                value={values.email}
-                            />
+                <form onSubmit={handleSubmit(onSubmit)}>
+                    <FormTextField
+                        variant="outlined"
+                        margin="normal"
+                        required
+                        fullWidth
+                        autoFocus
+                        type="text"
+                        label={t("common.username")}
+                        name="username"
+                        control={control}
+                    />
+                    <FormTextField
+                        variant="outlined"
+                        margin="normal"
+                        required
+                        fullWidth
+                        type="email"
+                        name="email"
+                        label={t("common.email")}
+                        control={control}
+                    />
 
-                            <TextField
-                                variant="outlined"
-                                margin="normal"
-                                required
-                                fullWidth
-                                type="password"
-                                name="password"
-                                label={t("common.password")}
-                                onBlur={handleBlur}
-                                onChange={handleChange}
-                                value={values.password}
-                            />
+                    <FormTextField
+                        variant="outlined"
+                        margin="normal"
+                        required
+                        fullWidth
+                        type="password"
+                        name="password"
+                        label={t("common.password")}
+                        control={control}
+                    />
 
-                            <TextField
-                                variant="outlined"
-                                margin="normal"
-                                required
-                                fullWidth
-                                type="password"
-                                name="password2"
-                                label={t("common.repeatPassword")}
-                                onBlur={handleBlur}
-                                onChange={handleChange}
-                                value={values.password2}
-                            />
+                    <FormTextField
+                        variant="outlined"
+                        margin="normal"
+                        required
+                        fullWidth
+                        type="password"
+                        name="password2"
+                        label={t("common.repeatPassword")}
+                        control={control}
+                    />
 
-                            {isSubmitting && <LinearProgress />}
-                            <Button
-                                type="submit"
-                                fullWidth
-                                variant="contained"
-                                color="primary"
-                                disabled={isSubmitting}
-                                sx={{ mt: 1 }}
-                            >
-                                {t("auth.register.confirmButton")}
-                            </Button>
-                            <Grid container={true} sx={{ justifyContent: "flex-end" }}>
-                                <Grid item>
-                                    <Link to={`/login${queryArgsForward}`} component={RouterLink} variant="body2">
-                                        {t("auth.register.alreadyHasAccount")}
-                                    </Link>
-                                </Grid>
-                            </Grid>
-                        </Form>
-                    )}
-                </Formik>
+                    <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 1 }}>
+                        {t("auth.register.confirmButton")}
+                    </Button>
+                    <Grid container={true} sx={{ justifyContent: "flex-end" }}>
+                        <Grid item>
+                            <Link to={`/login${queryArgsForward}`} component={RouterLink} variant="body2">
+                                {t("auth.register.alreadyHasAccount")}
+                            </Link>
+                        </Grid>
+                    </Grid>
+                </form>
             </Box>
         </Container>
     );

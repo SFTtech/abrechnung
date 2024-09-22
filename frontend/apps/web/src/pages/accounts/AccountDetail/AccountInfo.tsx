@@ -1,4 +1,4 @@
-import { DateInput } from "@/components/DateInput";
+import { DateInput } from "@abrechnung/components";
 import { ShareSelect } from "@/components/ShareSelect";
 import { TagSelector } from "@/components/TagSelector";
 import { TextInput } from "@/components/TextInput";

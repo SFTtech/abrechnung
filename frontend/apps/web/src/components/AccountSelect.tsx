@@ -4,7 +4,7 @@ import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from
 import { styled } from "@mui/material/styles";
 import React from "react";
 import { getAccountIcon } from "./style/AbrechnungIcons";
-import { DisabledTextField } from "./style/DisabledTextField";
+import { DisabledTextField } from "@abrechnung/components";
 
 const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
     minWidth: 200,
