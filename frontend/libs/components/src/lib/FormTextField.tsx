@@ -12,10 +12,11 @@ export const FormTextField = ({ name, control, ...props }: FormTextFieldProps) =
         <Controller
             name={name}
             control={control}
-            render={({ field: { onChange, value }, fieldState: { error } }) => (
+            render={({ field: { onChange, onBlur, value }, fieldState: { error } }) => (
                 <TextField
                     helperText={error ? error.message : null}
                     error={!!error}
+                    onBlur={onBlur}
                     onChange={onChange}
                     value={value}
                     {...props}

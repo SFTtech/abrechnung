@@ -3,7 +3,7 @@ import { TouchableHighlight, View } from "react-native";
 import { Portal, Text, useTheme } from "react-native-paper";
 import { TagSelectDialog } from "./TagSelectDialog";
 
-interface Props {
+export interface TagSelectProps {
     groupId: number;
     label: string;
     value: string[];
@@ -11,7 +11,7 @@ interface Props {
     onChange: (newValue: string[]) => void;
 }
 
-export const TagSelect: React.FC<Props> = ({ groupId, label, value, onChange, disabled }) => {
+export const TagSelect: React.FC<TagSelectProps> = ({ groupId, label, value, onChange, disabled }) => {
     const theme = useTheme();
     const [showDialog, setShowDialog] = useState(false);
 

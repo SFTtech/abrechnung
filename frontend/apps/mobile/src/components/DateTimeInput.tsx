@@ -3,7 +3,7 @@ import { DateTimePickerAndroid, DateTimePickerEvent } from "@react-native-commun
 import React, { useEffect, useState } from "react";
 import { HelperText, TextInput } from "react-native-paper";
 
-interface Props
+export interface DateTimeInputProps
     extends Omit<React.ComponentProps<typeof TextInput>, "onChange" | "value" | "disabled" | "editable" | "mode"> {
     value: Date | null;
     onChange: (newValue: Date) => void;
@@ -12,7 +12,7 @@ interface Props
     editable?: boolean;
 }
 
-export const DateTimeInput: React.FC<Props> = ({
+export const DateTimeInput: React.FC<DateTimeInputProps> = ({
     value,
     onChange,
     mode = "date",

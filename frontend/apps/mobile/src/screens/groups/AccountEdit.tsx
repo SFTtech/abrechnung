@@ -7,18 +7,26 @@ import {
     wipAccountUpdated,
 } from "@abrechnung/redux";
 import { AccountValidator } from "@abrechnung/types";
-import { fromISOStringNullable, toFormikValidationSchema, toISODateStringNullable } from "@abrechnung/utils";
 import { useFocusEffect } from "@react-navigation/native";
-import { useFormik } from "formik";
 import React, { useEffect, useLayoutEffect } from "react";
 import { BackHandler, ScrollView, StyleSheet } from "react-native";
-import { Button, Dialog, HelperText, IconButton, Portal, ProgressBar, TextInput, useTheme } from "react-native-paper";
-import { TransactionShareInput } from "../../components/transaction-shares/TransactionShareInput";
+import { Button, Dialog, IconButton, Portal, useTheme } from "react-native-paper";
 import { useApi } from "../../core/ApiProvider";
 import { GroupStackScreenProps } from "../../navigation/types";
 import { notify } from "../../notifications";
 import { useAppDispatch } from "../../store";
-import { LoadingIndicator, TagSelect, DateTimeInput } from "../../components";
+import {
+    LoadingIndicator,
+    FormTextInput,
+    FormTransactionShareInput,
+    FormTagSelect,
+    FormDateTimeInput,
+} from "../../components";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+type FormSchema = z.infer<typeof AccountValidator>;
 
 export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ route, navigation }) => {
     const theme = useTheme();
@@ -73,8 +81,15 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
         }
     }, [navigation, accountId, isGroupWritable, groupId]);
 
-    const formik = useFormik({
-        initialValues:
+    const {
+        control,
+        handleSubmit,
+        reset: resetForm,
+        watch,
+        getValues,
+    } = useForm<FormSchema>({
+        resolver: zodResolver(AccountValidator),
+        defaultValues:
             account === undefined
                 ? {}
                 : account.type === "clearing"
@@ -92,44 +107,38 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
                         description: account.description,
                         owning_user_id: account.owning_user_id,
                     },
-        validationSchema: toFormikValidationSchema(AccountValidator),
-        onSubmit: (values, { setSubmitting }) => {
+    });
+
+    const onSubmit = React.useCallback(
+        (values: FormSchema) => {
             if (!account) {
                 return;
             }
 
-            setSubmitting(true);
             dispatch(wipAccountUpdated({ ...account, ...values }));
             dispatch(saveAccount({ groupId: groupId, accountId: account.id, api }))
                 .unwrap()
                 .then(({ account }) => {
-                    setSubmitting(false);
                     navigation.replace("AccountDetail", {
                         accountId: account.id,
                         groupId: groupId,
                     });
                 })
                 .catch(() => {
-                    setSubmitting(false);
+                    notify({ text: "Error saving account" });
                 });
         },
-        enableReinitialize: true,
-    });
-
-    const onUpdate = React.useCallback(() => {
-        if (account) {
-            dispatch(wipAccountUpdated({ ...account, ...formik.values }));
-        }
-    }, [dispatch, account, formik]);
-
-    const updateWipAccount = React.useCallback(
-        (values: Partial<typeof formik.values>) => {
-            if (account) {
-                dispatch(wipAccountUpdated({ ...account, ...values }));
-            }
-        },
-        [dispatch, account, formik]
+        [dispatch, account, navigation, groupId, api]
     );
+
+    React.useEffect(() => {
+        const { unsubscribe } = watch(() => {
+            if (account) {
+                dispatch(wipAccountUpdated({ ...account, ...getValues() }));
+            }
+        });
+        return unsubscribe;
+    }, [dispatch, account, getValues, watch]);
 
     const cancelEdit = React.useCallback(() => {
         if (!account) {
@@ -137,27 +146,27 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
         }
 
         dispatch(discardAccountChange({ groupId, accountId: account.id }));
-        formik.resetForm();
+        resetForm();
         navigation.pop();
-    }, [dispatch, groupId, account, navigation, formik]);
+    }, [dispatch, groupId, account, navigation, resetForm]);
 
     useLayoutEffect(() => {
         navigation.setOptions({
             onGoBack: onGoBack,
-            headerTitle: formik.values?.name ?? account?.name ?? "",
+            headerTitle: account?.name ?? "",
             headerRight: () => {
                 return (
                     <>
                         <Button onPress={cancelEdit} textColor={theme.colors.error}>
                             Cancel
                         </Button>
-                        <Button onPress={() => formik.handleSubmit()}>Save</Button>
+                        <Button onPress={handleSubmit(onSubmit)}>Save</Button>
                         <IconButton icon="delete" iconColor={theme.colors.error} onPress={openConfirmDeleteModal} />
                     </>
                 );
             },
         } as any);
-    }, [theme, account, navigation, formik, cancelEdit, onGoBack]);
+    }, [theme, account, navigation, handleSubmit, onSubmit, cancelEdit, onGoBack]);
 
     if (account == null) {
         return <LoadingIndicator />;
@@ -165,76 +174,28 @@ export const AccountEdit: React.FC<GroupStackScreenProps<"AccountEdit">> = ({ ro
 
     return (
         <ScrollView style={styles.container}>
-            {formik.isSubmitting ? <ProgressBar indeterminate /> : null}
-            <TextInput
-                label="Name"
-                value={formik.values.name}
-                style={styles.input}
-                editable={true}
-                onChangeText={(val) => formik.setFieldValue("name", val)}
-                onBlur={onUpdate}
-                error={formik.touched.name && !!formik.errors.name}
-            />
-            {formik.touched.name && !!formik.errors.name ? (
-                <HelperText type="error">{formik.errors.name}</HelperText>
-            ) : null}
-            <TextInput
-                label="Description"
-                value={formik.values.description}
-                style={styles.input}
-                editable={true}
-                onBlur={onUpdate}
-                onChangeText={(val) => formik.setFieldValue("description", val)}
-                error={formik.touched.description && !!formik.errors.description}
-            />
-            {formik.touched.description && !!formik.errors.description ? (
-                <HelperText type="error">{formik.errors.description}</HelperText>
-            ) : null}
-            {account.type === "personal" && formik.touched.owning_user_id && !!formik.errors.owning_user_id && (
-                <HelperText type="error">{formik.errors.owning_user_id}</HelperText>
-            )}
-            {formik.values.type === "clearing" && (
+            <FormTextInput label="Name" style={styles.input} name="name" control={control} />
+            <FormTextInput label="Description" style={styles.input} name="description" control={control} />
+            {account.type === "clearing" && (
                 <>
-                    <DateTimeInput
+                    <FormDateTimeInput
+                        control={control}
+                        name="date_info"
                         label="Date"
-                        value={fromISOStringNullable(formik.values.date_info)}
                         editable={true}
                         style={styles.input}
-                        onChange={(val) => formik.setFieldValue("dateInfo", toISODateStringNullable(val))}
-                        onBlur={onUpdate}
-                        error={formik.touched.date_info && !!formik.errors.date_info}
                     />
-                    {formik.touched.date_info && !!formik.errors.date_info && (
-                        <HelperText type="error">{formik.errors.date_info}</HelperText>
-                    )}
-                    <TagSelect
-                        groupId={groupId}
-                        label="Tags"
-                        value={formik.values.tags}
-                        disabled={false}
-                        onChange={(val) => {
-                            updateWipAccount({ tags: val });
-                        }}
-                    />
-                    {formik.touched.tags && !!formik.errors.tags && (
-                        <HelperText type="error">{formik.errors.tags}</HelperText>
-                    )}
-                    <TransactionShareInput
+                    <FormTagSelect control={control} name="tags" groupId={groupId} label="Tags" disabled={false} />
+                    <FormTransactionShareInput
+                        name="clearing_shares"
+                        control={control}
                         title="Participated"
-                        disabled={false}
                         groupId={groupId}
-                        value={formik.values.clearing_shares}
-                        onChange={(newValue) => {
-                            updateWipAccount({ clearing_shares: newValue });
-                        }}
+                        disabled={false}
+                        excludedAccounts={[account.id]}
                         enableAdvanced={true}
                         multiSelect={true}
-                        excludedAccounts={[account.id]}
-                        error={formik.touched.clearing_shares && !!formik.errors.clearing_shares}
                     />
-                    {formik.touched.clearing_shares && !!formik.errors.clearing_shares && (
-                        <HelperText type="error">{formik.errors.clearing_shares as string}</HelperText>
-                    )}
                 </>
             )}
             <Portal>
