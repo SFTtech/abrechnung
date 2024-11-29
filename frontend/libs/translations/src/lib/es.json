@@ -29,12 +29,12 @@
         "lastChanged": "Último cambio",
         "send": "Enviar",
         "username": "Nombre de usuario",
-        "email": "Correo electrónico",
+        "email": "Correo",
         "passwordsDoNotMatch": "Las contraseñas no coinciden",
         "yes": "Sí",
         "no": "No",
         "cancel": "Cancelar",
-        "search": "Buscar ...",
+        "search": "Buscar...",
         "noneSoFar": "Ninguno de momento",
         "exportAsCsv": "Exportar como CSV",
         "currency": "Divisa",
@@ -46,9 +46,9 @@
         "selectedPeople_one": "{{count}} persona",
         "selectedPeople_many": "{{count}} personas",
         "selectedPeople_other": "{{count}} personas",
-        "selectedEvent_one": "{{count}} Evento",
-        "selectedEvent_many": "{{count}} Eventos",
-        "selectedEvent_other": "{{count}} Eventos"
+        "selectedEvent_one": "{{count}} evento",
+        "selectedEvent_many": "{{count}} eventos",
+        "selectedEvent_other": "{{count}} eventos"
     },
     "navbar": {
         "transactions": "Transacciones",
@@ -92,10 +92,10 @@
             "isOwner": "Es líder"
         },
         "settings": {
-            "leaveGroupConfirm": "¿Seguro que quieres salir del grupo {{group.name}}? Si eres el último miembro en salir de este grupo se borrará y sus transacciones se perderán para siempre...",
+            "leaveGroupConfirm": "¿Seguro que quieres salir del grupo «{{group.name}}»? Si eres el último miembro en salir de este grupo se borrará y sus transacciones se perderán para siempre.",
             "archiveGroup": "Archivar grupo",
             "unarchiveGroup": "Desarchivar grupo",
-            "unarchiveGroupConfirm": "¿Seguro que quieres desarchivar el grupo {{group.name}}? El grupo ya no será de solo lectura.",
+            "unarchiveGroupConfirm": "¿Seguro que quieres desarchivar el grupo «{{group.name}}»? El grupo ya no será de solo lectura.",
             "tabTitle": "{{groupName}} - Ajustes",
             "ownerDisclaimer": "Eres líder de este grupo",
             "readAccessDisclaimer": "Tienes acceso de solo lectura a este grupo",
@@ -103,13 +103,13 @@
             "autoAddAccounts": "Añade cuentas para miembros nuevos automáticamente",
             "header": "Ajustes",
             "leaveGroup": "Salir del grupo",
-            "archiveGroupConfirm": "¿Seguro que quieres archivar el grupo {{group.name}}? Los grupos archivados no admiten modificaciones y se ocultarán de listas de grupos. Solo un líder puede revertir esta acción."
+            "archiveGroupConfirm": "¿Seguro que quieres archivar el grupo «{{group.name}}»? Los grupos archivados no admiten modificaciones y se ocultarán de listas de grupos. Solo un líder puede revertir esta acción."
         },
         "join": {
             "tabTitle": "Abrechnung - Unirse a un grupo",
             "invitationDescription": "Descripción de la invitación",
             "invitationValidUntil": "Invitación válida hasta",
-            "youHaveBeenInvited": "Se te ha invitado al grupo {{group.name}}",
+            "youHaveBeenInvited": "Se te ha invitado al grupo «{{group.name}}»",
             "invitationSingleUse": "Invitación de un solo uso",
             "join": "Unirse"
         },
