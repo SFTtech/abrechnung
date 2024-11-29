@@ -10,7 +10,7 @@
         "confirm": "Confirmar",
         "add": "Añadir",
         "name": "Nombre",
-        "lastChangedWithTime": "último cambio: {{datetime}}",
+        "lastChangedWithTime": "Última modificación el: {{datetime}}",
         "value": "Valor",
         "date": "Fecha",
         "description": "Descripción",
@@ -26,7 +26,7 @@
         "advanced": "Avanzado",
         "price": "Precio",
         "createdAt": "Creado en",
-        "lastChanged": "Último cambio",
+        "lastChanged": "Última modificación",
         "send": "Enviar",
         "username": "Nombre de usuario",
         "email": "Correo",
@@ -248,7 +248,7 @@
         },
         "recoverPassword": {
             "tabTitle": "Abrechnung - Recuperación",
-            "body": "Por favor, escribe tu correo. Un enlace de recuperación se te enviará en breves.",
+            "body": "Por favor, introduzca tu dirección de correo electrónico. En breve te enviaremos un enlace de recuperación.",
             "header": "Recuperación",
             "emailSent": "Un enlace de recuperación se ha enviado a tu correo."
         },
