@@ -273,5 +273,9 @@
     },
     "app": {
         "name": "Abrechnung"
+    },
+    "languages": {
+        "en": "Inglés",
+        "de": "Alemán"
     }
 }
