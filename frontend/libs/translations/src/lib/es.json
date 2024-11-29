@@ -45,7 +45,10 @@
         "showEvents": "Mostrar eventos",
         "selectedPeople_one": "{{count}} persona",
         "selectedPeople_many": "{{count}} personas",
-        "selectedPeople_other": "{{count}} personas"
+        "selectedPeople_other": "{{count}} personas",
+        "selectedEvent_one": "{{count}} Evento",
+        "selectedEvent_many": "{{count}} Eventos",
+        "selectedEvent_other": "{{count}} Eventos"
     },
     "navbar": {
         "transactions": "Transacciones",
@@ -60,7 +63,8 @@
         "changeEmail": "Cambiar correo",
         "changePassword": "Cambiar contraseña",
         "login": "Iniciar sesión",
-        "signOut": "Cerrar sesión"
+        "signOut": "Cerrar sesión",
+        "imprint": "Imprimir"
     },
     "groups": {
         "addGroup": "Añadir grupo",
@@ -112,7 +116,8 @@
         "invites": {
             "tabTitle": "{{groupName}} - Enlaces de invitación",
             "header": "Enlaces de invitación activos",
-            "guestUserDisclaimer": "Eres un invitado en este Abrechnung y por tanto no puedes crear invitaciones."
+            "guestUserDisclaimer": "Eres un invitado en este Abrechnung y por tanto no puedes crear invitaciones.",
+            "tokenHidden": "token oculto, fue creado por otro miembro"
         }
     },
     "images": {
@@ -255,7 +260,14 @@
         },
         "confirmPasswordRecovery": {
             "tabTitle": "Abrechnung - Confirmar recuperación",
-            "header": "Confirmar recuperación"
+            "header": "Confirmar recuperación",
+            "successfulLinkToLogin": "La recuperación de contraseña se ha realizado correctamente, por favor <1>inicie sesión</1> con tu nueva contraseña."
+        },
+        "confirmRegistration": {
+            "header": "Confirmar registro",
+            "confirmSuccessful": "Confirmación correcta",
+            "successfulLinkToLogin": "Por favor, <1>inicia sesión</1> con tus credenciales.",
+            "clickHereToConfirm": "Haga clic <1>aquí</1> para confirmar tu registro."
         }
     },
     "app": {
