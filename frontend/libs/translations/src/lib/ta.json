@@ -93,7 +93,7 @@
         "log": {
             "tabTitle": "{{groupName}} - செயல்பாடு",
             "header": "குழு செயல்பாடு",
-            "messageInfo": "{{datetime}} இல் {{username}} இவரால்"
+            "messageInfo": "{{username}} ஆல் {{datetime}} அன்று"
         },
         "addGroup": "குழுவைச் சேர்க்கவும்",
         "archivedDisclaimer": "இந்த குழு காப்பகப்படுத்தப்பட்டுள்ளது, எனவே படிக்க மட்டுமே.",
@@ -136,7 +136,7 @@
             "addPositions": "நிலைகளைச் சேர்க்கவும்",
             "remaining": "மீதமுள்ள:"
         },
-        "byFor": "இவரால் {{by}}, இதற்காக {{for}}",
+        "byFor": "{{by}}ஆல் {{for}}இதற்கு",
         "list": {
             "tabTitle": "{{groupName}} - பரிவர்த்தனைகள்"
         },
@@ -145,10 +145,10 @@
     },
     "accounts": {
         "settlement": {
-            "settleButton": "கடனை அடை",
+            "settleButton": "குடியேறு",
             "transactionName": "தீர்வு",
             "title": "இந்த குழுக்கள் நிலுவைகளைத் தீர்த்துக் கொள்ளுங்கள்",
-            "whoPaysWhom": "{{from}} செலுத்துதல் {{money}} {{to}}"
+            "whoPaysWhom": "{{from}} {{money}}செலுத்துதல் {{to}}"
         },
         "deleteConfirm": "நீக்கு {{accountType}}",
         "noAccounts": "கணக்குகள் இல்லை",
@@ -169,7 +169,7 @@
             "tabTitleAccount": "{{group.name}} - கணக்கு {{account.name}}"
         },
         "clearingDistributionOf": "{{account.name}} இல் பங்கேற்பாளர்கள்",
-        "balanceOf": "{{account.name}} இன் இருப்பு",
+        "balanceOf": "{{account.name}}இன் இருப்பு",
         "deleteConfirmBody": "{{accountType}} \"{{accountName}}\" ஐ நீக்க விரும்புகிறீர்களா என்பதில் உறுதியாக இருக்கிறீர்களா"
     },
     "auth": {
@@ -268,7 +268,7 @@
             "tabTitle": "பட்டியலிடல் - அமர்வுகள்",
             "header": "உள்நுழைவு அமர்வுகள்",
             "confirmDeleteSession": "அமர்வை நீக்கவா?",
-            "areYouSureToDelete": "அமர்வை நீக்க விரும்புகிறீர்களா? {{sessionName}}"
+            "areYouSureToDelete": "அமர்வை நீக்க விரும்புகிறீர்களா{{sessionName}}"
         }
     },
     "languages": {
