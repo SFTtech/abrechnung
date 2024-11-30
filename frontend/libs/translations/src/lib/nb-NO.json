@@ -1,12 +1,12 @@
 {
     "groups": {
         "log": {
-            "tabTitle": " "
+            "tabTitle": ""
         }
     },
     "auth": {
         "recoverPassword": {
-            "header": "<? xml versão = \"1.0\" codificação = \"utf-8\" ?>\n<!-- Copyright (C) 2007 O Projeto Android Open Source\n     Licenciado sob a Licença Apache, Versão 2.0 (a \"Licença\");\n     você não pode usar este arquivo exceto em conformidade com a Licença.\n     Você pode obter uma cópia da L"
+            "header": ""
         }
     }
 }
