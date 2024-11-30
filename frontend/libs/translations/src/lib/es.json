@@ -247,10 +247,10 @@
             "forgotPassword": "¿Contraseña olvidada?"
         },
         "recoverPassword": {
-            "tabTitle": "Abrechnung - Recuperación",
+            "tabTitle": "Abrechnung - Recuperar contraseña",
             "body": "Por favor, escribe tu dirección de correo. En breve te enviaremos un enlace de recuperación.",
-            "header": "Recuperación",
-            "emailSent": "Un enlace de recuperación se ha enviado a tu correo."
+            "header": "Recuperar contraseña",
+            "emailSent": "Te hemos enviado un enlace para la recuperación de la contraseña por correo electrónico."
         },
         "confirmEmailChange": {
             "tabTitle": "Abrechnung - Confirmar cambio de correo",
