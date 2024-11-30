@@ -267,7 +267,7 @@
             "header": "Confirmar registro",
             "confirmSuccessful": "Confirmación correcta",
             "successfulLinkToLogin": "Por favor, <1>inicia sesión</1> con tus credenciales.",
-            "clickHereToConfirm": "Haz clic <1>aquí</1> para confirmar tu registro.",
+            "clickHereToConfirm": "Pincha <1>aquí</1> para confirmar tu registro.",
             "tabTitle": "Abrechnung - Confirmar registro"
         }
     },
