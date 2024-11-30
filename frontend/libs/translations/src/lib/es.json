@@ -78,7 +78,7 @@
         },
         "log": {
             "tabTitle": "{{groupName}} - Actividad",
-            "header": "Actividad",
+            "header": "Actividad del grupo",
             "messageInfo": "por {{username}} el {{datetime}}"
         },
         "memberList": {
@@ -224,7 +224,7 @@
         },
         "sessions": {
             "tabTitle": "Abrechnung - Sesiones",
-            "header": "Sesiones",
+            "header": "Sesiones abiertas",
             "confirmDeleteSession": "¿Borrar sesión?",
             "areYouSureToDelete": "¿Seguro que quieres borrar la sesión «{{sessionName}}»?"
         }
@@ -240,7 +240,7 @@
         },
         "login": {
             "tabTitle": "Abrechnung - Iniciar sesión",
-            "header": "Iniciar sesión",
+            "header": "Inicia sesión",
             "loginSuccess": "Sesión iniciada...",
             "confirmButton": "Iniciar sesión",
             "noAccountRegister": "¿No tienes una cuenta? Regístrate",
@@ -248,7 +248,7 @@
         },
         "recoverPassword": {
             "tabTitle": "Abrechnung - Recuperación",
-            "body": "Por favor, introduzca tu dirección de correo electrónico. En breve te enviaremos un enlace de recuperación.",
+            "body": "Por favor, escribe tu dirección de correo. En breve te enviaremos un enlace de recuperación.",
             "header": "Recuperación",
             "emailSent": "Un enlace de recuperación se ha enviado a tu correo."
         },
