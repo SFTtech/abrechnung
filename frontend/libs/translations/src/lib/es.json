@@ -250,7 +250,7 @@
             "tabTitle": "Abrechnung - Recuperar contraseña",
             "body": "Por favor, escribe tu dirección de correo. En breve te enviaremos un enlace de recuperación.",
             "header": "Recuperar contraseña",
-            "emailSent": "Te hemos enviado un enlace para la recuperación de la contraseña por correo electrónico."
+            "emailSent": "Hemos enviado un enlace para la recuperación de la contraseña a tu correo electrónico."
         },
         "confirmEmailChange": {
             "tabTitle": "Abrechnung - Confirmar cambio de correo",
