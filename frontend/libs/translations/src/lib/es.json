@@ -34,7 +34,7 @@
         "yes": "Sí",
         "no": "No",
         "cancel": "Cancelar",
-        "search": "Buscar...",
+        "search": "Buscar…",
         "noneSoFar": "Ninguno de momento",
         "exportAsCsv": "Exportar como CSV",
         "currency": "Divisa",
@@ -92,7 +92,7 @@
             "isOwner": "Es líder"
         },
         "settings": {
-            "leaveGroupConfirm": "¿Seguro que quieres salir del grupo «{{group.name}}»? Si eres el último miembro en salir de este grupo se borrará y sus transacciones se perderán para siempre.",
+            "leaveGroupConfirm": "¿Seguro que quieres salir del grupo «{{group.name}}»? Si eres el último miembro en salir de este grupo se borrará y sus transacciones se perderán para siempre…",
             "archiveGroup": "Archivar grupo",
             "unarchiveGroup": "Desarchivar grupo",
             "unarchiveGroupConfirm": "¿Seguro que quieres desarchivar el grupo «{{group.name}}»? El grupo ya no será de solo lectura.",
@@ -236,12 +236,12 @@
             "alreadyHasAccount": "¿Ya tienes una cuenta? Inicia sesión",
             "title": "Registro",
             "confirmButton": "Registrar",
-            "registrationSuccess": "Registrado correctamente, por favor, confirma tu correo antes de iniciar sesión..."
+            "registrationSuccess": "Registrado correctamente, por favor, confirma tu correo antes de iniciar sesión…"
         },
         "login": {
             "tabTitle": "Abrechnung - Iniciar sesión",
             "header": "Inicia sesión",
-            "loginSuccess": "Sesión iniciada...",
+            "loginSuccess": "Sesión iniciada…",
             "confirmButton": "Iniciar sesión",
             "noAccountRegister": "¿No tienes una cuenta? Regístrate",
             "forgotPassword": "¿Contraseña olvidada?"
