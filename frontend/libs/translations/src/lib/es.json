@@ -10,7 +10,7 @@
         "confirm": "Confirmar",
         "add": "Añadir",
         "name": "Nombre",
-        "lastChangedWithTime": "Última modificación el: {{datetime}}",
+        "lastChangedWithTime": "último cambio: {{datetime}}",
         "value": "Valor",
         "date": "Fecha",
         "description": "Descripción",
@@ -68,7 +68,7 @@
     },
     "groups": {
         "addGroup": "Añadir grupo",
-        "archivedDisclaimer": "Este grupo está archivado y es por tanto de solo lectura.",
+        "archivedDisclaimer": "Este grupo está archivado y, por tanto, es de solo lectura.",
         "list": {
             "tabTitle": "Abrechnung - Grupos",
             "header": "Grupos",
@@ -241,7 +241,7 @@
         "login": {
             "tabTitle": "Abrechnung - Iniciar sesión",
             "header": "Inicia sesión",
-            "loginSuccess": "Sesión iniciada…",
+            "loginSuccess": "Conectado…",
             "confirmButton": "Iniciar sesión",
             "noAccountRegister": "¿No tienes una cuenta? Regístrate",
             "forgotPassword": "¿Contraseña olvidada?"
