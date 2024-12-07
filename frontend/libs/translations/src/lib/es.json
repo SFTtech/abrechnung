@@ -261,7 +261,7 @@
         "confirmPasswordRecovery": {
             "tabTitle": "Abrechnung - Confirmar recuperación",
             "header": "Confirmar recuperación de la contraseña",
-            "successfulLinkToLogin": "La recuperación se ha realizado correctamente, por favor, <1>inicia sesión</1> con tu nueva contraseña."
+            "successfulLinkToLogin": "Se ha realizado el cambio correctamente, por favor, <1>inicia sesión</1> con tu nueva contraseña."
         },
         "confirmRegistration": {
             "header": "Confirmar registro",
