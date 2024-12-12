@@ -1,6 +1,7 @@
 # Abrechnung
 
 [![GitHub Actions Status](https://github.com/SFTtech/abrechnung/actions/workflows/ci_testing.yaml/badge.svg)](https://github.com/SFTtech/abrechnung/actions/workflows/ci_testing.yaml)
+[![Translation Status](https://hosted.weblate.org/widget/abrechnung/svg-badge.svg)](https://hosted.weblate.org/engage/abrechnung/)
 
 The *Abrechnung* (German for *reckoning*, *settlement*, *revenge*) aims to be a versatile and user-centric **payment**, **transaction** and **bookkeeping** management tool for human groups and events.
 
@@ -53,6 +54,12 @@ If there is **that feature** you really want to see implemented, you found a **b
 * [Issue tracker](https://github.com/SFTtech/abrechnung/issues)
 * [Code contributions](https://github.com/SFTtech/abrechnung/pulls)
 * [Development roadmap](https://github.com/SFTtech/abrechnung/projects)
+
+### Translations
+
+Translations are managed using the hosted weblate service [here](https://hosted.weblate.org/engage/abrechnung/).
+
+[![Translation Status](https://hosted.weblate.org/widget/abrechnung/multi-auto.svg)](https://hosted.weblate.org/engage/abrechnung/)
 
 
 ## Contact

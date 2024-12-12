@@ -10,7 +10,9 @@ i18n.use(LanguageDetector)
         resources,
         defaultNS,
         lng: "en-US",
-        fallbackLng: "en-US",
+        fallbackLng: {
+            default: ["en"],
+        },
         debug: true,
         interpolation: { escapeValue: false },
     });

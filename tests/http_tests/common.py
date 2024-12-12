@@ -1,5 +1,5 @@
 # pylint: disable=attribute-defined-outside-init
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 from abrechnung.http.api import Api
 from tests.common import TEST_CONFIG, BaseTestCase
@@ -12,7 +12,8 @@ class HTTPTestCase(BaseTestCase):
         self.http_service = Api(config=self.test_config)
         await self.http_service._setup()
 
-        self.client = AsyncClient(app=self.http_service.api, base_url="https://abrechnung.sft.lol")
+        self.transport = ASGITransport(app=self.http_service.api)
+        self.client = AsyncClient(transport=self.transport, base_url="https://abrechnung.sft.lol")
         self.transaction_service = self.http_service.transaction_service
         self.account_service = self.http_service.account_service
         self.group_service = self.http_service.group_service

@@ -4,6 +4,10 @@
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.14.0...HEAD)
 
+- add Spanish and Tamil as supported languages
+- rework group settings to just be a single page
+- allow archiving of groups
+
 ## 0.14.0 (2024-08-16)
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.13.3...v0.14.0)
