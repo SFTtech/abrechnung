@@ -22,6 +22,8 @@ export const LanguageSelect: React.FC<LanguageSelectProps> = (props) => {
         >
             <MenuItem value="en-US">{t("languages.en")}</MenuItem>
             <MenuItem value="de-DE">{t("languages.de")}</MenuItem>
+            <MenuItem value="es-ES">{t("languages.es")}</MenuItem>
+            <MenuItem value="ta-LK">{t("languages.ta")}</MenuItem>
         </Select>
     );
 };
