@@ -1,0 +1,12 @@
+{
+    "groups": {
+        "log": {
+            "tabTitle": ""
+        }
+    },
+    "auth": {
+        "recoverPassword": {
+            "header": ""
+        }
+    }
+}

@@ -1,5 +1,7 @@
 {
-    "app": { "name": "Abrechnung" },
+    "app": {
+        "name": "Abrechnung"
+    },
     "common": {
         "username": "Username",
         "server": "Server",
@@ -16,7 +18,7 @@
         "confirm": "Confirm",
         "add": "Add",
         "cancel": "Cancel",
-        "search": "Search ...",
+        "search": "Search…",
         "name": "Name",
         "lastChanged": "Last changed",
         "lastChangedWithTime": "last changed: {{datetime}}",
@@ -97,7 +99,7 @@
             "terms": "Terms",
             "autoAddAccounts": "Automatically add accounts for newly joined group members",
             "leaveGroup": "Leave Group",
-            "leaveGroupConfirm": "Are you sure you want to leave the group {{group.name}}. If you are the last member to leave this group it will be deleted and its transaction will be lost forever...",
+            "leaveGroupConfirm": "Are you sure you want to leave the group \"{{group.name}}\"? If you are the last member to leave this group it will be deleted and its transactions will be lost forever…",
             "archiveGroup": "Archive Group",
             "archiveGroupConfirm": "Are you sure you want to archive the group {{group.name}}. No modifications can be made to archived groups and they will be hidden in group lists. Only a group owner can reverse this action.",
             "unarchiveGroup": "Unarchive Group",
@@ -124,7 +126,11 @@
         "compressing": "compressing ..",
         "filename": "File Name"
     },
-    "balanceTable": { "totalConsumed": "Received / Consumed", "totalPaid": "Paid", "balance": "Balance" },
+    "balanceTable": {
+        "totalConsumed": "Received / Consumed",
+        "totalPaid": "Paid",
+        "balance": "Balance"
+    },
     "transactions": {
         "createTransaction": "Create Transaction",
         "createPurchase": "Create Purchase",
@@ -138,8 +144,10 @@
         "paidBy": "Paid by",
         "paidFor": "For whom",
         "confirmDeleteTransaction": "Confirm delete transaction",
-        "confirmDeleteTransactionInfo": "Are you sure you want to delete the transaction \"{{transaction.name}}\"",
-        "list": { "tabTitle": "{{groupName}} - Transactions" },
+        "confirmDeleteTransactionInfo": "Are you sure you want to delete the transaction \"{{transaction.name}}\"?",
+        "list": {
+            "tabTitle": "{{groupName}} - Transactions"
+        },
         "byFor": "by {{by}}, for {{for}}",
         "positions": {
             "positions": "Positions",
@@ -150,7 +158,9 @@
     },
     "accounts": {
         "noAccounts": "No Accounts",
-        "list": { "tabTitle": "{{groupName}} - Accounts" },
+        "list": {
+            "tabTitle": "{{groupName}} - Accounts"
+        },
         "balances": {
             "tabTitle": "{{groupName}} - Balances",
             "clearingAccountsRemainingBalances": "Some Events have remaining balances"
@@ -173,10 +183,12 @@
             "settleButton": "Settle"
         },
         "deleteConfirm": "Confirm delete {{accountType}}",
-        "deleteConfirmBody": "Are you sure you want to delete the {{accountType}} \"{{accountName}}\""
+        "deleteConfirmBody": "Are you sure you want to delete the {{accountType}} \"{{accountName}}\"?"
     },
     "events": {
-        "list": { "tabTitle": "{{groupName}} - Events" },
+        "list": {
+            "tabTitle": "{{groupName}} - Events"
+        },
         "createEvent": "Create Event",
         "noEvents": "No Events"
     },
@@ -214,7 +226,7 @@
             "tabTitle": "Abrechnung - Sessions",
             "header": "Login Sessions",
             "confirmDeleteSession": "Delete Session?",
-            "areYouSureToDelete": "Are you sure you want to delete session {{sessionName}}"
+            "areYouSureToDelete": "Are you sure you want to delete session \"{{sessionName}}\"?"
         }
     },
     "auth": {
@@ -223,13 +235,13 @@
             "tabTitle": "Abrechnung - Register",
             "header": "Register a new account",
             "confirmButton": "Register",
-            "registrationSuccess": "Registered successfully, please confirm your email before logging in...",
+            "registrationSuccess": "Registered successfully, please confirm your email before logging in…",
             "alreadyHasAccount": "Already have an account? Sign in"
         },
         "login": {
             "tabTitle": "Abrechnung - Login",
             "header": "Sign in",
-            "loginSuccess": "Logged in ...",
+            "loginSuccess": "Logged in…",
             "confirmButton": "Login",
             "noAccountRegister": "No account? register",
             "forgotPassword": "Forgot your password?"
@@ -259,5 +271,8 @@
             "clickHereToConfirm": "Click <1>here</1> to confirm your registration."
         }
     },
-    "languages": { "en": "English", "de": "German" }
+    "languages": {
+        "en": "English",
+        "de": "German"
+    }
 }

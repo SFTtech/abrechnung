@@ -1,0 +1,281 @@
+{
+    "common": {
+        "server": "Servidor",
+        "password": "Contraseña",
+        "repeatPassword": "Repetir contraseña",
+        "save": "Guardar",
+        "ok": "Vale",
+        "edit": "Editar",
+        "delete": "Borrar",
+        "confirm": "Confirmar",
+        "add": "Añadir",
+        "name": "Nombre",
+        "lastChangedWithTime": "último cambio: {{datetime}}",
+        "value": "Valor",
+        "date": "Fecha",
+        "description": "Descripción",
+        "sortBy": "Ordenar por",
+        "filterByTags": "Filtrar por etiquetas",
+        "tag_one": "Etiqueta",
+        "tag_many": "Etiquetas",
+        "tag_other": "Etiquetas",
+        "total": "Total",
+        "totalWithColon": "Total:",
+        "shared": "Compartido",
+        "shares": "Partes",
+        "advanced": "Avanzado",
+        "price": "Precio",
+        "createdAt": "Creado en",
+        "lastChanged": "Última modificación",
+        "send": "Enviar",
+        "username": "Nombre de usuario",
+        "email": "Correo",
+        "passwordsDoNotMatch": "Las contraseñas no coinciden",
+        "yes": "Sí",
+        "no": "No",
+        "cancel": "Cancelar",
+        "search": "Buscar…",
+        "noneSoFar": "Ninguno de momento",
+        "exportAsCsv": "Exportar como CSV",
+        "currency": "Divisa",
+        "addNewTag": "Añadir nueva etiqueta"
+    },
+    "shareSelect": {
+        "accountSlashEvent": "Cuenta / Evento",
+        "showEvents": "Mostrar eventos",
+        "selectedPeople_one": "{{count}} persona",
+        "selectedPeople_many": "{{count}} personas",
+        "selectedPeople_other": "{{count}} personas",
+        "selectedEvent_one": "{{count}} evento",
+        "selectedEvent_many": "{{count}} eventos",
+        "selectedEvent_other": "{{count}} eventos"
+    },
+    "navbar": {
+        "transactions": "Transacciones",
+        "events": "Eventos",
+        "balances": "Saldos",
+        "accounts": "Cuentas",
+        "groupSettings": "Ajustes",
+        "activity": "Actividad",
+        "profile": "Perfil",
+        "settings": "Ajustes",
+        "sessions": "Sesiones",
+        "changeEmail": "Cambiar correo",
+        "changePassword": "Cambiar contraseña",
+        "login": "Iniciar sesión",
+        "signOut": "Cerrar sesión",
+        "imprint": "Imprimir"
+    },
+    "groups": {
+        "addGroup": "Añadir grupo",
+        "archivedDisclaimer": "Este grupo está archivado y, por tanto, es de solo lectura.",
+        "list": {
+            "tabTitle": "Abrechnung - Grupos",
+            "header": "Grupos",
+            "guestUserDisclaimer": "Eres un invitado en este Abrechnung y por tanto no tienes permitido crear grupos nuevos.",
+            "noGroups": "Sin grupos",
+            "archivedGroups": "Archivado"
+        },
+        "log": {
+            "tabTitle": "{{groupName}} - Actividad",
+            "header": "Actividad del grupo",
+            "messageInfo": "por {{username}} el {{datetime}}"
+        },
+        "memberList": {
+            "tabTitle": "{{groupName}} - Miembros",
+            "invitedBy": "invitado por {{username}}, ",
+            "joined": "se unió el {{datetime}}",
+            "editor": "Editor",
+            "owner": "Líder",
+            "itsYou": "Eres tú",
+            "canWrite": "Puede editar",
+            "isOwner": "Es líder"
+        },
+        "settings": {
+            "leaveGroupConfirm": "¿Seguro que quieres salir del grupo «{{group.name}}»? Si eres el último miembro en salir de este grupo se borrará y sus transacciones se perderán para siempre…",
+            "archiveGroup": "Archivar grupo",
+            "unarchiveGroup": "Desarchivar grupo",
+            "unarchiveGroupConfirm": "¿Seguro que quieres desarchivar el grupo «{{group.name}}»? El grupo ya no será de solo lectura.",
+            "tabTitle": "{{groupName}} - Ajustes",
+            "ownerDisclaimer": "Eres líder de este grupo",
+            "readAccessDisclaimer": "Tienes acceso de solo lectura a este grupo",
+            "terms": "Términos",
+            "autoAddAccounts": "Añade cuentas para miembros nuevos automáticamente",
+            "header": "Ajustes",
+            "leaveGroup": "Salir del grupo",
+            "archiveGroupConfirm": "¿Seguro que quieres archivar el grupo «{{group.name}}»? Los grupos archivados no admiten modificaciones y se ocultarán de listas de grupos. Solo un líder puede revertir esta acción."
+        },
+        "join": {
+            "tabTitle": "Abrechnung - Unirse a un grupo",
+            "invitationDescription": "Descripción de la invitación",
+            "invitationValidUntil": "Invitación válida hasta",
+            "youHaveBeenInvited": "Se te ha invitado al grupo «{{group.name}}»",
+            "invitationSingleUse": "Invitación de un solo uso",
+            "join": "Unirse"
+        },
+        "invites": {
+            "tabTitle": "{{groupName}} - Enlaces de invitación",
+            "header": "Enlaces de invitación activos",
+            "guestUserDisclaimer": "Eres un invitado en este Abrechnung y por tanto no puedes crear invitaciones.",
+            "tokenHidden": "token oculto, fue creado por otro miembro"
+        }
+    },
+    "images": {
+        "uploadImage": "Subir imagen",
+        "chooseImage": "Seleccionar imagen",
+        "filename": "Nombre del archivo",
+        "compressing": "Comprimendo..."
+    },
+    "balanceTable": {
+        "totalConsumed": "Recibido / Consumido",
+        "balance": "Saldo",
+        "totalPaid": "Pagado"
+    },
+    "transactions": {
+        "createTransaction": "Crear transacción",
+        "createPurchase": "Crear compra",
+        "createTransfer": "Crear transferencia",
+        "transfer": "Transferencia",
+        "transferredFrom": "De",
+        "transferredTo": "Para",
+        "paidBy": "Pagado por",
+        "paidFor": "Pagado para",
+        "confirmDeleteTransaction": "Confirmar el borrado de la transacción",
+        "confirmDeleteTransactionInfo": "¿Seguro que quieres borrar la transacción «{{transaction.name}}»?",
+        "list": {
+            "tabTitle": "{{groupName}} - Transacciones"
+        },
+        "byFor": "por {{by}}, para {{for}}",
+        "positions": {
+            "positions": "Desglose",
+            "sharedPlusRest": "Compartido + Resto",
+            "addPositions": "Añadir desglose",
+            "remaining": "Restante:"
+        },
+        "createPurchaseForAccount": "Crear compra con {{accountName}} como participante",
+        "noTransactions": "Sin transacciones",
+        "purchase": "Compra"
+    },
+    "accounts": {
+        "list": {
+            "tabTitle": "{{groupName}} - Cuentas"
+        },
+        "balances": {
+            "tabTitle": "{{groupName}} - Saldos",
+            "clearingAccountsRemainingBalances": "Algunos eventos tienen saldo restante"
+        },
+        "detail": {
+            "tabTitleAccount": "{{group.name}} - Cuenta {{account.name}}",
+            "tabTitleEvent": "{{group.name}} - Evento {{account.name}}"
+        },
+        "balanceOf": "Saldo de {{account.name}}",
+        "clearingDistributionOf": "Participantes de {{account.name}}",
+        "transactionsInvolving": "Transacciones que involucran a {{account.name}}",
+        "participated": "Participado",
+        "settlement": {
+            "transactionName": "Liquidación",
+            "title": "Saldar las cuentas de este grupo",
+            "whoPaysWhom": "{{from}} le paga a {{to}} {{money}}",
+            "settleButton": "Saldar"
+        },
+        "deleteConfirm": "Confirmar el borrado de {{accountType}}",
+        "deleteConfirmBody": "¿Seguro que quieres borrar la {{accountType}} «{{accountName}}»?",
+        "event": "Evento",
+        "noAccounts": "Sin cuentas",
+        "account": "Cuenta",
+        "settleUp": "Saldar cuentas"
+    },
+    "events": {
+        "list": {
+            "tabTitle": "{{groupName}} - Eventos"
+        },
+        "createEvent": "Crear evento",
+        "noEvents": "Sin eventos"
+    },
+    "profile": {
+        "index": {
+            "tabTitle": "Abrechnung - Perfil",
+            "pageTitle": "Perfil",
+            "guestUserDisclaimer": "Eres un invitado en este Abrechnung y por tanto no puedes crear nuevos grupos o invitaciones.",
+            "registered": "Registrado"
+        },
+        "settings": {
+            "tabTitle": "Abrechnung - Ajustes",
+            "pageTitle": "Ajustes",
+            "info": "Estos ajustes se guardan de forma local en tu dispositivo. Borrar el almacenamiento de tu dispositivo los restablecerá.",
+            "theme": "Tema",
+            "themeLightMode": "Claro",
+            "clearCache": "Borrar caché",
+            "confirmClearCache": "Esta acción borrará tu caché local. Todos tus ajustes (esta página) no se restablecerán.",
+            "themeSystemDefault": "Por defecto",
+            "themeDarkMode": "Oscuro"
+        },
+        "changePassword": {
+            "tabTitle": "Abrechnung - Cambiar contraseña",
+            "success": "Contraseña cambiada correctamente",
+            "newPassword": "Nueva contraseña",
+            "pageTitle": "Cambiar contraseña"
+        },
+        "changeEmail": {
+            "tabTitle": "Abrechnung - Cambiar correo",
+            "pageTitle": "Cambiar correo",
+            "newEmail": "Nuevo correo",
+            "success": "Se ha solicitado el cambio de correo, pronto deberías recibir un correo con un enlace de confirmación"
+        },
+        "sessions": {
+            "tabTitle": "Abrechnung - Sesiones",
+            "header": "Sesiones abiertas",
+            "confirmDeleteSession": "¿Borrar sesión?",
+            "areYouSureToDelete": "¿Seguro que quieres borrar la sesión «{{sessionName}}»?"
+        }
+    },
+    "auth": {
+        "register": {
+            "tabTitle": "Abrechnung - Registro",
+            "header": "Registrar una cuenta nueva",
+            "alreadyHasAccount": "¿Ya tienes una cuenta? Inicia sesión",
+            "title": "Registro",
+            "confirmButton": "Registrar",
+            "registrationSuccess": "Registrado correctamente, por favor, confirma tu correo antes de iniciar sesión…"
+        },
+        "login": {
+            "tabTitle": "Abrechnung - Iniciar sesión",
+            "header": "Inicia sesión",
+            "loginSuccess": "Conectado…",
+            "confirmButton": "Iniciar sesión",
+            "noAccountRegister": "¿No tienes una cuenta? Regístrate",
+            "forgotPassword": "¿Contraseña olvidada?"
+        },
+        "recoverPassword": {
+            "tabTitle": "Abrechnung - Recuperar contraseña",
+            "body": "Por favor, escribe tu dirección de correo. En breve te enviaremos un enlace de recuperación.",
+            "header": "Recuperar contraseña",
+            "emailSent": "Hemos enviado un enlace para la recuperación de la contraseña a tu correo electrónico."
+        },
+        "confirmEmailChange": {
+            "tabTitle": "Abrechnung - Confirmar cambio de correo",
+            "clickHereToConfirm": "Pincha <1>aquí</1> para confirmar tu nuevo correo.",
+            "header": "Confirma tu nuevo correo",
+            "confirmSuccessful": "Confirmación correcta"
+        },
+        "confirmPasswordRecovery": {
+            "tabTitle": "Abrechnung - Confirmar recuperación",
+            "header": "Confirmar recuperación de la contraseña",
+            "successfulLinkToLogin": "Se ha realizado el cambio correctamente, por favor, <1>inicia sesión</1> con tu nueva contraseña."
+        },
+        "confirmRegistration": {
+            "header": "Confirmar registro",
+            "confirmSuccessful": "Confirmación correcta",
+            "successfulLinkToLogin": "Por favor, <1>inicia sesión</1> con tus credenciales.",
+            "clickHereToConfirm": "Pincha <1>aquí</1> para confirmar tu registro.",
+            "tabTitle": "Abrechnung - Confirmar registro"
+        }
+    },
+    "app": {
+        "name": "Abrechnung"
+    },
+    "languages": {
+        "en": "Inglés",
+        "de": "Alemán"
+    }
+}
