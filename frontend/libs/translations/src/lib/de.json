@@ -183,7 +183,7 @@
             "settleButton": "Begleichen"
         },
         "deleteConfirm": "Löschen bestätigen {{accountType}}",
-        "deleteConfirmBody": "Sind Sie sicher, dass Sie {{accountType}} \"{{accountName}}\" löschen möchten"
+        "deleteConfirmBody": "Sind Sie sicher, dass Sie {{accountType}} \"{{accountName}}\" löschen möchten?"
     },
     "events": {
         "list": {
@@ -226,7 +226,7 @@
             "tabTitle": "Abrechnung - Sitzungen",
             "header": "Anmeldesitzungen",
             "confirmDeleteSession": "Sitzung löschen?",
-            "areYouSureToDelete": "Sind Sie sicher, dass Sie die Sitzung {{sessionName}} löschen möchten"
+            "areYouSureToDelete": "Sind Sie sicher, dass Sie die Sitzung \"{{sessionName}}\" löschen möchten?"
         }
     },
     "auth": {
