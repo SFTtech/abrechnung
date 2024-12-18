@@ -1,0 +1,34 @@
+{
+    "common": {
+        "yes": "Да",
+        "no": "Не",
+        "passwordsDoNotMatch": "Паролите не съвпадат",
+        "ok": "Ок",
+        "price": "Цена",
+        "username": "Потребителско име",
+        "confirm": "Потвърждаване",
+        "name": "Име",
+        "value": "Стойност",
+        "date": "Дата",
+        "server": "Сървър",
+        "password": "Парола",
+        "repeatPassword": "Повтори паролата",
+        "add": "Добави",
+        "edit": "Редактиране",
+        "delete": "Изтриване",
+        "description": "Описание",
+        "send": "Изпращане"
+    },
+    "navbar": {
+        "groupSettings": "Настройки"
+    },
+    "groups": {
+        "list": {
+            "header": "Групи"
+        },
+        "addGroup": "Добави група"
+    },
+    "app": {
+        "name": "Abrechnung"
+    }
+}
