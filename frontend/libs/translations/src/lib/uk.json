@@ -1,1 +1,283 @@
-{}
+{
+    "common": {
+        "delete": "Видалити",
+        "description": "опис",
+        "filterByTags": "Фільтрувати за тегами",
+        "total": "Всього",
+        "send": "Надіслати",
+        "add": "додати",
+        "username": "Ім'я користувача",
+        "server": "Сервер",
+        "password": "Пароль",
+        "save": "зберегти",
+        "yes": "Так",
+        "no": "Ні",
+        "ok": "Добре",
+        "confirm": "Підтвердити",
+        "cancel": "Скасувати",
+        "search": "Пошук…",
+        "name": "Ім'я",
+        "lastChanged": "Востаннє змінено",
+        "lastChangedWithTime": "останні зміни: {{datetime}}",
+        "value": "Значення",
+        "date": "Дата",
+        "shared": "Спільний доступ",
+        "shares": "акції",
+        "createdAt": "Створено Ат",
+        "noneSoFar": "Поки жодного",
+        "price": "Ціна",
+        "email": "Електронна пошта",
+        "repeatPassword": "Повторіть пароль",
+        "passwordsDoNotMatch": "Паролі не збігаються",
+        "edit": "Редагувати",
+        "sortBy": "Сортувати за",
+        "tag_one": "Тег",
+        "tag_few": "Теги",
+        "tag_many": "Теги",
+        "totalWithColon": "Всього:",
+        "advanced": "Просунутий",
+        "currency": "Валюта",
+        "addNewTag": "Додати новий тег",
+        "exportAsCsv": "Експортувати як CSV"
+    },
+    "images": {
+        "uploadImage": "Завантажити зображення",
+        "compressing": "стискання ..",
+        "filename": "Ім'я файлу",
+        "chooseImage": "Виберіть зображення"
+    },
+    "auth": {
+        "register": {
+            "confirmButton": "зареєструватися",
+            "title": "зареєструватися",
+            "tabTitle": "Оплата - Реєстрація",
+            "alreadyHasAccount": "Вже маєте акаунт? Увійдіть",
+            "header": "Зареєструйте новий обліковий запис",
+            "registrationSuccess": "Зареєстровано успішно, підтвердьте свою електронну адресу перед входом…"
+        },
+        "login": {
+            "loginSuccess": "Увійшли…",
+            "header": "Увійдіть",
+            "tabTitle": "Оплата - Логін",
+            "confirmButton": "Логін",
+            "forgotPassword": "Забули пароль?",
+            "noAccountRegister": "Немає облікового запису? зареєструватися"
+        },
+        "confirmRegistration": {
+            "header": "Підтвердити реєстрацію",
+            "tabTitle": "Оплата - Підтвердження реєстрації",
+            "confirmSuccessful": "Підтвердження успішне",
+            "successfulLinkToLogin": "<1>Увійдіть</1>, використовуючи свої облікові дані.",
+            "clickHereToConfirm": "Натисніть <1>тут</1>, щоб підтвердити свою реєстрацію."
+        },
+        "confirmEmailChange": {
+            "tabTitle": "Платіж - Підтвердьте зміну електронної пошти",
+            "confirmSuccessful": "Підтвердження успішне",
+            "header": "Підтвердьте свій новий E-Mail",
+            "clickHereToConfirm": "Натисніть <1>тут</1>, щоб підтвердити нову електронну адресу."
+        },
+        "confirmPasswordRecovery": {
+            "successfulLinkToLogin": "Пароль відновлено успішно, <1>увійдіть</1> за допомогою нового пароля.",
+            "tabTitle": "Платежі - Підтвердьте відновлення пароля",
+            "header": "Підтвердьте відновлення пароля"
+        },
+        "recoverPassword": {
+            "emailSent": "Посилання для відновлення надіслано вам електронною поштою.",
+            "tabTitle": "Платежі - відновити пароль",
+            "header": "Відновити пароль",
+            "body": "Будь ласка, введіть свою електронну адресу. Незабаром буде надіслано посилання для відновлення."
+        }
+    },
+    "navbar": {
+        "settings": "Налаштування",
+        "imprint": "Вихідні дані",
+        "events": "Події",
+        "balances": "Залишки",
+        "accounts": "Облікові записи",
+        "groupSettings": "Налаштування",
+        "changeEmail": "Змінити електронну пошту",
+        "changePassword": "Змінити пароль",
+        "login": "Логін",
+        "signOut": "Вийти",
+        "transactions": "транзакції",
+        "activity": "діяльність",
+        "profile": "Профіль",
+        "sessions": "Сеанси"
+    },
+    "events": {
+        "createEvent": "Створити подію",
+        "noEvents": "Немає подій",
+        "list": {
+            "tabTitle": "{{groupName}} - Події"
+        }
+    },
+    "groups": {
+        "join": {
+            "join": "Приєднуйтесь",
+            "youHaveBeenInvited": "Вас запросили до групи {{group.name}}",
+            "invitationValidUntil": "Запрошення діє до",
+            "tabTitle": "Оплата - Приєднатися до групи",
+            "invitationDescription": "Опис запрошення",
+            "invitationSingleUse": "Одноразове запрошення"
+        },
+        "memberList": {
+            "joined": "приєднався {{datetime}}",
+            "tabTitle": "{{groupName}} - Члени",
+            "isOwner": "Є Власником",
+            "editor": "редактор",
+            "invitedBy": "запрошений {{username}}, ",
+            "owner": "Власник",
+            "itsYou": "це ти",
+            "canWrite": "Може писати"
+        },
+        "settings": {
+            "readAccessDisclaimer": "Ви маєте доступ лише для читання цієї групи",
+            "autoAddAccounts": "Автоматично додавати облікові записи для нових учасників групи",
+            "unarchiveGroupConfirm": "Ви впевнені, що бажаєте розархівувати групу {{group.name}}? Група більше не буде доступною лише для читання.",
+            "ownerDisclaimer": "Ви є власником цієї групи",
+            "leaveGroup": "Вийти з групи",
+            "archiveGroup": "Архівна група",
+            "unarchiveGroup": "Розархівувати групу",
+            "terms": "Терміни",
+            "tabTitle": "{{groupName}} - Налаштування",
+            "header": "Налаштування",
+            "leaveGroupConfirm": "Ви впевнені, що бажаєте залишити групу \"{{group.name}}\"? Якщо ви останній учасник, який залишив цю групу, її буде видалено, а її транзакції буде втрачено назавжди…",
+            "archiveGroupConfirm": "Ви впевнені, що хочете заархівувати групу {{group.name}}? Заархівовані групи не можна змінювати, і вони будуть приховані у списках груп. Лише власник групи може скасувати цю дію."
+        },
+        "list": {
+            "tabTitle": "Білінг - Групи",
+            "header": "Групи",
+            "noGroups": "Немає груп",
+            "archivedGroups": "Архівовано",
+            "guestUserDisclaimer": "Ви є гостем у цьому Abrechnung, тому вам не дозволено створювати нові групи."
+        },
+        "log": {
+            "tabTitle": "{{groupName}} - діяльність",
+            "header": "Групова діяльність",
+            "messageInfo": "автор: {{username}} {{datetime}}"
+        },
+        "invites": {
+            "tabTitle": "{{groupName}} - Посилання на запрошення",
+            "header": "Активні посилання на запрошення",
+            "guestUserDisclaimer": "Ви є гостем у цьому Abrechnung, тому вам не дозволено створювати групові запрошення.",
+            "tokenHidden": "маркер приховано, створено іншим учасником"
+        },
+        "addGroup": "Додати групу",
+        "archivedDisclaimer": "Ця група заархівована і тому доступна лише для читання."
+    },
+    "balanceTable": {
+        "totalConsumed": "Отримано/спожито",
+        "totalPaid": "Платний",
+        "balance": "Баланс"
+    },
+    "transactions": {
+        "transferredFrom": "Від",
+        "createPurchaseForAccount": "Створіть покупку з {{accountName}} як учасником",
+        "purchase": "Купівля",
+        "transferredTo": "до",
+        "list": {
+            "tabTitle": "{{groupName}} - транзакції"
+        },
+        "positions": {
+            "positions": "посади",
+            "addPositions": "Додати позиції",
+            "remaining": "Залишилося:",
+            "sharedPlusRest": "Спільне + Відпочинок"
+        },
+        "confirmDeleteTransaction": "Підтвердити видалення транзакції",
+        "createPurchase": "Створити покупку",
+        "createTransfer": "Створити передачу",
+        "createTransaction": "Створити транзакцію",
+        "noTransactions": "Немає транзакцій",
+        "paidFor": "Для кого",
+        "transfer": "Трансфер",
+        "paidBy": "Оплачено",
+        "confirmDeleteTransactionInfo": "Ви впевнені, що бажаєте видалити транзакцію \"{{transaction.name}}\"?",
+        "byFor": "від {{by}}, для {{for}}"
+    },
+    "accounts": {
+        "participated": "Брав участь",
+        "noAccounts": "Немає облікових записів",
+        "detail": {
+            "tabTitleAccount": "{{group.name}} - Обліковий запис {{account.name}}",
+            "tabTitleEvent": "{{group.name}} - Подія {{account.name}}"
+        },
+        "account": "Обліковий запис",
+        "settleUp": "Розрахунок",
+        "settlement": {
+            "transactionName": "Поселення",
+            "title": "Розрахунок балансу цієї групи",
+            "settleButton": "розрахунок",
+            "whoPaysWhom": "{{from}} платить {{to}} {{money}}"
+        },
+        "deleteConfirmBody": "Ви впевнені, що хочете видалити {{accountType}} \"{{accountName}}\"?",
+        "balanceOf": "Баланс {{account.name}}",
+        "event": "Подія",
+        "deleteConfirm": "Підтвердити видалення {{accountType}}",
+        "list": {
+            "tabTitle": "{{groupName}} - Облікові записи"
+        },
+        "balances": {
+            "tabTitle": "{{groupName}} - Залишки",
+            "clearingAccountsRemainingBalances": "На деяких подіях є залишки"
+        },
+        "clearingDistributionOf": "Учасники {{account.name}}",
+        "transactionsInvolving": "Операції за участю {{account.name}}"
+    },
+    "profile": {
+        "sessions": {
+            "tabTitle": "Платежі - сесії",
+            "header": "Сеанси входу",
+            "confirmDeleteSession": "Видалити сеанс?",
+            "areYouSureToDelete": "Ви впевнені, що хочете видалити сеанс \"{{sessionName}}\"?"
+        },
+        "index": {
+            "pageTitle": "Профіль",
+            "registered": "Зареєстрований",
+            "guestUserDisclaimer": "Ви є гостем у цьому Abrechnung, тому вам не дозволено створювати нові групи або запрошувати до них.",
+            "tabTitle": "Білінг - Профілі"
+        },
+        "settings": {
+            "pageTitle": "Налаштування",
+            "themeDarkMode": "Темний режим",
+            "clearCache": "Очистити кеш",
+            "themeSystemDefault": "Системне значення за замовчуванням",
+            "themeLightMode": "Світловий режим",
+            "tabTitle": "Платежі - Налаштування",
+            "theme": "Тема",
+            "info": "Ці налаштування зберігаються локально на вашому пристрої. Очищення локальної пам’яті веб-переглядача скине їх.",
+            "confirmClearCache": "Ця дія очистить ваш локальний кеш. Усі ваші налаштування (ця сторінка) не буде скинуто."
+        },
+        "changePassword": {
+            "tabTitle": "Платежі - зміна пароля",
+            "newPassword": "Новий пароль",
+            "success": "Пароль успішно змінено",
+            "pageTitle": "Змінити пароль"
+        },
+        "changeEmail": {
+            "pageTitle": "Змінити електронну пошту",
+            "tabTitle": "Платежі - зміна електронної пошти",
+            "success": "Надіслано запит на зміну електронної адреси, незабаром ви отримаєте електронний лист із посиланням для підтвердження",
+            "newEmail": "Нова електронна пошта"
+        }
+    },
+    "languages": {
+        "es": "Іспанська",
+        "en": "англійська",
+        "ta": "тамільська",
+        "de": "Німецький"
+    },
+    "shareSelect": {
+        "showEvents": "Показати події",
+        "selectedPeople_one": "{{count}} особа",
+        "selectedPeople_few": "{{count}} Люди",
+        "selectedPeople_many": "{{count}} Люди",
+        "selectedEvent_one": "{{count}} Подія",
+        "selectedEvent_few": "{{count}} Події",
+        "selectedEvent_many": "{{count}} Події",
+        "accountSlashEvent": "Обліковий запис / Подія"
+    },
+    "app": {
+        "name": "рахунок-фактура"
+    }
+}
