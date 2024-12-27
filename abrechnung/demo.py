@@ -14,7 +14,7 @@ async def cleanup(config: Config):
 
     deletion_threshold = datetime.now() - config.demo.wipe_interval
 
-    database = get_database(config)
+    database = get_database(config.database)
     db_pool = await database.create_pool()
     async with db_pool.acquire() as conn:
         async with conn.transaction():

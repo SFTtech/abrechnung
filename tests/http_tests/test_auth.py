@@ -175,7 +175,7 @@ class AuthAPITest(HTTPTestCase):
             f"/api/v1/auth/recover_password",
             json={"email": "fooo@stusta.de"},
         )
-        self.assertEqual(403, resp.status_code)
+        self.assertEqual(400, resp.status_code)
 
         resp = await self.client.post(
             f"/api/v1/auth/recover_password",

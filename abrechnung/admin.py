@@ -16,7 +16,7 @@ async def create_user(config: Config, name: str, email: str, skip_email_check: b
         print("Passwords do not match!")
         return
 
-    database = get_database(config)
+    database = get_database(config.database)
     db_pool = await database.create_pool()
     user_service = UserService(db_pool, config)
     user_service.enable_registration = True

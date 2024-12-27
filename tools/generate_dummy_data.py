@@ -35,7 +35,7 @@ async def main(
 ):
     config = read_config(Path(config_path))
 
-    database = get_database(config)
+    database = get_database(config.database)
     db_pool = await database.create_pool()
     user_service = UserService(db_pool, config)
     group_service = GroupService(db_pool, config)

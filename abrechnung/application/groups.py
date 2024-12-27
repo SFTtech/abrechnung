@@ -330,7 +330,7 @@ class GroupService(Service[Config]):
             group_id,
         )
         if n_members != 1:
-            raise PermissionError(f"Can only delete a group when you are the last member")
+            raise InvalidArgument(f"Can only delete a group when you are the last member")
 
         await conn.execute("delete from grp where id = $1", group_id)
 

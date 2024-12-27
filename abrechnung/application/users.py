@@ -12,6 +12,7 @@ from sftkit.service import Service, with_db_transaction
 
 from abrechnung.config import Config
 from abrechnung.domain.users import Session, User
+from abrechnung.util import is_valid_uuid
 
 ALGORITHM = "HS256"
 
@@ -246,6 +247,8 @@ class UserService(Service[Config]):
 
     @with_db_transaction
     async def confirm_registration(self, *, conn: Connection, token: str) -> int:
+        if not is_valid_uuid(token):
+            raise InvalidArgument(f"Invalid confirmation token")
         row = await conn.fetchrow(
             "select user_id, valid_until from pending_registration where token = $1",
             token,
@@ -342,6 +345,8 @@ class UserService(Service[Config]):
 
     @with_db_transaction
     async def confirm_email_change(self, *, conn: Connection, token: str) -> int:
+        if not is_valid_uuid(token):
+            raise InvalidArgument(f"Invalid confirmation token")
         row = await conn.fetchrow(
             "select user_id, new_email, valid_until from pending_email_change where token = $1",
             token,
@@ -360,7 +365,7 @@ class UserService(Service[Config]):
     async def request_password_recovery(self, *, conn: Connection, email: str):
         user_id = await conn.fetchval("select id from usr where email = $1", email)
         if not user_id:
-            raise PermissionError
+            raise InvalidArgument("permission denied")
 
         await conn.execute(
             "insert into pending_password_recovery (user_id) values ($1)",
@@ -369,6 +374,8 @@ class UserService(Service[Config]):
 
     @with_db_transaction
     async def confirm_password_recovery(self, *, conn: Connection, token: str, new_password: str) -> int:
+        if not is_valid_uuid(token):
+            raise InvalidArgument(f"Invalid confirmation token")
         row = await conn.fetchrow(
             "select user_id, valid_until from pending_password_recovery where token = $1",
             token,

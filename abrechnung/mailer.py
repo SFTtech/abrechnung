@@ -18,7 +18,7 @@ class Mailer:
         self.config = config
         self.events: Optional[asyncio.Queue] = None
         self.psql: Connection | None = None
-        self.database = get_database(config)
+        self.database = get_database(config.database)
         self.mailer = None
         self.logger = logging.getLogger(__name__)
 

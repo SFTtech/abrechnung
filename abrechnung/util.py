@@ -1,5 +1,6 @@
 import logging
 import re
+import uuid
 from datetime import datetime, timedelta, timezone
 
 postgres_timestamp_format = re.compile(
@@ -63,3 +64,11 @@ def log_setup(setting, default=1):
 def clamp(number, smallest, largest):
     """return number but limit it to the inclusive given value range"""
     return max(smallest, min(number, largest))
+
+
+def is_valid_uuid(val: str):
+    try:
+        uuid.UUID(val)
+        return True
+    except ValueError:
+        return False
