@@ -6,6 +6,7 @@ from unittest import IsolatedAsyncioTestCase as TestCase
 
 import asyncpg
 from asyncpg.pool import Pool
+from sftkit.database import DatabaseConfig
 
 from abrechnung.application.users import UserService
 from abrechnung.config import (
@@ -15,20 +16,20 @@ from abrechnung.config import (
     RegistrationConfig,
     ServiceConfig,
 )
-from abrechnung.database.migrations import apply_revisions, reset_schema
+from abrechnung.database.migrations import get_database, reset_schema
 from abrechnung.domain.users import User
-from abrechnung.framework.database import DatabaseConfig, create_db_pool
 
 lock = asyncio.Lock()
 
 
 def get_test_db_config() -> DatabaseConfig:
     return DatabaseConfig(
-        user=os.environ.get("TEST_DB_USER", "abrechnung-test"),
-        password=os.environ.get("TEST_DB_PASSWORD", "asdf1234"),
-        host=os.environ.get("TEST_DB_HOST", "localhost"),
-        dbname=os.environ.get("TEST_DB_DATABASE", "abrechnung-test"),
+        user=os.environ.get("TEST_DB_USER"),
+        password=os.environ.get("TEST_DB_PASSWORD"),
+        host=os.environ.get("TEST_DB_HOST"),
+        dbname=os.environ.get("TEST_DB_DATABASE", "abrechnung_test"),
         port=int(os.environ.get("TEST_DB_PORT", 5432)),
+        sslrootcert=None,
     )
 
 
@@ -42,13 +43,13 @@ TEST_CONFIG = Config(
         secret_key="asdf",
         host="localhost",
         port=8000,
+        base_url="https://abrechnung.example.lol",
     ),
     registration=RegistrationConfig(enabled=True),
     database=get_test_db_config(),
     service=ServiceConfig(
-        url="https://abrechnung.example.lol",
-        api_url="https://abrechnung.example.lol",
         name="Test Abrechnung",
+        url="https://abrechnung.example.lol",
     ),
 )
 
@@ -57,10 +58,11 @@ async def get_test_db() -> Pool:
     """
     get a connection pool to the test database
     """
-    pool = await create_db_pool(TEST_CONFIG.database)
+    database = get_database(TEST_CONFIG.database)
+    pool = await database.create_pool()
 
     await reset_schema(pool)
-    await apply_revisions(pool)
+    await database.apply_migrations()
 
     return pool
 

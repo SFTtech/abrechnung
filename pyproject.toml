@@ -19,13 +19,10 @@ classifiers = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "typer~=0.15.1",
-    "fastapi==0.115.6",
+    "sftkit==0.3.0",
     "pydantic[email]~=2.10.3",
     "pydantic-settings==2.6.1",
-    "uvicorn[standard]~=0.32.1",
     "python-jose[cryptography]~=3.3.0",
-    "asyncpg~=0.30.0",
     "passlib[bcrypt]~=1.7.0",
     "websockets~=14.1",
     "python-multipart~=0.0.19",
@@ -114,3 +111,7 @@ files = [
     { filename = "CHANGELOG.md", search = "Unreleased", replace = "{new_version} ({now:%Y-%m-%d})"},
     { filename = "CHANGELOG.md", search = "v{current_version}...HEAD", replace = "v{current_version}...v{new_version}"},
 ]
+
+[tool.sftkit]
+db_code_dir = "abrechnung/database/code"
+db_migrations_dir = "abrechnung/database/revisions"

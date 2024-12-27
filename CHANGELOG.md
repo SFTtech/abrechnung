@@ -4,6 +4,11 @@
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.14.0...HEAD)
 
+**BREAKING**
+- changed config structure to only include the reverse-proxy base_url once in the `api` section
+- drop python 3.10 support
+
+**OTHER**
 - add Spanish and Tamil as supported languages
 - rework group settings to just be a single page
 - allow archiving of groups

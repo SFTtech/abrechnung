@@ -1,4 +1,4 @@
--- revision: 174ef0fc
+-- migration: 174ef0fc
 -- requires: c019dd21
 
 alter table grp add column add_user_account_on_join boolean default false not null;

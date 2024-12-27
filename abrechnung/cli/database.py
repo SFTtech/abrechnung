@@ -4,10 +4,9 @@ from typing import Annotated, Optional
 import typer
 
 from abrechnung.config import Config
-from abrechnung.database.migrations import apply_revisions
+from abrechnung.database.migrations import get_database
 from abrechnung.database.migrations import list_revisions as list_revisions_
 from abrechnung.database.migrations import reset_schema
-from abrechnung.framework.database import create_db_pool, psql_attach
 
 database_cli = typer.Typer()
 
@@ -15,15 +14,8 @@ database_cli = typer.Typer()
 @database_cli.command()
 def attach(ctx: typer.Context):
     """Get a psql shell to the currently configured database."""
-    asyncio.run(psql_attach(ctx.obj.config.database))
-
-
-async def _migrate(cfg: Config, until_revision: Optional[str]):
-    db_pool = await create_db_pool(cfg.database)
-    try:
-        await apply_revisions(db_pool=db_pool, until_revision=until_revision)
-    finally:
-        await db_pool.close()
+    db = get_database(config=ctx.obj.config.database)
+    asyncio.run(db.attach())
 
 
 @database_cli.command()
@@ -32,14 +24,16 @@ def migrate(
     until_revision: Annotated[Optional[str], typer.Option(help="Only apply revisions until this version")] = None,
 ):
     """Apply all database migrations."""
-    asyncio.run(_migrate(cfg=ctx.obj.config, until_revision=until_revision))
+    db = get_database(config=ctx.obj.config.database)
+    asyncio.run(db.apply_migrations(until_migration=until_revision))
 
 
 async def _rebuild(cfg: Config):
-    db_pool = await create_db_pool(cfg.database)
+    db = get_database(cfg.database)
+    db_pool = await db.create_pool(n_connections=2)
     try:
         await reset_schema(db_pool=db_pool)
-        await apply_revisions(db_pool=db_pool)
+        await db.apply_migrations()
     finally:
         await db_pool.close()
 
@@ -51,7 +45,8 @@ def rebuild(ctx: typer.Context):
 
 
 async def _reset(cfg: Config):
-    db_pool = await create_db_pool(cfg.database)
+    db = get_database(cfg.database)
+    db_pool = await db.create_pool()
     try:
         await reset_schema(db_pool=db_pool)
     finally:
@@ -67,6 +62,16 @@ def reset(
 
 
 @database_cli.command()
-def list_revisions():
+def list_revisions(
+    ctx: typer.Context,
+):
     """List all available database revisions."""
-    list_revisions_()
+    db = get_database(ctx.obj.config.database)
+    list_revisions_(db)
+
+
+@database_cli.command()
+def reload_code(ctx: typer.Context):
+    """List all available database revisions."""
+    db = get_database(ctx.obj.config.database)
+    asyncio.run(db.reload_code())

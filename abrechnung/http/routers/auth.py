@@ -6,7 +6,6 @@ from pydantic import BaseModel, EmailStr
 
 from abrechnung.application.users import InvalidPassword, UserService
 from abrechnung.config import Config
-from abrechnung.core.errors import InvalidCommand
 from abrechnung.domain.users import User
 from abrechnung.http.auth import get_current_session_id, get_current_user
 from abrechnung.http.dependencies import get_config, get_user_service
@@ -122,10 +121,7 @@ async def confirm_registration(
     payload: ConfirmRegistrationPayload,
     user_service: UserService = Depends(get_user_service),
 ):
-    try:
-        await user_service.confirm_registration(token=payload.token)
-    except (PermissionError, InvalidCommand) as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    await user_service.confirm_registration(token=payload.token)
 
 
 @router.get("/v1/profile", summary="fetch user profile information", response_model=User, operation_id="get_profile")

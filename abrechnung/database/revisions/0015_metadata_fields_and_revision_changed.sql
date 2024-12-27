@@ -1,4 +1,4 @@
--- revision: ee5d2b35
+-- migration: ee5d2b35
 -- requires: 174ef0fc
 
 alter table account_revision

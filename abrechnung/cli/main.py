@@ -1,5 +1,4 @@
 import asyncio
-import json
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Annotated
@@ -7,7 +6,7 @@ from typing import Annotated
 import typer
 
 from abrechnung.config import read_config
-from abrechnung.http.api import Api
+from abrechnung.http.api import Api, print_openapi
 from abrechnung.mailer import Mailer
 from abrechnung.util import log_setup
 
@@ -51,8 +50,7 @@ def api(ctx: typer.Context):
 
 @cli.command()
 def show_openapi(ctx: typer.Context):
-    a = Api(config=ctx.obj.config)
-    print(json.dumps(a.api.openapi(), indent=2))
+    print_openapi(ctx.obj.config)
 
 
 cli.add_typer(database_cli, name="db", help="Manage everything related to the abrechnung database")

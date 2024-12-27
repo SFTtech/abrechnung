@@ -6,13 +6,13 @@ from email_validator import EmailNotValidError, validate_email
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
+from sftkit.database import Connection
+from sftkit.error import InvalidArgument
+from sftkit.service import Service, with_db_transaction
 
 from abrechnung.config import Config
-from abrechnung.core.errors import InvalidCommand, NotFoundError
-from abrechnung.core.service import Service
 from abrechnung.domain.users import Session, User
-from abrechnung.framework.database import Connection
-from abrechnung.framework.decorators import with_db_transaction
+from abrechnung.util import is_valid_uuid
 
 ALGORITHM = "HS256"
 
@@ -39,12 +39,12 @@ async def _check_user_exists(*, conn: Connection, username: str, email: str):
         email,
     )
     if user_exists["username_exists"]:
-        raise InvalidCommand("A user with this username already exists")
+        raise InvalidArgument("A user with this username already exists")
     if user_exists["email_exists"]:
-        raise InvalidCommand("A user with this email already exists")
+        raise InvalidArgument("A user with this email already exists")
 
 
-class UserService(Service):
+class UserService(Service[Config]):
     def __init__(
         self,
         db_pool: Pool,
@@ -52,10 +52,10 @@ class UserService(Service):
     ):
         super().__init__(db_pool=db_pool, config=config)
 
-        self.enable_registration = self.cfg.registration.enabled
-        self.require_email_confirmation = self.cfg.registration.require_email_confirmation
-        self.allow_guest_users = self.cfg.registration.allow_guest_users
-        self.valid_email_domains = self.cfg.registration.valid_email_domains
+        self.enable_registration = self.config.registration.enabled
+        self.require_email_confirmation = self.config.registration.require_email_confirmation
+        self.allow_guest_users = self.config.registration.allow_guest_users
+        self.valid_email_domains = self.config.registration.valid_email_domains
 
         self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -70,12 +70,12 @@ class UserService(Service):
             "user_id": user_id,
             "session_id": session_id,
         }
-        encoded_jwt = jwt.encode(data, self.cfg.api.secret_key, algorithm=ALGORITHM)
+        encoded_jwt = jwt.encode(data, self.config.api.secret_key, algorithm=ALGORITHM)
         return encoded_jwt
 
     def decode_jwt_payload(self, token: str) -> TokenMetadata:
         try:
-            payload = jwt.decode(token, self.cfg.api.secret_key, algorithms=[ALGORITHM])
+            payload = jwt.decode(token, self.config.api.secret_key, algorithms=[ALGORITHM])
             try:
                 return TokenMetadata.model_validate(payload)
             except:
@@ -103,7 +103,7 @@ class UserService(Service):
                 user_id,
             )
             if user is None:
-                raise NotFoundError(f"User with id {user_id} does not exist")
+                raise InvalidArgument(f"User with id {user_id} does not exist")
 
             if user["deleted"] or user["pending"]:
                 return False
@@ -124,16 +124,16 @@ class UserService(Service):
             username,
         )
         if user is None:
-            raise InvalidCommand(f"Login failed")
+            raise InvalidArgument(f"Login failed")
 
         if not self._check_password(password, user["hashed_password"]):
-            raise InvalidCommand(f"Login failed")
+            raise InvalidArgument(f"Login failed")
 
         if user["deleted"]:
-            raise InvalidCommand(f"User is not permitted to login")
+            raise InvalidArgument(f"User is not permitted to login")
 
         if user["pending"]:
-            raise InvalidCommand(f"You need to confirm your email before logging in")
+            raise InvalidArgument(f"You need to confirm your email before logging in")
 
         session_id = await conn.fetchval(
             "insert into session (user_id, name) values ($1, $2) returning id",
@@ -152,7 +152,7 @@ class UserService(Service):
             user.id,
         )
         if sess_id is None:
-            raise InvalidCommand(f"Already logged out")
+            raise InvalidArgument(f"Already logged out")
 
     @with_db_transaction
     async def demo_register_user(self, *, conn: Connection, username: str, email: str, password: str) -> int:
@@ -165,7 +165,7 @@ class UserService(Service):
             hashed_password,
         )
         if user_id is None:
-            raise InvalidCommand(f"Registering new user failed")
+            raise InvalidArgument(f"Registering new user failed")
 
         return user_id
 
@@ -175,7 +175,7 @@ class UserService(Service):
             valid = validate_email(email)
             email = valid.normalized
         except EmailNotValidError as e:
-            raise InvalidCommand(str(e))
+            raise InvalidArgument(str(e))
 
         return email
 
@@ -219,7 +219,7 @@ class UserService(Service):
                 invite_token,
             )
             if invite is None:
-                raise InvalidCommand("Invalid invite token")
+                raise InvalidArgument("Invalid invite token")
             is_guest_user = True
             if self.enable_registration and has_valid_email:
                 self._validate_email_domain(email)
@@ -238,7 +238,7 @@ class UserService(Service):
             requires_email_confirmation,
         )
         if user_id is None:
-            raise InvalidCommand(f"Registering new user failed")
+            raise InvalidArgument(f"Registering new user failed")
 
         if requires_email_confirmation:
             await conn.execute("insert into pending_registration (user_id) values ($1)", user_id)
@@ -247,6 +247,8 @@ class UserService(Service):
 
     @with_db_transaction
     async def confirm_registration(self, *, conn: Connection, token: str) -> int:
+        if not is_valid_uuid(token):
+            raise InvalidArgument(f"Invalid confirmation token")
         row = await conn.fetchrow(
             "select user_id, valid_until from pending_registration where token = $1",
             token,
@@ -275,7 +277,7 @@ class UserService(Service):
         )
 
         if user is None:
-            raise NotFoundError(f"User with id {user_id} does not exist")
+            raise InvalidArgument(f"User with id {user_id} does not exist")
 
         sessions = await conn.fetch_many(
             Session,
@@ -297,7 +299,7 @@ class UserService(Service):
             user.id,
         )
         if not sess_id:
-            raise NotFoundError(f"no such session found with id {session_id}")
+            raise InvalidArgument(f"no such session found with id {session_id}")
 
     @with_db_transaction
     async def rename_session(self, *, conn: Connection, user: User, session_id: int, name: str):
@@ -308,7 +310,7 @@ class UserService(Service):
             name,
         )
         if not sess_id:
-            raise NotFoundError(f"no such session found with id {session_id}")
+            raise InvalidArgument(f"no such session found with id {session_id}")
 
     @with_db_transaction
     async def change_password(self, *, conn: Connection, user: User, old_password: str, new_password: str):
@@ -329,7 +331,7 @@ class UserService(Service):
             valid = validate_email(email)
             email = valid.normalized
         except EmailNotValidError as e:
-            raise InvalidCommand(str(e))
+            raise InvalidArgument(str(e))
 
         valid_pw = await self._verify_user_password(user.id, password)
         if not valid_pw:
@@ -343,6 +345,8 @@ class UserService(Service):
 
     @with_db_transaction
     async def confirm_email_change(self, *, conn: Connection, token: str) -> int:
+        if not is_valid_uuid(token):
+            raise InvalidArgument(f"Invalid confirmation token")
         row = await conn.fetchrow(
             "select user_id, new_email, valid_until from pending_email_change where token = $1",
             token,
@@ -361,7 +365,7 @@ class UserService(Service):
     async def request_password_recovery(self, *, conn: Connection, email: str):
         user_id = await conn.fetchval("select id from usr where email = $1", email)
         if not user_id:
-            raise PermissionError
+            raise InvalidArgument("permission denied")
 
         await conn.execute(
             "insert into pending_password_recovery (user_id) values ($1)",
@@ -370,6 +374,8 @@ class UserService(Service):
 
     @with_db_transaction
     async def confirm_password_recovery(self, *, conn: Connection, token: str, new_password: str) -> int:
+        if not is_valid_uuid(token):
+            raise InvalidArgument(f"Invalid confirmation token")
         row = await conn.fetchrow(
             "select user_id, valid_until from pending_password_recovery where token = $1",
             token,

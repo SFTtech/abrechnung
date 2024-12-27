@@ -1,8 +1,8 @@
+from sftkit.database import Connection
+from sftkit.error import InvalidArgument
+
 from abrechnung.domain.groups import GroupMember
 from abrechnung.domain.users import User
-from abrechnung.framework.database import Connection
-
-from .errors import NotFoundError
 
 
 async def check_group_permissions(
@@ -21,7 +21,7 @@ async def check_group_permissions(
         user.id,
     )
     if membership is None:
-        raise NotFoundError(f"group not found")
+        raise InvalidArgument(f"group not found")
 
     if can_write and not (membership.is_owner or membership.can_write):
         raise PermissionError(f"write access to group denied")

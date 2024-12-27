@@ -29,7 +29,7 @@ export const PurchaseValidator = z
     .object({
         creditor_shares: z
             .record(z.number())
-            .refine((shares) => Object.keys(shares).length !== 1, "somebody has payed for this"),
+            .refine((shares) => Object.keys(shares).length === 1, "somebody has payed for this"),
         debitor_shares: z.record(z.number()).refine((shares) => Object.keys(shares).length > 0, "select at least one"),
     })
     .merge(BaseTransactionValidator)

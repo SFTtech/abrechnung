@@ -21,7 +21,7 @@ class WebsocketAPITest(BaseTestCase):
         self.http_service = Api(config=self.test_config)
         await self.http_service._setup()
 
-        self.client = TestClient(self.http_service.api)
+        self.client = TestClient(self.http_service.server.api)
         self.transaction_service = self.http_service.transaction_service
         self.account_service = self.http_service.account_service
         self.group_service = self.http_service.group_service

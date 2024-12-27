@@ -10,13 +10,13 @@ from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.config import read_config
+from abrechnung.database.migrations import get_database
 from abrechnung.domain.accounts import AccountType, NewAccount
 from abrechnung.domain.transactions import (
     NewTransaction,
     NewTransactionPosition,
     TransactionType,
 )
-from abrechnung.framework.database import create_db_pool
 
 
 def random_date() -> date:
@@ -35,7 +35,8 @@ async def main(
 ):
     config = read_config(Path(config_path))
 
-    db_pool = await create_db_pool(config.database)
+    database = get_database(config.database)
+    db_pool = await database.create_pool()
     user_service = UserService(db_pool, config)
     group_service = GroupService(db_pool, config)
     account_service = AccountService(db_pool, config)

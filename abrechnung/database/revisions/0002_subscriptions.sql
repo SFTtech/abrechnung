@@ -1,4 +1,4 @@
--- revision: 83a50a30
+-- migration: 83a50a30
 -- requires: 62df6b55
 
 -- which table or event variant is a subscription for.

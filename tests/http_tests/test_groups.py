@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from abrechnung.domain.accounts import AccountType, NewAccount
 from abrechnung.domain.transactions import NewTransaction, TransactionType
@@ -51,7 +51,7 @@ class GroupAPITest(HTTPAPITest):
         group = await self._fetch_group(group_id)
         self.assertEqual("name", group["name"])
 
-        await self._fetch_group(13333, 404)
+        await self._fetch_group(13333, 400)
 
         resp = await self._post(
             f"/api/v1/groups/{group_id}",
@@ -128,12 +128,12 @@ class GroupAPITest(HTTPAPITest):
         )
 
         resp = await self._delete(f"/api/v1/groups/{group_id}")
-        self.assertEqual(403, resp.status_code)
+        self.assertEqual(400, resp.status_code)
 
         resp = await self._post(f"/api/v1/groups/{group_id}/leave")
         self.assertEqual(204, resp.status_code)
 
-        await self._fetch_group(group_id, expected_status=404)
+        await self._fetch_group(group_id, expected_status=400)
 
         resp = await self.client.delete(
             f"/api/v1/groups/{group_id}",
@@ -345,7 +345,7 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual(422, resp.status_code)
 
         resp = await self._get(f"/api/v1/groups/{group_id}/accounts/13232")
-        self.assertEqual(404, resp.status_code)
+        self.assertEqual(400, resp.status_code)
 
     async def test_invites(self):
         group_id = await self.group_service.create_group(

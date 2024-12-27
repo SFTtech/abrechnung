@@ -1,2 +1,2 @@
--- revision: f133b1d3
+-- migration: f133b1d3
 -- requires: b32893f6

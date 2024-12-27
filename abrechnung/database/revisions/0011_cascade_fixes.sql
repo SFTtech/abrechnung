@@ -1,4 +1,4 @@
--- revision: f6c9ff0b
+-- migration: f6c9ff0b
 -- requires: c85ea20c
 
 alter table clearing_account_share drop constraint clearing_account_share_account_id_fkey;

@@ -1,14 +1,16 @@
 from typing import Optional, Union
 
 import asyncpg
+from sftkit.database import Connection
+from sftkit.error import InvalidArgument
+from sftkit.service import Service, with_db_connection, with_db_transaction
 
+from abrechnung.config import Config
 from abrechnung.core.auth import check_group_permissions, create_group_log
 from abrechnung.core.decorators import (
     requires_group_permissions,
     with_group_last_changed_update,
 )
-from abrechnung.core.errors import InvalidCommand, NotFoundError
-from abrechnung.core.service import Service
 from abrechnung.domain.accounts import (
     Account,
     AccountType,
@@ -18,13 +20,11 @@ from abrechnung.domain.accounts import (
 )
 from abrechnung.domain.groups import GroupMember
 from abrechnung.domain.users import User
-from abrechnung.framework.database import Connection
-from abrechnung.framework.decorators import with_db_connection, with_db_transaction
 
 from .common import _get_or_create_tag_ids
 
 
-class AccountService(Service):
+class AccountService(Service[Config]):
     @staticmethod
     async def _commit_revision(conn: asyncpg.Connection, revision_id: int):
         """Touches a revision to have all associated constraints run"""
@@ -57,7 +57,7 @@ class AccountService(Service):
             account_id,
         )
         if not result:
-            raise NotFoundError(f"account not found")
+            raise InvalidArgument(f"account not found")
 
         if can_write and not (result["can_write"] or result["is_owner"]):
             raise PermissionError(f"user does not have write permissions")
@@ -65,7 +65,9 @@ class AccountService(Service):
         if account_type:
             type_check = [account_type] if isinstance(account_type, str) else account_type
             if result["type"] not in type_check:
-                raise InvalidCommand(f"Transaction type {result['type']} does not match the expected type {type_check}")
+                raise InvalidArgument(
+                    f"Transaction type {result['type']} does not match the expected type {type_check}"
+                )
 
         return result["group_id"], result["type"]
 
@@ -91,7 +93,7 @@ class AccountService(Service):
         )
 
         if last_committed_revision is None:
-            raise InvalidCommand(f"Cannot edit account {account_id} as it has no committed changes.")
+            raise InvalidArgument(f"Cannot edit account {account_id} as it has no committed changes.")
 
         # copy all existing transaction data into a new history entry
         await conn.execute(
@@ -124,7 +126,7 @@ class AccountService(Service):
             account_id,
         )
         if not acc:
-            raise NotFoundError(f"Account with id {account_id}")
+            raise InvalidArgument(f"Account with id {account_id}")
 
         return True
 
@@ -210,7 +212,7 @@ class AccountService(Service):
         group_membership: GroupMember,
     ) -> int:
         if account.clearing_shares and account.type != AccountType.clearing:
-            raise InvalidCommand(
+            raise InvalidArgument(
                 f"'{account.type.value}' accounts cannot have associated settlement distribution shares"
             )
 
@@ -279,7 +281,7 @@ class AccountService(Service):
         )
         membership = await check_group_permissions(conn=conn, group_id=group_id, user=user, can_write=True)
         if account.clearing_shares and account_type != AccountType.clearing.value:
-            raise InvalidCommand(f"'{account_type}' accounts cannot have associated settlement distribution shares")
+            raise InvalidArgument(f"'{account_type}' accounts cannot have associated settlement distribution shares")
 
         revision_id = await self._create_revision(conn=conn, user=user, account_id=account_id)
 
@@ -350,7 +352,7 @@ class AccountService(Service):
             account_id,
         )
         if row is None:
-            raise InvalidCommand(f"Account does not exist")
+            raise InvalidArgument(f"Account does not exist")
 
         # TODO: FIXME move this check into the database
 
@@ -374,20 +376,20 @@ class AccountService(Service):
         )
 
         if has_shares or has_usages:
-            raise InvalidCommand(f"Cannot delete an account that is references by a transaction")
+            raise InvalidArgument(f"Cannot delete an account that is references by a transaction")
 
         if has_clearing_shares:
-            raise InvalidCommand(f"Cannot delete an account that is references by a clearing account")
+            raise InvalidArgument(f"Cannot delete an account that is references by a clearing account")
 
         row = await conn.fetchrow(
             "select name, revision_id, deleted from account_state_valid_at() where account_id = $1",
             account_id,
         )
         if row is None:
-            raise InvalidCommand(f"Cannot delete an account without any committed changes")
+            raise InvalidArgument(f"Cannot delete an account without any committed changes")
 
         if row["deleted"]:
-            raise InvalidCommand(f"Cannot delete an already deleted account")
+            raise InvalidArgument(f"Cannot delete an already deleted account")
 
         has_clearing_shares = await conn.fetchval(
             "select exists (select from account_state_valid_at() p where not p.deleted and $1 = any(p.involved_accounts))",
@@ -395,7 +397,7 @@ class AccountService(Service):
         )
 
         if has_clearing_shares:
-            raise InvalidCommand(f"Cannot delete an account that is references by another clearing account")
+            raise InvalidArgument(f"Cannot delete an account that is references by another clearing account")
 
         revision_id = await conn.fetchval(
             "insert into account_revision (user_id, account_id) values ($1, $2) returning id",

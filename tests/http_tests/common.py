@@ -1,5 +1,6 @@
 # pylint: disable=attribute-defined-outside-init
 from httpx import ASGITransport, AsyncClient
+from sftkit.http._context import ContextMiddleware
 
 from abrechnung.http.api import Api
 from tests.common import TEST_CONFIG, BaseTestCase
@@ -12,7 +13,13 @@ class HTTPTestCase(BaseTestCase):
         self.http_service = Api(config=self.test_config)
         await self.http_service._setup()
 
-        self.transport = ASGITransport(app=self.http_service.api)
+        # workaround for bad testability in sftkit
+        self.http_service.server.api.add_middleware(
+            ContextMiddleware,
+            context=self.http_service.context,
+        )
+
+        self.transport = ASGITransport(app=self.http_service.server.api)
         self.client = AsyncClient(transport=self.transport, base_url="https://abrechnung.sft.lol")
         self.transaction_service = self.http_service.transaction_service
         self.account_service = self.http_service.account_service
