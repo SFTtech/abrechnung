@@ -1,2 +1,2 @@
--- revision: 5b333d87
+-- migration: 5b333d87
 -- requires: f6c9ff0b

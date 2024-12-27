@@ -6,6 +6,7 @@ from unittest import IsolatedAsyncioTestCase as TestCase
 
 import asyncpg
 from asyncpg.pool import Pool
+from sftkit.database import DatabaseConfig
 
 from abrechnung.application.users import UserService
 from abrechnung.config import (
@@ -15,9 +16,8 @@ from abrechnung.config import (
     RegistrationConfig,
     ServiceConfig,
 )
-from abrechnung.database.migrations import apply_revisions, reset_schema
+from abrechnung.database.migrations import get_database, reset_schema
 from abrechnung.domain.users import User
-from abrechnung.framework.database import DatabaseConfig, create_db_pool
 
 lock = asyncio.Lock()
 
@@ -42,13 +42,13 @@ TEST_CONFIG = Config(
         secret_key="asdf",
         host="localhost",
         port=8000,
+        base_url="https://abrechnung.example.lol",
     ),
     registration=RegistrationConfig(enabled=True),
     database=get_test_db_config(),
     service=ServiceConfig(
-        url="https://abrechnung.example.lol",
-        api_url="https://abrechnung.example.lol",
         name="Test Abrechnung",
+        url="https://abrechnung.example.lol",
     ),
 )
 
@@ -57,10 +57,11 @@ async def get_test_db() -> Pool:
     """
     get a connection pool to the test database
     """
-    pool = await create_db_pool(TEST_CONFIG.database)
+    database = get_database(TEST_CONFIG)
+    pool = await database.create_pool()
 
     await reset_schema(pool)
-    await apply_revisions(pool)
+    await database.apply_migrations()
 
     return pool
 

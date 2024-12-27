@@ -1,4 +1,4 @@
--- revision: 2467f144
+-- migration: 2467f144
 -- requires: 04424b59
 
 alter table grp add column archived boolean not null default false;

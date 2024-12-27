@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from abrechnung.domain.accounts import AccountType, NewAccount
 from abrechnung.domain.transactions import NewTransaction, TransactionType

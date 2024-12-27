@@ -1,4 +1,4 @@
--- revision: c85ea20c
+-- migration: c85ea20c
 -- requires: bf5fbd44
 
 insert into account_type (name) values ('clearing');

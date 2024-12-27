@@ -1,9 +1,9 @@
 from typing import Optional
 
-import asyncpg
+from sftkit.database import Connection
 
 
-async def _get_or_create_tag_ids(*, conn: asyncpg.Connection, group_id: int, tags: Optional[list[str]]) -> list[int]:
+async def _get_or_create_tag_ids(*, conn: Connection, group_id: int, tags: Optional[list[str]]) -> list[int]:
     if not tags or len(tags) <= 0:
         return []
     tag_rows = await conn.fetch(

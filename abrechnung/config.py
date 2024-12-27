@@ -9,14 +9,12 @@ from pydantic_settings import (
     PydanticBaseSettingsSource,
     SettingsConfigDict,
 )
-
-from abrechnung.framework.database import DatabaseConfig
+from sftkit.database import DatabaseConfig
+from sftkit.http import HTTPServerConfig
 
 
 class ServiceConfig(BaseModel):
-    url: str
     name: str
-    api_url: str
 
 
 class DemoConfig(BaseModel):
@@ -24,10 +22,8 @@ class DemoConfig(BaseModel):
     wipe_interval: timedelta = timedelta(hours=1)
 
 
-class ApiConfig(BaseModel):
+class ApiConfig(HTTPServerConfig):
     secret_key: str
-    host: str
-    port: int
     id: str = "default"
     max_uploadable_file_size: int = 1024
     enable_cors: bool = True

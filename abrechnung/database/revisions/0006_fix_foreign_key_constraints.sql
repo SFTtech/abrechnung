@@ -1,4 +1,4 @@
--- revision: a77c9b57
+-- migration: a77c9b57
 -- requires: 64df13c9
 
 alter table purchase_item drop constraint purchase_item_transaction_id_fkey;

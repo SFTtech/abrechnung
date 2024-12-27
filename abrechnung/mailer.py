@@ -7,10 +7,10 @@ import smtplib
 from typing import Optional, Type
 
 import asyncpg
-
-from abrechnung.framework.database import Connection, create_db_pool
+from sftkit.database import Connection
 
 from .config import Config
+from .database.migrations import get_database
 
 
 class Mailer:
@@ -18,6 +18,7 @@ class Mailer:
         self.config = config
         self.events: Optional[asyncio.Queue] = None
         self.psql: Connection | None = None
+        self.database = get_database(config)
         self.mailer = None
         self.logger = logging.getLogger(__name__)
 
@@ -42,7 +43,7 @@ class Mailer:
         if self.events is None:
             raise RuntimeError("something unexpected happened, self.events is None")
 
-        db_pool = await create_db_pool(self.config.database, n_connections=1)
+        db_pool = await self.database.create_pool(n_connections=1)
         self.psql = await db_pool.acquire()
         assert self.psql is not None
         self.psql.add_termination_listener(self.terminate_callback)
@@ -165,7 +166,7 @@ class Mailer:
                     "",
                     "To complete your registration, visit",
                     "",
-                    f"{self.config.service.url}/confirm-registration/{row['token']}",
+                    f"{self.config.api.base_url}/confirm-registration/{row['token']}",
                     "",
                     f"Your request will time out {row['valid_until']}.",
                     "If you do not want to create a user account, just ignore this email.",
@@ -199,7 +200,7 @@ class Mailer:
                     "",
                     "To set a new one, visit",
                     "",
-                    f"{self.config.service.url}/confirm-password-recovery/{row['token']}",
+                    f"{self.config.api.base_url}/confirm-password-recovery/{row['token']}",
                     "",
                     f"Your request will time out {row['valid_until']}.",
                     "If you do not want to reset your password, just ignore this email.",
@@ -252,7 +253,7 @@ class Mailer:
                     "",
                     "To confirm, visit",
                     "",
-                    f"{self.config.service.url}/confirm-email-change/{row['token']}",
+                    f"{self.config.api.base_url}/confirm-email-change/{row['token']}",
                     "",
                     f"Your request will time out {row['valid_until']}.",
                     "If you do not want to change your email, just ignore this email.",

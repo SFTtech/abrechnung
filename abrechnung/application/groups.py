@@ -1,14 +1,16 @@
 from datetime import datetime
 
 import asyncpg
+from sftkit.database import Connection
+from sftkit.error import InvalidArgument
+from sftkit.service import Service, with_db_transaction
 
+from abrechnung.config import Config
 from abrechnung.core.auth import create_group_log
 from abrechnung.core.decorators import (
     requires_group_permissions,
     with_group_last_changed_update,
 )
-from abrechnung.core.errors import InvalidCommand, NotFoundError
-from abrechnung.core.service import Service
 from abrechnung.domain.accounts import AccountType
 from abrechnung.domain.groups import (
     Group,
@@ -18,11 +20,9 @@ from abrechnung.domain.groups import (
     GroupPreview,
 )
 from abrechnung.domain.users import User
-from abrechnung.framework.database import Connection
-from abrechnung.framework.decorators import with_db_transaction
 
 
-class GroupService(Service):
+class GroupService(Service[Config]):
     @with_db_transaction
     async def create_group(
         self,
@@ -116,7 +116,7 @@ class GroupService(Service):
             group_id,
         )
         if not deleted_id:
-            raise NotFoundError(f"No invite with the given id exists")
+            raise InvalidArgument(f"No invite with the given id exists")
         await create_group_log(conn=conn, group_id=group_id, user=user, type="invite-deleted")
 
     async def _create_user_account(self, conn: asyncpg.Connection, group_id: int, user: User) -> int:
@@ -165,7 +165,7 @@ class GroupService(Service):
             invite["group_id"],
         )
         if user_is_already_member:
-            raise InvalidCommand(f"User is already a member of this group")
+            raise InvalidArgument(f"User is already a member of this group")
 
         await conn.execute(
             "insert into group_membership (user_id, group_id, invited_by, can_write, is_owner) "
@@ -249,7 +249,7 @@ class GroupService(Service):
         is_owner: bool,
     ):
         if user.id == member_id:
-            raise InvalidCommand(f"group members cannot modify their own privileges")
+            raise InvalidArgument(f"group members cannot modify their own privileges")
 
         # not possible to have an owner without can_write
         can_write = can_write if not is_owner else True
@@ -260,7 +260,7 @@ class GroupService(Service):
             member_id,
         )
         if membership is None:
-            raise NotFoundError(f"member with id {member_id} does not exist")
+            raise InvalidArgument(f"member with id {member_id} does not exist")
 
         if membership["is_owner"] == is_owner and membership["can_write"] == can_write:  # no changes
             return

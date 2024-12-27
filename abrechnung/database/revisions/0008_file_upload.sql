@@ -1,4 +1,4 @@
--- revision: 156aef63
+-- migration: 156aef63
 -- requires: dbcccb58
 
 create table if not exists blob (

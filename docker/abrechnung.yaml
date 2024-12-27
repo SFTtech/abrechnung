@@ -1,6 +1,5 @@
 service:
   url: "https://localhost"
-  api_url: "https://localhost/api"
   name: "Abrechnung"
 
 database:
@@ -10,6 +9,7 @@ database:
 
 api:
   host: "0.0.0.0"
+  base_url: "https://localhost"
   port: 8080
   id: default
 

@@ -2,7 +2,7 @@ import logging
 from datetime import datetime
 
 from abrechnung.config import Config
-from abrechnung.framework.database import create_db_pool
+from abrechnung.database.migrations import get_database
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,8 @@ async def cleanup(config: Config):
 
     deletion_threshold = datetime.now() - config.demo.wipe_interval
 
-    db_pool = await create_db_pool(config.database)
+    database = get_database(config)
+    db_pool = await database.create_pool()
     async with db_pool.acquire() as conn:
         async with conn.transaction():
             n_rows_groups = await conn.fetchval(

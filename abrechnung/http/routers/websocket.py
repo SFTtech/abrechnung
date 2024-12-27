@@ -22,7 +22,7 @@ def make_error_msg(code: int, msg: str) -> dict:
 
 
 class NotificationManager:
-    def __init__(self, config: Config):
+    def __init__(self, config: Config, db_pool: asyncpg.Pool):
         self.logger = logging.getLogger(__name__)
         self.config = config
 
@@ -34,11 +34,10 @@ class NotificationManager:
         self.channel_id: Optional[int] = None
         self.channel_name: Optional[str] = None
 
-        self.db_pool: Optional[asyncpg.Pool] = None
+        self.db_pool = db_pool
         self.connection: Optional[asyncpg.Connection] = None
 
-    async def initialize(self, db_pool: asyncpg.Pool):
-        self.db_pool = db_pool
+    async def initialize(self):
         self.connection = await self.db_pool.acquire()
         await self.connection.set_type_codec("json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
         await self.connection.set_type_codec("jsonb", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")

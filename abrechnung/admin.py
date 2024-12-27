@@ -3,7 +3,7 @@ from getpass import getpass
 
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
-from abrechnung.framework.database import create_db_pool
+from abrechnung.database.migrations import get_database
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,8 @@ async def create_user(config: Config, name: str, email: str, skip_email_check: b
         print("Passwords do not match!")
         return
 
-    db_pool = await create_db_pool(config.database)
+    database = get_database(config)
+    db_pool = await database.create_pool()
     user_service = UserService(db_pool, config)
     user_service.enable_registration = True
     if skip_email_check:

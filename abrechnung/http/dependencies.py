@@ -9,11 +9,11 @@ from abrechnung.config import Config
 
 
 def get_config(request: Request) -> Config:
-    return request.state.config
+    return request.state.context.config
 
 
 def get_db_pool(request: Request) -> asyncpg.Pool:
-    return request.state.db_pool
+    return request.state.context.db_pool
 
 
 async def get_db_conn(
@@ -32,16 +32,16 @@ async def get_db_transaction(
 
 
 def get_user_service(request: Request) -> UserService:
-    return request.state.user_service
+    return request.state.context.user_service
 
 
 def get_group_service(request: Request) -> GroupService:
-    return request.state.group_service
+    return request.state.context.group_service
 
 
 def get_account_service(request: Request) -> AccountService:
-    return request.state.account_service
+    return request.state.context.account_service
 
 
 def get_transaction_service(request: Request) -> TransactionService:
-    return request.state.transaction_service
+    return request.state.context.transaction_service

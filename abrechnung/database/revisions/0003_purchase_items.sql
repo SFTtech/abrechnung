@@ -1,4 +1,4 @@
--- revision: b32893f6
+-- migration: b32893f6
 -- requires: 83a50a30
 
 -- an item in a 'purchase'-type transaction

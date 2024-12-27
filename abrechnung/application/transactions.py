@@ -3,15 +3,17 @@ from datetime import datetime
 from typing import Optional, Union
 
 import asyncpg
+from sftkit.database import Connection
+from sftkit.error import InvalidArgument
+from sftkit.service import Service, with_db_transaction
 
 from abrechnung.application.common import _get_or_create_tag_ids
+from abrechnung.config import Config
 from abrechnung.core.auth import create_group_log
 from abrechnung.core.decorators import (
     requires_group_permissions,
     with_group_last_changed_update,
 )
-from abrechnung.core.errors import InvalidCommand, NotFoundError
-from abrechnung.core.service import Service
 from abrechnung.domain.transactions import (
     NewFile,
     NewTransaction,
@@ -23,11 +25,9 @@ from abrechnung.domain.transactions import (
     UpdateTransaction,
 )
 from abrechnung.domain.users import User
-from abrechnung.framework.database import Connection
-from abrechnung.framework.decorators import with_db_transaction
 
 
-class TransactionService(Service):
+class TransactionService(Service[Config]):
     @staticmethod
     async def _check_transaction_permissions(
         conn: asyncpg.Connection,
@@ -45,7 +45,7 @@ class TransactionService(Service):
             transaction_id,
         )
         if not result:
-            raise NotFoundError(f"user is not a member of this group")
+            raise InvalidArgument(f"user is not a member of this group")
 
         if can_write and not (result["can_write"] or result["is_owner"]):
             raise PermissionError(f"user does not have write permissions")
@@ -53,7 +53,9 @@ class TransactionService(Service):
         if transaction_type:
             type_check = [transaction_type] if isinstance(transaction_type, TransactionType) else transaction_type
             if result["type"] not in [t.value for t in type_check]:
-                raise InvalidCommand(f"Transaction type {result['type']} does not match the expected type {type_check}")
+                raise InvalidArgument(
+                    f"Transaction type {result['type']} does not match the expected type {type_check}"
+                )
 
         return result["group_id"]
 
@@ -89,7 +91,7 @@ class TransactionService(Service):
             )
         for transaction in transactions:
             for attachment in transaction.files:
-                attachment.host_url = self.cfg.service.api_url
+                attachment.host_url = self.config.api.base_url + "/api"
         return transactions
 
     @with_db_transaction
@@ -102,7 +104,7 @@ class TransactionService(Service):
             transaction_id,
         )
         for attachment in transaction.files:
-            attachment.host_url = self.cfg.service.api_url
+            attachment.host_url = self.config.api.base_url + "/api"
         return transaction
 
     @staticmethod
@@ -127,12 +129,12 @@ class TransactionService(Service):
         self, *, conn: Connection, revision_id: int, transaction_id: int, attachment: NewFile
     ) -> int:
         content = base64.b64decode(attachment.content)
-        max_file_size = self.cfg.api.max_uploadable_file_size
+        max_file_size = self.config.api.max_uploadable_file_size
         if len(content) / 1024 > max_file_size:
-            raise InvalidCommand(f"File is too large, maximum is {max_file_size}KB")
+            raise InvalidArgument(f"File is too large, maximum is {max_file_size}KB")
 
         if "." in attachment.filename:
-            raise InvalidCommand(f"Dots '.' are not allowed in file names")
+            raise InvalidArgument(f"Dots '.' are not allowed in file names")
 
         blob_id = await conn.fetchval(
             "insert into blob (content, mime_type) values ($1, $2) returning id",
@@ -157,7 +159,7 @@ class TransactionService(Service):
         *, conn: Connection, revision_id: int, transaction_id: int, attachment: UpdateFile
     ) -> int:
         if "." in attachment.filename:
-            raise InvalidCommand(f"Dots '.' are not allowed in file names")
+            raise InvalidArgument(f"Dots '.' are not allowed in file names")
 
         blob_id = await conn.fetchval(
             "select blob_id from file_state_valid_at(now()) where id = $1 and transaction_id = $2",
@@ -165,7 +167,7 @@ class TransactionService(Service):
             transaction_id,
         )
         if blob_id is None:
-            raise NotFoundError("Transaction attachment does not exist")
+            raise InvalidArgument("Transaction attachment does not exist")
 
         await conn.execute(
             "insert into file_history (id, revision_id, filename, blob_id, deleted) values ($1, $2, $3, $4, $5)",
@@ -279,7 +281,7 @@ class TransactionService(Service):
             list(debitor_shares.keys()),
         )
         if len(debitor_shares.keys()) != n_accounts:
-            raise InvalidCommand("one of the accounts referenced by a debitor share does not exist in this group")
+            raise InvalidArgument("one of the accounts referenced by a debitor share does not exist in this group")
         for account_id, value in debitor_shares.items():
             await conn.execute(
                 "insert into debitor_share(transaction_id, revision_id, account_id, shares) " "values ($1, $2, $3, $4)",
@@ -304,7 +306,7 @@ class TransactionService(Service):
             list(creditor_shares.keys()),
         )
         if len(creditor_shares.keys()) != n_accounts:
-            raise InvalidCommand("one of the accounts referenced by a creditor share does not exist in this group")
+            raise InvalidArgument("one of the accounts referenced by a creditor share does not exist in this group")
         for account_id, value in creditor_shares.items():
             await conn.execute(
                 "insert into creditor_share(transaction_id, revision_id, account_id, shares) "
@@ -331,11 +333,11 @@ class TransactionService(Service):
             blob_id,
         )
         if not perms:
-            raise InvalidCommand("File not found")
+            raise InvalidArgument("File not found")
 
         blob = await conn.fetchrow("select content, mime_type from blob where id = $1", blob_id)
         if not blob:
-            raise InvalidCommand("File not found")
+            raise InvalidArgument("File not found")
 
         return blob["mime_type"], blob["content"]
 
@@ -354,7 +356,7 @@ class TransactionService(Service):
             list(usages.keys()),
         )
         if len(usages.keys()) != n_accounts:
-            raise InvalidCommand("one of the accounts referenced by a position usage does not exist in this group")
+            raise InvalidArgument("one of the accounts referenced by a position usage does not exist in this group")
         for account_id, value in usages.items():
             await conn.execute(
                 "insert into purchase_item_usage(item_id, revision_id, account_id, share_amount) "
@@ -614,9 +616,9 @@ class TransactionService(Service):
             transaction_id,
         )
         if row is None:
-            raise NotFoundError()
+            raise InvalidArgument(f"Transaction id {transaction_id} not found")
         if row is not None and row["deleted"]:
-            raise InvalidCommand(f"Cannot delete transaction {transaction_id} as it already is deleted")
+            raise InvalidArgument(f"Cannot delete transaction {transaction_id} as it already is deleted")
 
         await create_group_log(
             conn=conn,
@@ -666,7 +668,7 @@ class TransactionService(Service):
         )
 
         if last_committed_revision is None:
-            raise InvalidCommand(f"Cannot edit transaction {transaction_id} as it has no committed changes.")
+            raise InvalidArgument(f"Cannot edit transaction {transaction_id} as it has no committed changes.")
 
         # copy all existing transaction data into a new history entry
         await conn.execute(
