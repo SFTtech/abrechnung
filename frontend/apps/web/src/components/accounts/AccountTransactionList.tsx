@@ -13,7 +13,7 @@ import { AccountClearingListEntry } from "./AccountClearingListEntry";
 import { AccountTransactionListEntry } from "./AccountTransactionListEntry";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { PurchaseIcon } from "../style/AbrechnungIcons";
 
 type ArrayAccountsAndTransactions = Array<Transaction | Account>;

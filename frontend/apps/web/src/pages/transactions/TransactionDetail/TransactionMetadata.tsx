@@ -181,7 +181,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                     helperText={validationErrors.fieldErrors.creditor_shares}
                 />
 
-                {transaction.type === "transfer" && (
+                {/* {transaction.type === "transfer" && (
                     <AccountSelect
                         margin="normal"
                         groupId={groupId}
@@ -197,7 +197,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                         error={!!validationErrors.fieldErrors.debitor_shares}
                         helperText={validationErrors.fieldErrors.debitor_shares}
                     />
-                )}
+                )} */}
             </Grid>
 
             {(transaction.is_wip || hasAttachments) && (

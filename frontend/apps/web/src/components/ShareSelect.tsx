@@ -23,7 +23,7 @@ import {
     useTheme,
 } from "@mui/material";
 import * as React from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { getAccountLink } from "../utils";
 import { NumericInput } from "@abrechnung/components";
 import { getAccountIcon } from "./style/AbrechnungIcons";

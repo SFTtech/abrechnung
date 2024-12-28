@@ -1,7 +1,7 @@
 import { selectIsAuthenticated } from "@abrechnung/redux";
 import { Alert, Box, Button, Container, CssBaseline, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { z } from "zod";
 import { api } from "@/core/api";
 import { useAppSelector } from "@/store";

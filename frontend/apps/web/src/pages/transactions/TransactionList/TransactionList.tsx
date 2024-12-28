@@ -33,7 +33,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import { SaveAlt } from "@mui/icons-material";
 import React, { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router";
 import { TagSelector } from "@/components/TagSelector";
 import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
 import { MobilePaper } from "@/components/style";

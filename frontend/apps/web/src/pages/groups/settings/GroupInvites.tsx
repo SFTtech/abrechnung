@@ -20,7 +20,7 @@ import { api, ws } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
-import { Navigate } from "react-router-dom";
+import { Navigate } from "react-router";
 import { Group } from "@abrechnung/api";
 
 interface GroupInviteProps {

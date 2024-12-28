@@ -1,6 +1,6 @@
 import * as React from "react";
 import { selectIsAuthenticated } from "@abrechnung/redux";
-import { Link as RouterLink, Navigate, Outlet, useLocation, useParams } from "react-router-dom";
+import { Link as RouterLink, Navigate, Outlet, useLocation, useParams } from "react-router";
 import { useAppSelector } from "@/store";
 import { ListItemLink } from "@/components/style/ListItemLink";
 import { SidebarGroupList } from "@/app/authenticated-layout/SidebarGroupList";

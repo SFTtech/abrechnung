@@ -1,6 +1,6 @@
 import { Button, Typography } from "@mui/material";
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams } from "react-router";
 import { toast } from "react-toastify";
 import { Loading } from "@abrechnung/components";
 import { api } from "@/core/api";

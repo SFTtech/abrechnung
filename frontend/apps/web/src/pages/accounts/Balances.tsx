@@ -27,7 +27,7 @@ import {
 import { useTheme } from "@mui/material/styles";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate, Link as RouterLink } from "react-router-dom";
+import { Navigate, Link as RouterLink } from "react-router";
 import { BalanceBarGraph } from "./BalanceBarGraph";
 import { GroupArchivedDisclaimer } from "@/components";
 

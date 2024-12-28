@@ -22,7 +22,7 @@ import {
     useTheme,
 } from "@mui/material";
 import React, { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router";
 import { TagSelector } from "@/components/TagSelector";
 import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
 import { MobilePaper } from "@/components/style";

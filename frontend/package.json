@@ -59,7 +59,7 @@
         "react-native-vector-icons": "^10.2.0",
         "react-native-web": "0.19.13",
         "react-redux": "9.2.0",
-        "react-router-dom": "7.1.1",
+        "react-router": "7.1.1",
         "react-toastify": "^11.0.2",
         "recharts": "^2.15.0",
         "redux-persist": "^6.0.0",

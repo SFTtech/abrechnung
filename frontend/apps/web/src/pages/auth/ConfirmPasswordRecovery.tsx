@@ -1,6 +1,6 @@
 import { Alert, Box, Button, Container, CssBaseline, Link, Stack, Typography } from "@mui/material";
 import React, { useState } from "react";
-import { Link as RouterLink, useParams } from "react-router-dom";
+import { Link as RouterLink, useParams } from "react-router";
 import { z } from "zod";
 import { api } from "@/core/api";
 import i18n from "@/i18n";

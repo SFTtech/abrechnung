@@ -6,7 +6,7 @@ import { Loading } from "@abrechnung/components";
 import { useQuery, useTitle } from "@/core/utils";
 import { Grid, Typography } from "@mui/material";
 import * as React from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate, useParams } from "react-router";
 import { AccountInfo } from "./AccountInfo";
 import { useTranslation } from "react-i18next";
 import { Account } from "@abrechnung/types";

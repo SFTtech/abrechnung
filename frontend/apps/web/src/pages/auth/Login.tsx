@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router";
 import { api } from "@/core/api";
 import { toast } from "react-toastify";
 import { useQuery, useTitle } from "@/core/utils";
