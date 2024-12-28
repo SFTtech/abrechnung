@@ -1,6 +1,6 @@
 {
     "$schema": "./node_modules/nx/schemas/nx-schema.json",
-    "parallel": 8,
+    "parallel": 1,
     "pluginsConfig": {
         "@nx/js": {
             "analyzeSourceFiles": false
