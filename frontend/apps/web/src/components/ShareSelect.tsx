@@ -1,3 +1,6 @@
+import { useIsSmallScreen } from "@/hooks";
+import { NumericInput } from "@abrechnung/components";
+import { getAccountSortFunc } from "@abrechnung/core";
 import { useGroupAccounts } from "@abrechnung/redux";
 import { Account, TransactionShare } from "@abrechnung/types";
 import { Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
@@ -17,18 +20,14 @@ import {
     TableHead,
     TableRow,
     TextField,
-    Theme,
     Typography,
-    useMediaQuery,
     useTheme,
 } from "@mui/material";
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { getAccountLink } from "../utils";
-import { NumericInput } from "@abrechnung/components";
 import { getAccountIcon } from "./style/AbrechnungIcons";
-import { getAccountSortFunc } from "@abrechnung/core";
-import { useTranslation } from "react-i18next";
 
 interface RowProps {
     account: Account;
@@ -129,7 +128,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
 }) => {
     const { t } = useTranslation();
     const theme = useTheme();
-    const isSmallScreen = useMediaQuery((theme: Theme) => theme.breakpoints.down("sm"));
+    const isSmallScreen = useIsSmallScreen();
 
     const [showEvents, setShowEvents] = React.useState(false);
     const [showAdvanced, setShowAdvanced] = React.useState(false);

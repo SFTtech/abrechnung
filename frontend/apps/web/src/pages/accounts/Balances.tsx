@@ -1,7 +1,8 @@
+import { GroupArchivedDisclaimer } from "@/components";
 import { BalanceTable } from "@/components/accounts/BalanceTable";
-import { MobilePaper, ListItemLink } from "@/components/style";
+import { ListItemLink, MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
-import { useFormatCurrency } from "@/hooks";
+import { useFormatCurrency, useIsSmallScreen } from "@/hooks";
 import { useAppSelector } from "@/store";
 import {
     selectAccountBalances,
@@ -11,25 +12,12 @@ import {
     useSortedAccounts,
 } from "@abrechnung/redux";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-import {
-    Alert,
-    AlertTitle,
-    Box,
-    Button,
-    Divider,
-    List,
-    ListItemText,
-    Tab,
-    Theme,
-    Typography,
-    useMediaQuery,
-} from "@mui/material";
+import { Alert, AlertTitle, Box, Button, Divider, List, ListItemText, Tab, Theme, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, Link as RouterLink } from "react-router";
 import { BalanceBarGraph } from "./BalanceBarGraph";
-import { GroupArchivedDisclaimer } from "@/components";
 
 interface Props {
     groupId: number;
@@ -39,7 +27,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
     const theme: Theme = useTheme();
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+    const isSmallScreen = useIsSmallScreen();
 
     const group = useGroup(groupId);
     const personalAccounts = useSortedAccounts(groupId, "name", "personal");

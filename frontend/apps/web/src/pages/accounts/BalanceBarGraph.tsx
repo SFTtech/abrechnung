@@ -1,13 +1,13 @@
-import * as React from "react";
-import { useFormatCurrency } from "@/hooks";
+import { useFormatCurrency, useIsSmallScreen } from "@/hooks";
 import { useAppSelector } from "@/store";
+import { Group } from "@abrechnung/api";
 import { selectAccountBalances, useSortedAccounts } from "@abrechnung/redux";
-import { Theme, useMediaQuery } from "@mui/material";
+import { Theme } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
+import * as React from "react";
 import { useNavigate } from "react-router";
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { CategoricalChartFunc } from "recharts/types/chart/generateCategoricalChart";
-import { Group } from "@abrechnung/api";
 
 export type BalanceBarGraphProps = {
     group: Group;
@@ -24,7 +24,7 @@ type Data = {
 export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
     const formatCurrency = useFormatCurrency();
     const theme: Theme = useTheme();
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
+    const isSmallScreen = useIsSmallScreen();
     const navigate = useNavigate();
 
     const personalAccounts = useSortedAccounts(group.id, "name", "personal");

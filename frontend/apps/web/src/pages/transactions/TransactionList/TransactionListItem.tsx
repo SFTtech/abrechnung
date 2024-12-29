@@ -1,13 +1,13 @@
+import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
+import { ListItemLink } from "@/components/style/ListItemLink";
+import { useFormatCurrency, useIsSmallScreen } from "@/hooks";
+import { useAppSelector } from "@/store";
 import { selectAccountIdToAccountMap, useTransaction } from "@abrechnung/redux";
 import { HelpOutline } from "@mui/icons-material";
 import { Chip, Divider, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
-import React from "react";
-import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
-import { ListItemLink } from "@/components/style/ListItemLink";
-import { useAppSelector } from "@/store";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useFormatCurrency } from "@/hooks";
 
 interface Props {
     groupId: number;
@@ -20,6 +20,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
     const formatCurrency = useFormatCurrency();
     const accounts = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
     const transaction = useTransaction(groupId, transactionId);
+    const isSmallScreen = useIsSmallScreen();
     if (transaction === undefined) {
         // TODO: HACKY WORKAROUND
         // when switching between groups which are already loaded into the redux store we will land on the transaction list page
@@ -59,8 +60,14 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
                     )}
                 </ListItemAvatar>
                 <ListItemText
-                    primaryTypographyProps={{ component: "div" }}
-                    secondaryTypographyProps={{ component: "div" }}
+                    slotProps={{
+                        primary: {
+                            component: "div",
+                        },
+                        secondary: {
+                            component: "div",
+                        },
+                    }}
                     primary={
                         <>
                             {transaction.is_wip && (
@@ -87,14 +94,18 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
                 <ListItemText>
                     <Typography align="right" variant="body2">
                         {formatCurrency(transaction.value, transaction.currency_symbol)}
-                        <br />
-                        <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
-                            {t("common.lastChangedWithTime", "", {
-                                datetime: DateTime.fromISO(transaction.last_changed).toLocaleString(
-                                    DateTime.DATETIME_FULL
-                                ),
-                            })}
-                        </Typography>
+                        {!isSmallScreen && (
+                            <>
+                                <br />
+                                <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
+                                    {t("common.lastChangedWithTime", "", {
+                                        datetime: DateTime.fromISO(transaction.last_changed).toLocaleString(
+                                            DateTime.DATETIME_FULL
+                                        ),
+                                    })}
+                                </Typography>
+                            </>
+                        )}
                     </Typography>
                 </ListItemText>
             </ListItemLink>

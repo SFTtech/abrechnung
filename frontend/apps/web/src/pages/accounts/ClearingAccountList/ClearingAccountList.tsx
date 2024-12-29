@@ -1,5 +1,14 @@
+import { GroupArchivedDisclaimer } from "@/components";
+import { TagSelector } from "@/components/TagSelector";
+import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
+import { MobilePaper } from "@/components/style";
+import { useTitle } from "@/core/utils";
+import { useIsSmallScreen } from "@/hooks";
+import { useAppDispatch } from "@/store";
+import { getAccountLink } from "@/utils";
 import { AccountSortMode } from "@abrechnung/core";
 import { createAccount, useGroup, useIsGroupWritable, useSortedAccounts } from "@abrechnung/redux";
+import { Account } from "@abrechnung/types";
 import { Add as AddIcon, Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import {
     Alert,
@@ -16,23 +25,12 @@ import {
     Pagination,
     Select,
     Stack,
-    Theme,
     Tooltip,
-    useMediaQuery,
-    useTheme,
 } from "@mui/material";
 import React, { useState } from "react";
-import { Navigate, useNavigate } from "react-router";
-import { TagSelector } from "@/components/TagSelector";
-import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
-import { MobilePaper } from "@/components/style";
-import { useTitle } from "@/core/utils";
-import { useAppDispatch } from "@/store";
-import { getAccountLink } from "@/utils";
-import { ClearingAccountListItem } from "./ClearingAccountListItem";
 import { useTranslation } from "react-i18next";
-import { Account } from "@abrechnung/types";
-import { GroupArchivedDisclaimer } from "@/components";
+import { Navigate, useNavigate } from "react-router";
+import { ClearingAccountListItem } from "./ClearingAccountListItem";
 
 interface Props {
     groupId: number;
@@ -47,8 +45,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
     const navigate = useNavigate();
     const group = useGroup(groupId);
     const isGroupWritable = useIsGroupWritable(groupId);
-    const theme: Theme = useTheme();
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+    const isSmallScreen = useIsSmallScreen();
 
     const [searchValue, setSearchValue] = useState("");
     const [tagFilter, setTagFilter] = useState<string[]>(emptyList);
@@ -92,19 +89,12 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
             <MobilePaper>
                 <Stack spacing={1}>
                     <GroupArchivedDisclaimer group={group} />
-                    <Box
-                        sx={{
-                            display: "flex",
-                            flexDirection: { xs: "column", sm: "column", md: "row", lg: "row" },
-                            alignItems: { md: "flex-end" },
-                            pl: "16px",
-                            justifyContent: "space-between",
-                        }}
+                    <Stack
+                        direction={{ sm: "column", md: "row" }}
+                        alignItems={{ md: "flex-end" }}
+                        justifyContent="space-between"
                     >
-                        <Box sx={{ display: "flex-item" }}>
-                            <Box sx={{ minWidth: "56px", pt: "16px" }}>
-                                <SearchIcon sx={{ color: "action.active" }} />
-                            </Box>
+                        <Stack direction={{ sm: "column", md: "row" }} justifyContent="space-between" spacing={1}>
                             <Input
                                 value={searchValue}
                                 onChange={(e) => setSearchValue(e.target.value)}
@@ -112,7 +102,11 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                                 inputProps={{
                                     "aria-label": "search",
                                 }}
-                                sx={{ pt: "16px" }}
+                                startAdornment={
+                                    <InputAdornment position="start">
+                                        <SearchIcon sx={{ color: "action.active" }} />
+                                    </InputAdornment>
+                                }
                                 endAdornment={
                                     <InputAdornment position="end">
                                         <IconButton
@@ -125,7 +119,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                                     </InputAdornment>
                                 }
                             />
-                            <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
+                            <FormControl variant="standard" sx={{ minWidth: 120 }}>
                                 <InputLabel id="select-sort-by-label">{t("common.sortBy")}</InputLabel>
                                 <Select
                                     labelId="select-sort-by-label"
@@ -140,7 +134,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                                     <MenuItem value="dateInfo">{t("common.date")}</MenuItem>
                                 </Select>
                             </FormControl>
-                            <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
+                            <FormControl variant="standard" sx={{ minWidth: 120 }}>
                                 <TagSelector
                                     label={t("common.filterByTags")}
                                     groupId={groupId}
@@ -151,7 +145,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                                     chipProps={{ size: "small" }}
                                 />
                             </FormControl>
-                        </Box>
+                        </Stack>
                         {!isSmallScreen && isGroupWritable && (
                             <Box sx={{ display: "flex-item" }}>
                                 <Tooltip title={t("events.createEvent")}>
@@ -161,7 +155,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                                 </Tooltip>
                             </Box>
                         )}
-                    </Box>
+                    </Stack>
                     <Divider />
                     <List>
                         {paginatedAccounts.length === 0 ? (

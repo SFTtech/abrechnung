@@ -48,36 +48,17 @@ import { useConfig } from "@/core/config";
 const drawerWidth = 240;
 const AUTH_FALLBACK = "/login";
 
-export const AuthenticatedLayout: React.FC = () => {
-    const { t } = useTranslation();
-    const authenticated = useAppSelector(selectIsAuthenticated);
-    const location = useLocation();
-    const params = useParams();
-    const groupId = params["groupId"] ? Number(params["groupId"]) : undefined;
-    const [anchorEl, setAnchorEl] = React.useState<Element | null>(null);
-    const theme: Theme = useTheme();
-    const dotsMenuOpen = Boolean(anchorEl);
+type DrawerContentProps = {
+    groupId: number | undefined;
+};
+
+const DrawerContent: React.FC<DrawerContentProps> = ({ groupId }) => {
+    const theme = useTheme();
     const cfg = useConfig();
-    const isLargeScreen = useMediaQuery(theme.breakpoints.up("sm"));
+    const { t } = useTranslation();
+    const location = useLocation();
 
-    const [mobileOpen, setMobileOpen] = React.useState(true);
-    if (!authenticated) {
-        return <Navigate to={`${AUTH_FALLBACK}?next=${location.pathname}`} />;
-    }
-
-    const handleProfileMenuOpen = (event: React.MouseEvent) => {
-        setAnchorEl(event.currentTarget);
-    };
-
-    const handleDotsMenuClose = () => {
-        setAnchorEl(null);
-    };
-
-    const handleDrawerToggle = () => {
-        setMobileOpen(!mobileOpen);
-    };
-
-    const drawer = (
+    return (
         <div className={styles["sidebarContainer"]}>
             <div className={styles["sidebarScrollContainer"]}>
                 {groupId !== undefined && (
@@ -172,6 +153,35 @@ export const AuthenticatedLayout: React.FC = () => {
             </div>
         </div>
     );
+};
+
+export const AuthenticatedLayout: React.FC = () => {
+    const { t } = useTranslation();
+    const authenticated = useAppSelector(selectIsAuthenticated);
+    const location = useLocation();
+    const params = useParams();
+    const groupId = params["groupId"] ? Number(params["groupId"]) : undefined;
+    const [anchorEl, setAnchorEl] = React.useState<Element | null>(null);
+    const theme: Theme = useTheme();
+    const dotsMenuOpen = Boolean(anchorEl);
+    const isLargeScreen = useMediaQuery(theme.breakpoints.up("sm"));
+
+    const [mobileOpen, setMobileOpen] = React.useState(true);
+    if (!authenticated) {
+        return <Navigate to={`${AUTH_FALLBACK}?next=${location.pathname}`} />;
+    }
+
+    const handleProfileMenuOpen = (event: React.MouseEvent) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleDotsMenuClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleDrawerToggle = () => {
+        setMobileOpen(!mobileOpen);
+    };
 
     return (
         <Box sx={{ display: "flex" }}>
@@ -267,7 +277,7 @@ export const AuthenticatedLayout: React.FC = () => {
                         overflowY: "hidden",
                     }}
                 >
-                    {drawer}
+                    <DrawerContent groupId={groupId} />
                 </Drawer>
             </Box>
             <Box
