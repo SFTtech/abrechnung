@@ -75,65 +75,65 @@ jobs:
       - name: Build web app
         run: npx nx build web
 
-  build-app:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Nodejs
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+  # build-app:
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run:
+  #       working-directory: frontend
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Set up Nodejs
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: "22"
+  #         cache: "npm"
+  #         cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+  #     - name: Install dependencies
+  #       run: npm ci
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'temurin'
+  #     - name: Set up JDK 17
+  #       uses: actions/setup-java@v3
+  #       with:
+  #         java-version: '17'
+  #         distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+  #     - name: Setup Android SDK
+  #       uses: android-actions/setup-android@v3
 
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
+  #     - uses: actions/cache@v4
+  #       with:
+  #         path: |
+  #           ~/.gradle/caches
+  #           ~/.gradle/wrapper
+  #         key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+  #         restore-keys: |
+  #           ${{ runner.os }}-gradle-
 
-      - name: Setup Gradle
-        uses: gradle/gradle-build-action@v2
+  #     - name: Setup Gradle
+  #       uses: gradle/gradle-build-action@v2
 
-      - name: Write gradle.properties to include signing key configuration for android release build
-        env:
-          KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_B64 }}
-          KEYSTORE_ALIAS: ${{ secrets.ANDROID_KEY_STORE_ALIAS }}
-          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: |
-          echo "${KEYSTORE}" | base64 --decode > abrechnung-app-upload.keystore
-          ls -lah .
-          mkdir -p ~/.gradle
-          echo "ABRECHNUNG_UPLOAD_STORE_FILE=$(pwd)/abrechnung-app-upload.keystore" >> ~/.gradle/gradle.properties
-          echo "ABRECHNUNG_UPLOAD_KEY_ALIAS=${KEYSTORE_ALIAS}" >> ~/.gradle/gradle.properties
-          echo "ABRECHNUNG_UPLOAD_STORE_PASSWORD=${KEYSTORE_PASSWORD}" >> ~/.gradle/gradle.properties
-          echo "ABRECHNUNG_UPLOAD_KEY_PASSWORD=${KEY_PASSWORD}" >> ~/.gradle/gradle.properties
-          cat ~/.gradle/gradle.properties
+  #     - name: Write gradle.properties to include signing key configuration for android release build
+  #       env:
+  #         KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+  #         KEYSTORE_ALIAS: ${{ secrets.ANDROID_KEY_STORE_ALIAS }}
+  #         KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEY_STORE_PASSWORD }}
+  #         KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+  #       run: |
+  #         echo "${KEYSTORE}" | base64 --decode > abrechnung-app-upload.keystore
+  #         ls -lah .
+  #         mkdir -p ~/.gradle
+  #         echo "ABRECHNUNG_UPLOAD_STORE_FILE=$(pwd)/abrechnung-app-upload.keystore" >> ~/.gradle/gradle.properties
+  #         echo "ABRECHNUNG_UPLOAD_KEY_ALIAS=${KEYSTORE_ALIAS}" >> ~/.gradle/gradle.properties
+  #         echo "ABRECHNUNG_UPLOAD_STORE_PASSWORD=${KEYSTORE_PASSWORD}" >> ~/.gradle/gradle.properties
+  #         echo "ABRECHNUNG_UPLOAD_KEY_PASSWORD=${KEY_PASSWORD}" >> ~/.gradle/gradle.properties
+  #         cat ~/.gradle/gradle.properties
 
-      - name: Build App APK
-        run: npx nx build-android mobile --tasks assembleRelease
+  #     - name: Build App APK
+  #       run: npx nx build-android mobile --tasks assembleRelease
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-release-apk
-          path: frontend/apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+  #     - name: Upload APK
+  #       uses: actions/upload-artifact@v4
+  #       with:
+  #         name: app-release-apk
+  #         path: frontend/apps/mobile/android/app/build/outputs/apk/release/app-release.apk
