@@ -18,7 +18,7 @@ import {
 } from "@mui/material";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router";
 import { GroupInvites } from "./GroupInvites";
 import { GroupMemberList } from "./GroupMemberList";
 import { SettingsForm } from "./SettingsForm";

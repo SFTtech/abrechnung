@@ -9,7 +9,7 @@ import {
 } from "@abrechnung/redux";
 import { Button, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
 import * as React from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { useFormatCurrency } from "@/hooks";
 

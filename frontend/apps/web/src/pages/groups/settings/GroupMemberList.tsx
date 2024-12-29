@@ -26,7 +26,7 @@ import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
-import { Navigate } from "react-router-dom";
+import { Navigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { FormCheckbox } from "@abrechnung/components";
 

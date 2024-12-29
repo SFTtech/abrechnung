@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Link as RouterLink, Outlet, Navigate } from "react-router-dom";
+import { Link as RouterLink, Outlet, Navigate } from "react-router";
 import { AppBar, Box, Button, Container, CssBaseline, Toolbar, Typography } from "@mui/material";
 import { Banner } from "@/components/style/Banner";
 import { selectIsAuthenticated } from "@abrechnung/redux";

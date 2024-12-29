@@ -11,7 +11,7 @@ import {
     LinearProgress,
 } from "@mui/material";
 import React, { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Transaction } from "@abrechnung/types";
 import { useGroup, useIsGroupWritable } from "@abrechnung/redux";

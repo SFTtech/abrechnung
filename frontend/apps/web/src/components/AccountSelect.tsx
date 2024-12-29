@@ -32,11 +32,9 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
 }) => {
     const accounts = useSortedAccounts(groupId, "name");
 
-    const [filteredAccounts, setFilteredAccounts] = React.useState<Account[]>([]);
-
-    React.useEffect(() => {
-        setFilteredAccounts(exclude ? accounts.filter((account) => exclude.indexOf(account.id) < 0) : accounts);
-    }, [exclude, setFilteredAccounts, accounts]);
+    const filteredAccounts = React.useMemo<Account[]>(() => {
+        return exclude ? accounts.filter((account) => exclude.indexOf(account.id) < 0) : accounts;
+    }, [accounts, exclude]);
 
     return (
         <Autocomplete
@@ -47,7 +45,7 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
             disabled={disabled}
             openOnFocus
             fullWidth
-            PopperComponent={StyledAutocompletePopper}
+            slots={{ popper: StyledAutocompletePopper }}
             disableClearable
             className={className}
             onChange={(event, newValue: Account) => onChange(newValue)}

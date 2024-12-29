@@ -2,7 +2,7 @@ import { selectIsAuthenticated } from "@abrechnung/redux";
 import { LockOutlined } from "@mui/icons-material";
 import { Avatar, Box, Button, Container, CssBaseline, Grid, Link, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import { FormTextField, Loading } from "@abrechnung/components";

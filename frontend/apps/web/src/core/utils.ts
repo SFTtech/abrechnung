@@ -1,6 +1,6 @@
 import { Theme } from "@mui/material";
 import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation } from "react-router";
 
 export const useQuery = (): URLSearchParams => {
     return new URLSearchParams(useLocation().search);

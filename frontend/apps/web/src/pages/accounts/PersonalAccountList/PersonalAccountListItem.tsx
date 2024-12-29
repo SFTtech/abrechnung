@@ -7,7 +7,7 @@ import { Delete, Edit } from "@mui/icons-material";
 import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText } from "@mui/material";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router";
 
 interface Props {
     groupId: number;

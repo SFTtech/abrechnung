@@ -1,6 +1,6 @@
 import { Alert, Button, Container, Link, Typography } from "@mui/material";
 import React, { useState } from "react";
-import { Link as RouterLink, useParams } from "react-router-dom";
+import { Link as RouterLink, useParams } from "react-router";
 import { Loading } from "@abrechnung/components";
 import { MobilePaper } from "@/components/style";
 import { api } from "@/core/api";

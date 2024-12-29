@@ -1,4 +1,4 @@
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 
 export const useQueryVar = <Val extends string | undefined>(
     name: string,

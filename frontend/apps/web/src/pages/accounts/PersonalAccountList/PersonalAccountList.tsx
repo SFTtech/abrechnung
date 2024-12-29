@@ -26,7 +26,7 @@ import {
     useTheme,
 } from "@mui/material";
 import React, { useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import { PersonalAccountListItem } from "./PersonalAccountListItem";
 import { useTranslation } from "react-i18next";

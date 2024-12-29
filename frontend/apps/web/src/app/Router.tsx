@@ -1,5 +1,5 @@
 import React from "react";
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { createBrowserRouter, RouterProvider } from "react-router";
 import { ConfirmEmailChange } from "../pages/auth/ConfirmEmailChange";
 import { ConfirmPasswordRecovery } from "../pages/auth/ConfirmPasswordRecovery";
 import { ConfirmRegistration } from "../pages/auth/ConfirmRegistration";

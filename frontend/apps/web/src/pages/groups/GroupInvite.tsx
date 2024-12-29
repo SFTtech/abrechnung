@@ -6,7 +6,7 @@ import { GroupPreview } from "@abrechnung/api";
 import { Alert, Button, Grid, List, ListItem, ListItemText, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 
 export const GroupInvite: React.FC = () => {
     const { t } = useTranslation();

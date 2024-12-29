@@ -16,7 +16,7 @@ import { PositionValidator, Transaction, TransactionValidator } from "@abrechnun
 import { Add as AddIcon } from "@mui/icons-material";
 import { Button, Divider, Grid } from "@mui/material";
 import * as React from "react";
-import { Navigate, useNavigate, useParams } from "react-router-dom";
+import { Navigate, useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
 import { typeToFlattenedError, z } from "zod";
 import { TransactionActions } from "./TransactionActions";

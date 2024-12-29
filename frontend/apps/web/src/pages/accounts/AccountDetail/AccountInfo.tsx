@@ -21,7 +21,7 @@ import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
 import { Button, Chip, Divider, Grid, IconButton, LinearProgress, TableCell } from "@mui/material";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import { typeToFlattenedError, z } from "zod";
 

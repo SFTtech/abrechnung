@@ -4,7 +4,7 @@ import { useAppSelector } from "@/store";
 import { selectAccountBalances, useSortedAccounts } from "@abrechnung/redux";
 import { Theme, useMediaQuery } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { CategoricalChartFunc } from "recharts/types/chart/generateCategoricalChart";
 import { Group } from "@abrechnung/api";

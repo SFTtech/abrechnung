@@ -12,7 +12,7 @@ import { Alert, Card, Divider, Theme, Typography, useTheme } from "@mui/material
 import { PointMouseHandler, PointTooltipProps, ResponsiveLine, Serie } from "@nivo/line";
 import { DateTime } from "luxon";
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { ClearingAccountIcon, PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 import { useTranslation } from "react-i18next";
 
