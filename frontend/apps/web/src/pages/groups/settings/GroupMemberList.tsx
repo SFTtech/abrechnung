@@ -1,10 +1,5 @@
 import { Group, GroupMember } from "@abrechnung/api";
-import {
-    selectCurrentUserId,
-    selectGroupMembers,
-    updateGroupMemberPrivileges,
-    useCurrentUserPermissions,
-} from "@abrechnung/redux";
+import { selectCurrentUserId, useCurrentUserPermissions } from "@abrechnung/redux";
 import { Edit } from "@mui/icons-material";
 import {
     Button,
@@ -20,14 +15,14 @@ import {
 } from "@mui/material";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
-import { useAppDispatch, useAppSelector } from "@/store";
+import { useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { useForm } from "react-hook-form";
-import { FormCheckbox } from "@abrechnung/components";
+import { FormCheckbox, Loading } from "@abrechnung/components";
 import { useFormatDatetime } from "@/hooks";
+import { useListMembersQuery, useUpdateMemberPermissionsMutation } from "@/core/generated/api";
 
 interface GroupMemberListProps {
     group: Group;
@@ -45,7 +40,7 @@ const EditMemberDialog: React.FC<{
     setMemberToEdit: (member: GroupMember | undefined) => void;
 }> = ({ group, memberToEdit, setMemberToEdit }) => {
     const { t } = useTranslation();
-    const dispatch = useAppDispatch();
+    const [updateMember] = useUpdateMemberPermissionsMutation();
 
     const closeEditMemberModal = () => {
         setMemberToEdit(undefined);
@@ -72,14 +67,14 @@ const EditMemberDialog: React.FC<{
     }, [memberToEdit, resetForm]);
 
     const handleEditMemberSubmit = (values: FormValues) => {
-        dispatch(
-            updateGroupMemberPrivileges({
-                groupId: group.id,
-                memberId: values.userId,
-                permissions: { canWrite: values.canWrite, isOwner: values.isOwner },
-                api,
-            })
-        )
+        updateMember({
+            groupId: group.id,
+            updateGroupMemberPayload: {
+                can_write: values.canWrite,
+                is_owner: values.isOwner,
+                user_id: values.userId,
+            },
+        })
             .unwrap()
             .then(() => {
                 closeEditMemberModal();
@@ -92,7 +87,7 @@ const EditMemberDialog: React.FC<{
 
     return (
         <Dialog open={memberToEdit !== undefined} onClose={closeEditMemberModal}>
-            <DialogTitle>Edit Group Member</DialogTitle>
+            <DialogTitle>{t("groups.memberList.editGroupMember")}</DialogTitle>
             <DialogContent>
                 <form onSubmit={handleSubmit(handleEditMemberSubmit)}>
                     <FormCheckbox name="canWrite" label={t("groups.memberList.canWrite")} control={control} />
@@ -115,7 +110,7 @@ const EditMemberDialog: React.FC<{
 export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
     const { t } = useTranslation();
     const currentUserId = useAppSelector(selectCurrentUserId);
-    const members = useAppSelector((state) => selectGroupMembers(state, group.id));
+    const { data: members } = useListMembersQuery({ groupId: group.id });
     const permissions = useCurrentUserPermissions(group.id);
     const formatDatetime = useFormatDatetime();
 
@@ -124,7 +119,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
     useTitle(t("groups.memberList.tabTitle", { groupName: group?.name }));
 
     const getMemberUsername = (member_id: number) => {
-        const member = members.find((member) => member.user_id === member_id);
+        const member = members?.find((member) => member.user_id === member_id);
         if (member === undefined) {
             return "unknown";
         }
@@ -132,13 +127,16 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
     };
 
     const openEditMemberModal = (userID: number) => {
-        const user = members.find((member) => member.user_id === userID);
+        const user = members?.find((member) => member.user_id === userID);
         // TODO: maybe deal with disappearing users in the list
         setMemberToEdit(user);
     };
 
     if (!permissions) {
         return <Navigate to="/404" />;
+    }
+    if (members == null) {
+        return <Loading />;
     }
 
     return (

@@ -35,6 +35,8 @@ class Group(BaseModel):
     created_by: int
     last_changed: datetime
     archived: bool
+    is_owner: bool
+    can_write: bool
 
 
 class GroupLog(BaseModel):

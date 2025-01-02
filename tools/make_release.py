@@ -1,5 +1,4 @@
 import argparse
-import re
 import subprocess
 import tomllib
 from datetime import datetime

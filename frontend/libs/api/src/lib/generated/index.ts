@@ -56,5 +56,8 @@ export type { VersionResponse } from "./models/VersionResponse";
 export { AccountsService } from "./services/AccountsService";
 export { AuthService } from "./services/AuthService";
 export { CommonService } from "./services/CommonService";
+export { GroupInvitesService } from "./services/GroupInvitesService";
+export { GroupLogsService } from "./services/GroupLogsService";
+export { GroupMembersService } from "./services/GroupMembersService";
 export { GroupsService } from "./services/GroupsService";
 export { TransactionsService } from "./services/TransactionsService";

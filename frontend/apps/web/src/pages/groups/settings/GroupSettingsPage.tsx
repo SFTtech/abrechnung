@@ -1,6 +1,6 @@
 import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
-import { Group, GroupMember } from "@abrechnung/api";
+import { Group } from "@abrechnung/api";
 import { archiveGroup, leaveGroup, unarchiveGroup, useCurrentUserPermissions, useGroup } from "@abrechnung/redux";
 import { useQueryVar } from "@abrechnung/utils";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
@@ -32,7 +32,7 @@ interface Props {
     groupId: number;
 }
 
-const GroupActions: React.FC<{ group: Group; permissions: GroupMember }> = ({ group, permissions }) => {
+const GroupActions: React.FC<{ group: Group }> = ({ group }) => {
     const { t } = useTranslation();
     const [showLeaveModal, setShowLeaveModal] = React.useState(false);
     const [showArchiveModal, setShowArchiveModal] = React.useState(false);
@@ -80,7 +80,7 @@ const GroupActions: React.FC<{ group: Group; permissions: GroupMember }> = ({ gr
                 >
                     {t("groups.settings.leaveGroup")}
                 </Button>
-                {permissions.is_owner && !group.archived && (
+                {group.is_owner && !group.archived && (
                     <Button
                         variant="contained"
                         color="error"
@@ -90,7 +90,7 @@ const GroupActions: React.FC<{ group: Group; permissions: GroupMember }> = ({ gr
                         {t("groups.settings.archiveGroup")}
                     </Button>
                 )}
-                {permissions.is_owner && group.archived && (
+                {group.is_owner && group.archived && (
                     <Button
                         variant="contained"
                         color="error"
@@ -187,7 +187,7 @@ export const GroupSettingsPage: React.FC<Props> = ({ groupId }) => {
                         </Stack>
                         <SettingsForm group={group} />
                         <Box sx={{ mt: 1 }}>
-                            <GroupActions group={group} permissions={permissions} />
+                            <GroupActions group={group} />
                         </Box>
                     </MobilePaper>
                     <MobilePaper>

@@ -1,4 +1,4 @@
-import { selectGroupMembers, selectIsGuestUser, useCurrentUserPermissions } from "@abrechnung/redux";
+import { selectIsGuestUser, useCurrentUserPermissions } from "@abrechnung/redux";
 import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import { Alert, Grid2 as Grid, IconButton, List, ListItem, ListItemText } from "@mui/material";
 import React, { useState } from "react";
@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { Group } from "@abrechnung/api";
 import { useFormatDatetime } from "@/hooks";
-import { useDeleteInviteMutation, useListInvitesQuery } from "@/core/generated/api";
+import { useDeleteInviteMutation, useListInvitesQuery, useListMembersQuery } from "@/core/generated/api";
 
 interface GroupInviteProps {
     group: Group;
@@ -21,7 +21,7 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
     const { t } = useTranslation();
     const [showModal, setShowModal] = useState(false);
     const { data: invites } = useListInvitesQuery({ groupId: group.id });
-    const members = useAppSelector((state) => selectGroupMembers(state, group.id));
+    const { data: members } = useListMembersQuery({ groupId: group.id });
     const permissions = useCurrentUserPermissions(group.id);
     const formatDatetime = useFormatDatetime();
     const [deleteInvite] = useDeleteInviteMutation();
@@ -39,7 +39,7 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
     };
 
     const getMemberUsername = (memberID: number) => {
-        const member = members.find((member) => member.user_id === memberID);
+        const member = members?.find((member) => member.user_id === memberID);
         if (member === undefined) {
             return "unknown";
         }

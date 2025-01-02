@@ -1,11 +1,4 @@
-import {
-    AbrechnungUpdateProvider,
-    fetchGroups,
-    selectAccessToken,
-    selectCurrentUserId,
-    subscribe,
-    unsubscribe,
-} from "@abrechnung/redux";
+import { fetchGroups, selectAccessToken } from "@abrechnung/redux";
 import { CssBaseline, PaletteMode, ThemeProvider, createTheme, useMediaQuery } from "@mui/material";
 import { StyledEngineProvider } from "@mui/material/styles";
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -14,7 +7,7 @@ import * as React from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Loading } from "@abrechnung/components";
-import { api, ws } from "../core/api";
+import { api } from "../core/api";
 import { selectTheme, useAppDispatch, useAppSelector } from "../store";
 import { Router } from "./Router";
 
@@ -26,7 +19,6 @@ export const App = () => {
     const accessToken = useAppSelector(selectAccessToken);
     const themeMode = useAppSelector(selectTheme);
     const isAuthenticated = accessToken !== undefined;
-    const userId = useAppSelector(selectCurrentUserId);
 
     const useDarkMode: PaletteMode = themeMode === "browser" ? (darkModeSystem ? "dark" : "light") : themeMode;
 
@@ -52,20 +44,6 @@ export const App = () => {
         }
     }, [accessToken, dispatch]);
 
-    React.useEffect(() => {
-        if (!isAuthenticated || userId === undefined) {
-            return () => {
-                return;
-            };
-        }
-
-        dispatch(subscribe({ subscription: { type: "group", userId }, websocket: ws }));
-
-        return () => {
-            dispatch(unsubscribe({ subscription: { type: "group", userId }, websocket: ws }));
-        };
-    }, [dispatch, isAuthenticated, userId]);
-
     return (
         <StyledEngineProvider injectFirst>
             <ThemeProvider theme={theme}>
@@ -85,9 +63,7 @@ export const App = () => {
                     {(isAuthenticated && groupStoreStatus !== "initialized") || !apiInitialized ? (
                         <Loading />
                     ) : (
-                        <AbrechnungUpdateProvider api={api} websocket={ws}>
-                            <Router />
-                        </AbrechnungUpdateProvider>
+                        <Router />
                     )}
                 </LocalizationProvider>
             </ThemeProvider>

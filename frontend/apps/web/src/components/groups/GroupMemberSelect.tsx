@@ -1,9 +1,8 @@
-import React from "react";
+import * as React from "react";
 import { Autocomplete, Box, Popper, TextField, TextFieldProps, Typography } from "@mui/material";
 import { DisabledTextField } from "@abrechnung/components";
 import { styled } from "@mui/material/styles";
-import { useAppSelector } from "@/store";
-import { selectGroupMemberIds, selectGroupMemberIdToUsername } from "@abrechnung/redux";
+import { useListMembersQuery } from "@/core/generated/api";
 
 const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
     minWidth: 200,
@@ -27,14 +26,14 @@ export const GroupMemberSelect: React.FC<Props> = ({
     className,
     ...props
 }) => {
-    const memberIds = useAppSelector((state) => selectGroupMemberIds(state, groupId));
-    const memberIDToUsername = useAppSelector((state) => selectGroupMemberIdToUsername(state, groupId));
+    const { data: members } = useListMembersQuery({ groupId });
+    const selected = members?.find((user) => user.user_id === value);
 
     return (
         <Autocomplete
-            options={memberIds}
-            getOptionLabel={(option) => memberIDToUsername[option]}
-            value={value}
+            options={members ?? []}
+            getOptionLabel={(option) => option.username}
+            value={selected ?? null}
             multiple={false}
             disabled={disabled}
             openOnFocus
@@ -42,10 +41,10 @@ export const GroupMemberSelect: React.FC<Props> = ({
             slots={{ popper: StyledAutocompletePopper }}
             className={className}
             onChange={(event, newValue) => onChange(Number(newValue))}
-            renderOption={(props, user_id) => (
+            renderOption={(props, user) => (
                 <Box component="li" {...props}>
                     <Typography variant="body2" component="span" sx={{ ml: 1 }}>
-                        {memberIDToUsername[user_id]}
+                        {user.username}
                     </Typography>
                 </Box>
             )}

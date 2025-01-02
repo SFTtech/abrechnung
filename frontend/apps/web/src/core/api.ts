@@ -1,4 +1,4 @@
-import { AbrechnungWebSocket, Api, IConnectionStatusProvider } from "@abrechnung/api";
+import { Api, IConnectionStatusProvider } from "@abrechnung/api";
 import {
     fetchBaseQuery,
     type BaseQueryFn,
@@ -19,8 +19,6 @@ const connectionStatusProvider: IConnectionStatusProvider = {
 export const api = new Api(connectionStatusProvider, baseURL);
 
 const websocketURL = `${window.location.protocol === "https:" ? "wss" : "ws"}://${siteHost}/api/v1/ws`;
-
-export const ws = new AbrechnungWebSocket(websocketURL, api);
 
 export const prepareAuthHeaders = (headers: Headers) => {
     const token = api.getAccessToken();

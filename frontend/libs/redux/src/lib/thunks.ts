@@ -3,7 +3,6 @@ import { PURGE } from "redux-persist";
 import { Api } from "@abrechnung/api";
 import { fetchAccounts } from "./accounts";
 import { fetchTransactions } from "./transactions";
-import { fetchGroupMembers } from "./groups";
 import { IRootState } from "./types";
 
 export const fetchGroupDependencies = createAsyncThunk<
@@ -16,7 +15,6 @@ export const fetchGroupDependencies = createAsyncThunk<
         await Promise.all([
             dispatch(fetchAccounts({ groupId, api, fetchAnyway })).unwrap(),
             dispatch(fetchTransactions({ groupId, api, fetchAnyway })).unwrap(),
-            dispatch(fetchGroupMembers({ groupId, api })).unwrap(),
         ]);
     },
     {

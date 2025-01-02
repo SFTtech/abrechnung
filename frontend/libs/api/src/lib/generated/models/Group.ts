@@ -13,4 +13,6 @@ export type Group = {
     created_by: number;
     last_changed: string;
     archived: boolean;
+    is_owner: boolean;
+    can_write: boolean;
 };

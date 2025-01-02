@@ -1,4 +1,4 @@
-import { Group, GroupInvite, GroupLogEntry, GroupMember, GroupPreview } from "@abrechnung/types";
+import { Group, GroupLogEntry, GroupMember, GroupPreview } from "@abrechnung/types";
 
 export interface BackendGroup {
     id: number;
@@ -71,28 +71,6 @@ export const backendMemberToMember = (member: BackendGroupMember): GroupMember =
         description: member.description,
         joinedAt: member.joined_at,
         invitedBy: member.invited_by,
-    };
-};
-
-export interface BackendGroupInvite {
-    id: number;
-    created_by: number;
-    single_use: boolean;
-    valid_until: string;
-    token: string;
-    description: string;
-    join_as_editor: boolean;
-}
-
-export const backendInviteToInvite = (invite: BackendGroupInvite): GroupInvite => {
-    return {
-        id: invite.id,
-        createdBy: invite.created_by,
-        singleUse: invite.single_use,
-        validUntil: invite.valid_until,
-        description: invite.description,
-        token: invite.token,
-        joinAsEditor: invite.join_as_editor,
     };
 };
 

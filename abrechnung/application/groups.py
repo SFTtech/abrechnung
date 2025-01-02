@@ -195,7 +195,8 @@ class GroupService(Service[Config]):
     async def list_groups(self, *, conn: Connection, user: User) -> list[Group]:
         return await conn.fetch_many(
             Group,
-            "select grp.* " "from grp " "join group_membership gm on grp.id = gm.group_id where gm.user_id = $1",
+            "select g.*, gm.is_owner, gm.can_write from grp as g join group_membership gm on g.id = gm.group_id "
+            "where gm.user_id = $1",
             user.id,
         )
 
@@ -204,8 +205,10 @@ class GroupService(Service[Config]):
     async def get_group(self, *, conn: Connection, user: User, group_id: int) -> Group:
         return await conn.fetch_one(
             Group,
-            "select * " "from grp " "where grp.id = $1",
+            "select g.*, gm.is_owner, gm.can_write from grp as g join group_membership gm on g.id = gm.group_id "
+            "where g.id = $1 and gm.user_id = $2",
             group_id,
+                user.id
         )
 
     @with_db_transaction

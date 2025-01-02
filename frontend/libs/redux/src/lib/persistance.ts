@@ -4,7 +4,6 @@ import { MigrationManifest, createMigrate, persistReducer, type Storage } from "
 import { accountMigrations, accountReducer, accountSliceVersion } from "./accounts";
 import { authMigrations, authReducer, authSliceVersion } from "./auth";
 import { groupMigrations, groupReducer, groupSliceVersion } from "./groups";
-import { subscriptionReducer } from "./subscriptions";
 import { transactionMigrations, transactionReducer, transactionSliceVersion } from "./transactions";
 
 const getPersistConfig = (key: string, version: number, storage: Storage, migrations: MigrationManifest) => {
@@ -41,7 +40,6 @@ export const getAbrechnungReducer = <S, A extends Action = UnknownAction>(
             getPersistConfig("auth", authSliceVersion, persistStorage, authMigrations as any),
             authReducer
         ),
-        subscriptions: subscriptionReducer,
         ...additionalReducers,
     });
 };

@@ -91,6 +91,8 @@ export namespace components.schemas {
         created_by: z.number().int(),
         last_changed: z.string(),
         archived: z.boolean(),
+        is_owner: z.boolean(),
+        can_write: z.boolean(),
     });
     /** GroupInvite */
     export const GroupInvite = z.object({
