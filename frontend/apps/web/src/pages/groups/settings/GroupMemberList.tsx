@@ -16,7 +16,6 @@ import {
     IconButton,
     List,
     ListItem,
-    ListItemSecondaryAction,
     ListItemText,
 } from "@mui/material";
 import { DateTime } from "luxon";
@@ -150,7 +149,16 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
                     </ListItem>
                 ) : (
                     members.map((member, index) => (
-                        <ListItem key={index}>
+                        <ListItem
+                            key={index}
+                            secondaryAction={
+                                (permissions.is_owner || permissions.can_write) && (
+                                    <IconButton color="primary" onClick={() => openEditMemberModal(member.user_id)}>
+                                        <Edit />
+                                    </IconButton>
+                                )
+                            }
+                        >
                             <ListItemText
                                 primary={
                                     <>
@@ -204,13 +212,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
                                     </>
                                 }
                             />
-                            {(permissions.is_owner || permissions.can_write) && (
-                                <ListItemSecondaryAction>
-                                    <IconButton color="primary" onClick={() => openEditMemberModal(member.user_id)}>
-                                        <Edit />
-                                    </IconButton>
-                                </ListItemSecondaryAction>
-                            )}
                         </ListItem>
                     ))
                 )}

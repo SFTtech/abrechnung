@@ -1,3 +1,10 @@
+import { GroupArchivedDisclaimer } from "@/components";
+import { TagSelector } from "@/components/TagSelector";
+import { MobilePaper } from "@/components/style";
+import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
+import { useTitle } from "@/core/utils";
+import { useIsSmallScreen } from "@/hooks";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { TransactionSortMode, transactionCsvDump } from "@abrechnung/core";
 import {
     createTransaction,
@@ -7,7 +14,8 @@ import {
     useIsGroupWritable,
     useSortedTransactions,
 } from "@abrechnung/redux";
-import { Add, Clear } from "@mui/icons-material";
+import { Transaction } from "@abrechnung/types";
+import { Add, Clear, SaveAlt } from "@mui/icons-material";
 import SearchIcon from "@mui/icons-material/Search";
 import {
     Alert,
@@ -26,23 +34,12 @@ import {
     SpeedDialAction,
     SpeedDialIcon,
     Stack,
-    Theme,
     Tooltip,
-    useMediaQuery,
 } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
-import { SaveAlt } from "@mui/icons-material";
 import React, { useState } from "react";
-import { Navigate, useNavigate } from "react-router";
-import { TagSelector } from "@/components/TagSelector";
-import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
-import { MobilePaper } from "@/components/style";
-import { useTitle } from "@/core/utils";
-import { useAppDispatch, useAppSelector } from "@/store";
-import { TransactionListItem } from "./TransactionListItem";
 import { useTranslation } from "react-i18next";
-import { Transaction } from "@abrechnung/types";
-import { GroupArchivedDisclaimer } from "@/components";
+import { Navigate, useNavigate } from "react-router";
+import { TransactionListItem } from "./TransactionListItem";
 
 interface Props {
     groupId: number;
@@ -72,10 +69,130 @@ const useDownloadCsv = (groupId: number, transactions: Transaction[]) => {
     }, [accounts, balanceEffects, transactions]);
 };
 
+type TransactionListActionsProps = {
+    groupId: number;
+    searchValue: string;
+    setSearchValue: (val: string) => void;
+    sortMode: TransactionSortMode;
+    setSortMode: (val: TransactionSortMode) => void;
+    tagFilter: string[];
+    setTagFilter: (val: string[]) => void;
+    handleClickCreateTransfer: () => void;
+    handleClickCreatePurchase: () => void;
+    handleClickDownloadCsv: () => void;
+};
+
+const TransactionListActions: React.FC<TransactionListActionsProps> = ({
+    groupId,
+    searchValue,
+    setSearchValue,
+    sortMode,
+    setSortMode,
+    tagFilter,
+    setTagFilter,
+    handleClickCreateTransfer,
+    handleClickCreatePurchase,
+    handleClickDownloadCsv,
+}) => {
+    const { t } = useTranslation();
+    const isSmallScreen = useIsSmallScreen();
+
+    const handleChangeTagFilter = (newTags: string[]) => setTagFilter(newTags);
+
+    const isGroupWritable = useIsGroupWritable(groupId);
+
+    return (
+        <Stack
+            direction={{ sm: "column", md: "row" }}
+            alignItems={{ md: "flex-end" }}
+            justifyContent="space-between"
+            spacing={1}
+        >
+            <Stack direction={{ sm: "column", md: "row" }} justifyContent="space-between" spacing={1}>
+                <Input
+                    value={searchValue}
+                    onChange={(e) => setSearchValue(e.target.value)}
+                    placeholder={t("common.search")}
+                    inputProps={{
+                        "aria-label": "search",
+                    }}
+                    startAdornment={
+                        <InputAdornment position="start">
+                            <SearchIcon />
+                        </InputAdornment>
+                    }
+                    endAdornment={
+                        <InputAdornment position="end">
+                            <IconButton
+                                aria-label="clear search input"
+                                sx={{ padding: 0, margin: 0 }}
+                                onClick={() => setSearchValue("")}
+                                edge="end"
+                            >
+                                <Clear />
+                            </IconButton>
+                        </InputAdornment>
+                    }
+                />
+                <FormControl variant="standard" sx={{ minWidth: 120 }}>
+                    <InputLabel id="select-sort-by-label">{t("common.sortBy")}</InputLabel>
+                    <Select
+                        labelId="select-sort-by-label"
+                        id="select-sort-by"
+                        label={t("common.sortBy")}
+                        onChange={(evt) => setSortMode(evt.target.value as TransactionSortMode)}
+                        value={sortMode}
+                    >
+                        <MenuItem value="last_changed">{t("common.lastChanged")}</MenuItem>
+                        <MenuItem value="description">{t("common.description")}</MenuItem>
+                        <MenuItem value="value">{t("common.value")}</MenuItem>
+                        <MenuItem value="billed_at">{t("common.date")}</MenuItem>
+                    </Select>
+                </FormControl>
+                <FormControl variant="standard" sx={{ minWidth: 120 }}>
+                    <TagSelector
+                        label={t("common.filterByTags")}
+                        groupId={groupId}
+                        editable={true}
+                        value={tagFilter}
+                        onChange={handleChangeTagFilter}
+                        addCreateNewOption={false}
+                        chipProps={{ size: "small" }}
+                    />
+                </FormControl>
+            </Stack>
+            {!isSmallScreen && (
+                <Stack direction="row">
+                    <Tooltip title={t("common.exportAsCsv")}>
+                        <IconButton size="small" color="primary" onClick={handleClickDownloadCsv}>
+                            <SaveAlt />
+                        </IconButton>
+                    </Tooltip>
+                    {isGroupWritable && (
+                        <>
+                            <div style={{ padding: "8px" }}>
+                                <Add color="primary" />
+                            </div>
+                            <Tooltip title={t("transactions.createPurchase")}>
+                                <IconButton color="primary" onClick={handleClickCreatePurchase}>
+                                    <PurchaseIcon />
+                                </IconButton>
+                            </Tooltip>
+                            <Tooltip title={t("transactions.createTransfer")}>
+                                <IconButton color="primary" onClick={handleClickCreateTransfer}>
+                                    <TransferIcon />
+                                </IconButton>
+                            </Tooltip>
+                        </>
+                    )}
+                </Stack>
+            )}
+        </Stack>
+    );
+};
+
 export const TransactionList: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
-    const theme: Theme = useTheme();
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
 
     const navigate = useNavigate();
     const dispatch = useAppDispatch();
@@ -105,6 +222,8 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
 
     useTitle(t("transactions.list.tabTitle", "", { groupName: group?.name }));
 
+    const downloadCsv = useDownloadCsv(groupId, transactions);
+
     const onCreatePurchase = () => {
         dispatch(createTransaction({ groupId, type: "purchase" }))
             .unwrap()
@@ -120,10 +239,6 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
             });
     };
 
-    const handleChangeTagFilter = (newTags: string[]) => setTagFilter(newTags);
-
-    const downloadCsv = useDownloadCsv(groupId, transactions);
-
     if (!group) {
         return <Navigate to="/404" />;
     }
@@ -133,93 +248,18 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
             <MobilePaper>
                 <Stack spacing={1}>
                     <GroupArchivedDisclaimer group={group} />
-                    <Box
-                        sx={{
-                            display: "flex",
-                            flexDirection: { xs: "column", sm: "column", md: "row", lg: "row" },
-                            alignItems: { md: "flex-end" },
-                            pl: "16px",
-                            justifyContent: "space-between",
-                        }}
-                    >
-                        <Box sx={{ display: "flex-item" }}>
-                            <Box sx={{ minWidth: "56px", pt: "16px" }}>
-                                <SearchIcon sx={{ color: "action.active" }} />
-                            </Box>
-                            <Input
-                                value={searchValue}
-                                onChange={(e) => setSearchValue(e.target.value)}
-                                placeholder={t("common.search")}
-                                inputProps={{
-                                    "aria-label": "search",
-                                }}
-                                sx={{ pt: "16px" }}
-                                endAdornment={
-                                    <InputAdornment position="end">
-                                        <IconButton
-                                            aria-label="clear search input"
-                                            onClick={() => setSearchValue("")}
-                                            edge="end"
-                                        >
-                                            <Clear />
-                                        </IconButton>
-                                    </InputAdornment>
-                                }
-                            />
-                            <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
-                                <InputLabel id="select-sort-by-label">{t("common.sortBy")}</InputLabel>
-                                <Select
-                                    labelId="select-sort-by-label"
-                                    id="select-sort-by"
-                                    label={t("common.sortBy")}
-                                    onChange={(evt) => setSortMode(evt.target.value as TransactionSortMode)}
-                                    value={sortMode}
-                                >
-                                    <MenuItem value="last_changed">{t("common.lastChanged")}</MenuItem>
-                                    <MenuItem value="description">{t("common.description")}</MenuItem>
-                                    <MenuItem value="value">{t("common.value")}</MenuItem>
-                                    <MenuItem value="billed_at">{t("common.date")}</MenuItem>
-                                </Select>
-                            </FormControl>
-                            <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
-                                <TagSelector
-                                    label={t("common.filterByTags")}
-                                    groupId={groupId}
-                                    editable={true}
-                                    value={tagFilter}
-                                    onChange={handleChangeTagFilter}
-                                    addCreateNewOption={false}
-                                    chipProps={{ size: "small" }}
-                                />
-                            </FormControl>
-                        </Box>
-                        {!isSmallScreen && (
-                            <Box sx={{ display: "flex-item" }}>
-                                <Tooltip title={t("common.exportAsCsv")}>
-                                    <IconButton size="small" color="primary" onClick={downloadCsv}>
-                                        <SaveAlt />
-                                    </IconButton>
-                                </Tooltip>
-                                {isGroupWritable && (
-                                    <>
-                                        <div style={{ padding: "8px" }}>
-                                            <Add color="primary" />
-                                        </div>
-                                        <Tooltip title={t("transactions.createPurchase")}>
-                                            <IconButton color="primary" onClick={onCreatePurchase}>
-                                                <PurchaseIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                        <Tooltip title={t("transactions.createTransfer")}>
-                                            <IconButton color="primary" onClick={onCreateTransfer}>
-                                                <TransferIcon />
-                                            </IconButton>
-                                        </Tooltip>
-                                    </>
-                                )}
-                            </Box>
-                        )}
-                    </Box>
+                    <TransactionListActions
+                        groupId={group.id}
+                        sortMode={sortMode}
+                        setSortMode={setSortMode}
+                        searchValue={searchValue}
+                        tagFilter={tagFilter}
+                        setTagFilter={setTagFilter}
+                        setSearchValue={setSearchValue}
+                        handleClickCreatePurchase={onCreatePurchase}
+                        handleClickCreateTransfer={onCreateTransfer}
+                        handleClickDownloadCsv={downloadCsv}
+                    />
                     <Divider />
                     <List>
                         {paginatedTransactions.length === 0 ? (

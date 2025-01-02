@@ -82,7 +82,9 @@ export const PositionTableRow: React.FC<PositionTableRowProps> = ({
                     error={validationError && !!validationError.fieldErrors["price"]}
                     helperText={validationError && validationError.fieldErrors["price"]}
                     onChange={(value) => updatePosition(position, position.name, value, position.communist_shares)}
-                    InputProps={{ endAdornment: <InputAdornment position="end">{currencySymbol}</InputAdornment> }}
+                    slotProps={{
+                        input: { endAdornment: <InputAdornment position="end">{currencySymbol}</InputAdornment> },
+                    }}
                 />
             </TableCell>
             {shownAccounts.map((account) => (
@@ -93,7 +95,7 @@ export const PositionTableRow: React.FC<PositionTableRowProps> = ({
                             value={(position.usages[account.id] ?? 0) !== 0 ? position.usages[account.id] : 0}
                             error={validationError && !!validationError.fieldErrors["usages"]}
                             onChange={(value) => updatePositionUsage(position, account.id, value)}
-                            inputProps={{ tabIndex: -1 }}
+                            slotProps={{ input: { tabIndex: -1 } }}
                         />
                     ) : (
                         <Checkbox
@@ -116,7 +118,7 @@ export const PositionTableRow: React.FC<PositionTableRowProps> = ({
                         sx={{ maxWidth: 50 }}
                         onChange={(value) => updatePosition(position, position.name, position.price, value)}
                         error={validationError && !!validationError.fieldErrors["communist_shares"]}
-                        inputProps={{ tabIndex: -1 }}
+                        slotProps={{ input: { tabIndex: -1 } }}
                     />
                 ) : (
                     <Checkbox

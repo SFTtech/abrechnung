@@ -46,7 +46,8 @@ export const NumericInput: React.FC<NumericInputProps> = ({ value, isCurrency, o
             onBlur={onInternalBlur}
             onKeyUp={onKeyUp}
             variant="standard"
-            inputProps={{ inputMode: "decimal" }}
+            slotProps={{ input: { inputMode: "decimal" } }}
+            onFocus={(event) => event.target.select()}
             {...props}
         />
     );

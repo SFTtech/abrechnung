@@ -174,7 +174,7 @@ export const GroupSettingsPage: React.FC<Props> = ({ groupId }) => {
                     <Tab label={t("groups.invites.header")} value="invites" />
                 </TabList>
             </Box>
-            <TabPanel value="settings">
+            <TabPanel value="settings" sx={{ padding: 0 }}>
                 <Stack spacing={2}>
                     <MobilePaper>
                         <Stack spacing={1}>
@@ -195,7 +195,7 @@ export const GroupSettingsPage: React.FC<Props> = ({ groupId }) => {
                     </MobilePaper>
                 </Stack>
             </TabPanel>
-            <TabPanel value="invites">
+            <TabPanel value="invites" sx={{ padding: 0 }}>
                 <MobilePaper>
                     <GroupInvites group={group} />
                 </MobilePaper>

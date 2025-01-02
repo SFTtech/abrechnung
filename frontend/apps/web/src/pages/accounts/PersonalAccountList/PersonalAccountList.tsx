@@ -1,9 +1,12 @@
+import { GroupArchivedDisclaimer } from "@/components";
 import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
 import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
+import { useIsSmallScreen } from "@/hooks";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { AccountSortMode } from "@abrechnung/core";
 import { createAccount, selectCurrentUserId, useGroup, useIsGroupWritable, useSortedAccounts } from "@abrechnung/redux";
+import { Account } from "@abrechnung/types";
 import { Add as AddIcon, Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import {
     Alert,
@@ -20,18 +23,13 @@ import {
     Pagination,
     Select,
     Stack,
-    Theme,
     Tooltip,
-    useMediaQuery,
-    useTheme,
 } from "@mui/material";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import { PersonalAccountListItem } from "./PersonalAccountListItem";
-import { useTranslation } from "react-i18next";
-import { Account } from "@abrechnung/types";
-import { GroupArchivedDisclaimer } from "@/components";
 
 interface Props {
     groupId: number;
@@ -44,8 +42,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const group = useGroup(groupId);
-    const theme: Theme = useTheme();
-    const isSmallScreen = useMediaQuery(theme.breakpoints.down("md"));
+    const isSmallScreen = useIsSmallScreen();
 
     const [searchValue, setSearchValue] = useState("");
     const [sortMode, setSortMode] = useState<AccountSortMode>("name");
@@ -93,19 +90,12 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
             <MobilePaper>
                 <Stack spacing={1}>
                     <GroupArchivedDisclaimer group={group} />
-                    <Box
-                        sx={{
-                            display: "flex",
-                            flexDirection: { xs: "column", sm: "column", md: "row", lg: "row" },
-                            alignItems: { md: "flex-end" },
-                            pl: "16px",
-                            justifyContent: "space-between",
-                        }}
+                    <Stack
+                        direction={{ sm: "column", md: "row" }}
+                        alignItems={{ md: "flex-end" }}
+                        justifyContent="space-between"
                     >
-                        <Box sx={{ display: "flex-item" }}>
-                            <Box sx={{ minWidth: "56px", pt: "16px" }}>
-                                <SearchIcon sx={{ color: "action.active" }} />
-                            </Box>
+                        <Stack direction={{ sm: "column", md: "row" }} justifyContent="space-between" spacing={1}>
                             <Input
                                 value={searchValue}
                                 onChange={(e) => setSearchValue(e.target.value)}
@@ -113,11 +103,16 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                                 inputProps={{
                                     "aria-label": "search",
                                 }}
-                                sx={{ pt: "16px" }}
+                                startAdornment={
+                                    <InputAdornment position="start">
+                                        <SearchIcon />
+                                    </InputAdornment>
+                                }
                                 endAdornment={
                                     <InputAdornment position="end">
                                         <IconButton
                                             aria-label="clear search input"
+                                            sx={{ padding: 0, margin: 0 }}
                                             onClick={() => setSearchValue("")}
                                             edge="end"
                                         >
@@ -126,7 +121,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                                     </InputAdornment>
                                 }
                             />
-                            <FormControl variant="standard" sx={{ minWidth: 120, ml: 3 }}>
+                            <FormControl variant="standard" sx={{ minWidth: 120 }}>
                                 <InputLabel id="select-sort-by-label">{t("common.sortBy")}</InputLabel>
                                 <Select
                                     labelId="select-sort-by-label"
@@ -140,7 +135,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                                     <MenuItem value="last_changed">{t("common.lastChanged")}</MenuItem>
                                 </Select>
                             </FormControl>
-                        </Box>
+                        </Stack>
                         {!isSmallScreen && isGroupWritable && (
                             <Box sx={{ display: "flex-item" }}>
                                 <Tooltip title="Create Account">
@@ -150,7 +145,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                                 </Tooltip>
                             </Box>
                         )}
-                    </Box>
+                    </Stack>
                     <Divider />
                     <List>
                         {paginatedAccounts.length === 0 ? (

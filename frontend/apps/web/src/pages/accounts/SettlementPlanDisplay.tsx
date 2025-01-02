@@ -7,7 +7,7 @@ import {
     selectSettlementPlan,
     useGroupCurrencySymbol,
 } from "@abrechnung/redux";
-import { Button, List, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
+import { Button, List, ListItem, ListItemText, Typography } from "@mui/material";
 import * as React from "react";
 import { Navigate, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
@@ -54,7 +54,14 @@ export const SettlementPlanDisplay: React.FC<Props> = ({ groupId }) => {
             <Typography variant="h5">{t("accounts.settlement.title")}</Typography>
             <List>
                 {settlementPlan.map((planItem) => (
-                    <ListItem key={`${planItem.creditorId}-${planItem.debitorId}`}>
+                    <ListItem
+                        key={`${planItem.creditorId}-${planItem.debitorId}`}
+                        secondaryAction={
+                            <Button onClick={() => onSettleClicked(planItem)}>
+                                {t("accounts.settlement.settleButton")}
+                            </Button>
+                        }
+                    >
                         <ListItemText
                             primary={
                                 <span>
@@ -66,11 +73,6 @@ export const SettlementPlanDisplay: React.FC<Props> = ({ groupId }) => {
                                 </span>
                             }
                         />
-                        <ListItemSecondaryAction>
-                            <Button onClick={() => onSettleClicked(planItem)}>
-                                {t("accounts.settlement.settleButton")}
-                            </Button>
-                        </ListItemSecondaryAction>
                     </ListItem>
                 ))}
             </List>
