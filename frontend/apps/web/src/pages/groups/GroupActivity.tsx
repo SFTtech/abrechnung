@@ -8,7 +8,6 @@ import {
     useGroup,
 } from "@abrechnung/redux";
 import { List, ListItem, ListItemText, Typography } from "@mui/material";
-import { DateTime } from "luxon";
 import React, { useEffect } from "react";
 import { Loading } from "@abrechnung/components";
 import { MobilePaper } from "@/components/style";
@@ -16,6 +15,7 @@ import { api, ws } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
+import { useFormatDatetime } from "@/hooks";
 
 interface Props {
     groupId: number;
@@ -25,6 +25,7 @@ export const GroupActivity: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const group = useGroup(groupId);
+    const formatDatetime = useFormatDatetime();
     const members = useAppSelector((state) => selectGroupMembers(state, groupId));
     const logs = useAppSelector((state) => selectGroupLogs(state, groupId));
     const logLoadingStatus = useAppSelector((state) => selectGroupLogStatus(state, groupId));
@@ -60,11 +61,9 @@ export const GroupActivity: React.FC<Props> = ({ groupId }) => {
                         <ListItem key={logEntry.id}>
                             <ListItemText
                                 primary={`${logEntry.type} - ${logEntry.message}`}
-                                secondary={t("groups.log.messageInfo", "", {
+                                secondary={t("groups.log.messageInfo", {
                                     username: getMemberUsername(logEntry.user_id),
-                                    datetime: DateTime.fromISO(logEntry.logged_at).toLocaleString(
-                                        DateTime.DATETIME_FULL
-                                    ),
+                                    datetime: formatDatetime(logEntry.logged_at, "full"),
                                 })}
                             />
                         </ListItem>

@@ -61,7 +61,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
         (currentPage + 1) * MAX_ITEMS_PER_PAGE
     );
 
-    useTitle(t("events.list.tabTitle", "", { groupName: group?.name }));
+    useTitle(t("events.list.tabTitle", { groupName: group?.name }));
 
     const [accountDelete, setAccountDelete] = useState<Account | null>(null);
     const showDeleteModal = accountDelete !== null;

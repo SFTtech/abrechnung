@@ -39,6 +39,7 @@
         "send": "Send",
         "currency": "Currency",
         "addNewTag": "Add new Tag",
+        "tagNameRequiredError": "please input a tag name",
         "exportAsCsv": "Export as CSV",
         "noneSoFar": "None so far"
     },
@@ -68,6 +69,13 @@
     },
     "groups": {
         "addGroup": "Add Group",
+        "create": {
+            "addUserAccountOnJoinDescription": "Automatically add accounts for newly joined group members"
+        },
+        "delete": {
+            "title": "Delete Group",
+            "description": "Are you sure you want to delete group {{groupName}}"
+        },
         "archivedDisclaimer": "This group is archived and therefore read-only.",
         "list": {
             "tabTitle": "Abrechnung - Groups",
@@ -118,7 +126,11 @@
             "tabTitle": "{{groupName}} - Invite Links",
             "header": "Active Invite Links",
             "guestUserDisclaimer": "You are a guest user on this Abrechnung and therefore not permitted to create group invites.",
-            "tokenHidden": "token hidden, was created by another member"
+            "tokenHidden": "token hidden, was created by another member",
+            "singleUse": "Single use",
+            "validUntil": "Valid until",
+            "newMembersJoinAsEditors": "New members join as editors",
+            "createdSuccessfully": "Successfully created invite token"
         }
     },
     "images": {
@@ -137,6 +149,7 @@
         "createPurchase": "Create Purchase",
         "createPurchaseForAccount": "Create purchase with {{accountName}} as participant",
         "createTransfer": "Create Transfer",
+        "createTransferForAccount": "Create transfer to {{accountName}}",
         "noTransactions": "No Transactions",
         "purchase": "Purchase",
         "transfer": "Transfer",
@@ -205,6 +218,7 @@
             "pageTitle": "Settings",
             "info": "These settings are stored locally on your device. Clearing your Browser&apos;s local storage will reset them.",
             "theme": "Theme",
+            "darkMode": "Dark Mode",
             "themeSystemDefault": "System Default",
             "themeDarkMode": "Dark Mode",
             "themeLightMode": "Light Mode",
@@ -227,7 +241,9 @@
             "tabTitle": "Abrechnung - Sessions",
             "header": "Login Sessions",
             "confirmDeleteSession": "Delete Session?",
-            "areYouSureToDelete": "Are you sure you want to delete session \"{{sessionName}}\"?"
+            "areYouSureToDelete": "Are you sure you want to delete session \"{{sessionName}}\"?",
+            "validUntil": "Valid until {{datetime}}, ",
+            "lastSeenOn": "Last seen on {{datetime}}"
         }
     },
     "auth": {
@@ -276,6 +292,8 @@
         "en": "English",
         "de": "German",
         "es": "Spanish",
-        "ta": "Tamil"
+        "ta": "Tamil",
+        "uk": "Ukrainian",
+        "bg": "Bulgarian"
     }
 }

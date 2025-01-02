@@ -3,7 +3,7 @@ import { Link as RouterLink, useNavigate } from "react-router";
 import { api } from "@/core/api";
 import { toast } from "react-toastify";
 import { useQuery, useTitle } from "@/core/utils";
-import { Avatar, Box, Button, Container, CssBaseline, Grid, Link, Typography } from "@mui/material";
+import { Avatar, Box, Button, Container, CssBaseline, Grid2 as Grid, Link, Typography } from "@mui/material";
 import { LockOutlined } from "@mui/icons-material";
 import { z } from "zod";
 import { useAppDispatch, useAppSelector } from "@/store";
@@ -47,7 +47,7 @@ export const Login: React.FC = () => {
     });
 
     const onSubmit = (values: FormValues) => {
-        const sessionName = navigator.appVersion + " " + navigator.userAgent + " " + navigator.appName;
+        const sessionName = navigator.userAgent;
         dispatch(login({ username: values.username, password: values.password, sessionName, api }))
             .unwrap()
             .then((res) => {
@@ -61,7 +61,7 @@ export const Login: React.FC = () => {
     return (
         <Container component="main" maxWidth="xs">
             <CssBaseline />
-            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <Box display="flex" flexDirection="column" alignItems="center">
                 <Avatar sx={{ margin: 1, backgroundColor: "primary.main" }}>
                     <LockOutlined />
                 </Avatar>
@@ -96,15 +96,15 @@ export const Login: React.FC = () => {
                     <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 1 }}>
                         {t("auth.login.confirmButton")}
                     </Button>
-                    <Grid container={true} sx={{ justifyContent: "flex-end" }}>
-                        <Grid item>
+                    <Grid container justifyContent="flex-end">
+                        <Grid>
                             <Link to={`/register${queryArgsForward}`} component={RouterLink} variant="body2">
                                 {t("auth.login.noAccountRegister")}
                             </Link>
                         </Grid>
                     </Grid>
-                    <Grid container={true} sx={{ justifyContent: "flex-end" }}>
-                        <Grid item>
+                    <Grid container justifyContent="flex-end">
+                        <Grid>
                             <Link to="/recover-password" component={RouterLink} variant="body2">
                                 {t("auth.login.forgotPassword")}
                             </Link>

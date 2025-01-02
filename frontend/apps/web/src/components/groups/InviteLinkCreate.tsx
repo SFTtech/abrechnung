@@ -9,6 +9,7 @@ import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { FormCheckbox, FormTextField } from "@abrechnung/components";
+import { useTranslation } from "react-i18next";
 
 interface Props {
     group: Group;
@@ -32,6 +33,7 @@ const nowPlusOneHour = () => {
 };
 
 export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
+    const { t } = useTranslation();
     const { control, handleSubmit } = useForm<FormValues>({
         resolver: zodResolver(validationSchema),
         defaultValues: {
@@ -53,8 +55,8 @@ export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
                     join_as_editor: values.joinAsEditor,
                 },
             })
-            .then((result) => {
-                toast.success("Successfully created invite token");
+            .then(() => {
+                toast.success(t("groups.invites.createdSuccessfully"));
                 onClose({}, "completed");
             })
             .catch((err) => {
@@ -76,7 +78,7 @@ export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
                             autoFocus
                             variant="standard"
                             name="description"
-                            label="Description"
+                            label={t("common.description")}
                             control={control}
                         />
                         <Controller
@@ -85,7 +87,7 @@ export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
                             render={({ field: { onChange, value } }) => (
                                 <DateTimePicker
                                     format="yyyy-MM-dd HH:mm"
-                                    label="Valid until"
+                                    label={t("groups.invites.validUntil")}
                                     value={DateTime.fromISO(value)}
                                     onChange={(val) => {
                                         if (val != null && val.isValid) {
@@ -102,15 +104,19 @@ export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
                                 />
                             )}
                         />
-                        <FormCheckbox label="Single Use" control={control} name="singleUse" />
-                        <FormCheckbox label="New members join as editors" control={control} name="joinAsEditor" />
+                        <FormCheckbox label={t("groups.invites.singleUse")} control={control} name="singleUse" />
+                        <FormCheckbox
+                            label={t("groups.invites.newMembersJoinAsEditors")}
+                            control={control}
+                            name="joinAsEditor"
+                        />
 
                         <DialogActions>
                             <Button type="submit" color="primary">
-                                Save
+                                {t("common.save")}
                             </Button>
                             <Button color="error" onClick={() => onClose({}, "closeButton")}>
-                                Cancel
+                                {t("common.cancel")}
                             </Button>
                         </DialogActions>
                     </Stack>

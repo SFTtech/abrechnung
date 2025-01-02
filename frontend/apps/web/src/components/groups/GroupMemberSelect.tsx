@@ -39,7 +39,7 @@ export const GroupMemberSelect: React.FC<Props> = ({
             disabled={disabled}
             openOnFocus
             fullWidth
-            PopperComponent={StyledAutocompletePopper}
+            slots={{ popper: StyledAutocompletePopper }}
             className={className}
             onChange={(event, newValue) => onChange(Number(newValue))}
             renderOption={(props, user_id) => (

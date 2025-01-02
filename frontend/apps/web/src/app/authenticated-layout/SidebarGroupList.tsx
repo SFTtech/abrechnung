@@ -3,7 +3,7 @@ import { ListItemLink } from "@/components/style";
 import { useAppSelector } from "@/store";
 import { selectGroups, selectIsGuestUser } from "@abrechnung/redux";
 import { Add } from "@mui/icons-material";
-import { Grid, IconButton, List, ListItem, ListItemText, Tooltip } from "@mui/material";
+import { IconButton, List, ListItem, ListItemText, Tooltip } from "@mui/material";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -31,28 +31,24 @@ export const SidebarGroupList: React.FC<Props> = ({ activeGroupId }) => {
         <>
             <List sx={{ pt: 0 }}>
                 <ListItemLink to="/" sx={{ pt: 0, pb: 0 }}>
-                    <ListItemText secondary="Groups" />
+                    <ListItemText secondary={t("groups.list.header")} />
                 </ListItemLink>
-                <div>
-                    {groups.map((it) => (
-                        <ListItemLink
-                            key={it.id}
-                            to={`/groups/${it.id}`}
-                            selected={activeGroupId != null && activeGroupId === it.id}
-                        >
-                            <ListItemText primary={it.name} />
-                        </ListItemLink>
-                    ))}
-                </div>
+                {groups.map((it) => (
+                    <ListItemLink
+                        key={it.id}
+                        to={`/groups/${it.id}`}
+                        selected={activeGroupId != null && activeGroupId === it.id}
+                    >
+                        <ListItemText primary={it.name} />
+                    </ListItemLink>
+                ))}
                 {!isGuest && (
-                    <ListItem sx={{ padding: 0 }}>
-                        <Grid container justifyContent="center">
-                            <Tooltip title={t("groups.addGroup")}>
-                                <IconButton size="small" onClick={openGroupCreateModal}>
-                                    <Add />
-                                </IconButton>
-                            </Tooltip>
-                        </Grid>
+                    <ListItem sx={{ justifyContent: "center" }}>
+                        <Tooltip title={t("groups.addGroup")}>
+                            <IconButton size="small" onClick={openGroupCreateModal}>
+                                <Add />
+                            </IconButton>
+                        </Tooltip>
                     </ListItem>
                 )}
             </List>

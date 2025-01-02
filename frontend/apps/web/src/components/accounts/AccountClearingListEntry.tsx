@@ -1,13 +1,12 @@
 import { selectAccountBalances, useGroupCurrencySymbol } from "@abrechnung/redux";
 import { Box, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
-import { DateTime } from "luxon";
 import React from "react";
 import { balanceColor } from "@/core/utils";
 import { useAppSelector } from "@/store";
 import { getAccountLink } from "@/utils";
 import { ListItemLink, ClearingAccountIcon } from "../style";
 import { useTranslation } from "react-i18next";
-import { useFormatCurrency } from "@/hooks";
+import { useFormatCurrency, useFormatDatetime } from "@/hooks";
 import { ClearingAccount } from "@abrechnung/types";
 
 interface Props {
@@ -19,6 +18,7 @@ interface Props {
 export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, clearingAccount }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
+    const formatDatetime = useFormatDatetime();
     const balances = useAppSelector((state) => selectAccountBalances(state, groupId));
     const currency_symbol = useGroupCurrencySymbol(groupId);
     if (!currency_symbol) {
@@ -39,9 +39,11 @@ export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, 
                     </Typography>
                 }
                 secondary={
-                    <Box sx={{ display: "flex", flexDirection: "column" }}>
+                    <Box component="span" display="flex" flexDirection="column">
                         <span>{clearingAccount.description}</span>
-                        {clearingAccount.date_info != null && <span>{clearingAccount.date_info}</span>}
+                        {clearingAccount.date_info != null && (
+                            <span>{formatDatetime(clearingAccount.date_info, "date")}</span>
+                        )}
                     </Box>
                 }
             />
@@ -58,10 +60,8 @@ export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, 
                     </Typography>
                     <br />
                     <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
-                        {t("common.lastChangedWithTime", "", {
-                            datetime: DateTime.fromISO(clearingAccount.last_changed).toLocaleString(
-                                DateTime.DATETIME_FULL
-                            ),
+                        {t("common.lastChangedWithTime", {
+                            datetime: formatDatetime(clearingAccount.last_changed, "full"),
                         })}
                     </Typography>
                 </Typography>

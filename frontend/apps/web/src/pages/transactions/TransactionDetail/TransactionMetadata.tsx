@@ -11,7 +11,7 @@ import {
     wipTransactionUpdated,
 } from "@abrechnung/redux";
 import { Account, Transaction, TransactionShare, TransactionValidator } from "@abrechnung/types";
-import { Grid, InputAdornment, TableCell } from "@mui/material";
+import { Grid2 as Grid, InputAdornment, TableCell } from "@mui/material";
 import * as React from "react";
 import { typeToFlattenedError, z } from "zod";
 import { FileGallery } from "./FileGallery";
@@ -100,7 +100,7 @@ export const TransactionMetadata: React.FC<Props> = ({
 
     return (
         <Grid container>
-            <Grid item md={transaction.is_wip || hasAttachments ? 6 : 12} xs={12}>
+            <Grid size={{ xs: 12, md: transaction.is_wip || hasAttachments ? 5 : 12 }}>
                 <TextInput
                     label={t("common.name")}
                     name="name"
@@ -157,7 +157,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                     <TagSelector
                         margin="dense"
                         fullWidth
-                        label={t("common.tag", "", { count: 2 })}
+                        label={t("common.tag", { count: 2 })}
                         groupId={groupId}
                         value={transaction.tags || []}
                         editable={transaction.is_wip}
@@ -203,12 +203,12 @@ export const TransactionMetadata: React.FC<Props> = ({
             </Grid>
 
             {(transaction.is_wip || hasAttachments) && (
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                     <FileGallery groupId={groupId} transaction={transaction} />
                 </Grid>
             )}
             {transaction.type === "purchase" && (
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                     <ShareSelect
                         groupId={groupId}
                         label={t("transactions.paidFor")}

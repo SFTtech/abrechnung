@@ -1,5 +1,5 @@
 import { AbrechnungWebSocket, Api, NotificationPayload } from "@abrechnung/api";
-import { AnyAction, ThunkDispatch } from "@reduxjs/toolkit";
+import { UnknownAction, ThunkDispatch } from "@reduxjs/toolkit";
 import React from "react";
 import { useDispatch } from "react-redux";
 import { fetchAccount } from "../accounts";
@@ -15,7 +15,7 @@ export interface IAbrechnungUpdateProvider {
 }
 
 export const useSubscription = (subscription: Subscription, websocket: AbrechnungWebSocket) => {
-    const dispatch = useDispatch<ThunkDispatch<IRootState, undefined, AnyAction>>();
+    const dispatch = useDispatch<ThunkDispatch<IRootState, undefined, UnknownAction>>();
 
     React.useEffect(() => {
         dispatch(subscribe({ subscription, websocket }));
@@ -28,7 +28,7 @@ export const useSubscription = (subscription: Subscription, websocket: Abrechnun
 };
 
 export const AbrechnungUpdateProvider: React.FC<IAbrechnungUpdateProvider> = ({ api, children, websocket }) => {
-    const dispatch = useDispatch<ThunkDispatch<IRootState, undefined, AnyAction>>();
+    const dispatch = useDispatch<ThunkDispatch<IRootState, undefined, UnknownAction>>();
 
     React.useEffect(() => {
         if (!api || !websocket) {

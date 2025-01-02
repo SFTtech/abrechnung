@@ -220,7 +220,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
         (currentPage + 1) * MAX_ITEMS_PER_PAGE
     );
 
-    useTitle(t("transactions.list.tabTitle", "", { groupName: group?.name }));
+    useTitle(t("transactions.list.tabTitle", { groupName: group?.name }));
 
     const downloadCsv = useDownloadCsv(groupId, transactions);
 
@@ -293,8 +293,6 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                     ariaLabel={t("transactions.createTransaction")}
                     sx={{ position: "fixed", bottom: 20, right: 20 }}
                     icon={<SpeedDialIcon />}
-                    // onClose={() => setSpeedDialOpen(false)}
-                    // onOpen={() => setSpeedDialOpen(true)}
                     onClick={toggleSpeedDial}
                     open={speedDialOpen}
                 >

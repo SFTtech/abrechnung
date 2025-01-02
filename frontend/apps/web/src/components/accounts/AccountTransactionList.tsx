@@ -4,7 +4,7 @@ import {
     useClearingAccountsInvolvingAccount,
 } from "@abrechnung/redux";
 import { Add as AddIcon } from "@mui/icons-material";
-import { Account, Transaction } from "@abrechnung/types";
+import { Account, Transaction, TransactionType } from "@abrechnung/types";
 import { Alert, Box, IconButton, List, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import * as React from "react";
@@ -14,7 +14,7 @@ import { AccountTransactionListEntry } from "./AccountTransactionListEntry";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router";
-import { PurchaseIcon } from "../style/AbrechnungIcons";
+import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 
 type ArrayAccountsAndTransactions = Array<Transaction | Account>;
 
@@ -34,11 +34,11 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, account }) =>
         .concat(clearingAccounts)
         .sort((f1, f2) => DateTime.fromISO(f2.last_changed).toMillis() - DateTime.fromISO(f1.last_changed).toMillis());
 
-    const createTransactionForAccount = () => {
+    const createTransactionForAccount = (type: TransactionType) => {
         dispatch(
             createTransaction({
                 groupId,
-                type: "purchase",
+                type,
                 data: {
                     debitor_shares: {
                         [account.id]: 1,
@@ -55,20 +55,29 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, account }) =>
 
     return (
         <>
-            <Box sx={{ display: "grid", gridTemplateColumns: "auto min-content", justifyContent: "space-between" }}>
+            <Box display="grid" gridTemplateColumns="auto min-content" justifyContent="space-between">
                 <Typography variant="h6">{t("accounts.transactionsInvolving", "", { account })}</Typography>
-                <Tooltip
-                    title={t("transactions.createPurchaseForAccount", "", {
-                        accountName: account.name,
-                    })}
-                >
-                    <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
-                        <AddIcon color="primary" />
-                        <IconButton color="primary" onClick={createTransactionForAccount}>
+                <Box display="flex" flexDirection="row" alignItems="center">
+                    <AddIcon color="primary" />
+                    <Tooltip
+                        title={t("transactions.createPurchaseForAccount", "", {
+                            accountName: account.name,
+                        })}
+                    >
+                        <IconButton color="primary" onClick={() => createTransactionForAccount("purchase")}>
                             <PurchaseIcon />
                         </IconButton>
-                    </Box>
-                </Tooltip>
+                    </Tooltip>
+                    <Tooltip
+                        title={t("transactions.createTransferForAccount", "", {
+                            accountName: account.name,
+                        })}
+                    >
+                        <IconButton color="primary" onClick={() => createTransactionForAccount("transfer")}>
+                            <TransferIcon />
+                        </IconButton>
+                    </Tooltip>
+                </Box>
             </Box>
             <List>
                 {combinedList.length === 0 && <Alert severity="info">{t("common.noneSoFar")}</Alert>}
@@ -87,8 +96,6 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, account }) =>
                         return null;
                     }
 
-                    // we need to case "entry" to Transaction as typescript cant deduce that it
-                    // has to be a transaction even though we handled all other "type" cases before
                     return (
                         <AccountTransactionListEntry
                             key={`transaction-${entry.id}`}

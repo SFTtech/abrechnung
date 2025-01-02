@@ -18,7 +18,7 @@ import {
 } from "@abrechnung/redux";
 import { Account, AccountValidator } from "@abrechnung/types";
 import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
-import { Button, Chip, Divider, Grid, IconButton, LinearProgress, TableCell } from "@mui/material";
+import { Button, Chip, Divider, Grid2 as Grid, IconButton, LinearProgress, TableCell } from "@mui/material";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
@@ -118,13 +118,13 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
     return (
         <>
             <Grid container justifyContent="space-between">
-                <Grid item sx={{ display: "flex", alignItems: "center" }}>
+                <Grid display="flex" alignItems="center">
                     <IconButton sx={{ display: { xs: "none", md: "inline-flex" } }} onClick={navigateBack}>
                         <ChevronLeft />
                     </IconButton>
                     <Chip color="primary" label={accountTypeLabel} />
                 </Grid>
-                <Grid item>
+                <Grid>
                     {isGroupWritable && (
                         <>
                             {account.is_wip ? (
@@ -151,7 +151,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
             <Divider sx={{ marginBottom: 1, marginTop: 1 }} />
             {showProgress && <LinearProgress />}
             <Grid container>
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                     <TextInput
                         label={t("common.name")}
                         variant="standard"
@@ -204,7 +204,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                     )}
                 </Grid>
                 {account.type === "clearing" && account.is_wip ? (
-                    <Grid item xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <ShareSelect
                             groupId={groupId}
                             label={t("accounts.participated")}

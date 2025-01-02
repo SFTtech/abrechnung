@@ -70,7 +70,7 @@ export const Settings: React.FC = () => {
                                 id="dark-mode-select"
                                 labelId="dark-mode-select-label"
                                 value={themeMode}
-                                label="Dark Mode"
+                                label={t("profile.settings.darkMode")}
                                 variant="standard"
                                 onChange={handleDarkModeChange}
                             >

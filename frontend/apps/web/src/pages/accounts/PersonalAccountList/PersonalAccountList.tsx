@@ -61,7 +61,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
         (currentPage + 1) * MAX_ITEMS_PER_PAGE
     );
 
-    useTitle(t("accounts.list.tabTitle", "", { groupName: group?.name }));
+    useTitle(t("accounts.list.tabTitle", { groupName: group?.name }));
 
     const [accountDelete, setAccountDelete] = useState<Account | null>(null);
     const showDeleteModal = accountDelete !== null;

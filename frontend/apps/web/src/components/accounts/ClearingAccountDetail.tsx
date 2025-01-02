@@ -22,7 +22,7 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, account }) => 
     }
     return (
         <>
-            <Typography variant="h6">{t("accounts.clearingDistributionOf", "", { account })}</Typography>
+            <Typography variant="h6">{t("accounts.clearingDistributionOf", { account })}</Typography>
             <ShareSelect
                 groupId={groupId}
                 label={t("accounts.participated")}

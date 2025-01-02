@@ -10,12 +10,10 @@ import {
     IconButton,
     List,
     ListItem,
-    ListItemSecondaryAction,
     ListItemText,
     TextField,
     Typography,
 } from "@mui/material";
-import { DateTime } from "luxon";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { MobilePaper } from "@/components/style";
@@ -24,15 +22,15 @@ import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
+import { useFormatDatetime } from "@/hooks";
+import { Session } from "@abrechnung/api";
 
 export const SessionList: React.FC = () => {
     const { t } = useTranslation();
     // TODO: fix editing functions
     const [editedSessions, setEditedSessions] = useState<Record<number, string>>({});
-    const [sessionToDelete, setSessionToDelete] = useState<{ show: boolean; toDelete: number | null }>({
-        show: false,
-        toDelete: null,
-    });
+    const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null);
+    const formatDatetime = useFormatDatetime();
     const profile = useAppSelector(selectProfile);
 
     useTitle(t("profile.sessions.tabTitle"));
@@ -59,7 +57,7 @@ export const SessionList: React.FC = () => {
     };
 
     const closeDeleteSessionModal = () => {
-        setSessionToDelete({ show: false, toDelete: null });
+        setSessionToDelete(null);
     };
 
     const performRename = (id: number) => {
@@ -73,16 +71,16 @@ export const SessionList: React.FC = () => {
         }
     };
 
-    const openDeleteSessionModal = (id: number) => {
-        setSessionToDelete({ show: true, toDelete: id });
+    const openDeleteSessionModal = (session: Session) => {
+        setSessionToDelete(session);
     };
 
     const confirmDeleteSession = () => {
-        if (sessionToDelete.toDelete !== null) {
-            api.client.auth.deleteSession({ requestBody: { session_id: sessionToDelete.toDelete } }).catch((err) => {
+        if (sessionToDelete !== null) {
+            api.client.auth.deleteSession({ requestBody: { session_id: sessionToDelete.id } }).catch((err) => {
                 toast.error(err);
             });
-            setSessionToDelete({ show: false, toDelete: null });
+            setSessionToDelete(null);
         }
     };
 
@@ -92,7 +90,7 @@ export const SessionList: React.FC = () => {
     };
 
     const onKeyUp = (id: number) => (key: React.KeyboardEvent) => {
-        if (key.keyCode === 13) {
+        if (key.code === "Enter") {
             performRename(id);
         }
     };
@@ -109,7 +107,19 @@ export const SessionList: React.FC = () => {
                     {profile.sessions.map((session) => {
                         if (editedSessions[session.id] !== undefined) {
                             return (
-                                <ListItem key={session.id}>
+                                <ListItem
+                                    key={session.id}
+                                    secondaryAction={
+                                        <>
+                                            <Button onClick={() => performRename(session.id)}>
+                                                <Check />
+                                            </Button>
+                                            <Button onClick={() => stopEditSession(session.id)}>
+                                                <Close />
+                                            </Button>
+                                        </>
+                                    }
+                                >
                                     <TextField
                                         margin="normal"
                                         variant="standard"
@@ -118,67 +128,56 @@ export const SessionList: React.FC = () => {
                                         value={editedSessions[session.id]}
                                         onChange={(event) => handleEditChange(session.id, event.target.value)}
                                     />
-                                    <ListItemSecondaryAction>
-                                        <Button onClick={() => performRename(session.id)}>
-                                            <Check />
-                                        </Button>
-                                        <Button onClick={() => stopEditSession(session.id)}>
-                                            <Close />
-                                        </Button>
-                                    </ListItemSecondaryAction>
                                 </ListItem>
                             );
                         } else {
                             return (
-                                <ListItem key={session.id}>
+                                <ListItem
+                                    key={session.id}
+                                    secondaryAction={
+                                        <>
+                                            <IconButton color="primary" onClick={() => editSession(session.id)}>
+                                                <Edit />
+                                            </IconButton>
+                                            <IconButton color="error" onClick={() => openDeleteSessionModal(session)}>
+                                                <Delete />
+                                            </IconButton>
+                                        </>
+                                    }
+                                >
                                     <ListItemText
                                         primary={session.name}
                                         secondary={
                                             <>
                                                 {session.valid_until != null && (
                                                     <span>
-                                                        Valid until{" "}
-                                                        {DateTime.fromISO(session.valid_until).toLocaleString(
-                                                            DateTime.DATETIME_FULL
-                                                        ) && "indefinitely"}
-                                                        ,{" "}
+                                                        {t("profile.sessions.validUntil", {
+                                                            datetime: formatDatetime(session.valid_until, "full"),
+                                                        })}
                                                     </span>
                                                 )}
                                                 <span>
-                                                    Last seen on{" "}
-                                                    {DateTime.fromISO(session.last_seen).toLocaleString(
-                                                        DateTime.DATETIME_FULL
-                                                    )}
+                                                    {t("profile.sessions.lastSeenOn", {
+                                                        datetime: formatDatetime(session.last_seen, "full"),
+                                                    })}
                                                 </span>
                                             </>
                                         }
                                     />
-                                    <ListItemSecondaryAction>
-                                        <IconButton onClick={() => editSession(session.id)}>
-                                            <Edit />
-                                        </IconButton>
-                                        <IconButton onClick={() => openDeleteSessionModal(session.id)}>
-                                            <Delete />
-                                        </IconButton>
-                                    </ListItemSecondaryAction>
                                 </ListItem>
                             );
                         }
                     })}
                 </List>
             )}
-            <Dialog open={sessionToDelete.show} onClose={closeDeleteSessionModal}>
+            <Dialog open={sessionToDelete != null} onClose={closeDeleteSessionModal}>
                 <DialogTitle>{t("profile.sessions.confirmDeleteSession")}</DialogTitle>
 
                 <DialogContent>
                     <DialogContentText>
-                        {sessionToDelete.toDelete !== null
-                            ? t("profile.sessions.areYouSureToDelete", "", {
-                                  sessionName: profile?.sessions.find(
-                                      (session) => session.id === sessionToDelete.toDelete
-                                  )?.name,
-                              })
-                            : null}
+                        {t("profile.sessions.areYouSureToDelete", {
+                            sessionName: sessionToDelete?.name ?? "",
+                        })}
                     </DialogContentText>
                 </DialogContent>
 

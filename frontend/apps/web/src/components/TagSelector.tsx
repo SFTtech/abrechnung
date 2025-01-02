@@ -62,15 +62,17 @@ export const TagSelector: React.FC<Props> = ({
                 select
                 variant="standard"
                 value={value}
-                SelectProps={{
-                    multiple: true,
-                    renderValue: (selected: unknown) => (
-                        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                            {(selected as string[]).map((value) => (
-                                <Chip key={value} label={value} variant="outlined" {...chipProps} />
-                            ))}
-                        </Box>
-                    ),
+                slotProps={{
+                    select: {
+                        multiple: true,
+                        renderValue: (selected: unknown) => (
+                            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                                {(selected as string[]).map((value) => (
+                                    <Chip key={value} label={value} variant="outlined" {...chipProps} />
+                                ))}
+                            </Box>
+                        ),
+                    },
                 }}
                 onChange={handleChange}
                 disabled={!editable}

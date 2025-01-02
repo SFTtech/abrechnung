@@ -1,6 +1,6 @@
 import { selectIsAuthenticated } from "@abrechnung/redux";
 import { LockOutlined } from "@mui/icons-material";
-import { Avatar, Box, Button, Container, CssBaseline, Grid, Link, Typography } from "@mui/material";
+import { Avatar, Box, Button, Container, CssBaseline, Grid2 as Grid, Link, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router";
 import { toast } from "react-toastify";
@@ -158,8 +158,8 @@ export const Register: React.FC = () => {
                     <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 1 }}>
                         {t("auth.register.confirmButton")}
                     </Button>
-                    <Grid container={true} sx={{ justifyContent: "flex-end" }}>
-                        <Grid item>
+                    <Grid container justifyContent="flex-end">
+                        <Grid>
                             <Link to={`/login${queryArgsForward}`} component={RouterLink} variant="body2">
                                 {t("auth.register.alreadyHasAccount")}
                             </Link>

@@ -51,10 +51,10 @@ export const DeleteAccountModal: React.FC<Props> = ({ show, onClose, groupId, ac
         <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={show}>
             {showProgress && <LinearProgress />}
             <DialogTitle id="confirmation-dialog-title">
-                {t("accounts.deleteConfirm", "", { accountType: accountTypeLabel })}
+                {t("accounts.deleteConfirm", { accountType: accountTypeLabel })}
             </DialogTitle>
             <DialogContent dividers>
-                {t("accounts.deleteConfirmBody", "", { accountType: accountTypeLabel, accountName: account?.name })}
+                {t("accounts.deleteConfirmBody", { accountType: accountTypeLabel, accountName: account?.name })}
             </DialogContent>
             <DialogActions>
                 <Button autoFocus onClick={onClose} color="primary">

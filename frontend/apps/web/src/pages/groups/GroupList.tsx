@@ -1,6 +1,16 @@
 import React, { useState } from "react";
 import { GroupCreateModal } from "@/components/groups/GroupCreateModal";
-import { Alert, Divider, Grid, IconButton, List, ListItem, ListItemText, Stack, Typography } from "@mui/material";
+import {
+    Alert,
+    Divider,
+    Grid2 as Grid,
+    IconButton,
+    List,
+    ListItem,
+    ListItemText,
+    Stack,
+    Typography,
+} from "@mui/material";
 import { Add } from "@mui/icons-material";
 import { MobilePaper, ListItemLink } from "@/components/style";
 import { selectIsGuestUser, selectGroups } from "@abrechnung/redux";
@@ -8,12 +18,12 @@ import { useAppSelector } from "@/store";
 import { useTitle } from "@/core/utils";
 import { useTranslation } from "react-i18next";
 import { Group } from "@abrechnung/api";
-import { useIsSmallScreen } from "@/hooks";
-import { DateTime } from "luxon";
+import { useFormatDatetime, useIsSmallScreen } from "@/hooks";
 
 const GList: React.FC<{ groups: Group[] }> = ({ groups }) => {
     const { t } = useTranslation();
     const isSmallScreen = useIsSmallScreen();
+    const formatDatetime = useFormatDatetime();
 
     return (
         <List>
@@ -24,8 +34,8 @@ const GList: React.FC<{ groups: Group[] }> = ({ groups }) => {
             ) : (
                 groups.map((group) => {
                     return (
-                        <>
-                            <ListItemLink sx={{ padding: 0 }} key={group.id} to={`/groups/${group.id}`}>
+                        <div key={group.id}>
+                            <ListItemLink sx={{ padding: 0 }} to={`/groups/${group.id}`}>
                                 <ListItemText
                                     primary={group.name}
                                     secondary={
@@ -37,16 +47,14 @@ const GList: React.FC<{ groups: Group[] }> = ({ groups }) => {
                                                 </>
                                             )}
                                             {t("groups.list.lastUpdateAt", {
-                                                datetime: DateTime.fromISO(group.last_changed).toLocaleString(
-                                                    DateTime.DATETIME_FULL
-                                                ),
+                                                datetime: formatDatetime(group.last_changed, "full"),
                                             })}
                                         </>
                                     }
                                 />
                             </ListItemLink>
                             {isSmallScreen && <Divider component="li" />}
-                        </>
+                        </div>
                     );
                 })
             )}

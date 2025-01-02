@@ -4,7 +4,7 @@ import { ClearingAccountDetail } from "@/components/accounts/ClearingAccountDeta
 import { MobilePaper } from "@/components/style";
 import { Loading } from "@abrechnung/components";
 import { useQuery, useTitle } from "@/core/utils";
-import { Grid, Typography } from "@mui/material";
+import { Grid2 as Grid, Typography } from "@mui/material";
 import * as React from "react";
 import { Navigate, useParams } from "react-router";
 import { AccountInfo } from "./AccountInfo";
@@ -19,7 +19,7 @@ interface Props {
 const AccountEdit: React.FC<{ groupId: number; account: Account }> = ({ groupId, account }) => {
     return (
         <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <MobilePaper>
                     <AccountInfo groupId={groupId} account={account} />
                 </MobilePaper>
@@ -58,13 +58,13 @@ export const AccountDetail: React.FC<Props> = ({ groupId }) => {
 
     return (
         <Grid container spacing={2}>
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <MobilePaper>
                     <AccountInfo groupId={groupId} account={account} />
                 </MobilePaper>
             </Grid>
             {account.type === "personal" && (
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                     <MobilePaper>
                         <Typography variant="h6">{t("accounts.balanceOf", "", { account })}</Typography>
                         <BalanceHistoryGraph groupId={groupId} accountId={accountId} />
@@ -72,13 +72,13 @@ export const AccountDetail: React.FC<Props> = ({ groupId }) => {
                 </Grid>
             )}
             {account.type === "clearing" && (
-                <Grid item xs={12}>
+                <Grid size={{ xs: 12 }}>
                     <MobilePaper>
                         <ClearingAccountDetail groupId={groupId} account={account} />
                     </MobilePaper>
                 </Grid>
             )}
-            <Grid item xs={12}>
+            <Grid size={{ xs: 12 }}>
                 <MobilePaper>
                     <AccountTransactionList groupId={groupId} account={account} />
                 </MobilePaper>

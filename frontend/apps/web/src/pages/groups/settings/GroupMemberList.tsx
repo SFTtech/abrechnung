@@ -18,7 +18,6 @@ import {
     ListItem,
     ListItemText,
 } from "@mui/material";
-import { DateTime } from "luxon";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { api } from "@/core/api";
@@ -28,6 +27,7 @@ import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { FormCheckbox } from "@abrechnung/components";
+import { useFormatDatetime } from "@/hooks";
 
 interface GroupMemberListProps {
     group: Group;
@@ -117,10 +117,11 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
     const currentUserId = useAppSelector(selectCurrentUserId);
     const members = useAppSelector((state) => selectGroupMembers(state, group.id));
     const permissions = useCurrentUserPermissions(group.id);
+    const formatDatetime = useFormatDatetime();
 
     const [memberToEdit, setMemberToEdit] = useState<GroupMember | undefined>(undefined);
 
-    useTitle(t("groups.memberList.tabTitle", "", { groupName: group?.name }));
+    useTitle(t("groups.memberList.tabTitle", { groupName: group?.name }));
 
     const getMemberUsername = (member_id: number) => {
         const member = members.find((member) => member.user_id === member_id);
@@ -197,16 +198,14 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
                                     <>
                                         {member.invited_by && (
                                             <small className="text-muted">
-                                                {t("groups.memberList.invitedBy", "", {
+                                                {t("groups.memberList.invitedBy", {
                                                     username: getMemberUsername(member.invited_by),
                                                 })}
                                             </small>
                                         )}
                                         <small className="text-muted">
-                                            {t("groups.memberList.joined", "", {
-                                                datetime: DateTime.fromISO(member.joined_at).toLocaleString(
-                                                    DateTime.DATETIME_FULL
-                                                ),
+                                            {t("groups.memberList.joined", {
+                                                datetime: formatDatetime(member.joined_at, "full"),
                                             })}
                                         </small>
                                     </>

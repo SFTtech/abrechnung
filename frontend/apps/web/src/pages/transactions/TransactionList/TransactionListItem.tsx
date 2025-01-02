@@ -1,11 +1,10 @@
 import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
 import { ListItemLink } from "@/components/style/ListItemLink";
-import { useFormatCurrency, useIsSmallScreen } from "@/hooks";
+import { useFormatCurrency, useFormatDatetime, useIsSmallScreen } from "@/hooks";
 import { useAppSelector } from "@/store";
 import { selectAccountIdToAccountMap, useTransaction } from "@abrechnung/redux";
 import { HelpOutline } from "@mui/icons-material";
 import { Chip, Divider, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
-import { DateTime } from "luxon";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 
@@ -21,6 +20,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
     const accounts = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
     const transaction = useTransaction(groupId, transactionId);
     const isSmallScreen = useIsSmallScreen();
+    const formatDatetime = useFormatDatetime();
     if (transaction === undefined) {
         // TODO: HACKY WORKAROUND
         // when switching between groups which are already loaded into the redux store we will land on the transaction list page
@@ -84,7 +84,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
                                 {t("transactions.byFor", "", { by: creditorNames, for: debitorNames })}
                             </Typography>
                             <br />
-                            {DateTime.fromISO(transaction.billed_at).toLocaleString(DateTime.DATE_FULL)}
+                            {formatDatetime(transaction.billed_at, "date")}
                             {transaction.tags.map((t) => (
                                 <Chip key={t} sx={{ ml: 1 }} variant="outlined" size="small" color="info" label={t} />
                             ))}
@@ -98,10 +98,8 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
                             <>
                                 <br />
                                 <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
-                                    {t("common.lastChangedWithTime", "", {
-                                        datetime: DateTime.fromISO(transaction.last_changed).toLocaleString(
-                                            DateTime.DATETIME_FULL
-                                        ),
+                                    {t("common.lastChangedWithTime", {
+                                        datetime: formatDatetime(transaction.last_changed, "full"),
                                     })}
                                 </Typography>
                             </>
