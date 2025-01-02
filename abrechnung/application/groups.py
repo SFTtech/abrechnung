@@ -208,7 +208,7 @@ class GroupService(Service[Config]):
             "select g.*, gm.is_owner, gm.can_write from grp as g join group_membership gm on g.id = gm.group_id "
             "where g.id = $1 and gm.user_id = $2",
             group_id,
-                user.id
+            user.id,
         )
 
     @with_db_transaction
