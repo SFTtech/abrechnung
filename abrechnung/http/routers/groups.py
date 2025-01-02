@@ -34,7 +34,8 @@ class PreviewGroupPayload(BaseModel):
     r"/v1/groups/preview",
     summary="preview a group before joining using an invite token",
     response_model=GroupPreview,
-    operation_id="preview_group", tags=["groups"]
+    operation_id="preview_group",
+    tags=["groups"],
 )
 async def preview_group(
     payload: PreviewGroupPayload,
@@ -48,7 +49,11 @@ async def preview_group(
 
 
 @router.post(
-    r"/v1/groups/join", summary="join a group using an invite token", response_model=Group, operation_id="join_group", tags=["groups"]
+    r"/v1/groups/join",
+    summary="join a group using an invite token",
+    response_model=Group,
+    operation_id="join_group",
+    tags=["groups"],
 )
 async def join_group(
     payload: PreviewGroupPayload,
@@ -64,7 +69,11 @@ async def join_group(
 
 
 @router.get(
-    "/v1/groups", summary="list the current users groups", response_model=List[Group], operation_id="list_groups", tags=["groups"]
+    "/v1/groups",
+    summary="list the current users groups",
+    response_model=List[Group],
+    operation_id="list_groups",
+    tags=["groups"],
 )
 async def list_groups(
     user: User = Depends(get_current_user),

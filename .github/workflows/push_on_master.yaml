@@ -199,7 +199,6 @@ jobs:
         with:
           files: |
             artifacts/debs/*.deb
-            artifacts/app-release-apk/*.apk
           # if it's not already published, keep the release as a draft.
           draft: true
           # mark it as a prerelease if the tag contains 'rc'.

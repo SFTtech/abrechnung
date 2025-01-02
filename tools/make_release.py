@@ -48,17 +48,6 @@ def _read_pyproject_toml():
         return tomllib.load(f)
 
 
-def _update_app_gradle(dry_run: bool):
-    app_build_gradle = repo_root / "frontend" / "apps" / "mobile" / "android" / "app" / "build.gradle"
-    gradle_content = app_build_gradle.read_text()
-    if not dry_run:
-        version_code_matches = re.findall(r"versionCode (?P<version>\d+)", gradle_content)
-        for match in version_code_matches:
-            code = int(match)
-            gradle_content = gradle_content.replace(f"versionCode {code}", f"versionCode {code + 1}")
-            app_build_gradle.write_text(gradle_content)
-
-
 def _update_debian_changelog(pyproject: dict, config: Config, dry_run: bool):
     formatted_debian_changelog = debian_changelog_template.format(
         new_version=config.new_version,
@@ -109,7 +98,6 @@ def main(part: str, dry_run: bool):
         bump_my_version_args.append("--dry-run")
     subprocess.run(bump_my_version_args, check=True)
 
-    _update_app_gradle(dry_run)
     _update_debian_changelog(pyproject, config, dry_run)
     _update_changelog(config, dry_run)
 

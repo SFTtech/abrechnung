@@ -8,6 +8,7 @@
 
 - changed config structure to only include the reverse-proxy base_url once in the `api` section
 - drop python 3.10 support
+- remove react native mobile app in favor of mobile optimized PWA
 
 **Features**
 
