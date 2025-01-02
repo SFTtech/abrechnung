@@ -1,28 +1,17 @@
-import {
-    deleteGroupInvite,
-    fetchGroupInvites,
-    selectGroupInviteStatus,
-    selectGroupInvites,
-    selectGroupMembers,
-    selectIsGuestUser,
-    subscribe,
-    unsubscribe,
-    useCurrentUserPermissions,
-} from "@abrechnung/redux";
+import { selectIsGuestUser, useCurrentUserPermissions } from "@abrechnung/redux";
 import { Add, ContentCopy, Delete } from "@mui/icons-material";
 import { Alert, Grid2 as Grid, IconButton, List, ListItem, ListItemText } from "@mui/material";
-import { DateTime } from "luxon";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { InviteLinkCreate } from "@/components/groups/InviteLinkCreate";
 import { Loading } from "@abrechnung/components";
-import { api, ws } from "@/core/api";
 import { useTitle } from "@/core/utils";
-import { useAppDispatch, useAppSelector } from "@/store";
+import { useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { Group } from "@abrechnung/api";
 import { useFormatDatetime } from "@/hooks";
+import { useDeleteInviteMutation, useListInvitesQuery, useListMembersQuery } from "@/core/generated/api";
 
 interface GroupInviteProps {
     group: Group;
@@ -31,27 +20,18 @@ interface GroupInviteProps {
 export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
     const { t } = useTranslation();
     const [showModal, setShowModal] = useState(false);
-    const dispatch = useAppDispatch();
-    const invites = useAppSelector((state) => selectGroupInvites(state, group.id));
-    const members = useAppSelector((state) => selectGroupMembers(state, group.id));
+    const { data: invites } = useListInvitesQuery({ groupId: group.id });
+    const { data: members } = useListMembersQuery({ groupId: group.id });
     const permissions = useCurrentUserPermissions(group.id);
-    const invitesLoadingStatus = useAppSelector((state) => selectGroupInviteStatus(state, group.id));
     const formatDatetime = useFormatDatetime();
+    const [deleteInvite] = useDeleteInviteMutation();
 
     const isGuest = useAppSelector(selectIsGuestUser);
 
     useTitle(t("groups.invites.tabTitle", { groupName: group?.name }));
 
-    useEffect(() => {
-        dispatch(fetchGroupInvites({ groupId: group.id, api }));
-        dispatch(subscribe({ subscription: { type: "group_invite", groupId: group.id }, websocket: ws }));
-        return () => {
-            dispatch(unsubscribe({ subscription: { type: "group_invite", groupId: group.id }, websocket: ws }));
-        };
-    }, [dispatch, group]);
-
     const deleteToken = (id: number) => {
-        dispatch(deleteGroupInvite({ groupId: group.id, inviteId: id, api }))
+        deleteInvite({ groupId: group.id, inviteId: id })
             .unwrap()
             .catch((err) => {
                 toast.error(err);
@@ -59,7 +39,7 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
     };
 
     const getMemberUsername = (memberID: number) => {
-        const member = members.find((member) => member.user_id === memberID);
+        const member = members?.find((member) => member.user_id === memberID);
         if (member === undefined) {
             return "unknown";
         }
@@ -97,7 +77,7 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
     return (
         <>
             {isGuest && <Alert severity="info">{t("groups.invites.guestUserDisclaimer")}</Alert>}
-            {invitesLoadingStatus === "loading" ? (
+            {invites == null ? (
                 <Loading />
             ) : (
                 <List>

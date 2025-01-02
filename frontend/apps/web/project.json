@@ -4,6 +4,13 @@
     "sourceRoot": "apps/web/src",
     "projectType": "application",
     "targets": {
+        "generate-openapi": {
+            "executor": "nx:run-commands",
+            "options": {
+                "commands": ["npx @rtk-query/codegen-openapi apps/web/openapi-config.ts"],
+                "parallel": false
+            }
+        },
         "collect-assets": {
             "executor": "nx:run-commands",
             "options": {
@@ -15,7 +22,7 @@
             "executor": "@nx/webpack:webpack",
             "outputs": ["{options.outputPath}"],
             "defaultConfiguration": "production",
-            "dependsOn": ["collect-assets"],
+            "dependsOn": ["collect-assets", "generate-openapi"],
             "options": {
                 "compiler": "babel",
                 "outputPath": "dist/apps/web",
@@ -55,7 +62,7 @@
         "serve": {
             "executor": "@nx/webpack:dev-server",
             "defaultConfiguration": "development",
-            "dependsOn": ["collect-assets"],
+            "dependsOn": ["collect-assets", "generate-openapi"],
             "options": {
                 "buildTarget": "web:build",
                 "hmr": true,

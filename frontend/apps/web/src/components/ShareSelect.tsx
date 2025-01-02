@@ -176,25 +176,38 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
         }
     }, [value, setShowAdvanced]);
 
-    const nSelectedPeople = accounts.reduce((nAccs: number, acc: Account) => {
-        if (acc.type !== "personal") {
-            return nAccs;
-        }
-        if ((shouldDisplayAccount && shouldDisplayAccount(acc.id)) || value[acc.id] > 0) {
-            return nAccs + 1;
-        }
-        return nAccs;
-    }, 0);
-    const nSelectedEvents = accounts.reduce((nAccs: number, acc: Account) => {
-        if (acc.type !== "clearing") {
-            return nAccs;
-        }
-        if ((shouldDisplayAccount && shouldDisplayAccount(acc.id)) || value[acc.id] > 0) {
-            return nAccs + 1;
-        }
-        return nAccs;
-    }, 0);
-    const nSelected = nSelectedEvents + nSelectedPeople;
+    const nSelectedPeople = React.useMemo(
+        () =>
+            accounts.reduce((nAccs: number, acc: Account) => {
+                if (acc.type !== "personal") {
+                    return nAccs;
+                }
+                if ((shouldDisplayAccount && shouldDisplayAccount(acc.id)) || value[acc.id] > 0) {
+                    return nAccs + 1;
+                }
+                return nAccs;
+            }, 0),
+        [accounts, value, shouldDisplayAccount]
+    );
+
+    const nSelectedEvents = React.useMemo(
+        () =>
+            accounts.reduce((nAccs: number, acc: Account) => {
+                if (acc.type !== "clearing") {
+                    return nAccs;
+                }
+                if ((shouldDisplayAccount && shouldDisplayAccount(acc.id)) || value[acc.id] > 0) {
+                    return nAccs + 1;
+                }
+                return nAccs;
+            }, 0),
+        [accounts, value, shouldDisplayAccount]
+    );
+
+    const nSelected = React.useMemo(() => {
+        return Object.values(value).reduce((nSelected, val) => nSelected + (val > 0 ? 1 : 0), 0);
+    }, [value]);
+    const isAllSelected = nSelected === accounts.length;
     const showSearch = !isSmallScreen && unfilteredAccounts.length > 5;
 
     const handleAccountShareChange = (accountId: number, shareValue: number) => {
@@ -209,7 +222,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
     };
 
     const handleSelectAll = () => {
-        if (nSelected === accounts.length) {
+        if (isAllSelected) {
             onChange?.({});
         } else {
             const newVal: TransactionShare = accounts.reduce<TransactionShare>((shares, account) => {
@@ -324,8 +337,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                                 {editable ? (
                                     <FormControlLabel
                                         control={<Checkbox onChange={handleSelectAll} />}
-                                        checked={nSelected === accounts.length}
-                                        disabled={!editable}
+                                        checked={isAllSelected}
                                         label={t("common.shares")}
                                     />
                                 ) : (

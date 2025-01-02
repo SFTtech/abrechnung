@@ -48,5 +48,3 @@ export const GroupDeleteModal: React.FC<Props> = ({ show, onClose, groupToDelete
         </Dialog>
     );
 };
-
-export default GroupDeleteModal;

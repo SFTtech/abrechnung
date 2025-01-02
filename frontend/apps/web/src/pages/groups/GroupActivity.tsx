@@ -1,21 +1,12 @@
-import {
-    fetchGroupLog,
-    selectGroupLogStatus,
-    selectGroupLogs,
-    selectGroupMembers,
-    subscribe,
-    unsubscribe,
-    useGroup,
-} from "@abrechnung/redux";
+import { useGroup } from "@abrechnung/redux";
 import { List, ListItem, ListItemText, Typography } from "@mui/material";
-import React, { useEffect } from "react";
+import * as React from "react";
 import { Loading } from "@abrechnung/components";
 import { MobilePaper } from "@/components/style";
-import { api, ws } from "@/core/api";
 import { useTitle } from "@/core/utils";
-import { useAppDispatch, useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 import { useFormatDatetime } from "@/hooks";
+import { useListLogQuery, useListMembersQuery } from "@/core/generated/api";
 
 interface Props {
     groupId: number;
@@ -23,25 +14,15 @@ interface Props {
 
 export const GroupActivity: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
-    const dispatch = useAppDispatch();
     const group = useGroup(groupId);
     const formatDatetime = useFormatDatetime();
-    const members = useAppSelector((state) => selectGroupMembers(state, groupId));
-    const logs = useAppSelector((state) => selectGroupLogs(state, groupId));
-    const logLoadingStatus = useAppSelector((state) => selectGroupLogStatus(state, groupId));
+    const { data: members } = useListMembersQuery({ groupId });
+    const { data: logs } = useListLogQuery({ groupId });
 
-    useTitle(t("groups.log.tabTitle", "", { groupName: group?.name }));
-
-    useEffect(() => {
-        dispatch(fetchGroupLog({ groupId, api }));
-        dispatch(subscribe({ subscription: { type: "group_log", groupId }, websocket: ws }));
-        return () => {
-            dispatch(unsubscribe({ subscription: { type: "group_log", groupId }, websocket: ws }));
-        };
-    }, [dispatch, groupId]);
+    useTitle(t("groups.log.tabTitle", { groupName: group?.name }));
 
     const getMemberUsername = (member_id: number) => {
-        const member = members.find((member) => member.user_id === member_id);
+        const member = members?.find((member) => member.user_id === member_id);
         if (member === undefined) {
             return "unknown";
         }
@@ -54,7 +35,7 @@ export const GroupActivity: React.FC<Props> = ({ groupId }) => {
                 {t("groups.log.header")}
             </Typography>
             <List>
-                {logLoadingStatus === undefined || logLoadingStatus === "loading" ? (
+                {logs == null ? (
                     <Loading />
                 ) : (
                     logs.map((logEntry) => (

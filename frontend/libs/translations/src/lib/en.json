@@ -70,6 +70,7 @@
     "groups": {
         "addGroup": "Add Group",
         "create": {
+            "title": "Create Group",
             "addUserAccountOnJoinDescription": "Automatically add accounts for newly joined group members"
         },
         "delete": {
@@ -91,6 +92,7 @@
             "messageInfo": "by {{username}} on {{datetime}}"
         },
         "memberList": {
+            "editGroupMember": "Edit Group Member",
             "tabTitle": "{{groupName}} - Members",
             "invitedBy": "invited by {{username}}, ",
             "joined": "joined {{datetime}}",

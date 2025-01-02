@@ -5,7 +5,6 @@ from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
 from abrechnung.config import Config
-from abrechnung.http.routers.websocket import NotificationManager
 
 
 @dataclass
@@ -20,4 +19,3 @@ class Context:
     transaction_service: TransactionService
     account_service: AccountService
     group_service: GroupService
-    notification_manager: NotificationManager

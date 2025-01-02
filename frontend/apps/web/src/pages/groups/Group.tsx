@@ -1,10 +1,7 @@
 import {
     fetchGroupDependencies,
     selectGroupAccountsStatus,
-    selectGroupMemberStatus,
     selectGroupTransactionsStatus,
-    subscribe,
-    unsubscribe,
     useGroup,
 } from "@abrechnung/redux";
 import React, { Suspense } from "react";
@@ -12,7 +9,7 @@ import { Navigate, Route, Routes, useParams } from "react-router";
 import { toast } from "react-toastify";
 import { Balances } from "../accounts/Balances";
 import { Loading } from "@abrechnung/components";
-import { api, ws } from "@/core/api";
+import { api } from "@/core/api";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { AccountDetail } from "../accounts/AccountDetail";
 import { PersonalAccountList } from "../accounts/PersonalAccountList";
@@ -32,30 +29,17 @@ export const Group: React.FC = () => {
     const groupExists = group !== undefined;
     const transactionStatus = useAppSelector((state) => selectGroupTransactionsStatus(state, groupId));
     const accountStatus = useAppSelector((state) => selectGroupAccountsStatus(state, groupId));
-    const groupMemberStatus = useAppSelector((state) => selectGroupMemberStatus(state, groupId));
 
     React.useEffect(() => {
         if (!groupExists) {
-            return () => {
-                // TODO: fixme
-                return;
-            };
+            return;
         }
-        dispatch(subscribe({ subscription: { type: "transaction", groupId }, websocket: ws }));
-        dispatch(subscribe({ subscription: { type: "account", groupId }, websocket: ws }));
-        dispatch(subscribe({ subscription: { type: "group_member", groupId }, websocket: ws }));
         dispatch(fetchGroupDependencies({ groupId, api, fetchAnyway: true }))
             .unwrap()
             .catch((err: SerializedError) => {
                 console.warn(err);
                 toast.error(`Error while loading transactions and accounts: ${err.message}`);
             });
-
-        return () => {
-            dispatch(unsubscribe({ subscription: { type: "transaction", groupId }, websocket: ws }));
-            dispatch(unsubscribe({ subscription: { type: "account", groupId }, websocket: ws }));
-            dispatch(unsubscribe({ subscription: { type: "group_member", groupId }, websocket: ws }));
-        };
     }, [dispatch, groupId, groupExists]);
 
     if (!groupExists) {
@@ -67,10 +51,8 @@ export const Group: React.FC = () => {
         group === undefined ||
         accountStatus === undefined ||
         transactionStatus === undefined ||
-        groupMemberStatus === undefined ||
         accountStatus === "loading" ||
-        transactionStatus === "loading" ||
-        groupMemberStatus === "loading"
+        transactionStatus === "loading"
     ) {
         return <Loading />;
     }

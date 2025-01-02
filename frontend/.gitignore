@@ -52,8 +52,6 @@ npm-debug.*
 web-build/
 
 
-apps/mobile-e2e/artifacts
-
 .nx/cache
 .nx/workspace-data
 

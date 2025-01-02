@@ -7,7 +7,7 @@ name = "abrechnung"
 authors = [
     { name = "Michael Loipführer", email = "milo@sft.lol" },
     { name = "Jonas Jelten", email = "jj@sft.lol" },
-    { name = "Michael Enßlin", email = "mic@sft.lol" }
+    { name = "Michael Enßlin", email = "mic@sft.lol" },
 ]
 license = { file = "LICENSE" }
 dynamic = ["version", "description"]
@@ -43,13 +43,9 @@ dev = [
     "mypy==1.13.0",
     "types-PyYAML~=6.0",
     "pylint==3.3.2",
-    "bump-my-version~=0.18"
+    "bump-my-version~=0.18",
 ]
-docs = [
-    "sphinx",
-    "sphinx-autobuild",
-    "sphinx-autodoc-typehints",
-]
+docs = ["sphinx", "sphinx-autobuild", "sphinx-autodoc-typehints"]
 
 [project.urls]
 Source = "https://github.com/SFTtech/abrechung"
@@ -67,9 +63,7 @@ version = { attr = "abrechnung.__version__" }
 description = { file = ["README.md"] }
 
 [tool.pylint.MASTER]
-extension-pkg-whitelist = [
-    "pydantic"
-]
+extension-pkg-whitelist = ["pydantic"]
 
 [tool.pylint.format]
 max-line-length = 120
@@ -80,7 +74,8 @@ disable = [
     "R",
     "fixme",
     "logging-fstring-interpolation",
-    "broad-exception-caught" ]
+    "broad-exception-caught",
+]
 
 [tool.black]
 line-length = 120
@@ -93,23 +88,18 @@ profile = "black"
 ignore_missing_imports = true
 check_untyped_defs = true
 pretty = true
-plugins = [
-    "pydantic.mypy"
-]
+plugins = ["pydantic.mypy"]
 
 [tool.coverage.run]
-source = [
-    "abrechnung"
-]
+source = ["abrechnung"]
 
 [tool.bumpversion]
 current_version = "0.14.0"
 commit = false
 files = [
     { filename = "abrechnung/__init__.py" },
-    { filename = "frontend/apps/mobile/android/app/build.gradle" },
-    { filename = "CHANGELOG.md", search = "Unreleased", replace = "{new_version} ({now:%Y-%m-%d})"},
-    { filename = "CHANGELOG.md", search = "v{current_version}...HEAD", replace = "v{current_version}...v{new_version}"},
+    { filename = "CHANGELOG.md", search = "Unreleased", replace = "{new_version} ({now:%Y-%m-%d})" },
+    { filename = "CHANGELOG.md", search = "v{current_version}...HEAD", replace = "v{current_version}...v{new_version}" },
 ]
 
 [tool.sftkit]

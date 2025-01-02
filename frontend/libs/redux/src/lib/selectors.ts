@@ -15,7 +15,6 @@ import {
 } from "./transactions";
 import { AccountSliceState, AccountState, IRootState } from "./types";
 import { getGroupScopedState } from "./utils";
-import { GroupMember } from "@abrechnung/api";
 import { useSelector } from "react-redux";
 import { createSelector } from "@reduxjs/toolkit";
 
@@ -38,25 +37,13 @@ export const selectAccountBalanceHistory = createSelector(
     }
 );
 
-export const useCurrentUserPermissions = (groupId: number): GroupMember | undefined => {
+export const useCurrentUserPermissions = (groupId: number): { is_owner: boolean; can_write: boolean } | undefined => {
     return useSelector((state: IRootState) => {
-        if (state.auth.profile === undefined) {
+        if (state.groups.groups.byId[groupId] === undefined) {
             return undefined;
         }
-
-        const userId = state.auth.profile.id;
-
-        if (
-            state.groups.byGroupId[groupId] === undefined ||
-            state.groups.byGroupId[groupId].groupMembersStatus !== "initialized"
-        ) {
-            return undefined;
-        }
-        const member = state.groups.byGroupId[groupId].groupMembers.byId[userId];
-        if (member === undefined) {
-            return undefined;
-        }
-        return member;
+        const group = state.groups.groups.byId[groupId];
+        return group;
     });
 };
 

@@ -12,8 +12,7 @@ from abrechnung.config import Config
 from abrechnung.database.migrations import check_revision_version, get_database
 
 from .context import Context
-from .routers import accounts, auth, common, groups, transactions, websocket
-from .routers.websocket import NotificationManager
+from .routers import accounts, auth, common, groups, transactions
 
 
 def get_server(config: Config):
@@ -30,7 +29,6 @@ def get_server(config: Config):
     server.add_router(auth.router)
     server.add_router(accounts.router)
     server.add_router(common.router)
-    server.add_router(websocket.router)
     return server
 
 
@@ -55,19 +53,15 @@ class Api:
         self.transaction_service = TransactionService(db_pool=self.db_pool, config=self.cfg)
         self.account_service = AccountService(db_pool=self.db_pool, config=self.cfg)
         self.group_service = GroupService(db_pool=self.db_pool, config=self.cfg)
-        self.notification_manager = NotificationManager(config=self.cfg, db_pool=self.db_pool)
-        await self.notification_manager.initialize()
         self.context = Context(
             config=self.cfg,
             user_service=self.user_service,
             transaction_service=self.transaction_service,
             account_service=self.account_service,
             group_service=self.group_service,
-            notification_manager=self.notification_manager,
         )
 
     async def _teardown(self):
-        await self.notification_manager.teardown()
         await self.db_pool.close()
 
     async def run(self):

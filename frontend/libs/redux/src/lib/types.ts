@@ -15,18 +15,6 @@ export type Subscription =
           groupId: number;
       }
     | {
-          type: "group_log";
-          groupId: number;
-      }
-    | {
-          type: "group_invite";
-          groupId: number;
-      }
-    | {
-          type: "group_member";
-          groupId: number;
-      }
-    | {
           type: "group";
           userId: number;
       };
@@ -50,25 +38,7 @@ export interface AuthState {
 
 export type AuthSliceState = AbrechnungInstanceAwareState & AuthState;
 
-export interface GroupInfo {
-    groupMembers: {
-        byId: { [k: number]: GroupMember };
-        ids: number[];
-    };
-    groupMembersStatus: StateStatus;
-    groupInvites: {
-        byId: { [k: number]: GroupInvite };
-        ids: number[];
-    };
-    groupInvitesStatus: StateStatus;
-    groupLog: {
-        byId: { [k: number]: GroupLog };
-        ids: number[];
-    };
-    groupLogStatus: StateStatus;
-}
-
-export type GroupState = GroupScopedState<GroupInfo> & {
+export type GroupState = {
     groups: {
         byId: { [k: number]: Group };
         ids: number[];
@@ -132,12 +102,4 @@ export interface IGroupRootState {
     groups: GroupSliceState;
 }
 
-export interface ISubscriptionRootState {
-    subscriptions: SubscriptionSliceState;
-}
-
-export type IRootState = ITransactionRootState &
-    IAccountRootState &
-    IAuthRootState &
-    IGroupRootState &
-    ISubscriptionRootState;
+export type IRootState = ITransactionRootState & IAccountRootState & IAuthRootState & IGroupRootState;
