@@ -10,7 +10,7 @@ import {
     useCurrentUserPermissions,
 } from "@abrechnung/redux";
 import { Add, ContentCopy, Delete } from "@mui/icons-material";
-import { Alert, Grid, IconButton, List, ListItem, ListItemSecondaryAction, ListItemText } from "@mui/material";
+import { Alert, Grid, IconButton, List, ListItem, ListItemText } from "@mui/material";
 import { DateTime } from "luxon";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
@@ -73,7 +73,10 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
         selection?.addRange(range);
     };
 
-    const copyToClipboard = (content: string) => {
+    const copyToClipboard = (content: string | null) => {
+        if (!content) {
+            return;
+        }
         navigator.clipboard.writeText(content);
         toast.info("Link copied to clipboard!");
     };
@@ -81,6 +84,13 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
     if (!permissions || !group) {
         return <Navigate to="/404" />;
     }
+
+    const getInviteLink = (token: string | null) => {
+        if (!token) {
+            return null;
+        }
+        return `${window.location.origin}/invite/${token}`;
+    };
 
     return (
         <>
@@ -95,15 +105,34 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
                         </ListItem>
                     ) : (
                         invites.map((invite) => (
-                            <ListItem key={invite.id}>
+                            <ListItem
+                                key={invite.id}
+                                secondaryAction={
+                                    permissions.can_write && (
+                                        <>
+                                            <IconButton
+                                                color="primary"
+                                                onClick={() => copyToClipboard(getInviteLink(invite.token))}
+                                            >
+                                                <ContentCopy />
+                                            </IconButton>
+                                            <IconButton color="error" onClick={() => deleteToken(invite.id)}>
+                                                <Delete />
+                                            </IconButton>
+                                        </>
+                                    )
+                                }
+                            >
                                 <ListItemText
                                     primary={
                                         invite.token === null ? (
                                             <span>{t("groups.invites.tokenHidden")}</span>
                                         ) : (
-                                            <span onClick={selectLink}>
-                                                {window.location.origin}/invite/
-                                                {invite.token}
+                                            <span
+                                                onClick={selectLink}
+                                                style={{ textOverflow: "ellipsis", maxWidth: "100%" }}
+                                            >
+                                                {getInviteLink(invite.token)}
                                             </span>
                                         )
                                     }
@@ -119,21 +148,6 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
                                         </>
                                     }
                                 />
-                                {permissions.can_write && (
-                                    <ListItemSecondaryAction>
-                                        <IconButton
-                                            color="primary"
-                                            onClick={() =>
-                                                copyToClipboard(`${window.location.origin}/invite/${invite.token}`)
-                                            }
-                                        >
-                                            <ContentCopy />
-                                        </IconButton>
-                                        <IconButton color="error" onClick={() => deleteToken(invite.id)}>
-                                            <Delete />
-                                        </IconButton>
-                                    </ListItemSecondaryAction>
-                                )}
                             </ListItem>
                         ))
                     )}

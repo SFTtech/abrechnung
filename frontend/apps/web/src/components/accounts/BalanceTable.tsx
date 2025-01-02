@@ -19,7 +19,6 @@ export const BalanceTable: React.FC<Props> = ({ group }) => {
         return {
             id: acc.id,
             name: acc.name,
-            description: acc.description,
             balance: balances[acc.id]?.balance ?? 0,
             totalPaid: balances[acc.id]?.totalPaid ?? 0,
             totalConsumed: balances[acc.id]?.totalConsumed ?? 0,
@@ -27,9 +26,7 @@ export const BalanceTable: React.FC<Props> = ({ group }) => {
     });
 
     const columns: GridColDef[] = [
-        { field: "id", headerName: "ID" },
-        { field: "name", headerName: "Name", width: 150 },
-        { field: "description", headerName: "Description", width: 200 },
+        { field: "name", headerName: "Name", flex: 1 },
         {
             field: "totalConsumed",
             headerName: t("balanceTable.totalConsumed"),
@@ -48,20 +45,13 @@ export const BalanceTable: React.FC<Props> = ({ group }) => {
     ];
 
     return (
-        <div style={{ width: "100%" }}>
+        <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
             <DataGrid
+                getRowId={(row) => row.id}
                 sx={{ border: 0 }}
                 rows={tableData}
-                initialState={{
-                    columns: {
-                        columnVisibilityModel: {
-                            id: false,
-                        },
-                    },
-                }}
                 columns={columns}
                 disableRowSelectionOnClick
-                autoHeight
                 slots={{
                     toolbar: GridToolbar,
                 }}

@@ -1,51 +1,30 @@
 import React, { useState } from "react";
 import { GroupCreateModal } from "@/components/groups/GroupCreateModal";
-import { GroupDeleteModal } from "@/components/groups/GroupDeleteModal";
-import {
-    Alert,
-    Grid,
-    IconButton,
-    List,
-    ListItem,
-    ListItemSecondaryAction,
-    ListItemText,
-    Stack,
-    Typography,
-} from "@mui/material";
-import { Add, Delete } from "@mui/icons-material";
+import { Alert, Divider, Grid, IconButton, List, ListItem, ListItemText, Stack, Typography } from "@mui/material";
+import { Add } from "@mui/icons-material";
 import { MobilePaper, ListItemLink } from "@/components/style";
 import { selectIsGuestUser, selectGroups } from "@abrechnung/redux";
 import { useAppSelector } from "@/store";
 import { useTitle } from "@/core/utils";
 import { useTranslation } from "react-i18next";
 import { Group } from "@abrechnung/api";
+import { useIsSmallScreen } from "@/hooks";
 import { DateTime } from "luxon";
 
 const GList: React.FC<{ groups: Group[] }> = ({ groups }) => {
     const { t } = useTranslation();
-    const [groupToDelete, setGroupToDelete] = useState<Group | null>(null);
-
-    const openGroupDeletionModal = (groupID: number) => {
-        const g = groups.find((group) => group.id === groupID);
-        if (g) {
-            setGroupToDelete(g);
-        }
-    };
-
-    const closeGroupDeletionModal = () => {
-        setGroupToDelete(null);
-    };
+    const isSmallScreen = useIsSmallScreen();
 
     return (
-        <>
-            <List>
-                {groups.length === 0 ? (
-                    <ListItem key={0}>
-                        <span>{t("groups.list.noGroups")}</span>
-                    </ListItem>
-                ) : (
-                    groups.map((group) => {
-                        return (
+        <List>
+            {groups.length === 0 ? (
+                <ListItem>
+                    <span>{t("groups.list.noGroups")}</span>
+                </ListItem>
+            ) : (
+                groups.map((group) => {
+                    return (
+                        <>
                             <ListItemLink sx={{ padding: 0 }} key={group.id} to={`/groups/${group.id}`}>
                                 <ListItemText
                                     primary={group.name}
@@ -57,7 +36,7 @@ const GList: React.FC<{ groups: Group[] }> = ({ groups }) => {
                                                     <br />
                                                 </>
                                             )}
-                                            {t("common.lastChangedWithTime", {
+                                            {t("groups.list.lastUpdateAt", {
                                                 datetime: DateTime.fromISO(group.last_changed).toLocaleString(
                                                     DateTime.DATETIME_FULL
                                                 ),
@@ -65,28 +44,13 @@ const GList: React.FC<{ groups: Group[] }> = ({ groups }) => {
                                         </>
                                     }
                                 />
-                                <ListItemSecondaryAction>
-                                    <IconButton
-                                        edge="end"
-                                        aria-label="delete-group"
-                                        onClick={() => openGroupDeletionModal(group.id)}
-                                    >
-                                        <Delete />
-                                    </IconButton>
-                                </ListItemSecondaryAction>
                             </ListItemLink>
-                        );
-                    })
-                )}
-            </List>
-            {groupToDelete != null && (
-                <GroupDeleteModal
-                    show={groupToDelete != null}
-                    onClose={closeGroupDeletionModal}
-                    groupToDelete={groupToDelete}
-                />
+                            {isSmallScreen && <Divider component="li" />}
+                        </>
+                    );
+                })
             )}
-        </>
+        </List>
     );
 };
 

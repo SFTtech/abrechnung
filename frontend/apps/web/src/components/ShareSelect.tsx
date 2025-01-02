@@ -194,6 +194,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
         }
         return nAccs;
     }, 0);
+    const nSelected = nSelectedEvents + nSelectedPeople;
     const showSearch = !isSmallScreen && unfilteredAccounts.length > 5;
 
     const handleAccountShareChange = (accountId: number, shareValue: number) => {
@@ -207,9 +208,21 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
         }
     };
 
+    const handleSelectAll = () => {
+        if (nSelected === accounts.length) {
+            onChange?.({});
+        } else {
+            const newVal: TransactionShare = accounts.reduce<TransactionShare>((shares, account) => {
+                shares[account.id] = 1;
+                return shares;
+            }, {});
+            onChange?.(newVal);
+        }
+    };
+
     return (
         <div>
-            <Grid container direction="row" justifyContent="space-between">
+            <Grid container direction={isSmallScreen ? "column" : "row"} justifyContent="space-between">
                 <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "0.5em", marginY: 1 }}>
                     <Typography variant="subtitle1">{label}</Typography>
                     {nSelectedPeople > 0 && (
@@ -284,28 +297,36 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                                         value={searchValue}
                                         onChange={(e) => setSearchValue(e.target.value)}
                                         variant="standard"
-                                        InputProps={{
-                                            startAdornment: (
-                                                <InputAdornment position="start">
-                                                    <SearchIcon />
-                                                </InputAdornment>
-                                            ),
-                                            endAdornment: (
-                                                <InputAdornment position="end">
-                                                    <IconButton
-                                                        aria-label="clear search input"
-                                                        onClick={(e) => setSearchValue("")}
-                                                        edge="end"
-                                                    >
-                                                        <ClearIcon />
-                                                    </IconButton>
-                                                </InputAdornment>
-                                            ),
+                                        slotProps={{
+                                            input: {
+                                                startAdornment: (
+                                                    <InputAdornment position="start">
+                                                        <SearchIcon />
+                                                    </InputAdornment>
+                                                ),
+                                                endAdornment: (
+                                                    <InputAdornment position="end">
+                                                        <IconButton
+                                                            aria-label="clear search input"
+                                                            onClick={(e) => setSearchValue("")}
+                                                            edge="end"
+                                                        >
+                                                            <ClearIcon />
+                                                        </IconButton>
+                                                    </InputAdornment>
+                                                ),
+                                            },
                                         }}
                                     />
                                 )}
                             </TableCell>
-                            <TableCell width="100px">{t("common.shares")}</TableCell>
+                            <TableCell width="100px">
+                                <FormControlLabel
+                                    control={<Checkbox onChange={handleSelectAll} />}
+                                    checked={nSelected === accounts.length}
+                                    label={t("common.shares")}
+                                />
+                            </TableCell>
                             {additionalShareInfoHeader ?? null}
                         </TableRow>
                     </TableHead>

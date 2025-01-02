@@ -104,13 +104,14 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                                 }}
                                 startAdornment={
                                     <InputAdornment position="start">
-                                        <SearchIcon sx={{ color: "action.active" }} />
+                                        <SearchIcon />
                                     </InputAdornment>
                                 }
                                 endAdornment={
                                     <InputAdornment position="end">
                                         <IconButton
                                             aria-label="clear search input"
+                                            sx={{ padding: 0, margin: 0 }}
                                             onClick={() => setSearchValue("")}
                                             edge="end"
                                         >

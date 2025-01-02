@@ -100,7 +100,7 @@ export const TransactionMetadata: React.FC<Props> = ({
 
     return (
         <Grid container>
-            <Grid item xs={transaction.is_wip || hasAttachments ? 6 : 12}>
+            <Grid item md={transaction.is_wip || hasAttachments ? 6 : 12} xs={12}>
                 <TextInput
                     label={t("common.name")}
                     name="name"
@@ -140,8 +140,10 @@ export const TransactionMetadata: React.FC<Props> = ({
                     value={transaction.value}
                     isCurrency={true}
                     disabled={!transaction.is_wip}
-                    InputProps={{
-                        endAdornment: <InputAdornment position="end">{transaction.currency_symbol}</InputAdornment>,
+                    slotProps={{
+                        input: {
+                            endAdornment: <InputAdornment position="end">{transaction.currency_symbol}</InputAdornment>,
+                        },
                     }}
                 />
                 <DateInput
@@ -181,7 +183,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                     helperText={validationErrors.fieldErrors.creditor_shares}
                 />
 
-                {/* {transaction.type === "transfer" && (
+                {transaction.type === "transfer" && (
                     <AccountSelect
                         margin="normal"
                         groupId={groupId}
@@ -197,11 +199,11 @@ export const TransactionMetadata: React.FC<Props> = ({
                         error={!!validationErrors.fieldErrors.debitor_shares}
                         helperText={validationErrors.fieldErrors.debitor_shares}
                     />
-                )} */}
+                )}
             </Grid>
 
             {(transaction.is_wip || hasAttachments) && (
-                <Grid item xs={6}>
+                <Grid item xs={12} md={6}>
                     <FileGallery groupId={groupId} transaction={transaction} />
                 </Grid>
             )}

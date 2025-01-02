@@ -49,8 +49,8 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
             disableClearable
             className={className}
             onChange={(event, newValue: Account) => onChange(newValue)}
-            renderOption={(props, account) => (
-                <Box component="li" {...props}>
+            renderOption={({ key, ...props }, account) => (
+                <Box component="li" key={key} {...props}>
                     {getAccountIcon(account.type)}
                     <Box sx={{ ml: 1, display: "flex", flexDirection: "column" }}>
                         <Typography variant="body2" component="span">

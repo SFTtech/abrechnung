@@ -59,7 +59,8 @@
             "options": {
                 "buildTarget": "web:build",
                 "hmr": true,
-                "host": "0.0.0.0"
+                "host": "0.0.0.0",
+                "proxyConfig": "apps/web/proxy.conf.json"
             },
             "configurations": {
                 "development": {

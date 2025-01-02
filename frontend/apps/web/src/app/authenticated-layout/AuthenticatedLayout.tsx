@@ -184,7 +184,7 @@ export const AuthenticatedLayout: React.FC = () => {
     };
 
     return (
-        <Box sx={{ display: "flex" }}>
+        <Box sx={{ display: "flex", overflow: "hidden" }}>
             <CssBaseline />
             <AppBar
                 position="fixed"
@@ -284,12 +284,12 @@ export const AuthenticatedLayout: React.FC = () => {
                 component="main"
                 sx={{
                     flexGrow: 1,
-                    width: { sm: `calc(100% - ${drawerWidth}px)` },
+                    width: { sm: `calc(100vw - ${drawerWidth}px)`, md: "100vw" },
                 }}
             >
                 <Toolbar />
                 <Banner />
-                <Container maxWidth="lg" sx={{ padding: { xs: 0, md: 1, lg: 3 } }}>
+                <Container maxWidth="lg" sx={{ padding: { xs: 0, md: 1, lg: 3 }, overflow: "auto" }}>
                     <React.Suspense fallback={<Loading />}>
                         <Outlet />
                     </React.Suspense>

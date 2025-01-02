@@ -90,8 +90,8 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                     {isSmallScreen ? (
                         <List>
                             {personalAccounts.map((account) => (
-                                <>
-                                    <ListItemLink key={account.id} to={`/groups/${group.id}/accounts/${account.id}`}>
+                                <div key={account.id}>
+                                    <ListItemLink to={`/groups/${group.id}/accounts/${account.id}`}>
                                         <ListItemText primary={account.name} />
                                         <Typography
                                             align="right"
@@ -106,8 +106,8 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                             {formatCurrency(balances[account.id]?.balance, group.currency_symbol)}
                                         </Typography>
                                     </ListItemLink>
-                                    <Divider key={account.id * 2} component="li" />
-                                </>
+                                    <Divider component="li" />
+                                </div>
                             ))}
                         </List>
                     ) : (

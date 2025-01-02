@@ -74,7 +74,8 @@
             "header": "Groups",
             "archivedGroups": "Archived",
             "guestUserDisclaimer": "You are a guest user on this Abrechnung and therefore not permitted to create new groups.",
-            "noGroups": "No Groups"
+            "noGroups": "No Groups",
+            "lastUpdateAt": "last update: {{datetime}}"
         },
         "log": {
             "tabTitle": "{{groupName}} - Activity",

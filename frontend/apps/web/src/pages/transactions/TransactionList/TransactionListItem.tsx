@@ -35,10 +35,10 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
     }
 
     const creditorNames = Object.keys(transaction.creditor_shares)
-        .map((accountId) => accounts[Number(accountId)].name)
+        .map((accountId) => accounts[Number(accountId)]?.name)
         .join(", ");
     const debitorNames = Object.keys(transaction.debitor_shares)
-        .map((accountId) => accounts[Number(accountId)].name)
+        .map((accountId) => accounts[Number(accountId)]?.name)
         .join(", ");
 
     return (
