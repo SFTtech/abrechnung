@@ -1,0 +1,22 @@
+{
+    "short_name": "Abrechnung",
+    "name": "Abrechnung",
+    "icons": [
+        {
+            "src": "favicon.png",
+            "sizes": "248x248",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/logo.svg",
+            "sizes": "256x256",
+            "type": "image/svg+xml"
+        }
+    ],
+    "id": "/?source=pwa",
+    "start_url": "/?source=pwa",
+    "scope": "/",
+    "display": "standalone",
+    "theme_color": "#000000",
+    "background_color": "#ffffff"
+}
