@@ -149,7 +149,8 @@
             "header": "Групи",
             "noGroups": "Немає груп",
             "archivedGroups": "Архівовано",
-            "guestUserDisclaimer": "Ви є гостем у цьому Abrechnung, тому вам не дозволено створювати нові групи."
+            "guestUserDisclaimer": "Ви є гостем у цьому Abrechnung, тому вам не дозволено створювати нові групи.",
+            "lastUpdateAt": "останнє оновлення: {{datetime}}"
         },
         "log": {
             "tabTitle": "{{groupName}} - діяльність",
