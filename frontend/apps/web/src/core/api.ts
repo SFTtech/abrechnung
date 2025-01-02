@@ -1,9 +1,6 @@
 import { AbrechnungWebSocket, Api, IConnectionStatusProvider } from "@abrechnung/api";
 
-export const siteHost =
-    !process.env["NODE_ENV"] || process.env["NODE_ENV"] === "development"
-        ? `${window.location.hostname}:8080`
-        : window.location.host;
+export const siteHost = window.location.host;
 export const baseURL = `${window.location.protocol}//${siteHost}`;
 console.log("API Base URL", baseURL);
 

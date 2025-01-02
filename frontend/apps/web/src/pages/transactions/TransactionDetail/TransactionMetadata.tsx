@@ -16,7 +16,7 @@ import * as React from "react";
 import { typeToFlattenedError, z } from "zod";
 import { FileGallery } from "./FileGallery";
 import { useTranslation } from "react-i18next";
-import { useFormatCurrency } from "@/hooks";
+import { useFormatCurrency, useIsSmallScreen } from "@/hooks";
 
 interface Props {
     groupId: number;
@@ -34,39 +34,46 @@ export const TransactionMetadata: React.FC<Props> = ({
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
     const dispatch = useAppDispatch();
+    const isSmallScreen = useIsSmallScreen();
     const hasAttachments = useAppSelector((state) => selectTransactionHasFiles(state, groupId, transaction.id));
     const hasPositions = useAppSelector((state) => selectTransactionHasPositions(state, groupId, transaction.id));
     const balanceEffect = useAppSelector((state) => selectTransactionBalanceEffect(state, groupId, transaction.id));
 
     const renderShareInfo = React.useCallback(
-        ({ account }: { account: Account }) =>
-            showPositions || hasPositions ? (
-                <>
-                    <TableCell align="right">
-                        {formatCurrency(balanceEffect[account.id]?.positions ?? 0, transaction.currency_symbol)}
-                    </TableCell>
-                    <TableCell></TableCell>
-                    <TableCell align="right">
-                        {formatCurrency(balanceEffect[account.id]?.commonDebitors ?? 0, transaction.currency_symbol)}
-                    </TableCell>
-                    <TableCell></TableCell>
-                    <TableCell width="100px" align="right">
-                        {formatCurrency(
-                            (balanceEffect[account.id]?.commonDebitors ?? 0) +
-                                (balanceEffect[account.id]?.positions ?? 0),
-                            transaction.currency_symbol
-                        )}
-                    </TableCell>
-                </>
-            ) : (
+        ({ account }: { account: Account }) => {
+            const total = formatCurrency(
+                (balanceEffect[account.id]?.commonDebitors ?? 0) + (balanceEffect[account.id]?.positions ?? 0),
+                transaction.currency_symbol
+            );
+
+            if ((showPositions || hasPositions) && !isSmallScreen) {
+                return (
+                    <>
+                        <TableCell align="right">
+                            {formatCurrency(balanceEffect[account.id]?.positions ?? 0, transaction.currency_symbol)}
+                        </TableCell>
+                        <TableCell></TableCell>
+                        <TableCell align="right">
+                            {formatCurrency(
+                                balanceEffect[account.id]?.commonDebitors ?? 0,
+                                transaction.currency_symbol
+                            )}
+                        </TableCell>
+                        <TableCell></TableCell>
+                        <TableCell width="100px" align="right">
+                            {total}
+                        </TableCell>
+                    </>
+                );
+            }
+
+            return (
                 <TableCell width="100px" align="right">
-                    {formatCurrency(
-                        (balanceEffect[account.id]?.commonDebitors ?? 0) + (balanceEffect[account.id]?.positions ?? 0),
-                        transaction.currency_symbol
-                    )}
+                    {total}
                 </TableCell>
-            ),
-        [showPositions, hasPositions, transaction, balanceEffect, formatCurrency]
+            );
+        },
+        [showPositions, hasPositions, transaction, balanceEffect, formatCurrency, isSmallScreen]
     );
 
     const shouldDisplayAccount = React.useCallback(
@@ -220,18 +227,22 @@ export const TransactionMetadata: React.FC<Props> = ({
                         additionalShareInfoHeader={
                             showPositions || hasPositions ? (
                                 <>
-                                    <TableCell width="100px" align="right">
-                                        {t("transactions.positions.positions")}
-                                    </TableCell>
-                                    <TableCell width="3px" align="center">
-                                        +
-                                    </TableCell>
-                                    <TableCell width="100px" align="right">
-                                        {t("transactions.positions.sharedPlusRest")}
-                                    </TableCell>
-                                    <TableCell width="3px" align="center">
-                                        =
-                                    </TableCell>
+                                    {!isSmallScreen && (
+                                        <>
+                                            <TableCell width="100px" align="right">
+                                                {t("transactions.positions.positions")}
+                                            </TableCell>
+                                            <TableCell width="3px" align="center">
+                                                +
+                                            </TableCell>
+                                            <TableCell width="100px" align="right">
+                                                {t("transactions.positions.sharedPlusRest")}
+                                            </TableCell>
+                                            <TableCell width="3px" align="center">
+                                                =
+                                            </TableCell>
+                                        </>
+                                    )}
                                     <TableCell width="100px" align="right">
                                         {t("common.total")}
                                     </TableCell>
