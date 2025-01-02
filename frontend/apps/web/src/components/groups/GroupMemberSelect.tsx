@@ -57,5 +57,3 @@ export const GroupMemberSelect: React.FC<Props> = ({
         />
     );
 };
-
-export default GroupMemberSelect;

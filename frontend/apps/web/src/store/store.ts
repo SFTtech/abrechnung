@@ -4,6 +4,7 @@ import { getAbrechnungReducer } from "@abrechnung/redux";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { settingsReducer } from "./settingsSlice";
 import localForage from "localforage";
+import { api } from "@/core/generated/api";
 
 /**
  * Persist you redux state using IndexedDB
@@ -21,7 +22,10 @@ const storage = (dbName: string) => {
     };
 };
 
-const rootReducer = getAbrechnungReducer(storage("abrechnung"), { settings: settingsReducer });
+const rootReducer = getAbrechnungReducer(storage("abrechnung"), {
+    settings: settingsReducer,
+    [api.reducerPath]: api.reducer,
+});
 
 export const store = configureStore({
     reducer: rootReducer,
@@ -29,7 +33,7 @@ export const store = configureStore({
         getDefaultMiddleware({
             serializableCheck: false,
             immutableCheck: false,
-        }),
+        }).concat(api.middleware),
 });
 export const persistor = persistStore(store);
 

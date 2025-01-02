@@ -70,6 +70,7 @@
     "groups": {
         "addGroup": "Add Group",
         "create": {
+            "title": "Create Group",
             "addUserAccountOnJoinDescription": "Automatically add accounts for newly joined group members"
         },
         "delete": {

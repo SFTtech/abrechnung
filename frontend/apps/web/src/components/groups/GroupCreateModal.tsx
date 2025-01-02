@@ -21,7 +21,7 @@ type FormValues = z.infer<typeof validationSchema>;
 const initialValues: FormValues = {
     name: "",
     description: "",
-    addUserAccountOnJoin: true,
+    addUserAccountOnJoin: false,
 };
 
 interface Props {
@@ -61,7 +61,7 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
 
     return (
         <Dialog open={show} onClose={(_, reason) => onClose(reason)}>
-            <DialogTitle>Create Group</DialogTitle>
+            <DialogTitle>{t("groups.create.title")}</DialogTitle>
             <DialogContent>
                 <form onSubmit={handleSubmit(onSubmit)}>
                     <FormTextField

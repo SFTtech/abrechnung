@@ -3,7 +3,7 @@ import { UnknownAction, ThunkDispatch } from "@reduxjs/toolkit";
 import React from "react";
 import { useDispatch } from "react-redux";
 import { fetchAccount } from "../accounts";
-import { fetchGroupInvites, fetchGroupLog, fetchGroupMembers, fetchGroups } from "../groups";
+import { fetchGroupLog, fetchGroupMembers, fetchGroups } from "../groups";
 import { subscribe, unsubscribe } from "../subscriptions";
 import { fetchTransaction } from "../transactions";
 import { IRootState, Subscription } from "../types";
@@ -59,9 +59,6 @@ export const AbrechnungUpdateProvider: React.FC<IAbrechnungUpdateProvider> = ({ 
                     break;
                 case "group_member":
                     dispatch(fetchGroupMembers({ api, groupId: notificationPayload.groupId }));
-                    break;
-                case "group_invite":
-                    dispatch(fetchGroupInvites({ api, groupId: notificationPayload.groupId }));
                     break;
                 case "group_log":
                     dispatch(fetchGroupLog({ api, groupId: notificationPayload.groupId }));

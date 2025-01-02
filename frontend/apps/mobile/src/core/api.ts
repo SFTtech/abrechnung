@@ -1,4 +1,5 @@
 import { AbrechnungWebSocket, Api, IConnectionStatusProvider } from "@abrechnung/api";
+import type { BaseQueryApi, BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query/react";
 // import { fetch as fetchNetworkState } from "@react-native-community/netinfo";
 
 export const connectionStatusProvider: IConnectionStatusProvider = {

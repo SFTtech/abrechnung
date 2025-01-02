@@ -4,12 +4,12 @@ import { DateTimePicker } from "@mui/x-date-pickers";
 import { DateTime } from "luxon";
 import React from "react";
 import { toast } from "react-toastify";
-import { api } from "@/core/api";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { FormCheckbox, FormTextField } from "@abrechnung/components";
 import { useTranslation } from "react-i18next";
+import { useCreateInviteMutation } from "@/core/generated/api";
 
 interface Props {
     group: Group;
@@ -34,27 +34,28 @@ const nowPlusOneHour = () => {
 
 export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
     const { t } = useTranslation();
+
+    const [createInvite] = useCreateInviteMutation();
     const { control, handleSubmit } = useForm<FormValues>({
         resolver: zodResolver(validationSchema),
         defaultValues: {
             description: "",
             validUntil: nowPlusOneHour().toISO(),
             singleUse: false,
-            joinAsEditor: false,
+            joinAsEditor: true,
         },
     });
 
     const onSubmit = (values: FormValues) => {
-        api.client.groups
-            .createInvite({
-                groupId: group.id,
-                requestBody: {
-                    description: values.description,
-                    valid_until: values.validUntil,
-                    single_use: values.singleUse,
-                    join_as_editor: values.joinAsEditor,
-                },
-            })
+        createInvite({
+            groupId: group.id,
+            createInvitePayload: {
+                description: values.description,
+                valid_until: values.validUntil,
+                single_use: values.singleUse,
+                join_as_editor: values.joinAsEditor,
+            },
+        })
             .then(() => {
                 toast.success(t("groups.invites.createdSuccessfully"));
                 onClose({}, "completed");
@@ -125,5 +126,3 @@ export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
         </Dialog>
     );
 };
-
-export default InviteLinkCreate;

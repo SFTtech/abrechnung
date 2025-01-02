@@ -27,11 +27,6 @@ const initializeGroupState = (state: Draft<GroupSliceState>, groupId: number) =>
             ids: [],
         },
         groupMembersStatus: "loading",
-        groupInvites: {
-            byId: {},
-            ids: [],
-        },
-        groupInvitesStatus: "loading",
         groupLog: {
             byId: {},
             ids: [],
@@ -111,17 +106,6 @@ export const selectGroupMemberStatus = (state: IRootState, groupId: number): Sta
         return undefined;
     }
     return state.groups.byGroupId[groupId].groupMembersStatus;
-};
-
-export const selectGroupInvites = createSelector(selectGroupSlice, (s: GroupInfo): GroupInvite[] => {
-    return s.groupInvites.ids.map((id) => s.groupInvites.byId[id]);
-});
-
-export const selectGroupInviteStatus = (state: IRootState, groupId: number): StateStatus | undefined => {
-    if (state.groups.byGroupId[groupId] === undefined) {
-        return undefined;
-    }
-    return state.groups.byGroupId[groupId].groupInvitesStatus;
 };
 
 export const selectGroupLogs = createSelector(selectGroupSlice, (s: GroupInfo): GroupLog[] => {
@@ -204,25 +188,6 @@ export const fetchGroupLog = createAsyncThunk<GroupLog[], { groupId: number; api
     // }
 );
 
-export const fetchGroupInvites = createAsyncThunk<GroupInvite[], { groupId: number; api: Api }, { state: IRootState }>(
-    "fetchGroupInvites",
-    async ({ groupId, api }) => {
-        return await api.client.groups.listInvites({ groupId });
-    }
-    // {
-    //     condition: ({ groupId }, { getState }): boolean => {
-    //         const state = getState();
-    //         if (
-    //             state.groups.byGroupId[groupId] !== undefined &&
-    //             state.groups.byGroupId[groupId].groupInvitesStatus === "initialized"
-    //         ) {
-    //             return false;
-    //         }
-    //         return true;
-    //     },
-    // }
-);
-
 export const updateGroup = createAsyncThunk<
     Group,
     { group: GroupPayload & { id: number }; api: Api },
@@ -245,14 +210,6 @@ export const updateGroupMemberPrivileges = createAsyncThunk<
             can_write: permissions.canWrite,
         },
     });
-});
-
-export const deleteGroupInvite = createAsyncThunk<
-    void,
-    { groupId: number; inviteId: number; api: Api },
-    { state: IRootState }
->("deleteGroupInvite", async ({ groupId, inviteId, api }) => {
-    await api.client.groups.deleteInvite({ groupId, inviteId });
 });
 
 const groupSlice = createSlice({
@@ -295,19 +252,6 @@ const groupSlice = createSlice({
 
             state.byGroupId[groupId].groupMembersStatus = "initialized";
         });
-        builder.addCase(fetchGroupInvites.fulfilled, (state, action) => {
-            const { groupId } = action.meta.arg;
-            const invites = action.payload;
-            const membersById = invites.reduce<{ [k: number]: GroupInvite }>((byId, invite) => {
-                byId[invite.id] = invite;
-                return byId;
-            }, {});
-            const inviteIds = invites.map((invite) => invite.id);
-            state.byGroupId[groupId].groupInvites.byId = membersById;
-            state.byGroupId[groupId].groupInvites.ids = inviteIds;
-
-            state.byGroupId[groupId].groupInvitesStatus = "initialized";
-        });
         builder.addCase(fetchGroupLog.fulfilled, (state, action) => {
             const { groupId } = action.meta.arg;
             const logs = action.payload;
@@ -339,13 +283,6 @@ const groupSlice = createSlice({
             }
             // we assume that the member id is already in the id list
             state.byGroupId[groupId].groupMembers.byId[member.user_id] = member;
-        });
-        builder.addCase(deleteGroupInvite.fulfilled, (state, action) => {
-            const { groupId, inviteId } = action.meta.arg;
-            if (state.byGroupId[groupId] === undefined) {
-                return;
-            }
-            removeEntity(state.byGroupId[groupId].groupInvites, inviteId);
         });
         builder.addCase(createGroup.fulfilled, (state, action) => {
             const group = action.payload;

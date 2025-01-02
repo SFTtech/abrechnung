@@ -56,11 +56,6 @@ export interface GroupInfo {
         ids: number[];
     };
     groupMembersStatus: StateStatus;
-    groupInvites: {
-        byId: { [k: number]: GroupInvite };
-        ids: number[];
-    };
-    groupInvitesStatus: StateStatus;
     groupLog: {
         byId: { [k: number]: GroupLog };
         ids: number[];

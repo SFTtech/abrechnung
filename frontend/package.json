@@ -93,6 +93,7 @@
         "@react-native/eslint-config": "0.76.5",
         "@react-native/metro-config": "0.76.5",
         "@react-native/typescript-config": "0.76.5",
+        "@rtk-query/codegen-openapi": "^2.0.0",
         "@svgr/webpack": "^8.1.0",
         "@swc-node/register": "~1.10.9",
         "@swc/cli": "~0.5.2",
