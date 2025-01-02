@@ -321,11 +321,16 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                                 )}
                             </TableCell>
                             <TableCell width="100px">
-                                <FormControlLabel
-                                    control={<Checkbox onChange={handleSelectAll} />}
-                                    checked={nSelected === accounts.length}
-                                    label={t("common.shares")}
-                                />
+                                {editable ? (
+                                    <FormControlLabel
+                                        control={<Checkbox onChange={handleSelectAll} />}
+                                        checked={nSelected === accounts.length}
+                                        disabled={!editable}
+                                        label={t("common.shares")}
+                                    />
+                                ) : (
+                                    t("common.shares")
+                                )}
                             </TableCell>
                             {additionalShareInfoHeader ?? null}
                         </TableRow>

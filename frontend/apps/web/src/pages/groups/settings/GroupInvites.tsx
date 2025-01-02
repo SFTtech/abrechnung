@@ -22,6 +22,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 import { Navigate } from "react-router";
 import { Group } from "@abrechnung/api";
+import { useFormatDatetime } from "@/hooks";
 
 interface GroupInviteProps {
     group: Group;
@@ -35,10 +36,11 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
     const members = useAppSelector((state) => selectGroupMembers(state, group.id));
     const permissions = useCurrentUserPermissions(group.id);
     const invitesLoadingStatus = useAppSelector((state) => selectGroupInviteStatus(state, group.id));
+    const formatDatetime = useFormatDatetime();
 
     const isGuest = useAppSelector(selectIsGuestUser);
 
-    useTitle(t("groups.invites.tabTitle", "", { groupName: group?.name }));
+    useTitle(t("groups.invites.tabTitle", { groupName: group?.name }));
 
     useEffect(() => {
         dispatch(fetchGroupInvites({ groupId: group.id, api }));
@@ -139,10 +141,7 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
                                     secondary={
                                         <>
                                             {invite.description}, created by {getMemberUsername(invite.created_by)},
-                                            valid until{" "}
-                                            {DateTime.fromISO(invite.valid_until).toLocaleString(
-                                                DateTime.DATETIME_FULL
-                                            )}
+                                            valid until {formatDatetime(invite.valid_until, "full")}
                                             {invite.single_use && ", single use"}
                                             {invite.join_as_editor && ", join as editor"}
                                         </>

@@ -157,7 +157,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                     <TagSelector
                         margin="dense"
                         fullWidth
-                        label={t("common.tag", "", { count: 2 })}
+                        label={t("common.tag", { count: 2 })}
                         groupId={groupId}
                         value={transaction.tags || []}
                         editable={transaction.is_wip}

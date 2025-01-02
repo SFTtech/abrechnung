@@ -41,36 +41,35 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
     }
 
     return (
-        <ListItem sx={{ padding: 0 }} key={account.id}>
-            <ListItemLink
-                to={getAccountLink(groupId, account.type, account.id)}
-                secondaryAction={
-                    isGroupWritable && (
-                        <>
-                            <IconButton color="primary" onClick={edit}>
-                                <Edit />
-                            </IconButton>
-                            <IconButton color="error" onClick={() => setAccountToDelete(account)}>
-                                <Delete />
-                            </IconButton>
-                        </>
-                    )
+        <ListItemLink
+            key={account.id}
+            to={getAccountLink(groupId, account.type, account.id)}
+            secondaryAction={
+                isGroupWritable && (
+                    <>
+                        <IconButton color="primary" onClick={edit}>
+                            <Edit />
+                        </IconButton>
+                        <IconButton color="error" onClick={() => setAccountToDelete(account)}>
+                            <Delete />
+                        </IconButton>
+                    </>
+                )
+            }
+        >
+            <ListItemText
+                slotProps={{ primary: { component: "div" }, secondary: { component: "div" } }}
+                primary={
+                    <div>
+                        {account.is_wip && (
+                            <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 1 }} />
+                        )}
+                        <span>{account.name}</span>
+                        {owningUserInfo}
+                    </div>
                 }
-            >
-                <ListItemText
-                    slotProps={{ primary: { component: "div" }, secondary: { component: "div" } }}
-                    primary={
-                        <div>
-                            {account.is_wip && (
-                                <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 1 }} />
-                            )}
-                            <span>{account.name}</span>
-                            {owningUserInfo}
-                        </div>
-                    }
-                    secondary={account.description}
-                />
-            </ListItemLink>
-        </ListItem>
+                secondary={account.description}
+            />
+        </ListItemLink>
     );
 };

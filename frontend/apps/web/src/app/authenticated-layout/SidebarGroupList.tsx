@@ -31,7 +31,7 @@ export const SidebarGroupList: React.FC<Props> = ({ activeGroupId }) => {
         <>
             <List sx={{ pt: 0 }}>
                 <ListItemLink to="/" sx={{ pt: 0, pb: 0 }}>
-                    <ListItemText secondary="Groups" />
+                    <ListItemText secondary={t("groups.list.header")} />
                 </ListItemLink>
                 {groups.map((it) => (
                     <ListItemLink

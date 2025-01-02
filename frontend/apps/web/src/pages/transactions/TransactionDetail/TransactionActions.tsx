@@ -89,7 +89,7 @@ export const TransactionActions: React.FC<Props> = ({
             <Dialog maxWidth="xs" aria-labelledby="confirmation-dialog-title" open={confirmDeleteDialogOpen}>
                 <DialogTitle id="confirmation-dialog-title">{t("transactions.confirmDeleteTransaction")}</DialogTitle>
                 <DialogContent dividers>
-                    {t("transactions.confirmDeleteTransactionInfo", "", { transaction })}
+                    {t("transactions.confirmDeleteTransactionInfo", { transaction })}
                 </DialogContent>
                 <DialogActions>
                     <Button autoFocus onClick={() => setConfirmDeleteDialogOpen(false)} color="primary">

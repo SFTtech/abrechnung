@@ -1,18 +1,16 @@
+import { useFormatCurrency } from "@/hooks";
 import { useTheme } from "@mui/material/styles";
 import * as React from "react";
 
-function pnlFormatter(value: number, currency_symbol: string) {
-    return `${value.toFixed(2)} ${currency_symbol}`;
-}
-
 interface CurrencyValueProps {
-    currency_symbol: string;
+    currencySymbol: string;
     value?: number;
     forceColor?: string;
 }
 
-const CurrencyValue = React.memo(({ currency_symbol, value = 0, forceColor }: CurrencyValueProps) => {
+const CurrencyValue = React.memo(({ currencySymbol, value = 0, forceColor }: CurrencyValueProps) => {
     const theme = useTheme();
+    const formatCurrency = useFormatCurrency();
 
     const positiveColor = theme.palette.mode === "light" ? theme.palette.success.dark : theme.palette.success.light;
     const negativeColor = theme.palette.mode === "light" ? theme.palette.error.dark : theme.palette.error.light;
@@ -28,18 +26,18 @@ const CurrencyValue = React.memo(({ currency_symbol, value = 0, forceColor }: Cu
                 textAlign: "end",
             }}
         >
-            {pnlFormatter(value, currency_symbol)}
+            {formatCurrency(value, currencySymbol)}
         </div>
     );
 });
 CurrencyValue.displayName = "CurrencyValue";
 
 export function renderCurrency(
-    currency_symbol: string,
+    currencySymbol: string,
     forceColor?: string
 ): (params: { value?: number }) => React.ReactNode {
     const component: React.FC<{ value?: number }> = (params) => {
-        return <CurrencyValue currency_symbol={currency_symbol} value={params.value} forceColor={forceColor} />;
+        return <CurrencyValue currencySymbol={currencySymbol} value={params.value} forceColor={forceColor} />;
     };
     component.displayName = "CurrencyValue";
     return component;

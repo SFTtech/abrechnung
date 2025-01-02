@@ -55,7 +55,7 @@ export const AddNewTagDialog: React.FC<Props> = ({ open, onCreate, onClose }) =>
                     value={tag}
                     error={error}
                     onKeyUp={onKeyUp}
-                    helperText={error ? "please input a tag name" : null}
+                    helperText={error ? t("common.tagNameRequiredError") : null}
                     onChange={handleChange}
                 />
             </DialogContent>

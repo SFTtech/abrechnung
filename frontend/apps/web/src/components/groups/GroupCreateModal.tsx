@@ -8,6 +8,7 @@ import { useAppDispatch } from "@/store";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormTextField } from "@abrechnung/components";
+import { useTranslation } from "react-i18next";
 
 const validationSchema = z.object({
     name: z.string({ required_error: "Name is required" }),
@@ -20,7 +21,7 @@ type FormValues = z.infer<typeof validationSchema>;
 const initialValues: FormValues = {
     name: "",
     description: "",
-    addUserAccountOnJoin: false,
+    addUserAccountOnJoin: true,
 };
 
 interface Props {
@@ -29,6 +30,7 @@ interface Props {
 }
 
 export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
+    const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const { control, handleSubmit } = useForm<FormValues>({
         resolver: zodResolver(validationSchema),
@@ -70,7 +72,7 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
                         variant="standard"
                         type="text"
                         name="name"
-                        label="Group Name"
+                        label={t("common.name")}
                         control={control}
                     />
                     <FormTextField
@@ -79,11 +81,11 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
                         variant="standard"
                         type="text"
                         name="description"
-                        label="Description"
+                        label={t("common.description")}
                         control={control}
                     />
                     <FormControlLabel
-                        label="Automatically add accounts for newly joined group members"
+                        label={t("groups.create.addUserAccountOnJoinDescription")}
                         control={
                             <Controller
                                 name="addUserAccountOnJoin"
@@ -94,10 +96,10 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
                     />
                     <DialogActions>
                         <Button type="submit" color="primary">
-                            Save
+                            {t("common.save")}
                         </Button>
                         <Button color="error" onClick={() => onClose("closeButton")}>
-                            Cancel
+                            {t("common.cancel")}
                         </Button>
                     </DialogActions>
                 </form>

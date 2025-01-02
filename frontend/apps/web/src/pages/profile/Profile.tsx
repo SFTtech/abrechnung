@@ -4,13 +4,14 @@ import { useTitle } from "@/core/utils";
 import { useAppSelector } from "@/store";
 import { selectProfile } from "@abrechnung/redux";
 import { Alert, List, ListItem, ListItemText, Typography } from "@mui/material";
-import { DateTime } from "luxon";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import { useFormatDatetime } from "@/hooks";
 
 export const Profile: React.FC = () => {
     const { t } = useTranslation();
     const profile = useAppSelector(selectProfile);
+    const formatDatetime = useFormatDatetime();
     useTitle(t("profile.index.tabTitle"));
 
     return (
@@ -33,9 +34,7 @@ export const Profile: React.FC = () => {
                         <ListItem>
                             <ListItemText
                                 primary={t("profile.index.registered")}
-                                secondary={DateTime.fromISO(profile.registered_at).toLocaleString(
-                                    DateTime.DATETIME_FULL
-                                )}
+                                secondary={formatDatetime(profile.registered_at, "full")}
                             />
                         </ListItem>
                     </List>

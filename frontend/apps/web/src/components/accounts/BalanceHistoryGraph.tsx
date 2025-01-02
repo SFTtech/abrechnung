@@ -15,6 +15,7 @@ import React from "react";
 import { useNavigate } from "react-router";
 import { ClearingAccountIcon, PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 import { useTranslation } from "react-i18next";
+import { useFormatCurrency } from "@/hooks";
 
 interface Props {
     groupId: number;
@@ -30,6 +31,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
     const transactionMap = useAppSelector((state) => selectTransactionByIdMap(state, groupId));
     const accounts = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
     const balanceHistory = useAppSelector((state) => selectAccountBalanceHistory(state, groupId, accountId));
+    const formatCurrency = useFormatCurrency();
 
     const { graphData, seriesColors, areaBaselineValue } = React.useMemo(() => {
         const { hasNegativeEntries, hasPositiveEntries, max, min } = balanceHistory.reduce(
@@ -126,7 +128,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
                             ml: 2,
                         }}
                     >
-                        {(point.data.y as number).toFixed(2)} {currency_symbol}
+                        {formatCurrency(point.data.y as number, currency_symbol)}
                     </Typography>
                 </div>
                 <Divider />
@@ -164,7 +166,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
                 pointLabel={(p) => `${toISODateString(p.data.x as Date)}: ${p.data.y}`}
                 useMesh={true}
                 axisLeft={{
-                    format: (value: number) => `${value.toFixed(2)} ${currency_symbol}`,
+                    format: (value: number) => formatCurrency(value, currency_symbol),
                 }}
                 axisBottom={{
                     tickValues: 4,

@@ -40,7 +40,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
     const colorGreenInverted = theme.palette.mode === "dark" ? theme.palette.success.light : theme.palette.success.dark;
     const colorRedInverted = theme.palette.mode === "dark" ? theme.palette.error.light : theme.palette.error.dark;
 
-    useTitle(t("accounts.balances.tabTitle", "", { groupName: group?.name }));
+    useTitle(t("accounts.balances.tabTitle", { groupName: group?.name }));
 
     if (!group) {
         return <Navigate to="/404" />;

@@ -1,13 +1,13 @@
 import { selectTransactionBalanceEffect, useGroupCurrencySymbol } from "@abrechnung/redux";
 import { HelpOutline } from "@mui/icons-material";
 import { Chip, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
-import { DateTime } from "luxon";
-import React from "react";
+import * as React from "react";
 import { balanceColor } from "@/core/utils";
 import { useAppSelector } from "@/store";
 import { ListItemLink, PurchaseIcon, TransferIcon } from "../style";
 import { useTranslation } from "react-i18next";
 import { Transaction } from "@abrechnung/types";
+import { useFormatCurrency, useFormatDatetime } from "@/hooks";
 
 interface Props {
     groupId: number;
@@ -18,7 +18,9 @@ interface Props {
 export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transaction, accountId }) => {
     const { t } = useTranslation();
     const balanceEffect = useAppSelector((state) => selectTransactionBalanceEffect(state, groupId, transaction.id));
-    const currency_symbol = useGroupCurrencySymbol(groupId);
+    const formatDatetime = useFormatDatetime();
+    const formatCurrency = useFormatCurrency();
+    const currencySymbol = useGroupCurrencySymbol(groupId);
 
     return (
         <ListItemLink to={`/groups/${groupId}/transactions/${transaction.id}`}>
@@ -48,7 +50,7 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transact
                         </Typography>
                     </>
                 }
-                secondary={DateTime.fromISO(transaction.billed_at).toLocaleString(DateTime.DATE_FULL)}
+                secondary={formatDatetime(transaction.billed_at, "date")}
             />
             <ListItemText>
                 <Typography align="right" variant="body2">
@@ -58,12 +60,12 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transact
                             color: (theme) => balanceColor(balanceEffect[accountId].total, theme),
                         }}
                     >
-                        {balanceEffect[accountId].total.toFixed(2)} {currency_symbol}
+                        {formatCurrency(balanceEffect[accountId].total, currencySymbol)}
                     </Typography>
                     <br />
                     <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
-                        {t("common.lastChangedWithTime", "", {
-                            datetime: DateTime.fromISO(transaction.last_changed).toLocaleString(DateTime.DATETIME_FULL),
+                        {t("common.lastChangedWithTime", {
+                            datetime: formatDatetime(transaction.last_changed, "full"),
                         })}
                     </Typography>
                 </Typography>
