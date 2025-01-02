@@ -10,7 +10,6 @@ import {
     IconButton,
     List,
     ListItem,
-    ListItemSecondaryAction,
     ListItemText,
     TextField,
     Typography,
@@ -92,7 +91,7 @@ export const SessionList: React.FC = () => {
     };
 
     const onKeyUp = (id: number) => (key: React.KeyboardEvent) => {
-        if (key.keyCode === 13) {
+        if (key.code === "Enter") {
             performRename(id);
         }
     };
@@ -109,7 +108,19 @@ export const SessionList: React.FC = () => {
                     {profile.sessions.map((session) => {
                         if (editedSessions[session.id] !== undefined) {
                             return (
-                                <ListItem key={session.id}>
+                                <ListItem
+                                    key={session.id}
+                                    secondaryAction={
+                                        <>
+                                            <Button onClick={() => performRename(session.id)}>
+                                                <Check />
+                                            </Button>
+                                            <Button onClick={() => stopEditSession(session.id)}>
+                                                <Close />
+                                            </Button>
+                                        </>
+                                    }
+                                >
                                     <TextField
                                         margin="normal"
                                         variant="standard"
@@ -118,19 +129,23 @@ export const SessionList: React.FC = () => {
                                         value={editedSessions[session.id]}
                                         onChange={(event) => handleEditChange(session.id, event.target.value)}
                                     />
-                                    <ListItemSecondaryAction>
-                                        <Button onClick={() => performRename(session.id)}>
-                                            <Check />
-                                        </Button>
-                                        <Button onClick={() => stopEditSession(session.id)}>
-                                            <Close />
-                                        </Button>
-                                    </ListItemSecondaryAction>
                                 </ListItem>
                             );
                         } else {
                             return (
-                                <ListItem key={session.id}>
+                                <ListItem
+                                    key={session.id}
+                                    secondaryAction={
+                                        <>
+                                            <IconButton onClick={() => editSession(session.id)}>
+                                                <Edit />
+                                            </IconButton>
+                                            <IconButton onClick={() => openDeleteSessionModal(session.id)}>
+                                                <Delete />
+                                            </IconButton>
+                                        </>
+                                    }
+                                >
                                     <ListItemText
                                         primary={session.name}
                                         secondary={
@@ -153,14 +168,6 @@ export const SessionList: React.FC = () => {
                                             </>
                                         }
                                     />
-                                    <ListItemSecondaryAction>
-                                        <IconButton onClick={() => editSession(session.id)}>
-                                            <Edit />
-                                        </IconButton>
-                                        <IconButton onClick={() => openDeleteSessionModal(session.id)}>
-                                            <Delete />
-                                        </IconButton>
-                                    </ListItemSecondaryAction>
                                 </ListItem>
                             );
                         }

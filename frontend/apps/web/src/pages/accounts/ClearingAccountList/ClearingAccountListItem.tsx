@@ -5,7 +5,7 @@ import { Group } from "@abrechnung/api";
 import { accountEditStarted, copyAccount, selectAccountIdToAccountMap, useIsGroupWritable } from "@abrechnung/redux";
 import { Account } from "@abrechnung/types";
 import { ContentCopy, Delete, Edit } from "@mui/icons-material";
-import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText, Typography } from "@mui/material";
+import { Chip, IconButton, ListItem, ListItemText, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import React from "react";
 import { useNavigate } from "react-router";
@@ -42,10 +42,27 @@ export const ClearingAccountListItem: React.FC<Props> = ({ group, account, setAc
 
     return (
         <ListItem sx={{ padding: 0 }} key={account.id}>
-            <ListItemLink sx={{ paddingRight: 17 }} to={getAccountLink(group.id, account.type, account.id)}>
+            <ListItemLink
+                sx={{ paddingRight: 17 }}
+                to={getAccountLink(group.id, account.type, account.id)}
+                secondaryAction={
+                    isGroupWritable && (
+                        <>
+                            <IconButton color="primary" onClick={edit}>
+                                <Edit />
+                            </IconButton>
+                            <IconButton color="primary" onClick={copy}>
+                                <ContentCopy />
+                            </IconButton>
+                            <IconButton color="error" onClick={() => setAccountToDelete(account)}>
+                                <Delete />
+                            </IconButton>
+                        </>
+                    )
+                }
+            >
                 <ListItemText
-                    primaryTypographyProps={{ component: "div" }}
-                    secondaryTypographyProps={{ component: "div" }}
+                    slotProps={{ primary: { component: "div" }, secondary: { component: "div" } }}
                     primary={
                         <>
                             {account.is_wip && (
@@ -71,19 +88,6 @@ export const ClearingAccountListItem: React.FC<Props> = ({ group, account, setAc
                     }
                 />
             </ListItemLink>
-            {isGroupWritable && (
-                <ListItemSecondaryAction>
-                    <IconButton color="primary" onClick={edit}>
-                        <Edit />
-                    </IconButton>
-                    <IconButton color="primary" onClick={copy}>
-                        <ContentCopy />
-                    </IconButton>
-                    <IconButton color="error" onClick={() => setAccountToDelete(account)}>
-                        <Delete />
-                    </IconButton>
-                </ListItemSecondaryAction>
-            )}
         </ListItem>
     );
 };

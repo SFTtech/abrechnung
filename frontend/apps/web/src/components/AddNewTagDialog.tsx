@@ -30,7 +30,7 @@ export const AddNewTagDialog: React.FC<Props> = ({ open, onCreate, onClose }) =>
     };
 
     const onKeyUp = (key: React.KeyboardEvent) => {
-        if (key.keyCode === 13) {
+        if (key.code === "Enter") {
             handleSave();
         }
     };

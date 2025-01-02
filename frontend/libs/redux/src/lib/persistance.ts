@@ -1,5 +1,5 @@
 import { combineReducers } from "@reduxjs/toolkit";
-import { Action, AnyAction, ReducersMapObject } from "redux";
+import { Action, UnknownAction, ReducersMapObject } from "redux";
 import { MigrationManifest, createMigrate, persistReducer, type Storage } from "redux-persist";
 import { accountMigrations, accountReducer, accountSliceVersion } from "./accounts";
 import { authMigrations, authReducer, authSliceVersion } from "./auth";
@@ -16,7 +16,7 @@ const getPersistConfig = (key: string, version: number, storage: Storage, migrat
     };
 };
 
-export const getAbrechnungReducer = <S, A extends Action = AnyAction>(
+export const getAbrechnungReducer = <S, A extends Action = UnknownAction>(
     persistStorage: Storage,
     additionalReducers: ReducersMapObject<S, A>
 ) => {

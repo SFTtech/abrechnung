@@ -10,7 +10,7 @@ import {
     useCurrentUserPermissions,
 } from "@abrechnung/redux";
 import { Add, ContentCopy, Delete } from "@mui/icons-material";
-import { Alert, Grid, IconButton, List, ListItem, ListItemText } from "@mui/material";
+import { Alert, Grid2 as Grid, IconButton, List, ListItem, ListItemText } from "@mui/material";
 import { DateTime } from "luxon";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";

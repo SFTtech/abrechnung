@@ -6,7 +6,7 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
-    Grid,
+    Grid2 as Grid,
     IconButton,
     LinearProgress,
 } from "@mui/material";
@@ -55,13 +55,13 @@ export const TransactionActions: React.FC<Props> = ({
     return (
         <>
             <Grid container justifyContent="space-between">
-                <Grid item sx={{ display: "flex", alignItems: "center" }}>
+                <Grid display="flex" alignItems="center">
                     <IconButton sx={{ display: { xs: "none", md: "inline-flex" } }} onClick={navigateBack}>
                         <ChevronLeft />
                     </IconButton>
                     <Chip color="primary" label={transactionTypeLabel} />
                 </Grid>
-                <Grid item>
+                <Grid>
                     {isGroupWritable && (
                         <>
                             {transaction.is_wip ? (

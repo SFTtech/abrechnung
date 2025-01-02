@@ -4,7 +4,7 @@ import { getAccountLink } from "@/utils";
 import { accountEditStarted, useIsGroupWritable } from "@abrechnung/redux";
 import { Account } from "@abrechnung/types";
 import { Delete, Edit } from "@mui/icons-material";
-import { Chip, IconButton, ListItem, ListItemSecondaryAction, ListItemText } from "@mui/material";
+import { Chip, IconButton, ListItem, ListItemText } from "@mui/material";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
@@ -42,10 +42,23 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
 
     return (
         <ListItem sx={{ padding: 0 }} key={account.id}>
-            <ListItemLink to={getAccountLink(groupId, account.type, account.id)}>
+            <ListItemLink
+                to={getAccountLink(groupId, account.type, account.id)}
+                secondaryAction={
+                    isGroupWritable && (
+                        <>
+                            <IconButton color="primary" onClick={edit}>
+                                <Edit />
+                            </IconButton>
+                            <IconButton color="error" onClick={() => setAccountToDelete(account)}>
+                                <Delete />
+                            </IconButton>
+                        </>
+                    )
+                }
+            >
                 <ListItemText
-                    primaryTypographyProps={{ component: "div" }}
-                    secondaryTypographyProps={{ component: "div" }}
+                    slotProps={{ primary: { component: "div" }, secondary: { component: "div" } }}
                     primary={
                         <div>
                             {account.is_wip && (
@@ -58,16 +71,6 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
                     secondary={account.description}
                 />
             </ListItemLink>
-            {isGroupWritable && (
-                <ListItemSecondaryAction>
-                    <IconButton color="primary" onClick={edit}>
-                        <Edit />
-                    </IconButton>
-                    <IconButton color="error" onClick={() => setAccountToDelete(account)}>
-                        <Delete />
-                    </IconButton>
-                </ListItemSecondaryAction>
-            )}
         </ListItem>
     );
 };

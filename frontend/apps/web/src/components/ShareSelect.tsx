@@ -10,7 +10,7 @@ import {
     Chip,
     Divider,
     FormControlLabel,
-    Grid,
+    Grid2 as Grid,
     IconButton,
     InputAdornment,
     Table,
@@ -73,8 +73,8 @@ const ShareSelectRow: React.FC<RowProps> = ({
                     to={getAccountLink(account.group_id, account.type, account.id)}
                 >
                     <Grid container direction="row" alignItems="center">
-                        <Grid item>{getAccountIcon(account.type)}</Grid>
-                        <Grid item sx={{ ml: 1, display: "flex", flexDirection: "column" }}>
+                        <Grid>{getAccountIcon(account.type)}</Grid>
+                        <Grid display="flex" flexDirection="column" sx={{ ml: 1 }}>
                             <Typography variant="body2" component="span">
                                 {account.name}
                             </Typography>

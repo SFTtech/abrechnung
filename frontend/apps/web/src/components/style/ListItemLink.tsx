@@ -1,17 +1,19 @@
 import React from "react";
 import { Link as RouterLink } from "react-router";
-import { ListItemButton, ListItemButtonProps } from "@mui/material";
+import { ListItem, ListItemButton, ListItemProps } from "@mui/material";
 
 type Props = {
     to: string;
     children: React.ReactNode;
     selected?: boolean;
-} & ListItemButtonProps;
+} & ListItemProps;
 
 export const ListItemLink: React.FC<Props> = ({ to, children, selected = false, ...props }) => {
     return (
-        <ListItemButton component={RouterLink} selected={selected} to={to} {...props}>
-            {children}
-        </ListItemButton>
+        <ListItem {...props} disablePadding>
+            <ListItemButton component={RouterLink} selected={selected} to={to}>
+                {children}
+            </ListItemButton>
+        </ListItem>
     );
 };

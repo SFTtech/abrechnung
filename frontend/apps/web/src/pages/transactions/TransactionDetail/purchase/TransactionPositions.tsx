@@ -18,7 +18,7 @@ import { Add } from "@mui/icons-material";
 import {
     Checkbox,
     FormControlLabel,
-    Grid,
+    Grid2 as Grid,
     IconButton,
     Table,
     TableBody,

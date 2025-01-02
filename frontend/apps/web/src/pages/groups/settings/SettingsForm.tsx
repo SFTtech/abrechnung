@@ -4,7 +4,7 @@ import { useAppDispatch } from "@/store";
 import { Group } from "@abrechnung/api";
 import { updateGroup, useCurrentUserPermissions } from "@abrechnung/redux";
 import { Cancel, Edit, Save } from "@mui/icons-material";
-import { Alert, Button, Checkbox, FormGroup, Grid } from "@mui/material";
+import { Alert, Button, Checkbox, FormGroup, Grid2 as Grid } from "@mui/material";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
