@@ -13,6 +13,7 @@
 - changed config structure to only include the reverse-proxy base_url once in the `api` section
 - removed frontend config via separate `config.json` in favour of configuration in the backend config yaml
 - drop python 3.10 support
+- add ubuntu 24.04 support and drop 22.04
 - remove react native mobile app in favour of mobile optimized PWA
 
 **Features**

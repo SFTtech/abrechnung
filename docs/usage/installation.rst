@@ -25,7 +25,7 @@ as well as static web assets in ``/usr/share/abrechnung_web`` are installed.
 
 The only remaining work to be done is to setup the database and customize the configuration (see :ref:`abrechnung-config`).
 
-Ubuntu Jammy
+Ubuntu Noble
 --------------------------------
 
 Follow the installation instructions for :ref:`Debian <abrechnung-installation-debian>`, just make sure to choose the correct

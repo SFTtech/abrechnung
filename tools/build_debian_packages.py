@@ -24,7 +24,7 @@ from typing import Optional, Sequence
 DISTS = (
     "debian:bookworm",
     "debian:trixie",
-    "ubuntu:jammy",  # 22.04
+    "ubuntu:noble",  # 24.04
 )
 
 DESC = """\
