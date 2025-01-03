@@ -2,7 +2,7 @@ import { GroupArchivedDisclaimer } from "@/components";
 import { BalanceTable } from "@/components/accounts/BalanceTable";
 import { ListItemLink, MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
-import { useFormatCurrency, useIsSmallScreen } from "@/hooks";
+import { useFormatCurrency, useGetAmountColor, useIsSmallScreen } from "@/hooks";
 import { useAppSelector } from "@/store";
 import {
     selectAccountBalances,
@@ -12,8 +12,7 @@ import {
     useSortedAccounts,
 } from "@abrechnung/redux";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-import { Alert, AlertTitle, Box, Button, Divider, List, ListItemText, Tab, Theme, Typography } from "@mui/material";
-import { useTheme } from "@mui/material/styles";
+import { Alert, AlertTitle, Box, Button, Divider, List, ListItemText, Tab, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, Link as RouterLink } from "react-router";
@@ -26,7 +25,6 @@ interface Props {
 export const Balances: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
-    const theme: Theme = useTheme();
     const isSmallScreen = useIsSmallScreen();
 
     const group = useGroup(groupId);
@@ -37,8 +35,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
 
     const [selectedTab, setSelectedTab] = useState("1");
 
-    const colorGreenInverted = theme.palette.mode === "dark" ? theme.palette.success.light : theme.palette.success.dark;
-    const colorRedInverted = theme.palette.mode === "dark" ? theme.palette.error.light : theme.palette.error.dark;
+    const getAmountColor = useGetAmountColor();
 
     useTitle(t("accounts.balances.tabTitle", { groupName: group?.name }));
 
@@ -78,7 +75,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                         variant="body2"
                                         component="span"
                                         sx={{
-                                            color: account.balance < 0 ? colorRedInverted : colorGreenInverted,
+                                            color: getAmountColor(account.balance),
                                         }}
                                     >
                                         {formatCurrency(account.balance, group.currency_symbol)}
@@ -97,10 +94,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                             align="right"
                                             variant="body2"
                                             sx={{
-                                                color:
-                                                    balances[account.id]?.balance < 0
-                                                        ? colorRedInverted
-                                                        : colorGreenInverted,
+                                                color: getAmountColor(balances[account.id].balance),
                                             }}
                                         >
                                             {formatCurrency(balances[account.id]?.balance, group.currency_symbol)}

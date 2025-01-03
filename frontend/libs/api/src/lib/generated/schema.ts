@@ -79,6 +79,13 @@ export namespace components.schemas {
         host_url: z.union([z.string(), z.null()]).optional(),
         deleted: z.boolean(),
     });
+    /** FrontendConfig */
+    export const FrontendConfig = z.object({
+        messages: z.union([z.array(components["schemas"]["ServiceMessage"]), z.null()]).optional(),
+        imprint_url: z.union([z.string(), z.null()]).optional(),
+        source_code_url: z.string(),
+        issue_tracker_url: z.string(),
+    });
     /** Group */
     export const Group = z.object({
         id: z.number().int(),
@@ -231,6 +238,17 @@ export namespace components.schemas {
         session_id: z.number().int(),
         name: z.string(),
     });
+    /** ServiceMessage */
+    export const ServiceMessage = z.object({
+        type: components["schemas"]["ServiceMessageType"],
+        title: z.union([z.string(), z.null()]).optional(),
+        body: z.string(),
+    });
+    /**
+     * ServiceMessageType
+     * @enum {string}
+     */
+    export const ServiceMessageType = z.enum(["info", "error", "warning", "success"]);
     /** Session */
     export const Session = z.object({
         id: z.number().int(),
@@ -1438,6 +1456,17 @@ export const operations = {
             },
         },
     },
+    get_frontend_config: {
+        /** Get Frontend Config */
+        responses: {
+            /** @description Successful Response */
+            200: {
+                content: {
+                    "application/json": components["schemas"]["FrontendConfig"],
+                },
+            },
+        },
+    },
 };
 
 export const paths = {
@@ -1590,5 +1619,9 @@ export const paths = {
     "/api/version": {
         /** Get Version */
         get: operations["get_version"],
+    },
+    "/api/config": {
+        /** Get Frontend Config */
+        get: operations["get_frontend_config"],
     },
 };

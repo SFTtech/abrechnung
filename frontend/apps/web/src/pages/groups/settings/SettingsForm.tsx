@@ -4,7 +4,7 @@ import { useAppDispatch } from "@/store";
 import { Group } from "@abrechnung/api";
 import { updateGroup, useCurrentUserPermissions } from "@abrechnung/redux";
 import { Cancel, Edit, Save } from "@mui/icons-material";
-import { Alert, Button, Checkbox, FormGroup, Grid2 as Grid } from "@mui/material";
+import { Alert, Button, Checkbox, FormGroup, Grid2 as Grid, Stack } from "@mui/material";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
@@ -152,20 +152,14 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
             <Grid container justifyContent="space-between" style={{ marginTop: 10 }}>
                 <div>
                     {permissions.can_write && isEditing && (
-                        <>
+                        <Stack spacing={1} direction="row">
                             <Button type="submit" variant="contained" color="primary" startIcon={<Save />}>
                                 {t("common.save")}
                             </Button>
-                            <Button
-                                variant="contained"
-                                color="error"
-                                onClick={stopEdit}
-                                startIcon={<Cancel />}
-                                sx={{ ml: 1 }}
-                            >
+                            <Button variant="contained" color="error" onClick={stopEdit} startIcon={<Cancel />}>
                                 {t("common.cancel")}
                             </Button>
-                        </>
+                        </Stack>
                     )}
                     {permissions.can_write && !isEditing && (
                         <Button variant="contained" color="primary" onClick={startEdit} startIcon={<Edit />}>

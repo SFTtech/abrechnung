@@ -1,5 +1,5 @@
 import { useGroup } from "@abrechnung/redux";
-import { List, ListItem, ListItemText, Typography } from "@mui/material";
+import { Divider, List, ListItem, ListItemText, Typography } from "@mui/material";
 import * as React from "react";
 import { Loading } from "@abrechnung/components";
 import { MobilePaper } from "@/components/style";
@@ -39,15 +39,18 @@ export const GroupActivity: React.FC<Props> = ({ groupId }) => {
                     <Loading />
                 ) : (
                     logs.map((logEntry) => (
-                        <ListItem key={logEntry.id}>
-                            <ListItemText
-                                primary={`${logEntry.type} - ${logEntry.message}`}
-                                secondary={t("groups.log.messageInfo", {
-                                    username: getMemberUsername(logEntry.user_id),
-                                    datetime: formatDatetime(logEntry.logged_at, "full"),
-                                })}
-                            />
-                        </ListItem>
+                        <div key={logEntry.id}>
+                            <ListItem>
+                                <ListItemText
+                                    primary={`${logEntry.type} - ${logEntry.message}`}
+                                    secondary={t("groups.log.messageInfo", {
+                                        username: getMemberUsername(logEntry.user_id),
+                                        datetime: formatDatetime(logEntry.logged_at, "full"),
+                                    })}
+                                />
+                            </ListItem>
+                            <Divider sx={{ display: { lg: "none" } }} component="li" />
+                        </div>
                     ))
                 )}
             </List>

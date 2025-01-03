@@ -71,7 +71,7 @@ const GroupActions: React.FC<{ group: Group }> = ({ group }) => {
 
     return (
         <>
-            <Stack direction="row" spacing={1}>
+            <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
                 <Button
                     variant="contained"
                     color="error"
@@ -160,7 +160,7 @@ export const GroupSettingsPage: React.FC<Props> = ({ groupId }) => {
     const group = useGroup(groupId);
     const permissions = useCurrentUserPermissions(groupId);
 
-    useTitle(t("groups.settings.tabTitle", "", { groupName: group?.name }));
+    useTitle(t("groups.settings.tabTitle", { groupName: group?.name }));
 
     if (!permissions || !group) {
         return <Navigate to="/404" />;
@@ -171,6 +171,7 @@ export const GroupSettingsPage: React.FC<Props> = ({ groupId }) => {
             <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                 <TabList onChange={(e, newVal) => setActiveTab(newVal)}>
                     <Tab label={t("groups.settings.header")} value="settings" />
+                    <Tab label={t("groups.memberList.header")} value="members" />
                     <Tab label={t("groups.invites.header")} value="invites" />
                 </TabList>
             </Box>
@@ -186,14 +187,19 @@ export const GroupSettingsPage: React.FC<Props> = ({ groupId }) => {
                             ) : null}
                         </Stack>
                         <SettingsForm group={group} />
-                        <Box sx={{ mt: 1 }}>
-                            <GroupActions group={group} />
-                        </Box>
                     </MobilePaper>
                     <MobilePaper>
-                        <GroupMemberList group={group} />
+                        <Stack spacing={1}>
+                            <Alert severity="error">{t("groups.settings.dangerZone")}</Alert>
+                            <GroupActions group={group} />
+                        </Stack>
                     </MobilePaper>
                 </Stack>
+            </TabPanel>
+            <TabPanel value="members" sx={{ padding: 0 }}>
+                <MobilePaper>
+                    <GroupMemberList group={group} />
+                </MobilePaper>
             </TabPanel>
             <TabPanel value="invites" sx={{ padding: 0 }}>
                 <MobilePaper>

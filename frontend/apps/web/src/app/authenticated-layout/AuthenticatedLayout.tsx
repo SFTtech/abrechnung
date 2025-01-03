@@ -133,19 +133,19 @@ const DrawerContent: React.FC<DrawerContentProps> = ({ groupId }) => {
                     borderTop: `1px solid ${theme.palette.divider}`,
                 }}
             >
-                {cfg.imprintURL && (
-                    <Link href={cfg.imprintURL} target="_blank" sx={{ mr: 2 }}>
+                {cfg.imprint_url && (
+                    <Link href={cfg.imprint_url} target="_blank" sx={{ mr: 2 }}>
                         {t("navbar.imprint")}
                     </Link>
                 )}
                 <Tooltip title="Source Code">
-                    <Link sx={{ ml: 1 }} target="_blank" href={cfg.sourceCodeURL}>
+                    <Link sx={{ ml: 1 }} target="_blank" href={cfg.source_code_url}>
                         <GitHub />
                     </Link>
                 </Tooltip>
-                {cfg.issueTrackerURL && (
+                {cfg.issue_tracker_url && (
                     <Tooltip title="Bug reports">
-                        <Link sx={{ ml: 1 }} target="_blank" href={cfg.issueTrackerURL}>
+                        <Link sx={{ ml: 1 }} target="_blank" href={cfg.issue_tracker_url}>
                             <BugReport />
                         </Link>
                     </Tooltip>
