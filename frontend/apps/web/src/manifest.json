@@ -3,20 +3,34 @@
     "name": "Abrechnung",
     "icons": [
         {
-            "src": "favicon.png",
-            "sizes": "248x248",
+            "purpose": "maskable",
+            "sizes": "48x48",
+            "src": "assets/maskable_icon_x48.png",
             "type": "image/png"
         },
         {
-            "src": "assets/logo.svg",
-            "sizes": "256x256",
-            "type": "image/svg+xml"
+            "purpose": "maskable",
+            "sizes": "192x192",
+            "src": "assets/maskable_icon_x192.png",
+            "type": "image/png"
+        },
+        {
+            "purpose": "maskable",
+            "sizes": "512x512",
+            "src": "assets/maskable_icon_x512.png",
+            "type": "image/png"
+        },
+        {
+            "purpose": "maskable",
+            "sizes": "1024x1024",
+            "src": "assets/maskable_icon_x1024.png",
+            "type": "image/png"
         }
     ],
     "id": "/?source=pwa",
     "start_url": "/?source=pwa",
     "scope": "/",
     "display": "standalone",
-    "theme_color": "#000000",
+    "theme_color": "#aa0000",
     "background_color": "#ffffff"
 }
