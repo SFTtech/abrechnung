@@ -1,6 +1,5 @@
 import { Client } from "./generated";
 import { IConnectionStatusProvider, IHttpError } from "./types";
-import { isRequiredVersion } from "./version";
 
 export class HttpError implements IHttpError {
     constructor(
@@ -9,14 +8,9 @@ export class HttpError implements IHttpError {
     ) {}
 }
 
-// accepted version range of the backend api, [min, max)
-export const MIN_BACKEND_VERSION = "0.14.0";
-export const MAX_BACKEND_VERSION = "0.15.0";
-
 export class Api {
     private baseApiUrl: string;
     private accessToken?: string;
-    private backendVersion?: string;
 
     public client: Client;
 
@@ -47,24 +41,6 @@ export class Api {
     public init = async (accessToken?: string) => {
         if (accessToken) {
             this.setAccessToken(accessToken);
-        }
-        await this.checkBackendVersion();
-    };
-
-    private checkBackendVersion = async () => {
-        if (this.backendVersion === undefined) {
-            try {
-                const version = await this.client.common.getVersion();
-                this.backendVersion = version.version;
-            } catch {
-                // TODO: what to do here, should we propagate this error?
-                return;
-            }
-        }
-        if (!isRequiredVersion(this.backendVersion, MIN_BACKEND_VERSION, MAX_BACKEND_VERSION)) {
-            throw new Error(
-                `This app version is incompatible with the version your backend is running. Expected ${MIN_BACKEND_VERSION} (inclusive) to ${MAX_BACKEND_VERSION} (exclusive), but the backend is running ${this.backendVersion}`
-            );
         }
     };
 
