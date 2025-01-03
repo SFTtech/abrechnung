@@ -41,7 +41,8 @@
         "addNewTag": "Add new Tag",
         "tagNameRequiredError": "please input a tag name",
         "exportAsCsv": "Export as CSV",
-        "noneSoFar": "None so far"
+        "noneSoFar": "None so far",
+        "copyToClipboard": "Copy to clipboard"
     },
     "shareSelect": {
         "selectedPeople_one": "{{count}} Person",
@@ -92,6 +93,7 @@
             "messageInfo": "by {{username}} on {{datetime}}"
         },
         "memberList": {
+            "header": "Members",
             "editGroupMember": "Edit Group Member",
             "tabTitle": "{{groupName}} - Members",
             "invitedBy": "invited by {{username}}, ",
@@ -114,7 +116,8 @@
             "archiveGroup": "Archive Group",
             "archiveGroupConfirm": "Are you sure you want to archive the group {{group.name}}. No modifications can be made to archived groups and they will be hidden in group lists. Only a group owner can reverse this action.",
             "unarchiveGroup": "Unarchive Group",
-            "unarchiveGroupConfirm": "Are you sure you want to unarchive the group {{group.name}}. The group will no longer be read-only."
+            "unarchiveGroupConfirm": "Are you sure you want to unarchive the group {{group.name}}. The group will no longer be read-only.",
+            "dangerZone": "Danger zone. The following are irreversible actions."
         },
         "join": {
             "tabTitle": "Abrechnung - Join Group",
@@ -126,7 +129,7 @@
         },
         "invites": {
             "tabTitle": "{{groupName}} - Invite Links",
-            "header": "Active Invite Links",
+            "header": "Invite Links",
             "guestUserDisclaimer": "You are a guest user on this Abrechnung and therefore not permitted to create group invites.",
             "tokenHidden": "token hidden, was created by another member",
             "singleUse": "Single use",

@@ -4,7 +4,7 @@ import { getAccountLink } from "@/utils";
 import { accountEditStarted, useIsGroupWritable } from "@abrechnung/redux";
 import { Account } from "@abrechnung/types";
 import { Delete, Edit } from "@mui/icons-material";
-import { Chip, IconButton, ListItem, ListItemText } from "@mui/material";
+import { Chip, Divider, IconButton, ListItemText, Stack } from "@mui/material";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
@@ -35,41 +35,39 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
     };
     let owningUserInfo = null;
     if (account.type === "personal" && account.owning_user_id === currentUserId) {
-        owningUserInfo = (
-            <Chip size="small" component="span" color="primary" label={t("groups.memberList.itsYou")} sx={{ ml: 1 }} />
-        );
+        owningUserInfo = <Chip size="small" component="span" color="primary" label={t("groups.memberList.itsYou")} />;
     }
 
     return (
-        <ListItemLink
-            key={account.id}
-            to={getAccountLink(groupId, account.type, account.id)}
-            secondaryAction={
-                isGroupWritable && (
-                    <>
-                        <IconButton color="primary" onClick={edit}>
-                            <Edit />
-                        </IconButton>
-                        <IconButton color="error" onClick={() => setAccountToDelete(account)}>
-                            <Delete />
-                        </IconButton>
-                    </>
-                )
-            }
-        >
-            <ListItemText
-                slotProps={{ primary: { component: "div" }, secondary: { component: "div" } }}
-                primary={
-                    <div>
-                        {account.is_wip && (
-                            <Chip color="info" variant="outlined" label="WIP" size="small" sx={{ mr: 1 }} />
-                        )}
-                        <span>{account.name}</span>
-                        {owningUserInfo}
-                    </div>
+        <>
+            <ListItemLink
+                to={getAccountLink(groupId, account.type, account.id)}
+                secondaryAction={
+                    isGroupWritable && (
+                        <>
+                            <IconButton color="primary" onClick={edit}>
+                                <Edit />
+                            </IconButton>
+                            <IconButton color="error" onClick={() => setAccountToDelete(account)}>
+                                <Delete />
+                            </IconButton>
+                        </>
+                    )
                 }
-                secondary={account.description}
-            />
-        </ListItemLink>
+            >
+                <ListItemText
+                    slotProps={{ primary: { component: "div" }, secondary: { component: "div" } }}
+                    primary={
+                        <Stack spacing={1} direction="row">
+                            {account.is_wip && <Chip color="info" variant="outlined" label="WIP" size="small" />}
+                            <span>{account.name}</span>
+                            {owningUserInfo}
+                        </Stack>
+                    }
+                    secondary={account.description}
+                />
+            </ListItemLink>
+            <Divider sx={{ display: { lg: "none" } }} component="li" />
+        </>
     );
 };

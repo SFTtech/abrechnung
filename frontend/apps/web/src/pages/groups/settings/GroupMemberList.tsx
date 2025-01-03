@@ -8,10 +8,12 @@ import {
     DialogActions,
     DialogContent,
     DialogTitle,
+    Divider,
     IconButton,
     List,
     ListItem,
     ListItemText,
+    Stack,
 } from "@mui/material";
 import React, { useState } from "react";
 import { toast } from "react-toastify";
@@ -126,10 +128,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
         return member.username;
     };
 
-    const openEditMemberModal = (userID: number) => {
-        const user = members?.find((member) => member.user_id === userID);
-        // TODO: maybe deal with disappearing users in the list
-        setMemberToEdit(user);
+    const openEditMemberModal = (member: GroupMember) => {
+        setMemberToEdit(member);
     };
 
     if (!permissions) {
@@ -148,68 +148,67 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
                     </ListItem>
                 ) : (
                     members.map((member, index) => (
-                        <ListItem
-                            key={index}
-                            secondaryAction={
-                                (permissions.is_owner || permissions.can_write) && (
-                                    <IconButton color="primary" onClick={() => openEditMemberModal(member.user_id)}>
-                                        <Edit />
-                                    </IconButton>
-                                )
-                            }
-                        >
-                            <ListItemText
-                                primary={
-                                    <>
-                                        <span style={{ marginRight: 5 }}>{member.username}</span>
-                                        {member.is_owner ? (
-                                            <Chip
-                                                size="small"
-                                                sx={{ mr: 1 }}
-                                                component="span"
-                                                color="primary"
-                                                label={t("groups.memberList.owner")}
-                                                variant="outlined"
-                                            />
-                                        ) : member.can_write ? (
-                                            <Chip
-                                                size="small"
-                                                sx={{ mr: 1 }}
-                                                component="span"
-                                                color="primary"
-                                                label={t("groups.memberList.editor")}
-                                                variant="outlined"
-                                            />
-                                        ) : null}
-                                        {member.user_id === currentUserId && (
-                                            <Chip
-                                                size="small"
-                                                sx={{ mr: 1 }}
-                                                component="span"
-                                                color="primary"
-                                                label={t("groups.memberList.itsYou")}
-                                            />
-                                        )}
-                                    </>
+                        <div key={index}>
+                            <ListItem
+                                secondaryAction={
+                                    (permissions.is_owner || permissions.can_write) && (
+                                        <IconButton color="primary" onClick={() => openEditMemberModal(member)}>
+                                            <Edit />
+                                        </IconButton>
+                                    )
                                 }
-                                secondary={
-                                    <>
-                                        {member.invited_by && (
+                            >
+                                <ListItemText
+                                    primary={
+                                        <Stack spacing={1} direction="row">
+                                            <span>{member.username}</span>
+                                            {member.is_owner ? (
+                                                <Chip
+                                                    size="small"
+                                                    component="span"
+                                                    color="primary"
+                                                    label={t("groups.memberList.owner")}
+                                                    variant="outlined"
+                                                />
+                                            ) : member.can_write ? (
+                                                <Chip
+                                                    size="small"
+                                                    component="span"
+                                                    color="primary"
+                                                    label={t("groups.memberList.editor")}
+                                                    variant="outlined"
+                                                />
+                                            ) : null}
+                                            {member.user_id === currentUserId && (
+                                                <Chip
+                                                    size="small"
+                                                    component="span"
+                                                    color="primary"
+                                                    label={t("groups.memberList.itsYou")}
+                                                />
+                                            )}
+                                        </Stack>
+                                    }
+                                    secondary={
+                                        <>
+                                            {member.invited_by && (
+                                                <small className="text-muted">
+                                                    {t("groups.memberList.invitedBy", {
+                                                        username: getMemberUsername(member.invited_by),
+                                                    })}
+                                                </small>
+                                            )}
                                             <small className="text-muted">
-                                                {t("groups.memberList.invitedBy", {
-                                                    username: getMemberUsername(member.invited_by),
+                                                {t("groups.memberList.joined", {
+                                                    datetime: formatDatetime(member.joined_at, "full"),
                                                 })}
                                             </small>
-                                        )}
-                                        <small className="text-muted">
-                                            {t("groups.memberList.joined", {
-                                                datetime: formatDatetime(member.joined_at, "full"),
-                                            })}
-                                        </small>
-                                    </>
-                                }
-                            />
-                        </ListItem>
+                                        </>
+                                    }
+                                />
+                            </ListItem>
+                            <Divider sx={{ display: { lg: "none" } }} component="li" />
+                        </div>
                     ))
                 )}
             </List>
