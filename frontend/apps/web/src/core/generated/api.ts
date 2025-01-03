@@ -475,7 +475,7 @@ export type DeleteAccountApiArg = {
 };
 export type GetVersionApiResponse = /** status 200 Successful Response */ VersionResponse;
 export type GetVersionApiArg = void;
-export type GetFrontendConfigApiResponse = /** status 200 Successful Response */ ServiceConfig;
+export type GetFrontendConfigApiResponse = /** status 200 Successful Response */ FrontendConfig;
 export type GetFrontendConfigApiArg = void;
 export type TransactionType = "mimo" | "purchase" | "transfer";
 export type TransactionPosition = {
@@ -779,12 +779,11 @@ export type ServiceMessage = {
     title?: string | null;
     body: string;
 };
-export type ServiceConfig = {
-    name: string;
+export type FrontendConfig = {
     messages?: ServiceMessage[] | null;
     imprint_url?: string | null;
-    source_code_url?: string;
-    issue_tracker_url?: string;
+    source_code_url: string;
+    issue_tracker_url: string;
 };
 export const {
     useListTransactionsQuery,

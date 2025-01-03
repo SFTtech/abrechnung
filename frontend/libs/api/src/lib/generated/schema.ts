@@ -79,6 +79,13 @@ export namespace components.schemas {
         host_url: z.union([z.string(), z.null()]).optional(),
         deleted: z.boolean(),
     });
+    /** FrontendConfig */
+    export const FrontendConfig = z.object({
+        messages: z.union([z.array(components["schemas"]["ServiceMessage"]), z.null()]).optional(),
+        imprint_url: z.union([z.string(), z.null()]).optional(),
+        source_code_url: z.string(),
+        issue_tracker_url: z.string(),
+    });
     /** Group */
     export const Group = z.object({
         id: z.number().int(),
@@ -230,14 +237,6 @@ export namespace components.schemas {
     export const RenameSessionPayload = z.object({
         session_id: z.number().int(),
         name: z.string(),
-    });
-    /** ServiceConfig */
-    export const ServiceConfig = z.object({
-        name: z.string(),
-        messages: z.union([z.array(components["schemas"]["ServiceMessage"]), z.null()]).optional(),
-        imprint_url: z.union([z.string(), z.null()]).optional(),
-        source_code_url: z.string().optional(),
-        issue_tracker_url: z.string().optional(),
     });
     /** ServiceMessage */
     export const ServiceMessage = z.object({
@@ -1463,7 +1462,7 @@ export const operations = {
             /** @description Successful Response */
             200: {
                 content: {
-                    "application/json": components["schemas"]["ServiceConfig"],
+                    "application/json": components["schemas"]["FrontendConfig"],
                 },
             },
         },

@@ -21,6 +21,7 @@ export type { ConfirmRegistrationPayload } from "./models/ConfirmRegistrationPay
 export type { CreateInvitePayload } from "./models/CreateInvitePayload";
 export type { DeleteSessionPayload } from "./models/DeleteSessionPayload";
 export type { FileAttachment } from "./models/FileAttachment";
+export type { FrontendConfig } from "./models/FrontendConfig";
 export type { Group } from "./models/Group";
 export type { GroupInvite } from "./models/GroupInvite";
 export type { GroupLog } from "./models/GroupLog";
@@ -40,7 +41,6 @@ export type { RecoverPasswordPayload } from "./models/RecoverPasswordPayload";
 export type { RegisterPayload } from "./models/RegisterPayload";
 export type { RegisterResponse } from "./models/RegisterResponse";
 export type { RenameSessionPayload } from "./models/RenameSessionPayload";
-export type { ServiceConfig } from "./models/ServiceConfig";
 export type { ServiceMessage } from "./models/ServiceMessage";
 export type { ServiceMessageType } from "./models/ServiceMessageType";
 export type { Session } from "./models/Session";

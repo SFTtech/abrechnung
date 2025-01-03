@@ -2,7 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { ServiceConfig } from "../models/ServiceConfig";
+import type { FrontendConfig } from "../models/FrontendConfig";
 import type { VersionResponse } from "../models/VersionResponse";
 import type { CancelablePromise } from "../core/CancelablePromise";
 import type { BaseHttpRequest } from "../core/BaseHttpRequest";
@@ -21,10 +21,10 @@ export class CommonService {
     }
     /**
      * Get Frontend Config
-     * @returns ServiceConfig Successful Response
+     * @returns FrontendConfig Successful Response
      * @throws ApiError
      */
-    public getFrontendConfig(): CancelablePromise<ServiceConfig> {
+    public getFrontendConfig(): CancelablePromise<FrontendConfig> {
         return this.httpRequest.request({
             method: "GET",
             url: "/api/config",
