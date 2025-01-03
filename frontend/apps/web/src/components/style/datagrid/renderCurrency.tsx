@@ -1,26 +1,20 @@
-import { useFormatCurrency } from "@/hooks";
-import { useTheme } from "@mui/material/styles";
+import { useFormatCurrency, useGetAmountColor } from "@/hooks";
 import * as React from "react";
 
 interface CurrencyValueProps {
     currencySymbol: string;
     value?: number;
-    forceColor?: string;
+    signOverride?: number;
 }
 
-const CurrencyValue = React.memo(({ currencySymbol, value = 0, forceColor }: CurrencyValueProps) => {
-    const theme = useTheme();
+const CurrencyValue = React.memo(({ currencySymbol, value = 0, signOverride }: CurrencyValueProps) => {
     const formatCurrency = useFormatCurrency();
-
-    const positiveColor = theme.palette.mode === "light" ? theme.palette.success.dark : theme.palette.success.light;
-    const negativeColor = theme.palette.mode === "light" ? theme.palette.error.dark : theme.palette.error.light;
-
-    const colorOverride = forceColor !== undefined ? (forceColor === "red" ? negativeColor : positiveColor) : null;
+    const getAmountColor = useGetAmountColor();
 
     return (
         <div
             style={{
-                color: colorOverride ? colorOverride : value >= 0 ? positiveColor : negativeColor,
+                color: getAmountColor(signOverride ?? value),
                 width: "100%",
                 fontVariantNumeric: "tabular-nums",
                 textAlign: "end",
@@ -34,10 +28,10 @@ CurrencyValue.displayName = "CurrencyValue";
 
 export function renderCurrency(
     currencySymbol: string,
-    forceColor?: string
+    signOverride?: number
 ): (params: { value?: number }) => React.ReactNode {
     const component: React.FC<{ value?: number }> = (params) => {
-        return <CurrencyValue currencySymbol={currencySymbol} value={params.value} forceColor={forceColor} />;
+        return <CurrencyValue currencySymbol={currencySymbol} value={params.value} signOverride={signOverride} />;
     };
     component.displayName = "CurrencyValue";
     return component;
