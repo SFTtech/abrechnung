@@ -1,7 +1,14 @@
 {
     "short_name": "Abrechnung",
     "name": "Abrechnung",
+    "description": "Payment Splitting for Groups",
     "icons": [
+        {
+            "purpose": "any",
+            "sizes": "256x256",
+            "src": "assets/logo.svg",
+            "type": "image/svg+xml"
+        },
         {
             "purpose": "maskable",
             "sizes": "48x48",
