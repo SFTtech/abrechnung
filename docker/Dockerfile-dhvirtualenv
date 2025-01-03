@@ -51,7 +51,7 @@ RUN apt-get update -y -o Acquire::Languages=none \
         dh-virtualenv
 
 # install yarn
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 RUN apt-get install -y nodejs
 
 RUN mkdir -p /abrechnung/.cypress_cache && chmod 777 /abrechnung/.cypress_cache
