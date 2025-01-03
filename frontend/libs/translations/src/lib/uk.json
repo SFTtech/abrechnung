@@ -129,7 +129,8 @@
             "invitedBy": "запрошений {{username}}, ",
             "owner": "Власник",
             "itsYou": "це ти",
-            "canWrite": "Може писати"
+            "canWrite": "Може писати",
+            "editGroupMember": "Редагувати члена групи"
         },
         "settings": {
             "readAccessDisclaimer": "Ви маєте доступ лише для читання цієї групи",
@@ -175,7 +176,8 @@
             "description": "Ви дійсно хочете видалити групу {{groupName}}"
         },
         "create": {
-            "addUserAccountOnJoinDescription": "Автоматично додавати облікові записи для нових учасників групи"
+            "addUserAccountOnJoinDescription": "Автоматично додавати облікові записи для нових учасників групи",
+            "title": "Створити групу"
         }
     },
     "balanceTable": {
