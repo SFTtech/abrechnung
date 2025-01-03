@@ -18,8 +18,6 @@ const connectionStatusProvider: IConnectionStatusProvider = {
 
 export const api = new Api(connectionStatusProvider, baseURL);
 
-const websocketURL = `${window.location.protocol === "https:" ? "wss" : "ws"}://${siteHost}/api/v1/ws`;
-
 export const prepareAuthHeaders = (headers: Headers) => {
     const token = api.getAccessToken();
     if (token) {
