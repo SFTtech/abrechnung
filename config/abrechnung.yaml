@@ -1,7 +1,4 @@
-
 service:
-  url: "http://localhost"
-  api_url: "http://localhost/api"
   name: "Abrechnung"
 
 database:
@@ -12,6 +9,7 @@ database:
 
 api:
   secret_key: "please generate a unique one with pwgen -s 64 1"
+  base_url: "http://localhost"
   host: "localhost"
   port: 8080
   id: default

@@ -1,3 +1,4 @@
+import enum
 from datetime import timedelta
 from pathlib import Path
 from typing import List, Literal, Optional, Tuple, Type
@@ -13,8 +14,26 @@ from sftkit.database import DatabaseConfig
 from sftkit.http import HTTPServerConfig
 
 
+class ServiceMessageType(enum.Enum):
+    info = "info"
+    error = "error"
+    warning = "warning"
+    success = "success"
+
+
+class ServiceMessage(BaseModel):
+    type: ServiceMessageType
+    title: str | None = None
+    body: str
+
+
 class ServiceConfig(BaseModel):
     name: str
+
+    messages: list[ServiceMessage] | None = None
+    imprint_url: str | None = None
+    source_code_url: str = "https://github.com/SFTtech/abrechnung"
+    issue_tracker_url: str = "https://github.com/SFTtech/abrechnung/issues"
 
 
 class DemoConfig(BaseModel):

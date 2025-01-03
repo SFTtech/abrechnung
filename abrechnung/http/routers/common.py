@@ -1,7 +1,9 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from abrechnung import MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION, __version__
+from abrechnung.config import Config, ServiceConfig
+from abrechnung.http.dependencies import get_config
 
 router = APIRouter(
     prefix="/api",
@@ -34,3 +36,8 @@ async def get_version():
         "minor_version": MINOR_VERSION,
         "patch_version": PATCH_VERSION,
     }
+
+
+@router.get("/config", response_model=ServiceConfig, operation_id="get_config")
+async def get_frontend_config(config: Config = Depends(get_config)):
+    return config.service

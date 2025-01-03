@@ -142,23 +142,17 @@ E.g. to set the email auth username from the config yaml as below we'd use the e
 Frontend Configuration
 -------------------------
 
-The frontend also has some configuration options. The javascript application expects a json file ``config.json`` under ``https://<domain>/config.json``.
-If you want to overwrite the default config please configure your webserver to serve your designated ``config.json`` at that url.
-
-This also enables server administrators to show information banners / messages on top via the ``messages`` config key to e.g. announce maintenance.
+The frontend also has some configuration options which can be configured in the ``service`` section of the yaml configuration.
+This enables server administrators to show information banners / messages on top via the ``messages`` config key to e.g. announce maintenance.
 
 Possible config options are
 
-.. code-block:: json
+.. code-block:: yaml
 
-   {
-     "messages": [
-       {
-         "type": "<'error'|'info'|'warning'|'success'>",
-         "title": "<string, optional>",
-         "body": "<string>"
-       }
-     ],
-     "imprintURL": "<string, optional>",
-     "sourceCodeURL": "https://github.com/SFTtech/abrechnung"
-   }
+  service:
+    # ...
+    messages:
+      - type: "info"  # "error" | "warning" | "success"
+        body: "This is an informational message which will be displayed at the top of the application"
+        title: "My optional title"
+    imprint_url: "https://my-imprint-for-my-abrechnung-instance.mydomain.com"

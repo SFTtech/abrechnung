@@ -283,6 +283,10 @@ const injectedRtkApi = api
                 query: () => ({ url: `/api/version` }),
                 providesTags: ["common"],
             }),
+            getFrontendConfig: build.query<GetFrontendConfigApiResponse, GetFrontendConfigApiArg>({
+                query: () => ({ url: `/api/config` }),
+                providesTags: ["common"],
+            }),
         }),
         overrideExisting: false,
     });
@@ -471,6 +475,8 @@ export type DeleteAccountApiArg = {
 };
 export type GetVersionApiResponse = /** status 200 Successful Response */ VersionResponse;
 export type GetVersionApiArg = void;
+export type GetFrontendConfigApiResponse = /** status 200 Successful Response */ ServiceConfig;
+export type GetFrontendConfigApiArg = void;
 export type TransactionType = "mimo" | "purchase" | "transfer";
 export type TransactionPosition = {
     name: string;
@@ -767,6 +773,19 @@ export type VersionResponse = {
     minor_version: number;
     patch_version: number;
 };
+export type ServiceMessageType = "info" | "error" | "warning" | "success";
+export type ServiceMessage = {
+    type: ServiceMessageType;
+    title?: string | null;
+    body: string;
+};
+export type ServiceConfig = {
+    name: string;
+    messages?: ServiceMessage[] | null;
+    imprint_url?: string | null;
+    source_code_url?: string;
+    issue_tracker_url?: string;
+};
 export const {
     useListTransactionsQuery,
     useLazyListTransactionsQuery,
@@ -823,4 +842,6 @@ export const {
     useDeleteAccountMutation,
     useGetVersionQuery,
     useLazyGetVersionQuery,
+    useGetFrontendConfigQuery,
+    useLazyGetFrontendConfigQuery,
 } = injectedRtkApi;
