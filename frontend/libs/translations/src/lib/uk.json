@@ -38,7 +38,8 @@
         "advanced": "Просунутий",
         "currency": "Валюта",
         "addNewTag": "Додати новий тег",
-        "exportAsCsv": "Експортувати як CSV"
+        "exportAsCsv": "Експортувати як CSV",
+        "tagNameRequiredError": "введіть назву тегу"
     },
     "images": {
         "uploadImage": "Завантажити зображення",
@@ -128,7 +129,8 @@
             "invitedBy": "запрошений {{username}}, ",
             "owner": "Власник",
             "itsYou": "це ти",
-            "canWrite": "Може писати"
+            "canWrite": "Може писати",
+            "editGroupMember": "Редагувати члена групи"
         },
         "settings": {
             "readAccessDisclaimer": "Ви маєте доступ лише для читання цієї групи",
@@ -149,7 +151,8 @@
             "header": "Групи",
             "noGroups": "Немає груп",
             "archivedGroups": "Архівовано",
-            "guestUserDisclaimer": "Ви є гостем у цьому Abrechnung, тому вам не дозволено створювати нові групи."
+            "guestUserDisclaimer": "Ви є гостем у цьому Abrechnung, тому вам не дозволено створювати нові групи.",
+            "lastUpdateAt": "останнє оновлення: {{datetime}}"
         },
         "log": {
             "tabTitle": "{{groupName}} - діяльність",
@@ -160,10 +163,22 @@
             "tabTitle": "{{groupName}} - Посилання на запрошення",
             "header": "Активні посилання на запрошення",
             "guestUserDisclaimer": "Ви є гостем у цьому Abrechnung, тому вам не дозволено створювати групові запрошення.",
-            "tokenHidden": "маркер приховано, створено іншим учасником"
+            "tokenHidden": "маркер приховано, створено іншим учасником",
+            "singleUse": "Одноразове використання",
+            "validUntil": "Дійсний до",
+            "createdSuccessfully": "Успішно створено маркер запрошення",
+            "newMembersJoinAsEditors": "Нові учасники приєднуються як редактори"
         },
         "addGroup": "Додати групу",
-        "archivedDisclaimer": "Ця група заархівована і тому доступна лише для читання."
+        "archivedDisclaimer": "Ця група заархівована і тому доступна лише для читання.",
+        "delete": {
+            "title": "Видалити групу",
+            "description": "Ви дійсно хочете видалити групу {{groupName}}"
+        },
+        "create": {
+            "addUserAccountOnJoinDescription": "Автоматично додавати облікові записи для нових учасників групи",
+            "title": "Створити групу"
+        }
     },
     "balanceTable": {
         "totalConsumed": "Отримано/спожито",
@@ -193,7 +208,8 @@
         "transfer": "Трансфер",
         "paidBy": "Оплачено",
         "confirmDeleteTransactionInfo": "Ви впевнені, що бажаєте видалити транзакцію \"{{transaction.name}}\"?",
-        "byFor": "від {{by}}, для {{for}}"
+        "byFor": "від {{by}}, для {{for}}",
+        "createTransferForAccount": "Створити переказ до {{accountName}}"
     },
     "accounts": {
         "participated": "Брав участь",
@@ -229,7 +245,9 @@
             "tabTitle": "Платежі - сесії",
             "header": "Сеанси входу",
             "confirmDeleteSession": "Видалити сеанс?",
-            "areYouSureToDelete": "Ви впевнені, що хочете видалити сеанс \"{{sessionName}}\"?"
+            "areYouSureToDelete": "Ви впевнені, що хочете видалити сеанс \"{{sessionName}}\"?",
+            "validUntil": "Дійсний до {{datetime}}, ",
+            "lastSeenOn": "Востаннє в мережі {{datetime}}"
         },
         "index": {
             "pageTitle": "Профіль",
@@ -246,7 +264,8 @@
             "tabTitle": "Платежі - Налаштування",
             "theme": "Тема",
             "info": "Ці налаштування зберігаються локально на вашому пристрої. Очищення локальної пам’яті веб-переглядача скине їх.",
-            "confirmClearCache": "Ця дія очистить ваш локальний кеш. Усі ваші налаштування (ця сторінка) не буде скинуто."
+            "confirmClearCache": "Ця дія очистить ваш локальний кеш. Усі ваші налаштування (ця сторінка) не буде скинуто.",
+            "darkMode": "Темний режим"
         },
         "changePassword": {
             "tabTitle": "Платежі - зміна пароля",
@@ -265,7 +284,9 @@
         "es": "Іспанська",
         "en": "англійська",
         "ta": "тамільська",
-        "de": "Німецький"
+        "de": "Німецький",
+        "uk": "Українська",
+        "bg": "Болгарська"
     },
     "shareSelect": {
         "showEvents": "Показати події",
