@@ -116,7 +116,7 @@
             "invitationDescription": "Descripción de la invitación",
             "invitationValidUntil": "Invitación válida hasta",
             "youHaveBeenInvited": "Se te ha invitado al grupo «{{group.name}}»",
-            "invitationSingleUse": "Invitación de un solo uso",
+            "invitationSingleUse": "Invitación desechable",
             "join": "Unirse"
         },
         "invites": {
