@@ -38,7 +38,9 @@
         "noneSoFar": "Ninguno de momento",
         "exportAsCsv": "Exportar como CSV",
         "currency": "Divisa",
-        "addNewTag": "Añadir nueva etiqueta"
+        "addNewTag": "Añadir nueva etiqueta",
+        "copyToClipboard": "Copiar al portapapeles",
+        "tagNameRequiredError": "por favor, escribe un nombre para la etiqueta"
     },
     "shareSelect": {
         "accountSlashEvent": "Cuenta / Evento",
@@ -74,7 +76,8 @@
             "header": "Grupos",
             "guestUserDisclaimer": "Eres un invitado en este Abrechnung y por tanto no tienes permitido crear grupos nuevos.",
             "noGroups": "Sin grupos",
-            "archivedGroups": "Archivado"
+            "archivedGroups": "Archivado",
+            "lastUpdateAt": "última actualización: {{datetime}}"
         },
         "log": {
             "tabTitle": "{{groupName}} - Actividad",
@@ -89,7 +92,9 @@
             "owner": "Líder",
             "itsYou": "Eres tú",
             "canWrite": "Puede editar",
-            "isOwner": "Es líder"
+            "isOwner": "Es líder",
+            "header": "Miembros",
+            "editGroupMember": "Editar miembro"
         },
         "settings": {
             "leaveGroupConfirm": "¿Seguro que quieres salir del grupo «{{group.name}}»? Si eres el último miembro en salir de este grupo se borrará y sus transacciones se perderán para siempre…",
@@ -103,21 +108,34 @@
             "autoAddAccounts": "Añade cuentas para miembros nuevos automáticamente",
             "header": "Ajustes",
             "leaveGroup": "Salir del grupo",
-            "archiveGroupConfirm": "¿Seguro que quieres archivar el grupo «{{group.name}}»? Los grupos archivados no admiten modificaciones y se ocultarán de listas de grupos. Solo un líder puede revertir esta acción."
+            "archiveGroupConfirm": "¿Seguro que quieres archivar el grupo «{{group.name}}»? Los grupos archivados no admiten modificaciones y se ocultarán de listas de grupos. Solo un líder puede revertir esta acción.",
+            "dangerZone": "¡Cuidado! Las siguientes acciones son irreversibles."
         },
         "join": {
             "tabTitle": "Abrechnung - Unirse a un grupo",
             "invitationDescription": "Descripción de la invitación",
             "invitationValidUntil": "Invitación válida hasta",
             "youHaveBeenInvited": "Se te ha invitado al grupo «{{group.name}}»",
-            "invitationSingleUse": "Invitación de un solo uso",
+            "invitationSingleUse": "Invitación desechable",
             "join": "Unirse"
         },
         "invites": {
             "tabTitle": "{{groupName}} - Enlaces de invitación",
-            "header": "Enlaces de invitación activos",
+            "header": "Enlaces de invitación",
             "guestUserDisclaimer": "Eres un invitado en este Abrechnung y por tanto no puedes crear invitaciones.",
-            "tokenHidden": "token oculto, fue creado por otro miembro"
+            "tokenHidden": "token oculto, fue creado por otro miembro",
+            "newMembersJoinAsEditors": "Nuevos miembros se unen como editores",
+            "validUntil": "Válida hasta",
+            "singleUse": "Desechable",
+            "createdSuccessfully": "Token de invitación creado correctamente"
+        },
+        "delete": {
+            "description": "¿Seguro que deseas eliminar el grupo {{groupName}}?",
+            "title": "Borrar grupo"
+        },
+        "create": {
+            "addUserAccountOnJoinDescription": "Agregar cuentas automáticamente para los miembros recién incorporados al grupo",
+            "title": "Crear grupo"
         }
     },
     "images": {
@@ -154,7 +172,8 @@
         },
         "createPurchaseForAccount": "Crear compra con {{accountName}} como participante",
         "noTransactions": "Sin transacciones",
-        "purchase": "Compra"
+        "purchase": "Compra",
+        "createTransferForAccount": "Crear transferencia a {{accountName}}"
     },
     "accounts": {
         "list": {
@@ -208,7 +227,8 @@
             "clearCache": "Borrar caché",
             "confirmClearCache": "Esta acción borrará tu caché local. Todos tus ajustes (esta página) no se restablecerán.",
             "themeSystemDefault": "Por defecto",
-            "themeDarkMode": "Oscuro"
+            "themeDarkMode": "Oscuro",
+            "darkMode": "Modo oscuro"
         },
         "changePassword": {
             "tabTitle": "Abrechnung - Cambiar contraseña",
@@ -226,7 +246,9 @@
             "tabTitle": "Abrechnung - Sesiones",
             "header": "Sesiones abiertas",
             "confirmDeleteSession": "¿Borrar sesión?",
-            "areYouSureToDelete": "¿Seguro que quieres borrar la sesión «{{sessionName}}»?"
+            "areYouSureToDelete": "¿Seguro que quieres borrar la sesión «{{sessionName}}»?",
+            "lastSeenOn": "Visto por última vez el {{datetime}}",
+            "validUntil": "Válido hasta el {{datetime}} , "
         }
     },
     "auth": {
@@ -278,6 +300,8 @@
         "en": "Inglés",
         "de": "Alemán",
         "es": "Español",
-        "ta": "Tamil"
+        "ta": "Tamil",
+        "uk": "Ucraniano",
+        "bg": "Búlgaro"
     }
 }
