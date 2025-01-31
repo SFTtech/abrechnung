@@ -1,11 +1,11 @@
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional, Union
 
 import asyncpg
 from sftkit.database import Connection
 from sftkit.error import InvalidArgument
-from sftkit.service import Service, with_db_transaction
+from sftkit.service import Service, with_db_connection, with_db_transaction
 
 from abrechnung.application.common import _get_or_create_tag_ids
 from abrechnung.config import Config
@@ -25,6 +25,7 @@ from abrechnung.domain.transactions import (
     UpdateTransaction,
 )
 from abrechnung.domain.users import User
+from abrechnung.util import timed_cache
 
 
 class TransactionService(Service[Config]):
@@ -721,3 +722,20 @@ class TransactionService(Service[Config]):
         )
 
         return revision_id
+
+    @with_db_connection
+    @timed_cache(timedelta(minutes=5))
+    async def total_number_of_transactions(self, conn: Connection):
+        return await conn.fetchval("select count(*) from transaction_state_valid_at(now()) where not deleted")
+
+    @with_db_connection
+    @timed_cache(timedelta(minutes=5))
+    async def total_amount_of_money_per_currency(self, conn: Connection) -> dict[str, float]:
+        result = await conn.fetch(
+            "select t.currency_symbol, sum(t.value) as total_value "
+            "from transaction_state_valid_at(now()) as t where not t.deleted group by t.currency_symbol"
+        )
+        aggregated = {}
+        for row in result:
+            aggregated[row["currency_symbol"]] = row["total_value"]
+        return aggregated
