@@ -17,7 +17,7 @@ class Mailer:
     def __init__(self, config: Config):
         self.config = config
         self.events: Optional[asyncio.Queue] = None
-        self.psql: Connection | None = None
+        self.db_connection: Connection | None = None
         self.database = get_database(config.database)
         self.mailer = None
         self.logger = logging.getLogger(__name__)
@@ -34,6 +34,22 @@ class Mailer:
             ("mailer", "pending_email_change"): self.on_user_email_update_notification,
         }
 
+    async def _mailer_loop(self):
+        # run all of the events manually once
+        for event_handler in self.event_handlers.values():
+            await event_handler()
+
+        # handle events
+        while True:
+            event = await self.events.get()
+            if isinstance(event, StopIteration):
+                return False
+            handler = self.event_handlers.get(event)
+            if handler is None:
+                self.logger.info(f"unhandled event {event!r}")
+            else:
+                await handler()
+
     async def run(self):
         # just try to connect to the mailing server once
         _ = self.get_mailer_instance()
@@ -43,31 +59,23 @@ class Mailer:
         if self.events is None:
             raise RuntimeError("something unexpected happened, self.events is None")
 
-        db_pool = await self.database.create_pool(n_connections=1)
-        self.psql = await db_pool.acquire()
-        assert self.psql is not None
-        self.psql.add_termination_listener(self.terminate_callback)
-        self.psql.add_log_listener(self.log_callback)
-        await self.psql.add_listener("mailer", self.notification_callback)
+        stopped = False
+        while not stopped:
+            db_pool = await self.database.create_pool(n_connections=1)
+            self.db_connection = await db_pool.acquire()
+            assert self.db_connection is not None
+            self.db_connection.add_termination_listener(self.terminate_callback)
+            self.db_connection.add_log_listener(self.log_callback)
+            await self.db_connection.add_listener("mailer", self.notification_callback)
 
-        # run all of the events manually once
-        for event_handler in self.event_handlers.values():
-            await event_handler()
-
-        # handle events
-        while True:
-            event = await self.events.get()
-            if isinstance(event, StopIteration):
-                break
-            handler = self.event_handlers.get(event)
-            if handler is None:
-                self.logger.info(f"unhandled event {event!r}")
-            else:
-                await handler()
-
-        await self.psql.remove_listener("mailer", self.notification_callback)
-        await self.psql.close()
-        await db_pool.close()
+            try:
+                # if this returns it means the database connection was closed -> retry opening the db pool
+                await self._mailer_loop()
+            except Exception:  # pylint: disable=bare-except
+                await self.db_connection.remove_listener("mailer", self.notification_callback)
+                await self.db_connection.close()
+                await db_pool.close()
+                stopped = True
 
     def get_mailer_instance(self):
         mode = self.config.email.mode
@@ -95,7 +103,6 @@ class Mailer:
 
     def notification_callback(self, connection: asyncpg.Connection, pid: int, channel: str, payload: str):
         """runs whenever we get a psql notification"""
-        assert connection is self.psql
         del pid  # unused
         if self.events is None:
             raise RuntimeError("something unexpected happened, self.events is None")
@@ -103,7 +110,6 @@ class Mailer:
 
     def terminate_callback(self, connection: asyncpg.Connection):
         """runs when the psql connection is closed"""
-        assert connection is self.psql
         self.logger.info("psql connection closed")
         # proper way of clearing asyncio queue
         if self.events is None:
@@ -115,7 +121,6 @@ class Mailer:
 
     async def log_callback(self, connection: asyncpg.Connection, message: str):
         """runs when psql sends a log message"""
-        assert connection is self.psql
         self.logger.info(f"psql log message: {message}")
 
     def send_email(self, *text_lines: str, subject: str, dest_address: str, dest_name: str):
@@ -149,8 +154,8 @@ class Mailer:
         return "", "Thoughtfully yours", "", f"    {self.config.service.name}"
 
     async def on_pending_registration_notification(self):
-        assert self.psql is not None
-        unsent_mails = await self.psql.fetch(
+        assert self.db_connection is not None
+        unsent_mails = await self.db_connection.fetch(
             "select usr.id, usr.email, usr.username, pr.token, pr.valid_until "
             "from pending_registration pr join usr on usr.id = pr.user_id "
             "where pr.mail_next_attempt is not null and pr.mail_next_attempt < NOW() and pr.valid_until > NOW()"
@@ -175,7 +180,7 @@ class Mailer:
                     dest_name=row["username"],
                 )
 
-                await self.psql.execute(
+                await self.db_connection.execute(
                     "update pending_registration set mail_next_attempt = null where token = $1",
                     row["token"],
                 )
@@ -183,8 +188,8 @@ class Mailer:
                 self.logger.warning(f"Failed to send email to user {row['username']} with email {row['email']}: {e}")
 
     async def on_user_password_recovery_notification(self):
-        assert self.psql is not None
-        unsent_mails = await self.psql.fetch(
+        assert self.db_connection is not None
+        unsent_mails = await self.db_connection.fetch(
             "select usr.id, usr.username, usr.email, ppr.token, ppr.valid_until "
             "from pending_password_recovery ppr join usr on usr.id = ppr.user_id "
             "where ppr.mail_next_attempt is not null and ppr.mail_next_attempt < NOW() and ppr.valid_until > NOW()"
@@ -209,7 +214,7 @@ class Mailer:
                     dest_name=row["username"],
                 )
 
-                await self.psql.execute(
+                await self.db_connection.execute(
                     "update pending_password_recovery set mail_next_attempt = null where token = $1",
                     row["token"],
                 )
@@ -217,8 +222,8 @@ class Mailer:
                 self.logger.warning(f"Failed to send email to user {row['username']} with email {row['email']}: {e}")
 
     async def on_user_email_update_notification(self):
-        assert self.psql is not None
-        unsent_mails = await self.psql.fetch(
+        assert self.db_connection is not None
+        unsent_mails = await self.db_connection.fetch(
             "select usr.id, usr.username, usr.email as old_email, pec.new_email as new_email, pec.token, "
             "   pec.valid_until "
             "from pending_email_change pec join usr on usr.id = pec.user_id "
@@ -262,7 +267,7 @@ class Mailer:
                     dest_name=row["username"],
                 )
 
-                await self.psql.execute(
+                await self.db_connection.execute(
                     "update pending_email_change set mail_next_attempt = null where token = $1",
                     row["token"],
                 )
