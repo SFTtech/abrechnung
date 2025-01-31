@@ -4,6 +4,11 @@
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.0.0...HEAD)
 
+**Features**
+
+- add optional prometheus metrics endpoint
+- make mailer service tolerant to database restarts
+
 ## 1.0.0 (2025-01-03)
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v0.14.0...v1.0.0)
