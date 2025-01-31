@@ -4,9 +4,8 @@ from typing import Annotated, Optional
 import typer
 
 from abrechnung.config import Config
-from abrechnung.database.migrations import get_database
+from abrechnung.database.migrations import get_database, reset_schema
 from abrechnung.database.migrations import list_revisions as list_revisions_
-from abrechnung.database.migrations import reset_schema
 
 database_cli = typer.Typer()
 

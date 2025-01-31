@@ -90,7 +90,13 @@ class GroupPayload(BaseModel):
     terms: str = ""
 
 
-@router.post("/v1/groups", summary="create a group", response_model=Group, operation_id="create_group", tags=["groups"])
+@router.post(
+    "/v1/groups",
+    summary="create a group",
+    response_model=Group,
+    operation_id="create_group",
+    tags=["groups"],
+)
 async def create_group(
     payload: GroupPayload,
     user: User = Depends(get_current_user),
@@ -339,7 +345,12 @@ async def delete_invite(
     )
 
 
-@router.post(r"/v1/groups/{group_id}/archive", summary="archive a group", operation_id="archive_group", tags=["groups"])
+@router.post(
+    r"/v1/groups/{group_id}/archive",
+    summary="archive a group",
+    operation_id="archive_group",
+    tags=["groups"],
+)
 async def archive_group(
     group_id: int,
     user: User = Depends(get_current_user),
@@ -352,7 +363,10 @@ async def archive_group(
 
 
 @router.post(
-    r"/v1/groups/{group_id}/un-archive", summary="un-archive a group", operation_id="unarchive_group", tags=["groups"]
+    r"/v1/groups/{group_id}/un-archive",
+    summary="un-archive a group",
+    operation_id="unarchive_group",
+    tags=["groups"],
 )
 async def unarchive_group(
     group_id: int,

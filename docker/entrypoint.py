@@ -6,7 +6,11 @@ abrechnung_venv_python = "/opt/abrechnung-venv/bin/python3"
 
 if sys.argv[1] == "api":
     print("migrating ...")
-    subprocess.run([abrechnung_venv_python, "-m", "abrechnung", "-vvv", "db", "migrate"], check=True, stdout=sys.stdout)
+    subprocess.run(
+        [abrechnung_venv_python, "-m", "abrechnung", "-vvv", "db", "migrate"],
+        check=True,
+        stdout=sys.stdout,
+    )
     print("migrated")
 
 if sys.argv[1] == "cron":

@@ -22,7 +22,10 @@ class Token(BaseModel):
 
 
 @router.post(
-    "/v1/auth/token", summary="login with username and password", response_model=Token, operation_id="get_token"
+    "/v1/auth/token",
+    summary="login with username and password",
+    response_model=Token,
+    operation_id="get_token",
 )
 async def get_token(
     form_data: OAuth2PasswordRequestForm = Depends(),
@@ -43,7 +46,12 @@ class LoginPayload(BaseModel):
     session_name: str
 
 
-@router.post("/v1/auth/login", summary="login with username and password", response_model=Token, operation_id="login")
+@router.post(
+    "/v1/auth/login",
+    summary="login with username and password",
+    response_model=Token,
+    operation_id="login",
+)
 async def login(
     payload: LoginPayload,
     user_service: UserService = Depends(get_user_service),
@@ -83,7 +91,10 @@ class RegisterResponse(BaseModel):
 
 
 @router.post(
-    "/v1/auth/register", summary="register a new user", response_model=RegisterResponse, operation_id="register"
+    "/v1/auth/register",
+    summary="register a new user",
+    response_model=RegisterResponse,
+    operation_id="register",
 )
 async def register(
     payload: RegisterPayload,
@@ -124,7 +135,12 @@ async def confirm_registration(
     await user_service.confirm_registration(token=payload.token)
 
 
-@router.get("/v1/profile", summary="fetch user profile information", response_model=User, operation_id="get_profile")
+@router.get(
+    "/v1/profile",
+    summary="fetch user profile information",
+    response_model=User,
+    operation_id="get_profile",
+)
 async def get_profile(
     user: User = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),

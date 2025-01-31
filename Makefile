@@ -4,25 +4,31 @@ test:
 
 .PHONY: format
 format:
-	isort .
-	black .
+	ruff format
 	cd frontend && npx prettier --write . && cd ..
 
 .PHONY: check-format
 check-format:
-	isort --check-only .
-	black --check .
+	ruff format --check
 
 .PHONY: check-format-frontend
 check-format-frontend:
 	cd frontend && npx prettier --check . && cd ..
 
 .PHONY: lint
-lint: pylint mypy
+lint: pylint mypy ruff
 
 .PHONY: pylint
 pylint:
 	pylint ./**/*.py
+
+.PHONY: ruff
+ruff:
+	ruff check
+
+.PHONY: ruff-fix
+ruff-fix:
+	ruff check --fix
 
 .PHONY: eslint
 eslint:
@@ -31,10 +37,6 @@ eslint:
 .PHONY: mypy
 mypy:
 	mypy .
-
-.PHONY: package
-package:
-	flit build
 
 .PHONY: docs
 docs:

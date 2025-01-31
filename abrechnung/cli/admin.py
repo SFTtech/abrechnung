@@ -9,7 +9,11 @@ admin_cli = typer.Typer()
 
 @admin_cli.command()
 def create_user(
-    ctx: typer.Context, name: str, email: str, skip_email_check: bool = False, no_email_confirmation: bool = False
+    ctx: typer.Context,
+    name: str,
+    email: str,
+    skip_email_check: bool = False,
+    no_email_confirmation: bool = False,
 ):
     asyncio.run(
         create_user_(

@@ -146,7 +146,7 @@ class GroupAPITest(HTTPAPITest):
             self.assertIsNone(gid)
 
     async def test_list_groups(self):
-        resp = await self._get(f"/api/v1/groups")
+        resp = await self._get("/api/v1/groups")
         self.assertEqual(200, resp.status_code)
         ret_data = resp.json()
         self.assertEqual(0, len(ret_data))
@@ -167,7 +167,7 @@ class GroupAPITest(HTTPAPITest):
             terms="terms",
             add_user_account_on_join=False,
         )
-        resp = await self._get(f"/api/v1/groups")
+        resp = await self._get("/api/v1/groups")
         self.assertEqual(200, resp.status_code)
         ret_data = resp.json()
         self.assertEqual(2, len(ret_data))
