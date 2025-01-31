@@ -46,7 +46,19 @@ async def hook(request: web.Request):
         print(f"Upload successful, received {filename} of size {size} bytes.")
 
     await copy_file_to_container(request, "/tmp/abrechnung_latest.deb", archive_name)
-    await run_in_container(request, ["apt-get", "install", "-y", "--reinstall", archive_name])
+    await run_in_container(
+        request,
+        [
+            "DEBIAN_FRONTEND=noninteractive",
+            "apt-get",
+            '-o "Dpkg::Options::=--force-confdef"',
+            '-o "Dpkg::Options::=--force-confold"',
+            "install",
+            "-y",
+            "--reinstall",
+            archive_name,
+        ],
+    )
     await run_in_container(request, ["abrechnung", "-vvv", "db", "rebuild"])
     await run_in_container(request, ["systemctl", "daemon-reload"])
     await run_in_container(request, ["systemctl", "restart", "abrechnung-api.service"])
