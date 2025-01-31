@@ -37,7 +37,9 @@ def parse_args():
 
 def _get_bumpversion_config(part: str) -> Config:
     ret = subprocess.run(
-        ["bump-my-version", "show", "--format", "json", "--increment", part], capture_output=True, check=True
+        ["bump-my-version", "show", "--format", "json", "--increment", part],
+        capture_output=True,
+        check=True,
     )
     return Config.model_validate_json(ret.stdout)
 

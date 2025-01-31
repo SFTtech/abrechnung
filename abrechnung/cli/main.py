@@ -21,8 +21,14 @@ cli = typer.Typer()
 def get_config(
     ctx: typer.Context,
     config_path: Annotated[Path, typer.Option("--config-path", "-c")] = Path("/etc/abrechnung/abrechnung.yaml"),
-    quiet: Annotated[int, typer.Option("--quiet", "-q", count=True, help="decrease program verbosity")] = 0,
-    verbose: Annotated[int, typer.Option("--verbose", "-v", count=True, help="increase program verbosity")] = 0,
+    quiet: Annotated[
+        int,
+        typer.Option("--quiet", "-q", count=True, help="decrease program verbosity"),
+    ] = 0,
+    verbose: Annotated[
+        int,
+        typer.Option("--verbose", "-v", count=True, help="increase program verbosity"),
+    ] = 0,
     debug: Annotated[bool, typer.Option(help="enable asyncio debugging")] = False,
 ):
     log_setup(verbose - quiet)

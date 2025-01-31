@@ -42,7 +42,11 @@ def requires_group_permissions(
             user = kwargs["user"]
             group_id = kwargs.pop("group_id")
             group_membership = await check_group_permissions(
-                conn=conn, group_id=group_id, user=user, can_write=requires_write, is_owner=requires_owner
+                conn=conn,
+                group_id=group_id,
+                user=user,
+                can_write=requires_write,
+                is_owner=requires_owner,
             )
             if "group_membership" in original_signature.parameters:
                 kwargs["group_membership"] = group_membership
@@ -59,7 +63,9 @@ def requires_group_permissions(
     return f
 
 
-def with_group_last_changed_update(func: Callable[..., Awaitable[R]]) -> Callable[..., Awaitable[R]]:
+def with_group_last_changed_update(
+    func: Callable[..., Awaitable[R]],
+) -> Callable[..., Awaitable[R]]:
     original_signature = signature(func)
 
     @wraps(func)

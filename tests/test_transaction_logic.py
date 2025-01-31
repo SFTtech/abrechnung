@@ -171,7 +171,13 @@ class TransactionLogicTest(BaseTestCase):
                 value=33,
                 debitor_shares={account1_id: 1.0},
                 creditor_shares={account2_id: 1.0},
-                new_files=[NewFile(filename="test file", mime_type="image/jpeg", content=image_base64)],
+                new_files=[
+                    NewFile(
+                        filename="test file",
+                        mime_type="image/jpeg",
+                        content=image_base64,
+                    )
+                ],
             ),
         )
         transaction: Transaction = await self.transaction_service.get_transaction(

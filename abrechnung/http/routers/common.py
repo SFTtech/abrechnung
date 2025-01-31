@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
 from abrechnung import MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION, __version__
-from abrechnung.config import Config, ServiceConfig, ServiceMessage
+from abrechnung.config import Config, ServiceMessage
 from abrechnung.http.dependencies import get_config
 
 router = APIRouter(

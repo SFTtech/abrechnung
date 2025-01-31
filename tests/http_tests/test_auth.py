@@ -12,7 +12,7 @@ class AuthAPITest(HTTPTestCase):
         expected_status: int = 200,
     ) -> dict:
         resp = await self.client.post(
-            f"/api/v1/auth/login",
+            "/api/v1/auth/login",
             json={
                 "username": username,
                 "password": password,
@@ -23,7 +23,7 @@ class AuthAPITest(HTTPTestCase):
         return resp.json()
 
     async def _fetch_profile(self, token: str, expected_status: int = 200) -> dict | None:
-        resp = await self.client.get(f"/api/v1/profile", headers={"Authorization": f"Bearer {token}"})
+        resp = await self.client.get("/api/v1/profile", headers={"Authorization": f"Bearer {token}"})
         self.assertEqual(expected_status, resp.status_code)
         if resp.status_code < 400:
             return resp.json()
@@ -32,7 +32,7 @@ class AuthAPITest(HTTPTestCase):
 
     async def test_register_user(self):
         resp = await self.client.post(
-            f"/api/v1/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "user",
                 "email": "email@mail.com",
@@ -44,7 +44,7 @@ class AuthAPITest(HTTPTestCase):
         self.assertIsNotNone(ret_data["user_id"])
 
         resp = await self.client.post(
-            f"/api/v1/auth/register",
+            "/api/v1/auth/register",
             json={
                 "username": "user2",
                 "email": "email@mail.com",
@@ -63,7 +63,7 @@ class AuthAPITest(HTTPTestCase):
         async with self.db_pool.acquire() as conn:
             token = await conn.fetchval("select token from pending_registration where user_id = $1", user_id)
 
-        resp = await self.client.post(f"/api/v1/auth/confirm_registration", json={"token": str(token)})
+        resp = await self.client.post("/api/v1/auth/confirm_registration", json={"token": str(token)})
         self.assertEqual(204, resp.status_code)
 
         # now we should be able to login and get a session token
@@ -90,7 +90,7 @@ class AuthAPITest(HTTPTestCase):
         await self._fetch_profile(invalid_token, expected_status=401)
 
         # now check that we can logout and afterwards not fetch the profile anymore
-        resp = await self.client.post(f"/api/v1/auth/logout", headers={"Authorization": f"Bearer {token}"})
+        resp = await self.client.post("/api/v1/auth/logout", headers={"Authorization": f"Bearer {token}"})
         self.assertEqual(204, resp.status_code)
         await self._fetch_profile(token, expected_status=401)
 
@@ -104,14 +104,14 @@ class AuthAPITest(HTTPTestCase):
 
         # check that we cannot change anything without providing the correct password
         resp = await self.client.post(
-            f"/api/v1/profile/change_password",
+            "/api/v1/profile/change_password",
             headers=headers,
             json={"old_password": "foobar", "new_password": "password3"},
         )
         self.assertEqual(400, resp.status_code)
 
         resp = await self.client.post(
-            f"/api/v1/profile/change_password",
+            "/api/v1/profile/change_password",
             headers=headers,
             json={"old_password": password, "new_password": "password2"},
         )
@@ -131,20 +131,20 @@ class AuthAPITest(HTTPTestCase):
 
         headers = {"Authorization": f"Bearer {token}"}
         resp = await self.client.post(
-            f"/api/v1/profile/change_email",
+            "/api/v1/profile/change_email",
             headers=headers,
             json={"email": new_email, "password": password},
         )
         self.assertEqual(204, resp.status_code)
 
         resp = await self.client.post(
-            f"/api/v1/profile/change_email",
+            "/api/v1/profile/change_email",
             headers=headers,
             json={"email": new_email, "password": "asdf1234"},
         )
         self.assertEqual(400, resp.status_code)
 
-        resp = await self.client.get(f"/api/v1/profile", headers=headers)
+        resp = await self.client.get("/api/v1/profile", headers=headers)
         self.assertEqual(200, resp.status_code)
         profile = resp.json()
         # we still have the old email
@@ -154,14 +154,14 @@ class AuthAPITest(HTTPTestCase):
         # fetch the registration token from the database
         async with self.db_pool.acquire() as conn:
             token = await conn.fetchval("select token from pending_email_change where user_id = $1", user.id)
-        resp = await self.client.post(f"/api/v1/auth/confirm_email_change", json={"token": "foobar lol"})
+        resp = await self.client.post("/api/v1/auth/confirm_email_change", json={"token": "foobar lol"})
         self.assertEqual(400, resp.status_code)
 
-        resp = await self.client.post(f"/api/v1/auth/confirm_email_change", json={"token": str(token)})
+        resp = await self.client.post("/api/v1/auth/confirm_email_change", json={"token": str(token)})
         self.assertEqual(204, resp.status_code)
 
         # now we have the new email
-        resp = await self.client.get(f"/api/v1/profile", headers=headers)
+        resp = await self.client.get("/api/v1/profile", headers=headers)
         self.assertEqual(200, resp.status_code)
         profile = resp.json()
         # we still have the old email
@@ -172,13 +172,13 @@ class AuthAPITest(HTTPTestCase):
         username = "user1"
         user, password = await self._create_test_user(username, user_email)
         resp = await self.client.post(
-            f"/api/v1/auth/recover_password",
+            "/api/v1/auth/recover_password",
             json={"email": "fooo@stusta.de"},
         )
         self.assertEqual(400, resp.status_code)
 
         resp = await self.client.post(
-            f"/api/v1/auth/recover_password",
+            "/api/v1/auth/recover_password",
             json={"email": user_email},
         )
         self.assertEqual(204, resp.status_code)
@@ -194,13 +194,13 @@ class AuthAPITest(HTTPTestCase):
         self.assertIsNotNone(token)
 
         resp = await self.client.post(
-            f"/api/v1/auth/confirm_password_recovery",
+            "/api/v1/auth/confirm_password_recovery",
             json={"token": "foobar", "new_password": "secret secret"},
         )
         self.assertEqual(400, resp.status_code)
 
         resp = await self.client.post(
-            f"/api/v1/auth/confirm_password_recovery",
+            "/api/v1/auth/confirm_password_recovery",
             json={"token": str(token), "new_password": "new_password"},
         )
         self.assertEqual(204, resp.status_code)

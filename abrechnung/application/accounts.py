@@ -57,10 +57,10 @@ class AccountService(Service[Config]):
             account_id,
         )
         if not result:
-            raise InvalidArgument(f"account not found")
+            raise InvalidArgument("account not found")
 
         if can_write and not (result["can_write"] or result["is_owner"]):
-            raise PermissionError(f"user does not have write permissions")
+            raise PermissionError("user does not have write permissions")
 
         if account_type:
             type_check = [account_type] if isinstance(account_type, str) else account_type
@@ -120,8 +120,7 @@ class AccountService(Service[Config]):
     @staticmethod
     async def _check_account_exists(conn: asyncpg.Connection, group_id: int, account_id: int) -> int:
         acc = await conn.fetchval(
-            "select account_id from account_state_valid_at() "
-            "where group_id = $1 and account_id = $2 and not deleted",
+            "select account_id from account_state_valid_at() where group_id = $1 and account_id = $2 and not deleted",
             group_id,
             account_id,
         )
@@ -218,7 +217,7 @@ class AccountService(Service[Config]):
 
         if account.owning_user_id is not None:
             if not group_membership.is_owner and account.owning_user_id != user.id:
-                raise PermissionError(f"only group owners can associate others with accounts")
+                raise PermissionError("only group owners can associate others with accounts")
 
         account_id = await conn.fetchval(
             "insert into account (group_id, type) values ($1, $2) returning id",
@@ -292,13 +291,13 @@ class AccountService(Service[Config]):
 
         if account.owning_user_id is not None:
             if not membership.is_owner and account.owning_user_id != user.id:
-                raise PermissionError(f"only group owners can associate others with accounts")
+                raise PermissionError("only group owners can associate others with accounts")
         elif (
             committed_account["owning_user_id"] is not None
             and committed_account["owning_user_id"] != user.id
             and not membership.is_owner
         ):
-            raise PermissionError(f"only group owners can remove other users as account owners")
+            raise PermissionError("only group owners can remove other users as account owners")
 
         await conn.execute(
             "insert into account_history (id, revision_id, name, description, owning_user_id, date_info) "
@@ -352,7 +351,7 @@ class AccountService(Service[Config]):
             account_id,
         )
         if row is None:
-            raise InvalidArgument(f"Account does not exist")
+            raise InvalidArgument("Account does not exist")
 
         # TODO: FIXME move this check into the database
 
@@ -376,20 +375,20 @@ class AccountService(Service[Config]):
         )
 
         if has_shares or has_usages:
-            raise InvalidArgument(f"Cannot delete an account that is references by a transaction")
+            raise InvalidArgument("Cannot delete an account that is references by a transaction")
 
         if has_clearing_shares:
-            raise InvalidArgument(f"Cannot delete an account that is references by a clearing account")
+            raise InvalidArgument("Cannot delete an account that is references by a clearing account")
 
         row = await conn.fetchrow(
             "select name, revision_id, deleted from account_state_valid_at() where account_id = $1",
             account_id,
         )
         if row is None:
-            raise InvalidArgument(f"Cannot delete an account without any committed changes")
+            raise InvalidArgument("Cannot delete an account without any committed changes")
 
         if row["deleted"]:
-            raise InvalidArgument(f"Cannot delete an already deleted account")
+            raise InvalidArgument("Cannot delete an already deleted account")
 
         has_clearing_shares = await conn.fetchval(
             "select exists (select from account_state_valid_at() p where not p.deleted and $1 = any(p.involved_accounts))",
@@ -397,7 +396,7 @@ class AccountService(Service[Config]):
         )
 
         if has_clearing_shares:
-            raise InvalidArgument(f"Cannot delete an account that is references by another clearing account")
+            raise InvalidArgument("Cannot delete an account that is references by another clearing account")
 
         revision_id = await conn.fetchval(
             "insert into account_revision (user_id, account_id) values ($1, $2) returning id",

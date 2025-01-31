@@ -36,7 +36,7 @@ class GroupService(Service[Config]):
         terms: str,
     ) -> int:
         if user.is_guest_user:
-            raise PermissionError(f"guest users are not allowed to create group new groups")
+            raise PermissionError("guest users are not allowed to create group new groups")
 
         group_id = await conn.fetchval(
             "insert into grp (name, description, currency_symbol, terms, add_user_account_on_join, created_by) "
@@ -86,7 +86,7 @@ class GroupService(Service[Config]):
         valid_until: datetime,
     ) -> int:
         if user.is_guest_user:
-            raise PermissionError(f"guest users are not allowed to create group invites")
+            raise PermissionError("guest users are not allowed to create group invites")
 
         await create_group_log(conn=conn, group_id=group_id, user=user, type="invite-created")
         return await conn.fetchval(
@@ -116,7 +116,7 @@ class GroupService(Service[Config]):
             group_id,
         )
         if not deleted_id:
-            raise InvalidArgument(f"No invite with the given id exists")
+            raise InvalidArgument("No invite with the given id exists")
         await create_group_log(conn=conn, group_id=group_id, user=user, type="invite-deleted")
 
     async def _create_user_account(self, conn: asyncpg.Connection, group_id: int, user: User) -> int:
@@ -150,14 +150,14 @@ class GroupService(Service[Config]):
             invite_token,
         )
         if not invite:
-            raise PermissionError(f"Invalid invite token")
+            raise PermissionError("Invalid invite token")
 
         group = await conn.fetchrow(
-            "select id, add_user_account_on_join from grp " "where grp.id = $1",
+            "select id, add_user_account_on_join from grp where grp.id = $1",
             invite["group_id"],
         )
         if not group:
-            raise PermissionError(f"Invalid invite token")
+            raise PermissionError("Invalid invite token")
 
         user_is_already_member = await conn.fetchval(
             "select exists (select user_id from group_membership where user_id = $1 and group_id = $2)",
@@ -165,7 +165,7 @@ class GroupService(Service[Config]):
             invite["group_id"],
         )
         if user_is_already_member:
-            raise InvalidArgument(f"User is already a member of this group")
+            raise InvalidArgument("User is already a member of this group")
 
         await conn.execute(
             "insert into group_membership (user_id, group_id, invited_by, can_write, is_owner) "
@@ -252,7 +252,7 @@ class GroupService(Service[Config]):
         is_owner: bool,
     ):
         if user.id == member_id:
-            raise InvalidArgument(f"group members cannot modify their own privileges")
+            raise InvalidArgument("group members cannot modify their own privileges")
 
         # not possible to have an owner without can_write
         can_write = can_write if not is_owner else True
@@ -269,10 +269,10 @@ class GroupService(Service[Config]):
             return
 
         if is_owner and not group_membership.is_owner:
-            raise PermissionError(f"group members cannot promote others to owner without being an owner")
+            raise PermissionError("group members cannot promote others to owner without being an owner")
 
         if membership["is_owner"]:
-            raise PermissionError(f"group owners cannot be demoted by other group members")
+            raise PermissionError("group owners cannot be demoted by other group members")
 
         if is_owner:
             await create_group_log(
@@ -317,8 +317,7 @@ class GroupService(Service[Config]):
             )
 
         await conn.execute(
-            "update group_membership gm set can_write = $3, is_owner = $4 "
-            "where gm.user_id = $1 and gm.group_id = $2",
+            "update group_membership gm set can_write = $3, is_owner = $4 where gm.user_id = $1 and gm.group_id = $2",
             member_id,
             group_id,
             can_write,
@@ -333,7 +332,7 @@ class GroupService(Service[Config]):
             group_id,
         )
         if n_members != 1:
-            raise InvalidArgument(f"Can only delete a group when you are the last member")
+            raise InvalidArgument("Can only delete a group when you are the last member")
 
         await conn.execute("delete from grp where id = $1", group_id)
 
@@ -367,7 +366,7 @@ class GroupService(Service[Config]):
             invite_token,
         )
         if not group:
-            raise PermissionError(f"invalid invite token to preview group")
+            raise PermissionError("invalid invite token to preview group")
 
         return group
 

@@ -38,8 +38,7 @@ test = [
     "httpx~=0.27",
 ]
 dev = [
-    "isort",
-    "black",
+    "ruff",
     "mypy==1.13.0",
     "types-PyYAML~=6.0",
     "pylint==3.3.2",
@@ -77,12 +76,20 @@ disable = [
     "broad-exception-caught",
 ]
 
-[tool.black]
+[tool.ruff]
 line-length = 120
-target-version = ["py311"]
+target-version = "py311"
+exclude = [
+    ".git",
+    ".idea",
+    ".mypy_cache",
+    ".venv*",
+    "docs"
+]
 
-[tool.isort]
-profile = "black"
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "PLE", "PLW"]
+ignore = ["E722"]
 
 [tool.mypy]
 ignore_missing_imports = true

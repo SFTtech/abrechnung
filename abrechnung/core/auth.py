@@ -21,13 +21,13 @@ async def check_group_permissions(
         user.id,
     )
     if membership is None:
-        raise InvalidArgument(f"group not found")
+        raise InvalidArgument("group not found")
 
     if can_write and not (membership.is_owner or membership.can_write):
-        raise PermissionError(f"write access to group denied")
+        raise PermissionError("write access to group denied")
 
     if is_owner and not membership.is_owner:
-        raise PermissionError(f"owner access to group denied")
+        raise PermissionError("owner access to group denied")
 
     return membership
 
@@ -41,7 +41,7 @@ async def create_group_log(
     affected_user_id: int | None = None,
 ):
     await conn.execute(
-        "insert into group_log (group_id, user_id, type, message, affected) " "values ($1, $2, $3, $4, $5)",
+        "insert into group_log (group_id, user_id, type, message, affected) values ($1, $2, $3, $4, $5)",
         group_id,
         user.id,
         type,

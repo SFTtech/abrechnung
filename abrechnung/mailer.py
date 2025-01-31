@@ -35,6 +35,7 @@ class Mailer:
         }
 
     async def _mailer_loop(self):
+        assert self.events is not None
         # run all of the events manually once
         for event_handler in self.event_handlers.values():
             await event_handler()
@@ -103,13 +104,14 @@ class Mailer:
 
     def notification_callback(self, connection: asyncpg.Connection, pid: int, channel: str, payload: str):
         """runs whenever we get a psql notification"""
-        del pid  # unused
+        del pid, connection  # unused
         if self.events is None:
             raise RuntimeError("something unexpected happened, self.events is None")
         self.events.put_nowait((channel, payload))
 
     def terminate_callback(self, connection: asyncpg.Connection):
         """runs when the psql connection is closed"""
+        del connection  # unused
         self.logger.info("psql connection closed")
         # proper way of clearing asyncio queue
         if self.events is None:
@@ -121,6 +123,7 @@ class Mailer:
 
     async def log_callback(self, connection: asyncpg.Connection, message: str):
         """runs when psql sends a log message"""
+        del connection  # unused
         self.logger.info(f"psql log message: {message}")
 
     def send_email(self, *text_lines: str, subject: str, dest_address: str, dest_name: str):

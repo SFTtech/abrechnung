@@ -45,10 +45,10 @@ class TransactionService(Service[Config]):
             transaction_id,
         )
         if not result:
-            raise InvalidArgument(f"user is not a member of this group")
+            raise InvalidArgument("user is not a member of this group")
 
         if can_write and not (result["can_write"] or result["is_owner"]):
-            raise PermissionError(f"user does not have write permissions")
+            raise PermissionError("user does not have write permissions")
 
         if transaction_type:
             type_check = [transaction_type] if isinstance(transaction_type, TransactionType) else transaction_type
@@ -119,14 +119,19 @@ class TransactionService(Service[Config]):
             return
         for tag_id in tag_ids:
             await conn.execute(
-                "insert into transaction_to_tag (transaction_id, revision_id, tag_id) " "values ($1, $2, $3)",
+                "insert into transaction_to_tag (transaction_id, revision_id, tag_id) values ($1, $2, $3)",
                 transaction_id,
                 revision_id,
                 tag_id,
             )
 
     async def _add_file_to_revision(
-        self, *, conn: Connection, revision_id: int, transaction_id: int, attachment: NewFile
+        self,
+        *,
+        conn: Connection,
+        revision_id: int,
+        transaction_id: int,
+        attachment: NewFile,
     ) -> int:
         content = base64.b64decode(attachment.content)
         max_file_size = self.config.api.max_uploadable_file_size
@@ -134,7 +139,7 @@ class TransactionService(Service[Config]):
             raise InvalidArgument(f"File is too large, maximum is {max_file_size}KB")
 
         if "." in attachment.filename:
-            raise InvalidArgument(f"Dots '.' are not allowed in file names")
+            raise InvalidArgument("Dots '.' are not allowed in file names")
 
         blob_id = await conn.fetchval(
             "insert into blob (content, mime_type) values ($1, $2) returning id",
@@ -156,10 +161,14 @@ class TransactionService(Service[Config]):
 
     @staticmethod
     async def _update_file_in_revision(
-        *, conn: Connection, revision_id: int, transaction_id: int, attachment: UpdateFile
+        *,
+        conn: Connection,
+        revision_id: int,
+        transaction_id: int,
+        attachment: UpdateFile,
     ) -> int:
         if "." in attachment.filename:
-            raise InvalidArgument(f"Dots '.' are not allowed in file names")
+            raise InvalidArgument("Dots '.' are not allowed in file names")
 
         blob_id = await conn.fetchval(
             "select blob_id from file_state_valid_at(now()) where id = $1 and transaction_id = $2",
@@ -247,7 +256,10 @@ class TransactionService(Service[Config]):
 
         for attachment in transaction.new_files:
             await self._add_file_to_revision(
-                conn=conn, revision_id=revision_id, transaction_id=transaction_id, attachment=attachment
+                conn=conn,
+                revision_id=revision_id,
+                transaction_id=transaction_id,
+                attachment=attachment,
             )
         await self._commit_revision(conn=conn, revision_id=revision_id)
 
@@ -284,7 +296,7 @@ class TransactionService(Service[Config]):
             raise InvalidArgument("one of the accounts referenced by a debitor share does not exist in this group")
         for account_id, value in debitor_shares.items():
             await conn.execute(
-                "insert into debitor_share(transaction_id, revision_id, account_id, shares) " "values ($1, $2, $3, $4)",
+                "insert into debitor_share(transaction_id, revision_id, account_id, shares) values ($1, $2, $3, $4)",
                 transaction_id,
                 revision_id,
                 account_id,
@@ -309,8 +321,7 @@ class TransactionService(Service[Config]):
             raise InvalidArgument("one of the accounts referenced by a creditor share does not exist in this group")
         for account_id, value in creditor_shares.items():
             await conn.execute(
-                "insert into creditor_share(transaction_id, revision_id, account_id, shares) "
-                "values ($1, $2, $3, $4)",
+                "insert into creditor_share(transaction_id, revision_id, account_id, shares) values ($1, $2, $3, $4)",
                 transaction_id,
                 revision_id,
                 account_id,
@@ -404,7 +415,7 @@ class TransactionService(Service[Config]):
         position: NewTransactionPosition,
     ) -> int:
         item_id = await conn.fetchval(
-            "insert into purchase_item (transaction_id) " "values ($1) " "returning id",
+            "insert into purchase_item (transaction_id) values ($1) returning id",
             transaction_id,
         )
         await conn.execute(
@@ -542,12 +553,18 @@ class TransactionService(Service[Config]):
 
         for new_attachment in transaction.new_files:
             await self._add_file_to_revision(
-                conn=conn, revision_id=revision_id, transaction_id=transaction_id, attachment=new_attachment
+                conn=conn,
+                revision_id=revision_id,
+                transaction_id=transaction_id,
+                attachment=new_attachment,
             )
 
         for updated_attachment in transaction.changed_files:
             await self._update_file_in_revision(
-                conn=conn, revision_id=revision_id, transaction_id=transaction_id, attachment=updated_attachment
+                conn=conn,
+                revision_id=revision_id,
+                transaction_id=transaction_id,
+                attachment=updated_attachment,
             )
         await self._commit_revision(conn=conn, revision_id=revision_id)
 
@@ -640,7 +657,10 @@ class TransactionService(Service[Config]):
     @staticmethod
     async def _commit_revision(conn: asyncpg.Connection, revision_id: int):
         """Touches a revision to have all associated constraints run"""
-        await conn.execute("update transaction_revision set created_at = now() where id = $1", revision_id)
+        await conn.execute(
+            "update transaction_revision set created_at = now() where id = $1",
+            revision_id,
+        )
 
     @staticmethod
     async def _create_revision(conn: asyncpg.Connection, user: User, transaction_id: int) -> int:
