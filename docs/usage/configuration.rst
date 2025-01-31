@@ -15,11 +15,13 @@ Database
 The first step after installing the **abrechnung** is to setup the database. Due to the use of database specific features
 we only support **PostgreSQL** with versions >= 13. Other versions might work but are untested.
 
-First create a database with an associated user ::
+First create a database with an associated user
 
-  $ sudo -u postgres psql
-  > create user abrechnung with password '<some secure password>';
-  > create database abrechnung owner abrechnung;
+.. code-block:: shell
+
+  sudo -u postgres psql
+  create user abrechnung with password '<some secure password>';
+  create database abrechnung owner abrechnung;
 
 Enter the information into the config file in ``/etc/abrechnung/abrechnung.yaml`` under the section database as
 
@@ -31,7 +33,9 @@ Enter the information into the config file in ``/etc/abrechnung/abrechnung.yaml`
     dbname: "abrechnung"
     password: "<password>"
 
-Apply all database migrations with ::
+Apply all database migrations with
+
+.. code-block:: shell
 
   abrechnung db migrate
 
@@ -48,7 +52,9 @@ The ``name`` is used to populate the email subjects as ``[<name>] <subject>``.
 API Config
 ---------------
 Typically the config for the http API does not need to be changed much apart from two important settings!
-In the ``api`` section make sure to insert a newly generated secret key, e.g. with ::
+In the ``api`` section make sure to insert a newly generated secret key, e.g. with
+
+.. code-block:: shell
 
   pwgen -S 64 1
 
@@ -123,6 +129,30 @@ Guest users will not be able to create new groups themselves but can take part i
     require_email_confirmation: true
     valid_email_domains: ["some-domain.com"]
     allow_guest_users: true
+
+Prometheus Metrics
+------------------
+
+Abrechnung also provides prometheus metrics which are disabled by default.
+This includes some general metrics about the abrechnung instance such as
+
+- http request durations and groupings of error codes
+- general python environment metrics such as process utilization and garbage collection performance
+
+Additionally it currently includes the following set of abrechnung specific metrics
+
+- number of groups created on the instance
+- number of transactions created on the instance
+- total amount of money by currency which was cleared via the instance, i.e. the total sum of transaction values per currency over all groups.
+  This is disabled by default as it may expose private data on very small abrechnung instances.
+
+To enable metrics under the api endpoint ``/api/metrics`` simply add the following to the config file
+
+.. code-block:: yaml
+
+  metrics:
+    enabled: true
+    expose_money_amounts: false  # disabled by default
 
 Configuration via Environment Variables
 ---------------------------------------

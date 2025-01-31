@@ -67,6 +67,11 @@ class EmailConfig(BaseModel):
     auth: Optional[AuthConfig] = None
 
 
+class MetricsConfig(BaseModel):
+    enabled: bool = False
+    expose_money_amounts: bool = False
+
+
 class Config(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="ABRECHNUNG_", env_nested_delimiter="__")
 
@@ -77,6 +82,7 @@ class Config(BaseSettings):
     # in case all params are optional this is needed to make the whole section optional
     demo: DemoConfig = DemoConfig()
     registration: RegistrationConfig = RegistrationConfig()
+    metrics: MetricsConfig = MetricsConfig()
 
     @classmethod
     def settings_customise_sources(

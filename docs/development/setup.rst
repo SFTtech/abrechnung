@@ -11,32 +11,28 @@ Setup
 Installation
 ------------
 
-Fork and clone the repository ::
+Fork and clone the repository
+
+.. code-block:: shell
 
   git clone https://github.com/SFTtech/abrechnung.git
   cd abrechnung
 
-Then install the package in local development mode as well as all required dependencies. Make sure to have
-`flit <https://github.com/pypa/flit>`_ installed first. Installing the dependencies can be two ways:
+Then install the package in local development mode as well as all required dependencies.
 
-Setup a virtual environment and install the packages via pip (straightforward way) ::
-
-  virtualenv -p python3 venv
-  source venv/bin/activate
-  pip install flit
-  flit install -s --deps develop
-
-Or install the dependencies through your package manager (useful for distribution packaging)
-
-* arch linux (slight chance some dependencies may be missing here)
+Setup a virtual environment and install the packages via pip
 
 .. code-block:: shell
 
-  sudo pacman -S python-flit python-yaml python-aiohttp python-aiohttp-cors python-asyncpg python-sphinx python-schema python-email-validator python-bcrypt python-pyjwt python-aiosmtpd python-pytest python-pytest-cov python-black python-mypy python-pylint python-apispec python-marshmallow python-webargs
+  virtualenv -p python3 .venv
+  source .venv/bin/activate
+  pip install -e . '[dev,test]'
 
-Afterwards install the package without dependencies ::
+Additionally you probably will want to activate the git pre-commit hooks (for formatting and linting) by running
 
-  flit install -s --deps none
+.. code-block:: shell
+
+  pre-commit install
 
 Database Setup
 --------------
@@ -60,7 +56,9 @@ Create the database (in a psql prompt):
 * Launch ``abrechnung -c abrechnung.yaml api``
 * Launch ``abrechnung -c abrechnung.yaml mailer`` to get mail delivery (working mail server in config file required!)
 
-It is always possible wipe and rebuild the database with ::
+It is always possible wipe and rebuild the database with
+
+.. code-block:: shell
 
   abrechnung -c abrechnung.yaml db rebuild
 
@@ -71,7 +69,7 @@ In case a new features requires changes to the database schema create a new migr
 
 .. code-block:: shell
 
-  ./tools/create_revision.py <revision_name>
+  sftkit create-migration <revision_name>
 
 In case you did not install the abrechnung in development mode it might be necessary to add the project root folder
 to your ``PYTHONPATH``.
@@ -100,30 +98,49 @@ is used as a means to wipe and repopulate the database between tests.
 
   alter schema public owner to "<your user>"
 
-Finally run the tests via ::
+Finally run the tests via
+
+.. code-block:: shell
 
   make test
 
-Run the linters via ::
+Run the linters via
+
+.. code-block:: shell
 
   make lint
+
+Run the formatters via
+
+.. code-block:: shell
+
+  make format
 
 Frontend Development
 --------------------
 
-Working on the frontend is quite easy, simply ::
+Working on the frontend is quite easy, simply
+
+.. code-block:: shell
 
   cd web
-  yarn install
-  yarn start
+  npm install
+  npx nx serve web
 
 and you are good to go!
 
 Documentation
 -------------
 
-To build the documentation locally simply run ::
+To build the documentation locally simply run
 
+.. code-block:: shell
+
+  pip install -r docs/requires.txt
   make docs
 
-The html docs can then be found in ``docs/_build``.
+The html docs can then be found in ``docs/_build`` or served locally with
+
+.. code-block:: shell
+
+  make serve-docs

@@ -53,4 +53,3 @@ create table account_to_tag (
     tag_id      integer not null references tag (id),
     primary key (account_id, revision_id, tag_id)
 );
-

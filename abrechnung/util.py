@@ -1,3 +1,4 @@
+import functools
 import logging
 import re
 import uuid
@@ -72,3 +73,23 @@ def is_valid_uuid(val: str):
         return True
     except ValueError:
         return False
+
+
+def timed_cache(ttl: timedelta):
+    def wrapper(func):
+        last_execution: datetime | None = None
+        last_value = None
+
+        @functools.wraps(func)
+        async def wrapped(*args, **kwargs):
+            nonlocal last_execution, last_value
+            current_execution = datetime.now()
+            if last_execution is None or last_value is None or current_execution - last_execution > ttl:
+                last_value = await func(*args, **kwargs)
+                last_execution = current_execution
+
+            return last_value
+
+        return wrapped
+
+    return wrapper

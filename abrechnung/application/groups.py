@@ -1,9 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import asyncpg
 from sftkit.database import Connection
 from sftkit.error import InvalidArgument
-from sftkit.service import Service, with_db_transaction
+from sftkit.service import Service, with_db_connection, with_db_transaction
 
 from abrechnung.config import Config
 from abrechnung.core.auth import create_group_log
@@ -20,6 +20,7 @@ from abrechnung.domain.groups import (
     GroupPreview,
 )
 from abrechnung.domain.users import User
+from abrechnung.util import timed_cache
 
 
 class GroupService(Service[Config]):
@@ -461,3 +462,8 @@ class GroupService(Service[Config]):
             "update grp set archived = false where id = $1",
             group_id,
         )
+
+    @with_db_connection
+    @timed_cache(timedelta(minutes=5))
+    async def total_number_of_groups(self, conn: Connection):
+        return await conn.fetchval("select count(*) from grp")

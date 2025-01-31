@@ -20,6 +20,7 @@ classifiers = [
 requires-python = ">=3.10"
 dependencies = [
     "sftkit==0.3.0",
+    "prometheus-fastapi-instrumentator==7.0.2",
     "pydantic[email]~=2.10.3",
     "pydantic-settings==2.6.1",
     "python-jose[cryptography]~=3.3.0",
@@ -39,6 +40,7 @@ test = [
 ]
 dev = [
     "ruff",
+    "pre-commit",
     "mypy==1.13.0",
     "types-PyYAML~=6.0",
     "pylint==3.3.2",
