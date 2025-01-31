@@ -39,6 +39,7 @@ test = [
 ]
 dev = [
     "ruff",
+    "pre-commit",
     "mypy==1.13.0",
     "types-PyYAML~=6.0",
     "pylint==3.3.2",
