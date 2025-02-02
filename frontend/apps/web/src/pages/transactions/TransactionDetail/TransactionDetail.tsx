@@ -14,7 +14,7 @@ import {
 } from "@abrechnung/redux";
 import { PositionValidator, Transaction, TransactionValidator } from "@abrechnung/types";
 import { Add as AddIcon } from "@mui/icons-material";
-import { Button, Divider, Grid2 as Grid } from "@mui/material";
+import { Button, Divider, Grid2 as Grid, Stack } from "@mui/material";
 import * as React from "react";
 import { Navigate, useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
@@ -24,6 +24,7 @@ import { TransactionMetadata } from "./TransactionMetadata";
 import { TransactionPositions } from "./purchase/TransactionPositions";
 import { ValidationErrors as PositionValidationErrors } from "./purchase/types";
 import { useTranslation } from "react-i18next";
+import { TransactionHistory } from "../TransactionHistory";
 
 interface Props {
     groupId: number;
@@ -151,19 +152,26 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
 
     return (
         <>
-            <MobilePaper>
-                <TransactionActions
-                    groupId={groupId}
-                    transaction={transaction}
-                    onStartEdit={edit}
-                    onCommitEdit={save}
-                    onAbortEdit={abortEdit}
-                    onDelete={confirmDeleteTransaction}
-                    showProgress={showProgress}
-                />
-                <Divider sx={{ marginBottom: 1, marginTop: 1 }} />
-                <TransactionMetadata groupId={groupId} transaction={transaction} validationErrors={validationErrors} />
-            </MobilePaper>
+            <Stack direction="row" spacing={2}>
+                <MobilePaper>
+                    <TransactionActions
+                        groupId={groupId}
+                        transaction={transaction}
+                        onStartEdit={edit}
+                        onCommitEdit={save}
+                        onAbortEdit={abortEdit}
+                        onDelete={confirmDeleteTransaction}
+                        showProgress={showProgress}
+                    />
+                    <Divider sx={{ marginBottom: 1, marginTop: 1 }} />
+                    <TransactionMetadata
+                        groupId={groupId}
+                        transaction={transaction}
+                        validationErrors={validationErrors}
+                    />
+                </MobilePaper>
+                {!transaction.is_wip && <TransactionHistory groupId={groupId} transaction={transaction} />}
+            </Stack>
 
             {transaction.type === "purchase" && !showPositions && transaction.is_wip && !hasPositions ? (
                 <Grid container justifyContent="center" sx={{ marginTop: 2 }}>
