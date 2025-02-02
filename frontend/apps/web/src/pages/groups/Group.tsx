@@ -20,6 +20,7 @@ import { GroupActivity } from "./GroupActivity";
 import { GroupSettingsPage } from "./settings";
 import { TransactionDetail } from "../transactions/TransactionDetail";
 import { SerializedError } from "@reduxjs/toolkit";
+import { TransactionHistory } from "../transactions/TransactionHistory";
 
 export const Group: React.FC = () => {
     const params = useParams();
@@ -68,6 +69,7 @@ export const Group: React.FC = () => {
                 <Route path="balances" element={<Balances groupId={groupId} />} />
                 <Route path="settlement-plan" element={<SettlementPlanDisplay groupId={group.id} />} />
                 <Route path="/" element={<TransactionList groupId={groupId} />} />
+                <Route path="transactions/:id/history" element={<TransactionHistory groupId={groupId} />} />
                 <Route path="transactions/:id" element={<TransactionDetail groupId={groupId} />} />
                 <Route path="accounts/:id" element={<AccountDetail groupId={group.id} />} />
                 <Route path="events/:id" element={<AccountDetail groupId={group.id} />} />

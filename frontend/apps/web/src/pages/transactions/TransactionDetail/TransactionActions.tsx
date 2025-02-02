@@ -1,4 +1,4 @@
-import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
+import { ChevronLeft, Delete, Edit, MoreVert } from "@mui/icons-material";
 import {
     Button,
     Chip,
@@ -9,9 +9,11 @@ import {
     Grid2 as Grid,
     IconButton,
     LinearProgress,
+    Menu,
+    MenuItem,
 } from "@mui/material";
 import React, { useState } from "react";
-import { Navigate, useNavigate } from "react-router";
+import { Navigate, useNavigate, Link as RouterLink } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Transaction } from "@abrechnung/types";
 import { useGroup, useIsGroupWritable } from "@abrechnung/redux";
@@ -37,6 +39,14 @@ export const TransactionActions: React.FC<Props> = ({
 }) => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+    const moreMenuOpen = Boolean(anchorEl);
+    const handleOpenMoreMenu = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleCloseMoreMenu = () => {
+        setAnchorEl(null);
+    };
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
 
     const isGroupWritable = useIsGroupWritable(groupId);
@@ -45,8 +55,6 @@ export const TransactionActions: React.FC<Props> = ({
     if (!group) {
         return <Navigate to="/404" />;
     }
-
-    const transactionTypeLabel = transaction.type === "purchase" ? "purchase" : "transfer";
 
     const navigateBack = () => {
         navigate(-1);
@@ -59,7 +67,7 @@ export const TransactionActions: React.FC<Props> = ({
                     <IconButton sx={{ display: { xs: "none", md: "inline-flex" } }} onClick={navigateBack}>
                         <ChevronLeft />
                     </IconButton>
-                    <Chip color="primary" label={transactionTypeLabel} />
+                    <Chip color="primary" label={t(`transactions.type.${transaction.type}`)} />
                 </Grid>
                 <Grid>
                     {isGroupWritable && (
@@ -83,6 +91,30 @@ export const TransactionActions: React.FC<Props> = ({
                             </IconButton>
                         </>
                     )}
+                    <IconButton color="primary" onClick={handleOpenMoreMenu}>
+                        <MoreVert />
+                    </IconButton>
+                    <Menu
+                        open={moreMenuOpen}
+                        anchorOrigin={{
+                            vertical: "top",
+                            horizontal: "right",
+                        }}
+                        keepMounted
+                        anchorEl={anchorEl}
+                        transformOrigin={{
+                            vertical: "top",
+                            horizontal: "right",
+                        }}
+                        onClose={handleCloseMoreMenu}
+                    >
+                        <MenuItem
+                            component={RouterLink}
+                            to={`/groups/${group.id}/transactions/${transaction.id}/history`}
+                        >
+                            {t("transactions.history.linkTo")}
+                        </MenuItem>
+                    </Menu>
                 </Grid>
             </Grid>
             {showProgress && <LinearProgress />}
