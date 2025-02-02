@@ -111,3 +111,9 @@ class Transaction(BaseModel):
 
     positions: list[TransactionPosition]
     files: list[FileAttachment]
+
+
+class TransactionHistory(BaseModel):
+    revision_id: int
+    changed_by: int  # user id of changing user
+    changed_at: datetime
