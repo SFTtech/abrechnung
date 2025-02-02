@@ -19,6 +19,7 @@ from abrechnung.domain.transactions import (
     NewTransaction,
     NewTransactionPosition,
     Transaction,
+    TransactionHistory,
     TransactionPosition,
     TransactionType,
     UpdateFile,
@@ -94,6 +95,18 @@ class TransactionService(Service[Config]):
             for attachment in transaction.files:
                 attachment.host_url = self.config.api.base_url + "/api"
         return transactions
+
+    @with_db_transaction
+    async def get_transaction_history(self, *, conn: Connection, user: User, transaction_id: int) -> TransactionHistory:
+        group_id = await self._check_transaction_permissions(conn=conn, user=user, transaction_id=transaction_id)
+        history = await conn.fetch_many(
+            TransactionHistory,
+            "select revision_id, created_at as changed_at, user_id as changed_by  "
+            "from aggregated_transaction_history where group_id = $1 and transaction_id = $2 order by created_at asc",
+            group_id,
+            transaction_id,
+        )
+        return history
 
     @with_db_transaction
     async def get_transaction(self, *, conn: Connection, user: User, transaction_id: int) -> Transaction:

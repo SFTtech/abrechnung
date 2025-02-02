@@ -54,6 +54,12 @@ const injectedRtkApi = api
                 }),
                 invalidatesTags: ["transactions"],
             }),
+            getTransactionHistory: build.query<GetTransactionHistoryApiResponse, GetTransactionHistoryApiArg>({
+                query: (queryArg) => ({
+                    url: `/api/v1/groups/${queryArg.groupId}/transactions/${queryArg.transactionId}/history`,
+                }),
+                providesTags: ["transactions"],
+            }),
             updateTransactionPositions: build.mutation<
                 UpdateTransactionPositionsApiResponse,
                 UpdateTransactionPositionsApiArg
@@ -315,6 +321,11 @@ export type UpdateTransactionApiArg = {
 };
 export type DeleteTransactionApiResponse = /** status 200 Successful Response */ Transaction;
 export type DeleteTransactionApiArg = {
+    groupId: number;
+    transactionId: number;
+};
+export type GetTransactionHistoryApiResponse = /** status 200 Successful Response */ TransactionHistory[];
+export type GetTransactionHistoryApiArg = {
     groupId: number;
     transactionId: number;
 };
@@ -582,6 +593,11 @@ export type UpdateTransaction = {
     changed_files?: UpdateFile[];
     changed_positions?: TransactionPosition[];
 };
+export type TransactionHistory = {
+    revision_id: number;
+    changed_by: number;
+    changed_at: string;
+};
 export type UpdatePositionsPayload = {
     positions: TransactionPosition[];
 };
@@ -793,6 +809,8 @@ export const {
     useLazyGetTransactionQuery,
     useUpdateTransactionMutation,
     useDeleteTransactionMutation,
+    useGetTransactionHistoryQuery,
+    useLazyGetTransactionHistoryQuery,
     useUpdateTransactionPositionsMutation,
     useGetFileContentsQuery,
     useLazyGetFileContentsQuery,
