@@ -7,7 +7,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
 from sftkit.database import Connection
-from sftkit.error import InvalidArgument
+from sftkit.error import AccessDenied, InvalidArgument, Unauthorized
 from sftkit.service import Service, with_db_transaction
 
 from abrechnung.config import Config
@@ -79,9 +79,9 @@ class UserService(Service[Config]):
             try:
                 return TokenMetadata.model_validate(payload)
             except:
-                raise PermissionError("invalid access token token")
+                raise Unauthorized("invalid access token")
         except JWTError:
-            raise PermissionError
+            raise Unauthorized("invalid access token")
 
     @with_db_transaction
     async def get_user_from_token(self, *, conn: Connection, token: str) -> User:
@@ -93,7 +93,7 @@ class UserService(Service[Config]):
             token_metadata.user_id,
         )
         if not sess:
-            raise PermissionError
+            raise Unauthorized("invalid access token")
         return await self._get_user(conn=conn, user_id=token_metadata.user_id)
 
     async def _verify_user_password(self, user_id: int, password: str) -> bool:
@@ -202,7 +202,7 @@ class UserService(Service[Config]):
     ) -> int:
         """Register a new user, returning the newly created user id and creating a pending registration entry"""
         if not self.enable_registration:
-            raise PermissionError("User registrations are disabled on this server")
+            raise AccessDenied("User registrations are disabled on this server")
 
         requires_email_confirmation = self.require_email_confirmation and requires_email_confirmation
 
@@ -224,7 +224,7 @@ class UserService(Service[Config]):
             if self.enable_registration and has_valid_email:
                 self._validate_email_domain(email)
         elif not has_valid_email:
-            raise PermissionError(
+            raise AccessDenied(
                 f"Only users with emails out of the following domains are allowed: {self.valid_email_domains}"
             )
 
@@ -254,12 +254,12 @@ class UserService(Service[Config]):
             token,
         )
         if row is None:
-            raise PermissionError("Invalid registration token")
+            raise AccessDenied("Invalid registration token")
 
         user_id = row["user_id"]
         valid_until = row["valid_until"]
         if valid_until is None or valid_until < datetime.now(tz=timezone.utc):
-            raise PermissionError("Invalid registration token")
+            raise AccessDenied("Invalid registration token")
 
         await conn.execute("delete from pending_registration where user_id = $1", user_id)
         await conn.execute("update usr set pending = false where id = $1", user_id)
@@ -354,7 +354,7 @@ class UserService(Service[Config]):
         user_id = row["user_id"]
         valid_until = row["valid_until"]
         if valid_until is None or valid_until < datetime.now(tz=timezone.utc):
-            raise PermissionError
+            raise AccessDenied("Invalid confirmation token")
 
         await conn.execute("delete from pending_email_change where user_id = $1", user_id)
         await conn.execute("update usr set email = $2 where id = $1", user_id, row["new_email"])
@@ -383,7 +383,7 @@ class UserService(Service[Config]):
         user_id = row["user_id"]
         valid_until = row["valid_until"]
         if valid_until is None or valid_until < datetime.now(tz=timezone.utc):
-            raise PermissionError
+            raise AccessDenied("Invalid confirmation token")
 
         await conn.execute("delete from pending_password_recovery where user_id = $1", user_id)
         hashed_password = self._hash_password(password=new_password)

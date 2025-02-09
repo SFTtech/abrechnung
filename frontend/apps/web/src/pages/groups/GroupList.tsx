@@ -32,31 +32,29 @@ const GList: React.FC<{ groups: Group[] }> = ({ groups }) => {
                     <span>{t("groups.list.noGroups")}</span>
                 </ListItem>
             ) : (
-                groups.map((group) => {
-                    return (
-                        <div key={group.id}>
-                            <ListItemLink sx={{ padding: 0 }} to={`/groups/${group.id}`}>
-                                <ListItemText
-                                    primary={group.name}
-                                    secondary={
-                                        <>
-                                            {group.description && (
-                                                <>
-                                                    {group.description}
-                                                    <br />
-                                                </>
-                                            )}
-                                            {t("groups.list.lastUpdateAt", {
-                                                datetime: formatDatetime(group.last_changed, "full"),
-                                            })}
-                                        </>
-                                    }
-                                />
-                            </ListItemLink>
-                            {isSmallScreen && <Divider component="li" />}
-                        </div>
-                    );
-                })
+                groups.map((group) => (
+                    <div key={group.id}>
+                        <ListItemLink sx={{ padding: 0 }} to={`/groups/${group.id}`}>
+                            <ListItemText
+                                primary={group.name}
+                                secondary={
+                                    <>
+                                        {group.description && (
+                                            <>
+                                                {group.description}
+                                                <br />
+                                            </>
+                                        )}
+                                        {t("groups.list.lastUpdateAt", {
+                                            datetime: formatDatetime(group.last_changed, "full"),
+                                        })}
+                                    </>
+                                }
+                            />
+                        </ListItemLink>
+                        {isSmallScreen && <Divider component="li" />}
+                    </div>
+                ))
             )}
         </List>
     );

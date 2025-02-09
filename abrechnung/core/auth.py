@@ -1,5 +1,5 @@
 from sftkit.database import Connection
-from sftkit.error import InvalidArgument
+from sftkit.error import AccessDenied, InvalidArgument
 
 from abrechnung.domain.groups import GroupMember
 from abrechnung.domain.users import User
@@ -24,10 +24,10 @@ async def check_group_permissions(
         raise InvalidArgument("group not found")
 
     if can_write and not (membership.is_owner or membership.can_write):
-        raise PermissionError("write access to group denied")
+        raise AccessDenied("write access to group denied")
 
     if is_owner and not membership.is_owner:
-        raise PermissionError("owner access to group denied")
+        raise AccessDenied("owner access to group denied")
 
     return membership
 

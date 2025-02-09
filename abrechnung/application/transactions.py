@@ -4,7 +4,7 @@ from typing import Optional, Union
 
 import asyncpg
 from sftkit.database import Connection
-from sftkit.error import InvalidArgument
+from sftkit.error import AccessDenied, InvalidArgument
 from sftkit.service import Service, with_db_connection, with_db_transaction
 
 from abrechnung.application.common import _get_or_create_tag_ids
@@ -49,7 +49,7 @@ class TransactionService(Service[Config]):
             raise InvalidArgument("user is not a member of this group")
 
         if can_write and not (result["can_write"] or result["is_owner"]):
-            raise PermissionError("user does not have write permissions")
+            raise AccessDenied("user does not have write permissions")
 
         if transaction_type:
             type_check = [transaction_type] if isinstance(transaction_type, TransactionType) else transaction_type

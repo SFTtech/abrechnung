@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { Link as RouterLink, useNavigate } from "react-router";
-import { api } from "@/core/api";
+import { api, handleApiError } from "@/core/api";
 import { toast } from "react-toastify";
 import { useQuery, useTitle } from "@/core/utils";
 import { Avatar, Box, Button, Container, CssBaseline, Grid2 as Grid, Link, Typography } from "@mui/material";
@@ -53,9 +53,7 @@ export const Login: React.FC = () => {
             .then((res) => {
                 toast.success(t("auth.login.loginSuccess"));
             })
-            .catch((err) => {
-                toast.error(err.message);
-            });
+            .catch(handleApiError);
     };
 
     return (

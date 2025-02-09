@@ -2,7 +2,7 @@ import { Alert, Box, Button, Container, CssBaseline, Link, Stack, Typography } f
 import React, { useState } from "react";
 import { Link as RouterLink, useParams } from "react-router";
 import { z } from "zod";
-import { api } from "@/core/api";
+import { api, handleApiError } from "@/core/api";
 import i18n from "@/i18n";
 import { Trans, useTranslation } from "react-i18next";
 import { useTitle } from "@/core/utils";
@@ -24,7 +24,6 @@ type FormSchema = z.infer<typeof validationSchema>;
 export const ConfirmPasswordRecovery: React.FC = () => {
     const { t } = useTranslation();
     const [status, setStatus] = useState("idle");
-    const [error, setError] = useState(null);
     const { token } = useParams();
 
     useTitle(t("auth.confirmPasswordRecovery.tabTitle"));
@@ -50,12 +49,11 @@ export const ConfirmPasswordRecovery: React.FC = () => {
             .confirmPasswordRecovery({ requestBody: { new_password: values.password, token } })
             .then(() => {
                 setStatus("success");
-                setError(null);
                 resetForm();
             })
             .catch((err) => {
+                handleApiError(err);
                 setStatus("error");
-                setError(err.toString());
             });
     };
 
@@ -73,11 +71,6 @@ export const ConfirmPasswordRecovery: React.FC = () => {
                 <Typography component="h1" variant="h5">
                     {t("auth.confirmPasswordRecovery.header")}
                 </Typography>
-                {error && (
-                    <Alert sx={{ mt: 4 }} severity="error">
-                        {error}
-                    </Alert>
-                )}
                 {status === "success" ? (
                     <Alert sx={{ mt: 4 }} severity="success">
                         <Trans Key="auth.confirmPasswordRecovery.successfulLinkToLogin">

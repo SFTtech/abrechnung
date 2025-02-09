@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { useParams } from "react-router";
 import { toast } from "react-toastify";
 import { Loading } from "@abrechnung/components";
-import { api } from "@/core/api";
+import { api, handleApiError } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { Trans, useTranslation } from "react-i18next";
 
@@ -25,9 +25,7 @@ export const ConfirmEmailChange: React.FC = () => {
             .then((value) => {
                 setStatus("success");
             })
-            .catch((error) => {
-                toast.error(error);
-            });
+            .catch(handleApiError);
     };
 
     if (status === "success") {

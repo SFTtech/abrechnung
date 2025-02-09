@@ -1,10 +1,11 @@
-import { Api, IConnectionStatusProvider } from "@abrechnung/api";
+import { Api, ApiError, IConnectionStatusProvider } from "@abrechnung/api";
 import {
     fetchBaseQuery,
     type BaseQueryFn,
     type FetchArgs,
     type FetchBaseQueryError,
 } from "@reduxjs/toolkit/query/react";
+import { toast } from "react-toastify";
 
 export const siteHost = window.location.host;
 export const baseURL = `${window.location.protocol}//${siteHost}`;
@@ -33,4 +34,12 @@ export const apiBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 ) => {
     const rawBaseQuery = fetchBaseQuery({ baseUrl: baseURL, prepareHeaders: prepareAuthHeaders });
     return rawBaseQuery(args, api, extraOptions);
+};
+
+export const handleApiError = (err: ApiError) => {
+    let message = err.name;
+    if (typeof err.body?.message === "string") {
+        message = err.body.message;
+    }
+    toast.error(message);
 };
