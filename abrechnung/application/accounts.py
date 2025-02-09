@@ -2,7 +2,7 @@ from typing import Optional, Union
 
 import asyncpg
 from sftkit.database import Connection
-from sftkit.error import InvalidArgument
+from sftkit.error import AccessDenied, InvalidArgument
 from sftkit.service import Service, with_db_connection, with_db_transaction
 
 from abrechnung.config import Config
@@ -60,7 +60,7 @@ class AccountService(Service[Config]):
             raise InvalidArgument("account not found")
 
         if can_write and not (result["can_write"] or result["is_owner"]):
-            raise PermissionError("user does not have write permissions")
+            raise AccessDenied("user does not have write permissions")
 
         if account_type:
             type_check = [account_type] if isinstance(account_type, str) else account_type
@@ -217,7 +217,7 @@ class AccountService(Service[Config]):
 
         if account.owning_user_id is not None:
             if not group_membership.is_owner and account.owning_user_id != user.id:
-                raise PermissionError("only group owners can associate others with accounts")
+                raise AccessDenied("only group owners can associate others with accounts")
 
         account_id = await conn.fetchval(
             "insert into account (group_id, type) values ($1, $2) returning id",
@@ -291,13 +291,13 @@ class AccountService(Service[Config]):
 
         if account.owning_user_id is not None:
             if not membership.is_owner and account.owning_user_id != user.id:
-                raise PermissionError("only group owners can associate others with accounts")
+                raise AccessDenied("only group owners can associate others with accounts")
         elif (
             committed_account["owning_user_id"] is not None
             and committed_account["owning_user_id"] != user.id
             and not membership.is_owner
         ):
-            raise PermissionError("only group owners can remove other users as account owners")
+            raise AccessDenied("only group owners can remove other users as account owners")
 
         await conn.execute(
             "insert into account_history (id, revision_id, name, description, owning_user_id, date_info) "

@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
+from sftkit.error import AccessDenied
 
 from abrechnung.application.users import InvalidPassword, UserService
 from abrechnung.config import Config
@@ -256,7 +257,7 @@ async def confirm_password_recovery(
 ):
     try:
         await user_service.confirm_password_recovery(token=payload.token, new_password=payload.new_password)
-    except PermissionError as e:
+    except AccessDenied as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 

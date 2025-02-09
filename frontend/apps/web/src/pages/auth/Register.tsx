@@ -6,7 +6,7 @@ import { Link as RouterLink, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import { FormTextField, Loading } from "@abrechnung/components";
-import { api } from "@/core/api";
+import { api, handleApiError } from "@/core/api";
 import { useQuery, useTitle } from "@/core/utils";
 import { useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
@@ -79,15 +79,13 @@ export const Register: React.FC = () => {
                     invite_token: inviteToken,
                 },
             })
-            .then(() => {
+            .then((resp) => {
                 toast.success(t("auth.register.registrationSuccess"), {
                     autoClose: 20000,
                 });
                 navigate(`/login${queryArgsForward}`);
             })
-            .catch((err) => {
-                toast.error(err);
-            });
+            .catch(handleApiError);
     };
 
     if (loading) {

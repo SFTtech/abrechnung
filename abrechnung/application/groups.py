@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 import asyncpg
 from sftkit.database import Connection
-from sftkit.error import InvalidArgument
+from sftkit.error import AccessDenied, InvalidArgument
 from sftkit.service import Service, with_db_connection, with_db_transaction
 
 from abrechnung.config import Config
@@ -37,7 +37,7 @@ class GroupService(Service[Config]):
         terms: str,
     ) -> int:
         if user.is_guest_user:
-            raise PermissionError("guest users are not allowed to create group new groups")
+            raise AccessDenied("guest users are not allowed to create group new groups")
 
         group_id = await conn.fetchval(
             "insert into grp (name, description, currency_symbol, terms, add_user_account_on_join, created_by) "
@@ -87,7 +87,7 @@ class GroupService(Service[Config]):
         valid_until: datetime,
     ) -> int:
         if user.is_guest_user:
-            raise PermissionError("guest users are not allowed to create group invites")
+            raise AccessDenied("guest users are not allowed to create group invites")
 
         await create_group_log(conn=conn, group_id=group_id, user=user, type="invite-created")
         return await conn.fetchval(
@@ -151,14 +151,14 @@ class GroupService(Service[Config]):
             invite_token,
         )
         if not invite:
-            raise PermissionError("Invalid invite token")
+            raise AccessDenied("Invalid invite token")
 
         group = await conn.fetchrow(
             "select id, add_user_account_on_join from grp where grp.id = $1",
             invite["group_id"],
         )
         if not group:
-            raise PermissionError("Invalid invite token")
+            raise AccessDenied("Invalid invite token")
 
         user_is_already_member = await conn.fetchval(
             "select exists (select user_id from group_membership where user_id = $1 and group_id = $2)",
@@ -270,10 +270,10 @@ class GroupService(Service[Config]):
             return
 
         if is_owner and not group_membership.is_owner:
-            raise PermissionError("group members cannot promote others to owner without being an owner")
+            raise AccessDenied("group members cannot promote others to owner without being an owner")
 
         if membership["is_owner"]:
-            raise PermissionError("group owners cannot be demoted by other group members")
+            raise AccessDenied("group owners cannot be demoted by other group members")
 
         if is_owner:
             await create_group_log(
@@ -367,7 +367,7 @@ class GroupService(Service[Config]):
             invite_token,
         )
         if not group:
-            raise PermissionError("invalid invite token to preview group")
+            raise AccessDenied("invalid invite token to preview group")
 
         return group
 

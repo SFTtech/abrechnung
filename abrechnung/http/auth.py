@@ -2,6 +2,7 @@ import logging
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from sftkit.error import AccessDenied
 
 from abrechnung.application.users import UserService
 from abrechnung.domain.users import User
@@ -21,7 +22,7 @@ async def get_current_user(
 ) -> User:
     try:
         return await user_service.get_user_from_token(token=token)
-    except PermissionError:
+    except AccessDenied:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",

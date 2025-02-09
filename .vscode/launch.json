@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "API",
+            "type": "debugpy",
+            "request": "launch",
+            "args": ["-c", "config.yaml", "-vvv", "api"],
+            "cwd": "${workspaceFolder}",
+            "module": "abrechnung"
+        }
+    ]
+}

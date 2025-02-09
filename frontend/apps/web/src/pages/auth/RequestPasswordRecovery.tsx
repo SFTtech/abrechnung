@@ -3,7 +3,7 @@ import { Alert, Box, Button, Container, CssBaseline, Typography } from "@mui/mat
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { z } from "zod";
-import { api } from "@/core/api";
+import { api, handleApiError } from "@/core/api";
 import { useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
 import { useTitle } from "@/core/utils";
@@ -20,7 +20,6 @@ export const RequestPasswordRecovery: React.FC = () => {
     const { t } = useTranslation();
     const isLoggedIn = useAppSelector(selectIsAuthenticated);
     const [status, setStatus] = useState("initial");
-    const [error, setError] = useState(null);
     const navigate = useNavigate();
 
     useTitle(t("auth.recoverPassword.tabTitle"));
@@ -45,12 +44,11 @@ export const RequestPasswordRecovery: React.FC = () => {
             .recoverPassword({ requestBody: { email: values.email } })
             .then(() => {
                 setStatus("success");
-                setError(null);
                 resetForm();
             })
             .catch((err) => {
                 setStatus("error");
-                setError(err.toString());
+                handleApiError(err);
             });
     };
 
@@ -71,11 +69,6 @@ export const RequestPasswordRecovery: React.FC = () => {
                 <Typography component="p" variant="body1">
                     {t("auth.recoverPassword.body")}
                 </Typography>
-                {error && (
-                    <Alert sx={{ mt: 4 }} severity="error">
-                        {error}
-                    </Alert>
-                )}
                 {status === "success" ? (
                     <Alert sx={{ mt: 4 }} severity="success">
                         {t("auth.recoverPassword.emailSent")}

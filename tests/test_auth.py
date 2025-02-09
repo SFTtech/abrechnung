@@ -1,6 +1,8 @@
 # pylint: disable=attribute-defined-outside-init,missing-kwoa
 from datetime import datetime, timedelta
 
+from sftkit.error import AccessDenied
+
 from abrechnung.application.groups import GroupService
 from abrechnung.application.users import UserService
 
@@ -61,7 +63,7 @@ class TransactionLogicTest(BaseTestCase):
         non_guest_user = await user_service.get_user(user_id=user_id)
         self.assertFalse(non_guest_user.is_guest_user)
 
-        with self.assertRaises(PermissionError):
+        with self.assertRaises(AccessDenied):
             await user_service.register_user(
                 username="invalid user",
                 email="invalid-something@something.com",
