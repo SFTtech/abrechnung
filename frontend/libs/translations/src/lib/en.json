@@ -42,7 +42,9 @@
         "tagNameRequiredError": "please input a tag name",
         "exportAsCsv": "Export as CSV",
         "noneSoFar": "None so far",
-        "copyToClipboard": "Copy to clipboard"
+        "copyToClipboard": "Copy to clipboard",
+        "createdBy": "created by {{username}}",
+        "changedBy": "changed by {{username}}"
     },
     "shareSelect": {
         "selectedPeople_one": "{{count}} Person",
@@ -168,11 +170,19 @@
             "tabTitle": "{{groupName}} - Transactions"
         },
         "byFor": "by {{by}}, for {{for}}",
+        "type": {
+            "purchase": "purchase",
+            "transfer": "transfer",
+            "mimo": "mimo"
+        },
         "positions": {
             "positions": "Positions",
             "sharedPlusRest": "Shared + Rest",
             "addPositions": "Add Positions",
             "remaining": "Remaining:"
+        },
+        "history": {
+            "linkTo": "History"
         }
     },
     "accounts": {

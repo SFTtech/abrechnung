@@ -8,6 +8,7 @@ from abrechnung.application.transactions import TransactionService
 from abrechnung.domain.transactions import (
     NewTransaction,
     Transaction,
+    TransactionHistory,
     TransactionPosition,
     UpdateTransaction,
 )
@@ -91,6 +92,21 @@ async def get_transaction(
     transaction_service: TransactionService = Depends(get_transaction_service),
 ):
     return await transaction_service.get_transaction(user=user, transaction_id=transaction_id)
+
+
+@router.get(
+    "/v1/groups/{group_id}/transactions/{transaction_id}/history",
+    summary="get transaction history",
+    response_model=list[TransactionHistory],
+    operation_id="get_transaction_history",
+)
+async def get_transaction_history(
+    group_id: int,
+    transaction_id: int,
+    user: User = Depends(get_current_user),
+    transaction_service: TransactionService = Depends(get_transaction_service),
+):
+    return await transaction_service.get_transaction_history(user=user, transaction_id=transaction_id)
 
 
 @router.post(
