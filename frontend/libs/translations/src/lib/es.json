@@ -40,7 +40,9 @@
         "currency": "Divisa",
         "addNewTag": "Añadir nueva etiqueta",
         "copyToClipboard": "Copiar al portapapeles",
-        "tagNameRequiredError": "por favor, escribe un nombre para la etiqueta"
+        "tagNameRequiredError": "por favor, escribe un nombre para la etiqueta",
+        "changedBy": "modificado por {{username}}",
+        "createdBy": "creado por {{username}}"
     },
     "shareSelect": {
         "accountSlashEvent": "Cuenta / Evento",
@@ -173,7 +175,14 @@
         "createPurchaseForAccount": "Crear compra con {{accountName}} como participante",
         "noTransactions": "Sin transacciones",
         "purchase": "Compra",
-        "createTransferForAccount": "Crear transferencia a {{accountName}}"
+        "createTransferForAccount": "Crear transferencia a {{accountName}}",
+        "type": {
+            "purchase": "compra",
+            "transfer": "transferencia"
+        },
+        "history": {
+            "linkTo": "Historial"
+        }
     },
     "accounts": {
         "list": {

@@ -40,7 +40,9 @@
         "addNewTag": "Додати новий тег",
         "exportAsCsv": "Експортувати як CSV",
         "tagNameRequiredError": "введіть назву тегу",
-        "copyToClipboard": "Копіювати в буфер обміну"
+        "copyToClipboard": "Копіювати в буфер обміну",
+        "createdBy": "створено {{username}}",
+        "changedBy": "змінено на {{username}}"
     },
     "images": {
         "uploadImage": "Завантажити зображення",
@@ -212,7 +214,15 @@
         "paidBy": "Оплачено",
         "confirmDeleteTransactionInfo": "Ви впевнені, що бажаєте видалити транзакцію \"{{transaction.name}}\"?",
         "byFor": "від {{by}}, для {{for}}",
-        "createTransferForAccount": "Створити переказ до {{accountName}}"
+        "createTransferForAccount": "Створити переказ до {{accountName}}",
+        "type": {
+            "mimo": "незважаючи на",
+            "transfer": "передача",
+            "purchase": "покупка"
+        },
+        "history": {
+            "linkTo": "історія"
+        }
     },
     "accounts": {
         "participated": "Брав участь",
