@@ -5,6 +5,7 @@ import {
     NewFile,
     UpdateFile,
 } from "@abrechnung/api";
+import { CurrencyIdentifierSchema } from "@abrechnung/core";
 import { z } from "zod";
 
 export type TransactionShare = { [k: number]: number };
@@ -18,7 +19,7 @@ const BaseTransactionValidator = z.object({
         .string({ required_error: "Billed at is required" })
         .regex(/\d{4}-\d{2}-\d{2}/, "A valid date is required"),
     description: z.string().optional(),
-    currency_symbol: z.string({ required_error: "Currency is required" }).min(1, "Currency is required"),
+    currency_identifier: CurrencyIdentifierSchema,
     tags: z.array(z.string()),
     currency_conversion_rate: z
         .number({ required_error: "Currency conversion rate is required" })

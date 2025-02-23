@@ -1,4 +1,4 @@
-import { selectAccountBalances, useGroupCurrencySymbol } from "@abrechnung/redux";
+import { selectAccountBalances, useGroupCurrencyIdentifier } from "@abrechnung/redux";
 import { Box, Divider, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import React from "react";
 import { balanceColor } from "@/core/utils";
@@ -20,9 +20,9 @@ export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, 
     const formatCurrency = useFormatCurrency();
     const formatDatetime = useFormatDatetime();
     const balances = useAppSelector((state) => selectAccountBalances(state, groupId));
-    const currencySymbol = useGroupCurrencySymbol(groupId);
+    const currencyIdentifier = useGroupCurrencyIdentifier(groupId);
     const isSmallScreen = useIsSmallScreen();
-    if (!currencySymbol) {
+    if (!currencyIdentifier) {
         return null;
     }
 
@@ -60,7 +60,7 @@ export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, 
                         >
                             {formatCurrency(
                                 balances[clearingAccount.id]?.clearingResolution[accountId],
-                                currencySymbol
+                                currencyIdentifier
                             )}
                         </Typography>
                         {!isSmallScreen && (

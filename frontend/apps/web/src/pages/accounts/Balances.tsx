@@ -78,7 +78,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                             color: getAmountColor(account.balance),
                                         }}
                                     >
-                                        {formatCurrency(account.balance, group.currency_symbol)}
+                                        {formatCurrency(account.balance, group.currency_identifier)}
                                     </Typography>
                                 </Typography>
                             ))}
@@ -97,7 +97,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                                 color: getAmountColor(balances[account.id].balance),
                                             }}
                                         >
-                                            {formatCurrency(balances[account.id]?.balance, group.currency_symbol)}
+                                            {formatCurrency(balances[account.id]?.balance, group.currency_identifier)}
                                         </Typography>
                                     </ListItemLink>
                                     <Divider component="li" />
