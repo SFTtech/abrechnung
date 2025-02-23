@@ -4,12 +4,13 @@
 /* eslint-disable */
 import type { CreateInvitePayload } from "../models/CreateInvitePayload";
 import type { Group } from "../models/Group";
+import type { GroupCreatePayload } from "../models/GroupCreatePayload";
 import type { GroupInvite } from "../models/GroupInvite";
 import type { GroupLog } from "../models/GroupLog";
 import type { GroupMember } from "../models/GroupMember";
 import type { GroupMessage } from "../models/GroupMessage";
-import type { GroupPayload } from "../models/GroupPayload";
 import type { GroupPreview } from "../models/GroupPreview";
+import type { GroupUpdatePayload } from "../models/GroupUpdatePayload";
 import type { PreviewGroupPayload } from "../models/PreviewGroupPayload";
 import type { UpdateGroupMemberPayload } from "../models/UpdateGroupMemberPayload";
 import type { CancelablePromise } from "../core/CancelablePromise";
@@ -75,7 +76,7 @@ export class GroupsService {
      * @returns Group Successful Response
      * @throws ApiError
      */
-    public createGroup({ requestBody }: { requestBody: GroupPayload }): CancelablePromise<Group> {
+    public createGroup({ requestBody }: { requestBody: GroupCreatePayload }): CancelablePromise<Group> {
         return this.httpRequest.request({
             method: "POST",
             url: "/api/v1/groups",
@@ -119,7 +120,7 @@ export class GroupsService {
         requestBody,
     }: {
         groupId: number;
-        requestBody: GroupPayload;
+        requestBody: GroupUpdatePayload;
     }): CancelablePromise<Group> {
         return this.httpRequest.request({
             method: "POST",

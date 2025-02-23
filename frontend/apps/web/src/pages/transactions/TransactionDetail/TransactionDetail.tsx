@@ -115,6 +115,7 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
         }
         if (!validated.success || Object.keys(positionErrors).length > 0) {
             if (!validated.success) {
+                console.log(validated);
                 setValidationErrors((validated as any).error.formErrors);
                 toast.error("Please recheck the transaction details");
             }

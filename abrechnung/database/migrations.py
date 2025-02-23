@@ -5,7 +5,7 @@ from sftkit.database import Database, DatabaseConfig
 
 MIGRATION_PATH = Path(__file__).parent / "revisions"
 DB_CODE_PATH = Path(__file__).parent / "code"
-CURRENT_REVISION = "8e8769af"
+CURRENT_REVISION = "b16c7901"
 
 
 def get_database(config: DatabaseConfig) -> Database:

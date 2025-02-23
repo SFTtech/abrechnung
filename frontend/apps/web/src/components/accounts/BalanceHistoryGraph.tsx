@@ -5,13 +5,13 @@ import {
     selectAccountBalanceHistory,
     selectAccountIdToAccountMap,
     selectTransactionByIdMap,
-    useGroupCurrencySymbol,
+    useGroupCurrencyIdentifier,
 } from "@abrechnung/redux";
 import { fromISOString, toISODateString } from "@abrechnung/utils";
 import { Alert, Card, Divider, Theme, Typography, useTheme } from "@mui/material";
 import { PointMouseHandler, PointTooltipProps, ResponsiveLine, Serie } from "@nivo/line";
 import { DateTime } from "luxon";
-import React from "react";
+import * as React from "react";
 import { useNavigate } from "react-router";
 import { ClearingAccountIcon, PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 import { useTranslation } from "react-i18next";
@@ -27,7 +27,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
     const theme: Theme = useTheme();
     const navigate = useNavigate();
 
-    const currency_symbol = useGroupCurrencySymbol(groupId);
+    const currencyIdentifier = useGroupCurrencyIdentifier(groupId);
     const transactionMap = useAppSelector((state) => selectTransactionByIdMap(state, groupId));
     const accounts = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
     const balanceHistory = useAppSelector((state) => selectAccountBalanceHistory(state, groupId, accountId));
@@ -128,7 +128,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
                             ml: 2,
                         }}
                     >
-                        {formatCurrency(point.data.y as number, currency_symbol)}
+                        {formatCurrency(point.data.y as number, currencyIdentifier)}
                     </Typography>
                 </div>
                 <Divider />
@@ -166,7 +166,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
                 pointLabel={(p) => `${toISODateString(p.data.x as Date)}: ${p.data.y}`}
                 useMesh={true}
                 axisLeft={{
-                    format: (value: number) => formatCurrency(value, currency_symbol),
+                    format: (value: number) => formatCurrency(value, currencyIdentifier),
                 }}
                 axisBottom={{
                     tickValues: 4,

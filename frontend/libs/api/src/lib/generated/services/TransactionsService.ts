@@ -4,6 +4,7 @@
 /* eslint-disable */
 import type { NewTransaction } from "../models/NewTransaction";
 import type { Transaction } from "../models/Transaction";
+import type { TransactionHistory } from "../models/TransactionHistory";
 import type { UpdatePositionsPayload } from "../models/UpdatePositionsPayload";
 import type { UpdateTransaction } from "../models/UpdateTransaction";
 import type { CancelablePromise } from "../core/CancelablePromise";
@@ -143,6 +144,33 @@ export class TransactionsService {
         return this.httpRequest.request({
             method: "DELETE",
             url: "/api/v1/groups/{group_id}/transactions/{transaction_id}",
+            path: {
+                group_id: groupId,
+                transaction_id: transactionId,
+            },
+            errors: {
+                401: `unauthorized`,
+                403: `forbidden`,
+                404: `Not found`,
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * get transaction history
+     * @returns TransactionHistory Successful Response
+     * @throws ApiError
+     */
+    public getTransactionHistory({
+        groupId,
+        transactionId,
+    }: {
+        groupId: number;
+        transactionId: number;
+    }): CancelablePromise<Array<TransactionHistory>> {
+        return this.httpRequest.request({
+            method: "GET",
+            url: "/api/v1/groups/{group_id}/transactions/{transaction_id}/history",
             path: {
                 group_id: groupId,
                 transaction_id: transactionId,

@@ -1,4 +1,4 @@
-import { selectTransactionBalanceEffect, useGroupCurrencySymbol } from "@abrechnung/redux";
+import { selectTransactionBalanceEffect, useGroupCurrencyIdentifier } from "@abrechnung/redux";
 import { HelpOutline } from "@mui/icons-material";
 import { Chip, Divider, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
 import * as React from "react";
@@ -20,7 +20,7 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transact
     const balanceEffect = useAppSelector((state) => selectTransactionBalanceEffect(state, groupId, transaction.id));
     const formatDatetime = useFormatDatetime();
     const formatCurrency = useFormatCurrency();
-    const currencySymbol = useGroupCurrencySymbol(groupId);
+    const currencyIdentifier = useGroupCurrencyIdentifier(groupId);
     const isSmallScreen = useIsSmallScreen();
 
     return (
@@ -62,7 +62,7 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transact
                                 color: (theme) => balanceColor(balanceEffect[accountId].total, theme),
                             }}
                         >
-                            {formatCurrency(balanceEffect[accountId].total, currencySymbol)}
+                            {formatCurrency(balanceEffect[accountId].total, currencyIdentifier)}
                         </Typography>
                         {!isSmallScreen && (
                             <>

@@ -2,10 +2,10 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type GroupPayload = {
+export type GroupCreatePayload = {
     name: string;
     description?: string;
-    currency_symbol: string;
     add_user_account_on_join?: boolean;
     terms?: string;
+    currency_identifier: string;
 };

@@ -1,4 +1,4 @@
-import { selectAccountBalances, useGroupCurrencySymbol } from "@abrechnung/redux";
+import { selectAccountBalances, useGroupCurrencyIdentifier } from "@abrechnung/redux";
 import { TableCell, Typography } from "@mui/material";
 import React from "react";
 import { useAppSelector } from "@/store";
@@ -15,9 +15,9 @@ interface Props {
 export const ClearingAccountDetail: React.FC<Props> = ({ groupId, account }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
-    const currency_symbol = useGroupCurrencySymbol(groupId);
+    const currencyIdentifier = useGroupCurrencyIdentifier(groupId);
     const balances = useAppSelector((state) => selectAccountBalances(state, groupId));
-    if (!currency_symbol) {
+    if (!currencyIdentifier) {
         return null;
     }
     return (
@@ -37,7 +37,7 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, account }) => 
                     <TableCell width="100px" align="right">
                         {formatCurrency(
                             balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0,
-                            currency_symbol
+                            currencyIdentifier
                         )}
                     </TableCell>
                 )}

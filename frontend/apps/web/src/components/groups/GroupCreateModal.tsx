@@ -7,11 +7,13 @@ import { api } from "@/core/api";
 import { useAppDispatch } from "@/store";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FormTextField } from "@abrechnung/components";
+import { CurrencyIdentifierSelect, FormTextField } from "@abrechnung/components";
 import { useTranslation } from "react-i18next";
+import { CurrencyIdentifier } from "@abrechnung/core";
 
 const validationSchema = z.object({
     name: z.string({ required_error: "Name is required" }),
+    currency_identifier: z.string(),
     description: z.string().optional(),
     addUserAccountOnJoin: z.boolean(),
 });
@@ -21,6 +23,7 @@ type FormValues = z.infer<typeof validationSchema>;
 const initialValues: FormValues = {
     name: "",
     description: "",
+    currency_identifier: "EUR",
     addUserAccountOnJoin: false,
 };
 
@@ -44,7 +47,7 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
                 group: {
                     name: values.name,
                     description: values.description,
-                    currency_symbol: "€",
+                    currency_identifier: values.currency_identifier,
                     terms: "",
                     add_user_account_on_join: values.addUserAccountOnJoin,
                 },
@@ -83,6 +86,19 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
                         name="description"
                         label={t("common.description")}
                         control={control}
+                    />
+                    <Controller
+                        name="currency_identifier"
+                        control={control}
+                        render={({ field, fieldState: { error } }) => (
+                            <CurrencyIdentifierSelect
+                                label={t("common.currency")}
+                                value={field.value as CurrencyIdentifier}
+                                onChange={(val) => field.onChange(val)}
+                                error={!!error}
+                                helperText={error?.message}
+                            />
+                        )}
                     />
                     <FormControlLabel
                         label={t("groups.create.addUserAccountOnJoinDescription")}

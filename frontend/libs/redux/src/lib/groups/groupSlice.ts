@@ -1,9 +1,8 @@
-import { Api, Group, GroupMember, GroupPayload } from "@abrechnung/api";
-import { GroupPermissions } from "@abrechnung/types";
+import { Api, Group, GroupCreatePayload, GroupUpdatePayload } from "@abrechnung/api";
 import { fromISOString } from "@abrechnung/utils";
-import { Draft, createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
-import { GroupSliceState, IRootState, StateStatus } from "../types";
-import { addEntity, getGroupScopedState, removeEntity } from "../utils";
+import { createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
+import { GroupSliceState, IRootState } from "../types";
+import { addEntity } from "../utils";
 import { leaveGroup } from "./actions";
 import { useSelector } from "react-redux";
 
@@ -51,8 +50,8 @@ export const useGroup = (groupId: number): Group | undefined => {
     return useSelector((state: IRootState) => selectGroupById(state, groupId));
 };
 
-export const useGroupCurrencySymbol = (groupId: number): string | undefined => {
-    return useSelector((state: IRootState) => selectGroupById(state, groupId)?.currency_symbol);
+export const useGroupCurrencyIdentifier = (groupId: number): string | undefined => {
+    return useSelector((state: IRootState) => selectGroupById(state, groupId)?.currency_identifier);
 };
 
 // async thunks
@@ -79,7 +78,7 @@ export const fetchGroup = createAsyncThunk<Group, { groupId: number; api: Api },
     }
 );
 
-export const createGroup = createAsyncThunk<Group, { group: GroupPayload; api: Api }>(
+export const createGroup = createAsyncThunk<Group, { group: GroupCreatePayload; api: Api }>(
     "createGroup",
     async ({ group, api }) => {
         return await api.client.groups.createGroup({ requestBody: group });
@@ -88,7 +87,7 @@ export const createGroup = createAsyncThunk<Group, { group: GroupPayload; api: A
 
 export const updateGroup = createAsyncThunk<
     Group,
-    { group: GroupPayload & { id: number }; api: Api },
+    { group: GroupUpdatePayload & { id: number }; api: Api },
     { state: IRootState }
 >("updateGroup", async ({ group, api }) => {
     const resp = await api.client.groups.updateGroup({ groupId: group.id, requestBody: group });

@@ -6,7 +6,7 @@ export type Group = {
     id: number;
     name: string;
     description: string;
-    currency_symbol: string;
+    currency_identifier: string;
     terms: string;
     add_user_account_on_join: boolean;
     created_at: string;
