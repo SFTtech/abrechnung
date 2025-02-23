@@ -1,4 +1,9 @@
-import { DisabledFormControlLabel, DisabledFormTextField } from "@abrechnung/components";
+import {
+    CurrencyIdentifierSelect,
+    DisabledFormControlLabel,
+    DisabledFormTextField,
+    DisabledTextField,
+} from "@abrechnung/components";
 import { api } from "@/core/api";
 import { useAppDispatch } from "@/store";
 import { Group } from "@abrechnung/api";
@@ -11,6 +16,7 @@ import { toast } from "react-toastify";
 import { z } from "zod";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { CurrencyIdentifier, getCurrencySymbolForIdentifier } from "@abrechnung/core";
 
 type SettingsFormProps = {
     group: Group;
@@ -20,7 +26,6 @@ const validationSchema = z.object({
     name: z.string({ required_error: "group name is required" }),
     description: z.string(),
     terms: z.string(),
-    currency_symbol: z.string(),
     addUserAccountOnJoin: z.boolean(),
 });
 
@@ -48,7 +53,6 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
             name: group.name,
             description: group.description,
             terms: group.terms,
-            currency_symbol: group.currency_symbol,
             addUserAccountOnJoin: group.add_user_account_on_join,
         },
     });
@@ -63,7 +67,6 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
                     id: group.id,
                     name: values.name,
                     description: values.description,
-                    currency_symbol: values.currency_symbol,
                     terms: values.terms,
                     add_user_account_on_join: values.addUserAccountOnJoin,
                 },
@@ -96,7 +99,6 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
                 disabled={!permissions.can_write || !isEditing}
                 control={control}
             />
-
             <DisabledFormTextField
                 variant="standard"
                 margin="normal"
@@ -107,17 +109,17 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
                 disabled={!permissions.can_write || !isEditing}
                 control={control}
             />
-            <DisabledFormTextField
+
+            <DisabledTextField
                 variant="standard"
                 margin="normal"
-                required
                 fullWidth
                 type="text"
-                name="currency_symbol"
                 label={t("common.currency")}
-                disabled={!permissions.can_write || !isEditing}
-                control={control}
+                disabled={true}
+                value={`${group.currency_identifier} (${getCurrencySymbolForIdentifier(group.currency_identifier)})`}
             />
+
             <DisabledFormTextField
                 variant="standard"
                 multiline={true}
@@ -148,7 +150,6 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
                     label={t("groups.settings.autoAddAccounts")}
                 />
             </FormGroup>
-
             <Grid container justifyContent="space-between" style={{ marginTop: 10 }}>
                 <div>
                     {permissions.can_write && isEditing && (

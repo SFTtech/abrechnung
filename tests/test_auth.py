@@ -19,7 +19,7 @@ class TransactionLogicTest(BaseTestCase):
             user=self.user,
             name="test group",
             description="",
-            currency_symbol="€",
+            currency_identifier="EUR",
             terms="",
             add_user_account_on_join=False,
         )

@@ -35,7 +35,7 @@ def abrechnung_total_amount_of_money(transaction_service: TransactionService):
     metric = Gauge(
         "abrechnung_total_amount_of_money",
         "Total amount of money per currency cleared via thisthis Abrechnung instance..",
-        labelnames=("currency_symbol",),
+        labelnames=("currency_identifier",),
     )
 
     async def instrumentation(info: Info) -> None:

@@ -93,7 +93,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
                 />
                 <ListItemText>
                     <Typography align="right" variant="body2">
-                        {formatCurrency(transaction.value, transaction.currency_symbol)}
+                        {formatCurrency(transaction.value, transaction.currency_identifier)}
                         {!isSmallScreen && (
                             <>
                                 <br />

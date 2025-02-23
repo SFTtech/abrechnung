@@ -1,5 +1,6 @@
 import { Account, Transaction, TransactionBalanceEffect } from "@abrechnung/types";
 import { buildCsv, fromISOString } from "@abrechnung/utils";
+import { getCurrencySymbolForIdentifier } from "./currency";
 
 export type TransactionSortMode = "last_changed" | "value" | "name" | "description" | "billed_at";
 
@@ -33,7 +34,7 @@ export const getTransactionSortFunc = (
 
 export const computeTransactionBalanceEffect = (transaction: Transaction): TransactionBalanceEffect => {
     const accountBalances: TransactionBalanceEffect = {};
-    let remainingTransactionValue = transaction.value;
+    let remainingTransactionValue = transaction.value * transaction.currency_conversion_rate;
     for (const id of transaction.position_ids) {
         const position = transaction.positions[id];
         if (position.deleted) {
@@ -48,10 +49,13 @@ export const computeTransactionBalanceEffect = (transaction: Transaction): Trans
         Object.entries(position.usages).forEach(([accountID, value]: [string, number]) => {
             if (accountBalances[Number(accountID)] !== undefined) {
                 accountBalances[Number(accountID)].positions +=
-                    totalUsages > 0 ? (position.price / totalUsages) * value : 0;
+                    totalUsages > 0 ? (position.price / totalUsages) * value * transaction.currency_conversion_rate : 0;
             } else {
                 accountBalances[Number(accountID)] = {
-                    positions: totalUsages > 0 ? (position.price / totalUsages) * value : 0,
+                    positions:
+                        totalUsages > 0
+                            ? (position.price / totalUsages) * value * transaction.currency_conversion_rate
+                            : 0,
                     commonCreditors: 0,
                     commonDebitors: 0,
                     total: 0,
@@ -60,8 +64,12 @@ export const computeTransactionBalanceEffect = (transaction: Transaction): Trans
         });
 
         // calculate the remaining purchase item price to be billed onto the communist shares
-        const commonRemainder = totalUsages > 0 ? (position.price / totalUsages) * position.communist_shares : 0;
-        remainingTransactionValue = remainingTransactionValue - position.price + commonRemainder;
+        const commonRemainder =
+            totalUsages > 0
+                ? (position.price / totalUsages) * position.communist_shares * transaction.currency_conversion_rate
+                : 0;
+        remainingTransactionValue =
+            remainingTransactionValue - position.price * transaction.currency_conversion_rate + commonRemainder;
     }
 
     const totaldebitor_shares: number = Object.values(transaction.debitor_shares).reduce((acc, curr) => acc + curr, 0);
@@ -86,11 +94,16 @@ export const computeTransactionBalanceEffect = (transaction: Transaction): Trans
     Object.entries(transaction.creditor_shares).forEach(([accountID, value]) => {
         if (accountBalances[Number(accountID)] !== undefined) {
             accountBalances[Number(accountID)].commonCreditors +=
-                totalcreditor_shares > 0 ? (transaction.value / totalcreditor_shares) * value : 0;
+                totalcreditor_shares > 0
+                    ? (transaction.value / totalcreditor_shares) * value * transaction.currency_conversion_rate
+                    : 0;
         } else {
             accountBalances[Number(accountID)] = {
                 positions: 0,
-                commonCreditors: totalcreditor_shares > 0 ? (transaction.value / totalcreditor_shares) * value : 0,
+                commonCreditors:
+                    totalcreditor_shares > 0
+                        ? (transaction.value / totalcreditor_shares) * value * transaction.currency_conversion_rate
+                        : 0,
                 commonDebitors: 0,
                 total: 0,
             };
@@ -124,7 +137,8 @@ export const transactionCsvDump = (
         payer: "Payer",
         name: "Name",
         description: "Description",
-        currency_symbol: "Currency",
+        currency_identifier: "Currency Identifier",
+        currency_symbol: "Currency Symbol",
         currency_conversion_rate: "Currency Conversion Rate",
         tags: "Tags",
         value: "Value",
@@ -145,7 +159,8 @@ export const transactionCsvDump = (
             payer: creditorName,
             name: transaction.name,
             description: transaction.description,
-            currency_symbol: transaction.currency_symbol,
+            currency_identifier: transaction.currency_identifier,
+            currency_symbol: getCurrencySymbolForIdentifier(transaction.currency_identifier),
             currency_conversion_rate: transaction.currency_conversion_rate,
             tags: tags,
             value: transaction.value.toFixed(2),

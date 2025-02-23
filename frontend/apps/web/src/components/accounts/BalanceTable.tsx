@@ -30,17 +30,17 @@ export const BalanceTable: React.FC<Props> = ({ group }) => {
         {
             field: "totalConsumed",
             headerName: t("balanceTable.totalConsumed"),
-            renderCell: renderCurrency(group.currency_symbol, -1),
+            renderCell: renderCurrency(group.currency_identifier, -1),
         },
         {
             field: "totalPaid",
             headerName: t("balanceTable.totalPaid"),
-            renderCell: renderCurrency(group.currency_symbol, 1),
+            renderCell: renderCurrency(group.currency_identifier, 1),
         },
         {
             field: "balance",
             headerName: t("balanceTable.balance"),
-            renderCell: renderCurrency(group.currency_symbol),
+            renderCell: renderCurrency(group.currency_identifier),
         },
     ];
 

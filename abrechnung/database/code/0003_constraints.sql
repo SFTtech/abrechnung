@@ -366,3 +366,27 @@ alter table grp add constraint name_not_empty check ( name <> '' );
 alter table purchase_item_history add constraint name_not_empty check ( name <> '' );
 
 alter table file_history add constraint filename_not_empty check (filename <> '');
+
+create or replace function check_transaction_currency_conversion_rate(
+    transaction_id bigint,
+    currency_conversion_rate double precision,
+    currency_identifier text
+) returns boolean as
+$$
+<<locals>> declare
+    group_currency_identifier text;
+begin
+    select g.currency_identifier into locals.group_currency_identifier
+    from grp as g join transaction as t on g.id = t.id where t.id = check_transaction_currency_conversion_rate.transaction_id;
+
+    if locals.group_currency_identifier = check_transaction_currency_conversion_rate.currency_identifier
+           and check_transaction_currency_conversion_rate.currency_conversion_rate != 1.0 then
+        raise 'transactions with the same currency as the group currency must have a currency conversion rate of "1"';
+    end if;
+
+    return true;
+end
+$$ language plpgsql;
+
+alter table transaction_history add constraint currency_conversion_fixed_for_group_currency
+    check (check_transaction_currency_conversion_rate(id, currency_conversion_rate, currency_identifier));
