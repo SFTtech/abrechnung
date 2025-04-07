@@ -40,7 +40,11 @@
         "currency": "Währung",
         "addNewTag": "Neuen Tag hinzufügen",
         "exportAsCsv": "Als CSV Datei exportieren",
-        "noneSoFar": "Bisher keine"
+        "noneSoFar": "Bisher keine",
+        "tagNameRequiredError": "bitte geben Sie einen Tag Namen ein",
+        "copyToClipboard": "in Zwischenablage kopieren",
+        "createdBy": "erstellt von {{username}}",
+        "changedBy": "geändert von {{username}}"
     },
     "shareSelect": {
         "selectedPeople_one": "{{count}} Person",
@@ -62,7 +66,7 @@
         "sessions": "Sitzungen",
         "changeEmail": "E-Mail ändern",
         "changePassword": "Passwort ändern",
-        "login": "Anmelden",
+        "login": "Einloggen",
         "signOut": "Abmelden",
         "imprint": "Impressum"
     },
@@ -73,11 +77,12 @@
             "header": "Gruppen",
             "guestUserDisclaimer": "Sie sind ein Gastbenutzer auf dieser Abrechnung und daher nicht berechtigt, neue Gruppen zu erstellen.",
             "noGroups": "Keine Gruppen",
-            "archivedGroups": "Archiviert"
+            "archivedGroups": "Archiviert",
+            "lastUpdateAt": "letzte Aktualisierung: {{datetime}}"
         },
         "log": {
             "tabTitle": "{{groupName}} - Aktivität",
-            "header": "Aktivität",
+            "header": "Groupenktivität",
             "messageInfo": "von {{username}} am {{datetime}}"
         },
         "memberList": {
@@ -88,7 +93,9 @@
             "owner": "Besitzer",
             "itsYou": "Du bist es",
             "canWrite": "Kann bearbeiten",
-            "isOwner": "Ist Besitzer"
+            "isOwner": "Ist Besitzer",
+            "header": "Mitglieder",
+            "editGroupMember": "Gruppenmitglied bearbeiten"
         },
         "settings": {
             "tabTitle": "{{groupName}} - Einstellungen",
@@ -102,7 +109,8 @@
             "unarchiveGroup": "Gruppe \"Archivierung aufheben\"",
             "archiveGroupConfirm": "Bist du sicher, dass du die Gruppe {{group.name}} archivieren möchtest? An archivierten Gruppen können keine Änderungen vorgenommen werden und sie werden in Gruppenlisten ausgeblendet. Nur ein Gruppenbesitzer kann diese Aktion rückgängig machen.",
             "header": "Einstellungen",
-            "unarchiveGroupConfirm": "Bist du sicher, dass du die Gruppe {{group.name}} dearchivieren möchtest? Die Gruppe ist nicht mehr schreibgeschützt."
+            "unarchiveGroupConfirm": "Bist du sicher, dass du die Gruppe {{group.name}} dearchivieren möchtest? Die Gruppe ist nicht mehr schreibgeschützt.",
+            "dangerZone": "Gefahrenzone. Die folgenden Aktionen sind irreversibel."
         },
         "join": {
             "tabTitle": "Abrechnung - Gruppe beitreten",
@@ -114,11 +122,23 @@
         },
         "invites": {
             "tabTitle": "{{groupName}} - Einladungslinks",
-            "header": "Aktive Einladungslinks",
+            "header": "Einladungslinks",
             "guestUserDisclaimer": "Sie sind ein Gastbenutzer auf dieser Abrechnung und daher nicht berechtigt, Gruppeneinladungen zu erstellen.",
-            "tokenHidden": "Token versteckt, wurde von einem anderen Mitglied erstellt"
+            "tokenHidden": "Token versteckt, wurde von einem anderen Mitglied erstellt",
+            "validUntil": "Gültig bis",
+            "singleUse": "Einzelverwendung",
+            "newMembersJoinAsEditors": "Neue Mitglieder treten als Bearbeiter bei",
+            "createdSuccessfully": "Einladungstoken erfolgreich erstellt"
         },
-        "archivedDisclaimer": "Diese Gruppe ist archiviert und daher schreibgeschützt."
+        "archivedDisclaimer": "Diese Gruppe ist archiviert und daher schreibgeschützt.",
+        "create": {
+            "title": "Gruppe erstellen",
+            "addUserAccountOnJoinDescription": "Konten für neu beigetretene Gruppenmitglieder automatisches hinzufügen"
+        },
+        "delete": {
+            "title": "Group löschen",
+            "description": "Sind Sie sicher, dass Sie die Gruppe {{groupName}} löschen möchten"
+        }
     },
     "images": {
         "uploadImage": "Bild hochladen",
@@ -154,7 +174,16 @@
             "addPositions": "Positionen hinzufügen",
             "remaining": "Verbleibend:"
         },
-        "createPurchaseForAccount": "Kauf mit {{accountName}} als Teilnehmer erstellen"
+        "createPurchaseForAccount": "Kauf mit {{accountName}} als Teilnehmer erstellen",
+        "createTransferForAccount": "Übertragung an {{accountName}} erstellen",
+        "type": {
+            "purchase": "kaufen",
+            "transfer": "übertragen",
+            "mimo": "mimo"
+        },
+        "history": {
+            "linkTo": "Verlauf"
+        }
     },
     "accounts": {
         "noAccounts": "Keine Konten",
@@ -175,12 +204,12 @@
         "clearingDistributionOf": "Teilnehmer von {{account.name}}",
         "transactionsInvolving": "Transaktionen mit Beteiligung von {{account.name}}",
         "participated": "Beteiligt",
-        "settleUp": "Begleichen",
+        "settleUp": "Abrechnen",
         "settlement": {
-            "transactionName": "Abrechnung",
+            "transactionName": "Abmachung",
             "title": "Salden dieser Gruppe begleichen",
             "whoPaysWhom": "{{from}} zahlt {{to}} {{money}}",
-            "settleButton": "Begleichen"
+            "settleButton": "Lösen"
         },
         "deleteConfirm": "Löschen bestätigen {{accountType}}",
         "deleteConfirmBody": "Sind Sie sicher, dass Sie {{accountType}} \"{{accountName}}\" löschen möchten?"
@@ -208,7 +237,8 @@
             "themeDarkMode": "Dunkelmodus",
             "themeLightMode": "Hellmodus",
             "clearCache": "Cache leeren",
-            "confirmClearCache": "Diese Aktion wird Ihren lokalen Cache löschen. Alle Ihre Einstellungen (diese Seite) werden nicht zurückgesetzt."
+            "confirmClearCache": "Diese Aktion wird Ihren lokalen Cache löschen. Alle Ihre Einstellungen (diese Seite) werden nicht zurückgesetzt.",
+            "darkMode": "Dunkelmodus"
         },
         "changePassword": {
             "tabTitle": "Abrechnung - Passwort ändern",
@@ -219,14 +249,16 @@
         "changeEmail": {
             "tabTitle": "Abrechnung - E-Mail ändern",
             "pageTitle": "E-Mail ändern",
-            "success": "E-Mail-Änderung angefordert. Sie sollten bald eine E-Mail mit einem Bestätigungslink erhalten.",
+            "success": "E-Mail-Änderung angefordert, Sie sollten bald eine E-Mail mit einem Bestätigungslink erhalten",
             "newEmail": "Neue E-Mail"
         },
         "sessions": {
             "tabTitle": "Abrechnung - Sitzungen",
             "header": "Anmeldesitzungen",
             "confirmDeleteSession": "Sitzung löschen?",
-            "areYouSureToDelete": "Sind Sie sicher, dass Sie die Sitzung \"{{sessionName}}\" löschen möchten?"
+            "areYouSureToDelete": "Sind Sie sicher, dass Sie die Sitzung \"{{sessionName}}\" löschen möchten?",
+            "lastSeenOn": "Zuletzt gesehen am {{datetime}}",
+            "validUntil": "Gültig bis {{datetime}}, "
         }
     },
     "auth": {
@@ -242,7 +274,7 @@
             "tabTitle": "Abrechnung - Anmelden",
             "header": "Anmelden",
             "loginSuccess": "Angemeldet…",
-            "confirmButton": "Anmelden",
+            "confirmButton": "Einloggen",
             "noAccountRegister": "Kein Konto? Registrieren",
             "forgotPassword": "Passwort vergessen?"
         },
@@ -275,6 +307,8 @@
         "en": "Englisch",
         "de": "Deutsch",
         "es": "Spanisch",
-        "ta": "Tamil"
+        "ta": "Tamil",
+        "uk": "Ukrainisch",
+        "bg": "Bulgarisch"
     }
 }
