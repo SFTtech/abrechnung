@@ -82,7 +82,7 @@
         },
         "log": {
             "tabTitle": "{{groupName}} - Aktivität",
-            "header": "Groupenktivität",
+            "header": "Gruppenaktivität",
             "messageInfo": "von {{username}} am {{datetime}}"
         },
         "memberList": {
@@ -136,7 +136,7 @@
             "addUserAccountOnJoinDescription": "Konten für neu beigetretene Gruppenmitglieder automatisches hinzufügen"
         },
         "delete": {
-            "title": "Group löschen",
+            "title": "Gruppe löschen",
             "description": "Sind Sie sicher, dass Sie die Gruppe {{groupName}} löschen möchten"
         }
     },
