@@ -62,7 +62,7 @@ class NewTransaction(BaseModel):
     name: str
     description: str
     value: float
-    currency_symbol: str
+    currency_identifier: str
     currency_conversion_rate: float
     billed_at: date
     tags: list[str] = []
@@ -98,7 +98,7 @@ class Transaction(BaseModel):
     name: str
     description: str
     value: float
-    currency_symbol: str
+    currency_identifier: str
     currency_conversion_rate: float
     billed_at: date
     tags: list[str]

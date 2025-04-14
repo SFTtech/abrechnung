@@ -12,7 +12,7 @@ import {
     discardAccountChange,
     saveAccount,
     selectAccountBalances,
-    useGroupCurrencySymbol,
+    useGroupCurrencyIdentifier,
     useIsGroupWritable,
     wipAccountUpdated,
 } from "@abrechnung/redux";
@@ -39,7 +39,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
     const navigate = useNavigate();
 
     const isGroupWritable = useIsGroupWritable(groupId);
-    const currencySymbol = useGroupCurrencySymbol(groupId);
+    const currencyIdentifier = useGroupCurrencyIdentifier(groupId);
     const balances = useAppSelector((state) => selectAccountBalances(state, groupId));
 
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = React.useState(false);
@@ -111,7 +111,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
         navigate(`/groups/${groupId}/${account.type === "clearing" ? "events" : "accounts"}`);
     };
 
-    if (!currencySymbol) {
+    if (!currencyIdentifier) {
         return <Navigate to="/404" />;
     }
 
@@ -221,7 +221,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                                 <TableCell width="100px" align="right">
                                     {formatCurrency(
                                         balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0,
-                                        currencySymbol
+                                        currencyIdentifier
                                     )}
                                 </TableCell>
                             )}

@@ -10,7 +10,7 @@ export type NewTransaction = {
     name: string;
     description: string;
     value: number;
-    currency_symbol: string;
+    currency_identifier: string;
     currency_conversion_rate: number;
     billed_at: string;
     tags?: Array<string>;

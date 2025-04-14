@@ -5,9 +5,10 @@ import { ContentCopy, Delete } from "@mui/icons-material";
 import { Checkbox, FormHelperText, IconButton, InputAdornment, TableCell, TableRow, useTheme } from "@mui/material";
 import React from "react";
 import { PositionValidationError } from "./types";
+import { getCurrencySymbolForIdentifier } from "@abrechnung/core";
 
 interface PositionTableRowProps {
-    currencySymbol: string;
+    currencyIdentifier: string;
     position: TransactionPosition;
     updatePosition: (
         position: TransactionPosition,
@@ -36,7 +37,7 @@ export const PositionTableRow: React.FC<PositionTableRowProps> = ({
     showAddAccount,
     deletePosition,
     validationError,
-    currencySymbol,
+    currencyIdentifier,
 }) => {
     const theme = useTheme();
 
@@ -83,7 +84,13 @@ export const PositionTableRow: React.FC<PositionTableRowProps> = ({
                     helperText={validationError && validationError.fieldErrors["price"]}
                     onChange={(value) => updatePosition(position, position.name, value, position.communist_shares)}
                     slotProps={{
-                        input: { endAdornment: <InputAdornment position="end">{currencySymbol}</InputAdornment> },
+                        input: {
+                            endAdornment: (
+                                <InputAdornment position="end">
+                                    {getCurrencySymbolForIdentifier(currencyIdentifier)}
+                                </InputAdornment>
+                            ),
+                        },
                     }}
                 />
             </TableCell>
