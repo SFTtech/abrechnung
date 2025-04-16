@@ -1,1 +1,326 @@
-{}
+{
+    "groups": {
+        "invites": {
+            "newMembersJoinAsEditors": "ينظم الأعضاء الجدد كمحررين",
+            "guestUserDisclaimer": "أنت مستخدم ضيف في هذه التسوية وبالتالي لا يُسمح لك بإنشاء دعوات للمجموعة.",
+            "header": "روابط الدعوة",
+            "tokenHidden": "الرمز مخفي، تم إنشاؤه من قبل عضو آخر",
+            "singleUse": "استخدام واحد",
+            "validUntil": "صالح إلى غاية",
+            "createdSuccessfully": "تم إنشاء رمز الدعوة بنجاح",
+            "tabTitle": "{{groupName}} - روابط الدعوة"
+        },
+        "delete": {
+            "description": "هل أنت متأكد أنك تريد حذف المجموعة {{groupName}}",
+            "title": "حذف المجموعة"
+        },
+        "settings": {
+            "readAccessDisclaimer": "لديك فقط حق قراءة هذه المجموعة",
+            "header": "إعدادات",
+            "archiveGroupConfirm": "هل أنت متأكد من أرشفة المجموعة {{group.name}}. لا يمكن إجراء أي تعديلات على المجموعات المؤرشفة، وسيتم إخفاؤها في قوائم المجموعات. فقط مالك المجموعة من يمكنه التراجع عن هذا الإجراء.",
+            "unarchiveGroupConfirm": "هل أنت متأكد إلغاء أرشفة المجموعة {{group.name}}.سيصبح من الممكن التعديل على المجموعة بدءاً من الآن.",
+            "leaveGroupConfirm": "هل أنت متأكد من مغادرة المجموعة \"{{group.name}}\"؟ إذا كنت آخر عضو يغادر هذه المجموعة، فسيتم حذفها وستفقد جميع المعاملات إلى الأبد…",
+            "tabTitle": "{{groupName}} - إعدادات",
+            "ownerDisclaimer": "أنت مالك هذه المجموعة",
+            "terms": "الشروط",
+            "autoAddAccounts": "إضافة حسابات لأعضاء المجموعة الجدد تلقائيًا",
+            "leaveGroup": "مغادرة المجموعة",
+            "archiveGroup": "أرشفة المجموعة",
+            "unarchiveGroup": "إلغاء أرشفة المجموعة",
+            "dangerZone": "إنذار خطر. الإجراءات التالية لا يمكن التراجع فيها."
+        },
+        "memberList": {
+            "canWrite": "يمكنه التعديل",
+            "header": "أعضاء",
+            "editGroupMember": "تعديل أعضاء المجموعة",
+            "tabTitle": "{{groupName}} - أعضاء",
+            "invitedBy": "تمت دعوته من قبل {{username}}، ",
+            "joined": "انضم في {{datetime}}",
+            "editor": "محرر",
+            "owner": "مالك",
+            "itsYou": "أنت",
+            "isOwner": "هو المالك"
+        },
+        "join": {
+            "youHaveBeenInvited": "لقد تمت دعوتك إلى المجموعة {{group.name}}",
+            "invitationSingleUse": "دعوة صالحة مرة واحدة",
+            "invitationValidUntil": "الدعوة صالحة إلى غاية",
+            "tabTitle": "ال‮‮تسوية - الانضمام إلى المجموعة",
+            "invitationDescription": "تفاصيل الدعوة",
+            "join": "انضمام"
+        },
+        "create": {
+            "addUserAccountOnJoinDescription": "إضافة حسابات لأعضاء المجموعة الجددا تلقائيًا",
+            "title": "إنشاء مجموعة"
+        },
+        "list": {
+            "guestUserDisclaimer": "أنت مستخدم ضيف في هذه ال‮‮تسوية وبالتالي لا يُسمح لك بإنشاء مجموعات جديدة.",
+            "tabTitle": "ال‮‮تسوية - مجموعات",
+            "header": "مجموعات",
+            "noGroups": "لا توجد مجموعات",
+            "lastUpdateAt": "آخر تحديث: {{datetime}}",
+            "archivedGroups": "مؤرشف"
+        },
+        "addGroup": "إضافة مجموعة",
+        "archivedDisclaimer": "تم أرشفة هذه المجموعة وبالتالي لا يمكن تعديلها.",
+        "log": {
+            "tabTitle": "{{groupName}} - النشاط",
+            "header": "نشاط المجموعة",
+            "messageInfo": "بواسطة {{username}} في {{datetime}}"
+        }
+    },
+    "transactions": {
+        "transfer": "تحويل",
+        "type": {
+            "purchase": "شراء",
+            "mimo": "mimo",
+            "transfer": "تحويل"
+        },
+        "createPurchaseForAccount": "إنشاء عملية الشراء باستخدام {{accountName}} كمشارك",
+        "paidFor": "لمن",
+        "createTransferForAccount": "إنشاء تحويل إلى {{accountName}}",
+        "createTransfer": "إنشاء تحويل",
+        "confirmDeleteTransaction": "تأكيد حذف المعاملة",
+        "list": {
+            "tabTitle": "{{groupName}} - المعاملات"
+        },
+        "createTransaction": "إنشاء معاملة",
+        "createPurchase": "إنشاء عملية الشراء",
+        "noTransactions": "لا توجد معاملات",
+        "purchase": "شراء",
+        "transferredFrom": "من",
+        "transferredTo": "إلى",
+        "paidBy": "تم الدفع من قبل",
+        "confirmDeleteTransactionInfo": "هل أنت متأكد من حذف المعاملة \"{{transaction.name}}\"؟",
+        "byFor": "من قبل {{by}}، إلى {{for}}",
+        "positions": {
+            "sharedPlusRest": "مشتَرك + الباقي",
+            "remaining": "المتبقي:",
+            "positions": "الأدوار",
+            "addPositions": "إضافة أدوار"
+        },
+        "history": {
+            "linkTo": "سجل"
+        }
+    },
+    "images": {
+        "filename": "اسم الملف",
+        "uploadImage": "رفع صورة",
+        "chooseImage": "اختيار صورة",
+        "compressing": "ضغط .."
+    },
+    "balanceTable": {
+        "totalPaid": "مدفوع",
+        "totalConsumed": "تم التلقي / الاستهلاك",
+        "balance": "رصيد"
+    },
+    "accounts": {
+        "participated": "مشارك",
+        "noAccounts": "لا يوجد حسابات",
+        "balances": {
+            "clearingAccountsRemainingBalances": "بعض الأحداث لديها رصيد متبقي",
+            "tabTitle": "{{groupName}} - الرصيد"
+        },
+        "detail": {
+            "tabTitleAccount": "{{group.name}} - الحساب {{account.name}}",
+            "tabTitleEvent": "{{group.name}} - الحدث {{account.name}}"
+        },
+        "settlement": {
+            "transactionName": "تسوية",
+            "whoPaysWhom": "{{from}} يدفع{{to}}{{money}}",
+            "title": "تسوية رصيد هذه المجموعة",
+            "settleButton": "تسوية"
+        },
+        "list": {
+            "tabTitle": "{{groupName}} - الحسابات"
+        },
+        "event": "الحدث",
+        "account": "الحساب",
+        "balanceOf": "رصيد {{account.name}}",
+        "clearingDistributionOf": "مشاركون في {{account.name}}",
+        "transactionsInvolving": "المعاملات التي تتضمن {{account.name}}",
+        "settleUp": "قضاء الدين",
+        "deleteConfirm": "تأكيد حذف {{accountType}}",
+        "deleteConfirmBody": "هل أنت متأكد من حذف {{accountType}} \"{{accountName}}\"؟"
+    },
+    "profile": {
+        "sessions": {
+            "lastSeenOn": "آخر ظهور في {{datetime}}",
+            "tabTitle": "ال‮‮تسوية - الجلسات",
+            "header": "جلسات تسجيل الدخول",
+            "confirmDeleteSession": "حذف الجلسة؟",
+            "areYouSureToDelete": "هل أنت متأكد من حذف الجلسة \"{{sessionName}}\"؟",
+            "validUntil": "صالحة إلى غاية {{datetime}}، "
+        },
+        "index": {
+            "registered": "مسجل",
+            "pageTitle": "الملف الشخصي",
+            "guestUserDisclaimer": "أنت مستخدم ضيف في هذه ال‮‮تسوية وبالتالي لا يُسمح لك بإنشاء مجموعات جديدة أو دعوات جماعية.",
+            "tabTitle": "ال‮‮تسوية - الملف الشخصي"
+        },
+        "settings": {
+            "clearCache": "مسح ذاكرة التخزين المؤقت",
+            "info": "هذه الإعدادات مُخزَّنة محليًا على جهازك. سيؤدي مسح ذاكرة التخزين المحلية في متصفحك إلى إعادة ضبطها.",
+            "themeLightMode": "وضع الإضاءة",
+            "pageTitle": "الإعدادات",
+            "theme": "الوضع",
+            "darkMode": "الوضع الداكن",
+            "themeSystemDefault": "الإعدادات الافتراضية للنظام",
+            "themeDarkMode": "الوضع الداكن",
+            "tabTitle": "ال‮‮تسوية - إعدادات",
+            "confirmClearCache": "سيؤدي هذا الإجراء إلى مسح ذاكرة التخزين المؤقت المحلية. لن تتم إعادة ظبط جميع إعداداتك (هذه الصفحة)."
+        },
+        "changePassword": {
+            "pageTitle": "تعديل كلمة السر",
+            "newPassword": "كلمة السر الجديدة",
+            "tabTitle": "ال‮‮تسوية - تعديل كلمة السر",
+            "success": "تم تعديل كلمة السربنجاح"
+        },
+        "changeEmail": {
+            "success": "تم طلب تعديل البريد الإلكتروني، ينبغي أن يصلك قريبًا بريد إلكتروني يحتوي على رابط التأكيد",
+            "tabTitle": "ال‮‮تسوية - تعديل البريد الإلكتروني",
+            "pageTitle": "تعديل البريد الإلكتروني",
+            "newEmail": "بريد إلكتروني جديد"
+        }
+    },
+    "events": {
+        "createEvent": "إنشاء حدث",
+        "list": {
+            "tabTitle": "{{groupName}} - أحداث"
+        },
+        "noEvents": "لا يوجد أحداث"
+    },
+    "auth": {
+        "confirmRegistration": {
+            "successfulLinkToLogin": "يرجى </1>تسجيل الدخول<1> باستخدام بياناتك الخاصة.",
+            "header": "تأكيد التسجيل",
+            "confirmSuccessful": "تم التأكيد بنجاح",
+            "clickHereToConfirm": "اضغط </1>هنا<1> لتأكيد تسجيلك.",
+            "tabTitle": "ال‮‮تسوية - تأكيد التسجيل"
+        },
+        "login": {
+            "forgotPassword": "نسيت كلمة السر؟",
+            "header": "تسجيل الدخول",
+            "loginSuccess": "تم تسجيل الدخول…",
+            "confirmButton": "تسجيل الدخول",
+            "noAccountRegister": "ليس لديك حساب؟ تسجيل",
+            "tabTitle": "ال‮‮تسوية - تسجيل الدخول"
+        },
+        "register": {
+            "registrationSuccess": "تم التسجيل بنجاح، يرجى تأكيد بريدك الإلكتروني قبل تسجيل الدخول…",
+            "title": "تسجيل",
+            "header": "تسجيل حساب جديد",
+            "confirmButton": "تسجيل",
+            "alreadyHasAccount": "لديك حساب؟ تسجيل الدخول",
+            "tabTitle": "ال‮‮تسوية - تسجيل"
+        },
+        "confirmEmailChange": {
+            "confirmSuccessful": "تم التأكيد بنجاح",
+            "header": "تأكيد بريدك الإلكتروني الجديد",
+            "clickHereToConfirm": "اضغط </1>هنا<1> لتأكيد بريدك الإلكتروني الجديد.",
+            "tabTitle": "ال‮‮تسوية - تأكيد تغيير البريد الإلكتروني"
+        },
+        "confirmPasswordRecovery": {
+            "header": "تأكيد استعادة كلمة السر",
+            "successfulLinkToLogin": "تم استعادة كلمة السر بنجاح، يرجى </1>تسجيل الدخول<1> باستخدام كلمة السر الجديدة.",
+            "tabTitle": "ال‮‮تسوية - تأكيد استعادة كلمة السر"
+        },
+        "recoverPassword": {
+            "tabTitle": "ال‮‮تسوية - استعادة كلمة السر",
+            "header": "استعادة كلمة السر",
+            "body": "يرجى إدخال بريدك الإلكتروني. سيتم إرسال رابط الاستعادة قريبًا.",
+            "emailSent": "لقد تم إرسال رابط الاستعادة إليك عبر البريد الإلكتروني."
+        }
+    },
+    "languages": {
+        "en": "الإنجليزية",
+        "de": "الألمانية",
+        "es": "الإسبانية",
+        "ta": "التاميلية",
+        "uk": "الأوكرانية",
+        "bg": "البلغارية"
+    },
+    "common": {
+        "no": "لا",
+        "ok": "حسنا",
+        "price": "السعر",
+        "exportAsCsv": "استخراج كملف CSV",
+        "delete": "حذف",
+        "tagNameRequiredError": "الرجاء إدخال اسم للعلامة",
+        "cancel": "إلغاء",
+        "passwordsDoNotMatch": "كلمات السرغير متوافقة",
+        "noneSoFar": "لا يوجد إلى الآن",
+        "username": "اسم المستخدم",
+        "email": "البريد الإلكتروني",
+        "password": "كلمة السر",
+        "repeatPassword": "إعادة كلمة السر",
+        "save": "حفظ",
+        "yes": "نعم",
+        "edit": "تعديل",
+        "confirm": "تأكيد",
+        "add": "إضافة",
+        "search": "بحث…",
+        "name": "الإسم",
+        "lastChanged": "آخر تعديل",
+        "lastChangedWithTime": "آخر تعديل: {{datetime}}",
+        "value": "القيمة",
+        "date": "تاريخ",
+        "description": "الوصف",
+        "sortBy": "فرز حسب",
+        "filterByTags": "فرز حسب العلامات",
+        "total": "المجموع",
+        "totalWithColon": "المجموع:",
+        "shared": "مشترك",
+        "tag_zero": "علامة",
+        "tag_one": "علامة",
+        "tag_two": "علامتين",
+        "tag_few": "علامات",
+        "tag_many": "علامة",
+        "tag_other": "علامة",
+        "shares": "الحصص",
+        "advanced": "متقدم",
+        "createdAt": "تم الإنشاء في",
+        "send": "إرسال",
+        "currency": "العملة",
+        "addNewTag": "إضافة علامة جديدة",
+        "copyToClipboard": "نسخ في الحافظة",
+        "createdBy": "تم الإنشاء من قبل {{username}}",
+        "changedBy": "تم التعديل من قبل {{username}}",
+        "server": "الخادم"
+    },
+    "shareSelect": {
+        "selectedPeople_zero": "{{count}} شخص",
+        "selectedPeople_one": "{{count}} شخص",
+        "selectedPeople_two": "شخصين",
+        "selectedPeople_few": "{{count}} أشخاص",
+        "selectedPeople_many": "{{count}} شخص",
+        "selectedPeople_other": "{{count}} شخص",
+        "selectedEvent_zero": "{{count}} حدث",
+        "selectedEvent_one": "{{count}} حدث",
+        "selectedEvent_two": "حدثين",
+        "selectedEvent_few": "{{count}} أحداث",
+        "selectedEvent_many": "{{count}} حدث",
+        "selectedEvent_other": "{{count}} حدث",
+        "accountSlashEvent": "حساب / حدث",
+        "showEvents": "عرض الأحداث"
+    },
+    "navbar": {
+        "events": "أحداث",
+        "balances": "الرصيد",
+        "settings": "إعدادات",
+        "transactions": "المعاملات",
+        "imprint": "بيان النشر",
+        "accounts": "الحسابات",
+        "groupSettings": "الإعدادات",
+        "activity": "النشاط",
+        "profile": "الملف الشخصي",
+        "sessions": "الجلسات",
+        "changeEmail": "تعديل البريد الإلكتروني",
+        "changePassword": "تعديل كلمة السر",
+        "login": "تسجيل الدخول",
+        "signOut": "تسجيل الخروج"
+    },
+    "app": {
+        "name": "Abrechnung"
+    }
+}
