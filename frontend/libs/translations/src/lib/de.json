@@ -49,14 +49,14 @@
     "shareSelect": {
         "selectedPeople_one": "{{count}} Person",
         "selectedPeople_other": "{{count}} Personen",
-        "selectedEvent_one": "{{count}} Ereignis",
-        "selectedEvent_other": "{{count}} Ereignisse",
-        "accountSlashEvent": "Person / Ereignis",
-        "showEvents": "Ereignisse anzeigen"
+        "selectedEvent_one": "{{count}} Veranstaltung",
+        "selectedEvent_other": "{{count}} Veranstaltungen",
+        "accountSlashEvent": "Konto / Veranstaltung",
+        "showEvents": "Veranstaltungen anzeigen"
     },
     "navbar": {
         "transactions": "Transaktionen",
-        "events": "Ereignisse",
+        "events": "Veranstaltungen",
         "balances": "Salden",
         "accounts": "Konten",
         "groupSettings": "Einstellungen",
@@ -192,13 +192,13 @@
         },
         "balances": {
             "tabTitle": "{{groupName}} - Salden",
-            "clearingAccountsRemainingBalances": "Einige Ereignisse haben noch offene Salden"
+            "clearingAccountsRemainingBalances": "Einige Veranstaltungen haben noch offene Salden"
         },
         "detail": {
-            "tabTitleEvent": "{{group.name}} - Ereignis {{account.name}}",
+            "tabTitleEvent": "{{group.name}} - Veranstaltung {{account.name}}",
             "tabTitleAccount": "{{group.name}} - Konto {{account.name}}"
         },
-        "event": "Ereignis",
+        "event": "Veranstaltung",
         "account": "Konto",
         "balanceOf": "Saldo von {{account.name}}",
         "clearingDistributionOf": "Teilnehmer von {{account.name}}",
@@ -216,10 +216,10 @@
     },
     "events": {
         "list": {
-            "tabTitle": "{{groupName}} - Ereignisse"
+            "tabTitle": "{{groupName}} - Veranstaltungen"
         },
-        "createEvent": "Ereignis erstellen",
-        "noEvents": "Keine Ereignisse"
+        "createEvent": "Veranstaltungen erstellen",
+        "noEvents": "Keine Veranstaltungen"
     },
     "profile": {
         "index": {
