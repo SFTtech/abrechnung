@@ -1,15 +1,15 @@
 {
     "common": {
         "delete": "Видалити",
-        "description": "опис",
+        "description": "Опис",
         "filterByTags": "Фільтрувати за тегами",
         "total": "Всього",
         "send": "Надіслати",
-        "add": "додати",
+        "add": "Додати",
         "username": "Ім'я користувача",
         "server": "Сервер",
         "password": "Пароль",
-        "save": "зберегти",
+        "save": "Зберегти",
         "yes": "Так",
         "no": "Ні",
         "ok": "Добре",
@@ -22,7 +22,7 @@
         "value": "Значення",
         "date": "Дата",
         "shared": "Спільний доступ",
-        "shares": "акції",
+        "shares": "Акції",
         "createdAt": "Створено Ат",
         "noneSoFar": "Поки жодного",
         "price": "Ціна",
@@ -33,7 +33,7 @@
         "sortBy": "Сортувати за",
         "tag_one": "Тег",
         "tag_few": "Теги",
-        "tag_many": "Теги",
+        "tag_many": "Тегів",
         "totalWithColon": "Всього:",
         "advanced": "Просунутий",
         "currency": "Валюта",
@@ -52,8 +52,8 @@
     },
     "auth": {
         "register": {
-            "confirmButton": "зареєструватися",
-            "title": "зареєструватися",
+            "confirmButton": "Зареєструватися",
+            "title": "Зареєструватися",
             "tabTitle": "Оплата - Реєстрація",
             "alreadyHasAccount": "Вже маєте акаунт? Увійдіть",
             "header": "Зареєструйте новий обліковий запис",
@@ -103,8 +103,8 @@
         "changePassword": "Змінити пароль",
         "login": "Логін",
         "signOut": "Вийти",
-        "transactions": "транзакції",
-        "activity": "діяльність",
+        "transactions": "Транзакції",
+        "activity": "Діяльність",
         "profile": "Профіль",
         "sessions": "Сеанси"
     },
@@ -128,10 +128,10 @@
             "joined": "приєднався {{datetime}}",
             "tabTitle": "{{groupName}} - Члени",
             "isOwner": "Є Власником",
-            "editor": "редактор",
+            "editor": "Редактор",
             "invitedBy": "запрошений {{username}}, ",
             "owner": "Власник",
-            "itsYou": "це ти",
+            "itsYou": "Це ти",
             "canWrite": "Може писати",
             "editGroupMember": "Редагувати члена групи",
             "header": "Члени"
@@ -194,12 +194,12 @@
         "transferredFrom": "Від",
         "createPurchaseForAccount": "Створіть покупку з {{accountName}} як учасником",
         "purchase": "Купівля",
-        "transferredTo": "до",
+        "transferredTo": "До",
         "list": {
             "tabTitle": "{{groupName}} - транзакції"
         },
         "positions": {
-            "positions": "посади",
+            "positions": "Посади",
             "addPositions": "Додати позиції",
             "remaining": "Залишилося:",
             "sharedPlusRest": "Спільне + Відпочинок"
@@ -232,11 +232,11 @@
             "tabTitleEvent": "{{group.name}} - Подія {{account.name}}"
         },
         "account": "Обліковий запис",
-        "settleUp": "Розрахунок",
+        "settleUp": "Розрахунки",
         "settlement": {
             "transactionName": "Поселення",
             "title": "Розрахунок балансу цієї групи",
-            "settleButton": "розрахунок",
+            "settleButton": "Розрахунок",
             "whoPaysWhom": "{{from}} платить {{to}} {{money}}"
         },
         "deleteConfirmBody": "Ви впевнені, що хочете видалити {{accountType}} \"{{accountName}}\"?",
@@ -295,8 +295,8 @@
     },
     "languages": {
         "es": "Іспанська",
-        "en": "англійська",
-        "ta": "тамільська",
+        "en": "Англійська",
+        "ta": "Тамільська",
         "de": "Німецький",
         "uk": "Українська",
         "bg": "Болгарська"
