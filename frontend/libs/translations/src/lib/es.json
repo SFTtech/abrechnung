@@ -178,7 +178,8 @@
         "createTransferForAccount": "Crear transferencia a {{accountName}}",
         "type": {
             "purchase": "compra",
-            "transfer": "transferencia"
+            "transfer": "transferencia",
+            "mimo": ""
         },
         "history": {
             "linkTo": "Historial"
