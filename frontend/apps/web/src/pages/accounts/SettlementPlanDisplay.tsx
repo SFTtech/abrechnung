@@ -5,7 +5,7 @@ import {
     createTransaction,
     selectAccountIdToAccountMap,
     selectSettlementPlan,
-    useGroupCurrencySymbol,
+    useGroupCurrencyIdentifier,
 } from "@abrechnung/redux";
 import { Button, List, ListItem, ListItemText, Typography } from "@mui/material";
 import * as React from "react";
@@ -23,10 +23,10 @@ export const SettlementPlanDisplay: React.FC<Props> = ({ groupId }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const settlementPlan = useAppSelector((state) => selectSettlementPlan(state, groupId));
-    const currencySymbol = useGroupCurrencySymbol(groupId);
+    const currencyIdentifier = useGroupCurrencyIdentifier(groupId);
     const accountMap = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
 
-    if (!currencySymbol) {
+    if (!currencyIdentifier) {
         return <Navigate to="/404" />;
     }
 
@@ -68,7 +68,7 @@ export const SettlementPlanDisplay: React.FC<Props> = ({ groupId }) => {
                                     {t("accounts.settlement.whoPaysWhom", "", {
                                         from: accountMap[planItem.creditorId].name,
                                         to: accountMap[planItem.debitorId].name,
-                                        money: formatCurrency(planItem.paymentAmount, currencySymbol),
+                                        money: formatCurrency(planItem.paymentAmount, currencyIdentifier),
                                     })}
                                 </span>
                             }

@@ -32,7 +32,7 @@ class GroupService(Service[Config]):
         user: User,
         name: str,
         description: str,
-        currency_symbol: str,
+        currency_identifier: str,
         add_user_account_on_join: bool,
         terms: str,
     ) -> int:
@@ -40,11 +40,11 @@ class GroupService(Service[Config]):
             raise AccessDenied("guest users are not allowed to create group new groups")
 
         group_id = await conn.fetchval(
-            "insert into grp (name, description, currency_symbol, terms, add_user_account_on_join, created_by) "
+            "insert into grp (name, description, currency_identifier, terms, add_user_account_on_join, created_by) "
             "values ($1, $2, $3, $4, $5, $6) returning id",
             name,
             description,
-            currency_symbol,
+            currency_identifier,
             terms,
             add_user_account_on_join,
             user.id,
@@ -223,17 +223,14 @@ class GroupService(Service[Config]):
         group_id: int,
         name: str,
         description: str,
-        currency_symbol: str,
         add_user_account_on_join: bool,
         terms: str,
     ):
         await conn.execute(
-            "update grp set name = $2, description = $3, currency_symbol = $4, terms = $5, add_user_account_on_join = $6 "
-            "where grp.id = $1",
+            "update grp set name = $2, description = $3, terms = $4, add_user_account_on_join = $5 where grp.id = $1",
             group_id,
             name,
             description,
-            currency_symbol,
             terms,
             add_user_account_on_join,
         )
@@ -358,7 +355,7 @@ class GroupService(Service[Config]):
         group = await conn.fetch_maybe_one(
             GroupPreview,
             "select grp.id, "
-            "grp.name, grp.description, grp.terms, grp.currency_symbol, grp.created_at, "
+            "grp.name, grp.description, grp.terms, grp.currency_identifier, grp.created_at, "
             "inv.description as invite_description, inv.valid_until as invite_valid_until, "
             "inv.single_use as invite_single_use "
             "from grp "

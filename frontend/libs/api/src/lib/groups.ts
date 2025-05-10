@@ -7,7 +7,7 @@ export interface BackendGroup {
     terms: string;
     created_at: string;
     created_by: number | null;
-    currency_symbol: string;
+    currency_identifier: string;
     add_user_account_on_join: boolean;
 }
 
@@ -19,7 +19,7 @@ export const backendGroupToGroup = (group: BackendGroup): Group => {
         terms: group.terms,
         createdAt: group.created_at,
         createdBy: group.created_by,
-        currency_symbol: group.currency_symbol,
+        currency_identifier: group.currency_identifier,
         addUserAccountOnJoin: group.add_user_account_on_join,
     };
 };
@@ -28,7 +28,7 @@ export interface BackendGroupPreview {
     id: number;
     name: string;
     description: string;
-    currency_symbol: string;
+    currency_identifier: string;
     terms: string;
     created_at: string;
     created_by: number | null;
@@ -42,7 +42,7 @@ export const backendGroupPreviewToPreview = (preview: BackendGroupPreview): Grou
         id: preview.id,
         name: preview.name,
         description: preview.description,
-        currency_symbol: preview.currency_symbol,
+        currency_identifier: preview.currency_identifier,
         terms: preview.terms,
         createdAt: preview.created_at,
         createdBy: preview.created_by,

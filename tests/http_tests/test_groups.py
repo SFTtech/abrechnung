@@ -39,7 +39,7 @@ class GroupAPITest(HTTPAPITest):
             json={
                 "name": "name",
                 "description": "description",
-                "currency_symbol": "€",
+                "currency_identifier": "EUR",
                 "terms": "terms",
             },
         )
@@ -58,7 +58,7 @@ class GroupAPITest(HTTPAPITest):
             json={
                 "name": "name2",
                 "description": "description2",
-                "currency_symbol": "$",
+                "currency_identifier": "$`USD",
                 "terms": "new terms",
                 "add_user_account_on_join": False,
             },
@@ -68,7 +68,7 @@ class GroupAPITest(HTTPAPITest):
         group = await self._fetch_group(group_id)
         self.assertEqual("name2", group["name"])
         self.assertEqual("description2", group["description"])
-        self.assertEqual("$", group["currency_symbol"])
+        self.assertEqual("USD", group["currency_identifier"])
         self.assertEqual("new terms", group["terms"])
 
     async def test_delete_group(self):
@@ -80,7 +80,7 @@ class GroupAPITest(HTTPAPITest):
             user=self.test_user,
             name="foobar",
             description="foobar",
-            currency_symbol="€",
+            currency_identifier="EUR",
             terms="foo",
             add_user_account_on_join=False,
         )
@@ -118,7 +118,7 @@ class GroupAPITest(HTTPAPITest):
                 name="asdf",
                 description="asdf",
                 billed_at=datetime.now().date(),
-                currency_symbol="€",
+                currency_identifier="EUR",
                 currency_conversion_rate=1.0,
                 tags=[],
                 value=20.0,
@@ -155,7 +155,7 @@ class GroupAPITest(HTTPAPITest):
             user=self.test_user,
             name="name1",
             description="description",
-            currency_symbol="€",
+            currency_identifier="EUR",
             terms="terms",
             add_user_account_on_join=False,
         )
@@ -163,7 +163,7 @@ class GroupAPITest(HTTPAPITest):
             user=self.test_user,
             name="name2",
             description="description",
-            currency_symbol="€",
+            currency_identifier="EUR",
             terms="terms",
             add_user_account_on_join=False,
         )
@@ -178,7 +178,7 @@ class GroupAPITest(HTTPAPITest):
             user=self.test_user,
             name="name",
             description="description",
-            currency_symbol="€",
+            currency_identifier="EUR",
             terms="terms",
             add_user_account_on_join=False,
         )
@@ -199,7 +199,7 @@ class GroupAPITest(HTTPAPITest):
             user=self.test_user,
             name="name",
             description="description",
-            currency_symbol="€",
+            currency_identifier="EUR",
             terms="terms",
             add_user_account_on_join=False,
         )
@@ -244,7 +244,7 @@ class GroupAPITest(HTTPAPITest):
             user=self.test_user,
             name="name",
             description="description",
-            currency_symbol="€",
+            currency_identifier="EUR",
             terms="terms",
             add_user_account_on_join=False,
         )
@@ -277,7 +277,7 @@ class GroupAPITest(HTTPAPITest):
             user=self.test_user,
             name="name",
             description="description",
-            currency_symbol="€",
+            currency_identifier="EUR",
             terms="terms",
             add_user_account_on_join=False,
         )
@@ -325,7 +325,7 @@ class GroupAPITest(HTTPAPITest):
             user=self.test_user,
             name="name",
             description="description",
-            currency_symbol="€",
+            currency_identifier="EUR",
             terms="terms",
             add_user_account_on_join=False,
         )
@@ -352,7 +352,7 @@ class GroupAPITest(HTTPAPITest):
             user=self.test_user,
             name="group1",
             description="description",
-            currency_symbol="€",
+            currency_identifier="EUR",
             terms="terms",
             add_user_account_on_join=False,
         )
@@ -448,7 +448,7 @@ class GroupAPITest(HTTPAPITest):
             user=self.test_user,
             name="group1",
             description="description",
-            currency_symbol="€",
+            currency_identifier="EUR",
             terms="terms",
             add_user_account_on_join=False,
         )

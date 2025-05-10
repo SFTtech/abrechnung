@@ -4,7 +4,7 @@ export interface GroupBase {
     id: number;
     name: string;
     description: string;
-    currency_symbol: string;
+    currency_identifier: string;
     terms: string;
     addUserAccountOnJoin: boolean;
 }
@@ -13,7 +13,7 @@ export const GroupValidator = z.object({
     name: z.string({ required_error: "Name is required" }),
     description: z.string().optional(),
     terms: z.string().optional(),
-    currency_symbol: z.string({ required_error: "Currency is required" }),
+    currency_identifier: z.string({ required_error: "Currency is required" }),
     addUserAccountOnJoin: z.boolean(),
 });
 
@@ -27,7 +27,7 @@ export interface GroupPreview {
     id: number;
     name: string;
     description: string;
-    currency_symbol: string;
+    currency_identifier: string;
     terms: string;
     createdAt: string;
     createdBy: number | null;
