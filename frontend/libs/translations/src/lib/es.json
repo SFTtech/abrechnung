@@ -179,7 +179,7 @@
         "type": {
             "purchase": "compra",
             "transfer": "transferencia",
-            "mimo": ""
+            "mimo": "ingreso"
         },
         "history": {
             "linkTo": "Historial"
