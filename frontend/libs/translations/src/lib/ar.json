@@ -11,7 +11,7 @@
             "tabTitle": "{{groupName}} - روابط الدعوة"
         },
         "delete": {
-            "description": "هل أنت متأكد أنك تريد حذف المجموعة {{groupName}}",
+            "description": "هل أنت متأكد أنك تريد حذف المجموعة {{groupName}}؟",
             "title": "حذف المجموعة"
         },
         "settings": {
