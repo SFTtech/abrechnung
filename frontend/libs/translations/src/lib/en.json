@@ -78,7 +78,7 @@
         },
         "delete": {
             "title": "Delete Group",
-            "description": "Are you sure you want to delete group {{groupName}}"
+            "description": "Are you sure you want to delete group {{groupName}}?"
         },
         "archivedDisclaimer": "This group is archived and therefore read-only.",
         "list": {
