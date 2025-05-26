@@ -137,7 +137,7 @@
         },
         "delete": {
             "title": "Gruppe löschen",
-            "description": "Sind Sie sicher, dass Sie die Gruppe {{groupName}} löschen möchten"
+            "description": "Sind Sie sicher, dass Sie die Gruppe {{groupName}} löschen möchten?"
         }
     },
     "images": {
