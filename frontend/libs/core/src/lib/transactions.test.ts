@@ -20,7 +20,7 @@ const generateTransaction = <T extends TransactionType>(
         name: "test",
         description: "",
         tags: [],
-        currency_symbol: "€",
+        currency_identifier: "EUR",
         currency_conversion_rate: 1.0,
         files: {},
         file_ids: [],

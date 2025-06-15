@@ -6,7 +6,7 @@ const purchaseTemplate: Omit<Transaction, "id" | "debitor_shares" | "creditor_sh
     type: "purchase" as const,
     billed_at: "2022-10-10",
     currency_conversion_rate: 1.0,
-    currency_symbol: "€",
+    currency_identifier: "EUR",
     name: "foobar",
     description: "",
     value: 0,
