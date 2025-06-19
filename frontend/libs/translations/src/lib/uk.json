@@ -222,7 +222,9 @@
         },
         "history": {
             "linkTo": "історія"
-        }
+        },
+        "currencyConversionRate": "Курс конвертації валют",
+        "conversionHint": "{{sourceValue}} = {{targetValue}}"
     },
     "accounts": {
         "participated": "Брав участь",
