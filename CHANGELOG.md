@@ -1,8 +1,8 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 (2025-06-19)
 
-[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.1.0...HEAD)
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.1.0...v1.2.0)
 
 **Features**
 
