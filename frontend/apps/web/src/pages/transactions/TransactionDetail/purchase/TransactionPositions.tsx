@@ -200,7 +200,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                   <PositionTableRow
                                       key={position.id}
                                       position={position}
-                                      currencySymbol={transaction.currency_symbol}
+                                      currencyIdentifier={transaction.currency_identifier}
                                       deletePosition={deletePosition}
                                       shownAccounts={shownAccounts}
                                       copyPosition={copyPosition}
@@ -216,7 +216,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                   <TableRow hover key={position.id}>
                                       <TableCell>{position.name}</TableCell>
                                       <TableCell align="right" style={{ minWidth: 80 }}>
-                                          {formatCurrency(position.price, transaction.currency_symbol)}
+                                          {formatCurrency(position.price, transaction.currency_identifier)}
                                       </TableCell>
                                       {shownAccountIDs.map((accountID) => (
                                           <TableCell align="right" key={accountID}>
@@ -248,11 +248,14 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                 <Typography sx={{ fontWeight: "bold" }}>{t("common.totalWithColon")}</Typography>
                             </TableCell>
                             <TableCell align="right">
-                                {formatCurrency(totalPositionValue, transaction.currency_symbol)}
+                                {formatCurrency(totalPositionValue, transaction.currency_identifier)}
                             </TableCell>
                             {shownAccountIDs.map((accountID) => (
                                 <TableCell align="right" key={accountID}>
-                                    {formatCurrency(purchaseItemSumForAccount(accountID), transaction.currency_symbol)}
+                                    {formatCurrency(
+                                        purchaseItemSumForAccount(accountID),
+                                        transaction.currency_identifier
+                                    )}
                                 </TableCell>
                             ))}
                             <TableCell align="right" colSpan={showAddAccount ? 2 : 1}>
@@ -262,7 +265,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                             (acc, curr) => acc + curr.positions,
                                             0
                                         ),
-                                    transaction.currency_symbol
+                                    transaction.currency_identifier
                                 )}
                             </TableCell>
                             {transaction.is_wip && <TableCell></TableCell>}
@@ -274,7 +277,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                 </Typography>
                             </TableCell>
                             <TableCell align="right">
-                                {formatCurrency(sharedTransactionValue, transaction.currency_symbol)}
+                                {formatCurrency(sharedTransactionValue, transaction.currency_identifier)}
                             </TableCell>
                             {shownAccountIDs.map((accountID) => (
                                 <TableCell align="right" key={accountID}></TableCell>

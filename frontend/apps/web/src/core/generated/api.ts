@@ -96,7 +96,7 @@ const injectedRtkApi = api
                 providesTags: ["groups"],
             }),
             createGroup: build.mutation<CreateGroupApiResponse, CreateGroupApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/groups`, method: "POST", body: queryArg.groupPayload }),
+                query: (queryArg) => ({ url: `/api/v1/groups`, method: "POST", body: queryArg.groupCreatePayload }),
                 invalidatesTags: ["groups"],
             }),
             getGroup: build.query<GetGroupApiResponse, GetGroupApiArg>({
@@ -107,7 +107,7 @@ const injectedRtkApi = api
                 query: (queryArg) => ({
                     url: `/api/v1/groups/${queryArg.groupId}`,
                     method: "POST",
-                    body: queryArg.groupPayload,
+                    body: queryArg.groupUpdatePayload,
                 }),
                 invalidatesTags: ["groups"],
             }),
@@ -352,7 +352,7 @@ export type ListGroupsApiResponse = /** status 200 Successful Response */ Group[
 export type ListGroupsApiArg = void;
 export type CreateGroupApiResponse = /** status 200 Successful Response */ Group;
 export type CreateGroupApiArg = {
-    groupPayload: GroupPayload;
+    groupCreatePayload: GroupCreatePayload;
 };
 export type GetGroupApiResponse = /** status 200 Successful Response */ Group;
 export type GetGroupApiArg = {
@@ -361,7 +361,7 @@ export type GetGroupApiArg = {
 export type UpdateGroupApiResponse = /** status 200 Successful Response */ Group;
 export type UpdateGroupApiArg = {
     groupId: number;
-    groupPayload: GroupPayload;
+    groupUpdatePayload: GroupUpdatePayload;
 };
 export type DeleteGroupApiResponse = unknown;
 export type DeleteGroupApiArg = {
@@ -514,7 +514,7 @@ export type Transaction = {
     name: string;
     description: string;
     value: number;
-    currency_symbol: string;
+    currency_identifier: string;
     currency_conversion_rate: number;
     billed_at: string;
     tags: string[];
@@ -555,7 +555,7 @@ export type NewTransaction = {
     name: string;
     description: string;
     value: number;
-    currency_symbol: string;
+    currency_identifier: string;
     currency_conversion_rate: number;
     billed_at: string;
     tags?: string[];
@@ -578,7 +578,7 @@ export type UpdateTransaction = {
     name: string;
     description: string;
     value: number;
-    currency_symbol: string;
+    currency_identifier: string;
     currency_conversion_rate: number;
     billed_at: string;
     tags?: string[];
@@ -605,7 +605,7 @@ export type GroupPreview = {
     id: number;
     name: string;
     description: string;
-    currency_symbol: string;
+    currency_identifier: string;
     terms: string;
     created_at: string;
     invite_single_use: boolean;
@@ -619,7 +619,7 @@ export type Group = {
     id: number;
     name: string;
     description: string;
-    currency_symbol: string;
+    currency_identifier: string;
     terms: string;
     add_user_account_on_join: boolean;
     created_at: string;
@@ -629,10 +629,16 @@ export type Group = {
     is_owner: boolean;
     can_write: boolean;
 };
-export type GroupPayload = {
+export type GroupCreatePayload = {
     name: string;
     description?: string;
-    currency_symbol: string;
+    add_user_account_on_join?: boolean;
+    terms?: string;
+    currency_identifier: string;
+};
+export type GroupUpdatePayload = {
+    name: string;
+    description?: string;
     add_user_account_on_join?: boolean;
     terms?: string;
 };

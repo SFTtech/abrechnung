@@ -1,6 +1,7 @@
 import { useFormatCurrency, useIsSmallScreen } from "@/hooks";
 import { useAppSelector } from "@/store";
 import { Group } from "@abrechnung/api";
+import { getCurrencySymbolForIdentifier } from "@abrechnung/core";
 import { selectAccountBalances, useSortedAccounts } from "@abrechnung/redux";
 import { Theme } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
@@ -72,10 +73,14 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
                     layout="vertical"
                     onClick={handleBarClick}
                 >
-                    <XAxis stroke={theme.palette.text.primary} type="number" unit={group.currency_symbol} />
+                    <XAxis
+                        stroke={theme.palette.text.primary}
+                        type="number"
+                        unit={getCurrencySymbolForIdentifier(group.currency_identifier)}
+                    />
                     <YAxis dataKey="name" stroke={theme.palette.text.primary} type="category" width={yaxiswidth} />
                     <Tooltip
-                        formatter={(label) => formatCurrency(parseFloat(String(label)), group.currency_symbol)}
+                        formatter={(label) => formatCurrency(parseFloat(String(label)), group.currency_identifier)}
                         labelStyle={{
                             color: theme.palette.text.primary,
                         }}
@@ -93,7 +98,7 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
                             return <Cell key={`cell-${index}`} fill={entry["balance"] >= 0 ? colorGreen : colorRed} />;
                         })}
                         <LabelList
-                            dataKey={(entry) => formatCurrency((entry as Data).balance, group.currency_symbol)}
+                            dataKey={(entry) => formatCurrency((entry as Data).balance, group.currency_identifier)}
                             position="insideLeft"
                             fill={theme.palette.text.primary}
                         />

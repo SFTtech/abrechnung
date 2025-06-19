@@ -1,5 +1,5 @@
 import { AccountSelect } from "@/components/AccountSelect";
-import { DateInput, NumericInput } from "@abrechnung/components";
+import { CurrencyIdentifierSelect, DateInput, NumericInput } from "@abrechnung/components";
 import { ShareSelect } from "@/components/ShareSelect";
 import { TagSelector } from "@/components/TagSelector";
 import { TextInput } from "@/components/TextInput";
@@ -8,15 +8,18 @@ import {
     selectTransactionBalanceEffect,
     selectTransactionHasFiles,
     selectTransactionHasPositions,
+    useGroupCurrencyIdentifier,
     wipTransactionUpdated,
 } from "@abrechnung/redux";
 import { Account, Transaction, TransactionShare, TransactionValidator } from "@abrechnung/types";
-import { Grid2 as Grid, InputAdornment, TableCell } from "@mui/material";
+import { Grid2 as Grid, InputAdornment, Stack, TableCell, Typography } from "@mui/material";
 import * as React from "react";
 import { typeToFlattenedError, z } from "zod";
 import { FileGallery } from "./FileGallery";
 import { useTranslation } from "react-i18next";
 import { useFormatCurrency, useIsSmallScreen } from "@/hooks";
+import { CurrencyIdentifier, getCurrencySymbolForIdentifier } from "@abrechnung/core";
+import { Navigate } from "react-router";
 
 interface Props {
     groupId: number;
@@ -34,6 +37,7 @@ export const TransactionMetadata: React.FC<Props> = ({
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
     const dispatch = useAppDispatch();
+    const groupCurrencyIdentifier = useGroupCurrencyIdentifier(groupId);
     const isSmallScreen = useIsSmallScreen();
     const hasAttachments = useAppSelector((state) => selectTransactionHasFiles(state, groupId, transaction.id));
     const hasPositions = useAppSelector((state) => selectTransactionHasPositions(state, groupId, transaction.id));
@@ -43,21 +47,18 @@ export const TransactionMetadata: React.FC<Props> = ({
         ({ account }: { account: Account }) => {
             const total = formatCurrency(
                 (balanceEffect[account.id]?.commonDebitors ?? 0) + (balanceEffect[account.id]?.positions ?? 0),
-                transaction.currency_symbol
+                groupCurrencyIdentifier
             );
 
             if ((showPositions || hasPositions) && !isSmallScreen) {
                 return (
                     <>
                         <TableCell align="right">
-                            {formatCurrency(balanceEffect[account.id]?.positions ?? 0, transaction.currency_symbol)}
+                            {formatCurrency(balanceEffect[account.id]?.positions ?? 0, groupCurrencyIdentifier)}
                         </TableCell>
                         <TableCell></TableCell>
                         <TableCell align="right">
-                            {formatCurrency(
-                                balanceEffect[account.id]?.commonDebitors ?? 0,
-                                transaction.currency_symbol
-                            )}
+                            {formatCurrency(balanceEffect[account.id]?.commonDebitors ?? 0, groupCurrencyIdentifier)}
                         </TableCell>
                         <TableCell></TableCell>
                         <TableCell width="100px" align="right">
@@ -88,7 +89,15 @@ export const TransactionMetadata: React.FC<Props> = ({
             newValue: Partial<
                 Pick<
                     Transaction,
-                    "name" | "description" | "billed_at" | "value" | "creditor_shares" | "debitor_shares" | "tags"
+                    | "name"
+                    | "description"
+                    | "billed_at"
+                    | "value"
+                    | "creditor_shares"
+                    | "debitor_shares"
+                    | "tags"
+                    | "currency_identifier"
+                    | "currency_conversion_rate"
                 >
             >
         ) => {
@@ -100,10 +109,19 @@ export const TransactionMetadata: React.FC<Props> = ({
         [dispatch, transaction]
     );
 
+    const updateCurrencyIdentifier = (currencyIdentifier: CurrencyIdentifier) => {
+        const newCurrencyConversionRate = 1.0; // TODO: lookup currency conversion rates here and explain how this works
+        pushChanges({ currency_identifier: currencyIdentifier, currency_conversion_rate: newCurrencyConversionRate });
+    };
+
     const updatedebitor_shares = React.useCallback(
         (shares: TransactionShare) => pushChanges({ debitor_shares: shares }),
         [pushChanges]
     );
+
+    if (groupCurrencyIdentifier == null) {
+        return <Navigate to="/404" />; // TODO: proper redirection to error page
+    }
 
     return (
         <Grid container>
@@ -135,24 +153,66 @@ export const TransactionMetadata: React.FC<Props> = ({
                         disabled={!transaction.is_wip}
                     />
                 )}
-                <NumericInput
-                    label={t("common.value")}
-                    name="value"
-                    variant="standard"
-                    margin="dense"
-                    fullWidth
-                    error={!!validationErrors.fieldErrors.value}
-                    helperText={validationErrors.fieldErrors.value}
-                    onChange={(value) => pushChanges({ value })}
-                    value={transaction.value}
-                    isCurrency={true}
-                    disabled={!transaction.is_wip}
-                    slotProps={{
-                        input: {
-                            endAdornment: <InputAdornment position="end">{transaction.currency_symbol}</InputAdornment>,
-                        },
-                    }}
-                />
+                <Stack spacing={1} direction="row">
+                    <NumericInput
+                        label={t("common.value")}
+                        name="value"
+                        variant="standard"
+                        margin="dense"
+                        fullWidth
+                        error={!!validationErrors.fieldErrors.value}
+                        helperText={validationErrors.fieldErrors.value}
+                        onChange={(value) => pushChanges({ value })}
+                        value={transaction.value}
+                        isCurrency={true}
+                        disabled={!transaction.is_wip}
+                        slotProps={{
+                            input: !transaction.is_wip
+                                ? {
+                                      endAdornment: (
+                                          <InputAdornment position="end">
+                                              {getCurrencySymbolForIdentifier(transaction.currency_identifier)}
+                                          </InputAdornment>
+                                      ),
+                                  }
+                                : undefined,
+                        }}
+                    />
+                    {transaction.is_wip && (
+                        <CurrencyIdentifierSelect
+                            label=" " // workaround to get the y-alignment correct
+                            sx={{ width: "150px" }}
+                            value={transaction.currency_identifier as CurrencyIdentifier}
+                            onChange={updateCurrencyIdentifier}
+                        />
+                    )}
+                </Stack>
+                {transaction.currency_identifier !== groupCurrencyIdentifier && (
+                    <Stack spacing={1} direction="row">
+                        <NumericInput
+                            label={t("transactions.currencyConversionRate")}
+                            name="currency_conversion_rate"
+                            variant="standard"
+                            margin="dense"
+                            fullWidth
+                            error={!!validationErrors.fieldErrors.value}
+                            helperText={validationErrors.fieldErrors.value}
+                            onChange={(value) => pushChanges({ currency_conversion_rate: value })}
+                            value={transaction.currency_conversion_rate}
+                            disabled={!transaction.is_wip}
+                        />
+                        <Typography sx={{ whiteSpace: "nowrap", alignContent: "end" }}>
+                            {t("transactions.conversionHint", {
+                                sourceValue: formatCurrency(1, transaction.currency_identifier),
+                                targetValue: formatCurrency(
+                                    transaction.currency_conversion_rate,
+                                    groupCurrencyIdentifier,
+                                    12
+                                ),
+                            })}
+                        </Typography>
+                    </Stack>
+                )}
                 <DateInput
                     value={transaction.billed_at || ""}
                     onChange={(value) => pushChanges({ billed_at: value })}

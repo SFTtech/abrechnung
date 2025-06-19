@@ -91,7 +91,7 @@ export namespace components.schemas {
         id: z.number().int(),
         name: z.string(),
         description: z.string(),
-        currency_symbol: z.string(),
+        currency_identifier: z.string(),
         terms: z.string(),
         add_user_account_on_join: z.boolean(),
         created_at: z.string(),
@@ -100,6 +100,14 @@ export namespace components.schemas {
         archived: z.boolean(),
         is_owner: z.boolean(),
         can_write: z.boolean(),
+    });
+    /** GroupCreatePayload */
+    export const GroupCreatePayload = z.object({
+        name: z.string(),
+        description: z.string().optional(),
+        add_user_account_on_join: z.boolean().optional(),
+        terms: z.string().optional(),
+        currency_identifier: z.string(),
     });
     /** GroupInvite */
     export const GroupInvite = z.object({
@@ -134,25 +142,24 @@ export namespace components.schemas {
     export const GroupMessage = z.object({
         message: z.string(),
     });
-    /** GroupPayload */
-    export const GroupPayload = z.object({
-        name: z.string(),
-        description: z.string().optional(),
-        currency_symbol: z.string(),
-        add_user_account_on_join: z.boolean().optional(),
-        terms: z.string().optional(),
-    });
     /** GroupPreview */
     export const GroupPreview = z.object({
         id: z.number().int(),
         name: z.string(),
         description: z.string(),
-        currency_symbol: z.string(),
+        currency_identifier: z.string(),
         terms: z.string(),
         created_at: z.string(),
         invite_single_use: z.boolean(),
         invite_valid_until: z.string(),
         invite_description: z.string(),
+    });
+    /** GroupUpdatePayload */
+    export const GroupUpdatePayload = z.object({
+        name: z.string(),
+        description: z.string().optional(),
+        add_user_account_on_join: z.boolean().optional(),
+        terms: z.string().optional(),
     });
     /** HTTPValidationError */
     export const HTTPValidationError = z.object({
@@ -187,7 +194,7 @@ export namespace components.schemas {
         name: z.string(),
         description: z.string(),
         value: z.number(),
-        currency_symbol: z.string(),
+        currency_identifier: z.string(),
         currency_conversion_rate: z.number(),
         billed_at: z.string(),
         tags: z.array(z.string()).optional(),
@@ -269,7 +276,7 @@ export namespace components.schemas {
         name: z.string(),
         description: z.string(),
         value: z.number(),
-        currency_symbol: z.string(),
+        currency_identifier: z.string(),
         currency_conversion_rate: z.number(),
         billed_at: z.string(),
         tags: z.array(z.string()),
@@ -279,6 +286,12 @@ export namespace components.schemas {
         last_changed: z.string(),
         positions: z.array(components["schemas"]["TransactionPosition"]),
         files: z.array(components["schemas"]["FileAttachment"]),
+    });
+    /** TransactionHistory */
+    export const TransactionHistory = z.object({
+        revision_id: z.number().int(),
+        changed_by: z.number().int(),
+        changed_at: z.string(),
     });
     /** TransactionPosition */
     export const TransactionPosition = z.object({
@@ -316,7 +329,7 @@ export namespace components.schemas {
         name: z.string(),
         description: z.string(),
         value: z.number(),
-        currency_symbol: z.string(),
+        currency_identifier: z.string(),
         currency_conversion_rate: z.number(),
         billed_at: z.string(),
         tags: z.array(z.string()).optional(),
@@ -521,6 +534,35 @@ export const operations = {
             },
         },
     },
+    get_transaction_history: {
+        /** get transaction history */
+        parameters: {
+            path: z.object({
+                group_id: z.number().int(),
+                transaction_id: z.number().int(),
+            }),
+        },
+        responses: {
+            /** @description Successful Response */
+            200: {
+                content: {
+                    "application/json": z.array(components["schemas"]["TransactionHistory"]),
+                },
+            },
+            /** @description unauthorized */
+            401: z.never(),
+            /** @description forbidden */
+            403: z.never(),
+            /** @description Not found */
+            404: z.never(),
+            /** @description Validation Error */
+            422: {
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"],
+                },
+            },
+        },
+    },
     update_transaction_positions: {
         /** update transaction positions */
         parameters: {
@@ -657,7 +699,7 @@ export const operations = {
         /** create a group */
         requestBody: {
             content: {
-                "application/json": components["schemas"]["GroupPayload"],
+                "application/json": components["schemas"]["GroupCreatePayload"],
             },
         },
         responses: {
@@ -718,7 +760,7 @@ export const operations = {
         },
         requestBody: {
             content: {
-                "application/json": components["schemas"]["GroupPayload"],
+                "application/json": components["schemas"]["GroupUpdatePayload"],
             },
         },
         responses: {
@@ -1483,6 +1525,10 @@ export const paths = {
         post: operations["update_transaction"],
         /** delete a transaction */
         delete: operations["delete_transaction"],
+    },
+    "/api/v1/groups/{group_id}/transactions/{transaction_id}/history": {
+        /** get transaction history */
+        get: operations["get_transaction_history"],
     },
     "/api/v1/groups/{group_id}/transactions/{transaction_id}/positions": {
         /** update transaction positions */

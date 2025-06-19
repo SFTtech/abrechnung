@@ -164,6 +164,8 @@
         "transferredTo": "To",
         "paidBy": "Paid by",
         "paidFor": "For whom",
+        "currencyConversionRate": "Currency conversion rate",
+        "conversionHint": "{{sourceValue}} = {{targetValue}}",
         "confirmDeleteTransaction": "Confirm delete transaction",
         "confirmDeleteTransactionInfo": "Are you sure you want to delete the transaction \"{{transaction.name}}\"?",
         "list": {

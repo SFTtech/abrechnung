@@ -6,7 +6,7 @@ export type GroupPreview = {
     id: number;
     name: string;
     description: string;
-    currency_symbol: string;
+    currency_identifier: string;
     terms: string;
     created_at: string;
     invite_single_use: boolean;

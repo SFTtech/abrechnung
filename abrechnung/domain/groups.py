@@ -28,7 +28,7 @@ class Group(BaseModel):
     id: int
     name: str
     description: str
-    currency_symbol: str
+    currency_identifier: str
     terms: str
     add_user_account_on_join: bool
     created_at: datetime
@@ -52,7 +52,7 @@ class GroupPreview(BaseModel):
     id: int
     name: str
     description: str
-    currency_symbol: str
+    currency_identifier: str
     terms: str
     created_at: datetime
     invite_single_use: bool

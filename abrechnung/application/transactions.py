@@ -222,11 +222,11 @@ class TransactionService(Service[Config]):
         )
         await conn.execute(
             "insert into transaction_history "
-            "   (id, revision_id, currency_symbol, currency_conversion_rate, value, name, description, billed_at) "
+            "   (id, revision_id, currency_identifier, currency_conversion_rate, value, name, description, billed_at) "
             "values ($1, $2, $3, $4, $5, $6, $7, $8)",
             transaction_id,
             revision_id,
-            transaction.currency_symbol,
+            transaction.currency_identifier,
             transaction.currency_conversion_rate,
             transaction.value,
             transaction.name,
@@ -495,15 +495,15 @@ class TransactionService(Service[Config]):
         )
         revision_id = await self._create_revision(conn=conn, user=user, transaction_id=transaction_id)
         await conn.execute(
-            "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, "
+            "insert into transaction_history (id, revision_id, currency_identifier, currency_conversion_rate, "
             "   value, billed_at, name, description)"
             "values ($1, $2, $3, $4, $5, $6, $7, $8) "
             "on conflict (id, revision_id) do update "
-            "set currency_symbol = $3, currency_conversion_rate = $4, value = $5, "
+            "set currency_identifier = $3, currency_conversion_rate = $4, value = $5, "
             "   billed_at = $6, name = $7, description = $8",
             transaction_id,
             revision_id,
-            transaction.currency_symbol,
+            transaction.currency_identifier,
             transaction.currency_conversion_rate,
             transaction.value,
             transaction.billed_at,
@@ -706,8 +706,8 @@ class TransactionService(Service[Config]):
 
         # copy all existing transaction data into a new history entry
         await conn.execute(
-            "insert into transaction_history (id, revision_id, currency_symbol, currency_conversion_rate, name, description, value, billed_at, deleted)"
-            "select id, $1, currency_symbol, currency_conversion_rate, name, description, value, billed_at, deleted "
+            "insert into transaction_history (id, revision_id, currency_identifier, currency_conversion_rate, name, description, value, billed_at, deleted)"
+            "select id, $1, currency_identifier, currency_conversion_rate, name, description, value, billed_at, deleted "
             "from transaction_history where id = $2 and revision_id = $3",
             revision_id,
             transaction_id,
@@ -745,10 +745,10 @@ class TransactionService(Service[Config]):
     @timed_cache(timedelta(minutes=5))
     async def total_amount_of_money_per_currency(self, conn: Connection) -> dict[str, float]:
         result = await conn.fetch(
-            "select t.currency_symbol, sum(t.value) as total_value "
-            "from transaction_state_valid_at(now()) as t where not t.deleted group by t.currency_symbol"
+            "select t.currency_identifier, sum(t.value) as total_value "
+            "from transaction_state_valid_at(now()) as t where not t.deleted group by t.currency_identifier"
         )
         aggregated = {}
         for row in result:
-            aggregated[row["currency_symbol"]] = row["total_value"]
+            aggregated[row["currency_identifier"]] = row["total_value"]
         return aggregated

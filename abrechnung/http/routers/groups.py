@@ -82,23 +82,20 @@ async def list_groups(
     return await group_service.list_groups(user=user)
 
 
-class GroupPayload(BaseModel):
+class GroupUpdatePayload(BaseModel):
     name: str
     description: str = ""
-    currency_symbol: str
     add_user_account_on_join: bool = False
     terms: str = ""
 
 
-@router.post(
-    "/v1/groups",
-    summary="create a group",
-    response_model=Group,
-    operation_id="create_group",
-    tags=["groups"],
-)
+class GroupCreatePayload(GroupUpdatePayload):
+    currency_identifier: str
+
+
+@router.post("/v1/groups", summary="create a group", response_model=Group, operation_id="create_group", tags=["groups"])
 async def create_group(
-    payload: GroupPayload,
+    payload: GroupCreatePayload,
     user: User = Depends(get_current_user),
     group_service: GroupService = Depends(get_group_service),
 ):
@@ -106,7 +103,7 @@ async def create_group(
         user=user,
         name=payload.name,
         description=payload.description,
-        currency_symbol=payload.currency_symbol,
+        currency_identifier=payload.currency_identifier,
         add_user_account_on_join=payload.add_user_account_on_join,
         terms=payload.terms,
     )
@@ -138,7 +135,7 @@ async def get_group(
 )
 async def update_group(
     group_id: int,
-    payload: GroupPayload,
+    payload: GroupUpdatePayload,
     user: User = Depends(get_current_user),
     group_service: GroupService = Depends(get_group_service),
 ):
@@ -147,7 +144,6 @@ async def update_group(
         group_id=group_id,
         name=payload.name,
         description=payload.description,
-        currency_symbol=payload.currency_symbol,
         add_user_account_on_join=payload.add_user_account_on_join,
         terms=payload.terms,
     )

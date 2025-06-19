@@ -30,6 +30,10 @@ const currencyFormatConfig = {
     maximumFractionDigits: 2,
 };
 
+const numberFormatConfig = {
+    maximumFractionDigits: 12,
+};
+
 export const NumericInput: React.FC<NumericInputProps> = ({
     value,
     isCurrency,
@@ -48,7 +52,7 @@ export const NumericInput: React.FC<NumericInputProps> = ({
     React.useEffect(() => {
         if (value != null) {
             setInternalValue(
-                Intl.NumberFormat(i18n.language, isCurrency ? currencyFormatConfig : undefined).format(value)
+                Intl.NumberFormat(i18n.language, isCurrency ? currencyFormatConfig : numberFormatConfig).format(value)
             );
         }
     }, [value, setInternalValue, isCurrency, i18n.language]);

@@ -5,25 +5,25 @@ export const useFormatCurrency = () => {
     const { i18n } = useTranslation();
 
     return React.useCallback(
-        (value: number, currencySymbol?: string) => {
-            if (!currencySymbol) {
+        (value: number, currencyIdentifier?: string, maximumFractionDigits?: number) => {
+            if (!currencyIdentifier) {
                 const formatDef = new Intl.NumberFormat(i18n.language, {
                     style: "decimal",
                     minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
+                    maximumFractionDigits: maximumFractionDigits ?? 2,
                 });
 
                 return formatDef.format(value);
             }
 
             const formatDef = new Intl.NumberFormat(i18n.language, {
-                currency: "EUR",
+                currency: currencyIdentifier,
                 style: "currency",
                 minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
+                maximumFractionDigits: maximumFractionDigits ?? 2,
             });
 
-            return formatDef.format(value).replace("€", currencySymbol);
+            return formatDef.format(value);
         },
         [i18n]
     );
