@@ -7,6 +7,8 @@
 **Features**
 
 - add transaction history display
+- add multi currency support
+- add support for math expressions in numeric inputs
 
 ## 1.1.0 (2025-01-31)
 
