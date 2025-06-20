@@ -127,3 +127,5 @@ yarn-error.log
 
 apps/mobile-native-e2e/artifacts
 apps/test-mobile-app-e2e/artifacts
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md

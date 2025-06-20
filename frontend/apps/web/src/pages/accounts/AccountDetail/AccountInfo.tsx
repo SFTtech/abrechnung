@@ -18,7 +18,7 @@ import {
 } from "@abrechnung/redux";
 import { Account, AccountValidator } from "@abrechnung/types";
 import { ChevronLeft, Delete, Edit } from "@mui/icons-material";
-import { Button, Chip, Divider, Grid2 as Grid, IconButton, LinearProgress, TableCell } from "@mui/material";
+import { Button, Chip, Divider, Grid, IconButton, LinearProgress, TableCell } from "@mui/material";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
@@ -217,7 +217,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                             error={!!validationErrors.fieldErrors.clearing_shares}
                             helperText={validationErrors.fieldErrors.clearing_shares}
                             excludeAccounts={[account.id]}
-                            renderAdditionalShareInfo={({ account: participatingAccount }) => (
+                            AdditionalShareInfo={({ account: participatingAccount }) => (
                                 <TableCell width="100px" align="right">
                                     {formatCurrency(
                                         balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0,

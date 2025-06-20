@@ -1,16 +1,6 @@
 import React, { useState } from "react";
 import { GroupCreateModal } from "@/components/groups/GroupCreateModal";
-import {
-    Alert,
-    Divider,
-    Grid2 as Grid,
-    IconButton,
-    List,
-    ListItem,
-    ListItemText,
-    Stack,
-    Typography,
-} from "@mui/material";
+import { Alert, Divider, Grid, IconButton, List, ListItem, ListItemText, Stack, Typography } from "@mui/material";
 import { Add } from "@mui/icons-material";
 import { MobilePaper, ListItemLink } from "@/components/style";
 import { selectIsGuestUser, selectGroups } from "@abrechnung/redux";

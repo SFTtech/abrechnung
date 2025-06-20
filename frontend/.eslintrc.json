@@ -9,7 +9,7 @@
     "overrides": [
         {
             "files": ["*.ts", "*.tsx", "*.js", "*.jsx"],
-            "extends": ["eslint:recommended", "plugin:deprecation/recommended"],
+            "extends": ["eslint:recommended"],
             "rules": {
                 "@nx/enforce-module-boundaries": [
                     "error",
@@ -30,18 +30,13 @@
             "files": ["*.ts", "*.tsx"],
             "extends": ["plugin:@nx/typescript"],
             "rules": {
-                "@typescript-eslint/no-explicit-any": "warn",
-                "@typescript-eslint/no-extra-semi": "error",
-                "no-extra-semi": "off"
+                "@typescript-eslint/no-explicit-any": "warn"
             }
         },
         {
             "files": ["*.js", "*.jsx"],
             "extends": ["plugin:@nx/javascript"],
-            "rules": {
-                "@typescript-eslint/no-extra-semi": "error",
-                "no-extra-semi": "off"
-            }
+            "rules": {}
         },
         {
             "files": ["*.jsx", "*.tsx"],

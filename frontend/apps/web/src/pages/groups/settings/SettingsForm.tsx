@@ -1,22 +1,17 @@
-import {
-    CurrencyIdentifierSelect,
-    DisabledFormControlLabel,
-    DisabledFormTextField,
-    DisabledTextField,
-} from "@abrechnung/components";
+import { DisabledFormControlLabel, DisabledFormTextField, DisabledTextField } from "@abrechnung/components";
 import { api } from "@/core/api";
 import { useAppDispatch } from "@/store";
 import { Group } from "@abrechnung/api";
 import { updateGroup, useCurrentUserPermissions } from "@abrechnung/redux";
 import { Cancel, Edit, Save } from "@mui/icons-material";
-import { Alert, Button, Checkbox, FormGroup, Grid2 as Grid, Stack } from "@mui/material";
+import { Alert, Button, Checkbox, FormGroup, Grid, Stack } from "@mui/material";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CurrencyIdentifier, getCurrencySymbolForIdentifier } from "@abrechnung/core";
+import { getCurrencySymbolForIdentifier } from "@abrechnung/core";
 
 type SettingsFormProps = {
     group: Group;

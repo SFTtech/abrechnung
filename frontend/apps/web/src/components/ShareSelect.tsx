@@ -10,7 +10,7 @@ import {
     Chip,
     Divider,
     FormControlLabel,
-    Grid2 as Grid,
+    Grid,
     IconButton,
     InputAdornment,
     Table,
@@ -34,7 +34,7 @@ interface RowProps {
     showAdvanced: boolean;
     editable: boolean;
     onChange: (accountId: number, newShareValue: number) => void;
-    renderAdditionalShareInfo?: React.FC<{ account: Account }> | undefined;
+    AdditionalShareInfo?: React.FC<{ account: Account }> | undefined;
     shareValue?: number | undefined;
 }
 
@@ -44,7 +44,7 @@ const ShareSelectRow: React.FC<RowProps> = ({
     showAdvanced,
     shareValue,
     onChange,
-    renderAdditionalShareInfo,
+    AdditionalShareInfo,
 }) => {
     const theme = useTheme();
     const handleChange = (newValue: number) => {
@@ -94,7 +94,7 @@ const ShareSelectRow: React.FC<RowProps> = ({
                     <Checkbox checked={(shareValue ?? 0) > 0} disabled={!editable} onChange={handleToggleShare} />
                 )}
             </TableCell>
-            {renderAdditionalShareInfo ? renderAdditionalShareInfo({ account }) : null}
+            {AdditionalShareInfo ? <AdditionalShareInfo account={account} /> : null}
         </TableRow>
     );
 };
@@ -108,7 +108,7 @@ interface ShareSelectProps {
     helperText?: React.ReactNode | undefined;
     shouldDisplayAccount?: (accountId: number) => boolean | undefined;
     additionalShareInfoHeader?: React.ReactNode | undefined;
-    renderAdditionalShareInfo?: React.FC<{ account: Account }> | undefined;
+    AdditionalShareInfo?: React.FC<{ account: Account }> | undefined;
     excludeAccounts?: number[] | undefined;
     editable?: boolean | undefined;
 }
@@ -120,7 +120,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
     onChange,
     shouldDisplayAccount,
     additionalShareInfoHeader,
-    renderAdditionalShareInfo,
+    AdditionalShareInfo,
     excludeAccounts,
     error,
     helperText,
@@ -356,7 +356,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                                 onChange={handleAccountShareChange}
                                 shareValue={value[account.id]}
                                 showAdvanced={showAdvanced}
-                                renderAdditionalShareInfo={renderAdditionalShareInfo}
+                                AdditionalShareInfo={AdditionalShareInfo}
                             />
                         ))}
                     </TableBody>
