@@ -14,7 +14,7 @@ import {
 } from "@abrechnung/redux";
 import { PositionValidator, Transaction, TransactionValidator } from "@abrechnung/types";
 import { Add as AddIcon } from "@mui/icons-material";
-import { Button, Divider, Grid2 as Grid, Stack, Box } from "@mui/material";
+import { Button, Divider, Grid } from "@mui/material";
 import * as React from "react";
 import { Navigate, useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";

@@ -3,7 +3,7 @@ import { Loading } from "@abrechnung/components";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
 import { GroupPreview } from "@abrechnung/api";
-import { Alert, Button, Grid2 as Grid, List, ListItem, ListItemText, Typography } from "@mui/material";
+import { Alert, Button, Grid, List, ListItem, ListItemText, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";

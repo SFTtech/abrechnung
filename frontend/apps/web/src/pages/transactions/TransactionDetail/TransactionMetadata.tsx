@@ -12,7 +12,7 @@ import {
     wipTransactionUpdated,
 } from "@abrechnung/redux";
 import { Account, Transaction, TransactionShare, TransactionValidator } from "@abrechnung/types";
-import { Grid2 as Grid, InputAdornment, Stack, TableCell, Typography } from "@mui/material";
+import { Grid, InputAdornment, Stack, TableCell, Typography } from "@mui/material";
 import * as React from "react";
 import { typeToFlattenedError, z } from "zod";
 import { FileGallery } from "./FileGallery";
@@ -43,7 +43,7 @@ export const TransactionMetadata: React.FC<Props> = ({
     const hasPositions = useAppSelector((state) => selectTransactionHasPositions(state, groupId, transaction.id));
     const balanceEffect = useAppSelector((state) => selectTransactionBalanceEffect(state, groupId, transaction.id));
 
-    const renderShareInfo = React.useCallback(
+    const ShareInfo = React.useCallback(
         ({ account }: { account: Account }) => {
             const total = formatCurrency(
                 (balanceEffect[account.id]?.commonDebitors ?? 0) + (balanceEffect[account.id]?.positions ?? 0),
@@ -313,7 +313,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                                 </TableCell>
                             )
                         }
-                        renderAdditionalShareInfo={renderShareInfo}
+                        AdditionalShareInfo={ShareInfo}
                         editable={transaction.is_wip}
                     />
                 </Grid>

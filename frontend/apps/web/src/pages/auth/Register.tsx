@@ -1,6 +1,6 @@
 import { selectIsAuthenticated } from "@abrechnung/redux";
 import { LockOutlined } from "@mui/icons-material";
-import { Avatar, Box, Button, Container, CssBaseline, Grid2 as Grid, Link, Typography } from "@mui/material";
+import { Avatar, Box, Button, Container, CssBaseline, Grid, Link, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router";
 import { toast } from "react-toastify";

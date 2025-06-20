@@ -3,7 +3,7 @@ import { Link as RouterLink, useNavigate } from "react-router";
 import { api, handleApiError } from "@/core/api";
 import { toast } from "react-toastify";
 import { useQuery, useTitle } from "@/core/utils";
-import { Avatar, Box, Button, Container, CssBaseline, Grid2 as Grid, Link, Typography } from "@mui/material";
+import { Avatar, Box, Button, Container, CssBaseline, Grid, Link, Typography } from "@mui/material";
 import { LockOutlined } from "@mui/icons-material";
 import { z } from "zod";
 import { useAppDispatch, useAppSelector } from "@/store";

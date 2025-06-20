@@ -9,7 +9,7 @@ import {
 } from "@abrechnung/redux";
 import { fromISOString, toISODateString } from "@abrechnung/utils";
 import { Alert, Card, Divider, Theme, Typography, useTheme } from "@mui/material";
-import { PointMouseHandler, PointTooltipProps, ResponsiveLine, Serie } from "@nivo/line";
+import { ResponsiveLine, PointOrSliceMouseHandler, PointTooltipComponent } from "@nivo/line";
 import { DateTime } from "luxon";
 import * as React from "react";
 import { useNavigate } from "react-router";
@@ -21,6 +21,15 @@ interface Props {
     groupId: number;
     accountId: number;
 }
+
+type DataSeries = {
+    id: string;
+    data: readonly {
+        x: Date;
+        y: number;
+        changeOrigin: BalanceChangeOrigin;
+    }[];
+};
 
 export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => {
     const { t } = useTranslation();
@@ -51,7 +60,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
         const areaBaselineValue =
             balanceHistory.length === 0 ? undefined : !hasNegativeEntries ? min : !hasPositiveEntries ? max : undefined;
 
-        const graphData: Serie[] = [];
+        const graphData: DataSeries[] = [];
         let lastPoint = balanceHistory[0];
         const makeSerie = (): {
             id: string;
@@ -94,8 +103,8 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
         return { graphData, seriesColors, areaBaselineValue };
     }, [balanceHistory, theme]);
 
-    const onClick: PointMouseHandler = (point, event) => {
-        const changeOrigin: BalanceChangeOrigin = (point.data as any).changeOrigin;
+    const onClick: PointOrSliceMouseHandler<DataSeries> = (point, event) => {
+        const changeOrigin: BalanceChangeOrigin = ((point as any).data as any).changeOrigin;
         if (changeOrigin.type === "clearing") {
             navigate(`/groups/${groupId}/accounts/${changeOrigin.id}`);
         } else {
@@ -103,7 +112,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
         }
     };
 
-    const renderTooltip: React.FC<PointTooltipProps> = ({ point }) => {
+    const renderTooltip: PointTooltipComponent<DataSeries> = ({ point }) => {
         const changeOrigin: BalanceChangeOrigin = (point.data as any).changeOrigin;
 
         const icon =

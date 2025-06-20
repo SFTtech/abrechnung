@@ -5,16 +5,7 @@ import { FileAttachment as BackendFileAttachment, NewFile } from "@abrechnung/ap
 import { selectTransactionFiles, wipFileDeleted } from "@abrechnung/redux";
 import { FileAttachment, Transaction, UpdatedFileAttachment } from "@abrechnung/types";
 import { AddCircle, ChevronLeft, ChevronRight, Delete } from "@mui/icons-material";
-import {
-    Button,
-    Chip,
-    Dialog,
-    DialogActions,
-    DialogContent,
-    DialogTitle,
-    Grid2 as Grid,
-    IconButton,
-} from "@mui/material";
+import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Transition } from "react-transition-group";

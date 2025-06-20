@@ -4,7 +4,7 @@ import { ClearingAccountDetail } from "@/components/accounts/ClearingAccountDeta
 import { MobilePaper } from "@/components/style";
 import { Loading } from "@abrechnung/components";
 import { useQuery, useTitle } from "@/core/utils";
-import { Grid2 as Grid, Typography } from "@mui/material";
+import { Grid, Typography } from "@mui/material";
 import * as React from "react";
 import { Navigate, useParams } from "react-router";
 import { AccountInfo } from "./AccountInfo";

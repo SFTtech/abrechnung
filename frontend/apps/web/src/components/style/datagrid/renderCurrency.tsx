@@ -26,11 +26,8 @@ const CurrencyValue = React.memo(({ currencySymbol, value = 0, signOverride }: C
 });
 CurrencyValue.displayName = "CurrencyValue";
 
-export function renderCurrency(
-    currencySymbol: string,
-    signOverride?: number
-): (params: { value?: number }) => React.ReactNode {
-    const component: React.FC<{ value?: number }> = (params) => {
+export function renderCurrency(currencySymbol: string, signOverride?: number) {
+    const component = (params: { value?: number }) => {
         return <CurrencyValue currencySymbol={currencySymbol} value={params.value} signOverride={signOverride} />;
     };
     component.displayName = "CurrencyValue";
