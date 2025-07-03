@@ -1,7 +1,7 @@
 # pylint: disable=attribute-defined-outside-init,missing-kwoa
 from datetime import datetime, timedelta
 
-from sftkit.error import AccessDenied
+from sftkit.error import AccessDenied, InvalidArgument
 
 from abrechnung.application.groups import GroupService
 from abrechnung.application.users import UserService
@@ -53,6 +53,18 @@ class TransactionLogicTest(BaseTestCase):
         guest_user = await user_service.get_user(user_id=user_id)
         self.assertTrue(guest_user.is_guest_user)
 
+        with self.assertRaises(InvalidArgument):  # email confirmation required
+            await user_service.login_user(username="guest user 1", password="asdf1234", session_name="dummy session")
+
+        confirmation_token = await self.db_conn.fetchval(
+            "select token from pending_registration where user_id = $1", user_id
+        )
+        await user_service.confirm_registration(token=str(confirmation_token))
+        uid, _, _ = await user_service.login_user(
+            username="guest user 1", password="asdf1234", session_name="dummy session"
+        )
+        self.assertEqual(uid, user_id)
+
         user_id = await user_service.register_user(
             username="no guest user 1",
             email="foobar@stusta.de",
@@ -62,6 +74,17 @@ class TransactionLogicTest(BaseTestCase):
         self.assertIsNotNone(user_id)
         non_guest_user = await user_service.get_user(user_id=user_id)
         self.assertFalse(non_guest_user.is_guest_user)
+        with self.assertRaises(InvalidArgument):  # email confirmation required
+            await user_service.login_user(username="no guest user 1", password="asdf1234", session_name="dummy session")
+
+        confirmation_token = await self.db_conn.fetchval(
+            "select token from pending_registration where user_id = $1", user_id
+        )
+        await user_service.confirm_registration(token=str(confirmation_token))
+        uid, _, _ = await user_service.login_user(
+            username="no guest user 1", password="asdf1234", session_name="dummy session"
+        )
+        self.assertEqual(uid, user_id)
 
         with self.assertRaises(AccessDenied):
             await user_service.register_user(
@@ -83,3 +106,7 @@ class TransactionLogicTest(BaseTestCase):
         self.assertIsNotNone(user_id)
         user = await user_service.get_user(user_id=user_id)
         self.assertFalse(user.pending)
+        uid, _, _ = await user_service.login_user(
+            username="guest user 1", password="asdf1234", session_name="dummy session"
+        )
+        self.assertEqual(uid, user_id)
