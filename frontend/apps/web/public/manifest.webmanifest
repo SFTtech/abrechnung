@@ -38,6 +38,5 @@
     "start_url": "/?source=pwa",
     "scope": "/",
     "display": "standalone",
-    "theme_color": "#aa0000",
     "background_color": "#ffffff"
 }

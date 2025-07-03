@@ -13,7 +13,8 @@
             "@abrechnung/translations": ["../../libs/translations/src/index.ts"],
             "@abrechnung/components": ["../../libs/components/src/index.ts"],
             "@/*": ["src/*"]
-        }
+        },
+        "types": ["vite/client", "vitest"]
     },
     "files": [],
     "include": [],
