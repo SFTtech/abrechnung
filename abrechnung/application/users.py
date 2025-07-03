@@ -1,10 +1,10 @@
 from datetime import datetime, timezone
 from typing import Optional
 
+import bcrypt
 from asyncpg.pool import Pool
 from email_validator import EmailNotValidError, validate_email
 from jose import JWTError, jwt
-from passlib.context import CryptContext
 from pydantic import BaseModel
 from sftkit.database import Connection
 from sftkit.error import AccessDenied, InvalidArgument, Unauthorized
@@ -57,13 +57,12 @@ class UserService(Service[Config]):
         self.allow_guest_users = self.config.registration.allow_guest_users
         self.valid_email_domains = self.config.registration.valid_email_domains
 
-        self.pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
     def _hash_password(self, password: str) -> str:
-        return self.pwd_context.hash(password)
+        salt = bcrypt.gensalt()
+        return bcrypt.hashpw(password.encode("utf-8"), salt).decode("utf-8")
 
     def _check_password(self, password: str, hashed_password: str) -> bool:
-        return self.pwd_context.verify(password, hashed_password)
+        return bcrypt.checkpw(password.encode("utf-8"), hashed_password.encode("utf-8"))
 
     def _create_access_token(self, user_id: int, session_id: int):
         data = {
