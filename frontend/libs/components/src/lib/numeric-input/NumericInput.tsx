@@ -49,13 +49,20 @@ export const NumericInput: React.FC<NumericInputProps> = ({
     const [internalError, setInternalError] = React.useState(false);
     const [internalHelperText, setInternalHelperText] = React.useState<string | undefined>(undefined);
 
+    const formatValue = React.useCallback(
+        (value: number) => {
+            return Intl.NumberFormat(i18n.language, isCurrency ? currencyFormatConfig : numberFormatConfig).format(
+                value
+            );
+        },
+        [i18n.language, isCurrency]
+    );
+
     React.useEffect(() => {
         if (value != null) {
-            setInternalValue(
-                Intl.NumberFormat(i18n.language, isCurrency ? currencyFormatConfig : numberFormatConfig).format(value)
-            );
+            setInternalValue(formatValue(value));
         }
-    }, [value, setInternalValue, isCurrency, i18n.language]);
+    }, [value, setInternalValue, formatValue]);
 
     const onInternalChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setInternalValue(event.target.value);
@@ -63,7 +70,7 @@ export const NumericInput: React.FC<NumericInputProps> = ({
 
     const finalizeInput = () => {
         const updateValue = (value: number) => {
-            setInternalValue(isCurrency ? value.toFixed(2) : String(value));
+            setInternalValue(formatValue(value));
             onChange(value);
             setInternalError(false);
             setInternalHelperText(undefined);
