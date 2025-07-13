@@ -183,7 +183,9 @@
         },
         "history": {
             "linkTo": "Verlauf"
-        }
+        },
+        "currencyConversionRate": "Geldumtauschrate",
+        "conversionHint": "{{sourceValue}} = {{targetValue}}"
     },
     "accounts": {
         "noAccounts": "Keine Konten",
