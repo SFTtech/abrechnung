@@ -179,7 +179,7 @@
         "type": {
             "purchase": "kaufen",
             "transfer": "übertragen",
-            "mimo": "mimo"
+            "mimo": "Mimo"
         },
         "history": {
             "linkTo": "Verlauf"
