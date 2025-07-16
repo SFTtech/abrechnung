@@ -179,11 +179,13 @@
         "type": {
             "purchase": "kaufen",
             "transfer": "übertragen",
-            "mimo": "mimo"
+            "mimo": "Mimo"
         },
         "history": {
             "linkTo": "Verlauf"
-        }
+        },
+        "currencyConversionRate": "Geldumtauschrate",
+        "conversionHint": "{{sourceValue}} = {{targetValue}}"
     },
     "accounts": {
         "noAccounts": "Keine Konten",
