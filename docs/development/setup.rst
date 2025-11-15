@@ -123,7 +123,6 @@ Working on the frontend is quite easy, simply
 
 .. code-block:: shell
 
-  cd web
   npm install
   npx nx serve web
 

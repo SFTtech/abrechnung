@@ -1,6 +1,6 @@
 export default {
     displayName: "api",
-    preset: "../../../jest.preset.js",
+    preset: "../../jest.preset.js",
     globals: {},
     transform: {
         "^.+\\.[tj]s$": [

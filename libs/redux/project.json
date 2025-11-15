@@ -5,30 +5,6 @@
     "projectType": "library",
     "tags": [],
     "targets": {
-        "build": {
-            "executor": "@nx/web:rollup",
-            "outputs": [
-                "{options.outputPath}"
-            ],
-            "options": {
-                "outputPath": "dist/libs/redux",
-                "tsConfig": "libs/redux/tsconfig.lib.json",
-                "project": "libs/redux/package.json",
-                "entryFile": "libs/redux/src/index.ts",
-                "external": [
-                    "react/jsx-runtime"
-                ],
-                "rollupConfig": "@nx/react/plugins/bundle-rollup",
-                "compiler": "babel",
-                "assets": [
-                    {
-                        "glob": "libs/redux/README.md",
-                        "input": ".",
-                        "output": "."
-                    }
-                ]
-            }
-        },
         "test": {
             "executor": "@nx/jest:jest",
             "outputs": [
