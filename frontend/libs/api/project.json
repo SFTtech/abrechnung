@@ -3,6 +3,7 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "libs/api/src",
     "projectType": "library",
+    "tags": [],
     "targets": {
         "generate-openapi": {
             "executor": "nx:run-commands",
@@ -43,6 +44,5 @@
                 "jestConfig": "libs/api/jest.config.ts"
             }
         }
-    },
-    "tags": []
+    }
 }
