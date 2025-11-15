@@ -129,3 +129,11 @@ Sessionx.vim
 .env
 docker-compose.yaml
 docker-compose.yml
+
+# JavaScript
+node_modules/
+vite.config.*.timestamp*
+vitest.config.*.timestamp*
+.nx/cache
+.nx/workspace-data
+dist/

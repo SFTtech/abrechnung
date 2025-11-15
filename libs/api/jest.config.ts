@@ -1,7 +1,7 @@
 /* eslint-disable */
 export default {
     displayName: "api",
-    preset: "../../jest.preset.js",
+    preset: "../../../jest.preset.js",
     globals: {},
     transform: {
         "^.+\\.[tj]s$": [
@@ -12,5 +12,5 @@ export default {
         ],
     },
     moduleFileExtensions: ["ts", "js", "html"],
-    coverageDirectory: "../../coverage/libs/api",
+    coverageDirectory: "../../../coverage/libs/api",
 };
