@@ -14,8 +14,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormTextField } from "@abrechnung/components";
 
 const validationSchema = z.object({
-    username: z.string({ required_error: "username is required" }),
-    password: z.string({ required_error: "password is required" }),
+    username: z.string({ error: "username is required" }),
+    password: z.string({ error: "password is required" }),
 });
 
 type FormValues = z.infer<typeof validationSchema>;
@@ -50,7 +50,7 @@ export const Login: React.FC = () => {
         const sessionName = navigator.userAgent;
         dispatch(login({ username: values.username, password: values.password, sessionName, api }))
             .unwrap()
-            .then((res) => {
+            .then(() => {
                 toast.success(t("auth.login.loginSuccess"));
             })
             .catch(handleApiError);

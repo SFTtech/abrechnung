@@ -1,5 +1,3 @@
-import { z } from "zod";
-
 export const emailValidator = (email: string) => {
     const re = /\S+@\S+\.\S+/;
 

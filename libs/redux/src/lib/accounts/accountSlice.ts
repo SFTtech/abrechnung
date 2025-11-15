@@ -62,7 +62,6 @@ export const useGroupAccounts = <T extends AccountType>(
     groupId: number,
     type?: T
 ): T extends "clearing" ? ClearingAccount[] : T extends "personal" ? PersonalAccount[] : Account[] => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return useSelector((state: IRootState) => selectGroupAccounts(state, groupId, type)) as any;
 };
 
@@ -71,7 +70,7 @@ const emptyList: string[] = [];
 const selectSortedAccounts = createSelector(
     selectGroupAccounts,
     (state: IRootState, groupId: number, type: AccountType | undefined, sortMode: AccountSortMode) => sortMode,
-    (state: IRootState, groupId: number, type: AccountType | undefined, sortMode: AccountSortMode) => type,
+    (state: IRootState, groupId: number, type: AccountType | undefined) => type,
     (
         state: IRootState,
         groupId: number,
@@ -369,7 +368,7 @@ const accountSlice = createSlice({
 
             addEntity(state.wipAccounts, newAccount);
         },
-        advanceNextLocalAccountId: (sliceState, action: PayloadAction<void>) => {
+        advanceNextLocalAccountId: (sliceState) => {
             sliceState.nextLocalAccountId = sliceState.nextLocalAccountId - 1;
         },
         accountAdded: (sliceState, action: PayloadAction<Account>) => {
@@ -379,9 +378,6 @@ const accountSlice = createSlice({
                 return;
             }
             addEntity(state.accounts, account);
-        },
-        accountsUpdated: (state, action: PayloadAction<Account[]>) => {
-            // TODO: implement
         },
         accountEditStarted: (sliceState, action: PayloadAction<{ groupId: number; accountId: number }>) => {
             const { groupId, accountId } = action.payload;
@@ -485,13 +481,7 @@ const accountSlice = createSlice({
 // local reducers
 const { advanceNextLocalAccountId } = accountSlice.actions;
 
-export const {
-    wipAccountUpdated,
-    accountAdded,
-    accountEditStarted,
-    accountsUpdated,
-    copyAccount,
-    discardAccountChange,
-} = accountSlice.actions;
+export const { wipAccountUpdated, accountAdded, accountEditStarted, copyAccount, discardAccountChange } =
+    accountSlice.actions;
 
 export const { reducer: accountReducer } = accountSlice;

@@ -103,7 +103,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
         return { graphData, seriesColors, areaBaselineValue };
     }, [balanceHistory, theme]);
 
-    const onClick: PointOrSliceMouseHandler<DataSeries> = (point, event) => {
+    const onClick: PointOrSliceMouseHandler<DataSeries> = (point) => {
         const changeOrigin: BalanceChangeOrigin = ((point as any).data as any).changeOrigin;
         if (changeOrigin.type === "clearing") {
             navigate(`/groups/${groupId}/accounts/${changeOrigin.id}`);

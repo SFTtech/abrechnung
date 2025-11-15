@@ -1,12 +1,10 @@
-import { AccountSliceState } from "../types";
-
 export const accountSliceVersion = 3;
 
 export const accountMigrations = {
-    1: (state: AccountSliceState) => {
+    1: () => {
         return {};
     },
-    2: (state: AccountSliceState) => {
+    2: () => {
         return {};
     },
 };

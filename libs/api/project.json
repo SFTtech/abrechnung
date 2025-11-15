@@ -9,14 +9,15 @@
             "executor": "nx:run-commands",
             "options": {
                 "commands": [
-                    "npx openapi-zod ../../../api/openapi.json --output src/lib/generated/schema.ts",
-                    "npx openapi-typescript-codegen --input ../../../api/openapi.json --output src/lib/generated --useUnionTypes --name Client --useOptions",
+                    "npx openapi-zod ../../api/openapi.json --output src/lib/generated/schema.ts",
+                    "npx openapi-typescript-codegen --input ../../api/openapi.json --output src/lib/generated --useUnionTypes --name Client --useOptions",
                     "sed -i 's/type: string/type: \"personal\"/' src/lib/generated/models/PersonalAccount.ts",
                     "sed -i 's/type: string/type: \"clearing\"/' src/lib/generated/models/ClearingAccount.ts",
-                    "echo \"/* eslint-disable */\\n$(cat src/lib/generated/schema.ts)\" > src/lib/generated/schema.ts",
+                    "grep -rlZ eslint-disable src/lib/generated | xargs -0 sed -i 's/eslint-disable/oxlint-disable/' ",
+                    "echo \"/* oxlint-disable */\\n$(cat src/lib/generated/schema.ts)\" > src/lib/generated/schema.ts",
                     "echo \"/* tslint:disable */\\n$(cat src/lib/generated/schema.ts)\" > src/lib/generated/schema.ts",
                     "echo \"/* istanbul ignore file */\\n$(cat src/lib/generated/schema.ts)\" > src/lib/generated/schema.ts",
-                    "npx prettier --write src/lib/generated"
+                    "npx oxfmt src/lib/generated"
                 ],
                 "parallel": false,
                 "cwd": "libs/api"
@@ -24,22 +25,24 @@
         },
         "build": {
             "executor": "@nx/js:tsc",
-            "outputs": ["{options.outputPath}"],
+            "outputs": [
+                "{options.outputPath}"
+            ],
             "options": {
                 "outputPath": "dist/libs/api",
                 "main": "libs/api/src/index.ts",
                 "tsConfig": "libs/api/tsconfig.lib.json",
-                "assets": ["libs/api/*.md"],
+                "assets": [
+                    "libs/api/*.md"
+                ],
                 "updateBuildableProjectDepsInPackageJson": true
             }
         },
-        "lint": {
-            "executor": "@nx/eslint:lint",
-            "outputs": ["{options.outputFile}"]
-        },
         "test": {
             "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/api"],
+            "outputs": [
+                "{workspaceRoot}/coverage/libs/api"
+            ],
             "options": {
                 "jestConfig": "libs/api/jest.config.ts"
             }

@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+/* oxlint-disable */
 import type { Body_get_token } from "../models/Body_get_token";
 import type { ChangeEmailPayload } from "../models/ChangeEmailPayload";
 import type { ChangePasswordPayload } from "../models/ChangePasswordPayload";

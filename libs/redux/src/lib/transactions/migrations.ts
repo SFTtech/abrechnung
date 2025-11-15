@@ -1,12 +1,10 @@
-import { TransactionSliceState } from "../types";
-
 export const transactionSliceVersion = 3;
 
 export const transactionMigrations = {
-    1: (state: TransactionSliceState) => {
+    1: () => {
         return {};
     },
-    2: (state: TransactionSliceState) => {
+    2: () => {
         return {};
     },
 };

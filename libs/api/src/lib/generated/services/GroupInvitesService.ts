@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+/* oxlint-disable */
 import type { CreateInvitePayload } from "../models/CreateInvitePayload";
 import type { GroupInvite } from "../models/GroupInvite";
 import type { CancelablePromise } from "../core/CancelablePromise";

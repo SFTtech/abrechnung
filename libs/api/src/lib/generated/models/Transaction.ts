@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+/* oxlint-disable */
 import type { FileAttachment } from "./FileAttachment";
 import type { TransactionPosition } from "./TransactionPosition";
 import type { TransactionType } from "./TransactionType";

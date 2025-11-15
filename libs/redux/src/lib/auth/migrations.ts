@@ -1,12 +1,10 @@
-import { AuthSliceState } from "../types";
-
 export const authSliceVersion = 3;
 
 export const authMigrations = {
-    1: (state: AuthSliceState) => {
+    1: () => {
         return {};
     },
-    2: (state: AuthSliceState) => {
+    2: () => {
         return {};
     },
 };

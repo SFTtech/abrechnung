@@ -321,7 +321,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                                                     <InputAdornment position="end">
                                                         <IconButton
                                                             aria-label="clear search input"
-                                                            onClick={(e) => setSearchValue("")}
+                                                            onClick={() => setSearchValue("")}
                                                             edge="end"
                                                         >
                                                             <ClearIcon />

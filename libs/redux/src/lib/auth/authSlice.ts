@@ -72,7 +72,6 @@ export const logout = createAsyncThunk<void, { api: Api }>("logout", async ({ ap
     api.resetAuthState();
     dispatch({
         type: PURGE,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         result: (purgeResult: any) => {
             console.log("successfully purged state", purgeResult);
             return;
@@ -94,7 +93,7 @@ const authSlice = createSlice({
             state.accessToken = accessToken;
             state.baseUrl = baseUrl;
         });
-        builder.addCase(logout.fulfilled, (state, action) => {
+        builder.addCase(logout.fulfilled, (state) => {
             state.profile = undefined;
             state.accessToken = undefined;
         });

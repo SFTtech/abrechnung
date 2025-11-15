@@ -6,7 +6,7 @@ import React from "react";
 import { getAccountIcon } from "./style/AbrechnungIcons";
 import { DisabledTextField } from "@abrechnung/components";
 
-const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
+const StyledAutocompletePopper = styled(Popper)(() => ({
     minWidth: 200,
 }));
 
@@ -41,7 +41,6 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
             options={filteredAccounts}
             getOptionLabel={(acc: Account) => acc.name}
             multiple={false}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             value={value !== undefined ? (accounts.find((acc) => acc.id === value) ?? (null as any)) : (null as any)}
             disabled={disabled}
             openOnFocus

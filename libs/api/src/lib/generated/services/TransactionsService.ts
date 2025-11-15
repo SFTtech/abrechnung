@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+/* oxlint-disable */
 import type { NewTransaction } from "../models/NewTransaction";
 import type { Transaction } from "../models/Transaction";
 import type { TransactionHistory } from "../models/TransactionHistory";

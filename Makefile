@@ -5,7 +5,7 @@ test:
 .PHONY: format
 format:
 	ruff format
-	cd frontend && npx prettier --write . && cd ..
+	npx oxfmt
 
 .PHONY: check-format
 check-format:
@@ -13,7 +13,7 @@ check-format:
 
 .PHONY: check-format-frontend
 check-format-frontend:
-	cd frontend && npx prettier --check . && cd ..
+	npx oxfmt --check
 
 .PHONY: lint
 lint: pylint mypy ruff
@@ -29,10 +29,6 @@ ruff:
 .PHONY: ruff-fix
 ruff-fix:
 	ruff check --fix
-
-.PHONY: eslint
-eslint:
-	cd frontend && npx nx lint && cd ..
 
 .PHONY: mypy
 mypy:

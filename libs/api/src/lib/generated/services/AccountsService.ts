@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+/* oxlint-disable */
 import type { ClearingAccount } from "../models/ClearingAccount";
 import type { NewAccount } from "../models/NewAccount";
 import type { PersonalAccount } from "../models/PersonalAccount";

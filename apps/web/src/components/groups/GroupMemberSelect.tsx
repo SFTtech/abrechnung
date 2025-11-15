@@ -4,7 +4,7 @@ import { DisabledTextField } from "@abrechnung/components";
 import { styled } from "@mui/material/styles";
 import { useListMembersQuery } from "@/core/generated/api";
 
-const StyledAutocompletePopper = styled(Popper)(({ theme }) => ({
+const StyledAutocompletePopper = styled(Popper)(() => ({
     minWidth: 200,
 }));
 

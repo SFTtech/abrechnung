@@ -1,4 +1,3 @@
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type EventMap = Record<string, any>;
 type EventKey<T extends EventMap> = string & keyof T;
 type EventReceiver<T> = (params: T) => void;

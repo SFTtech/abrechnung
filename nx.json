@@ -11,11 +11,6 @@
             "dependsOn": ["^build", "prebuild", "^prebuild"],
             "inputs": ["production", "^production"],
             "cache": true
-        },
-        "@nx/eslint:lint": {
-            "inputs": ["default", "{workspaceRoot}/.eslintrc.json"],
-            "dependsOn": ["prebuild", "^prebuild"],
-            "cache": true
         }
     },
     "namedInputs": {
@@ -25,7 +20,6 @@
             "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
             "!{projectRoot}/tsconfig.spec.json",
             "!{projectRoot}/jest.config.[jt]s",
-            "!{projectRoot}/.eslintrc.json",
             "!{projectRoot}/src/test-setup.[jt]s"
         ],
         "sharedGlobals": ["{workspaceRoot}/babel.config.json"]
@@ -35,7 +29,6 @@
             "application": {
                 "babel": true,
                 "style": "css",
-                "linter": "eslint",
                 "bundler": "vite"
             },
             "component": {
@@ -43,19 +36,12 @@
             },
             "library": {
                 "style": "css",
-                "linter": "eslint",
                 "unitTestRunner": "jest"
             }
         }
     },
     "defaultProject": "web",
     "plugins": [
-        {
-            "plugin": "@nx/eslint/plugin",
-            "options": {
-                "targetName": "eslint:lint"
-            }
-        },
         {
             "plugin": "@nx/react/router-plugin",
             "options": {

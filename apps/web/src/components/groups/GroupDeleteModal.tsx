@@ -19,7 +19,7 @@ export const GroupDeleteModal: React.FC<Props> = ({ show, onClose, groupToDelete
     const confirmDeleteGroup = () => {
         api.client.groups
             .deleteGroup({ groupId: groupToDelete.id })
-            .then((res) => {
+            .then(() => {
                 onClose({}, "completed");
             })
             .catch((err) => {

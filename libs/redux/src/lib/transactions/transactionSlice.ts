@@ -191,7 +191,7 @@ export const selectTransactionsInvolvingAccount = createSelector(
     (state: IRootState, groupId: number, accountId: number, sortMode?: TransactionSortMode) => sortMode,
     (s: TransactionState, balanceEffects, accountId: number, sortMode?: TransactionSortMode): Transaction[] => {
         const transactionIds = Object.entries(balanceEffects)
-            .filter(([transactionId, balanceEffect]) => {
+            .filter(([_, balanceEffect]) => {
                 return balanceEffect[accountId] !== undefined;
             })
             .map(([transactionId]) => Number(transactionId));
@@ -301,7 +301,7 @@ export const saveTransaction = createAsyncThunk<
     },
     { groupId: number; transactionId: number; api: Api },
     { state: IRootState }
->("saveTransaction", async ({ groupId, transactionId, api }, { getState, dispatch, rejectWithValue }) => {
+>("saveTransaction", async ({ groupId, transactionId, api }, { getState, rejectWithValue }) => {
     const state = getState();
     const s = getGroupScopedState<TransactionState, TransactionSliceState>(state.transactions, groupId);
     const wipTransaction = s.wipTransactions.byId[transactionId];
@@ -349,6 +349,7 @@ export const saveTransaction = createAsyncThunk<
     }));
 
     // remove keys we don't want to send to the backend
+    // oxlint-disable-next-line no-unused-vars
     const { position_ids, positions, ...body } = wipTransaction;
 
     if (wipTransaction.id < 0) {
@@ -464,13 +465,13 @@ const transactionSlice = createSlice({
     name: "transactions",
     initialState,
     reducers: {
-        advanceNextLocalTransactionId: (state, action: PayloadAction<void>) => {
+        advanceNextLocalTransactionId: (state) => {
             state.nextLocalTransactionId = state.nextLocalTransactionId - 1;
         },
-        advanceNextLocalPositionId: (state, action: PayloadAction<void>) => {
+        advanceNextLocalPositionId: (state) => {
             state.nextLocalPositionId = state.nextLocalPositionId - 1;
         },
-        advanceNextLocalFileId: (state, action: PayloadAction<void>) => {
+        advanceNextLocalFileId: (state) => {
             state.nextLocalFileId = state.nextLocalFileId - 1;
         },
         transactionEditStarted: (state, action: PayloadAction<{ groupId: number; transactionId: number }>) => {

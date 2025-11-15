@@ -12,7 +12,6 @@ export type NumericInputProps = {
 
 const getDecimalSeparator = (locale: string) => {
     const numberWithDecimalSeparator = 1.1;
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const separator = Intl.NumberFormat(locale)
         .formatToParts(numberWithDecimalSeparator)
         .find((part) => part.type === "decimal")!.value;

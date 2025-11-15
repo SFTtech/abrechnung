@@ -1,12 +1,10 @@
-import { GroupSliceState } from "../types";
-
 export const groupSliceVersion = 3;
 
 export const groupMigrations = {
-    1: (state: GroupSliceState) => {
+    1: () => {
         return {};
     },
-    2: (state: GroupSliceState) => {
+    2: () => {
         return {};
     },
 };

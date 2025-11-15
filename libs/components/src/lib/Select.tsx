@@ -49,8 +49,6 @@ export function Select<
     checkboxes,
     formatOption,
     multiple,
-    chips,
-    helperText,
     onChange,
     ...props
 }: SelectProps<Option, Multiple, Nullable, DisableClearable>) {

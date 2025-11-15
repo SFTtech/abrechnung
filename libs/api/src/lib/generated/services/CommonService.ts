@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+/* oxlint-disable */
 import type { FrontendConfig } from "../models/FrontendConfig";
 import type { VersionResponse } from "../models/VersionResponse";
 import type { CancelablePromise } from "../core/CancelablePromise";

@@ -16,9 +16,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 const validationSchema = z
     .object({
-        username: z.string({ required_error: "username is required" }),
-        email: z.string({ required_error: "email is required" }),
-        password: z.string({ required_error: "password is required" }),
+        username: z.string({ error: "username is required" }),
+        email: z.string({ error: "email is required" }),
+        password: z.string({ error: "password is required" }),
         password2: z.string(),
     })
     .refine((data) => data.password === data.password2, {
@@ -79,7 +79,7 @@ export const Register: React.FC = () => {
                     invite_token: inviteToken,
                 },
             })
-            .then((resp) => {
+            .then(() => {
                 toast.success(t("auth.register.registrationSuccess"), {
                     autoClose: 20000,
                 });

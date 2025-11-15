@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+/* oxlint-disable */
 import type { ApiRequestOptions } from "./ApiRequestOptions";
 import type { CancelablePromise } from "./CancelablePromise";
 import type { OpenAPIConfig } from "./OpenAPI";

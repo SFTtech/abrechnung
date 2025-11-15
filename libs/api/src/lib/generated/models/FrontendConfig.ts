@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+/* oxlint-disable */
 import type { ServiceMessage } from "./ServiceMessage";
 export type FrontendConfig = {
     messages?: Array<ServiceMessage> | null;

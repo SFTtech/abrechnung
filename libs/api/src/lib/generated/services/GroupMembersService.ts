@@ -1,7 +1,7 @@
 /* generated using openapi-typescript-codegen -- do not edit */
 /* istanbul ignore file */
 /* tslint:disable */
-/* eslint-disable */
+/* oxlint-disable */
 import type { GroupMember } from "../models/GroupMember";
 import type { UpdateGroupMemberPayload } from "../models/UpdateGroupMemberPayload";
 import type { CancelablePromise } from "../core/CancelablePromise";

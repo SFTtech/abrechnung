@@ -48,7 +48,6 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     const formatCurrency = useFormatCurrency();
     const accounts = useGroupAccounts(groupId);
     const accountIDMap = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const transaction = useTransaction(groupId, transactionId)!;
     const positions = useWipTransactionPositions(groupId, transactionId);
     const positionsHaveComplexShares = React.useMemo(() => {
@@ -113,7 +112,11 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
 
     const updatePosition = (position: TransactionPosition, name: string, price: number, communist_shares: number) => {
         dispatch(
-            wipPositionUpdated({ groupId, transactionId, position: { ...position, name, price, communist_shares } })
+            wipPositionUpdated({
+                groupId,
+                transactionId,
+                position: { ...position, name, price, communist_shares },
+            })
         );
     };
 
@@ -124,7 +127,13 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
         } else {
             usages[accountID] = shares;
         }
-        dispatch(wipPositionUpdated({ groupId, transactionId, position: { ...position, usages } }));
+        dispatch(
+            wipPositionUpdated({
+                groupId,
+                transactionId,
+                position: { ...position, usages },
+            })
+        );
     };
 
     const deletePosition = (position: TransactionPosition) => {

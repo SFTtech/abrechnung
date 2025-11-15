@@ -27,8 +27,7 @@ export const fetchGroupDependencies = createAsyncThunk<
 export const clearCache = createAsyncThunk<void, void>("clearCache", async (args, { dispatch }) => {
     dispatch({
         type: PURGE,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        result: (purgeResult: any) => {
+        result: () => {
             return;
         },
     });

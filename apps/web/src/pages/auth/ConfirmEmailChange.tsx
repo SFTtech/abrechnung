@@ -1,7 +1,6 @@
 import { Button, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useParams } from "react-router";
-import { toast } from "react-toastify";
 import { Loading } from "@abrechnung/components";
 import { api, handleApiError } from "@/core/api";
 import { useTitle } from "@/core/utils";
@@ -22,7 +21,7 @@ export const ConfirmEmailChange: React.FC = () => {
         setStatus("loading");
         api.client.auth
             .confirmEmailChange({ requestBody: { token } })
-            .then((value) => {
+            .then(() => {
                 setStatus("success");
             })
             .catch(handleApiError);

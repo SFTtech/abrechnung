@@ -7,13 +7,17 @@
     "targets": {
         "build": {
             "executor": "@nx/web:rollup",
-            "outputs": ["{options.outputPath}"],
+            "outputs": [
+                "{options.outputPath}"
+            ],
             "options": {
                 "outputPath": "dist/libs/redux",
                 "tsConfig": "libs/redux/tsconfig.lib.json",
                 "project": "libs/redux/package.json",
                 "entryFile": "libs/redux/src/index.ts",
-                "external": ["react/jsx-runtime"],
+                "external": [
+                    "react/jsx-runtime"
+                ],
                 "rollupConfig": "@nx/react/plugins/bundle-rollup",
                 "compiler": "babel",
                 "assets": [
@@ -25,13 +29,11 @@
                 ]
             }
         },
-        "lint": {
-            "executor": "@nx/eslint:lint",
-            "outputs": ["{options.outputFile}"]
-        },
         "test": {
             "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/redux"],
+            "outputs": [
+                "{workspaceRoot}/coverage/libs/redux"
+            ],
             "options": {
                 "jestConfig": "libs/redux/jest.config.ts"
             }

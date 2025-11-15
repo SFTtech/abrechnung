@@ -1,4 +1,9 @@
 repos:
+- repo: https://github.com/oxc-project/mirrors-oxlint
+  rev: v1.28.0
+  hooks:
+    - id: oxlint
+      verbose: true
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v5.0.0
   hooks:

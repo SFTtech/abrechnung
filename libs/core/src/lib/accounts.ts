@@ -145,7 +145,7 @@ export const computeAccountBalances = (accounts: Account[], transactions: Transa
 
         const toSplit = balance.balance;
         balance.balance = 0;
-        const totalShares = [...Object.values(clearingShares)].reduce((acc: number, curr: number) => curr + acc, 0);
+        const totalShares = Object.values(clearingShares).reduce((acc: number, curr: number) => curr + acc, 0);
         for (const [accIDStr, shares] of Object.entries(clearingShares)) {
             const accID = Number(accIDStr);
             const accShare = (toSplit * shares) / totalShares;
