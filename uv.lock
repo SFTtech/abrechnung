@@ -62,7 +62,7 @@ requires-dist = [
     { name = "python-jose", extras = ["cryptography"], specifier = "~=3.3.0" },
     { name = "python-multipart", specifier = "~=0.0.19" },
     { name = "pyyaml", specifier = "~=6.0.2" },
-    { name = "sftkit", specifier = "==0.3.0" },
+    { name = "sftkit", specifier = "==0.4.0" },
     { name = "websockets", specifier = "~=14.1" },
 ]
 
@@ -988,16 +988,16 @@ wheels = [
 
 [[package]]
 name = "pydantic"
-version = "2.10.4"
+version = "2.10.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "annotated-types" },
     { name = "pydantic-core" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/70/7e/fb60e6fee04d0ef8f15e4e01ff187a196fa976eb0f0ab524af4599e5754c/pydantic-2.10.4.tar.gz", hash = "sha256:82f12e9723da6de4fe2ba888b5971157b3be7ad914267dea8f05f82b28254f06", size = 762094, upload-time = "2024-12-18T17:09:24.84Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/b7/ae/d5220c5c52b158b1de7ca89fc5edb72f304a70a4c540c84c8844bf4008de/pydantic-2.10.6.tar.gz", hash = "sha256:ca5daa827cce33de7a42be142548b0096bf05a7e7b365aebfa5f8eeec7128236", size = 761681, upload-time = "2025-01-24T01:42:12.693Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f3/26/3e1bbe954fde7ee22a6e7d31582c642aad9e84ffe4b5fb61e63b87cd326f/pydantic-2.10.4-py3-none-any.whl", hash = "sha256:597e135ea68be3a37552fb524bc7d0d66dcf93d395acd93a00682f1efcb8ee3d", size = 431765, upload-time = "2024-12-18T17:09:21.953Z" },
+    { url = "https://files.pythonhosted.org/packages/f4/3c/8cc1cc84deffa6e25d2d0c688ebb80635dfdbf1dbea3e30c541c8cf4d860/pydantic-2.10.6-py3-none-any.whl", hash = "sha256:427d664bf0b8a2b34ff5dd0f5a18df00591adcee7198fbd71981054cef37b584", size = 431696, upload-time = "2025-01-24T01:42:10.371Z" },
 ]
 
 [package.optional-dependencies]
@@ -1313,7 +1313,7 @@ wheels = [
 
 [[package]]
 name = "sftkit"
-version = "0.3.0"
+version = "0.4.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asyncpg" },
@@ -1322,9 +1322,9 @@ dependencies = [
     { name = "typer" },
     { name = "uvicorn" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f7/15/e8500963458d33761261f40d682845c97cff1a98d338940089ca10775778/sftkit-0.3.0.tar.gz", hash = "sha256:7f31674a2db7ec4af768887aec7c01a8aabb53b50ec01b4b05dd2dc7bdd12d3a", size = 20695, upload-time = "2024-12-27T13:13:04.244Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/de/b7/1c34c7b937f6c32256ac07904ddcf9ec739b655cfe921412ab179030b785/sftkit-0.4.0.tar.gz", hash = "sha256:46e33dca2ebafd4eac76d653c3cbf4b35713dae20aa2706aea0e2436a74d3bb5", size = 18447, upload-time = "2025-11-16T11:45:42.265Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d2/cb/b3f4267eea0c8fbdc99c08cea39ed2ccc12815940db671237e4ad988139c/sftkit-0.3.0-py3-none-any.whl", hash = "sha256:114657f206e084e8c57262c5f05183de8d914837cec9f5c2a1ba9f77ab8ad8fe", size = 24218, upload-time = "2024-12-27T13:13:00.871Z" },
+    { url = "https://files.pythonhosted.org/packages/82/ae/45e7eb0c37a118e2e15fa7ec3dd90ecf99c469cbbefe97a049c8b3a88f38/sftkit-0.4.0-py3-none-any.whl", hash = "sha256:834971d8c3bfa56cfd38d7d341fc8495aa039bb87d369624101d3f3bd7831f7f", size = 25605, upload-time = "2025-11-16T11:45:41.122Z" },
 ]
 
 [[package]]
