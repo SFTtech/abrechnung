@@ -1,0 +1,8 @@
+{
+    "name": "translations",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "libs/translations/src",
+    "projectType": "library",
+    "targets": {},
+    "tags": []
+}

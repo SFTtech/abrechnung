@@ -1,42 +1,38 @@
 .PHONY: test
 test:
-	pytest tests --doctest-modules --cov=abrechnung
+	uv run pytest tests --doctest-modules --cov=abrechnung
 
 .PHONY: format
 format:
-	ruff format
-	cd frontend && npx prettier --write . && cd ..
+	uv run ruff format
+	npx oxfmt
 
 .PHONY: check-format
 check-format:
-	ruff format --check
+	uv run ruff format --check
 
 .PHONY: check-format-frontend
 check-format-frontend:
-	cd frontend && npx prettier --check . && cd ..
+	npx oxfmt --check
 
 .PHONY: lint
 lint: pylint mypy ruff
 
 .PHONY: pylint
 pylint:
-	pylint ./**/*.py
+	uv run pylint ./**/*.py
 
 .PHONY: ruff
 ruff:
-	ruff check
+	uv run ruff check
 
 .PHONY: ruff-fix
 ruff-fix:
-	ruff check --fix
-
-.PHONY: eslint
-eslint:
-	cd frontend && npx nx lint && cd ..
+	uv run ruff check --fix
 
 .PHONY: mypy
 mypy:
-	mypy .
+	uv run mypy .
 
 .PHONY: docs
 docs:

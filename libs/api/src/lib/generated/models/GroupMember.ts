@@ -1,0 +1,13 @@
+/* generated using openapi-typescript-codegen -- do not edit */
+/* istanbul ignore file */
+/* tslint:disable */
+/* oxlint-disable */
+export type GroupMember = {
+    user_id: number;
+    username: string;
+    is_owner: boolean;
+    can_write: boolean;
+    description: string;
+    joined_at: string;
+    invited_by: number | null;
+};

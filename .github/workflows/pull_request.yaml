@@ -8,10 +8,10 @@ env:
     DOCKER_IMAGE_TAGS: latest ${{ github.sha }} ${{github.ref_name}}
 
 jobs:
-  build_and_test_frontend:
+  frontend:
     uses: ./.github/workflows/frontend.yaml
     secrets: inherit
 
-  build_and_test_backend:
+  backend:
     uses: ./.github/workflows/backend.yaml
     secrets: inherit
