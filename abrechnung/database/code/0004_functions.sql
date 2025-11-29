@@ -44,7 +44,8 @@ order by
     acah.account_id, acah.created_at desc
 $$ language sql
     security invoker
-    stable;
+    stable
+    set search_path = "$user", public;
 
 create or replace function full_account_state_valid_at(
     valid_at timestamp with time zone default now()
@@ -87,7 +88,8 @@ select
 from
     account a
     join account_state_valid_at(full_account_state_valid_at.valid_at) details on a.id = details.account_id
-$$;
+$$
+set search_path = "$user", public;
 
 create or replace function file_state_valid_at(
     valid_at timestamp with time zone default now()
@@ -105,6 +107,7 @@ create or replace function file_state_valid_at(
     )
     stable
     language sql
+    set search_path = "$user", public
 as
 $$
 select distinct on (id)
@@ -145,6 +148,7 @@ create or replace function transaction_position_state_valid_at(
     )
     stable
     language sql
+    set search_path = "$user", public
 as
 $$
 select distinct on (acph.item_id)
@@ -195,6 +199,7 @@ create or replace function transaction_state_valid_at(
     )
     stable
     language sql
+    set search_path = "$user", public
 as
 $$
 select distinct on (acth.transaction_id)
@@ -251,6 +256,7 @@ create or replace function full_transaction_state_valid_at(
     )
     stable
     language sql
+    set search_path = "$user", public
 as
 $$
 select

@@ -41,7 +41,8 @@ begin
 
     return locals.is_valid;
 end
-$$ language plpgsql;
+$$ language plpgsql
+set search_path = "$user", public;
 
 alter table debitor_share add constraint check_debitor_share_gt_zero check ( shares > 0 );
 alter table debitor_share add constraint check_debitor_shares
@@ -90,7 +91,8 @@ begin
 
     return locals.is_valid;
 end
-$$ language plpgsql;
+$$ language plpgsql
+set search_path = "$user", public;
 
 alter table creditor_share add constraint check_creditor_share_gt_zero check ( shares > 0 );
 alter table creditor_share add constraint check_creditor_shares
@@ -186,7 +188,8 @@ begin
 
     return true;
 end
-$$ language plpgsql;
+$$ language plpgsql
+set search_path = "$user", public;
 
 alter table transaction_revision add constraint check_committed_transactions
     check (check_committed_transactions(id, transaction_id));
@@ -260,7 +263,8 @@ begin
 
     return true;
 end
-$$;
+$$
+set search_path = "$user", public;
 
 create or replace function check_committed_accounts(
     revision_id bigint,
@@ -300,7 +304,8 @@ begin
 
     return true;
 end
-$$ language plpgsql;
+$$ language plpgsql
+set search_path = "$user", public;
 
 alter table account_revision add constraint check_committed_accounts
     check (check_committed_accounts(id, account_id));
@@ -355,7 +360,8 @@ begin
 
     return true;
 end
-$$ language plpgsql;
+$$ language plpgsql
+set search_path = "$user", public;
 
 alter table account_revision add constraint account_revision_check_cyclic
     check (check_clearing_accounts_for_cyclic_dependencies(id, account_id));
@@ -386,7 +392,8 @@ begin
 
     return true;
 end
-$$ language plpgsql;
+$$ language plpgsql
+set search_path = "$user", public;
 
 alter table transaction_history add constraint currency_conversion_fixed_for_group_currency
     check (check_transaction_currency_conversion_rate(id, currency_conversion_rate, currency_identifier));
