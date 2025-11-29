@@ -28,7 +28,7 @@ def get_test_db_config() -> DatabaseConfig:
         password=os.environ.get("TEST_DB_PASSWORD"),
         host=os.environ.get("TEST_DB_HOST"),
         dbname=os.environ.get("TEST_DB_DATABASE", "abrechnung_test"),
-        port=int(os.environ.get("TEST_DB_PORT", 5432)),
+        port=int(os.environ.get("TEST_DB_PORT", "5432")),
         sslrootcert=None,
     )
 
