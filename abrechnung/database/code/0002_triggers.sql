@@ -7,7 +7,8 @@ begin
 
     return null;
 end;
-$$ language plpgsql;
+$$ language plpgsql
+set search_path = "$user", public;
 
 create trigger pending_registration_trig
     after insert or update
@@ -22,7 +23,8 @@ begin
 
     return null;
 end;
-$$ language plpgsql;
+$$ language plpgsql
+set search_path = "$user", public;
 
 create trigger pending_password_recovery_trig
     after insert or update
@@ -37,7 +39,8 @@ begin
 
     return null;
 end;
-$$ language plpgsql;
+$$ language plpgsql
+set search_path = "$user", public;
 
 create trigger pending_email_change_trig
     after insert or update
