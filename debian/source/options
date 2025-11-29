@@ -1,4 +1,4 @@
-tar-ignore = "frontend/node_modules"
+tar-ignore = "node_modules"
 tar-ignore = ".git"
 tar-ignore = ".pybuild"
 tar-ignore = "config.yaml"
