@@ -8,7 +8,7 @@ Installation
 
 .. _abrechnung-installation-debian:
 
-Debian Bullseye and Bookworm
+Debian Trixie
 -----------------------------------------
 This is the recommended installation method as it also installs the prebuilt abrechnung web app.
 

@@ -30,7 +30,7 @@ jobs:
       - id: set-distros
         run: |
           # if we're running from a tag, get the full list of distros; otherwise just use debian:sid
-          dists='["debian:bookworm"]'
+          dists='["debian:trixie"]'
           tags="master $GITHUB_SHA"
           if [[ $GITHUB_REF == refs/tags/* ]]; then
               dists=$(tools/build_debian_packages.py --show-dists-json)
@@ -65,7 +65,6 @@ jobs:
 
     - name: Install dependencies
       run: npm ci --foreground-scripts
-      working-directory: frontend
 
     - name: Build API Image
       id: build-api-image
@@ -87,7 +86,6 @@ jobs:
         password: ${{ secrets.DOCKERHUB_REGISTRY_PASSWORD }}
 
     - name: Build Frontend
-      working-directory: frontend
       run: npx nx build web
 
     - name: Build Frontend Image
