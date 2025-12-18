@@ -1,1 +1,318 @@
-{}
+{
+    "app": {
+        "name": "Abrechnung"
+    },
+    "common": {
+        "username": "Имя пользователя",
+        "server": "Сервер",
+        "email": "Почта",
+        "password": "Пароль",
+        "repeatPassword": "Повтор пароля",
+        "passwordsDoNotMatch": "Пароли не совпадают",
+        "save": "Сохранить",
+        "yes": "Да",
+        "no": "Нет",
+        "ok": "Ок",
+        "edit": "Править",
+        "delete": "Удалить",
+        "confirm": "Подтвердить",
+        "add": "Добавить",
+        "cancel": "Отменить",
+        "search": "Поиск…",
+        "name": "Имя",
+        "lastChanged": "Последнее изменение",
+        "lastChangedWithTime": "последнее изменение: {{datetime}}",
+        "value": "Значение",
+        "date": "Дата",
+        "description": "Описание",
+        "sortBy": "Сортировать по",
+        "filterByTags": "Фильтр по тегам",
+        "tag_one": "Тег",
+        "tag_few": "Тега",
+        "tag_many": "Тегов",
+        "total": "Всего",
+        "totalWithColon": "Всего:",
+        "shared": "Поделено",
+        "shares": "Доли",
+        "advanced": "Дополнительно",
+        "price": "Цена",
+        "createdAt": "Создано",
+        "send": "Отправить",
+        "currency": "Валюта",
+        "addNewTag": "Добавить тег",
+        "tagNameRequiredError": "пожалуйста введите имя тега",
+        "exportAsCsv": "Экспорт в CSV",
+        "noneSoFar": "Пока нет",
+        "copyToClipboard": "Скопировать в буфер обмена",
+        "createdBy": "создано {{username}}",
+        "changedBy": "изменено {{username}}"
+    },
+    "shareSelect": {
+        "selectedPeople_one": "{{count}} человек",
+        "selectedPeople_few": "{{count}} человека",
+        "selectedPeople_many": "{{count}} человек",
+        "selectedEvent_one": "{{count}} событие",
+        "selectedEvent_few": "{{count}} события",
+        "selectedEvent_many": "{{count}} событий",
+        "accountSlashEvent": "Счёт / Событие",
+        "showEvents": "Показать событие"
+    },
+    "navbar": {
+        "transactions": "Транзакции",
+        "events": "События",
+        "balances": "Балансы",
+        "accounts": "Счета",
+        "groupSettings": "Настройки",
+        "activity": "Активность",
+        "profile": "Профиль",
+        "settings": "Настройки",
+        "sessions": "Сессии",
+        "changeEmail": "Изменить почту",
+        "changePassword": "Изменить пароль",
+        "login": "Логин",
+        "signOut": "Выйти",
+        "imprint": "Служебная информация"
+    },
+    "groups": {
+        "addGroup": "Добавить группу",
+        "create": {
+            "title": "Создать группу",
+            "addUserAccountOnJoinDescription": "Автоматически создавать учетные записи для новых членов группы"
+        },
+        "delete": {
+            "title": "Удалить группу",
+            "description": "Вы учерены, что хотите удалить группу {{groupName}}?"
+        },
+        "archivedDisclaimer": "Эта группа заархивирована, следовательно доступна только для чтения.",
+        "list": {
+            "tabTitle": "Abrechnung - Группы",
+            "header": "Группы",
+            "archivedGroups": "Архивировано",
+            "guestUserDisclaimer": "Вы гостевой пользователь в этом Abrechnung, следовательно вам нельзя создавать новые группы.",
+            "noGroups": "Нет групп",
+            "lastUpdateAt": "последнее обновление: {{datetime}}"
+        },
+        "log": {
+            "tabTitle": "{{groupName}} - Активность",
+            "header": "Активность группы",
+            "messageInfo": "пользователем {{username}} {{datetime}}"
+        },
+        "memberList": {
+            "header": "Члены",
+            "editGroupMember": "Редактировать члена группы",
+            "tabTitle": "{{groupName}} - Члены",
+            "invitedBy": "по приглашению {{username}}, ",
+            "joined": "присоединился {{datetime}}",
+            "editor": "Редактор",
+            "owner": "Владелец",
+            "itsYou": "Это Вы",
+            "canWrite": "Может писать",
+            "isOwner": "Владелец"
+        },
+        "settings": {
+            "tabTitle": "{{groupName}} - Настройки",
+            "header": "Настройки",
+            "ownerDisclaimer": "Вы владелец этой группы",
+            "readAccessDisclaimer": "У вас есть только право на чтение этой группы",
+            "terms": "Условия",
+            "autoAddAccounts": "Автоматически добавлять учетные записи для новых членов группы",
+            "leaveGroup": "Покинуть группу",
+            "leaveGroupConfirm": "Вы уверены, что хотите покинуть группу \"{{group.name}}\"? Если вы последний член группы, который её покинет, группа будет удалена и ее транзации будут навсегда потеряны…",
+            "archiveGroup": "Архивировать группу",
+            "archiveGroupConfirm": "Вы уверены, что хотите архивировать группу {{group.name}}? Архивированные группы не могут быть изменены и они будут скрыты из списков групп. Только владелец группы может обратить это изменение.",
+            "unarchiveGroup": "Разархивировать группу",
+            "unarchiveGroupConfirm": "Вы уверены, что хотите разархивировать группу {{group.name}}? Группа перестанет быть \"только для чтения\".",
+            "dangerZone": "Опасная зона. Следующие действия необратимы."
+        },
+        "join": {
+            "tabTitle": "Abrechnung - Присоединиться к группе",
+            "youHaveBeenInvited": "Вы были приглашены в группу {{group.name}}",
+            "invitationDescription": "Описание приглашения",
+            "invitationValidUntil": "Приглашение действительно до",
+            "invitationSingleUse": "Одноразовое приглашение",
+            "join": "Присоединиться"
+        },
+        "invites": {
+            "tabTitle": "{{groupName}} - Ссылки для приглашения",
+            "header": "Ссылки для приглашения",
+            "guestUserDisclaimer": "Вы гость в этом Abrechnung, следовательно не имеете права создавать приглашения.",
+            "tokenHidden": "токен скрыт, был создан другим пользователем",
+            "singleUse": "Одноразовое",
+            "validUntil": "Действительно до",
+            "newMembersJoinAsEditors": "Новые члены присоединяются как редакторы",
+            "createdSuccessfully": "Пригласительный токен успешно создан"
+        }
+    },
+    "images": {
+        "uploadImage": "Загрузить изображение",
+        "chooseImage": "Выберите изображение",
+        "compressing": "сжатие...",
+        "filename": "Имя файла"
+    },
+    "balanceTable": {
+        "totalConsumed": "Получено / израсходовано",
+        "totalPaid": "Оплачено",
+        "balance": "Баланс"
+    },
+    "transactions": {
+        "createTransaction": "Создать транзакцию",
+        "createPurchase": "Создать покупку",
+        "createPurchaseForAccount": "Создать покупку с участием {{accountName}}",
+        "createTransfer": "Создать трансфер",
+        "createTransferForAccount": "Создать трансфер пользователю {{accountName}}",
+        "noTransactions": "Нет транзакций",
+        "purchase": "Приобрести",
+        "transfer": "Передать",
+        "transferredFrom": "От",
+        "paidBy": "Оплачено",
+        "paidFor": "Для кого",
+        "currencyConversionRate": "Курс конвертации валют",
+        "conversionHint": "{{sourceValue}} = {{targetValue}}",
+        "confirmDeleteTransaction": "Подтвердите удаление транзакции",
+        "confirmDeleteTransactionInfo": "Вы уверены, что хотите удалить транзакцию \"{{transaction.name}}\"?",
+        "list": {
+            "tabTitle": "{{groupName}} - Транзакции"
+        },
+        "byFor": "от {{by}}, для {{for}}",
+        "transferredTo": "Для",
+        "type": {
+            "purchase": "покупка",
+            "transfer": "трансфер"
+        },
+        "positions": {
+            "positions": "Позиции",
+            "sharedPlusRest": "Поделено + Остальное",
+            "addPositions": "Добавить позиции",
+            "remaining": "Осталось:"
+        },
+        "history": {
+            "linkTo": "История"
+        }
+    },
+    "accounts": {
+        "noAccounts": "Нет учетных записей",
+        "list": {
+            "tabTitle": "{{groupName}} - Учётные записи"
+        },
+        "balances": {
+            "tabTitle": "{{groupName}} - Балансы",
+            "clearingAccountsRemainingBalances": "Некоторые события имеют оставшиеся балансы"
+        },
+        "detail": {
+            "tabTitleEvent": "{{group.name}} - Событие {{account.name}}",
+            "tabTitleAccount": "{{group.name}} - Учётная запись {{account.name}}"
+        },
+        "event": "Событие",
+        "account": "Учетная запись",
+        "balanceOf": "Баланс {{account.name}}",
+        "clearingDistributionOf": "Участники {{account.name}}",
+        "transactionsInvolving": "Транзакции с участием {{account.name}}",
+        "participated": "Участвовал",
+        "settleUp": "Рассчитаться",
+        "settlement": {
+            "transactionName": "Договоренность",
+            "title": "Погасить балансы этой группы",
+            "whoPaysWhom": "{{from}} платит {{to}} {{money}}",
+            "settleButton": "Погасить"
+        },
+        "deleteConfirm": "Подтвердите удаление {{accountType}}",
+        "deleteConfirmBody": "Вы уверены, что хотите удалить {{accountType}} \"{{accountName}}\"?"
+    },
+    "events": {
+        "list": {
+            "tabTitle": "{{groupName}} - События"
+        },
+        "createEvent": "Создать событие",
+        "noEvents": "Нет событий"
+    },
+    "profile": {
+        "index": {
+            "tabTitle": "Abrechnung - Профиль",
+            "pageTitle": "Профиль",
+            "guestUserDisclaimer": "Вы гостевой пользователь в этом Abrechnung, следовательно не имеете права создавать новые группы или групповые приглашения.",
+            "registered": "Зарегистрирован"
+        },
+        "settings": {
+            "tabTitle": "Abrechnung - Настройки",
+            "pageTitle": "Настройки",
+            "info": "Эти настройки хранятся локально на вашем устройстве. Очистка хранилища вашего Браузера сбросит их.",
+            "theme": "Тема",
+            "darkMode": "Тёмный режим",
+            "themeSystemDefault": "Системная по умолчанию",
+            "themeDarkMode": "Тёмный режим",
+            "themeLightMode": "Светлый режим",
+            "clearCache": "Очистить кеш",
+            "confirmClearCache": "Это действие очистит ваш локальный кеш. Все ваши настройки (эта страницу) не будут сброшены."
+        },
+        "changePassword": {
+            "tabTitle": "Abrechnung - Изменить пароль",
+            "pageTitle": "Изменить пароль",
+            "success": "Пароль успешно изменён",
+            "newPassword": "Новый пароль"
+        },
+        "changeEmail": {
+            "tabTitle": "Abrechnung - Изменить почту",
+            "pageTitle": "Изменить почту",
+            "success": "Запрошено изменение почты, вскоре вы должны получить письмо со ссылкой для подтверждения",
+            "newEmail": "Новая почта"
+        },
+        "sessions": {
+            "tabTitle": "Abrechnung - Сессии",
+            "header": "Сеансы входа в систему",
+            "confirmDeleteSession": "Удалить сессию?",
+            "areYouSureToDelete": "Вы уверены, что хотите удалить \"{{sessionName}}\"?",
+            "validUntil": "Действительно до {{datetime}}, ",
+            "lastSeenOn": "Последний раз был {{datetime}}"
+        }
+    },
+    "auth": {
+        "register": {
+            "title": "Зарегистрироваться",
+            "tabTitle": "Abrechnung - Регистрация",
+            "header": "Зарегистрировать новую учётную запись",
+            "confirmButton": "Зарегистрироваться",
+            "registrationSuccess": "Регистрация прошла успешно, пожалуйста подтвердите вашу почту перед входом…",
+            "alreadyHasAccount": "У вас уже есть учётная запись? Войдите"
+        },
+        "login": {
+            "tabTitle": "Abrechnung - Вход",
+            "header": "Войти",
+            "loginSuccess": "Успешный вход…",
+            "confirmButton": "Войти",
+            "noAccountRegister": "Нет учётной записи? Зарегистрироваться",
+            "forgotPassword": "Забыли пароль?"
+        },
+        "recoverPassword": {
+            "tabTitle": "Abrechnung - Восстановление пароля",
+            "header": "Восстановить пароль",
+            "body": "Пожалуйста введите почту. Ссылка для восстановления будет отправлена в ближайшее время.",
+            "emailSent": "Ссылка для восстановления была отправлена вам на почту."
+        },
+        "confirmEmailChange": {
+            "tabTitle": "Abrechnung - Подтверждение смены почты",
+            "header": "Подтвердите вашу новую почту",
+            "confirmSuccessful": "Успешное подтверждение",
+            "clickHereToConfirm": "Нажмите <1>здесь</1> чтобы подтвердить вашу новую почту."
+        },
+        "confirmPasswordRecovery": {
+            "tabTitle": "Abrechnung - Подтверждение восстановления пароля",
+            "header": "Подтвердите восстановление пароля",
+            "successfulLinkToLogin": "Успешное восстановления пароля, пожалуйста <1>войдите</1> с новым паролем."
+        },
+        "confirmRegistration": {
+            "tabTitle": "Abrechnung - Подтверждение регистрации",
+            "header": "Подтвердите регистрацию",
+            "confirmSuccessful": "Успешное подтверждение",
+            "successfulLinkToLogin": "Пожалуйста <1>войдите</1> с использованием ваших учётных данных.",
+            "clickHereToConfirm": "Нажмите <1>здесь</1> чтобы подтвердить вашу регистрацию."
+        }
+    },
+    "languages": {
+        "en": "Английский",
+        "de": "Немецкий",
+        "es": "Испанский",
+        "ta": "Тамильский",
+        "uk": "Украинский",
+        "bg": "Болгарский"
+    }
+}
