@@ -15,7 +15,7 @@ import { Account, Transaction, TransactionShare, TransactionValidator } from "@a
 import { Grid, InputAdornment, Stack, TableCell, Typography } from "@mui/material";
 import * as React from "react";
 import { typeToFlattenedError, z } from "zod";
-import { FileGallery } from "./FileGallery";
+import { FileGallery } from "./attachments/FileGallery";
 import { useTranslation } from "react-i18next";
 import { useFormatCurrency, useIsSmallScreen } from "@/hooks";
 import { CurrencyIdentifier, getCurrencySymbolForIdentifier } from "@abrechnung/core";
