@@ -4,8 +4,20 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import { FileAttachment as BackendFileAttachment, NewFile } from "@abrechnung/api";
 import { selectTransactionFiles, wipFileDeleted } from "@abrechnung/redux";
 import { FileAttachment, Transaction, UpdatedFileAttachment } from "@abrechnung/types";
-import { AddCircle, ChevronLeft, ChevronRight, Delete } from "@mui/icons-material";
-import { Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Grid, IconButton } from "@mui/material";
+import { AddCircle, ChevronLeft, ChevronRight, Delete, AddPhotoAlternate } from "@mui/icons-material";
+import {
+    Button,
+    Chip,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    Grid,
+    IconButton,
+    ImageList,
+    ImageListItem,
+    ImageListItemBar,
+} from "@mui/material";
 import React, { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { Transition } from "react-transition-group";
@@ -95,7 +107,6 @@ const useAttachments = ({ groupId, transaction }: { groupId: number; transaction
     const storeAttachments = useAppSelector((state) => selectTransactionFiles(state, groupId, transaction.id));
     // map of file id to blob object url
     const [attachments, setAttachments] = useState<Attachment[]>([]);
-    const [active, setActive] = useState(0);
 
     useEffect(() => {
         const fetchAttachments = async () => {
@@ -129,30 +140,9 @@ const useAttachments = ({ groupId, transaction }: { groupId: number; transaction
         fetchAttachments().catch((err) => {
             toast.error(`Error loading file: ${err}`);
         });
-
-        setActive((oldActive) => Math.max(0, Math.min(oldActive, storeAttachments.length - 1)));
     }, [storeAttachments]);
 
-    const toNextImage = () => {
-        if (active < attachments.length - 1) {
-            setActive(active + 1);
-        }
-    };
-
-    const toPrevImage = () => {
-        if (active > 0) {
-            setActive(active - 1);
-        }
-    };
-
-    const activeAttachment = useMemo(() => {
-        if (active >= attachments.length) {
-            return null;
-        }
-        return attachments[active];
-    }, [active, attachments]);
-
-    return { attachments, activeAttachment, activeAttachmentIdx: active, toPrevImage, toNextImage };
+    return attachments;
 };
 
 export interface FileGalleryProps {
@@ -163,94 +153,54 @@ export interface FileGalleryProps {
 export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transaction }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
-    const [showUploadDialog, setShowUploadDialog] = useState(false);
-    const [showImage, setShowImage] = useState(false);
+    const [shownImage, setShownImage] = useState<Attachment | null>(null);
 
-    const { attachments, activeAttachment, activeAttachmentIdx, toPrevImage, toNextImage } = useAttachments({
+    const attachments = useAttachments({
         groupId,
         transaction,
     });
 
-    const doShowImage = () => {
-        setShowImage(true);
-    };
-
-    const deleteSelectedFile = () => {
-        if (activeAttachment) {
-            console.log("deleting file", activeAttachment)
-            dispatch(wipFileDeleted({ groupId, transactionId: transaction.id, fileId: activeAttachment.meta.id }));
-            setShowImage(false);
-        }
+    const deleteFile = (attachment: Attachment) => {
+        dispatch(wipFileDeleted({ groupId, transactionId: transaction.id, fileId: attachment.meta.id }));
+        setShownImage(null);
     };
 
     return (
         <>
-            <Grid
-                container
-                justifyContent="center"
-                alignItems="center"
-                style={{
-                    position: "relative",
-                    height: "200px",
-                    width: "100%",
-                }}
-            >
-                {attachments.length === 0 ? (
-                    <img height="100%" src={placeholderImg} alt="placeholder" />
-                ) : (
-                    attachments.map((item, idx) => (
-                        <ImageDisplay
-                            key={item.meta.id}
-                            file={item.meta}
-                            isActive={idx === activeAttachmentIdx}
-                            objectUrl={item.objectUrl}
-                            onShowImage={doShowImage}
-                        />
-                    ))
-                )}
-                {attachments.length > 0 && (
-                    <Chip
-                        sx={{ position: "absolute", top: "5px", right: "10px" }}
-                        size="small"
-                        label={`${activeAttachmentIdx + 1} / ${attachments.length}`}
-                    />
-                )}
-                {activeAttachmentIdx > 0 && (
-                    <IconButton onClick={toPrevImage} sx={{ position: "absolute", top: "40%", left: "10px" }}>
-                        <ChevronLeft />
-                    </IconButton>
-                )}
-                {activeAttachmentIdx < attachments.length - 1 && (
-                    <IconButton onClick={toNextImage} sx={{ position: "absolute", top: "40%", right: "10px" }}>
-                        <ChevronRight />
-                    </IconButton>
-                )}
-                {transaction.is_wip && (
-                    <>
-                        <IconButton
-                            color="primary"
+            <ImageList sx={{ padding: 1 }} cols={3} rowHeight={150} gap={4}>
+                {attachments.map((attachment) => (
+                    <ImageListItem key={attachment.meta.id}>
+                        {attachment.meta.type === "new" ? (
+                            <img
+                                style={{ cursor: "pointer" }}
+                                onClick={() => setShownImage(attachment)}
+                                src={attachment.meta.content}
+                                alt={attachment.meta.filename.split(".")[0]}
+                                loading="lazy"
+                            />
+                        ) : (
+                            <img
+                                style={{ cursor: "pointer" }}
+                                onClick={() => setShownImage(attachment)}
+                                src={attachment.objectUrl}
+                                srcSet={attachment.objectUrl}
+                                alt={attachment.meta.filename.split(".")[0]}
+                                loading="lazy"
+                            />
+                        )}
+                        <ImageListItemBar
+                            title={attachment.meta.filename}
                             sx={{
-                                position: "absolute",
-                                top: "80%",
-                                right: "10px",
+                                background:
+                                    "linear-gradient(to top, rgba(0,0,0,0.7) 0%, " +
+                                    "rgba(0,0,0,0.3) 70%, rgba(0,0,0,0) 100%)",
                             }}
-                            onClick={() => setShowUploadDialog(true)}
-                        >
-                            <AddCircle fontSize="large" />
-                        </IconButton>
-                        <ImageUploadDialog
-                            groupId={groupId}
-                            transactionId={transaction.id}
-                            show={showUploadDialog}
-                            onClose={() => setShowUploadDialog(false)}
                         />
-                    </>
-                )}
-            </Grid>
-            <Dialog open={showImage} onClose={() => setShowImage(false)} scroll="body">
-                {activeAttachmentIdx < attachments.length && (
-                    <DialogTitle>{activeAttachment?.meta.filename.split(".")[0]}</DialogTitle>
-                )}
+                    </ImageListItem>
+                ))}
+            </ImageList>
+            <Dialog open={shownImage != null} onClose={() => setShownImage(null)} scroll="body">
+                {shownImage && <DialogTitle>{shownImage.meta.filename.split(".")[0]}</DialogTitle>}
 
                 <DialogContent>
                     <Grid
@@ -261,54 +211,35 @@ export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transaction }
                             position: "relative",
                         }}
                     >
-                        {activeAttachment &&
-                            (activeAttachment.meta.type === "new" ? (
+                        {shownImage &&
+                            (shownImage.meta.type === "new" ? (
                                 <img
                                     height="100%"
                                     width="100%"
-                                    src={activeAttachment.meta.content}
-                                    alt={activeAttachment.meta.filename}
+                                    src={shownImage.meta.content}
+                                    alt={shownImage.meta.filename}
                                     loading="lazy"
                                 />
                             ) : (
                                 <img
                                     height="100%"
                                     width="100%"
-                                    src={activeAttachment.objectUrl}
-                                    srcSet={activeAttachment.objectUrl}
-                                    alt={activeAttachment.meta.filename}
+                                    src={shownImage.objectUrl}
+                                    srcSet={shownImage.objectUrl}
+                                    alt={shownImage.meta.filename}
                                     loading="lazy"
                                 />
                             ))}
-                        {activeAttachmentIdx > 0 && (
-                            <IconButton
-                                onClick={toPrevImage}
-                                sx={{
-                                    position: "absolute",
-                                    top: "40%",
-                                    left: "0px",
-                                }}
-                            >
-                                <ChevronLeft />
-                            </IconButton>
-                        )}
-                        {activeAttachmentIdx < attachments.length - 1 && (
-                            <IconButton
-                                onClick={toNextImage}
-                                sx={{
-                                    position: "absolute",
-                                    top: "40%",
-                                    right: "0px",
-                                }}
-                            >
-                                <ChevronRight />
-                            </IconButton>
-                        )}
                     </Grid>
                 </DialogContent>
                 {transaction.is_wip && (
                     <DialogActions>
-                        <Button startIcon={<Delete />} onClick={deleteSelectedFile} variant="outlined" color="error">
+                        <Button
+                            startIcon={<Delete />}
+                            onClick={() => shownImage && deleteFile(shownImage)}
+                            variant="outlined"
+                            color="error"
+                        >
                             {t("common.delete")}
                         </Button>
                     </DialogActions>

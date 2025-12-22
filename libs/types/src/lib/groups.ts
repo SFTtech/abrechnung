@@ -10,10 +10,12 @@ export interface GroupBase {
 }
 
 export const GroupValidator = z.object({
-    name: z.string({ required_error: "Name is required" }),
+    name: z.string({ error: (issue) => (issue.input === undefined ? "Name is required" : "Not a string") }),
     description: z.string().optional(),
     terms: z.string().optional(),
-    currency_identifier: z.string({ required_error: "Currency is required" }),
+    currency_identifier: z.string({
+        error: (issue) => (issue.input === undefined ? "Currency is required" : "Not a string"),
+    }),
     addUserAccountOnJoin: z.boolean(),
 });
 

@@ -15,7 +15,7 @@ export const LanguageSelect: React.FC<LanguageSelectProps> = (props) => {
     return (
         <Select
             value={i18n.language}
-            sx={{ color: "inherit" }}
+            sx={{ color: "inherit", border: "none" }}
             variant="outlined"
             onChange={handleSetLanguage}
             {...props}

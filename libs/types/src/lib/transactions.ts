@@ -13,63 +13,65 @@ export type TransactionShare = { [k: number]: number };
 export type TransactionType = "purchase" | "transfer";
 
 const BaseTransactionValidator = z.object({
-    name: z.string({ required_error: "Name is required" }).min(1, "Name is required"),
-    value: z.number({ required_error: "Value is required" }),
+    name: z
+        .string({ error: (issue) => (issue.input === undefined ? "Name is required" : null) })
+        .min(1, "Name is required"),
+    value: z.number({ error: (issue) => (issue.input === undefined ? "Value is required" : null) }),
     billed_at: z
-        .string({ required_error: "Billed at is required" })
+        .string({ error: (issue) => (issue.input === undefined ? "Billed at is required" : null) })
         .regex(/\d{4}-\d{2}-\d{2}/, "A valid date is required"),
     description: z.string().optional(),
     currency_identifier: CurrencyIdentifierSchema,
     tags: z.array(z.string()),
     currency_conversion_rate: z
-        .number({ required_error: "Currency conversion rate is required" })
+        .number({ error: (issue) => (issue.input === undefined ? "Currency conversion rate is required" : null) })
         .positive("Currency conversion rate must be larger than 0"),
 });
 
-export const PurchaseValidator = z
-    .object({
-        creditor_shares: z
-            .record(z.number())
-            .refine((shares) => Object.keys(shares).length === 1, "somebody has payed for this"),
-        debitor_shares: z.record(z.number()).refine((shares) => Object.keys(shares).length > 0, "select at least one"),
-    })
-    .merge(BaseTransactionValidator)
-    .passthrough();
+export const PurchaseValidator = z.looseObject({
+    creditor_shares: z
+        .record(z.string(), z.number())
+        .refine((shares) => Object.keys(shares).length === 1, "somebody has payed for this"),
+    debitor_shares: z
+        .record(z.string(), z.number())
+        .refine((shares) => Object.keys(shares).length > 0, "select at least one"),
+    ...BaseTransactionValidator.shape,
+});
 
-export const MimoValidator = z
-    .object({
-        creditor_shares: z
-            .record(z.number())
-            .refine((shares) => Object.keys(shares).length > 0, "somebody has payed for this"),
-        debitor_shares: z.record(z.number()).refine((shares) => Object.keys(shares).length > 0, "select at least one"),
-    })
-    .merge(BaseTransactionValidator)
-    .passthrough();
+export const MimoValidator = z.looseObject({
+    creditor_shares: z
+        .record(z.string(), z.number())
+        .refine((shares) => Object.keys(shares).length > 0, "somebody has payed for this"),
+    debitor_shares: z
+        .record(z.string(), z.number())
+        .refine((shares) => Object.keys(shares).length > 0, "select at least one"),
+    ...BaseTransactionValidator.shape,
+});
 
-export const TransferValidator = z
-    .object({
-        creditor_shares: z
-            .record(z.number())
-            .refine((shares) => Object.keys(shares).length > 0, "somebody has payed for this"),
-        debitor_shares: z
-            .record(z.number())
-            .refine((shares) => Object.keys(shares).length > 0, "who received this money?"),
-    })
-    .merge(BaseTransactionValidator)
-    .passthrough();
+export const TransferValidator = z.looseObject({
+    creditor_shares: z
+        .record(z.string(), z.number())
+        .refine((shares) => Object.keys(shares).length > 0, "somebody has payed for this"),
+    debitor_shares: z
+        .record(z.string(), z.number())
+        .refine((shares) => Object.keys(shares).length > 0, "who received this money?"),
+    ...BaseTransactionValidator.shape,
+});
 
 export const TransactionValidator = z.discriminatedUnion("type", [
-    PurchaseValidator.merge(z.object({ type: z.literal("purchase") })),
-    TransferValidator.merge(z.object({ type: z.literal("transfer") })),
-    MimoValidator.merge(z.object({ type: z.literal("mimo") })),
+    z.looseObject({ type: z.literal("purchase"), ...PurchaseValidator.shape }),
+    z.looseObject({ type: z.literal("transfer"), ...TransferValidator.shape }),
+    z.object({ type: z.literal("mimo"), ...MimoValidator.shape }),
 ]);
 
 export const PositionValidator = z
     .object({
-        name: z.string({ required_error: "name is required" }).min(1, "name is required"),
-        price: z.number({ required_error: "price is required" }),
-        communist_shares: z.number({ required_error: "price is required" }),
-        usages: z.record(z.number()),
+        name: z
+            .string({ error: (issue) => (issue.input === undefined ? "Name is required" : null) })
+            .min(1, "Name is required"),
+        price: z.number({ error: (issue) => (issue.input === undefined ? "Price is required" : null) }),
+        communist_shares: z.number({ error: (issue) => (issue.input === undefined ? "Shares is required" : null) }),
+        usages: z.record(z.string(), z.number()),
     })
     .refine(
         (position) => {

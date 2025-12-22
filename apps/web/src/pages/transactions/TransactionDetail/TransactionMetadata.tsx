@@ -12,19 +12,21 @@ import {
     wipTransactionUpdated,
 } from "@abrechnung/redux";
 import { Account, Transaction, TransactionShare, TransactionValidator } from "@abrechnung/types";
-import { Grid, InputAdornment, Stack, TableCell, Typography } from "@mui/material";
+import { Grid, IconButton, InputAdornment, Stack, TableCell, Typography } from "@mui/material";
 import * as React from "react";
-import { typeToFlattenedError, z } from "zod";
+import { z } from "zod";
 import { FileGallery } from "./attachments/FileGallery";
 import { useTranslation } from "react-i18next";
 import { useFormatCurrency, useIsSmallScreen } from "@/hooks";
 import { CurrencyIdentifier, getCurrencySymbolForIdentifier } from "@abrechnung/core";
 import { Navigate } from "react-router";
+import { AddPhotoAlternate } from "@mui/icons-material";
+import { ImageUploadDialog } from "./attachments/ImageUploadDialog";
 
 interface Props {
     groupId: number;
     transaction: Transaction;
-    validationErrors: typeToFlattenedError<z.infer<typeof TransactionValidator>>;
+    validationErrors: z.core.$ZodFlattenedError<z.infer<typeof TransactionValidator>>;
     showPositions?: boolean | undefined;
 }
 
@@ -38,6 +40,7 @@ export const TransactionMetadata: React.FC<Props> = ({
     const formatCurrency = useFormatCurrency();
     const dispatch = useAppDispatch();
     const groupCurrencyIdentifier = useGroupCurrencyIdentifier(groupId);
+    const [showUploadDialog, setShowUploadDialog] = React.useState(false);
     const isSmallScreen = useIsSmallScreen();
     const hasAttachments = useAppSelector((state) => selectTransactionHasFiles(state, groupId, transaction.id));
     const hasPositions = useAppSelector((state) => selectTransactionHasPositions(state, groupId, transaction.id));
@@ -125,20 +128,35 @@ export const TransactionMetadata: React.FC<Props> = ({
 
     return (
         <Grid container>
-            <Grid size={{ xs: 12, md: transaction.is_wip || hasAttachments ? 5 : 12 }}>
-                <TextInput
-                    label={t("common.name")}
-                    name="name"
-                    variant="standard"
-                    margin="dense"
-                    autoFocus
-                    fullWidth
-                    error={!!validationErrors.fieldErrors.name}
-                    helperText={validationErrors.fieldErrors.name}
-                    onChange={(value) => pushChanges({ name: value })}
-                    value={transaction.name}
-                    disabled={!transaction.is_wip}
-                />
+            <Grid size={{ xs: 12, md: hasAttachments ? 6 : 12 }}>
+                <div style={{ display: "flex" }}>
+                    <TextInput
+                        label={t("common.name")}
+                        name="name"
+                        variant="standard"
+                        margin="dense"
+                        autoFocus
+                        fullWidth
+                        error={!!validationErrors.fieldErrors["name"]}
+                        helperText={validationErrors.fieldErrors["name"]}
+                        onChange={(value) => pushChanges({ name: value })}
+                        value={transaction.name}
+                        disabled={!transaction.is_wip}
+                    />
+                    {transaction.is_wip && (
+                        <>
+                            <IconButton color="primary" onClick={() => setShowUploadDialog(true)}>
+                                <AddPhotoAlternate fontSize="large" />
+                            </IconButton>
+                            <ImageUploadDialog
+                                groupId={groupId}
+                                transactionId={transaction.id}
+                                show={showUploadDialog}
+                                onClose={() => setShowUploadDialog(false)}
+                            />
+                        </>
+                    )}
+                </div>
                 {!transaction.is_wip && transaction.description === "" ? null : (
                     <TextInput
                         label={t("common.description")}
@@ -160,8 +178,8 @@ export const TransactionMetadata: React.FC<Props> = ({
                         variant="standard"
                         margin="dense"
                         fullWidth
-                        error={!!validationErrors.fieldErrors.value}
-                        helperText={validationErrors.fieldErrors.value}
+                        error={!!validationErrors.fieldErrors["value"]}
+                        helperText={validationErrors.fieldErrors["value"]}
                         onChange={(value) => pushChanges({ value })}
                         value={transaction.value}
                         isCurrency={true}
@@ -195,8 +213,8 @@ export const TransactionMetadata: React.FC<Props> = ({
                             variant="standard"
                             margin="dense"
                             fullWidth
-                            error={!!validationErrors.fieldErrors.value}
-                            helperText={validationErrors.fieldErrors.value}
+                            error={!!validationErrors.fieldErrors["value"]}
+                            helperText={validationErrors.fieldErrors["value"]}
                             onChange={(value) => pushChanges({ currency_conversion_rate: value })}
                             value={transaction.currency_conversion_rate}
                             disabled={!transaction.is_wip}
@@ -216,8 +234,8 @@ export const TransactionMetadata: React.FC<Props> = ({
                 <DateInput
                     value={transaction.billed_at || ""}
                     onChange={(value) => pushChanges({ billed_at: value })}
-                    error={!!validationErrors.fieldErrors.billed_at}
-                    helperText={validationErrors.fieldErrors.billed_at}
+                    error={!!validationErrors.fieldErrors["billed_at"]}
+                    helperText={validationErrors.fieldErrors["billed_at"]}
                     disabled={!transaction.is_wip}
                 />
                 {!transaction.is_wip && transaction.tags.length === 0 ? null : (
@@ -269,7 +287,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                 )}
             </Grid>
 
-            {(transaction.is_wip || hasAttachments) && (
+            {hasAttachments && (
                 <Grid size={{ xs: 12, md: 6 }}>
                     <FileGallery groupId={groupId} transaction={transaction} />
                 </Grid>
