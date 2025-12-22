@@ -51,7 +51,6 @@ export const getAccountSortFunc = (
 };
 
 export const computeAccountBalances = (accounts: Account[], transactions: Transaction[]): AccountBalanceMap => {
-    const s = performance.now();
     const accountBalances: AccountBalanceMap = accounts.reduce<AccountBalanceMap>((balances, account) => {
         balances[account.id] = {
             balance: 0,
@@ -173,7 +172,6 @@ export const computeAccountBalances = (accounts: Account[], transactions: Transa
         }
     }
 
-    console.log("computeAccountBalances took " + (performance.now() - s) + " milliseconds.");
     return accountBalances;
 };
 

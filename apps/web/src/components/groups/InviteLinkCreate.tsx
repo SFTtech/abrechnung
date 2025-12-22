@@ -93,7 +93,6 @@ export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
                                     onChange={(val) => {
                                         if (val != null && val.isValid) {
                                             onChange(val.toISO());
-                                            console.log(val.toISO());
                                         }
                                     }}
                                     slotProps={{

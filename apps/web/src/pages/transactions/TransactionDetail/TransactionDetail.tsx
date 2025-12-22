@@ -18,7 +18,7 @@ import { Button, Divider, Grid } from "@mui/material";
 import * as React from "react";
 import { Navigate, useNavigate, useParams } from "react-router";
 import { toast } from "react-toastify";
-import { typeToFlattenedError, z } from "zod";
+import { z } from "zod";
 import { TransactionActions } from "./TransactionActions";
 import { TransactionMetadata } from "./TransactionMetadata";
 import { TransactionPositions } from "./purchase/TransactionPositions";
@@ -50,7 +50,7 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
     const [showProgress, setShowProgress] = React.useState(false);
 
     const [validationErrors, setValidationErrors] =
-        React.useState<typeToFlattenedError<z.infer<typeof TransactionValidator>>>(emptyErrors);
+        React.useState<z.core.$ZodFlattenedError<z.infer<typeof TransactionValidator>>>(emptyErrors);
     const [positionValidationErrors, setPositionValidationErrors] =
         React.useState<PositionValidationErrors>(emptyPositionErrors);
 
@@ -110,13 +110,12 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
         for (const position of Object.values(transaction.positions)) {
             const v = PositionValidator.safeParse(position);
             if (!v.success) {
-                positionErrors[position.id] = (v as any).error.formErrors;
+                positionErrors[position.id] = z.flattenError(v.error);
             }
         }
         if (!validated.success || Object.keys(positionErrors).length > 0) {
             if (!validated.success) {
-                console.log(validated);
-                setValidationErrors((validated as any).error.formErrors);
+                setValidationErrors(z.flattenError(validated.error));
                 toast.error("Please recheck the transaction details");
             }
             if (Object.keys(positionErrors).length > 0) {

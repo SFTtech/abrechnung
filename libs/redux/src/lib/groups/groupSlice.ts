@@ -100,7 +100,6 @@ const groupSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         builder.addCase(fetchGroups.fulfilled, (state, action) => {
-            console.log("fetched groups");
             const groups = action.payload;
             // TODO: optimize such that we maybe only update those who have actually changed??
             const byId = groups.reduce<{ [k: number]: Group }>((byId, group) => {

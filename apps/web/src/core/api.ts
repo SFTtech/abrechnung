@@ -9,7 +9,6 @@ import { toast } from "react-toastify";
 
 export const siteHost = window.location.host;
 export const baseURL = `${window.location.protocol}//${siteHost}`;
-console.log("API Base URL", baseURL);
 
 const connectionStatusProvider: IConnectionStatusProvider = {
     hasConnection: async () => {
