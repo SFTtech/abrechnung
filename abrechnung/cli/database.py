@@ -1,4 +1,4 @@
-gimport asyncio
+import asyncio
 from typing import Annotated, Optional
 
 import typer
