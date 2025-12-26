@@ -1,4 +1,4 @@
-import asyncio
+gimport asyncio
 from typing import Annotated, Optional
 
 import typer
@@ -17,6 +17,13 @@ def attach(ctx: typer.Context):
     asyncio.run(db.attach())
 
 
+# Functions created by PostgreSQL extensions that should not be dropped during migrations
+EXTENSION_FUNCTION_SKIPLIST = [
+    "set_user",
+    "reset_user",
+]
+
+
 @database_cli.command()
 def migrate(
     ctx: typer.Context,
@@ -24,7 +31,12 @@ def migrate(
 ):
     """Apply all database migrations."""
     db = get_database(config=ctx.obj.config.database)
-    asyncio.run(db.apply_migrations(until_migration=until_revision))
+    asyncio.run(
+        db.apply_migrations(
+            until_migration=until_revision,
+            function_blacklist=EXTENSION_FUNCTION_SKIPLIST,
+        )
+    )
 
 
 async def _rebuild(cfg: Config):
@@ -32,7 +44,7 @@ async def _rebuild(cfg: Config):
     db_pool = await db.create_pool(n_connections=2)
     try:
         await reset_schema(db_pool=db_pool)
-        await db.apply_migrations()
+        await db.apply_migrations(function_blacklist=EXTENSION_FUNCTION_SKIPLIST)
     finally:
         await db_pool.close()
 
@@ -71,6 +83,6 @@ def list_revisions(
 
 @database_cli.command()
 def reload_code(ctx: typer.Context):
-    """List all available database revisions."""
+    """Reload all database code (functions, views, triggers)."""
     db = get_database(ctx.obj.config.database)
-    asyncio.run(db.reload_code())
+    asyncio.run(db.reload_code(function_blacklist=EXTENSION_FUNCTION_SKIPLIST))
