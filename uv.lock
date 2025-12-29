@@ -62,7 +62,7 @@ requires-dist = [
     { name = "python-jose", extras = ["cryptography"], specifier = "~=3.3.0" },
     { name = "python-multipart", specifier = "~=0.0.19" },
     { name = "pyyaml", specifier = "~=6.0.2" },
-    { name = "sftkit", specifier = "==0.4.0" },
+    { name = "sftkit", specifier = "==0.4.1" },
     { name = "websockets", specifier = "~=14.1" },
 ]
 
@@ -1313,7 +1313,7 @@ wheels = [
 
 [[package]]
 name = "sftkit"
-version = "0.4.0"
+version = "0.4.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "asyncpg" },
@@ -1322,9 +1322,9 @@ dependencies = [
     { name = "typer" },
     { name = "uvicorn" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/de/b7/1c34c7b937f6c32256ac07904ddcf9ec739b655cfe921412ab179030b785/sftkit-0.4.0.tar.gz", hash = "sha256:46e33dca2ebafd4eac76d653c3cbf4b35713dae20aa2706aea0e2436a74d3bb5", size = 18447, upload-time = "2025-11-16T11:45:42.265Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7f/c0/09711d27b42e4b269589193ed33d25fc357d5567465d92d69f714d4485ac/sftkit-0.4.1.tar.gz", hash = "sha256:b185c8fa8bc02eb521699465f5797c4ebb4abcd8c49afef1e1742291b2661c7b", size = 18555, upload-time = "2025-12-29T17:39:58.864Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/82/ae/45e7eb0c37a118e2e15fa7ec3dd90ecf99c469cbbefe97a049c8b3a88f38/sftkit-0.4.0-py3-none-any.whl", hash = "sha256:834971d8c3bfa56cfd38d7d341fc8495aa039bb87d369624101d3f3bd7831f7f", size = 25605, upload-time = "2025-11-16T11:45:41.122Z" },
+    { url = "https://files.pythonhosted.org/packages/82/ad/54992c05ce65ac07000af8bdf12441451189b9fa0c93eb4171160bb8933f/sftkit-0.4.1-py3-none-any.whl", hash = "sha256:ceaeb8b7a03276c45da3c47b3ce38e77e3b94d63d07ea7b87e9ed87d970b05a9", size = 25762, upload-time = "2025-12-29T17:39:59.669Z" },
 ]
 
 [[package]]
