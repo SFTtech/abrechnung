@@ -100,7 +100,8 @@ alter table creditor_share add constraint check_creditor_shares
 
 create or replace function check_committed_transactions(
     revision_id bigint,
-    transaction_id integer
+    transaction_id integer,
+    created_at timestamptz
 ) returns boolean as
 $$
 <<locals>> declare
@@ -109,6 +110,11 @@ $$
     transaction_type    text;
     transaction_deleted boolean;
 begin
+    -- the transaction is not yet fully committed
+    if check_committed_transactions.created_at is null then
+        return true;
+    end if;
+
     select
         t.type,
         th.deleted
@@ -192,13 +198,15 @@ $$ language plpgsql
 set search_path = "$user", public;
 
 alter table transaction_revision add constraint check_committed_transactions
-    check (check_committed_transactions(id, transaction_id));
+    check (check_committed_transactions(id, transaction_id, created_at));
 
 alter table purchase_item_history add constraint check_purchase_item_communist_shares_gte_zero check (communist_shares >= 0);
 alter table purchase_item_usage add constraint check_purchase_item_usage_shares_gt_zero check (share_amount > 0);
 
 create or replace function check_committed_accounts(
-    revision_id bigint, account_id integer
+    revision_id bigint,
+    account_id integer,
+    created_at timestamptz
 ) returns boolean
     language plpgsql as
 $$
@@ -207,16 +215,29 @@ $$
     n_clearing_shares int;
     group_id          int;
     account_type      text;
+    account_deleted   boolean;
     date_info         date;
 begin
+    -- the account is not yet fully committed
+    if check_committed_accounts.created_at is null then
+        return true;
+    end if;
+
     select
         a.type,
-        a.group_id
-    into locals.account_type, locals.group_id
+        ah.deleted,
+        a.group_id,
+        ah.date_info
+    into locals.account_type, locals.account_deleted, locals.group_id, locals.date_info
     from
         account a
+        left join account_history ah on a.id = ah.id and ah.revision_id = check_committed_accounts.revision_id
     where
-            a.id = check_committed_accounts.account_id;
+        a.id = check_committed_accounts.account_id;
+
+    if locals.account_deleted then -- if the account is deleted we simply accept anything as we dont care
+        return true;
+    end if;
 
     select
         count(cas.share_account_id)
@@ -235,15 +256,6 @@ begin
     where
             att.account_id = check_committed_accounts.account_id
         and att.revision_id = check_committed_accounts.revision_id;
-
-    select
-        ah.date_info
-    into locals.date_info
-    from
-        account_history ah
-    where
-            ah.id = check_committed_accounts.account_id
-        and ah.revision_id = check_committed_accounts.revision_id;
 
     if locals.account_type = 'personal' then
         if locals.n_clearing_shares != 0 then
@@ -267,11 +279,12 @@ $$
 set search_path = "$user", public;
 
 alter table account_revision add constraint check_committed_accounts
-    check (check_committed_accounts(id, account_id));
+    check (check_committed_accounts(id, account_id, created_at));
 
 create or replace function check_clearing_accounts_for_cyclic_dependencies(
     revision_id bigint,
-    account_id integer
+    account_id integer,
+    created_at timestamptz
 ) returns boolean as
 $$
 <<locals>> declare
@@ -282,6 +295,11 @@ $$
 
     cycle_path        int[];
 begin
+    -- the account is not yet fully committed
+    if check_clearing_accounts_for_cyclic_dependencies.created_at is null then
+        return true;
+    end if;
+
     select
         a.type,
         a.group_id
@@ -323,7 +341,7 @@ $$ language plpgsql
 set search_path = "$user", public;
 
 alter table account_revision add constraint account_revision_check_cyclic
-    check (check_clearing_accounts_for_cyclic_dependencies(id, account_id));
+    check (check_clearing_accounts_for_cyclic_dependencies(id, account_id, created_at));
 
 alter table account_history add constraint name_not_empty check ( name <> '' );
 alter table transaction_history add constraint name_not_empty check ( name <> '' );
