@@ -298,8 +298,8 @@ class GroupAPITest(HTTPAPITest):
         self.assertEqual({self.test_user.id, user2.id}, set([m["user_id"] for m in members]))
 
         resp = await self._post(
-            f"/api/v1/groups/{group_id}/members",
-            json={"user_id": user2.id, "can_write": True, "is_owner": False},
+            f"/api/v1/groups/{group_id}/members/{user2.id}",
+            json={"can_write": True, "is_owner": False},
         )
         self.assertEqual(200, resp.status_code)
 
@@ -309,8 +309,8 @@ class GroupAPITest(HTTPAPITest):
         self.assertFalse(list(filter(lambda x: x["user_id"] == user2.id, members))[0]["is_owner"])
 
         resp = await self._post(
-            f"/api/v1/groups/{group_id}/members",
-            json={"user_id": user2.id, "can_write": True, "is_owner": True},
+            f"/api/v1/groups/{group_id}/members/{user2.id}",
+            json={"can_write": True, "is_owner": True},
         )
         self.assertEqual(200, resp.status_code)
 

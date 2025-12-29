@@ -1,7 +1,7 @@
 {
-  "$schema": "./node_modules/oxfmt/configuration_schema.json",
-  "tabWidth": 4,
-  "singleQuote": false,
-  "trailingComma": "es5",
-  "printWidth": 120,
+    "$schema": "./node_modules/oxfmt/configuration_schema.json",
+    "tabWidth": 4,
+    "singleQuote": false,
+    "trailingComma": "es5",
+    "printWidth": 120,
 }

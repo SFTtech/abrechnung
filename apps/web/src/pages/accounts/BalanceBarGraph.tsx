@@ -8,7 +8,7 @@ import { useTheme } from "@mui/material/styles";
 import * as React from "react";
 import { useNavigate } from "react-router";
 import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { CategoricalChartFunc } from "recharts/types/chart/generateCategoricalChart";
+import { CategoricalChartFunc } from "recharts/types/chart/types";
 
 export type BalanceBarGraphProps = {
     group: Group;
@@ -55,8 +55,9 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
         : Math.max(...personalAccounts.map((account) => account.name.length)) * 7 + 5;
 
     const handleBarClick: CategoricalChartFunc = (data) => {
-        const id = data.activePayload?.[0].payload.id;
-        navigate(`/groups/${group.id}/accounts/${id}`);
+        const accountIndexInList = Number(data.activeTooltipIndex);
+        const acc = personalAccounts[accountIndexInList];
+        navigate(`/groups/${group.id}/accounts/${acc.id}`);
     };
 
     return (

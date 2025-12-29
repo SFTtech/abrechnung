@@ -97,7 +97,9 @@ class TransactionService(Service[Config]):
         return transactions
 
     @with_db_transaction
-    async def get_transaction_history(self, *, conn: Connection, user: User, transaction_id: int) -> TransactionHistory:
+    async def get_transaction_history(
+        self, *, conn: Connection, user: User, transaction_id: int
+    ) -> list[TransactionHistory]:
         group_id = await self._check_transaction_permissions(conn=conn, user=user, transaction_id=transaction_id)
         history = await conn.fetch_many(
             TransactionHistory,
@@ -481,7 +483,7 @@ class TransactionService(Service[Config]):
     async def _update_transaction(
         self,
         *,
-        conn: asyncpg.Connection,
+        conn: Connection,
         user: User,
         transaction_id: int,
         transaction: UpdateTransaction,
@@ -628,6 +630,7 @@ class TransactionService(Service[Config]):
                 revision_id=revision_id,
                 position=position,
             )
+        await self._commit_revision(conn=conn, revision_id=revision_id)
 
     @with_db_transaction
     @requires_group_permissions(requires_write=True)
@@ -680,7 +683,7 @@ class TransactionService(Service[Config]):
     async def _create_revision(conn: asyncpg.Connection, user: User, transaction_id: int) -> int:
         # create a new transaction revision
         revision_id = await conn.fetchval(
-            "insert into transaction_revision (user_id, transaction_id) values ($1, $2) returning id",
+            "insert into transaction_revision (user_id, transaction_id, created_at) values ($1, $2, null) returning id",
             user.id,
             transaction_id,
         )

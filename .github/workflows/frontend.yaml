@@ -1,64 +1,64 @@
 name: frontend
 on:
-  workflow_call:
+    workflow_call:
 
 jobs:
-  format:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Set up Nodejs
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "npm"
-          cache-dependency-path: package-lock.json
-      - name: Install dependencies
-        run: npm ci --foreground-scripts
-      - name: Check JavaScript formatting
-        run: npx oxfmt --check .
+    format:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+            - name: Set up Nodejs
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "24"
+                  cache: "npm"
+                  cache-dependency-path: package-lock.json
+            - name: Install dependencies
+              run: npm ci --foreground-scripts
+            - name: Check JavaScript formatting
+              run: npx oxfmt --check .
 
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Set up Nodejs
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "npm"
-          cache-dependency-path: package-lock.json
-      - name: Install dependencies
-        run: npm ci --foreground-scripts
-      - name: Build web app
-        run: npx nx run-many --target test
+    test:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+            - name: Set up Nodejs
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "24"
+                  cache: "npm"
+                  cache-dependency-path: package-lock.json
+            - name: Install dependencies
+              run: npm ci --foreground-scripts
+            - name: Build web app
+              run: npx nx run-many --target test
 
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Set up Nodejs
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "npm"
-          cache-dependency-path: package-lock.json
-      - name: Install dependencies
-        run: npm ci --foreground-scripts
-      - name: Build web app
-        run: npx oxlint
+    lint:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+            - name: Set up Nodejs
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "24"
+                  cache: "npm"
+                  cache-dependency-path: package-lock.json
+            - name: Install dependencies
+              run: npm ci --foreground-scripts
+            - name: Build web app
+              run: npx oxlint
 
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - name: Set up Nodejs
-        uses: actions/setup-node@v6
-        with:
-          node-version: "24"
-          cache: "npm"
-          cache-dependency-path: package-lock.json
-      - name: Install dependencies
-        run: npm ci --foreground-scripts
-      - name: Build web app
-        run: npx nx build web
+    build:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+            - name: Set up Nodejs
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "24"
+                  cache: "npm"
+                  cache-dependency-path: package-lock.json
+            - name: Install dependencies
+              run: npm ci --foreground-scripts
+            - name: Build web app
+              run: npx nx build web

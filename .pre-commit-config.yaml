@@ -1,21 +1,31 @@
 repos:
-- repo: https://github.com/oxc-project/mirrors-oxlint
-  rev: v1.28.0
-  hooks:
-    - id: oxlint
-      verbose: true
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v5.0.0
-  hooks:
-    - id: check-yaml
-    - id: end-of-file-fixer
-    - id: trailing-whitespace
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  # Ruff version.
-  rev: v0.9.4
-  hooks:
-    # Run the linter.
-    - id: ruff
-      args: [ --fix ]
-    # Run the formatter.
-    - id: ruff-format
+    - repo: local
+      hooks:
+          - id: oxfmt
+            name: oxfmt
+            entry: oxfmt
+            args: ["--no-error-on-unmatched-pattern"]
+            language: node
+            "types_or": [javascript, jsx, ts, tsx]
+            require_serial: false
+            additional_dependencies: ["oxfmt@latest"]
+    - repo: https://github.com/oxc-project/mirrors-oxlint
+      rev: v1.36.0
+      hooks:
+          - id: oxlint
+            verbose: true
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: v6.0.0
+      hooks:
+          - id: check-yaml
+          - id: end-of-file-fixer
+          - id: trailing-whitespace
+    - repo: https://github.com/astral-sh/ruff-pre-commit
+      # Ruff version.
+      rev: v0.14.10
+      hooks:
+          # Run the linter.
+          - id: ruff
+            args: [--fix]
+          # Run the formatter.
+          - id: ruff-format

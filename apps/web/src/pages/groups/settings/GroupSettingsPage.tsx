@@ -1,7 +1,15 @@
 import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
 import { Group } from "@abrechnung/api";
-import { archiveGroup, leaveGroup, unarchiveGroup, useCurrentUserPermissions, useGroup } from "@abrechnung/redux";
+import {
+    archiveGroup,
+    fetchGroup,
+    leaveGroup,
+    selectCurrentUserId,
+    unarchiveGroup,
+    useGroup,
+    useSortedAccounts,
+} from "@abrechnung/redux";
 import { useQueryVar } from "@abrechnung/utils";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import {
@@ -13,8 +21,10 @@ import {
     DialogContent,
     DialogContentText,
     DialogTitle,
+    MenuItem,
     Stack,
     Tab,
+    TextField,
 } from "@mui/material";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -22,11 +32,12 @@ import { Navigate, useNavigate } from "react-router";
 import { GroupInvites } from "./GroupInvites";
 import { GroupMemberList } from "./GroupMemberList";
 import { SettingsForm } from "./SettingsForm";
-import { useAppDispatch } from "@/store";
+import { useAppDispatch, useAppSelector } from "@/store";
 import { api } from "@/core/api";
 import { toast } from "react-toastify";
 import { Archive as ArchiveIcon, Logout as LogoutIcon } from "@mui/icons-material";
 import { GroupArchivedDisclaimer } from "@/components";
+import { useUpdateMemberOwnedAccountMutation } from "@/core/generated/api";
 
 interface Props {
     groupId: number;
@@ -153,16 +164,61 @@ const GroupActions: React.FC<{ group: Group }> = ({ group }) => {
     );
 };
 
+const OwnedAccountSettings: React.FC<{ group: Group }> = ({ group }) => {
+    const { t } = useTranslation();
+    const dispatch = useAppDispatch();
+    const currentUserId = useAppSelector(selectCurrentUserId);
+    const personalAccounts = useSortedAccounts(group.id, "name", "personal");
+    const [updateOwnedAccount] = useUpdateMemberOwnedAccountMutation();
+
+    const onChange = (accountId: number | null) => {
+        if (currentUserId == null) {
+            return;
+        }
+
+        updateOwnedAccount({
+            groupId: group.id,
+            userId: currentUserId,
+            updateGroupMemberOwnedAccountPayload: {
+                owned_account_id: accountId,
+            },
+        }).then(() => {
+            dispatch(fetchGroup({ groupId: group.id, api }));
+        });
+    };
+
+    return (
+        <MobilePaper>
+            <Stack spacing={1}>
+                <TextField
+                    select
+                    label={t("groups.settings.ownedAccount")}
+                    value={group.owned_account_id}
+                    onChange={(evt) => {
+                        onChange(evt.target.value as unknown as number | null);
+                    }}
+                    helperText={t("groups.settings.ownedAccountHelp")}
+                >
+                    {personalAccounts.map((acc) => (
+                        <MenuItem key={acc.id} value={acc.id}>
+                            {acc.name}
+                        </MenuItem>
+                    ))}
+                </TextField>
+            </Stack>
+        </MobilePaper>
+    );
+};
+
 export const GroupSettingsPage: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useQueryVar("activeTab", "settings");
 
     const group = useGroup(groupId);
-    const permissions = useCurrentUserPermissions(groupId);
 
     useTitle(t("groups.settings.tabTitle", { groupName: group?.name }));
 
-    if (!permissions || !group) {
+    if (!group) {
         return <Navigate to="/404" />;
     }
 
@@ -180,14 +236,15 @@ export const GroupSettingsPage: React.FC<Props> = ({ groupId }) => {
                     <MobilePaper>
                         <Stack spacing={1}>
                             <GroupArchivedDisclaimer group={group} />
-                            {permissions.is_owner ? (
+                            {group.is_owner ? (
                                 <Alert severity="info">{t("groups.settings.ownerDisclaimer")}</Alert>
-                            ) : !permissions.can_write ? (
+                            ) : !group.can_write ? (
                                 <Alert severity="info">{t("groups.settings.readAccessDisclaimer")}</Alert>
                             ) : null}
                         </Stack>
                         <SettingsForm group={group} />
                     </MobilePaper>
+                    <OwnedAccountSettings group={group} />
                     <MobilePaper>
                         <Stack spacing={1}>
                             <Alert severity="error">{t("groups.settings.dangerZone")}</Alert>

@@ -6,7 +6,7 @@ import { fromISOString, toISODateString } from "@abrechnung/utils";
 import { Draft, PayloadAction, createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
 import { leaveGroup } from "../groups";
 import { AccountSliceState, AccountState, IRootState, StateStatus } from "../types";
-import { addEntity, getGroupScopedState, removeEntity } from "../utils";
+import { addEntity, createAsyncThunkWithErrorHandling, getGroupScopedState, removeEntity } from "../utils";
 import { useSelector } from "react-redux";
 
 const initializeGroupState = (state: Draft<AccountSliceState>, groupId: number) => {
@@ -157,14 +157,6 @@ export const useAccount = (groupId: number, accountId: number) => {
     }, [s, accountId]);
 };
 
-export const useAccountsOwnedByUser = (groupId: number, userId: number): Account[] => {
-    const accounts = useGroupAccounts(groupId);
-
-    return React.useMemo(() => {
-        return accounts.filter((acc: Account) => acc.type === "personal" && acc.owning_user_id === userId);
-    }, [userId, accounts]);
-};
-
 export const useClearingAccountsInvolvingAccount = (groupId: number, accountId: number): Account[] => {
     const accounts = useGroupAccounts(groupId, "clearing");
 
@@ -203,7 +195,7 @@ export const fetchAccounts = createAsyncThunk<
     }
 );
 
-export const fetchAccount = createAsyncThunk<
+export const fetchAccount = createAsyncThunkWithErrorHandling<
     BackendAccount,
     { groupId: number; accountId: number; api: Api },
     { state: IRootState }
@@ -211,7 +203,7 @@ export const fetchAccount = createAsyncThunk<
     return await api.client.accounts.getAccount({ groupId, accountId });
 });
 
-export const saveAccount = createAsyncThunk<
+export const saveAccount = createAsyncThunkWithErrorHandling<
     { oldAccountId: number; account: BackendAccount },
     { groupId: number; accountId: number; api: Api },
     { state: IRootState }
@@ -227,13 +219,13 @@ export const saveAccount = createAsyncThunk<
         if (wipAccount.id < 0) {
             updatedAccount = await api.client.accounts.createAccount({
                 groupId,
-                requestBody: { owning_user_id: null, tags: [], date_info: null, ...wipAccount },
+                requestBody: { tags: [], date_info: null, ...wipAccount },
             });
         } else {
             updatedAccount = await api.client.accounts.updateAccount({
                 groupId,
                 accountId: wipAccount.id,
-                requestBody: { owning_user_id: null, tags: [], date_info: null, ...wipAccount },
+                requestBody: { tags: [], date_info: null, ...wipAccount },
             });
         }
     } else {
@@ -260,7 +252,6 @@ export const createAccount = createAsyncThunk<
             type: type,
             name: "",
             description: "",
-            owning_user_id: null,
             deleted: false,
             is_wip: true,
             last_changed: new Date().toISOString(),
@@ -284,7 +275,7 @@ export const createAccount = createAsyncThunk<
     return { account };
 });
 
-export const deleteAccount = createAsyncThunk<
+export const deleteAccount = createAsyncThunkWithErrorHandling<
     { account: BackendAccount | undefined },
     { groupId: number; accountId: number; api: Api },
     { state: IRootState }
@@ -334,7 +325,6 @@ const moveAccountToWip = (s: Draft<AccountState>, accountId: number): Account | 
                 deleted: account.deleted,
                 is_wip: true,
                 last_changed: new Date().toISOString(),
-                owning_user_id: account.owning_user_id,
             };
         }
         s.wipAccounts.byId[accountId] = wipAccount;

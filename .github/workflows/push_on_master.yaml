@@ -1,11 +1,11 @@
 name: Push or tag on master
 on:
-  # we build on all pushes to master to (hopefully) get early warning
-  # of things breaking (but only build one set of debs)
-  push:
-    branches: [ "master" ]
-    # we do the full build on tags.
-    tags: [ "v*" ]
+    # we build on all pushes to master to (hopefully) get early warning
+    # of things breaking (but only build one set of debs)
+    push:
+        branches: ["master"]
+        # we do the full build on tags.
+        tags: ["v*"]
 
 env:
     DOCKER_IMAGE_NAME_API: api
@@ -13,194 +13,194 @@ env:
     DOCKER_IMAGE_TAGS: latest ${{ github.sha }} ${{github.ref_name}}
 
 jobs:
-  frontend:
-    uses: ./.github/workflows/frontend.yaml
-    secrets: inherit
+    frontend:
+        uses: ./.github/workflows/frontend.yaml
+        secrets: inherit
 
-  backend:
-    uses: ./.github/workflows/backend.yaml
-    secrets: inherit
+    backend:
+        uses: ./.github/workflows/backend.yaml
+        secrets: inherit
 
-  get-distros:
-    name: "Calculate list of debian distros and docker image tags"
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-      - id: set-distros
-        run: |
-          # if we're running from a tag, get the full list of distros; otherwise just use debian:sid
-          dists='["debian:trixie"]'
-          tags="master $GITHUB_SHA"
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-              dists=$(tools/build_debian_packages.py --show-dists-json)
-              tags="master $GITHUB_SHA latest latest-release $GITHUB_REF_NAME"
-          fi
-          echo "::set-output name=distros::$dists"
-          echo "::set-output name=tags::$tags"
-    # map the step outputs to job outputs
-    outputs:
-      distros: ${{ steps.set-distros.outputs.distros }}
-      tags: ${{ steps.set-distros.outputs.tags }}
+    get-distros:
+        name: "Calculate list of debian distros and docker image tags"
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v5
+            - uses: actions/setup-python@v6
+            - id: set-distros
+              run: |
+                  # if we're running from a tag, get the full list of distros; otherwise just use debian:sid
+                  dists='["debian:trixie"]'
+                  tags="master $GITHUB_SHA"
+                  if [[ $GITHUB_REF == refs/tags/* ]]; then
+                      dists=$(tools/build_debian_packages.py --show-dists-json)
+                      tags="master $GITHUB_SHA latest latest-release $GITHUB_REF_NAME"
+                  fi
+                  echo "::set-output name=distros::$dists"
+                  echo "::set-output name=tags::$tags"
+        # map the step outputs to job outputs
+        outputs:
+            distros: ${{ steps.set-distros.outputs.distros }}
+            tags: ${{ steps.set-distros.outputs.tags }}
 
-  build-and-publish-docker:
-    name: Build and publish ready made docker containers
-    runs-on: ubuntu-latest
-    needs:
-    - get-distros
-    steps:
-    - uses: actions/checkout@v5
+    build-and-publish-docker:
+        name: Build and publish ready made docker containers
+        runs-on: ubuntu-latest
+        needs:
+            - get-distros
+        steps:
+            - uses: actions/checkout@v5
 
-    - name: Install qemu dependency
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y qemu-user-static
+            - name: Install qemu dependency
+              run: |
+                  sudo apt-get update
+                  sudo apt-get install -y qemu-user-static
 
-    - name: Set up Nodejs
-      uses: actions/setup-node@v6
-      with:
-        node-version: "24"
-        cache: "npm"
-        cache-dependency-path: package-lock.json
+            - name: Set up Nodejs
+              uses: actions/setup-node@v6
+              with:
+                  node-version: "24"
+                  cache: "npm"
+                  cache-dependency-path: package-lock.json
 
-    - name: Install dependencies
-      run: npm ci --foreground-scripts
+            - name: Install dependencies
+              run: npm ci --foreground-scripts
 
-    - name: Build API Image
-      id: build-api-image
-      uses: redhat-actions/buildah-build@v2
-      with:
-        image: ${{ env.DOCKER_IMAGE_NAME_API }}
-        tags: ${{ needs.get-distros.outputs.tags }}
-        platforms: linux/arm64/v8, linux/amd64
-        containerfiles: ./docker/Dockerfile-api
+            - name: Build API Image
+              id: build-api-image
+              uses: redhat-actions/buildah-build@v2
+              with:
+                  image: ${{ env.DOCKER_IMAGE_NAME_API }}
+                  tags: ${{ needs.get-distros.outputs.tags }}
+                  platforms: linux/arm64/v8, linux/amd64
+                  containerfiles: ./docker/Dockerfile-api
 
-    - name: Push API Image To quay.io
-      id: push-to-quay-api
-      uses: redhat-actions/push-to-registry@v2
-      with:
-        image: ${{ steps.build-api-image.outputs.image }}
-        tags: ${{ steps.build-api-image.outputs.tags }}
-        registry: quay.io/abrechnung
-        username: ${{ secrets.DOCKERHUB_REGISTRY_USER }}
-        password: ${{ secrets.DOCKERHUB_REGISTRY_PASSWORD }}
+            - name: Push API Image To quay.io
+              id: push-to-quay-api
+              uses: redhat-actions/push-to-registry@v2
+              with:
+                  image: ${{ steps.build-api-image.outputs.image }}
+                  tags: ${{ steps.build-api-image.outputs.tags }}
+                  registry: quay.io/abrechnung
+                  username: ${{ secrets.DOCKERHUB_REGISTRY_USER }}
+                  password: ${{ secrets.DOCKERHUB_REGISTRY_PASSWORD }}
 
-    - name: Build Frontend
-      run: npx nx build web
+            - name: Build Frontend
+              run: npx nx build web
 
-    - name: Build Frontend Image
-      id: build-frontend-image
-      uses: redhat-actions/buildah-build@v2
-      with:
-        image: ${{ env.DOCKER_IMAGE_NAME_FRONTEND }}
-        tags: ${{ needs.get-distros.outputs.tags }}
-        platforms: linux/arm64/v8, linux/amd64
-        containerfiles: ./docker/Dockerfile-frontend
+            - name: Build Frontend Image
+              id: build-frontend-image
+              uses: redhat-actions/buildah-build@v2
+              with:
+                  image: ${{ env.DOCKER_IMAGE_NAME_FRONTEND }}
+                  tags: ${{ needs.get-distros.outputs.tags }}
+                  platforms: linux/arm64/v8, linux/amd64
+                  containerfiles: ./docker/Dockerfile-frontend
 
-    - name: Push Frontend Image To quay.io
-      id: push-to-quay-frontend
-      uses: redhat-actions/push-to-registry@v2
-      with:
-        image: ${{ steps.build-frontend-image.outputs.image }}
-        tags: ${{ steps.build-frontend-image.outputs.tags }}
-        registry: quay.io/abrechnung
-        username: ${{ secrets.DOCKERHUB_REGISTRY_USER }}
-        password: ${{ secrets.DOCKERHUB_REGISTRY_PASSWORD }}
+            - name: Push Frontend Image To quay.io
+              id: push-to-quay-frontend
+              uses: redhat-actions/push-to-registry@v2
+              with:
+                  image: ${{ steps.build-frontend-image.outputs.image }}
+                  tags: ${{ steps.build-frontend-image.outputs.tags }}
+                  registry: quay.io/abrechnung
+                  username: ${{ secrets.DOCKERHUB_REGISTRY_USER }}
+                  password: ${{ secrets.DOCKERHUB_REGISTRY_PASSWORD }}
 
-  # now build the packages with an abrechnung build.
-  build-debs:
-    needs:
-    - get-distros
-    name: "Build .deb packages"
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        distro: ${{ fromJson(needs.get-distros.outputs.distros) }}
+    # now build the packages with an abrechnung build.
+    build-debs:
+        needs:
+            - get-distros
+        name: "Build .deb packages"
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                distro: ${{ fromJson(needs.get-distros.outputs.distros) }}
 
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          path: src
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v5
+              with:
+                  path: src
 
-      - name: Set up Docker Buildx
-        id: buildx
-        uses: docker/setup-buildx-action@v1
-        with:
-          install: true
+            - name: Set up Docker Buildx
+              id: buildx
+              uses: docker/setup-buildx-action@v1
+              with:
+                  install: true
 
-      - name: Set up docker layer caching
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-      - name: Set up python
-        uses: actions/setup-python@v5
+            - name: Set up docker layer caching
+              uses: actions/cache@v4
+              with:
+                  path: /tmp/.buildx-cache
+                  key: ${{ runner.os }}-buildx-${{ github.sha }}
+                  restore-keys: |
+                      ${{ runner.os }}-buildx-
+            - name: Set up python
+              uses: actions/setup-python@v5
 
-      - name: Build the packages
-        # see https://github.com/docker/build-push-action/issues/252
-        # for the cache magic here
-        run: |
-          ./src/tools/build_debian_packages.py \
-            --docker-build-arg=--cache-from=type=local,src=/tmp/.buildx-cache \
-            --docker-build-arg=--cache-to=type=local,mode=max,dest=/tmp/.buildx-cache-new \
-            --docker-build-arg=--progress=plain \
-            --docker-build-arg=--load \
-            "${{ matrix.distro }}"
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-          ARTIFACT_NAME=${{ matrix.distro }}
-          ARTIFACT_NAME=${ARTIFACT_NAME//:} # replace all colons
-          echo "ARTIFACT_NAME=${ARTIFACT_NAME}" >> $GITHUB_ENV
-      - name: Upload debs as artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: debs-${{ env.ARTIFACT_NAME }}
-          path: debs/*
+            - name: Build the packages
+              # see https://github.com/docker/build-push-action/issues/252
+              # for the cache magic here
+              run: |
+                  ./src/tools/build_debian_packages.py \
+                    --docker-build-arg=--cache-from=type=local,src=/tmp/.buildx-cache \
+                    --docker-build-arg=--cache-to=type=local,mode=max,dest=/tmp/.buildx-cache-new \
+                    --docker-build-arg=--progress=plain \
+                    --docker-build-arg=--load \
+                    "${{ matrix.distro }}"
+                  rm -rf /tmp/.buildx-cache
+                  mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+                  ARTIFACT_NAME=${{ matrix.distro }}
+                  ARTIFACT_NAME=${ARTIFACT_NAME//:} # replace all colons
+                  echo "ARTIFACT_NAME=${ARTIFACT_NAME}" >> $GITHUB_ENV
+            - name: Upload debs as artifacts
+              uses: actions/upload-artifact@v4
+              with:
+                  name: debs-${{ env.ARTIFACT_NAME }}
+                  path: debs/*
 
-  deploy-demo:
-    name: "Deploy demo application"
-    environment: demo
-    if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/heads/master')}}
-    needs:
-      - frontend
-      - backend
-      - build-debs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v4
-      - name: Trigger demo deployment via webhook
-        run: curl ${{ secrets.DEMO_DEPLOY_WEBHOOK_URL }} -F "archive=@$(find -name 'abrechnung_*bookworm*_amd64.deb')" --fail
+    deploy-demo:
+        name: "Deploy demo application"
+        environment: demo
+        if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/heads/master')}}
+        needs:
+            - frontend
+            - backend
+            - build-debs
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download all workflow run artifacts
+              uses: actions/download-artifact@v4
+            - name: Trigger demo deployment via webhook
+              run: curl ${{ secrets.DEMO_DEPLOY_WEBHOOK_URL }} -F "archive=@$(find -name 'abrechnung_*bookworm*_amd64.deb')" --fail
 
-  # if it's a tag, create a release and attach the artifacts to it
-  attach-assets:
-    name: "Attach assets to release"
-    if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/tags/') }}
-    needs:
-      - frontend
-      - backend
-      - build-debs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download all workflow run artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-          merge-multiple: true
-      - name: List files
-        run: |
-          ls -lah artifacts
-      - name: Attach to release
-        uses: softprops/action-gh-release@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          files: |
-            artifacts/*.deb
-          # if it's not already published, keep the release as a draft.
-          draft: true
-          # mark it as a prerelease if the tag contains 'rc'.
-          prerelease: ${{ contains(github.ref, 'rc') || contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
+    # if it's a tag, create a release and attach the artifacts to it
+    attach-assets:
+        name: "Attach assets to release"
+        if: ${{ !failure() && !cancelled() && startsWith(github.ref, 'refs/tags/') }}
+        needs:
+            - frontend
+            - backend
+            - build-debs
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download all workflow run artifacts
+              uses: actions/download-artifact@v4
+              with:
+                  path: artifacts
+                  merge-multiple: true
+            - name: List files
+              run: |
+                  ls -lah artifacts
+            - name: Attach to release
+              uses: softprops/action-gh-release@v2
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  files: |
+                      artifacts/*.deb
+                  # if it's not already published, keep the release as a draft.
+                  draft: true
+                  # mark it as a prerelease if the tag contains 'rc'.
+                  prerelease: ${{ contains(github.ref, 'rc') || contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}

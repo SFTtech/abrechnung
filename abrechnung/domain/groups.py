@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -11,13 +10,14 @@ class GroupMember(BaseModel):
     can_write: bool
     description: str
     joined_at: datetime
-    invited_by: Optional[int]
+    invited_by: int | None
+    owned_account_id: int | None
 
 
 class GroupInvite(BaseModel):
     id: int
     created_by: int
-    token: Optional[str]
+    token: str | None
     single_use: bool
     join_as_editor: bool
     description: str
@@ -37,6 +37,7 @@ class Group(BaseModel):
     archived: bool
     is_owner: bool
     can_write: bool
+    owned_account_id: int | None
 
 
 class GroupLog(BaseModel):
@@ -45,7 +46,7 @@ class GroupLog(BaseModel):
     logged_at: datetime
     type: str
     message: str
-    affected: Optional[int]
+    affected: int | None
 
 
 class GroupPreview(BaseModel):

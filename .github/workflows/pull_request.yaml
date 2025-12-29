@@ -1,6 +1,6 @@
 name: Pull Request
 on:
-  pull_request:
+    pull_request:
 
 env:
     DOCKER_IMAGE_NAME_API: api
@@ -8,10 +8,10 @@ env:
     DOCKER_IMAGE_TAGS: latest ${{ github.sha }} ${{github.ref_name}}
 
 jobs:
-  frontend:
-    uses: ./.github/workflows/frontend.yaml
-    secrets: inherit
+    frontend:
+        uses: ./.github/workflows/frontend.yaml
+        secrets: inherit
 
-  backend:
-    uses: ./.github/workflows/backend.yaml
-    secrets: inherit
+    backend:
+        uses: ./.github/workflows/backend.yaml
+        secrets: inherit

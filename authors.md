@@ -1,4 +1,4 @@
-abrechnung, the all-in-one* financial service tool.
+abrechnung, the all-in-one\* financial service tool.
 
 Any file in this project that doesn't state otherwise, and isn't listed as an
 exception below, is Copyright 2022-2022 The abrechnung authors, and licensed
@@ -8,13 +8,12 @@ A copy of the license can be found in [LICENSE](LICENSE).
 
 _the abrechnung authors_ are:
 
-| Full name                         | aliases                     | E-Mail                                            |
-|-----------------------------------|-----------------------------|---------------------------------------------------|
-| Michael Loipführer                | milo                        | milo á sft dawt lol                               |
-| Jonas Jelten                      | TheJJ                       | jj á sft dawt lol                                 |
-| Michael Enßlin                    | mic_e                       | mic á sft dawt lol                                |
-| Wolfgang Walter                   | ww                          | ww á sft dawt lol                                 |
-
+| Full name          | aliases | E-Mail              |
+| ------------------ | ------- | ------------------- |
+| Michael Loipführer | milo    | milo á sft dawt lol |
+| Jonas Jelten       | TheJJ   | jj á sft dawt lol   |
+| Michael Enßlin     | mic_e   | mic á sft dawt lol  |
+| Wolfgang Walter    | ww      | ww á sft dawt lol   |
 
 If you're a first-time committer, add yourself to the above list. This is not
 just for legal reasons, but also to keep an overview of all those nicknames.
@@ -36,10 +35,10 @@ the Free Software Foundation, either version 3 of the License, or
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
+along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-* may not actually be all-in-one.
+- may not actually be all-in-one.

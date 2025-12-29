@@ -1,20 +1,20 @@
 services:
-  api:
-    command: api
-    env_file: .env
-    healthcheck:
-      test: ["CMD", "/usr/bin/curl", "--connect-timeout", "10", "--silent", "http://127.0.0.1:8080/"]
+    api:
+        command: api
+        env_file: .env
+        healthcheck:
+            test: ["CMD", "/usr/bin/curl", "--connect-timeout", "10", "--silent", "http://127.0.0.1:8080/"]
 
-  mailer:
-    extends:
-      service: api
-    command: mailer
-    healthcheck:
-      disable: true
+    mailer:
+        extends:
+            service: api
+        command: mailer
+        healthcheck:
+            disable: true
 
-  cron:
-    extends:
-      service: api
-    command: cron
-    healthcheck:
-      disable: true
+    cron:
+        extends:
+            service: api
+        command: cron
+        healthcheck:
+            disable: true

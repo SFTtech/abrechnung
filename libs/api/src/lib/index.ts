@@ -1,5 +1,7 @@
 export * from "./api";
 export * from "./auth";
 export * from "./generated";
-export * from "./generated/schema";
 export * from "./types";
+import * as schema from "./generated/schema";
+export { schema };
+export * from "./error";

@@ -6,7 +6,7 @@ from sftkit.error import AccessDenied, InvalidArgument
 from sftkit.service import Service, with_db_connection, with_db_transaction
 
 from abrechnung.config import Config
-from abrechnung.core.auth import check_group_permissions, create_group_log
+from abrechnung.core.auth import create_group_log
 from abrechnung.core.decorators import (
     requires_group_permissions,
     with_group_last_changed_update,
@@ -32,9 +32,9 @@ class AccountService(Service[Config]):
 
     @staticmethod
     async def _create_revision(conn: asyncpg.Connection, user: User, account_id: int) -> int:
-        # create a new transaction revision
+        # create a new account revision
         revision_id = await conn.fetchval(
-            "insert into account_revision (user_id, account_id) values ($1, $2) returning id",
+            "insert into account_revision (user_id, account_id, created_at) values ($1, $2, null) returning id",
             user.id,
             account_id,
         )
@@ -71,52 +71,6 @@ class AccountService(Service[Config]):
 
         return result["group_id"], result["type"]
 
-    async def _get_or_create_pending_account_change(self, conn: asyncpg.Connection, user: User, account_id: int) -> int:
-        revision_id = await self._create_revision(conn=conn, user=user, account_id=account_id)
-
-        a = await conn.fetchval(
-            "select id from account_history th where revision_id = $1 and id = $2",
-            revision_id,
-            account_id,
-        )
-        if a:
-            return revision_id
-
-        last_committed_revision = await conn.fetchval(
-            "select ar.id "
-            "from account_revision ar "
-            "   join account_history ah on ar.id = ah.revision_id and ar.account_id = ah.id "
-            "where ar.account_id = $1 "
-            "order by ar.created_at desc "
-            "limit 1",
-            account_id,
-        )
-
-        if last_committed_revision is None:
-            raise InvalidArgument(f"Cannot edit account {account_id} as it has no committed changes.")
-
-        # copy all existing transaction data into a new history entry
-        await conn.execute(
-            "insert into account_history (id, revision_id, name, description, owning_user_id, date_info, deleted)"
-            "select id, $1, name, description, owning_user_id, date_info, deleted "
-            "from account_history where id = $2 and revision_id = $3",
-            revision_id,
-            account_id,
-            last_committed_revision,
-        )
-
-        # copy all last committed creditor shares
-        await conn.execute(
-            "insert into clearing_account_share (account_id, revision_id, share_account_id, shares) "
-            "select account_id, $1, share_account_id, shares "
-            "from clearing_account_share where account_id = $2 and revision_id = $3",
-            revision_id,
-            account_id,
-            last_committed_revision,
-        )
-
-        return revision_id
-
     @staticmethod
     async def _check_account_exists(conn: asyncpg.Connection, group_id: int, account_id: int) -> int:
         acc = await conn.fetchval(
@@ -128,29 +82,6 @@ class AccountService(Service[Config]):
             raise InvalidArgument(f"Account with id {account_id}")
 
         return True
-
-    async def _account_clearing_shares_check(
-        self,
-        conn: asyncpg.Connection,
-        user: User,
-        account_id: int,
-        share_account_id: int,
-        account_type: Optional[Union[str, list[str]]] = None,
-    ) -> tuple[int, int]:
-        """returns tuple of group_id of the account and the users revision_id of the pending change"""
-        group_id, _ = await self._check_account_permissions(
-            conn=conn,
-            user=user,
-            account_id=account_id,
-            can_write=True,
-            account_type=account_type,
-        )
-
-        await self._check_account_exists(conn, group_id, share_account_id)
-
-        revision_id = await self._get_or_create_pending_account_change(conn=conn, user=user, account_id=account_id)
-
-        return group_id, revision_id
 
     @with_db_transaction
     @requires_group_permissions()
@@ -215,10 +146,6 @@ class AccountService(Service[Config]):
                 f"'{account.type.value}' accounts cannot have associated settlement distribution shares"
             )
 
-        if account.owning_user_id is not None:
-            if not group_membership.is_owner and account.owning_user_id != user.id:
-                raise AccessDenied("only group owners can associate others with accounts")
-
         account_id = await conn.fetchval(
             "insert into account (group_id, type) values ($1, $2) returning id",
             group_id,
@@ -227,13 +154,11 @@ class AccountService(Service[Config]):
 
         revision_id = await self._create_revision(conn, user, account_id)
         await conn.execute(
-            "insert into account_history (id, revision_id, name, description, owning_user_id, date_info) "
-            "values ($1, $2, $3, $4, $5, $6)",
+            "insert into account_history (id, revision_id, name, description, date_info) values ($1, $2, $3, $4, $5)",
             account_id,
             revision_id,
             account.name,
             account.description,
-            account.owning_user_id,
             account.date_info,
         )
 
@@ -278,35 +203,17 @@ class AccountService(Service[Config]):
         group_id, account_type = await self._check_account_permissions(
             conn=conn, user=user, account_id=account_id, can_write=True
         )
-        membership = await check_group_permissions(conn=conn, group_id=group_id, user=user, can_write=True)
         if account.clearing_shares and account_type != AccountType.clearing.value:
             raise InvalidArgument(f"'{account_type}' accounts cannot have associated settlement distribution shares")
 
         revision_id = await self._create_revision(conn=conn, user=user, account_id=account_id)
 
-        committed_account = await conn.fetchrow(
-            "select owning_user_id from account_state_valid_at() where account_id = $1",
-            account_id,
-        )
-
-        if account.owning_user_id is not None:
-            if not membership.is_owner and account.owning_user_id != user.id:
-                raise AccessDenied("only group owners can associate others with accounts")
-        elif (
-            committed_account["owning_user_id"] is not None
-            and committed_account["owning_user_id"] != user.id
-            and not membership.is_owner
-        ):
-            raise AccessDenied("only group owners can remove other users as account owners")
-
         await conn.execute(
-            "insert into account_history (id, revision_id, name, description, owning_user_id, date_info) "
-            "values ($1, $2, $3, $4, $5, $6) ",
+            "insert into account_history (id, revision_id, name, description, date_info) values ($1, $2, $3, $4, $5) ",
             account_id,
             revision_id,
             account.name,
             account.description,
-            account.owning_user_id,
             account.date_info,
         )
         tag_ids = await _get_or_create_tag_ids(conn=conn, group_id=group_id, tags=account.tags)
@@ -398,14 +305,16 @@ class AccountService(Service[Config]):
         if has_clearing_shares:
             raise InvalidArgument("Cannot delete an account that is references by another clearing account")
 
-        revision_id = await conn.fetchval(
-            "insert into account_revision (user_id, account_id) values ($1, $2) returning id",
-            user.id,
+        await conn.execute(
+            "update group_membership set owned_account_id = null where group_id = $1 and owned_account_id = $2",
+            group_id,
             account_id,
         )
+
+        revision_id = await self._create_revision(conn=conn, user=user, account_id=account_id)
         await conn.execute(
-            "insert into account_history (id, revision_id, name, description, owning_user_id, date_info, deleted) "
-            "select $1, $2, name, description, owning_user_id, date_info, true "
+            "insert into account_history (id, revision_id, name, description, date_info, deleted) "
+            "select $1, $2, name, description, date_info, true "
             "from account_history ah where ah.id = $1 and ah.revision_id = $3 ",
             account_id,
             revision_id,

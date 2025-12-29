@@ -1,25 +1,27 @@
 import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
 import { ListItemLink } from "@/components/style/ListItemLink";
-import { useFormatCurrency, useFormatDatetime, useIsSmallScreen } from "@/hooks";
+import { useFormatCurrency, useFormatDatetime } from "@/hooks";
 import { useAppSelector } from "@/store";
-import { selectAccountIdToAccountMap, useTransaction } from "@abrechnung/redux";
+import { selectAccountIdToAccountMap, selectTransactionBalanceEffect, useTransaction } from "@abrechnung/redux";
 import { HelpOutline } from "@mui/icons-material";
-import { Chip, Divider, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
+import { Chip, Divider, ListItemAvatar, ListItemText, Stack, Tooltip, Typography } from "@mui/material";
 import * as React from "react";
+import { balanceColor } from "@/core/utils";
 import { useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
     transactionId: number;
+    ownedAccountId: number | null;
     style?: React.CSSProperties;
 }
 
-export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, style }) => {
+export const TransactionListItem: React.FC<Props> = ({ groupId, ownedAccountId, transactionId, style }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
     const accounts = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
     const transaction = useTransaction(groupId, transactionId);
-    const isSmallScreen = useIsSmallScreen();
+    const balanceEffect = useAppSelector((state) => selectTransactionBalanceEffect(state, groupId, transactionId));
     const formatDatetime = useFormatDatetime();
     if (transaction === undefined) {
         // TODO: HACKY WORKAROUND
@@ -40,6 +42,8 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
     const debitorNames = Object.keys(transaction.debitor_shares)
         .map((accountId) => accounts[Number(accountId)]?.name)
         .join(", ");
+
+    const ownAccountBalanceEffect = ownedAccountId != null ? balanceEffect[ownedAccountId] : undefined;
 
     return (
         <>
@@ -79,31 +83,47 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, transactionId, s
                         </>
                     }
                     secondary={
-                        <>
-                            <Typography variant="body2" component="span" sx={{ color: "text.primary" }}>
-                                {t("transactions.byFor", "", { by: creditorNames, for: debitorNames })}
-                            </Typography>
-                            <br />
-                            {formatDatetime(transaction.billed_at, "date")}
-                            {transaction.tags.map((t) => (
-                                <Chip key={t} sx={{ ml: 1 }} variant="outlined" size="small" color="info" label={t} />
-                            ))}
-                        </>
+                        <Stack>
+                            <div>
+                                <Typography variant="body2" component="span" sx={{ color: "text.primary" }}>
+                                    {t("transactions.byFor", "", { by: creditorNames, for: debitorNames })}
+                                </Typography>
+                                {transaction.tags.map((t) => (
+                                    <Chip
+                                        key={t}
+                                        sx={{ ml: 1 }}
+                                        variant="outlined"
+                                        size="small"
+                                        color="info"
+                                        label={t}
+                                    />
+                                ))}
+                            </div>
+                            {ownAccountBalanceEffect != null && (
+                                <div>
+                                    <span>{t("transactions.yourBalance")}&nbsp;</span>
+                                    <Typography
+                                        variant="body2"
+                                        component="span"
+                                        sx={{
+                                            color: (theme) => balanceColor(ownAccountBalanceEffect.total, theme),
+                                        }}
+                                    >
+                                        {formatCurrency(ownAccountBalanceEffect.total, transaction.currency_identifier)}
+                                    </Typography>
+                                </div>
+                            )}
+                        </Stack>
                     }
                 />
+
                 <ListItemText>
                     <Typography align="right" variant="body2">
                         {formatCurrency(transaction.value, transaction.currency_identifier)}
-                        {!isSmallScreen && (
-                            <>
-                                <br />
-                                <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
-                                    {t("common.lastChangedWithTime", {
-                                        datetime: formatDatetime(transaction.last_changed, "full"),
-                                    })}
-                                </Typography>
-                            </>
-                        )}
+                        <br />
+                        <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
+                            {formatDatetime(transaction.billed_at, "date")}
+                        </Typography>
                     </Typography>
                 </ListItemText>
             </ListItemLink>

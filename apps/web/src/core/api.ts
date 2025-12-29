@@ -1,4 +1,4 @@
-import { Api, ApiError, IConnectionStatusProvider } from "@abrechnung/api";
+import { Api, ApiError, IConnectionStatusProvider, stringifyError } from "@abrechnung/api";
 import {
     fetchBaseQuery,
     type BaseQueryFn,
@@ -36,9 +36,6 @@ export const apiBaseQuery: BaseQueryFn<string | FetchArgs, unknown, FetchBaseQue
 };
 
 export const handleApiError = (err: ApiError) => {
-    let message = err.name;
-    if (typeof err.body?.message === "string") {
-        message = err.body.message;
-    }
+    const message = stringifyError(err);
     toast.error(message);
 };

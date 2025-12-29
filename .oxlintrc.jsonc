@@ -1,18 +1,9 @@
 {
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": [
-    "eslint",
-    "typescript",
-    "oxc",
-    "unicorn",
-    "import",
-    "react",
-    "react-perf",
-    "vitest",
-  ],
-  "categories": {
-    "correctness": "error",
-    "suspicious": "error",
-    "perf": "error",
-  },
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "plugins": ["eslint", "typescript", "oxc", "unicorn", "import", "react", "react-perf", "vitest"],
+    "categories": {
+        "correctness": "error",
+        "suspicious": "error",
+        "perf": "error",
+    },
 }

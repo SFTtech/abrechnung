@@ -7,7 +7,7 @@ import { useAppSelector } from "@/store";
 import { ListItemLink, PurchaseIcon, TransferIcon } from "../style";
 import { useTranslation } from "react-i18next";
 import { Transaction } from "@abrechnung/types";
-import { useFormatCurrency, useFormatDatetime, useIsSmallScreen } from "@/hooks";
+import { useFormatCurrency, useFormatDatetime } from "@/hooks";
 
 interface Props {
     groupId: number;
@@ -21,7 +21,6 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transact
     const formatDatetime = useFormatDatetime();
     const formatCurrency = useFormatCurrency();
     const currencyIdentifier = useGroupCurrencyIdentifier(groupId);
-    const isSmallScreen = useIsSmallScreen();
 
     return (
         <>
@@ -64,16 +63,6 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transact
                         >
                             {formatCurrency(balanceEffect[accountId].total, currencyIdentifier)}
                         </Typography>
-                        {!isSmallScreen && (
-                            <>
-                                <br />
-                                <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
-                                    {t("common.lastChangedWithTime", {
-                                        datetime: formatDatetime(transaction.last_changed, "full"),
-                                    })}
-                                </Typography>
-                            </>
-                        )}
                     </Typography>
                 </ListItemText>
             </ListItemLink>

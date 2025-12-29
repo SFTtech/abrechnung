@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { FormTextField } from "@abrechnung/components";
 
 const validationSchema = z.object({
-    email: z.string({ required_error: "email is required" }).email("please enter a valid email address"),
+    email: z.email({ error: (issue) => (issue.input === undefined ? "email is required" : null) }),
 });
 type FormSchema = z.infer<typeof validationSchema>;
 

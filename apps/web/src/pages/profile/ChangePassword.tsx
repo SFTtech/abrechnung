@@ -13,9 +13,11 @@ import { FormTextField } from "@abrechnung/components";
 
 const validationSchema = z
     .object({
-        password: z.string({ required_error: "password is required" }),
-        newPassword: z.string({ required_error: "new password is required" }),
-        newPassword2: z.string({ required_error: "please repeat your desired new password" }),
+        password: z.string({ error: (issue) => (issue.input === undefined ? "password is required" : null) }),
+        newPassword: z.string({ error: (issue) => (issue.input === undefined ? "new password is required" : null) }),
+        newPassword2: z.string({
+            error: (issue) => (issue.input === undefined ? "please repeat your desired new password" : null),
+        }),
     })
     .refine((data) => data.newPassword === data.newPassword2, {
         message: i18n.t("common.passwordsDoNotMatch"),

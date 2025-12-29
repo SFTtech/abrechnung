@@ -1,22 +1,22 @@
 service:
-  url: "https://localhost"
-  name: "Abrechnung"
+    url: "https://localhost"
+    name: "Abrechnung"
 
 database:
-  host: "0.0.0.0"
-  user: "abrechnung"
-  dbname: "abrechnung"
+    host: "0.0.0.0"
+    user: "abrechnung"
+    dbname: "abrechnung"
 
 api:
-  host: "0.0.0.0"
-  base_url: "https://localhost"
-  port: 8080
-  id: default
+    host: "0.0.0.0"
+    base_url: "https://localhost"
+    port: 8080
+    id: default
 
 registration:
-  enabled: false
+    enabled: false
 
 email:
-  host: "localhost"
-  port: 587
-  mode: "smtp-starttls"
+    host: "localhost"
+    port: 587
+    mode: "smtp-starttls"

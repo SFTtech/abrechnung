@@ -1,27 +1,27 @@
 service:
-  name: "Abrechnung"
+    name: "Abrechnung"
 
 database:
-  host: "localhost"
-  user: "abrechnung"
-  dbname: "abrechnung"
+    host: "localhost"
+    user: "abrechnung"
+    dbname: "abrechnung"
 #  password: "<db password>"
 
 api:
-  secret_key: "please generate a unique one with pwgen -s 64 1"
-  base_url: "http://localhost"
-  host: "localhost"
-  port: 8080
-  id: default
+    secret_key: "please generate a unique one with pwgen -s 64 1"
+    base_url: "http://localhost"
+    host: "localhost"
+    port: 8080
+    id: default
 
 registration:
-  enabled: false
+    enabled: false
 
 email:
-  address: "abrechnung@example.lol"
-  host: "localhost"
-  port: 587
-  mode: "smtp-starttls"
-  auth:
-    username: "abrechnung"
-    password: "Mb2.r5oHf-0t"
+    address: "abrechnung@example.lol"
+    host: "localhost"
+    port: 587
+    mode: "smtp-starttls"
+    auth:
+        username: "abrechnung"
+        password: "Mb2.r5oHf-0t"

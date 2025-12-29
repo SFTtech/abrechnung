@@ -12,7 +12,7 @@ import { useTranslation } from "react-i18next";
 import { CurrencyIdentifier } from "@abrechnung/core";
 
 const validationSchema = z.object({
-    name: z.string({ required_error: "Name is required" }),
+    name: z.string({ error: (issue) => (issue.input === undefined ? "Name is required" : null) }),
     currency_identifier: z.string(),
     description: z.string().optional(),
     addUserAccountOnJoin: z.boolean(),

@@ -269,6 +269,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                                 <TransactionListItem
                                     key={transaction.id}
                                     groupId={groupId}
+                                    ownedAccountId={group.owned_account_id}
                                     transactionId={transaction.id}
                                 />
                             ))

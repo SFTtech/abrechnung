@@ -2,7 +2,7 @@ import { DisabledFormControlLabel, DisabledFormTextField, DisabledTextField } fr
 import { api } from "@/core/api";
 import { useAppDispatch } from "@/store";
 import { Group } from "@abrechnung/api";
-import { updateGroup, useCurrentUserPermissions } from "@abrechnung/redux";
+import { updateGroup } from "@abrechnung/redux";
 import { Cancel, Edit, Save } from "@mui/icons-material";
 import { Alert, Button, Checkbox, FormGroup, Grid, Stack } from "@mui/material";
 import * as React from "react";
@@ -18,7 +18,7 @@ type SettingsFormProps = {
 };
 
 const validationSchema = z.object({
-    name: z.string({ required_error: "group name is required" }),
+    name: z.string({ error: (issue) => (issue.input === undefined ? "group name is required" : null) }),
     description: z.string(),
     terms: z.string(),
     addUserAccountOnJoin: z.boolean(),
@@ -29,8 +29,6 @@ type FormValues = z.infer<typeof validationSchema>;
 export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
-
-    const permissions = useCurrentUserPermissions(group.id);
 
     const [isEditing, setIsEditing] = React.useState(false);
 
@@ -77,7 +75,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
             });
     };
 
-    if (!permissions || !group) {
+    if (!group) {
         return <Alert severity="error">Error loading group permissions</Alert>;
     }
 
@@ -91,7 +89,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
                 type="text"
                 label={t("common.name")}
                 name="name"
-                disabled={!permissions.can_write || !isEditing}
+                disabled={!group.can_write || !isEditing}
                 control={control}
             />
             <DisabledFormTextField
@@ -101,7 +99,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
                 type="text"
                 name="description"
                 label={t("common.description")}
-                disabled={!permissions.can_write || !isEditing}
+                disabled={!group.can_write || !isEditing}
                 control={control}
             />
 
@@ -123,7 +121,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
                 type="text"
                 name="terms"
                 label={t("groups.settings.terms")}
-                disabled={!permissions.can_write || !isEditing}
+                disabled={!group.can_write || !isEditing}
                 control={control}
             />
             <FormGroup>
@@ -134,7 +132,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
                             control={control}
                             render={({ field }) => (
                                 <Checkbox
-                                    disabled={!permissions.can_write || !isEditing || field.disabled}
+                                    disabled={!group.can_write || !isEditing || field.disabled}
                                     onBlur={field.onBlur}
                                     onChange={field.onChange}
                                     checked={field.value}
@@ -147,7 +145,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
             </FormGroup>
             <Grid container justifyContent="space-between" style={{ marginTop: 10 }}>
                 <div>
-                    {permissions.can_write && isEditing && (
+                    {group.can_write && isEditing && (
                         <Stack spacing={1} direction="row">
                             <Button type="submit" variant="contained" color="primary" startIcon={<Save />}>
                                 {t("common.save")}
@@ -157,7 +155,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
                             </Button>
                         </Stack>
                     )}
-                    {permissions.can_write && !isEditing && (
+                    {group.can_write && !isEditing && (
                         <Button variant="contained" color="primary" onClick={startEdit} startIcon={<Edit />}>
                             {t("common.edit")}
                         </Button>

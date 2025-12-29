@@ -1,79 +1,79 @@
 services:
-  api:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile-api
-    extends:
-      file: docker-compose.base.yaml
-      service: api
-    env_file: .env
-    environment:
-      ABRECHNUNG_DATABASE__HOST: postgres
-    depends_on:
-      postgres:
-        condition: service_healthy
+    api:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile-api
+        extends:
+            file: docker-compose.base.yaml
+            service: api
+        env_file: .env
+        environment:
+            ABRECHNUNG_DATABASE__HOST: postgres
+        depends_on:
+            postgres:
+                condition: service_healthy
 
-  frontend-dev:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile-devel
-      target: frontend-dev
-    depends_on:
-      api:
-        condition: service_healthy
+    frontend-dev:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile-devel
+            target: frontend-dev
+        depends_on:
+            api:
+                condition: service_healthy
 
-  nginx:
-    image: docker.io/nginx:stable-alpine
-    depends_on:
-      api:
-        condition: service_healthy
-    volumes:
-      - "./docker/nginx-dynamic:/etc/nginx/conf.d/default.conf"
-    ports:
-      - "8080:80"
+    nginx:
+        image: docker.io/nginx:stable-alpine
+        depends_on:
+            api:
+                condition: service_healthy
+        volumes:
+            - "./docker/nginx-dynamic:/etc/nginx/conf.d/default.conf"
+        ports:
+            - "8080:80"
 
-  mailer:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile-api
-    extends:
-      file: docker-compose.base.yaml
-      service: mailer
-    env_file: .env
-    environment:
-      ABRECHNUNG_DATABASE__HOST: postgres
-      ABRECHNUNG_EMAIL__HOST: mail
-      ABRECHNUNG_EMAIL__PORT: 1025
-      ABRECHNUNG_EMAIL__MODE: smtp
-    depends_on:
-      api:
-        condition: service_healthy
+    mailer:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile-api
+        extends:
+            file: docker-compose.base.yaml
+            service: mailer
+        env_file: .env
+        environment:
+            ABRECHNUNG_DATABASE__HOST: postgres
+            ABRECHNUNG_EMAIL__HOST: mail
+            ABRECHNUNG_EMAIL__PORT: 1025
+            ABRECHNUNG_EMAIL__MODE: smtp
+        depends_on:
+            api:
+                condition: service_healthy
 
-  cron:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile-api
-    extends:
-      file: docker-compose.base.yaml
-      service: cron
-    env_file: .env
-    environment:
-      ABRECHNUNG_DATABASE__HOST: postgres
-      ABRECHNUNG_EMAIL__HOST: mail
-      ABRECHNUNG_EMAIL__PORT: 1025
-      ABRECHNUNG_EMAIL__MODE: smtp
+    cron:
+        build:
+            context: .
+            dockerfile: docker/Dockerfile-api
+        extends:
+            file: docker-compose.base.yaml
+            service: cron
+        env_file: .env
+        environment:
+            ABRECHNUNG_DATABASE__HOST: postgres
+            ABRECHNUNG_EMAIL__HOST: mail
+            ABRECHNUNG_EMAIL__PORT: 1025
+            ABRECHNUNG_EMAIL__MODE: smtp
 
-  postgres:
-    image: docker.io/postgres:14-alpine
-    env_file: .env
-    healthcheck:
-      test: ["CMD", "/usr/local/bin/pg_isready"]
-      start_period: 10s
-    volumes:
-      - "./data/pg:/var/lib/postgresql/data"
+    postgres:
+        image: docker.io/postgres:14-alpine
+        env_file: .env
+        healthcheck:
+            test: ["CMD", "/usr/local/bin/pg_isready"]
+            start_period: 10s
+        volumes:
+            - "./data/pg:/var/lib/postgresql/data"
 
-  mailhog:
-    image: docker.io/mailhog/mailhog
-    ports:
-      - "8025:8025"
-    env_file: .env
+    mailhog:
+        image: docker.io/mailhog/mailhog
+        ports:
+            - "8025:8025"
+        env_file: .env

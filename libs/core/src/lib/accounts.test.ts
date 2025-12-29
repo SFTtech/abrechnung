@@ -39,7 +39,6 @@ const clearingAccountTemplate: Omit<ClearingAccount, "id" | "clearing_shares"> =
 const personalAccountTemplate: Omit<PersonalAccount, "id"> = {
     ...accountTemplate,
     type: "personal" as const,
-    owning_user_id: null,
 };
 
 describe("computeAccountBalances", () => {

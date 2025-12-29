@@ -6,6 +6,7 @@ import { deleteAccount } from "@abrechnung/redux";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 import { Account } from "@abrechnung/types";
+import { stringifyError } from "@abrechnung/api";
 
 interface Props {
     show: boolean;
@@ -38,9 +39,7 @@ export const DeleteAccountModal: React.FC<Props> = ({ show, onClose, groupId, ac
             })
             .catch((err) => {
                 toast.error(
-                    `error while deleting ${account.type === "personal" ? "account" : "event"}: ${
-                        err.message ?? err.toString()
-                    }`
+                    `error while deleting ${account.type === "personal" ? "account" : "event"}: ${stringifyError(err)}`
                 );
                 onClose();
                 setShowProgress(false);

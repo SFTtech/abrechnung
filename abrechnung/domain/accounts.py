@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from enum import Enum
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -17,7 +17,6 @@ class NewAccount(BaseModel):
     type: AccountType
     name: str
     description: str = ""
-    owning_user_id: int | None = None
     date_info: date | None = None
     deleted: bool = False
 
@@ -46,7 +45,6 @@ class PersonalAccount(BaseModel):
     type: Literal["personal"]
     name: str
     description: str
-    owning_user_id: Optional[int]
     deleted: bool
 
     last_changed: datetime
