@@ -1,33 +1,30 @@
 # Abrechnung
 
-[![GitHub Actions Status](https://github.com/SFTtech/abrechnung/actions/workflows/ci_testing.yaml/badge.svg)](https://github.com/SFTtech/abrechnung/actions/workflows/ci_testing.yaml)
+[![GitHub Actions Status](https://github.com/SFTtech/abrechnung/actions/workflows/push_on_master.yaml/badge.svg)](https://github.com/SFTtech/abrechnung/actions/workflows/push_on_master.yaml)
 [![Translation Status](https://hosted.weblate.org/widget/abrechnung/svg-badge.svg)](https://hosted.weblate.org/engage/abrechnung/)
 
 The _Abrechnung_ (German for _reckoning_, _settlement_, _revenge_) aims to be a versatile and user-centric **payment**, **transaction** and **bookkeeping** management tool for human groups and events.
+It aims to be a feature-complete, free and open source alternative to Splitwise, Tricount or similar.
 
 > You can simply **try** our [**demo instance**](https://demo.abrechnung.sft.lol)!
 
-> For mobile usage simply use the "Add to Home Screen" feature of your favourite web browser.
+### Features
 
-Abrechnung is a tool to track _money_, _purchases_ (and its items) and _debtors_ for:
-
-| Group life           | Events            | Travelling     |
-| -------------------- | ----------------- | -------------- |
-| Flat share roommates | Cooking revelries | Holiday trips  |
-| Your Hackerspace     | LAN parties       | Business trips |
-| Family life          | Regular parties   | Adventures     |
-| ...                  | ...               | ...            |
-
----
-
-All this is possible through the **basic blocks**:
-
-- Purchase & transaction tracking
-- Accounts with balance compensation
-- Invoice handling + optional position specification
-- Assignment (by fractions or counts) of positions and invoices
-- Clearing accounts for merging transactions
-- Multitenant access
+- Create and share groups
+- Create expenses and money transfers with uneven shares
+- Track expense positions
+- Permission management within groups to distinguish between viewers, editors and group owners
+- Installable on Mobile as a Progressive Web App - use the "Add to Home Screen" feature of your favourite web browser
+- Upload images for expenses
+- Use multiple currencies with different converesion rates within one group
+- Use math expressions when entering numeric values, e.g. typing `(2 + 4) * 3` in a text field will automatically enter `18`
+- Graphical representations of the current group balance as well as individual peoples balances over time
+- Automatic settlement plans for the whole group
+- Create events to manage complex expenses, e.g. multiple people buying things for a multi-day event with different participants each day
+- Add tags to expenses and events to quickly filter the expense and event lists
+- Unsaved changes are stored locally to not get lost when your internet connection drops
+- Export expenses to CSV
+- Archive groups to make them readonly
 
 ## Documentation
 
@@ -37,12 +34,12 @@ To help you set up your instance or understand the inner workings:
 
 ## Technical foundation
 
-| Technology       | Component        |
-| ---------------- | ---------------- |
-| **Python**       | Backend logic    |
-| **React**        | Web UI framework |
-| **PostgresSQL**  | Database         |
-| **Homo Sapiens** | Magic sauce      |
+| Technology              | Component       |
+| ----------------------- | --------------- |
+| **PostgresSQL**         | Database        |
+| **Python + FastAPI**    | Backend logic   |
+| **React + Material UI** | Web UI frontend |
+| **Homo Sapiens**        | Magic sauce     |
 
 ## Contributing
 
