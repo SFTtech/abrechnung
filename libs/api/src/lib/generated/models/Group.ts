@@ -15,4 +15,5 @@ export type Group = {
     archived: boolean;
     is_owner: boolean;
     can_write: boolean;
+    owned_account_id: number | null;
 };

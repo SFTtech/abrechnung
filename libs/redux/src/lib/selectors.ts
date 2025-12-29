@@ -37,16 +37,6 @@ export const selectAccountBalanceHistory = createSelector(
     }
 );
 
-export const useCurrentUserPermissions = (groupId: number): { is_owner: boolean; can_write: boolean } | undefined => {
-    return useSelector((state: IRootState) => {
-        if (state.groups.groups.byId[groupId] === undefined) {
-            return undefined;
-        }
-        const group = state.groups.groups.byId[groupId];
-        return group;
-    });
-};
-
 export const selectTagsInGroup = createSelector(
     (state: IRootState, groupId: number) => selectGroupTransactionsWithWip(state, groupId),
     (state: IRootState, groupId: number) => selectGroupAccounts(state, groupId, "clearing"),

@@ -266,47 +266,6 @@ end
 $$
 set search_path = "$user", public;
 
-create or replace function check_committed_accounts(
-    revision_id bigint,
-    account_id integer
-) returns boolean as
-$$
-<<locals>> declare
-    n_clearing_shares int;
-    group_id          int;
-    account_type      text;
-    account_deleted   boolean;
-begin
-    select
-        a.type,
-        ah.deleted,
-        a.group_id
-    into locals.account_type, locals.account_deleted, locals.group_id
-    from
-        account a
-        left join account_history ah on a.id = ah.id and ah.revision_id = check_committed_accounts.revision_id
-    where a.id = check_committed_accounts.account_id;
-
-    select
-        count(cas.share_account_id)
-    into locals.n_clearing_shares
-    from
-        clearing_account_share cas
-    where
-            cas.account_id = check_committed_accounts.account_id
-        and cas.revision_id = check_committed_accounts.revision_id;
-
-    if locals.account_type = 'personal' then
-        if locals.n_clearing_shares != 0 then
-            raise '"personal" type accounts cannot have associated settlement distribution shares';
-        end if;
-    end if;
-
-    return true;
-end
-$$ language plpgsql
-set search_path = "$user", public;
-
 alter table account_revision add constraint check_committed_accounts
     check (check_committed_accounts(id, account_id));
 

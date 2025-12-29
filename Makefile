@@ -40,9 +40,9 @@ docs:
 
 .PHONY: serve-docs
 serve-docs:
-	python3 -m http.server -d docs/_build/html 8888
+	uv run -m http.server -d docs/_build/html 8888
 
 .PHONY: generate-openapi
 generate-openapi:
 	mkdir -p api
-	python3 -m abrechnung -c config.yaml show-openapi > api/openapi.json
+	uv run abrechnung -c config.yaml show-openapi > api/openapi.json

@@ -21,7 +21,12 @@ export default defineConfig(() => ({
         port: 4200,
         host: "0.0.0.0",
     },
-    plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(["*.md"]), checker({ typescript: true })],
+    plugins: [
+        react(),
+        nxViteTsPaths(),
+        nxCopyAssetsPlugin(["*.md"]),
+        checker({ typescript: { tsconfigPath: "tsconfig.app.json" } }),
+    ],
     // Uncomment this if you are using workers.
     // worker: {
     //  plugins: [ nxViteTsPaths() ],

@@ -12,7 +12,8 @@ import type { GroupMessage } from "../models/GroupMessage";
 import type { GroupPreview } from "../models/GroupPreview";
 import type { GroupUpdatePayload } from "../models/GroupUpdatePayload";
 import type { PreviewGroupPayload } from "../models/PreviewGroupPayload";
-import type { UpdateGroupMemberPayload } from "../models/UpdateGroupMemberPayload";
+import type { UpdateGroupMemberOwnedAccountPayload } from "../models/UpdateGroupMemberOwnedAccountPayload";
+import type { UpdateGroupMemberPermissionsPayload } from "../models/UpdateGroupMemberPermissionsPayload";
 import type { CancelablePromise } from "../core/CancelablePromise";
 import type { BaseHttpRequest } from "../core/BaseHttpRequest";
 export class GroupsService {
@@ -199,34 +200,6 @@ export class GroupsService {
         });
     }
     /**
-     * update the permissions of a group member
-     * @returns GroupMember Successful Response
-     * @throws ApiError
-     */
-    public updateMemberPermissions({
-        groupId,
-        requestBody,
-    }: {
-        groupId: number;
-        requestBody: UpdateGroupMemberPayload;
-    }): CancelablePromise<GroupMember> {
-        return this.httpRequest.request({
-            method: "POST",
-            url: "/api/v1/groups/{group_id}/members",
-            path: {
-                group_id: groupId,
-            },
-            body: requestBody,
-            mediaType: "application/json",
-            errors: {
-                401: `unauthorized`,
-                403: `forbidden`,
-                404: `Not found`,
-                422: `Validation Error`,
-            },
-        });
-    }
-    /**
      * fetch the group log
      * @returns GroupLog Successful Response
      * @throws ApiError
@@ -263,6 +236,68 @@ export class GroupsService {
             url: "/api/v1/groups/{group_id}/send_message",
             path: {
                 group_id: groupId,
+            },
+            body: requestBody,
+            mediaType: "application/json",
+            errors: {
+                401: `unauthorized`,
+                403: `forbidden`,
+                404: `Not found`,
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * update the permissions of a group member
+     * @returns GroupMember Successful Response
+     * @throws ApiError
+     */
+    public updateMemberPermissions({
+        groupId,
+        userId,
+        requestBody,
+    }: {
+        groupId: number;
+        userId: number;
+        requestBody: UpdateGroupMemberPermissionsPayload;
+    }): CancelablePromise<GroupMember> {
+        return this.httpRequest.request({
+            method: "POST",
+            url: "/api/v1/groups/{group_id}/members/{user_id}",
+            path: {
+                group_id: groupId,
+                user_id: userId,
+            },
+            body: requestBody,
+            mediaType: "application/json",
+            errors: {
+                401: `unauthorized`,
+                403: `forbidden`,
+                404: `Not found`,
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * update the owned account of a group member
+     * @returns GroupMember Successful Response
+     * @throws ApiError
+     */
+    public updateMemberOwnedAccount({
+        groupId,
+        userId,
+        requestBody,
+    }: {
+        groupId: number;
+        userId: number;
+        requestBody: UpdateGroupMemberOwnedAccountPayload;
+    }): CancelablePromise<GroupMember> {
+        return this.httpRequest.request({
+            method: "POST",
+            url: "/api/v1/groups/{group_id}/members/{user_id}/owned-account",
+            path: {
+                group_id: groupId,
+                user_id: userId,
             },
             body: requestBody,
             mediaType: "application/json",

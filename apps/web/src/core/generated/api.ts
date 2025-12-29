@@ -72,7 +72,9 @@ const injectedRtkApi = api
                 invalidatesTags: ["transactions"],
             }),
             getFileContents: build.query<GetFileContentsApiResponse, GetFileContentsApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/files/${queryArg.fileId}/${queryArg.blobId}` }),
+                query: (queryArg) => ({
+                    url: `/api/v1/files/${queryArg.fileId}/${queryArg.blobId}`,
+                }),
                 providesTags: ["transactions"],
             }),
             previewGroup: build.mutation<PreviewGroupApiResponse, PreviewGroupApiArg>({
@@ -96,7 +98,11 @@ const injectedRtkApi = api
                 providesTags: ["groups"],
             }),
             createGroup: build.mutation<CreateGroupApiResponse, CreateGroupApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/groups`, method: "POST", body: queryArg.groupCreatePayload }),
+                query: (queryArg) => ({
+                    url: `/api/v1/groups`,
+                    method: "POST",
+                    body: queryArg.groupCreatePayload,
+                }),
                 invalidatesTags: ["groups"],
             }),
             getGroup: build.query<GetGroupApiResponse, GetGroupApiArg>({
@@ -112,27 +118,29 @@ const injectedRtkApi = api
                 invalidatesTags: ["groups"],
             }),
             deleteGroup: build.mutation<DeleteGroupApiResponse, DeleteGroupApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/groups/${queryArg.groupId}`, method: "DELETE" }),
+                query: (queryArg) => ({
+                    url: `/api/v1/groups/${queryArg.groupId}`,
+                    method: "DELETE",
+                }),
                 invalidatesTags: ["groups"],
             }),
             leaveGroup: build.mutation<LeaveGroupApiResponse, LeaveGroupApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/groups/${queryArg.groupId}/leave`, method: "POST" }),
+                query: (queryArg) => ({
+                    url: `/api/v1/groups/${queryArg.groupId}/leave`,
+                    method: "POST",
+                }),
                 invalidatesTags: ["groups"],
             }),
             listMembers: build.query<ListMembersApiResponse, ListMembersApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/groups/${queryArg.groupId}/members` }),
-                providesTags: ["groups", "group_members"],
-            }),
-            updateMemberPermissions: build.mutation<UpdateMemberPermissionsApiResponse, UpdateMemberPermissionsApiArg>({
                 query: (queryArg) => ({
                     url: `/api/v1/groups/${queryArg.groupId}/members`,
-                    method: "POST",
-                    body: queryArg.updateGroupMemberPayload,
                 }),
-                invalidatesTags: ["groups", "group_members"],
+                providesTags: ["groups", "group_members"],
             }),
             listLog: build.query<ListLogApiResponse, ListLogApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/groups/${queryArg.groupId}/logs` }),
+                query: (queryArg) => ({
+                    url: `/api/v1/groups/${queryArg.groupId}/logs`,
+                }),
                 providesTags: ["groups", "group_logs"],
             }),
             sendGroupMessage: build.mutation<SendGroupMessageApiResponse, SendGroupMessageApiArg>({
@@ -143,8 +151,29 @@ const injectedRtkApi = api
                 }),
                 invalidatesTags: ["groups", "group_logs"],
             }),
+            updateMemberPermissions: build.mutation<UpdateMemberPermissionsApiResponse, UpdateMemberPermissionsApiArg>({
+                query: (queryArg) => ({
+                    url: `/api/v1/groups/${queryArg.groupId}/members/${queryArg.userId}`,
+                    method: "POST",
+                    body: queryArg.updateGroupMemberPermissionsPayload,
+                }),
+                invalidatesTags: ["groups", "group_members"],
+            }),
+            updateMemberOwnedAccount: build.mutation<
+                UpdateMemberOwnedAccountApiResponse,
+                UpdateMemberOwnedAccountApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/api/v1/groups/${queryArg.groupId}/members/${queryArg.userId}/owned-account`,
+                    method: "POST",
+                    body: queryArg.updateGroupMemberOwnedAccountPayload,
+                }),
+                invalidatesTags: ["groups", "group_members"],
+            }),
             listInvites: build.query<ListInvitesApiResponse, ListInvitesApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/groups/${queryArg.groupId}/invites` }),
+                query: (queryArg) => ({
+                    url: `/api/v1/groups/${queryArg.groupId}/invites`,
+                }),
                 providesTags: ["groups", "group_invites"],
             }),
             createInvite: build.mutation<CreateInviteApiResponse, CreateInviteApiArg>({
@@ -163,19 +192,33 @@ const injectedRtkApi = api
                 invalidatesTags: ["groups", "group_invites"],
             }),
             archiveGroup: build.mutation<ArchiveGroupApiResponse, ArchiveGroupApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/groups/${queryArg.groupId}/archive`, method: "POST" }),
+                query: (queryArg) => ({
+                    url: `/api/v1/groups/${queryArg.groupId}/archive`,
+                    method: "POST",
+                }),
                 invalidatesTags: ["groups"],
             }),
             unarchiveGroup: build.mutation<UnarchiveGroupApiResponse, UnarchiveGroupApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/groups/${queryArg.groupId}/un-archive`, method: "POST" }),
+                query: (queryArg) => ({
+                    url: `/api/v1/groups/${queryArg.groupId}/un-archive`,
+                    method: "POST",
+                }),
                 invalidatesTags: ["groups"],
             }),
             getToken: build.mutation<GetTokenApiResponse, GetTokenApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/auth/token`, method: "POST", body: queryArg.bodyGetToken }),
+                query: (queryArg) => ({
+                    url: `/api/v1/auth/token`,
+                    method: "POST",
+                    body: queryArg.bodyGetToken,
+                }),
                 invalidatesTags: ["auth"],
             }),
             login: build.mutation<LoginApiResponse, LoginApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/auth/login`, method: "POST", body: queryArg.loginPayload }),
+                query: (queryArg) => ({
+                    url: `/api/v1/auth/login`,
+                    method: "POST",
+                    body: queryArg.loginPayload,
+                }),
                 invalidatesTags: ["auth"],
             }),
             logout: build.mutation<LogoutApiResponse, LogoutApiArg>({
@@ -183,7 +226,11 @@ const injectedRtkApi = api
                 invalidatesTags: ["auth"],
             }),
             register: build.mutation<RegisterApiResponse, RegisterApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/auth/register`, method: "POST", body: queryArg.registerPayload }),
+                query: (queryArg) => ({
+                    url: `/api/v1/auth/register`,
+                    method: "POST",
+                    body: queryArg.registerPayload,
+                }),
                 invalidatesTags: ["auth"],
             }),
             confirmRegistration: build.mutation<ConfirmRegistrationApiResponse, ConfirmRegistrationApiArg>({
@@ -255,7 +302,9 @@ const injectedRtkApi = api
                 invalidatesTags: ["auth"],
             }),
             listAccounts: build.query<ListAccountsApiResponse, ListAccountsApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/groups/${queryArg.groupId}/accounts` }),
+                query: (queryArg) => ({
+                    url: `/api/v1/groups/${queryArg.groupId}/accounts`,
+                }),
                 providesTags: ["accounts"],
             }),
             createAccount: build.mutation<CreateAccountApiResponse, CreateAccountApiArg>({
@@ -267,7 +316,9 @@ const injectedRtkApi = api
                 invalidatesTags: ["accounts"],
             }),
             getAccount: build.query<GetAccountApiResponse, GetAccountApiArg>({
-                query: (queryArg) => ({ url: `/api/v1/groups/${queryArg.groupId}/accounts/${queryArg.accountId}` }),
+                query: (queryArg) => ({
+                    url: `/api/v1/groups/${queryArg.groupId}/accounts/${queryArg.accountId}`,
+                }),
                 providesTags: ["accounts"],
             }),
             updateAccount: build.mutation<UpdateAccountApiResponse, UpdateAccountApiArg>({
@@ -375,11 +426,6 @@ export type ListMembersApiResponse = /** status 200 Successful Response */ Group
 export type ListMembersApiArg = {
     groupId: number;
 };
-export type UpdateMemberPermissionsApiResponse = /** status 200 Successful Response */ GroupMember;
-export type UpdateMemberPermissionsApiArg = {
-    groupId: number;
-    updateGroupMemberPayload: UpdateGroupMemberPayload;
-};
 export type ListLogApiResponse = /** status 200 Successful Response */ GroupLog[];
 export type ListLogApiArg = {
     groupId: number;
@@ -388,6 +434,18 @@ export type SendGroupMessageApiResponse = unknown;
 export type SendGroupMessageApiArg = {
     groupId: number;
     groupMessage: GroupMessage;
+};
+export type UpdateMemberPermissionsApiResponse = /** status 200 Successful Response */ GroupMember;
+export type UpdateMemberPermissionsApiArg = {
+    groupId: number;
+    userId: number;
+    updateGroupMemberPermissionsPayload: UpdateGroupMemberPermissionsPayload;
+};
+export type UpdateMemberOwnedAccountApiResponse = /** status 200 Successful Response */ GroupMember;
+export type UpdateMemberOwnedAccountApiArg = {
+    groupId: number;
+    userId: number;
+    updateGroupMemberOwnedAccountPayload: UpdateGroupMemberOwnedAccountPayload;
 };
 export type ListInvitesApiResponse = /** status 200 Successful Response */ GroupInvite[];
 export type ListInvitesApiArg = {
@@ -628,6 +686,7 @@ export type Group = {
     archived: boolean;
     is_owner: boolean;
     can_write: boolean;
+    owned_account_id: number | null;
 };
 export type GroupCreatePayload = {
     name: string;
@@ -650,11 +709,7 @@ export type GroupMember = {
     description: string;
     joined_at: string;
     invited_by: number | null;
-};
-export type UpdateGroupMemberPayload = {
-    user_id: number;
-    can_write: boolean;
-    is_owner: boolean;
+    owned_account_id: number | null;
 };
 export type GroupLog = {
     id: number;
@@ -666,6 +721,13 @@ export type GroupLog = {
 };
 export type GroupMessage = {
     message: string;
+};
+export type UpdateGroupMemberPermissionsPayload = {
+    can_write: boolean;
+    is_owner: boolean;
+};
+export type UpdateGroupMemberOwnedAccountPayload = {
+    owned_account_id: number | null;
 };
 export type GroupInvite = {
     id: number;
@@ -772,7 +834,6 @@ export type PersonalAccount = {
     type: "personal";
     name: string;
     description: string;
-    owning_user_id: number | null;
     deleted: boolean;
     last_changed: string;
 };
@@ -781,7 +842,6 @@ export type NewAccount = {
     type: AccountType;
     name: string;
     description?: string;
-    owning_user_id?: number | null;
     date_info?: string | null;
     deleted?: boolean;
     tags?: string[];
@@ -832,10 +892,11 @@ export const {
     useLeaveGroupMutation,
     useListMembersQuery,
     useLazyListMembersQuery,
-    useUpdateMemberPermissionsMutation,
     useListLogQuery,
     useLazyListLogQuery,
     useSendGroupMessageMutation,
+    useUpdateMemberPermissionsMutation,
+    useUpdateMemberOwnedAccountMutation,
     useListInvitesQuery,
     useLazyListInvitesQuery,
     useCreateInviteMutation,

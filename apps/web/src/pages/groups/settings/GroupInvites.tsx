@@ -1,4 +1,4 @@
-import { selectIsGuestUser, useCurrentUserPermissions } from "@abrechnung/redux";
+import { selectIsGuestUser } from "@abrechnung/redux";
 import { Add, ContentCopy, Delete, MoreVert } from "@mui/icons-material";
 import { Alert, Grid, IconButton, List, ListItem, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
 import * as React from "react";
@@ -117,7 +117,6 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
     const [showModal, setShowModal] = React.useState(false);
     const { data: invites } = useListInvitesQuery({ groupId: group.id });
     const { data: members } = useListMembersQuery({ groupId: group.id });
-    const permissions = useCurrentUserPermissions(group.id);
     const formatDatetime = useFormatDatetime();
 
     const isGuest = useAppSelector(selectIsGuestUser);
@@ -141,7 +140,7 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
         selection?.addRange(range);
     };
 
-    if (!permissions || !group) {
+    if (!group) {
         return <Navigate to="/404" />;
     }
 
@@ -160,9 +159,7 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
                         invites.map((invite) => (
                             <ListItem
                                 key={invite.id}
-                                secondaryAction={
-                                    permissions.can_write && <InviteActions group={group} invite={invite} />
-                                }
+                                secondaryAction={group.can_write && <InviteActions group={group} invite={invite} />}
                             >
                                 <ListItemText
                                     primary={
@@ -191,7 +188,7 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
                     )}
                 </List>
             )}
-            {permissions.can_write && !isGuest && (
+            {group.can_write && !isGuest && (
                 <>
                     <Grid container justifyContent="center">
                         <IconButton color="primary" onClick={() => setShowModal(true)}>

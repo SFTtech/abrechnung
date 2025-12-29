@@ -2,8 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* oxlint-disable */
-export type UpdateGroupMemberPayload = {
-    user_id: number;
+export type UpdateGroupMemberPermissionsPayload = {
     can_write: boolean;
     is_owner: boolean;
 };

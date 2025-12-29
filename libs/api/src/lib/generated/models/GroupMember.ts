@@ -10,4 +10,5 @@ export type GroupMember = {
     description: string;
     joined_at: string;
     invited_by: number | null;
+    owned_account_id: number | null;
 };

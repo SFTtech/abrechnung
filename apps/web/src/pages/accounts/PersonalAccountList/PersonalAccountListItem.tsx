@@ -1,7 +1,7 @@
 import { ListItemLink } from "@/components/style/ListItemLink";
 import { useAppDispatch } from "@/store";
 import { getAccountLink } from "@/utils";
-import { accountEditStarted, useIsGroupWritable } from "@abrechnung/redux";
+import { accountEditStarted, useGroup, useIsGroupWritable } from "@abrechnung/redux";
 import { Account } from "@abrechnung/types";
 import { Delete, Edit } from "@mui/icons-material";
 import { Chip, Divider, IconButton, ListItemText, Stack } from "@mui/material";
@@ -20,10 +20,11 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const group = useGroup(groupId);
 
     const isGroupWritable = useIsGroupWritable(groupId);
 
-    if (!account) {
+    if (!group || !account) {
         return <Navigate to="/404" />;
     }
 
@@ -34,7 +35,7 @@ export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserI
         navigate(getAccountLink(groupId, account.type, account.id));
     };
     let owningUserInfo = null;
-    if (account.type === "personal" && account.owning_user_id === currentUserId) {
+    if (account.type === "personal" && account.id === group.owned_account_id) {
         owningUserInfo = <Chip size="small" component="span" color="primary" label={t("groups.memberList.itsYou")} />;
     }
 

@@ -238,34 +238,62 @@ async def send_group_message(
     )
 
 
-class UpdateGroupMemberPayload(BaseModel):
-    user_id: int
+class UpdateGroupMemberPermissionsPayload(BaseModel):
     can_write: bool
     is_owner: bool
 
 
 @router.post(
-    r"/v1/groups/{group_id}/members",
+    r"/v1/groups/{group_id}/members/{user_id}",
     summary="update the permissions of a group member",
     response_model=GroupMember,
     operation_id="update_member_permissions",
     tags=["groups", "group_members"],
 )
 async def update_member_permissions(
-    payload: UpdateGroupMemberPayload,
+    payload: UpdateGroupMemberPermissionsPayload,
     group_id: int,
+    user_id: int,
     user: User = Depends(get_current_user),
     group_service: GroupService = Depends(get_group_service),
 ):
     await group_service.update_member_permissions(
         user=user,
         group_id=group_id,
-        member_id=payload.user_id,
+        member_id=user_id,
         can_write=payload.can_write,
         is_owner=payload.is_owner,
     )
 
-    return await group_service.get_member(user=user, group_id=group_id, member_id=payload.user_id)
+    return await group_service.get_member(user=user, group_id=group_id, member_id=user_id)
+
+
+class UpdateGroupMemberOwnedAccountPayload(BaseModel):
+    owned_account_id: int | None
+
+
+@router.post(
+    r"/v1/groups/{group_id}/members/{user_id}/owned-account",
+    summary="update the owned account of a group member",
+    response_model=GroupMember,
+    operation_id="update_member_owned_account",
+    tags=["groups", "group_members"],
+)
+async def update_member_owned_account(
+    payload: UpdateGroupMemberOwnedAccountPayload,
+    group_id: int,
+    user_id: int,
+    user: User = Depends(get_current_user),
+    group_service: GroupService = Depends(get_group_service),
+):
+    await group_service.update_member_owned_account(
+        user=user,
+        group_id=group_id,
+        member_id=user_id,
+        owned_account_id=payload.owned_account_id,
+    )
+
+    return await group_service.get_member(user=user, group_id=group_id, member_id=user_id)
 
 
 @router.get(

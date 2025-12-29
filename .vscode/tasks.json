@@ -1,11 +1,11 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Abrechnung API",
-      "type": "shell",
-      "command": "abrechnung -c config.yaml -vvv api",
-      "problemMatcher": []
-    }
-  ]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Abrechnung API",
+            "type": "shell",
+            "command": "abrechnung -c config.yaml -vvv api",
+            "problemMatcher": []
+        }
+    ]
 }

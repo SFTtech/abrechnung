@@ -133,13 +133,11 @@ class GroupService(Service[Config]):
         )
 
         await conn.execute(
-            "insert into account_history (id, revision_id, name, description, owning_user_id) "
-            "values ($1, $2, $3, $4, $5)",
+            "insert into account_history (id, revision_id, name, description) values ($1, $2, $3, $4, $5)",
             account_id,
             revision_id,
             user.username,
             "",
-            user.id,
         )
         return account_id
 
@@ -196,7 +194,7 @@ class GroupService(Service[Config]):
     async def list_groups(self, *, conn: Connection, user: User) -> list[Group]:
         return await conn.fetch_many(
             Group,
-            "select g.*, gm.is_owner, gm.can_write from grp as g join group_membership gm on g.id = gm.group_id "
+            "select g.*, gm.is_owner, gm.can_write, gm.owned_account_id from grp as g join group_membership gm on g.id = gm.group_id "
             "where gm.user_id = $1",
             user.id,
         )
@@ -206,7 +204,7 @@ class GroupService(Service[Config]):
     async def get_group(self, *, conn: Connection, user: User, group_id: int) -> Group:
         return await conn.fetch_one(
             Group,
-            "select g.*, gm.is_owner, gm.can_write from grp as g join group_membership gm on g.id = gm.group_id "
+            "select g.*, gm.is_owner, gm.can_write, gm.owned_account_id from grp as g join group_membership gm on g.id = gm.group_id "
             "where g.id = $1 and gm.user_id = $2",
             group_id,
             user.id,
@@ -323,6 +321,39 @@ class GroupService(Service[Config]):
         )
 
     @with_db_transaction
+    @requires_group_permissions()
+    async def update_member_owned_account(
+        self,
+        *,
+        conn: Connection,
+        user: User,
+        group_membership: GroupMember,
+        group_id: int,
+        member_id: int,
+        owned_account_id: int | None,
+    ):
+        if user.id != member_id and not group_membership.is_owner:
+            raise InvalidArgument("Only group owners can change the owned accounts for members other than themselves")
+
+        membership = await conn.fetchrow(
+            "select owned_account_id from group_membership where group_id = $1 and user_id = $2",
+            group_id,
+            member_id,
+        )
+        if membership is None:
+            raise InvalidArgument(f"member with id {member_id} does not exist")
+
+        if membership["owned_account_id"] == owned_account_id:  # no changes
+            return
+
+        await conn.execute(
+            "update group_membership gm set owned_account_id = $3 where gm.user_id = $1 and gm.group_id = $2",
+            member_id,
+            group_id,
+            owned_account_id,
+        )
+
+    @with_db_transaction
     @requires_group_permissions(requires_owner=True)
     async def delete_group(self, *, conn: Connection, user: User, group_id: int):
         n_members = await conn.fetchval(
@@ -401,7 +432,7 @@ class GroupService(Service[Config]):
         return await conn.fetch_many(
             GroupMember,
             "select usr.id as user_id, usr.username, gm.is_owner, gm.can_write, gm.description, "
-            "gm.invited_by, gm.joined_at "
+            "gm.invited_by, gm.joined_at, gm.owned_account_id "
             "from usr "
             "join group_membership gm on gm.user_id = usr.id "
             "where gm.group_id = $1",
@@ -414,7 +445,7 @@ class GroupService(Service[Config]):
         return await conn.fetch_one(
             GroupMember,
             "select usr.id as user_id, usr.username, gm.is_owner, gm.can_write, gm.description, "
-            "gm.invited_by, gm.joined_at "
+            "gm.invited_by, gm.joined_at, gm.owned_account_id "
             "from usr "
             "join group_membership gm on gm.user_id = usr.id "
             "where gm.group_id = $1 and gm.user_id = $2",

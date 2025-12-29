@@ -53,7 +53,6 @@ class TransactionLogicTest(BaseTestCase):
                     date_info=None,
                     deleted=False,
                     tags=[],
-                    owning_user_id=None,
                 ),
             )
             account_ids.append(acc_id)

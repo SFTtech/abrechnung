@@ -7,9 +7,7 @@
         "generate-openapi": {
             "executor": "nx:run-commands",
             "options": {
-                "commands": [
-                    "npx @rtk-query/codegen-openapi apps/web/openapi-config.ts"
-                ],
+                "commands": ["npx @rtk-query/codegen-openapi apps/web/openapi-config.ts"],
                 "parallel": false
             }
         },

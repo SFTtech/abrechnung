@@ -157,14 +157,6 @@ export const useAccount = (groupId: number, accountId: number) => {
     }, [s, accountId]);
 };
 
-export const useAccountsOwnedByUser = (groupId: number, userId: number): Account[] => {
-    const accounts = useGroupAccounts(groupId);
-
-    return React.useMemo(() => {
-        return accounts.filter((acc: Account) => acc.type === "personal" && acc.owning_user_id === userId);
-    }, [userId, accounts]);
-};
-
 export const useClearingAccountsInvolvingAccount = (groupId: number, accountId: number): Account[] => {
     const accounts = useGroupAccounts(groupId, "clearing");
 
@@ -227,13 +219,13 @@ export const saveAccount = createAsyncThunk<
         if (wipAccount.id < 0) {
             updatedAccount = await api.client.accounts.createAccount({
                 groupId,
-                requestBody: { owning_user_id: null, tags: [], date_info: null, ...wipAccount },
+                requestBody: { tags: [], date_info: null, ...wipAccount },
             });
         } else {
             updatedAccount = await api.client.accounts.updateAccount({
                 groupId,
                 accountId: wipAccount.id,
-                requestBody: { owning_user_id: null, tags: [], date_info: null, ...wipAccount },
+                requestBody: { tags: [], date_info: null, ...wipAccount },
             });
         }
     } else {
@@ -260,7 +252,6 @@ export const createAccount = createAsyncThunk<
             type: type,
             name: "",
             description: "",
-            owning_user_id: null,
             deleted: false,
             is_wip: true,
             last_changed: new Date().toISOString(),
@@ -334,7 +325,6 @@ const moveAccountToWip = (s: Draft<AccountState>, accountId: number): Account | 
                 deleted: account.deleted,
                 is_wip: true,
                 last_changed: new Date().toISOString(),
-                owning_user_id: account.owning_user_id,
             };
         }
         s.wipAccounts.byId[accountId] = wipAccount;

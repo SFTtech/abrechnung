@@ -119,7 +119,8 @@
             "archiveGroupConfirm": "Are you sure you want to archive the group {{group.name}}. No modifications can be made to archived groups and they will be hidden in group lists. Only a group owner can reverse this action.",
             "unarchiveGroup": "Unarchive Group",
             "unarchiveGroupConfirm": "Are you sure you want to unarchive the group {{group.name}}. The group will no longer be read-only.",
-            "dangerZone": "Danger zone. The following are irreversible actions."
+            "dangerZone": "Danger zone. The following are irreversible actions.",
+            "ownedAccount": "This account is you"
         },
         "join": {
             "tabTitle": "Abrechnung - Join Group",

@@ -1,7 +1,7 @@
 import type { ConfigFile } from "@rtk-query/codegen-openapi";
 
 const config: ConfigFile = {
-    schemaFile: "../../../api/openapi.json",
+    schemaFile: "../../api/openapi.json",
     apiFile: "./src/core/generated/emptyApi.ts",
     apiImport: "emptySplitApi",
     outputFile: "./src/core/generated/api.ts",

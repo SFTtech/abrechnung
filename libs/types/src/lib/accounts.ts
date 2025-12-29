@@ -16,7 +16,6 @@ const BaseAccountValidator = z.object({
 });
 
 export const PersonalAccountValidator = z.looseObject({
-    owning_user_id: z.number().nullable(),
     ...BaseAccountValidator.shape,
 });
 

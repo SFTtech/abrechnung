@@ -23,7 +23,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
 import { toast } from "react-toastify";
-import { typeToFlattenedError, z } from "zod";
+import { z } from "zod";
 
 interface Props {
     groupId: number;
@@ -45,7 +45,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
     const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = React.useState(false);
     const [showProgress, setShowProgress] = React.useState(false);
     const [validationErrors, setValidationErrors] =
-        React.useState<typeToFlattenedError<z.infer<typeof AccountValidator>>>(emptyErrors);
+        React.useState<z.core.$ZodFlattenedError<z.infer<typeof AccountValidator>>>(emptyErrors);
 
     const openDeleteDialog = () => setConfirmDeleteDialogOpen(true);
     const onCloseDeleteDialog = () => setConfirmDeleteDialogOpen(false);

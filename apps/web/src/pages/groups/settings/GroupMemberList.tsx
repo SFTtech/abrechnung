@@ -1,5 +1,5 @@
 import { Group, GroupMember } from "@abrechnung/api";
-import { selectCurrentUserId, useCurrentUserPermissions } from "@abrechnung/redux";
+import { selectCurrentUserId } from "@abrechnung/redux";
 import { Edit } from "@mui/icons-material";
 import {
     Button,
@@ -20,7 +20,6 @@ import { toast } from "react-toastify";
 import { useTitle } from "@/core/utils";
 import { useAppSelector } from "@/store";
 import { useTranslation } from "react-i18next";
-import { Navigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { FormCheckbox, Loading } from "@abrechnung/components";
 import { useFormatDatetime } from "@/hooks";
@@ -71,10 +70,10 @@ const EditMemberDialog: React.FC<{
     const handleEditMemberSubmit = (values: FormValues) => {
         updateMember({
             groupId: group.id,
-            updateGroupMemberPayload: {
+            userId: values.userId,
+            updateGroupMemberPermissionsPayload: {
                 can_write: values.canWrite,
                 is_owner: values.isOwner,
-                user_id: values.userId,
             },
         })
             .unwrap()
@@ -113,7 +112,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
     const { t } = useTranslation();
     const currentUserId = useAppSelector(selectCurrentUserId);
     const { data: members } = useListMembersQuery({ groupId: group.id });
-    const permissions = useCurrentUserPermissions(group.id);
     const formatDatetime = useFormatDatetime();
 
     const [memberToEdit, setMemberToEdit] = useState<GroupMember | undefined>(undefined);
@@ -132,9 +130,6 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
         setMemberToEdit(member);
     };
 
-    if (!permissions) {
-        return <Navigate to="/404" />;
-    }
     if (members == null) {
         return <Loading />;
     }
@@ -151,7 +146,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
                         <div key={index}>
                             <ListItem
                                 secondaryAction={
-                                    (permissions.is_owner || permissions.can_write) && (
+                                    (group.is_owner || group.can_write) && (
                                         <IconButton color="primary" onClick={() => openEditMemberModal(member)}>
                                             <Edit />
                                         </IconButton>

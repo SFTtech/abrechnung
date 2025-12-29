@@ -32,25 +32,14 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    {include-group = "docs"},
-    {include-group = "lint"},
-    {include-group = "test"},
+    { include-group = "docs" },
+    { include-group = "lint" },
+    { include-group = "test" },
     "pre-commit",
     "bump-my-version~=0.18",
 ]
-lint = [
-    "ruff",
-    "mypy==1.13.0",
-    "types-PyYAML~=6.0",
-    "pylint==3.3.2",
-]
-test = [
-    "aiosmtpd~=1.4",
-    "pytest",
-    "pytest-asyncio",
-    "pytest-cov",
-    "httpx~=0.27",
-]
+lint = ["ruff", "mypy==1.13.0", "types-PyYAML~=6.0", "pylint==3.3.2"]
+test = ["aiosmtpd~=1.4", "pytest", "pytest-asyncio", "pytest-cov", "httpx~=0.27"]
 docs = ["sphinx", "sphinx-autobuild", "sphinx-autodoc-typehints"]
 
 [project.urls]
@@ -75,13 +64,7 @@ extension-pkg-whitelist = ["pydantic"]
 max-line-length = 120
 
 [tool.pylint.messages_control]
-disable = [
-    "C",
-    "R",
-    "fixme",
-    "logging-fstring-interpolation",
-    "broad-exception-caught",
-]
+disable = ["C", "R", "fixme", "logging-fstring-interpolation", "broad-exception-caught"]
 
 [tool.ruff]
 line-length = 120
