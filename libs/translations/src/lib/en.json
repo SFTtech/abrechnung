@@ -120,7 +120,8 @@
             "unarchiveGroup": "Unarchive Group",
             "unarchiveGroupConfirm": "Are you sure you want to unarchive the group {{group.name}}. The group will no longer be read-only.",
             "dangerZone": "Danger zone. The following are irreversible actions.",
-            "ownedAccount": "This account is you"
+            "ownedAccount": "This account is you",
+            "ownedAccountHelp": "Account used as default for paying expenses and showing balance effects"
         },
         "join": {
             "tabTitle": "Abrechnung - Join Group",
@@ -172,6 +173,7 @@
         "list": {
             "tabTitle": "{{groupName}} - Transactions"
         },
+        "yourBalance": "your balance:",
         "byFor": "by {{by}}, for {{for}}",
         "type": {
             "purchase": "purchase",

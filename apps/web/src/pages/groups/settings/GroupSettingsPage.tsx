@@ -197,6 +197,7 @@ const OwnedAccountSettings: React.FC<{ group: Group }> = ({ group }) => {
                     onChange={(evt) => {
                         onChange(evt.target.value as unknown as number | null);
                     }}
+                    helperText={t("groups.settings.ownedAccountHelp")}
                 >
                     {personalAccounts.map((acc) => (
                         <MenuItem key={acc.id} value={acc.id}>

@@ -276,6 +276,11 @@ export const createTransaction = createAsyncThunk<
         deleted: false,
         last_changed: new Date().toISOString(),
     };
+    if (group.owned_account_id != null) {
+        transactionBase.creditor_shares = {
+            [group.owned_account_id]: 1.0,
+        };
+    }
     let transaction: Transaction;
     if (type === "purchase") {
         transaction = {
