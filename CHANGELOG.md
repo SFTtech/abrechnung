@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.2.0...HEAD)
+
+**Features**
+
+- select accounts as "owned" to set a default payer for purchases and transfers as well as
+  displaying balance effects directly
+
 ## 1.2.0 (2025-06-19)
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.1.0...v1.2.0)
