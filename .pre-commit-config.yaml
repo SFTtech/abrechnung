@@ -1,4 +1,14 @@
 repos:
+    - repo: local
+      hooks:
+          - id: oxfmt
+            name: oxfmt
+            entry: oxfmt
+            args: ["--no-error-on-unmatched-pattern"]
+            language: node
+            "types_or": [javascript, jsx, ts, tsx]
+            require_serial: false
+            additional_dependencies: ["oxfmt@latest"]
     - repo: https://github.com/oxc-project/mirrors-oxlint
       rev: v1.36.0
       hooks:
