@@ -24,6 +24,7 @@ import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import { z } from "zod";
+import { stringifyError } from "@abrechnung/api";
 
 interface Props {
     groupId: number;
@@ -92,7 +93,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
             })
             .catch((err) => {
                 setShowProgress(false);
-                toast.error(`error while saving account: ${err.toString()}`);
+                toast.error(`error while saving account: ${stringifyError(err)}`);
             });
     }, [account, setValidationErrors, setShowProgress, navigate, groupId, dispatch]);
 

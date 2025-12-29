@@ -1,4 +1,12 @@
+import {
+    AsyncThunkConfig,
+    AsyncThunkPayloadCreator,
+    AsyncThunkPayloadCreatorReturnValue,
+    createAsyncThunk,
+    GetThunkAPI,
+} from "@reduxjs/toolkit";
 import { GroupScopedState } from "./types";
+import { stringifyError } from "@abrechnung/api";
 
 export const getGroupScopedState = <T, K extends GroupScopedState<T>>(state: K, groupId: number): T => {
     const s = state.byGroupId[groupId];
@@ -32,3 +40,28 @@ export const removeEntity = <T extends Entity>(state: EntityState<T>, entityId: 
     delete state.byId[entityId];
     state.ids = state.ids.filter((id) => id !== entityId);
 };
+
+export function createAsyncThunkWithErrorHandling<
+    Returned,
+    ThunkArg = void,
+    CurriedThunkApiConfig extends AsyncThunkConfig = {},
+>(prefix: string, fn: AsyncThunkPayloadCreator<Returned, ThunkArg, CurriedThunkApiConfig>) {
+    return createAsyncThunk<Returned, ThunkArg, CurriedThunkApiConfig>(
+        prefix,
+        (
+            arg: ThunkArg,
+            api: GetThunkAPI<CurriedThunkApiConfig>
+        ): AsyncThunkPayloadCreatorReturnValue<Returned, CurriedThunkApiConfig> => {
+            const inner = async (arg: any, api: any) => {
+                try {
+                    return await fn(arg, api);
+                } catch (error: any) {
+                    const message = stringifyError(error);
+                    return api.rejectWithValue(message as any, {} as any);
+                }
+            };
+
+            return inner(arg, api);
+        }
+    );
+}

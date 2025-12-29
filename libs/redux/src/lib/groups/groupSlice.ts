@@ -2,7 +2,7 @@ import { Api, Group, GroupCreatePayload, GroupUpdatePayload } from "@abrechnung/
 import { fromISOString } from "@abrechnung/utils";
 import { createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
 import { GroupSliceState, IRootState } from "../types";
-import { addEntity } from "../utils";
+import { addEntity, createAsyncThunkWithErrorHandling } from "../utils";
 import { leaveGroup } from "./actions";
 import { useSelector } from "react-redux";
 
@@ -78,14 +78,14 @@ export const fetchGroup = createAsyncThunk<Group, { groupId: number; api: Api },
     }
 );
 
-export const createGroup = createAsyncThunk<Group, { group: GroupCreatePayload; api: Api }>(
+export const createGroup = createAsyncThunkWithErrorHandling<Group, { group: GroupCreatePayload; api: Api }>(
     "createGroup",
     async ({ group, api }) => {
         return await api.client.groups.createGroup({ requestBody: group });
     }
 );
 
-export const updateGroup = createAsyncThunk<
+export const updateGroup = createAsyncThunkWithErrorHandling<
     Group,
     { group: GroupUpdatePayload & { id: number }; api: Api },
     { state: IRootState }

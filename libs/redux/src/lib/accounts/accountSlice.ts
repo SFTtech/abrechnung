@@ -6,7 +6,7 @@ import { fromISOString, toISODateString } from "@abrechnung/utils";
 import { Draft, PayloadAction, createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
 import { leaveGroup } from "../groups";
 import { AccountSliceState, AccountState, IRootState, StateStatus } from "../types";
-import { addEntity, getGroupScopedState, removeEntity } from "../utils";
+import { addEntity, createAsyncThunkWithErrorHandling, getGroupScopedState, removeEntity } from "../utils";
 import { useSelector } from "react-redux";
 
 const initializeGroupState = (state: Draft<AccountSliceState>, groupId: number) => {
@@ -195,7 +195,7 @@ export const fetchAccounts = createAsyncThunk<
     }
 );
 
-export const fetchAccount = createAsyncThunk<
+export const fetchAccount = createAsyncThunkWithErrorHandling<
     BackendAccount,
     { groupId: number; accountId: number; api: Api },
     { state: IRootState }
@@ -203,7 +203,7 @@ export const fetchAccount = createAsyncThunk<
     return await api.client.accounts.getAccount({ groupId, accountId });
 });
 
-export const saveAccount = createAsyncThunk<
+export const saveAccount = createAsyncThunkWithErrorHandling<
     { oldAccountId: number; account: BackendAccount },
     { groupId: number; accountId: number; api: Api },
     { state: IRootState }
@@ -275,7 +275,7 @@ export const createAccount = createAsyncThunk<
     return { account };
 });
 
-export const deleteAccount = createAsyncThunk<
+export const deleteAccount = createAsyncThunkWithErrorHandling<
     { account: BackendAccount | undefined },
     { groupId: number; accountId: number; api: Api },
     { state: IRootState }

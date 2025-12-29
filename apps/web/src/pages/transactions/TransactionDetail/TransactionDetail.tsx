@@ -24,6 +24,7 @@ import { TransactionMetadata } from "./TransactionMetadata";
 import { TransactionPositions } from "./purchase/TransactionPositions";
 import { ValidationErrors as PositionValidationErrors } from "./purchase/types";
 import { useTranslation } from "react-i18next";
+import { stringifyError } from "@abrechnung/api";
 
 interface Props {
     groupId: number;
@@ -93,7 +94,7 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
             })
             .catch((err) => {
                 setShowProgress(false);
-                toast.error(`error while deleting transaction: ${err.toString()}`);
+                toast.error(`error while deleting transaction: ${stringifyError(err)}`);
             });
     }, [setShowProgress, dispatch, navigate, groupId, transactionId]);
 
@@ -137,7 +138,7 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
             })
             .catch((err) => {
                 setShowProgress(false);
-                toast.error(`error while saving transaction: ${err.toString()}`);
+                toast.error(`error while saving transaction: ${stringifyError(err)}`);
             });
     }, [transaction, setPositionValidationErrors, dispatch, setShowProgress, navigate, groupId, transactionId]);
 

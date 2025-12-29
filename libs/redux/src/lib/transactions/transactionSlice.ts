@@ -18,7 +18,7 @@ import { toISODateString } from "@abrechnung/utils";
 import { createAsyncThunk, createSelector, createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
 import { leaveGroup } from "../groups";
 import { IRootState, StateStatus, TransactionSliceState, TransactionState } from "../types";
-import { addEntity, getGroupScopedState, removeEntity } from "../utils";
+import { addEntity, createAsyncThunkWithErrorHandling, getGroupScopedState, removeEntity } from "../utils";
 import { useSelector } from "react-redux";
 
 export const initializeGroupState = (state: Draft<TransactionSliceState>, groupId: number) => {
@@ -294,7 +294,7 @@ export const createTransaction = createAsyncThunk<
     return { transaction };
 });
 
-export const saveTransaction = createAsyncThunk<
+export const saveTransaction = createAsyncThunkWithErrorHandling<
     {
         oldTransactionId: number;
         transaction: BackendTransaction;
@@ -380,7 +380,7 @@ export const saveTransaction = createAsyncThunk<
     };
 });
 
-export const deleteTransaction = createAsyncThunk<
+export const deleteTransaction = createAsyncThunkWithErrorHandling<
     { transaction: BackendTransaction | undefined },
     { groupId: number; transactionId: number; api: Api },
     { state: IRootState }
