@@ -43,6 +43,8 @@
         "exportAsCsv": "Export as CSV",
         "noneSoFar": "None so far",
         "copyToClipboard": "Copy to clipboard",
+        "linkCopiedToClipboard": "Link copied to clipboard!",
+        "qrCode": "Qr Code",
         "createdBy": "created by {{username}}",
         "changedBy": "changed by {{username}}"
     },
