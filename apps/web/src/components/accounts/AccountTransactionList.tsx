@@ -4,7 +4,7 @@ import {
     useClearingAccountsInvolvingAccount,
 } from "@abrechnung/redux";
 import { Add as AddIcon } from "@mui/icons-material";
-import { Account, Transaction, TransactionType } from "@abrechnung/types";
+import { Account, ClearingAccount, Transaction, TransactionType } from "@abrechnung/types";
 import { Alert, Box, IconButton, List, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
 import * as React from "react";
@@ -16,12 +16,20 @@ import { toast } from "react-toastify";
 import { useNavigate } from "react-router";
 import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 
-type ArrayAccountsAndTransactions = Array<Transaction | Account>;
+type ArrayAccountsAndTransactions = Array<Transaction | ClearingAccount>;
 
 interface Props {
     groupId: number;
     account: Account;
 }
+
+const getDate = (entry: Transaction | ClearingAccount) => {
+    if (entry.type === "clearing") {
+        return entry.date_info;
+    }
+
+    return entry.billed_at;
+};
 
 export const AccountTransactionList: React.FC<Props> = ({ groupId, account }) => {
     const { t } = useTranslation();
@@ -32,7 +40,7 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, account }) =>
 
     const combinedList: ArrayAccountsAndTransactions = (transactions as ArrayAccountsAndTransactions)
         .concat(clearingAccounts)
-        .sort((f1, f2) => DateTime.fromISO(f2.last_changed).toMillis() - DateTime.fromISO(f1.last_changed).toMillis());
+        .sort((f1, f2) => DateTime.fromISO(getDate(f2)).toMillis() - DateTime.fromISO(getDate(f1)).toMillis());
 
     const createTransactionForAccount = (type: TransactionType) => {
         dispatch(
@@ -91,9 +99,6 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, account }) =>
                                 clearingAccount={entry}
                             />
                         );
-                    }
-                    if (entry.type === "personal") {
-                        return null;
                     }
 
                     return (
