@@ -9,6 +9,10 @@ import { AccountSliceState, AccountState, IRootState, StateStatus } from "../typ
 import { addEntity, createAsyncThunkWithErrorHandling, getGroupScopedState, removeEntity } from "../utils";
 import { useSelector } from "react-redux";
 
+export const isAccountOnlyLocal = (account: Account) => {
+    return account.id < 0;
+};
+
 const initializeGroupState = (state: Draft<AccountSliceState>, groupId: number) => {
     if (state.byGroupId[groupId]) {
         return;
