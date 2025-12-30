@@ -7,7 +7,7 @@ import { HelpOutline } from "@mui/icons-material";
 import { Chip, Divider, ListItemAvatar, ListItemText, Stack, Tooltip, Typography } from "@mui/material";
 import * as React from "react";
 import { balanceColor } from "@/core/utils";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 interface Props {
     groupId: number;
@@ -86,7 +86,10 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, ownedAccountId, 
                         <Stack>
                             <div>
                                 <Typography variant="body2" component="span" sx={{ color: "text.primary" }}>
-                                    {t("transactions.byFor", "", { by: creditorNames, for: debitorNames })}
+                                    <Trans
+                                        i18nKey="transactions.byFor"
+                                        values={{ by: creditorNames, for: debitorNames }}
+                                    />
                                 </Typography>
                                 {transaction.tags.map((t) => (
                                     <Chip

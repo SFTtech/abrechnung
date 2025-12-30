@@ -21,6 +21,10 @@ import { IRootState, StateStatus, TransactionSliceState, TransactionState } from
 import { addEntity, createAsyncThunkWithErrorHandling, getGroupScopedState, removeEntity } from "../utils";
 import { useSelector } from "react-redux";
 
+export const isTransactionOnlyLocal = (transaction: Transaction) => {
+    return transaction.id < 0;
+};
+
 export const initializeGroupState = (state: Draft<TransactionSliceState>, groupId: number) => {
     if (state.byGroupId[groupId]) {
         return;

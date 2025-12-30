@@ -175,8 +175,8 @@
         "list": {
             "tabTitle": "{{groupName}} - Transactions"
         },
-        "yourBalance": "your balance:",
-        "byFor": "by {{by}}, for {{for}}",
+        "yourBalance": "Your balance:",
+        "byFor": "Paid by <strong>{{by}}</strong> for <strong>{{for}}</strong>",
         "type": {
             "purchase": "purchase",
             "transfer": "transfer",

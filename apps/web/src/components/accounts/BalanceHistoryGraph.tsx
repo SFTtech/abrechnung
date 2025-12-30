@@ -15,7 +15,7 @@ import * as React from "react";
 import { useNavigate } from "react-router";
 import { ClearingAccountIcon, PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
 import { useTranslation } from "react-i18next";
-import { useFormatCurrency } from "@/hooks";
+import { useFormatCurrency, useFormatDatetime } from "@/hooks";
 
 interface Props {
     groupId: number;
@@ -36,6 +36,7 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
     const theme: Theme = useTheme();
     const navigate = useNavigate();
 
+    const formatDatetime = useFormatDatetime();
     const currencyIdentifier = useGroupCurrencyIdentifier(groupId);
     const transactionMap = useAppSelector((state) => selectTransactionByIdMap(state, groupId));
     const accounts = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
@@ -127,14 +128,15 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
         return (
             <Card sx={{ padding: 2 }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <Typography variant="body1" component="span">
-                        {DateTime.fromJSDate(point.data.x as Date).toISODate()}
+                    <Typography variant="body1" component="span" sx={{ whiteSpace: "nowrap" }}>
+                        {formatDatetime(DateTime.fromJSDate(point.data.x as Date).toISO(), "date")}
                     </Typography>
                     <Typography
                         component="span"
                         sx={{
                             color: (theme) => balanceColor(point.data.y as number, theme),
                             ml: 2,
+                            whiteSpace: "nowrap",
                         }}
                     >
                         {formatCurrency(point.data.y as number, currencyIdentifier)}
