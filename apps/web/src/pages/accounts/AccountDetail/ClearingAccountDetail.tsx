@@ -2,7 +2,7 @@ import { selectAccountBalances, useGroupCurrencyIdentifier } from "@abrechnung/r
 import { TableCell, Typography } from "@mui/material";
 import React from "react";
 import { useAppSelector } from "@/store";
-import { ShareSelect } from "../ShareSelect";
+import { ShareSelect } from "../../../components/ShareSelect";
 import { useTranslation } from "react-i18next";
 import { useFormatCurrency } from "@/hooks";
 import { ClearingAccount } from "@abrechnung/types";

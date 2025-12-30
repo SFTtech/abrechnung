@@ -1,13 +1,13 @@
 import { selectAccountBalances, useGroupCurrencyIdentifier } from "@abrechnung/redux";
-import { Box, Divider, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
+import { Divider, ListItemAvatar, ListItemText, Stack, Tooltip, Typography } from "@mui/material";
 import React from "react";
 import { balanceColor } from "@/core/utils";
 import { useAppSelector } from "@/store";
 import { getAccountLink } from "@/utils";
-import { ListItemLink, ClearingAccountIcon } from "../style";
-import { useTranslation } from "react-i18next";
-import { useFormatCurrency, useFormatDatetime, useIsSmallScreen } from "@/hooks";
+import { ListItemLink, ClearingAccountIcon } from "@/components/style";
+import { useFormatCurrency, useFormatDatetime } from "@/hooks";
 import { ClearingAccount } from "@abrechnung/types";
+import { ClearingAccountParticipants } from "@/components/accounts";
 
 interface Props {
     groupId: number;
@@ -16,12 +16,10 @@ interface Props {
 }
 
 export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, clearingAccount }) => {
-    const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
     const formatDatetime = useFormatDatetime();
     const balances = useAppSelector((state) => selectAccountBalances(state, groupId));
     const currencyIdentifier = useGroupCurrencyIdentifier(groupId);
-    const isSmallScreen = useIsSmallScreen();
     if (!currencyIdentifier) {
         return null;
     }
@@ -41,12 +39,19 @@ export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, 
                         </Typography>
                     }
                     secondary={
-                        <Box component="span" display="flex" flexDirection="column">
-                            <span>{clearingAccount.description}</span>
+                        <Stack>
+                            <div>
+                                <Typography variant="body2" component="span" sx={{ color: "text.primary" }}>
+                                    <ClearingAccountParticipants groupId={groupId} account={clearingAccount} />
+                                </Typography>
+                            </div>
+
                             {clearingAccount.date_info != null && (
-                                <span>{formatDatetime(clearingAccount.date_info, "date")}</span>
+                                <div>
+                                    <span>{formatDatetime(clearingAccount.date_info, "date")}</span>
+                                </div>
                             )}
-                        </Box>
+                        </Stack>
                     }
                 />
                 <ListItemText>
@@ -63,16 +68,6 @@ export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, 
                                 currencyIdentifier
                             )}
                         </Typography>
-                        {!isSmallScreen && (
-                            <>
-                                <br />
-                                <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
-                                    {t("common.lastChangedWithTime", {
-                                        datetime: formatDatetime(clearingAccount.last_changed, "full"),
-                                    })}
-                                </Typography>
-                            </>
-                        )}
                     </Typography>
                 </ListItemText>
             </ListItemLink>

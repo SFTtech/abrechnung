@@ -1,18 +1,12 @@
-import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
 import { ListItemLink } from "@/components/style/ListItemLink";
 import { useFormatCurrency, useFormatDatetime } from "@/hooks";
 import { useAppSelector } from "@/store";
-import {
-    selectAccountIdToAccountMap,
-    selectTransactionBalanceEffect,
-    useGroupCurrencyIdentifier,
-    useTransaction,
-} from "@abrechnung/redux";
-import { HelpOutline } from "@mui/icons-material";
-import { Chip, Divider, ListItemAvatar, ListItemText, Stack, Tooltip, Typography } from "@mui/material";
+import { selectTransactionBalanceEffect, useGroupCurrencyIdentifier, useTransaction } from "@abrechnung/redux";
+import { Chip, Divider, ListItemAvatar, ListItemText, Stack, Typography } from "@mui/material";
 import * as React from "react";
 import { balanceColor } from "@/core/utils";
-import { Trans, useTranslation } from "react-i18next";
+import { useTranslation } from "react-i18next";
+import { TransactionIcon, TransactionPaidBy } from "@/components";
 
 interface Props {
     groupId: number;
@@ -24,7 +18,6 @@ interface Props {
 export const TransactionListItem: React.FC<Props> = ({ groupId, ownedAccountId, transactionId, style }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
-    const accounts = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
     const transaction = useTransaction(groupId, transactionId);
     const balanceEffect = useAppSelector((state) => selectTransactionBalanceEffect(state, groupId, transactionId));
     const groupCurrencyIdentifier = useGroupCurrencyIdentifier(groupId);
@@ -42,13 +35,6 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, ownedAccountId, 
         return null;
     }
 
-    const creditorNames = Object.keys(transaction.creditor_shares)
-        .map((accountId) => accounts[Number(accountId)]?.name)
-        .join(", ");
-    const debitorNames = Object.keys(transaction.debitor_shares)
-        .map((accountId) => accounts[Number(accountId)]?.name)
-        .join(", ");
-
     const ownAccountBalanceEffect = ownedAccountId != null ? balanceEffect[ownedAccountId] : undefined;
 
     const valueInGroupCurrency = (() => {
@@ -63,19 +49,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, ownedAccountId, 
         <>
             <ListItemLink to={`/groups/${groupId}/transactions/${transactionId}`} style={style}>
                 <ListItemAvatar sx={{ minWidth: { xs: "40px", md: "56px" } }}>
-                    {transaction.type === "purchase" ? (
-                        <Tooltip title={t("transactions.purchase")}>
-                            <PurchaseIcon color="primary" />
-                        </Tooltip>
-                    ) : transaction.type === "transfer" ? (
-                        <Tooltip title={t("transactions.transfer")}>
-                            <TransferIcon color="primary" />
-                        </Tooltip>
-                    ) : (
-                        <Tooltip title="Unknown Transaction Type">
-                            <HelpOutline color="primary" />
-                        </Tooltip>
-                    )}
+                    <TransactionIcon type={transaction.type} />
                 </ListItemAvatar>
                 <ListItemText
                     slotProps={{
@@ -100,10 +74,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, ownedAccountId, 
                         <Stack>
                             <div>
                                 <Typography variant="body2" component="span" sx={{ color: "text.primary" }}>
-                                    <Trans
-                                        i18nKey="transactions.byFor"
-                                        values={{ by: creditorNames, for: debitorNames }}
-                                    />
+                                    <TransactionPaidBy groupId={groupId} transaction={transaction} />
                                 </Typography>
                                 {transaction.tags.map((t) => (
                                     <Chip

@@ -13,7 +13,7 @@ import { ResponsiveLine, PointOrSliceMouseHandler, PointTooltipComponent } from 
 import { DateTime } from "luxon";
 import * as React from "react";
 import { useNavigate } from "react-router";
-import { ClearingAccountIcon, PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
+import { ClearingAccountIcon, PurchaseIcon, TransferIcon } from "../../../components/style/AbrechnungIcons";
 import { useTranslation } from "react-i18next";
 import { useFormatCurrency, useFormatDatetime } from "@/hooks";
 

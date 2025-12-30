@@ -14,7 +14,7 @@ import { AccountTransactionListEntry } from "./AccountTransactionListEntry";
 import { useTranslation } from "react-i18next";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router";
-import { PurchaseIcon, TransferIcon } from "../style/AbrechnungIcons";
+import { PurchaseIcon, TransferIcon } from "../../../components/style/AbrechnungIcons";
 
 type ArrayAccountsAndTransactions = Array<Transaction | ClearingAccount>;
 

@@ -227,7 +227,8 @@
             "tabTitle": "{{groupName}} - Events"
         },
         "createEvent": "Create Event",
-        "noEvents": "No Events"
+        "noEvents": "No Events",
+        "participants": "Participants: <strong>{{participants}}</strong>"
     },
     "profile": {
         "index": {

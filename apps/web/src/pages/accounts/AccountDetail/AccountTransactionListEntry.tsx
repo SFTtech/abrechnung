@@ -1,13 +1,12 @@
 import { selectTransactionBalanceEffect, useGroupCurrencyIdentifier } from "@abrechnung/redux";
-import { HelpOutline } from "@mui/icons-material";
-import { Chip, Divider, ListItemAvatar, ListItemText, Tooltip, Typography } from "@mui/material";
+import { Chip, Divider, ListItemAvatar, ListItemText, Stack, Typography } from "@mui/material";
 import * as React from "react";
 import { balanceColor } from "@/core/utils";
 import { useAppSelector } from "@/store";
-import { ListItemLink, PurchaseIcon, TransferIcon } from "../style";
-import { useTranslation } from "react-i18next";
+import { ListItemLink } from "@/components/style";
 import { Transaction } from "@abrechnung/types";
 import { useFormatCurrency, useFormatDatetime } from "@/hooks";
+import { TransactionIcon, TransactionPaidBy } from "@/components";
 
 interface Props {
     groupId: number;
@@ -16,7 +15,6 @@ interface Props {
 }
 
 export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transaction, accountId }) => {
-    const { t } = useTranslation();
     const balanceEffect = useAppSelector((state) => selectTransactionBalanceEffect(state, groupId, transaction.id));
     const formatDatetime = useFormatDatetime();
     const formatCurrency = useFormatCurrency();
@@ -26,19 +24,7 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transact
         <>
             <ListItemLink to={`/groups/${groupId}/transactions/${transaction.id}`}>
                 <ListItemAvatar sx={{ minWidth: { xs: "40px", md: "56px" } }}>
-                    {transaction.type === "purchase" ? (
-                        <Tooltip title={t("transactions.purchase")}>
-                            <PurchaseIcon color="primary" />
-                        </Tooltip>
-                    ) : transaction.type === "transfer" ? (
-                        <Tooltip title={t("transactions.transfer")}>
-                            <TransferIcon color="primary" />
-                        </Tooltip>
-                    ) : (
-                        <Tooltip title="Unknown Transaction Type">
-                            <HelpOutline color="primary" />
-                        </Tooltip>
-                    )}
+                    <TransactionIcon type={transaction.type} />
                 </ListItemAvatar>
                 <ListItemText
                     primary={
@@ -51,7 +37,18 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transact
                             </Typography>
                         </>
                     }
-                    secondary={formatDatetime(transaction.billed_at, "date")}
+                    secondary={
+                        <Stack>
+                            <div>
+                                <Typography variant="body2" component="span" sx={{ color: "text.primary" }}>
+                                    <TransactionPaidBy groupId={groupId} transaction={transaction} />
+                                </Typography>
+                            </div>
+                            <div>
+                                <span>{formatDatetime(transaction.billed_at, "date")}</span>
+                            </div>
+                        </Stack>
+                    }
                 />
                 <ListItemText>
                     <Typography align="right" variant="body2">
