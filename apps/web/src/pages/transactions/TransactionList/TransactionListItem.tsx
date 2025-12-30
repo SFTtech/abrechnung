@@ -2,7 +2,12 @@ import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
 import { ListItemLink } from "@/components/style/ListItemLink";
 import { useFormatCurrency, useFormatDatetime } from "@/hooks";
 import { useAppSelector } from "@/store";
-import { selectAccountIdToAccountMap, selectTransactionBalanceEffect, useTransaction } from "@abrechnung/redux";
+import {
+    selectAccountIdToAccountMap,
+    selectTransactionBalanceEffect,
+    useGroupCurrencyIdentifier,
+    useTransaction,
+} from "@abrechnung/redux";
 import { HelpOutline } from "@mui/icons-material";
 import { Chip, Divider, ListItemAvatar, ListItemText, Stack, Tooltip, Typography } from "@mui/material";
 import * as React from "react";
@@ -22,8 +27,9 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, ownedAccountId, 
     const accounts = useAppSelector((state) => selectAccountIdToAccountMap(state, groupId));
     const transaction = useTransaction(groupId, transactionId);
     const balanceEffect = useAppSelector((state) => selectTransactionBalanceEffect(state, groupId, transactionId));
+    const groupCurrencyIdentifier = useGroupCurrencyIdentifier(groupId);
     const formatDatetime = useFormatDatetime();
-    if (transaction === undefined) {
+    if (transaction === undefined || groupCurrencyIdentifier === undefined) {
         // TODO: HACKY WORKAROUND
         // when switching between groups which are already loaded into the redux store we will land on the transaction list page
         // if we switch from group 1 > transactions to group 2 > transactions the transaction list component will not get unmounted
@@ -44,6 +50,14 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, ownedAccountId, 
         .join(", ");
 
     const ownAccountBalanceEffect = ownedAccountId != null ? balanceEffect[ownedAccountId] : undefined;
+
+    const valueInGroupCurrency = (() => {
+        if (groupCurrencyIdentifier === transaction.currency_identifier) {
+            return undefined;
+        }
+
+        return transaction.value * transaction.currency_conversion_rate;
+    })();
 
     return (
         <>
@@ -123,6 +137,13 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, ownedAccountId, 
                 <ListItemText>
                     <Typography align="right" variant="body2">
                         {formatCurrency(transaction.value, transaction.currency_identifier)}
+                        {valueInGroupCurrency != null && (
+                            <>
+                                &#32;&#40;
+                                {formatCurrency(valueInGroupCurrency, groupCurrencyIdentifier)}
+                                &#41;
+                            </>
+                        )}
                         <br />
                         <Typography component="span" sx={{ typography: "body2", color: "text.secondary" }}>
                             {formatDatetime(transaction.billed_at, "date")}
