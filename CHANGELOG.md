@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.2.0...HEAD)
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.3.0...HEAD)
+
+## 1.3.0 (2025-12-30)
+
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.2.0...v1.3.0)
 
 **Features**
 
