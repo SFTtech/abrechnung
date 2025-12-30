@@ -1,5 +1,0 @@
-# doc requirements
-sphinx-autobuild
-sphinx-rtd-theme
-sphinx-autodoc-typehints
-sphinxcontrib-openapi
