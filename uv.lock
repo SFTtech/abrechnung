@@ -7,6 +7,7 @@ name = "abrechnung"
 source = { editable = "." }
 dependencies = [
     { name = "bcrypt" },
+    { name = "httpx" },
     { name = "prometheus-fastapi-instrumentator" },
     { name = "pydantic", extra = ["email"] },
     { name = "pydantic-settings" },
@@ -21,7 +22,6 @@ dependencies = [
 dev = [
     { name = "aiosmtpd" },
     { name = "bump-my-version" },
-    { name = "httpx" },
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "pylint" },
@@ -47,7 +47,6 @@ lint = [
 ]
 test = [
     { name = "aiosmtpd" },
-    { name = "httpx" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -56,6 +55,7 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "bcrypt", specifier = "~=4.3.0" },
+    { name = "httpx", specifier = ">=0.28.1" },
     { name = "prometheus-fastapi-instrumentator", specifier = "==7.0.2" },
     { name = "pydantic", extras = ["email"], specifier = "~=2.10.3" },
     { name = "pydantic-settings", specifier = "==2.6.1" },
@@ -70,7 +70,6 @@ requires-dist = [
 dev = [
     { name = "aiosmtpd", specifier = "~=1.4" },
     { name = "bump-my-version", specifier = "~=0.18" },
-    { name = "httpx", specifier = "~=0.27" },
     { name = "mypy", specifier = "==1.13.0" },
     { name = "pre-commit" },
     { name = "pylint", specifier = "==3.3.2" },
@@ -96,7 +95,6 @@ lint = [
 ]
 test = [
     { name = "aiosmtpd", specifier = "~=1.4" },
-    { name = "httpx", specifier = "~=0.27" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
