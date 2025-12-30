@@ -37,7 +37,7 @@ dev = [
     { include-group = "lint" },
     { include-group = "test" },
     "pre-commit",
-    "bump-my-version~=0.18",
+    "bump-my-version~=1.2.6",
 ]
 lint = ["ruff", "mypy==1.13.0", "types-PyYAML~=6.0", "pylint==3.3.2"]
 test = ["aiosmtpd~=1.4", "pytest", "pytest-asyncio", "pytest-cov"]

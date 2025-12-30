@@ -37,7 +37,7 @@ def parse_args():
 
 def _get_bumpversion_config(part: str) -> Config:
     ret = subprocess.run(
-        ["bump-my-version", "show", "--format", "json", "--increment", part],
+        ["uv", "run", "bump-my-version", "show", "--format", "json", "--increment", part],
         capture_output=True,
         check=True,
     )
@@ -94,15 +94,13 @@ def main(part: str, dry_run: bool):
     pyproject = _read_pyproject_toml()
     print(f"Current Version: {config.current_version}, Upgrading to version {config.new_version}")
 
-    bump_my_version_args = ["bump-my-version", "bump", part, "--no-commit", "--no-tag"]
+    bump_my_version_args = ["uv", "run", "bump-my-version", "bump", part, "--no-commit", "--no-tag"]
     if dry_run:
         bump_my_version_args.append("--dry-run")
     subprocess.run(bump_my_version_args, check=True)
 
     _update_debian_changelog(pyproject, config, dry_run)
     _update_changelog(config, dry_run)
-
-    print("Do not forget to update the api version compatibilities")
 
 
 if __name__ == "__main__":
