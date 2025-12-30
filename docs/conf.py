@@ -26,7 +26,7 @@ project = "abrechnung"
 author = "Michael Loipführer, Jonas Jelten, Michael Enßlin"
 copyright = f"{datetime.datetime.now():%Y}, {author}"  # pylint: disable=redefined-builtin
 
-version = abrechnung.__version__.replace(".dirty", "")
+version = abrechnung.__version__
 release = version
 
 # -- General configuration ---------------------------------------------------
@@ -42,9 +42,14 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.napoleon",
     "sphinx.ext.autosummary",
-    "sphinx_autodoc_typehints",
+    "sphinx_copybutton",
+    "myst_parser",
     "sphinxcontrib.openapi",
-    *[p.stem for p in (HERE / "_ext").glob("*.py")],
+]
+myst_enable_extensions = [
+    "colon_fence",
+    "html_image",
+    "attrs_inline",
 ]
 
 # Generate the API documentation when building
@@ -79,11 +84,11 @@ html_theme = "sphinx_rtd_theme"
 html_theme_options = dict(navigation_depth=1, titles_only=True)
 github_repo = "abrechnung"
 html_context = dict(
-    display_github=True,  # Integrate GitHub
-    github_user="SFTtech",  # Username
-    github_repo="abrechnung",  # Repo name
-    github_version="master",  # Version
-    conf_py_path="/docs/",  # Path in the checkout to the docs root
+    display_github=True,
+    github_user="SFTtech",
+    github_repo="abrechnung",
+    github_version="master",
+    conf_py_path="/docs/",
 )
 
 # Add any paths that contain custom static files (such as style sheets) here,

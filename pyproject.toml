@@ -41,7 +41,7 @@ dev = [
 ]
 lint = ["ruff", "mypy==1.13.0", "types-PyYAML~=6.0", "pylint==3.3.2"]
 test = ["aiosmtpd~=1.4", "pytest", "pytest-asyncio", "pytest-cov"]
-docs = ["sphinx", "sphinx-autobuild", "sphinx-autodoc-typehints"]
+docs = ["sphinx", "myst-parser", "sphinx-autobuild", "sphinx-copybutton", "sphinx-rtd-theme", "sphinxcontrib-openapi"]
 
 [project.urls]
 Source = "https://github.com/SFTtech/abrechung"
