@@ -77,6 +77,15 @@ const injectedRtkApi = api
                 }),
                 providesTags: ["transactions"],
             }),
+            getCurrencyConversionRates: build.query<
+                GetCurrencyConversionRatesApiResponse,
+                GetCurrencyConversionRatesApiArg
+            >({
+                query: (queryArg) => ({
+                    url: `/api/v1/${queryArg.groupId}/currency-conversion-rates/${queryArg.baseCurrency}`,
+                }),
+                providesTags: ["transactions"],
+            }),
             previewGroup: build.mutation<PreviewGroupApiResponse, PreviewGroupApiArg>({
                 query: (queryArg) => ({
                     url: `/api/v1/groups/preview`,
@@ -391,6 +400,11 @@ export type GetFileContentsApiArg = {
     fileId: number;
     blobId: number;
 };
+export type GetCurrencyConversionRatesApiResponse = /** status 200 Successful Response */ CurrencyConversionRate;
+export type GetCurrencyConversionRatesApiArg = {
+    groupId: number;
+    baseCurrency: string;
+};
 export type PreviewGroupApiResponse = /** status 200 Successful Response */ GroupPreview;
 export type PreviewGroupApiArg = {
     previewGroupPayload: PreviewGroupPayload;
@@ -659,6 +673,12 @@ export type TransactionHistory = {
 export type UpdatePositionsPayload = {
     positions: TransactionPosition[];
 };
+export type CurrencyConversionRate = {
+    base_currency: string;
+    rates: {
+        [key: string]: number;
+    };
+};
 export type GroupPreview = {
     id: number;
     name: string;
@@ -880,6 +900,8 @@ export const {
     useUpdateTransactionPositionsMutation,
     useGetFileContentsQuery,
     useLazyGetFileContentsQuery,
+    useGetCurrencyConversionRatesQuery,
+    useLazyGetCurrencyConversionRatesQuery,
     usePreviewGroupMutation,
     useJoinGroupMutation,
     useListGroupsQuery,

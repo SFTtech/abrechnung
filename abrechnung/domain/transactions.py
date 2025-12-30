@@ -117,3 +117,9 @@ class TransactionHistory(BaseModel):
     revision_id: int
     changed_by: int  # user id of changing user
     changed_at: datetime
+
+
+class CurrencyConversionRate(BaseModel):
+    base_currency: str
+    # map of currency_identifier to conversion rate
+    rates: dict[str, float]

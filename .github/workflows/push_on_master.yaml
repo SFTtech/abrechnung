@@ -173,7 +173,7 @@ jobs:
             - name: Download all workflow run artifacts
               uses: actions/download-artifact@v4
             - name: Trigger demo deployment via webhook
-              run: curl ${{ secrets.DEMO_DEPLOY_WEBHOOK_URL }} -F "archive=@$(find -name 'abrechnung_*bookworm*_amd64.deb')" --fail
+              run: curl ${{ secrets.DEMO_DEPLOY_WEBHOOK_URL }} -F "archive=@$(find -name 'abrechnung_*trixie*_amd64.deb')" --fail
 
     # if it's a tag, create a release and attach the artifacts to it
     attach-assets:

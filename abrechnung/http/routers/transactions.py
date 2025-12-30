@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from abrechnung.application.transactions import TransactionService
 from abrechnung.domain.transactions import (
+    CurrencyConversionRate,
     NewTransaction,
     Transaction,
     TransactionHistory,
@@ -193,3 +194,18 @@ async def get_file_contents(
     )
 
     return Response(content=content, media_type=mime_type)
+
+
+@router.get(
+    "/v1/{group_id}/currency-conversion-rates/{base_currency}",
+    summary="get the currency conversion rate",
+    response_model=CurrencyConversionRate,
+    operation_id="get_currency_conversion_rates",
+)
+async def get_currency_conversion_rates(
+    group_id: int,
+    base_currency: str,
+    user: User = Depends(get_current_user),
+    transaction_service: TransactionService = Depends(get_transaction_service),
+):
+    return await transaction_service.currency_api.get_currency_conversion_rate(base_currency=base_currency)

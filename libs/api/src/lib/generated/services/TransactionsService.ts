@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* oxlint-disable */
+import type { CurrencyConversionRate } from "../models/CurrencyConversionRate";
 import type { NewTransaction } from "../models/NewTransaction";
 import type { Transaction } from "../models/Transaction";
 import type { TransactionHistory } from "../models/TransactionHistory";
@@ -226,6 +227,33 @@ export class TransactionsService {
             path: {
                 file_id: fileId,
                 blob_id: blobId,
+            },
+            errors: {
+                401: `unauthorized`,
+                403: `forbidden`,
+                404: `Not found`,
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * get the currency conversion rate
+     * @returns CurrencyConversionRate Successful Response
+     * @throws ApiError
+     */
+    public getCurrencyConversionRates({
+        groupId,
+        baseCurrency,
+    }: {
+        groupId: number;
+        baseCurrency: string;
+    }): CancelablePromise<CurrencyConversionRate> {
+        return this.httpRequest.request({
+            method: "GET",
+            url: "/api/v1/{group_id}/currency-conversion-rates/{base_currency}",
+            path: {
+                group_id: groupId,
+                base_currency: baseCurrency,
             },
             errors: {
                 401: `unauthorized`,

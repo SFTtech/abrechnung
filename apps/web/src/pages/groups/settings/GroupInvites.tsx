@@ -1,6 +1,18 @@
 import { selectIsGuestUser } from "@abrechnung/redux";
-import { Add, ContentCopy, Delete, MoreVert } from "@mui/icons-material";
-import { Alert, Grid, IconButton, List, ListItem, ListItemIcon, ListItemText, Menu, MenuItem } from "@mui/material";
+import { Add, ContentCopy, Delete, MoreVert, QrCode as QrCodeIcon } from "@mui/icons-material";
+import {
+    Alert,
+    Dialog,
+    DialogContent,
+    Grid,
+    IconButton,
+    List,
+    ListItem,
+    ListItemIcon,
+    ListItemText,
+    Menu,
+    MenuItem,
+} from "@mui/material";
 import * as React from "react";
 import { toast } from "react-toastify";
 import { InviteLinkCreate } from "@/components/groups/InviteLinkCreate";
@@ -12,20 +24,13 @@ import { Navigate } from "react-router";
 import { Group, GroupInvite } from "@abrechnung/api";
 import { useFormatDatetime, useIsSmallScreen } from "@/hooks";
 import { useDeleteInviteMutation, useListInvitesQuery, useListMembersQuery } from "@/core/generated/api";
+import { QRCodeSVG } from "qrcode.react";
 
 const getInviteLink = (token: string | null) => {
     if (!token) {
         return null;
     }
     return `${window.location.origin}/invite/${token}`;
-};
-
-const copyToClipboard = (content: string | null) => {
-    if (!content) {
-        return;
-    }
-    navigator.clipboard.writeText(content);
-    toast.info("Link copied to clipboard!");
 };
 
 const InviteActions: React.FC<{ group: Group; invite: GroupInvite }> = ({ group, invite }) => {
@@ -41,6 +46,10 @@ const InviteActions: React.FC<{ group: Group; invite: GroupInvite }> = ({ group,
     const isSmallScreen = useIsSmallScreen();
     const [deleteInvite] = useDeleteInviteMutation();
 
+    const [qrCodeShown, setQrCodeShown] = React.useState(false);
+
+    const inviteLink = getInviteLink(invite.token);
+
     const deleteToken = (id: number) => {
         deleteInvite({ groupId: group.id, inviteId: id })
             .unwrap()
@@ -50,16 +59,33 @@ const InviteActions: React.FC<{ group: Group; invite: GroupInvite }> = ({ group,
     };
 
     const copy = () => {
-        copyToClipboard(getInviteLink(invite.token));
+        if (!inviteLink) {
+            return;
+        }
+        navigator.clipboard.writeText(inviteLink);
+        toast.info(t("common.linkCopiedToClipboard"));
     };
 
     const confirmDelete = () => {
         deleteToken(invite.id);
     };
 
+    const showQrCode = () => {
+        setQrCodeShown(true);
+    };
+
+    const qrDialog = inviteLink && (
+        <Dialog open={qrCodeShown} onClose={() => setQrCodeShown(false)}>
+            <DialogContent>
+                <QRCodeSVG marginSize={4} value={inviteLink} size={256} />
+            </DialogContent>
+        </Dialog>
+    );
+
     if (isSmallScreen) {
         return (
             <>
+                {qrDialog}
                 <IconButton
                     aria-label="more"
                     id="long-button"
@@ -72,25 +98,35 @@ const InviteActions: React.FC<{ group: Group; invite: GroupInvite }> = ({ group,
                 </IconButton>
                 <Menu
                     id="invite-actions-menu"
-                    MenuListProps={{
-                        "aria-labelledby": "long-button",
+                    slotProps={{
+                        list: {
+                            "aria-labelledby": "long-button",
+                        },
                     }}
                     anchorEl={anchorEl}
                     open={menuOpen}
                     onClose={handleCloseMenu}
                 >
-                    <MenuItem onClick={copy}>
-                        <ListItemIcon>
-                            <ContentCopy color="primary" fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText>{t("common.copyToClipboard")}</ListItemText>
-                    </MenuItem>
-                    <MenuItem onClick={copy}>
-                        <ListItemIcon>
-                            <Delete color="error" fontSize="small" />
-                        </ListItemIcon>
-                        <ListItemText>{t("common.delete")}</ListItemText>
-                    </MenuItem>
+                    {group.can_write && [
+                        <MenuItem key="qr" onClick={showQrCode}>
+                            <ListItemIcon>
+                                <QrCodeIcon color="primary" fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>{t("common.qrCode")}</ListItemText>
+                        </MenuItem>,
+                        <MenuItem key="clipboard" onClick={copy}>
+                            <ListItemIcon>
+                                <ContentCopy color="primary" fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>{t("common.copyToClipboard")}</ListItemText>
+                        </MenuItem>,
+                        <MenuItem key="delete" onClick={copy}>
+                            <ListItemIcon>
+                                <Delete color="error" fontSize="small" />
+                            </ListItemIcon>
+                            <ListItemText>{t("common.delete")}</ListItemText>
+                        </MenuItem>,
+                    ]}
                 </Menu>
             </>
         );
@@ -98,12 +134,20 @@ const InviteActions: React.FC<{ group: Group; invite: GroupInvite }> = ({ group,
 
     return (
         <>
-            <IconButton color="primary" onClick={copy}>
-                <ContentCopy />
-            </IconButton>
-            <IconButton color="error" onClick={confirmDelete}>
-                <Delete />
-            </IconButton>
+            {qrDialog}
+            {group.can_write && (
+                <>
+                    <IconButton color="primary" onClick={showQrCode}>
+                        <QrCodeIcon />
+                    </IconButton>
+                    <IconButton color="primary" onClick={copy}>
+                        <ContentCopy />
+                    </IconButton>
+                    <IconButton color="error" onClick={confirmDelete}>
+                        <Delete />
+                    </IconButton>
+                </>
+            )}
         </>
     );
 };
@@ -157,10 +201,7 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
                         </ListItem>
                     ) : (
                         invites.map((invite) => (
-                            <ListItem
-                                key={invite.id}
-                                secondaryAction={group.can_write && <InviteActions group={group} invite={invite} />}
-                            >
+                            <ListItem key={invite.id} secondaryAction={<InviteActions group={group} invite={invite} />}>
                                 <ListItemText
                                     primary={
                                         invite.token === null ? (

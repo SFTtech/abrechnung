@@ -10,6 +10,7 @@ import { getAccountLink, getAccountListLink } from "@/utils";
 import {
     accountEditStarted,
     discardAccountChange,
+    isAccountOnlyLocal,
     saveAccount,
     selectAccountBalances,
     useGroupCurrencyIdentifier,
@@ -83,10 +84,13 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
         setShowProgress(true);
         dispatch(saveAccount({ groupId: groupId, accountId: account.id, api }))
             .unwrap()
-            .then(({ oldAccountId, account }) => {
+            .then(({ oldAccountId, account: newAccount }) => {
                 setShowProgress(false);
-                if (oldAccountId !== account.id) {
-                    navigate(getAccountLink(groupId, account.type, account.id) + "?no-redirect=true", {
+                if (isAccountOnlyLocal(account) && account.type === "personal") {
+                    // we saved a purely local account, i.e. we created a new account -> navigate to account list
+                    navigate(getAccountListLink(groupId, "personal"));
+                } else if (oldAccountId !== newAccount.id) {
+                    navigate(getAccountLink(groupId, newAccount.type, newAccount.id) + "?no-redirect=true", {
                         replace: true,
                     });
                 }

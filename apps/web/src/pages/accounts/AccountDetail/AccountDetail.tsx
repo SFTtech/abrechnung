@@ -1,6 +1,6 @@
-import { AccountTransactionList } from "@/components/accounts/AccountTransactionList";
-import { BalanceHistoryGraph } from "@/components/accounts/BalanceHistoryGraph";
-import { ClearingAccountDetail } from "@/components/accounts/ClearingAccountDetail";
+import { AccountTransactionList } from "@/pages/accounts/AccountDetail/AccountTransactionList";
+import { BalanceHistoryGraph } from "@/pages/accounts/AccountDetail/BalanceHistoryGraph";
+import { ClearingAccountDetail } from "@/pages/accounts/AccountDetail/ClearingAccountDetail";
 import { MobilePaper } from "@/components/style";
 import { Loading } from "@abrechnung/components";
 import { useQuery, useTitle } from "@/core/utils";

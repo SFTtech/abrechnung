@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "@/store";
 import {
     deleteTransaction,
     discardTransactionChange,
+    isTransactionOnlyLocal,
     saveTransaction,
     selectTransactionHasPositions,
     transactionEditStarted,
@@ -81,7 +82,9 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
         setShowProgress(true);
         dispatch(discardTransactionChange({ groupId, transactionId }));
         setShowProgress(false);
-        navigate(`/groups/${groupId}/`);
+        if (isTransactionOnlyLocal(transaction)) {
+            navigate(`/groups/${groupId}/`);
+        }
     }, [transaction, setShowProgress, groupId, transactionId, dispatch, navigate]);
 
     const confirmDeleteTransaction = React.useCallback(() => {

@@ -35,6 +35,7 @@
         "luxon": "^3.7.2",
         "mathjs": "^15.1.0",
         "multer": "^2.0.2",
+        "qrcode.react": "^4.2.0",
         "react": "19.2.3",
         "react-dom": "19.2.3",
         "react-hook-form": "^7.69.0",

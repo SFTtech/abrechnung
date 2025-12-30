@@ -12,7 +12,7 @@ import {
     wipTransactionUpdated,
 } from "@abrechnung/redux";
 import { Account, Transaction, TransactionShare, TransactionValidator } from "@abrechnung/types";
-import { Grid, IconButton, InputAdornment, Stack, TableCell, Typography } from "@mui/material";
+import { Button, Grid, IconButton, InputAdornment, Stack, TableCell } from "@mui/material";
 import * as React from "react";
 import { z } from "zod";
 import { FileGallery } from "./attachments/FileGallery";
@@ -22,6 +22,7 @@ import { CurrencyIdentifier, getCurrencySymbolForIdentifier } from "@abrechnung/
 import { Navigate } from "react-router";
 import { AddPhotoAlternate } from "@mui/icons-material";
 import { ImageUploadDialog } from "./attachments/ImageUploadDialog";
+import { api } from "@/core/api";
 
 interface Props {
     groupId: number;
@@ -112,8 +113,29 @@ export const TransactionMetadata: React.FC<Props> = ({
         [dispatch, transaction]
     );
 
-    const updateCurrencyIdentifier = (currencyIdentifier: CurrencyIdentifier) => {
-        const newCurrencyConversionRate = 1.0; // TODO: lookup currency conversion rates here and explain how this works
+    const getDefaultCurrencyConversionRate = async (currencyIdentifier: string) => {
+        let newCurrencyConversionRate = 1.0;
+        if (currencyIdentifier != groupCurrencyIdentifier && groupCurrencyIdentifier != null) {
+            try {
+                const currencyConversions = await api.client.transactions.getCurrencyConversionRates({
+                    groupId,
+                    baseCurrency: currencyIdentifier,
+                });
+                newCurrencyConversionRate = currencyConversions.rates[groupCurrencyIdentifier] ?? 1.0;
+            } catch (e) {
+                console.error("Failed to fetch currency conversion rates from backend", e);
+            }
+        }
+        return newCurrencyConversionRate;
+    };
+
+    const refetchCurrencyConveresion = async () => {
+        const newCurrencyConversionRate = await getDefaultCurrencyConversionRate(transaction.currency_identifier);
+        pushChanges({ currency_conversion_rate: newCurrencyConversionRate });
+    };
+
+    const updateCurrencyIdentifier = async (currencyIdentifier: CurrencyIdentifier) => {
+        const newCurrencyConversionRate = await getDefaultCurrencyConversionRate(currencyIdentifier);
         pushChanges({ currency_identifier: currencyIdentifier, currency_conversion_rate: newCurrencyConversionRate });
     };
 
@@ -214,21 +236,26 @@ export const TransactionMetadata: React.FC<Props> = ({
                             margin="dense"
                             fullWidth
                             error={!!validationErrors.fieldErrors["value"]}
-                            helperText={validationErrors.fieldErrors["value"]}
+                            helperText={
+                                validationErrors.fieldErrors["value"] ??
+                                t("transactions.conversionHint", {
+                                    sourceValue: formatCurrency(1, transaction.currency_identifier),
+                                    targetValue: formatCurrency(
+                                        transaction.currency_conversion_rate,
+                                        groupCurrencyIdentifier,
+                                        12
+                                    ),
+                                })
+                            }
                             onChange={(value) => pushChanges({ currency_conversion_rate: value })}
                             value={transaction.currency_conversion_rate}
                             disabled={!transaction.is_wip}
                         />
-                        <Typography sx={{ whiteSpace: "nowrap", alignContent: "end" }}>
-                            {t("transactions.conversionHint", {
-                                sourceValue: formatCurrency(1, transaction.currency_identifier),
-                                targetValue: formatCurrency(
-                                    transaction.currency_conversion_rate,
-                                    groupCurrencyIdentifier,
-                                    12
-                                ),
-                            })}
-                        </Typography>
+                        {transaction.is_wip && (
+                            <Button onClick={refetchCurrencyConveresion}>
+                                {t("transactions.refreshCurrencyConversionRate")}
+                            </Button>
+                        )}
                     </Stack>
                 )}
                 <DateInput

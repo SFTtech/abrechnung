@@ -9,6 +9,10 @@ import { AccountSliceState, AccountState, IRootState, StateStatus } from "../typ
 import { addEntity, createAsyncThunkWithErrorHandling, getGroupScopedState, removeEntity } from "../utils";
 import { useSelector } from "react-redux";
 
+export const isAccountOnlyLocal = (account: Account) => {
+    return account.id < 0;
+};
+
 const initializeGroupState = (state: Draft<AccountSliceState>, groupId: number) => {
     if (state.byGroupId[groupId]) {
         return;
@@ -157,7 +161,7 @@ export const useAccount = (groupId: number, accountId: number) => {
     }, [s, accountId]);
 };
 
-export const useClearingAccountsInvolvingAccount = (groupId: number, accountId: number): Account[] => {
+export const useClearingAccountsInvolvingAccount = (groupId: number, accountId: number): ClearingAccount[] => {
     const accounts = useGroupAccounts(groupId, "clearing");
 
     return React.useMemo(() => {

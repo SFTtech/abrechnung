@@ -14,7 +14,10 @@ export const useFormatDatetime = () => {
     const { i18n } = useTranslation();
 
     return React.useCallback(
-        (datetime: DateTime | string, mode: FormatMode = "full") => {
+        (datetime?: DateTime | string | null, mode: FormatMode = "full") => {
+            if (datetime == null) {
+                return "";
+            }
             let d = datetime;
             if (typeof datetime === "string") {
                 d = DateTime.fromISO(datetime);

@@ -1,9 +1,10 @@
+import { ClearingAccountParticipants } from "@/components/accounts";
 import { ListItemLink } from "@/components/style/ListItemLink";
 import { useFormatDatetime } from "@/hooks";
-import { useAppDispatch, useAppSelector } from "@/store";
+import { useAppDispatch } from "@/store";
 import { getAccountLink } from "@/utils";
 import { Group } from "@abrechnung/api";
-import { accountEditStarted, copyAccount, selectAccountIdToAccountMap, useIsGroupWritable } from "@abrechnung/redux";
+import { accountEditStarted, copyAccount, useIsGroupWritable } from "@abrechnung/redux";
 import { Account } from "@abrechnung/types";
 import { ContentCopy, Delete, Edit } from "@mui/icons-material";
 import { Chip, Divider, IconButton, ListItemText, Typography } from "@mui/material";
@@ -22,13 +23,10 @@ export const ClearingAccountListItem: React.FC<Props> = ({ group, account, setAc
     const formatDatetime = useFormatDatetime();
 
     const isGroupWritable = useIsGroupWritable(group.id);
-    const accounts = useAppSelector((state) => selectAccountIdToAccountMap(state, group.id));
 
     if (account.type !== "clearing") {
         return null;
     }
-
-    const participatorNames = Object.keys(account.clearing_shares).map((accountId) => accounts[Number(accountId)].name);
 
     const edit = () => {
         if (!account.is_wip) {
@@ -77,7 +75,7 @@ export const ClearingAccountListItem: React.FC<Props> = ({ group, account, setAc
                     secondary={
                         <>
                             <Typography variant="body2" component="span" sx={{ color: "text.primary" }}>
-                                {participatorNames.join(", ")}
+                                <ClearingAccountParticipants groupId={group.id} account={account} />
                             </Typography>
                             <br />
                             {account.date_info && formatDatetime(account.date_info, "date")}

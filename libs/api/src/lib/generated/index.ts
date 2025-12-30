@@ -19,6 +19,7 @@ export type { ConfirmEmailChangePayload } from "./models/ConfirmEmailChangePaylo
 export type { ConfirmPasswordRecoveryPayload } from "./models/ConfirmPasswordRecoveryPayload";
 export type { ConfirmRegistrationPayload } from "./models/ConfirmRegistrationPayload";
 export type { CreateInvitePayload } from "./models/CreateInvitePayload";
+export type { CurrencyConversionRate } from "./models/CurrencyConversionRate";
 export type { DeleteSessionPayload } from "./models/DeleteSessionPayload";
 export type { FileAttachment } from "./models/FileAttachment";
 export type { FrontendConfig } from "./models/FrontendConfig";

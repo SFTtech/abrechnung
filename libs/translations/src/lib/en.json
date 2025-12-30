@@ -43,6 +43,8 @@
         "exportAsCsv": "Export as CSV",
         "noneSoFar": "None so far",
         "copyToClipboard": "Copy to clipboard",
+        "linkCopiedToClipboard": "Link copied to clipboard!",
+        "qrCode": "Qr Code",
         "createdBy": "created by {{username}}",
         "changedBy": "changed by {{username}}"
     },
@@ -173,8 +175,9 @@
         "list": {
             "tabTitle": "{{groupName}} - Transactions"
         },
-        "yourBalance": "your balance:",
-        "byFor": "by {{by}}, for {{for}}",
+        "yourBalance": "Your balance:",
+        "byFor": "Paid by <strong>{{by}}</strong> for <strong>{{for}}</strong>",
+        "refreshCurrencyConversionRate": "Refresh",
         "type": {
             "purchase": "purchase",
             "transfer": "transfer",
@@ -224,7 +227,8 @@
             "tabTitle": "{{groupName}} - Events"
         },
         "createEvent": "Create Event",
-        "noEvents": "No Events"
+        "noEvents": "No Events",
+        "participants": "Participants: <strong>{{participants}}</strong>"
     },
     "profile": {
         "index": {
