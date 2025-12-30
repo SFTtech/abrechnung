@@ -66,6 +66,12 @@ export const CreateInvitePayload = z.object({
     valid_until: z.string(),
 });
 
+export type CurrencyConversionRate = z.infer<typeof CurrencyConversionRate>;
+export const CurrencyConversionRate = z.object({
+    base_currency: z.string(),
+    rates: z.record(z.string(), z.number()),
+});
+
 export type DeleteSessionPayload = z.infer<typeof DeleteSessionPayload>;
 export const DeleteSessionPayload = z.object({
     session_id: z.number(),

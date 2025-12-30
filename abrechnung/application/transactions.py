@@ -1,9 +1,11 @@
 import base64
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from typing import Optional, Union
 
 import asyncpg
-from sftkit.database import Connection
+import httpx
+from pydantic import BaseModel
+from sftkit.database import Connection, Pool
 from sftkit.error import AccessDenied, InvalidArgument
 from sftkit.service import Service, with_db_connection, with_db_transaction
 
@@ -15,6 +17,7 @@ from abrechnung.core.decorators import (
     with_group_last_changed_update,
 )
 from abrechnung.domain.transactions import (
+    CurrencyConversionRate,
     NewFile,
     NewTransaction,
     NewTransactionPosition,
@@ -29,7 +32,39 @@ from abrechnung.domain.users import User
 from abrechnung.util import timed_cache
 
 
+class FrankfurterApiResp(BaseModel):
+    base: str
+    date: date
+    rates: dict[str, float]
+
+
+class CurrencyConversionApi:
+    def __init__(self):
+        self._cache: dict[str, tuple[date, CurrencyConversionRate]] = {}
+
+    async def get_currency_conversion_rate(self, base_currency: str) -> CurrencyConversionRate:
+        base_date = date.today()
+        cached = self._cache.get(base_currency)
+        if cached is not None and cached[0] == base_date:
+            return cached[1]
+
+        currency_api_base_url = "https://api.frankfurter.dev/v1"
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(f"{currency_api_base_url}/{base_date.isoformat()}", params={"base": base_currency})
+            body = resp.json()
+            parsed = FrankfurterApiResp.model_validate(body)
+            resulting_conversion_rate = CurrencyConversionRate(base_currency=parsed.base, rates=parsed.rates)
+
+        self._cache[base_currency] = (base_date, resulting_conversion_rate)
+        return resulting_conversion_rate
+
+
 class TransactionService(Service[Config]):
+    def __init__(self, db_pool: Pool, config: Config, transaction_retries: int | None = None):
+        super().__init__(db_pool, config, transaction_retries)
+
+        self.currency_api = CurrencyConversionApi()
+
     @staticmethod
     async def _check_transaction_permissions(
         conn: asyncpg.Connection,

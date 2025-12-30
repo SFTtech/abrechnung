@@ -177,6 +177,7 @@
         },
         "yourBalance": "Your balance:",
         "byFor": "Paid by <strong>{{by}}</strong> for <strong>{{for}}</strong>",
+        "refreshCurrencyConversionRate": "Refresh",
         "type": {
             "purchase": "purchase",
             "transfer": "transfer",

@@ -46,3 +46,4 @@ serve-docs:
 generate-openapi:
 	mkdir -p api
 	uv run abrechnung -c config.yaml show-openapi > api/openapi.json
+	npx nx run-many --target generate-openapi
