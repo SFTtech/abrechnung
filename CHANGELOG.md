@@ -8,6 +8,8 @@
 
 - select accounts as "owned" to set a default payer for purchases and transfers as well as
   displaying balance effects directly
+- fetch current currency conversion rates from external api
+- various UI polishes and improvements
 
 ## 1.2.0 (2025-06-19)
 
