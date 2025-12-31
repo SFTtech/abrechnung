@@ -133,7 +133,7 @@ class GroupService(Service[Config]):
         )
 
         await conn.execute(
-            "insert into account_history (id, revision_id, name, description) values ($1, $2, $3, $4, $5)",
+            "insert into account_history (id, revision_id, name, description) values ($1, $2, $3, $4)",
             account_id,
             revision_id,
             user.username,
