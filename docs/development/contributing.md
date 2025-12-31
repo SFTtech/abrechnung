@@ -3,7 +3,7 @@
 ## As Users
 
 In case you encounter bugs or have ideas for new and useful features don't hesitate to open an
-[issue](https://github.com/SFTtech/abrechnung/issues>) and start a discussion.
+[issue](https://github.com/SFTtech/abrechnung/issues) and start a discussion.
 
 ## As Developers
 
