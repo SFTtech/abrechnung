@@ -133,7 +133,7 @@ class GroupService(Service[Config]):
         )
 
         await conn.execute(
-            "insert into account_history (id, revision_id, name, description) values ($1, $2, $3, $4, $5)",
+            "insert into account_history (id, revision_id, name, description) values ($1, $2, $3, $4)",
             account_id,
             revision_id,
             user.username,
@@ -166,17 +166,19 @@ class GroupService(Service[Config]):
         if user_is_already_member:
             raise InvalidArgument("User is already a member of this group")
 
+        account_id = None
+        if group["add_user_account_on_join"]:
+            account_id = await self._create_user_account(conn=conn, group_id=group["id"], user=user)
+
         await conn.execute(
-            "insert into group_membership (user_id, group_id, invited_by, can_write, is_owner) "
-            "values ($1, $2, $3, $4, false)",
+            "insert into group_membership (user_id, group_id, invited_by, can_write, is_owner, owned_account_id) "
+            "values ($1, $2, $3, $4, false, $5)",
             user.id,
             invite["group_id"],
             invite["created_by"],
             invite["join_as_editor"],
+            account_id,
         )
-
-        if group["add_user_account_on_join"]:
-            await self._create_user_account(conn=conn, group_id=group["id"], user=user)
 
         await create_group_log(
             conn=conn,
