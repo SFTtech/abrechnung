@@ -58,6 +58,13 @@ exclude = ["tests*"]
 version = { attr = "abrechnung.__version__" }
 description = { file = ["README.md"] }
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+minversion = "6.0"
+testpaths = ["tests"]
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+
 [tool.pylint.MASTER]
 extension-pkg-whitelist = ["pydantic"]
 
@@ -65,7 +72,7 @@ extension-pkg-whitelist = ["pydantic"]
 max-line-length = 120
 
 [tool.pylint.messages_control]
-disable = ["C", "R", "fixme", "logging-fstring-interpolation", "broad-exception-caught"]
+disable = ["C", "R", "fixme", "logging-fstring-interpolation", "broad-exception-caught", "redefined-outer-name"]
 
 [tool.ruff]
 line-length = 120
