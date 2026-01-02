@@ -7,6 +7,7 @@ RUN /opt/abrechnung-venv/bin/python3 -m pip install /src
 
 FROM python:3.12-alpine
 RUN addgroup -S abrechnung && adduser -S abrechnung -G abrechnung && apk add --no-cache curl
+RUN mkdir -p /etc/abrechnung && chown abrechnung:abrechnung /etc/abrechnung
 COPY --from=builder /opt/abrechnung-venv/ /opt/abrechnung-venv/
 ADD --chmod=644 --chown=abrechnung:abrechnung docker/abrechnung.yaml /etc/abrechnung/abrechnung.yaml
 ADD --chmod=755 ./docker/entrypoint.py /
