@@ -44,7 +44,9 @@
         "tagNameRequiredError": "bitte geben Sie einen Tag Namen ein",
         "copyToClipboard": "in Zwischenablage kopieren",
         "createdBy": "erstellt von {{username}}",
-        "changedBy": "geändert von {{username}}"
+        "changedBy": "geändert von {{username}}",
+        "linkCopiedToClipboard": "Link in die Zwischenablage kopiert!",
+        "qrCode": "QR-Code"
     },
     "shareSelect": {
         "selectedPeople_one": "{{count}} Person",
@@ -110,7 +112,8 @@
             "archiveGroupConfirm": "Bist du sicher, dass du die Gruppe {{group.name}} archivieren möchtest? An archivierten Gruppen können keine Änderungen vorgenommen werden und sie werden in Gruppenlisten ausgeblendet. Nur ein Gruppenbesitzer kann diese Aktion rückgängig machen.",
             "header": "Einstellungen",
             "unarchiveGroupConfirm": "Bist du sicher, dass du die Gruppe {{group.name}} dearchivieren möchtest? Die Gruppe ist nicht mehr schreibgeschützt.",
-            "dangerZone": "Gefahrenzone. Die folgenden Aktionen sind irreversibel."
+            "dangerZone": "Gefahrenzone. Die folgenden Aktionen sind irreversibel.",
+            "ownedAccount": "Das ist dein Account"
         },
         "join": {
             "tabTitle": "Abrechnung - Gruppe beitreten",
@@ -167,7 +170,7 @@
         "list": {
             "tabTitle": "{{groupName}} - Transaktionen"
         },
-        "byFor": "von {{by}}, für {{for}}",
+        "byFor": "Bezahlt von {{by}}, für {{for}}",
         "positions": {
             "positions": "Positionen",
             "sharedPlusRest": "Geteilt + Rest",
@@ -185,7 +188,8 @@
             "linkTo": "Verlauf"
         },
         "currencyConversionRate": "Geldumtauschrate",
-        "conversionHint": "{{sourceValue}} = {{targetValue}}"
+        "conversionHint": "{{sourceValue}} = {{targetValue}}",
+        "refreshCurrencyConversionRate": "Aktualisieren"
     },
     "accounts": {
         "noAccounts": "Keine Konten",
@@ -221,7 +225,8 @@
             "tabTitle": "{{groupName}} - Veranstaltungen"
         },
         "createEvent": "Veranstaltungen erstellen",
-        "noEvents": "Keine Veranstaltungen"
+        "noEvents": "Keine Veranstaltungen",
+        "participants": "Teilnehmer: <strong>{{participants}}</strong>"
     },
     "profile": {
         "index": {
@@ -311,6 +316,7 @@
         "es": "Spanisch",
         "ta": "Tamil",
         "uk": "Ukrainisch",
-        "bg": "Bulgarisch"
+        "bg": "Bulgarisch",
+        "ru": "Russisch"
     }
 }
