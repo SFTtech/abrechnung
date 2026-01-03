@@ -7,7 +7,7 @@ import React from "react";
 import { PositionValidationError } from "./types";
 import { getCurrencySymbolForIdentifier } from "@abrechnung/core";
 
-interface PositionTableRowProps {
+interface EditablePositionTableRowProps {
     currencyIdentifier: string;
     position: TransactionPosition;
     updatePosition: (
@@ -26,7 +26,7 @@ interface PositionTableRowProps {
     validationError?: PositionValidationError;
 }
 
-export const PositionTableRow: React.FC<PositionTableRowProps> = ({
+export const EditablePositionTableRow: React.FC<EditablePositionTableRowProps> = ({
     position,
     updatePosition,
     shownAccounts,

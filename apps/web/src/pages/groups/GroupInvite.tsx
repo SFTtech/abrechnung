@@ -7,9 +7,12 @@ import { Alert, Button, Grid, List, ListItem, ListItemText, Typography } from "@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
+import { useAppDispatch } from "@/store";
+import { fetchGroups } from "@abrechnung/redux";
 
 export const GroupInvite: React.FC = () => {
     const { t } = useTranslation();
+    const dispatch = useAppDispatch();
     const [group, setGroup] = useState<GroupPreview | null>(null);
     const [error, setError] = useState<string | null>(null);
     const { inviteToken } = useParams();
@@ -42,6 +45,8 @@ export const GroupInvite: React.FC = () => {
             .then(() => {
                 setError(null);
                 navigate("/");
+
+                dispatch(fetchGroups({ api }));
             })
             .catch((err) => {
                 setError(err);

@@ -3,8 +3,8 @@ import { TagSelector } from "@/components/TagSelector";
 import { MobilePaper } from "@/components/style";
 import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
 import { useTitle } from "@/core/utils";
-import { useIsSmallScreen } from "@/hooks";
-import { useAppDispatch, useAppSelector } from "@/store";
+import { useIsSmallScreen, useQueryState } from "@/hooks";
+import { selectTransactionSortMode, updateTransactionSortMode, useAppDispatch, useAppSelector } from "@/store";
 import { TransactionSortMode, transactionCsvDump } from "@abrechnung/core";
 import {
     createTransaction,
@@ -40,12 +40,12 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
 import { TransactionListItem } from "./TransactionListItem";
+import z from "zod";
 
 interface Props {
     groupId: number;
 }
 
-const emptyList: string[] = [];
 const MAX_ITEMS_PER_PAGE = 40;
 
 const downloadFile = (content: string, filename: string, mimetype: string) => {
@@ -204,11 +204,17 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
 
     const isGroupWritable = useIsGroupWritable(groupId);
 
-    const [searchValue, setSearchValue] = useState("");
-    const [tagFilter, setTagFilter] = useState<string[]>(emptyList);
+    const sortMode = useAppSelector(selectTransactionSortMode);
 
-    const [sortMode, setSortMode] = useState<TransactionSortMode>("last_changed");
-
+    const [filterState, updateFilterState] = useQueryState(
+        { searchValue: "", tagFilter: "" },
+        z.object({ searchValue: z.string().optional().default(""), tagFilter: z.string().optional().default("") })
+    );
+    const searchValue = filterState.searchValue.trim();
+    const tagFilter = filterState.tagFilter
+        .trim()
+        .split(",")
+        .filter((tag) => !!tag);
     const transactions = useSortedTransactions(groupId, sortMode, searchValue, tagFilter);
 
     const [currentPage, setCurrentPage] = useState(0);
@@ -251,11 +257,11 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                     <TransactionListActions
                         groupId={group.id}
                         sortMode={sortMode}
-                        setSortMode={setSortMode}
+                        setSortMode={(sortMode) => dispatch(updateTransactionSortMode(sortMode))}
                         searchValue={searchValue}
                         tagFilter={tagFilter}
-                        setTagFilter={setTagFilter}
-                        setSearchValue={setSearchValue}
+                        setTagFilter={(newTags) => updateFilterState({ tagFilter: newTags.join(",") })}
+                        setSearchValue={(newSearch) => updateFilterState({ searchValue: newSearch })}
                         handleClickCreatePurchase={onCreatePurchase}
                         handleClickCreateTransfer={onCreateTransfer}
                         handleClickDownloadCsv={downloadCsv}
@@ -299,14 +305,12 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                 >
                     <SpeedDialAction
                         icon={<PurchaseIcon />}
-                        tooltipTitle={t("transactions.purchase")}
-                        tooltipOpen
+                        slotProps={{ tooltip: { title: t("transactions.purchase"), open: true } }}
                         onClick={onCreatePurchase}
                     />
                     <SpeedDialAction
                         icon={<TransferIcon />}
-                        tooltipTitle={t("transactions.transfer")}
-                        tooltipOpen
+                        slotProps={{ tooltip: { title: t("transactions.transfer"), open: true } }}
                         onClick={onCreateTransfer}
                     />
                 </SpeedDial>

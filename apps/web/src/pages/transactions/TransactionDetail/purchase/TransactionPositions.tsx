@@ -14,8 +14,9 @@ import {
     wipPositionUpdated,
 } from "@abrechnung/redux";
 import { Account, TransactionPosition } from "@abrechnung/types";
-import { Add } from "@mui/icons-material";
+import { Add, Delete } from "@mui/icons-material";
 import {
+    Box,
     Checkbox,
     FormControlLabel,
     Grid,
@@ -31,7 +32,8 @@ import {
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ValidationErrors } from "./types";
-import { PositionTableRow } from "./PositionTableRow";
+import { EditablePositionTableRow } from "./EditablePositionTableRow";
+import { ReadonlyPositionTableRow } from "./ReadonlyPositionTableRow";
 
 interface TransactionPositionsProps {
     groupId: number;
@@ -67,43 +69,45 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     const dispatch = useAppDispatch();
     const [showAdvanced, setShowAdvanced] = useState(false);
 
-    // find all accounts that take part in the transaction, either via debitor shares or purchase items
-    // TODO: should we add creditor accounts as well?
+    const [shownAccountIds, setShownAccountIds] = useState<number[]>([]);
+    const shownAccountIdsFromTransaction = React.useMemo(() => {
+        let accountIdsFromPositions: number[] = positions
+            .map((item) => Object.keys(item.usages))
+            .flat()
+            .map((id) => parseInt(id));
 
-    const [additionalPurchaseItemAccounts, setAdditionalPurchaseItemAccounts] = useState<number[]>([]);
-
-    const { shownAccounts, shownAccountIDs } = React.useMemo(() => {
-        let accountIDsToShow: number[] = Array.from(
-            new Set<number>(
-                positions
-                    .map((item) => Object.keys(item.usages))
-                    .flat()
-                    .map((id) => parseInt(id))
-            )
-        );
+        let accountIdsFromDebitorShares: number[] = [];
         if (transaction.is_wip) {
-            accountIDsToShow = Array.from(
-                new Set<number>(
-                    Object.keys(transaction.debitor_shares)
-                        .map((id) => parseInt(id))
-                        .concat(accountIDsToShow)
-                        .concat(additionalPurchaseItemAccounts)
-                )
-            );
+            accountIdsFromDebitorShares = Object.keys(transaction.debitor_shares).map((id) => parseInt(id));
         }
-        const accs = accountIDsToShow.map((id) => accountIDMap[id]).sort(getAccountSortFunc("name"));
 
-        return {
-            shownAccounts: accs,
-            shownAccountIDs: accs.map((a) => a.id),
-        };
-    }, [transaction, positions, additionalPurchaseItemAccounts, accountIDMap]);
+        return Array.from(new Set<number>([...accountIdsFromPositions, ...accountIdsFromDebitorShares]));
+    }, [transaction, positions]);
+
+    React.useEffect(() => {
+        setShownAccountIds((currAdditionalAccounts: number[]) => {
+            const sortFunc = getAccountSortFunc("name");
+            const sortedShownAccounts = [...shownAccountIdsFromTransaction].sort((acc1Id: number, acc2Id: number) =>
+                sortFunc(accountIDMap[acc1Id], accountIDMap[acc2Id])
+            );
+            const allAccountIds = Array.from(new Set<number>([...currAdditionalAccounts, ...sortedShownAccounts]));
+            return allAccountIds;
+        });
+    }, [shownAccountIdsFromTransaction, accountIDMap]);
+
+    const shownAccounts = React.useMemo(() => {
+        return shownAccountIds.map((id) => accountIDMap[id]);
+    }, [shownAccountIds]);
 
     const showAddAccount = shownAccounts.length < accounts.length;
 
     const [showAccountSelect, setShowAccountSelect] = useState(false);
 
     const totalPositionValue = positions.reduce((acc, curr) => acc + curr.price, 0);
+    const totalPositionSharedValue = positions.reduce(
+        (currTotal, position) => currTotal + position.price * position.communist_shares,
+        0
+    );
     const sharedTransactionValue = transaction.value - totalPositionValue;
 
     const purchaseItemSumForAccount = (accountID: number) => {
@@ -146,8 +150,14 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
 
     const addPurchaseItemAccount = (account: Account) => {
         setShowAccountSelect(false);
-        setAdditionalPurchaseItemAccounts((currAdditionalAccounts: number[]) =>
+        setShownAccountIds((currAdditionalAccounts: number[]) =>
             Array.from(new Set<number>([...currAdditionalAccounts, account.id]))
+        );
+    };
+
+    const removeAccountFromShown = (account: Account) => {
+        setShownAccountIds((currAdditionalAccounts: number[]) =>
+            currAdditionalAccounts.filter((id) => id !== account.id)
         );
     };
 
@@ -176,7 +186,14 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                             <TableCell align="right">{t("common.price")}</TableCell>
                             {shownAccounts.map((acc) => (
                                 <TableCell align="right" sx={{ minWidth: 80 }} key={acc.id}>
-                                    {acc.name}
+                                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "end" }}>
+                                        <span>{acc.name}</span>
+                                        {transaction.is_wip && !shownAccountIdsFromTransaction.includes(acc.id) && (
+                                            <IconButton onClick={() => removeAccountFromShown(acc)}>
+                                                <Delete />
+                                            </IconButton>
+                                        )}
+                                    </Box>
                                 </TableCell>
                             ))}
                             {transaction.is_wip && (
@@ -185,7 +202,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                         <TableCell align="right">
                                             <AccountSelect
                                                 groupId={groupId}
-                                                exclude={shownAccountIDs}
+                                                exclude={shownAccountIds}
                                                 onChange={addPurchaseItemAccount}
                                             />
                                         </TableCell>
@@ -206,7 +223,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                     <TableBody>
                         {transaction.is_wip
                             ? positions.map((position) => (
-                                  <PositionTableRow
+                                  <EditablePositionTableRow
                                       key={position.id}
                                       position={position}
                                       currencyIdentifier={transaction.currency_identifier}
@@ -222,35 +239,13 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                   />
                               ))
                             : positions.map((position) => (
-                                  <TableRow hover key={position.id}>
-                                      <TableCell>{position.name}</TableCell>
-                                      <TableCell align="right" style={{ minWidth: 80 }}>
-                                          {formatCurrency(position.price, transaction.currency_identifier)}
-                                      </TableCell>
-                                      {shownAccountIDs.map((accountID) => (
-                                          <TableCell align="right" key={accountID}>
-                                              {positionsHaveComplexShares ? (
-                                                  position.usages[accountID] !== undefined ? (
-                                                      position.usages[String(accountID)]
-                                                  ) : (
-                                                      0
-                                                  )
-                                              ) : (
-                                                  <Checkbox
-                                                      checked={(position.usages[accountID] ?? 0) !== 0}
-                                                      disabled={true}
-                                                  />
-                                              )}
-                                          </TableCell>
-                                      ))}
-                                      <TableCell align="right">
-                                          {positionsHaveComplexShares ? (
-                                              position.communist_shares
-                                          ) : (
-                                              <Checkbox checked={position.communist_shares !== 0} disabled={true} />
-                                          )}
-                                      </TableCell>
-                                  </TableRow>
+                                  <ReadonlyPositionTableRow
+                                      key={position.id}
+                                      transaction={transaction}
+                                      position={position}
+                                      shownAccountIDs={shownAccountIds}
+                                      positionsHaveComplexShares={positionsHaveComplexShares}
+                                  />
                               ))}
                         <TableRow hover>
                             <TableCell>
@@ -259,7 +254,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                             <TableCell align="right">
                                 {formatCurrency(totalPositionValue, transaction.currency_identifier)}
                             </TableCell>
-                            {shownAccountIDs.map((accountID) => (
+                            {shownAccountIds.map((accountID) => (
                                 <TableCell align="right" key={accountID}>
                                     {formatCurrency(
                                         purchaseItemSumForAccount(accountID),
@@ -268,14 +263,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                 </TableCell>
                             ))}
                             <TableCell align="right" colSpan={showAddAccount ? 2 : 1}>
-                                {formatCurrency(
-                                    positions.reduce((acc, curr) => acc + curr.price, 0) -
-                                        Object.values(transactionBalanceEffect).reduce(
-                                            (acc, curr) => acc + curr.positions,
-                                            0
-                                        ),
-                                    transaction.currency_identifier
-                                )}
+                                {formatCurrency(totalPositionSharedValue, transaction.currency_identifier)}
                             </TableCell>
                             {transaction.is_wip && <TableCell></TableCell>}
                         </TableRow>
@@ -288,7 +276,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                             <TableCell align="right">
                                 {formatCurrency(sharedTransactionValue, transaction.currency_identifier)}
                             </TableCell>
-                            {shownAccountIDs.map((accountID) => (
+                            {shownAccountIds.map((accountID) => (
                                 <TableCell align="right" key={accountID}></TableCell>
                             ))}
                             <TableCell align="right" colSpan={showAddAccount ? 2 : 1}></TableCell>
