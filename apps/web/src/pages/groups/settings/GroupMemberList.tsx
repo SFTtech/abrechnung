@@ -111,7 +111,16 @@ const EditMemberDialog: React.FC<{
 export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
     const { t } = useTranslation();
     const currentUserId = useAppSelector(selectCurrentUserId);
-    const { data: members } = useListMembersQuery({ groupId: group.id });
+    const { data: members } = useListMembersQuery(
+        { groupId: group.id },
+        {
+            selectFromResult: ({ data, ...rest }) => ({
+                ...rest,
+                data: data ? data.sort((a, b) => a.username.localeCompare(b.username)) : undefined,
+            }),
+        }
+    );
+
     const formatDatetime = useFormatDatetime();
 
     const [memberToEdit, setMemberToEdit] = useState<GroupMember | undefined>(undefined);
