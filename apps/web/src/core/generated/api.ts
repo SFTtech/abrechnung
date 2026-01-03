@@ -681,6 +681,7 @@ export type CurrencyConversionRate = {
 };
 export type GroupPreview = {
     id: number;
+    is_already_member: boolean;
     name: string;
     description: string;
     currency_identifier: string;
@@ -692,6 +693,7 @@ export type GroupPreview = {
 };
 export type PreviewGroupPayload = {
     invite_token: string;
+    logged_in_user_token?: string | null;
 };
 export type Group = {
     id: number;

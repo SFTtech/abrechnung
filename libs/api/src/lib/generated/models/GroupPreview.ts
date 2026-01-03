@@ -4,6 +4,7 @@
 /* oxlint-disable */
 export type GroupPreview = {
     id: number;
+    is_already_member: boolean;
     name: string;
     description: string;
     currency_identifier: string;

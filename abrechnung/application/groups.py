@@ -384,13 +384,13 @@ class GroupService(Service[Config]):
             )
 
     @with_db_transaction
-    async def preview_group(self, *, conn: Connection, invite_token: str) -> GroupPreview:
+    async def preview_group(self, *, conn: Connection, user: User | None, invite_token: str) -> GroupPreview:
         group = await conn.fetch_maybe_one(
             GroupPreview,
             "select grp.id, "
             "grp.name, grp.description, grp.terms, grp.currency_identifier, grp.created_at, "
             "inv.description as invite_description, inv.valid_until as invite_valid_until, "
-            "inv.single_use as invite_single_use "
+            "inv.single_use as invite_single_use, false as is_already_member "
             "from grp "
             "join group_invite inv on grp.id = inv.group_id "
             "where inv.token = $1",
@@ -398,6 +398,12 @@ class GroupService(Service[Config]):
         )
         if not group:
             raise AccessDenied("invalid invite token to preview group")
+
+        if user:
+            is_member = await conn.fetchval(
+                "select exists(select from group_membership where group_id = $1 and user_id = $2)", group.id, user.id
+            )
+            group.is_already_member = is_member
 
         return group
 

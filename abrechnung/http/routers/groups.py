@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 
 from abrechnung.application.groups import GroupService
+from abrechnung.application.users import UserService
 from abrechnung.domain.groups import (
     Group,
     GroupInvite,
@@ -14,7 +15,7 @@ from abrechnung.domain.groups import (
 )
 from abrechnung.domain.users import User
 from abrechnung.http.auth import get_current_user
-from abrechnung.http.dependencies import get_group_service
+from abrechnung.http.dependencies import get_group_service, get_user_service
 
 router = APIRouter(
     prefix="/api",
@@ -28,6 +29,7 @@ router = APIRouter(
 
 class PreviewGroupPayload(BaseModel):
     invite_token: str
+    logged_in_user_token: str | None = None
 
 
 @router.post(
@@ -39,11 +41,14 @@ class PreviewGroupPayload(BaseModel):
 )
 async def preview_group(
     payload: PreviewGroupPayload,
-    # user: User = Depends(get_current_user),
     group_service: GroupService = Depends(get_group_service),
+    user_service: UserService = Depends(get_user_service),
 ):
+    user = None
+    if payload.logged_in_user_token:
+        user = await user_service.get_user_from_token(token=payload.logged_in_user_token)
     return await group_service.preview_group(
-        # user=user,
+        user=user,
         invite_token=payload.invite_token,
     )
 

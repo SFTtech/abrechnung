@@ -51,6 +51,7 @@ class GroupLog(BaseModel):
 
 class GroupPreview(BaseModel):
     id: int
+    is_already_member: bool
     name: str
     description: str
     currency_identifier: str
