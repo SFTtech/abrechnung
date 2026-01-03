@@ -42,7 +42,9 @@
         "tagNameRequiredError": "введіть назву тегу",
         "copyToClipboard": "Копіювати в буфер обміну",
         "createdBy": "створено {{username}}",
-        "changedBy": "змінено на {{username}}"
+        "changedBy": "змінено на {{username}}",
+        "linkCopiedToClipboard": "Посилання скопійовано в буфер обміну!",
+        "qrCode": "QR-код"
     },
     "images": {
         "uploadImage": "Завантажити зображення",
@@ -113,7 +115,8 @@
         "noEvents": "Немає подій",
         "list": {
             "tabTitle": "{{groupName}} - Події"
-        }
+        },
+        "participants": "Учасники: <strong>{{participants}}</strong>"
     },
     "groups": {
         "join": {
@@ -215,7 +218,7 @@
         "transfer": "Трансфер",
         "paidBy": "Оплачено",
         "confirmDeleteTransactionInfo": "Ви впевнені, що бажаєте видалити транзакцію \"{{transaction.name}}\"?",
-        "byFor": "від {{by}}, для {{for}}",
+        "byFor": "Оплачено від <strong>{{by}}</strong> для <strong>{{for}}</strong>",
         "createTransferForAccount": "Створити переказ до {{accountName}}",
         "type": {
             "mimo": "незважаючи на",
@@ -227,7 +230,8 @@
         },
         "currencyConversionRate": "Курс конвертації валют",
         "conversionHint": "{{sourceValue}} = {{targetValue}}",
-        "yourBalance": "ваш баланс:"
+        "yourBalance": "Ваш баланс:",
+        "refreshCurrencyConversionRate": "Оновити"
     },
     "accounts": {
         "participated": "Брав участь",
@@ -304,7 +308,8 @@
         "ta": "Тамільська",
         "de": "Німецький",
         "uk": "Українська",
-        "bg": "Болгарська"
+        "bg": "Болгарська",
+        "ru": "Російська"
     },
     "shareSelect": {
         "showEvents": "Показати події",
