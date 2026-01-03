@@ -145,7 +145,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
             </FormGroup>
             <Grid container justifyContent="space-between" style={{ marginTop: 10 }}>
                 <div>
-                    {group.can_write && isEditing && (
+                    {group.is_owner && isEditing && (
                         <Stack spacing={1} direction="row">
                             <Button type="submit" variant="contained" color="primary" startIcon={<Save />}>
                                 {t("common.save")}
@@ -155,7 +155,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
                             </Button>
                         </Stack>
                     )}
-                    {group.can_write && !isEditing && (
+                    {group.is_owner && !isEditing && (
                         <Button variant="contained" color="primary" onClick={startEdit} startIcon={<Edit />}>
                             {t("common.edit")}
                         </Button>
