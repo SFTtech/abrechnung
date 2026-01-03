@@ -63,7 +63,7 @@ export const CreateInvitePayload = z.object({
     description: z.string(),
     single_use: z.boolean(),
     join_as_editor: z.boolean(),
-    valid_until: z.string(),
+    valid_until: z.union([z.union([z.string(), z.null()]), z.undefined()]).optional(),
 });
 
 export type CurrencyConversionRate = z.infer<typeof CurrencyConversionRate>;
@@ -144,7 +144,7 @@ export const GroupInvite = z.object({
     single_use: z.boolean(),
     join_as_editor: z.boolean(),
     description: z.string(),
-    valid_until: z.string(),
+    valid_until: z.union([z.string(), z.null()]),
 });
 
 export type GroupLog = z.infer<typeof GroupLog>;
@@ -177,6 +177,7 @@ export const GroupMessage = z.object({
 export type GroupPreview = z.infer<typeof GroupPreview>;
 export const GroupPreview = z.object({
     id: z.number(),
+    is_already_member: z.boolean(),
     name: z.string(),
     description: z.string(),
     currency_identifier: z.string(),
@@ -273,6 +274,7 @@ export const PersonalAccount = z.object({
 export type PreviewGroupPayload = z.infer<typeof PreviewGroupPayload>;
 export const PreviewGroupPayload = z.object({
     invite_token: z.string(),
+    logged_in_user_token: z.union([z.union([z.string(), z.null()]), z.undefined()]).optional(),
 });
 
 export type RecoverPasswordPayload = z.infer<typeof RecoverPasswordPayload>;

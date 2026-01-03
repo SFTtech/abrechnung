@@ -6,5 +6,5 @@ export type CreateInvitePayload = {
     description: string;
     single_use: boolean;
     join_as_editor: boolean;
-    valid_until: string;
+    valid_until?: string | null;
 };

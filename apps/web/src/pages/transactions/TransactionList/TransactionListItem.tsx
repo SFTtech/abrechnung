@@ -97,7 +97,7 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, ownedAccountId, 
                                             color: (theme) => balanceColor(ownAccountBalanceEffect.total, theme),
                                         }}
                                     >
-                                        {formatCurrency(ownAccountBalanceEffect.total, transaction.currency_identifier)}
+                                        {formatCurrency(ownAccountBalanceEffect.total, groupCurrencyIdentifier)}
                                     </Typography>
                                 </div>
                             )}

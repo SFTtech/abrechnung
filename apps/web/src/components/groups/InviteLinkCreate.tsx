@@ -24,13 +24,10 @@ const validationSchema = z.object({
     description: z.string(),
     singleUse: z.boolean(),
     joinAsEditor: z.boolean(),
-    validUntil: z.string().datetime({ offset: true }),
+    validUntil: z.iso.datetime({ offset: true }).optional(),
 });
 
 type FormValues = z.infer<typeof validationSchema>;
-const nowPlusOneHour = () => {
-    return DateTime.now().plus({ hours: 1 });
-};
 
 export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
     const { t } = useTranslation();
@@ -40,7 +37,7 @@ export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
         resolver: zodResolver(validationSchema),
         defaultValues: {
             description: "",
-            validUntil: nowPlusOneHour().toISO(),
+            validUntil: undefined,
             singleUse: false,
             joinAsEditor: true,
         },
@@ -89,7 +86,7 @@ export const InviteLinkCreate: React.FC<Props> = ({ show, onClose, group }) => {
                                 <DateTimePicker
                                     format="yyyy-MM-dd HH:mm"
                                     label={t("groups.invites.validUntil")}
-                                    value={DateTime.fromISO(value)}
+                                    value={value != null ? DateTime.fromISO(value) : null}
                                     onChange={(val) => {
                                         if (val != null && val.isValid) {
                                             onChange(val.toISO());

@@ -21,7 +21,7 @@ class GroupInvite(BaseModel):
     single_use: bool
     join_as_editor: bool
     description: str
-    valid_until: datetime
+    valid_until: datetime | None
 
 
 class Group(BaseModel):
@@ -51,6 +51,7 @@ class GroupLog(BaseModel):
 
 class GroupPreview(BaseModel):
     id: int
+    is_already_member: bool
     name: str
     description: str
     currency_identifier: str

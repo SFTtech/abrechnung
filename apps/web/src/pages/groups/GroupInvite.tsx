@@ -25,9 +25,13 @@ export const GroupInvite: React.FC = () => {
             return;
         }
         api.client.groups
-            .previewGroup({ requestBody: { invite_token: inviteToken } })
+            .previewGroup({ requestBody: { invite_token: inviteToken, logged_in_user_token: api.getAccessToken() } })
             .then((res) => {
-                setGroup(res);
+                if (res.is_already_member) {
+                    navigate(`/groups/${res.id}`);
+                } else {
+                    setGroup(res);
+                }
                 setError(null);
             })
             .catch((err) => {

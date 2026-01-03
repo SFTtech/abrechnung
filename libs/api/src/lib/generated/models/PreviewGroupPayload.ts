@@ -4,4 +4,5 @@
 /* oxlint-disable */
 export type PreviewGroupPayload = {
     invite_token: string;
+    logged_in_user_token?: string | null;
 };
