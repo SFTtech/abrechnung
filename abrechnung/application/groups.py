@@ -84,7 +84,7 @@ class GroupService(Service[Config]):
         description: str,
         single_use: bool,
         join_as_editor: bool,
-        valid_until: datetime,
+        valid_until: datetime | None,
     ) -> int:
         if user.is_guest_user:
             raise AccessDenied("guest users are not allowed to create group invites")

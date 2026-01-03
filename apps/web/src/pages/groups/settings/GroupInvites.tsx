@@ -217,8 +217,9 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
                                     }
                                     secondary={
                                         <>
-                                            {invite.description}, created by {getMemberUsername(invite.created_by)},
-                                            valid until {formatDatetime(invite.valid_until, "full")}
+                                            {invite.description}, created by {getMemberUsername(invite.created_by)}
+                                            {invite.valid_until != null &&
+                                                `, valid until ${formatDatetime(invite.valid_until, "full")}`}
                                             {invite.single_use && ", single use"}
                                             {invite.join_as_editor && ", join as editor"}
                                         </>

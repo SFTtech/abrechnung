@@ -323,7 +323,7 @@ class CreateInvitePayload(BaseModel):
     description: str
     single_use: bool
     join_as_editor: bool
-    valid_until: datetime
+    valid_until: datetime | None = None
 
 
 @router.post(
@@ -340,7 +340,7 @@ async def create_invite(
     group_service: GroupService = Depends(get_group_service),
 ):
     valid_until = payload.valid_until
-    if valid_until.tzinfo is None:
+    if valid_until is not None and valid_until.tzinfo is None:
         valid_until = valid_until.replace(tzinfo=timezone.utc)
 
     invite_id = await group_service.create_invite(

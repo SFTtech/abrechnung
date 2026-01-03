@@ -63,7 +63,7 @@ export const CreateInvitePayload = z.object({
     description: z.string(),
     single_use: z.boolean(),
     join_as_editor: z.boolean(),
-    valid_until: z.string(),
+    valid_until: z.union([z.union([z.string(), z.null()]), z.undefined()]).optional(),
 });
 
 export type CurrencyConversionRate = z.infer<typeof CurrencyConversionRate>;
@@ -144,7 +144,7 @@ export const GroupInvite = z.object({
     single_use: z.boolean(),
     join_as_editor: z.boolean(),
     description: z.string(),
-    valid_until: z.string(),
+    valid_until: z.union([z.string(), z.null()]),
 });
 
 export type GroupLog = z.infer<typeof GroupLog>;

@@ -9,5 +9,5 @@ export type GroupInvite = {
     single_use: boolean;
     join_as_editor: boolean;
     description: string;
-    valid_until: string;
+    valid_until: string | null;
 };
