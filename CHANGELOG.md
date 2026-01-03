@@ -2,7 +2,15 @@
 
 ## Unreleased
 
-[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.3.0...HEAD)
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.4.0...HEAD)
+
+## 1.4.0 (2026-01-03)
+
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.3.0...v1.4.0)
+
+- enable Russian and Bulgarian translations
+- make valid until field of invite links fully optional
+- persist filter and sort settings of list views across page navigations
 
 ## 1.3.0 (2025-12-30)
 
