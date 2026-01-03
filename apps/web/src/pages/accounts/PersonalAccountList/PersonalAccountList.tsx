@@ -2,8 +2,8 @@ import { GroupArchivedDisclaimer } from "@/components";
 import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
 import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
-import { useIsSmallScreen } from "@/hooks";
-import { useAppDispatch, useAppSelector } from "@/store";
+import { useIsSmallScreen, useQueryState } from "@/hooks";
+import { selectPersonalAccountSortMode, updatePersonalAccountSortMode, useAppDispatch, useAppSelector } from "@/store";
 import { AccountSortMode } from "@abrechnung/core";
 import { createAccount, selectCurrentUserId, useGroup, useIsGroupWritable, useSortedAccounts } from "@abrechnung/redux";
 import { Account } from "@abrechnung/types";
@@ -30,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import { PersonalAccountListItem } from "./PersonalAccountListItem";
+import z from "zod";
 
 interface Props {
     groupId: number;
@@ -44,8 +45,12 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
     const group = useGroup(groupId);
     const isSmallScreen = useIsSmallScreen();
 
-    const [searchValue, setSearchValue] = useState("");
-    const [sortMode, setSortMode] = useState<AccountSortMode>("name");
+    const [filterState, updateFilterState] = useQueryState(
+        { searchValue: "" },
+        z.object({ searchValue: z.string().optional().default("") })
+    );
+    const searchValue = filterState.searchValue.trim();
+    const sortMode = useAppSelector(selectPersonalAccountSortMode);
 
     const personalAccounts = useSortedAccounts(groupId, sortMode, "personal", searchValue);
 
@@ -98,7 +103,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                         <Stack direction={{ sm: "column", md: "row" }} justifyContent="space-between" spacing={1}>
                             <Input
                                 value={searchValue}
-                                onChange={(e) => setSearchValue(e.target.value)}
+                                onChange={(e) => updateFilterState({ searchValue: e.target.value })}
                                 placeholder={t("common.search")}
                                 inputProps={{
                                     "aria-label": "search",
@@ -113,7 +118,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                                         <IconButton
                                             aria-label="clear search input"
                                             sx={{ padding: 0, margin: 0 }}
-                                            onClick={() => setSearchValue("")}
+                                            onClick={() => updateFilterState({ searchValue: "" })}
                                             edge="end"
                                         >
                                             <ClearIcon />
@@ -127,7 +132,9 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                                     labelId="select-sort-by-label"
                                     id="select-sort-by"
                                     label={t("common.sortBy")}
-                                    onChange={(evt) => setSortMode(evt.target.value as AccountSortMode)}
+                                    onChange={(evt) =>
+                                        dispatch(updatePersonalAccountSortMode(evt.target.value as AccountSortMode))
+                                    }
                                     value={sortMode}
                                 >
                                     <MenuItem value="name">{t("common.name")}</MenuItem>

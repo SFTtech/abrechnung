@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-import { persistStore } from "redux-persist";
+import { createMigrate, persistReducer, persistStore } from "redux-persist";
 import { getAbrechnungReducer } from "@abrechnung/redux";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { settingsReducer } from "./settingsSlice";
@@ -23,7 +23,10 @@ const storage = (dbName: string) => {
 };
 
 const rootReducer = getAbrechnungReducer(storage("abrechnung"), {
-    settings: settingsReducer,
+    settings: persistReducer(
+        { key: "settings", version: 1, storage: storage("abrechnung-settings"), migrate: createMigrate({}) },
+        settingsReducer
+    ),
     [api.reducerPath]: api.reducer,
 });
 

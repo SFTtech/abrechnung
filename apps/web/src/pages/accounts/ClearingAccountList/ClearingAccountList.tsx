@@ -3,8 +3,8 @@ import { TagSelector } from "@/components/TagSelector";
 import { DeleteAccountModal } from "@/components/accounts/DeleteAccountModal";
 import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
-import { useIsSmallScreen } from "@/hooks";
-import { useAppDispatch } from "@/store";
+import { useIsSmallScreen, useQueryState } from "@/hooks";
+import { selectClearingAccountSortMode, updateClearingAccountSortMode, useAppDispatch, useAppSelector } from "@/store";
 import { getAccountLink } from "@/utils";
 import { AccountSortMode } from "@abrechnung/core";
 import { createAccount, useGroup, useIsGroupWritable, useSortedAccounts } from "@abrechnung/redux";
@@ -31,12 +31,12 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
 import { ClearingAccountListItem } from "./ClearingAccountListItem";
+import z from "zod";
 
 interface Props {
     groupId: number;
 }
 
-const emptyList: string[] = [];
 const MAX_ITEMS_PER_PAGE = 40;
 
 export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
@@ -47,9 +47,17 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
     const isGroupWritable = useIsGroupWritable(groupId);
     const isSmallScreen = useIsSmallScreen();
 
-    const [searchValue, setSearchValue] = useState("");
-    const [tagFilter, setTagFilter] = useState<string[]>(emptyList);
-    const [sortMode, setSortMode] = useState<AccountSortMode>("last_changed");
+    const sortMode = useAppSelector(selectClearingAccountSortMode);
+
+    const [filterState, updateFilterState] = useQueryState(
+        { searchValue: "", tagFilter: "" },
+        z.object({ searchValue: z.string().optional().default(""), tagFilter: z.string().optional().default("") })
+    );
+    const searchValue = filterState.searchValue.trim();
+    const tagFilter = filterState.tagFilter
+        .trim()
+        .split(",")
+        .filter((tag) => !!tag);
     const clearingAccounts = useSortedAccounts(groupId, sortMode, "clearing", searchValue, true, tagFilter);
 
     const [currentPage, setCurrentPage] = useState(0);
@@ -70,7 +78,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
         setAccountDelete(null);
     };
 
-    const handleChangeTagFilter = (newTags: string[]) => setTagFilter(newTags);
+    const handleChangeTagFilter = (newTags: string[]) => updateFilterState({ tagFilter: newTags.join(",") });
 
     const onCreateEvent = () => {
         dispatch(createAccount({ groupId, type: "clearing" }))
@@ -97,7 +105,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                         <Stack direction={{ sm: "column", md: "row" }} justifyContent="space-between" spacing={1}>
                             <Input
                                 value={searchValue}
-                                onChange={(e) => setSearchValue(e.target.value)}
+                                onChange={(e) => updateFilterState({ searchValue: e.target.value })}
                                 placeholder={t("common.search")}
                                 inputProps={{
                                     "aria-label": "search",
@@ -112,7 +120,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                                         <IconButton
                                             aria-label="clear search input"
                                             sx={{ padding: 0, margin: 0 }}
-                                            onClick={() => setSearchValue("")}
+                                            onClick={() => updateFilterState({ searchValue: "" })}
                                             edge="end"
                                         >
                                             <ClearIcon />
@@ -126,7 +134,9 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                                     labelId="select-sort-by-label"
                                     id="select-sort-by"
                                     label={t("common.sortBy")}
-                                    onChange={(evt) => setSortMode(evt.target.value as AccountSortMode)}
+                                    onChange={(evt) =>
+                                        dispatch(updateClearingAccountSortMode(evt.target.value as AccountSortMode))
+                                    }
                                     value={sortMode}
                                 >
                                     <MenuItem value="last_changed">{t("common.lastChanged")}</MenuItem>

@@ -240,7 +240,7 @@
         "settings": {
             "tabTitle": "Abrechnung - Settings",
             "pageTitle": "Settings",
-            "info": "These settings are stored locally on your device. Clearing your Browser&apos;s local storage will reset them.",
+            "info": "These settings are stored locally on your device. Clearing your Browser's local storage will reset them.",
             "theme": "Theme",
             "darkMode": "Dark Mode",
             "themeSystemDefault": "System Default",
