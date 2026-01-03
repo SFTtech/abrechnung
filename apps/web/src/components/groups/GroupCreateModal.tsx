@@ -1,4 +1,4 @@
-import { createGroup } from "@abrechnung/redux";
+import { createGroup, fetchGroups } from "@abrechnung/redux";
 import { Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel } from "@mui/material";
 import * as React from "react";
 import { toast } from "react-toastify";
@@ -56,6 +56,7 @@ export const GroupCreateModal: React.FC<Props> = ({ show, onClose }) => {
             .unwrap()
             .then(() => {
                 onClose("completed");
+                dispatch(fetchGroups({ api }));
             })
             .catch((err) => {
                 toast.error(err);
