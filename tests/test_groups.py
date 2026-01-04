@@ -9,12 +9,14 @@ from abrechnung.application.groups import GroupService
 from abrechnung.domain.groups import Group, GroupInvite, GroupPreview
 from abrechnung.domain.users import User
 
+from .conftest import CreateTestUser
+
 
 async def test_basic_invites(
     group_service: GroupService,
     dummy_group: Group,
     dummy_user: User,
-    create_test_user,
+    create_test_user: CreateTestUser,
 ):
     invite_id = await group_service.create_invite(
         user=dummy_user,
@@ -38,7 +40,7 @@ async def test_single_use_invite(
     group_service: GroupService,
     dummy_group: Group,
     dummy_user: User,
-    create_test_user,
+    create_test_user: CreateTestUser,
 ):
     invite_id = await group_service.create_invite(
         user=dummy_user,
@@ -64,7 +66,7 @@ async def test_invite_link_preview(
     group_service: GroupService,
     dummy_group: Group,
     dummy_user: User,
-    create_test_user,
+    create_test_user: CreateTestUser,
 ):
     invite_id = await group_service.create_invite(
         user=dummy_user,
@@ -122,7 +124,7 @@ async def test_delete_group(
 async def test_delete_group_fails_multiple_members(
     group_service: GroupService,
     dummy_user: User,
-    create_test_user,
+    create_test_user: CreateTestUser,
     db_pool: Pool,
 ):
     user2, _ = await create_test_user()

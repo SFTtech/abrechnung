@@ -12,7 +12,7 @@ from abrechnung.application.users import UserService
 from abrechnung.config import Config
 from abrechnung.mailer import Mailer
 
-from .conftest import TEST_CONFIG
+from .conftest import TEST_CONFIG, CreateTestUser
 
 
 @dataclass
@@ -82,7 +82,7 @@ async def test_registration_mail_delivery(test_fixture: TestFixtures):
     assert "[Test Abrechnung] Confirm user account" in decode(mail.content)
 
 
-async def test_email_change_mail_delivery(test_fixture: TestFixtures, create_test_user):
+async def test_email_change_mail_delivery(test_fixture: TestFixtures, create_test_user: CreateTestUser):
     new_email = "new_email@email.com"
     user, password = await create_test_user()
     await test_fixture.user_service.request_email_change(user=user, password=password, email=new_email)
@@ -98,7 +98,7 @@ async def test_email_change_mail_delivery(test_fixture: TestFixtures, create_tes
     assert "[Test Abrechnung] Change email" in decode(mail2.content)
 
 
-async def test_password_reset_mail_delivery(test_fixture: TestFixtures, create_test_user):
+async def test_password_reset_mail_delivery(test_fixture: TestFixtures, create_test_user: CreateTestUser):
     user, _ = await create_test_user()
     await test_fixture.user_service.request_password_recovery(email=user.email)
 

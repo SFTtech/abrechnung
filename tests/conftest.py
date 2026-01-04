@@ -1,7 +1,8 @@
 # pylint: disable=attribute-defined-outside-init,missing-kwoa
-import asyncio
 import os
 import secrets
+from datetime import date
+from typing import Awaitable, Protocol
 
 import pytest
 from asyncpg.pool import Pool
@@ -19,10 +20,16 @@ from abrechnung.config import (
     ServiceConfig,
 )
 from abrechnung.database.migrations import get_database, reset_schema
+from abrechnung.domain.accounts import Account, AccountType, NewAccount
 from abrechnung.domain.groups import Group
+from abrechnung.domain.transactions import (
+    NewTransaction,
+    NewTransactionPosition,
+    Transaction,
+    TransactionShares,
+    TransactionType,
+)
 from abrechnung.domain.users import User
-
-lock = asyncio.Lock()
 
 
 def get_test_db_config() -> DatabaseConfig:
@@ -90,8 +97,12 @@ async def transaction_service(db_pool: Pool) -> TransactionService:
     return TransactionService(db_pool, config=TEST_CONFIG)
 
 
+class CreateTestUser(Protocol):
+    def __call__(self) -> Awaitable[tuple[User, str]]: ...
+
+
 @pytest.fixture
-async def create_test_user(db_pool: Pool, user_service: UserService):
+async def create_test_user(db_pool: Pool, user_service: UserService) -> CreateTestUser:
     async def _create() -> tuple[User, str]:
         async with db_pool.acquire() as conn:
             password = "asdf1234"
@@ -110,7 +121,7 @@ async def create_test_user(db_pool: Pool, user_service: UserService):
 
 
 @pytest.fixture
-async def dummy_user(create_test_user) -> User:
+async def dummy_user(create_test_user: CreateTestUser) -> User:
     user, _ = await create_test_user()
     return user
 
@@ -126,3 +137,69 @@ async def dummy_group(group_service: GroupService, dummy_user: User) -> Group:
         add_user_account_on_join=False,
     )
     return await group_service.get_group(user=dummy_user, group_id=group_id)
+
+
+class CreateTestAccount(Protocol):
+    def __call__(self, group_id: int) -> Awaitable[Account]: ...
+
+
+@pytest.fixture
+async def create_test_account(account_service: AccountService, dummy_user: User) -> CreateTestAccount:
+    async def _create(group_id: int) -> Account:
+        account_id: int = await account_service.create_account(
+            user=dummy_user,
+            group_id=group_id,
+            account=NewAccount(
+                type=AccountType.personal,
+                name=secrets.token_hex(16),
+                description=f"account {secrets.token_hex(16)} description",
+            ),
+        )
+        account = await account_service.get_account(user=dummy_user, group_id=group_id, account_id=account_id)
+        return account
+
+    return _create
+
+
+class CreateTestPurchase(Protocol):
+    def __call__(
+        self,
+        group_id: int,
+        value: float,
+        creditor_id: int,
+        debitor_shares: TransactionShares,
+        positions: list[NewTransactionPosition] = [],
+    ) -> Awaitable[Transaction]: ...
+
+
+@pytest.fixture
+async def create_test_purchase(transaction_service: TransactionService, dummy_user: User) -> CreateTestPurchase:
+    async def _create(
+        group_id: int,
+        value: float,
+        creditor_id: int,
+        debitor_shares: TransactionShares,
+        positions: list[NewTransactionPosition] = [],
+    ) -> Transaction:
+        transaction_id: int = await transaction_service.create_transaction(
+            user=dummy_user,
+            group_id=group_id,
+            transaction=NewTransaction(
+                type=TransactionType.purchase,
+                name=secrets.token_hex(16),
+                description="transaction description",
+                currency_identifier="EUR",
+                currency_conversion_rate=1.0,
+                value=value,
+                creditor_shares={creditor_id: 1.0},
+                debitor_shares=debitor_shares,
+                billed_at=date.today(),
+                tags=[],
+                new_files=[],
+                new_positions=positions,
+            ),
+        )
+        transaction = await transaction_service.get_transaction(user=dummy_user, transaction_id=transaction_id)
+        return transaction
+
+    return _create
