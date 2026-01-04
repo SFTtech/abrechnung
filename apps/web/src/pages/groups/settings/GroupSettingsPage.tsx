@@ -1,6 +1,6 @@
 import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
-import { Group } from "@abrechnung/api";
+import { Group, stringifyError } from "@abrechnung/api";
 import {
     archiveGroup,
     fetchGroup,
@@ -35,9 +35,10 @@ import { SettingsForm } from "./SettingsForm";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { api } from "@/core/api";
 import { toast } from "react-toastify";
-import { Archive as ArchiveIcon, Logout as LogoutIcon } from "@mui/icons-material";
+import { Archive as ArchiveIcon, FileDownload, Logout as LogoutIcon } from "@mui/icons-material";
 import { GroupArchivedDisclaimer } from "@/components";
-import { useUpdateMemberOwnedAccountMutation } from "@/core/generated/api";
+import { useExportGroupJsonMutation, useUpdateMemberOwnedAccountMutation } from "@/core/generated/api";
+import { useDownloadFile } from "@/hooks";
 
 interface Props {
     groupId: number;
@@ -50,6 +51,8 @@ const GroupActions: React.FC<{ group: Group }> = ({ group }) => {
     const [showUnarchiveModal, setShowUnarchiveModal] = React.useState(false);
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
+    const downloadFile = useDownloadFile();
+    const [exportGroupJson] = useExportGroupJsonMutation();
 
     const confirmLeaveGroup = () => {
         dispatch(leaveGroup({ groupId: group.id, api }))
@@ -79,38 +82,58 @@ const GroupActions: React.FC<{ group: Group }> = ({ group }) => {
                 toast.error(err.message);
             });
     };
+    const exportGroup = () => {
+        exportGroupJson({ groupId: group.id })
+            .unwrap()
+            .then((jsonDump) => {
+                downloadFile({
+                    content: JSON.stringify(jsonDump, null, 2),
+                    mimetype: "application/json",
+                    filename: `${group.name}_export.json`,
+                });
+            })
+            .catch((e) => {
+                toast.error(stringifyError(e));
+            });
+    };
 
     return (
-        <>
-            <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
-                <Button
-                    variant="contained"
-                    color="error"
-                    onClick={() => setShowLeaveModal(true)}
-                    startIcon={<LogoutIcon />}
-                >
-                    {t("groups.settings.leaveGroup")}
-                </Button>
-                {group.is_owner && !group.archived && (
+        <MobilePaper>
+            <Stack spacing={1}>
+                <Alert severity="error">{t("groups.settings.dangerZone")}</Alert>
+                <Stack direction={{ xs: "column", md: "row" }} spacing={1}>
                     <Button
                         variant="contained"
                         color="error"
-                        onClick={() => setShowArchiveModal(true)}
-                        startIcon={<ArchiveIcon />}
+                        onClick={() => setShowLeaveModal(true)}
+                        startIcon={<LogoutIcon />}
                     >
-                        {t("groups.settings.archiveGroup")}
+                        {t("groups.settings.leaveGroup")}
                     </Button>
-                )}
-                {group.is_owner && group.archived && (
-                    <Button
-                        variant="contained"
-                        color="error"
-                        onClick={() => setShowUnarchiveModal(true)}
-                        startIcon={<ArchiveIcon />}
-                    >
-                        {t("groups.settings.unarchiveGroup")}
+                    {group.is_owner && !group.archived && (
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={() => setShowArchiveModal(true)}
+                            startIcon={<ArchiveIcon />}
+                        >
+                            {t("groups.settings.archiveGroup")}
+                        </Button>
+                    )}
+                    {group.is_owner && group.archived && (
+                        <Button
+                            variant="contained"
+                            color="error"
+                            onClick={() => setShowUnarchiveModal(true)}
+                            startIcon={<ArchiveIcon />}
+                        >
+                            {t("groups.settings.unarchiveGroup")}
+                        </Button>
+                    )}
+                    <Button variant="contained" color="warning" onClick={exportGroup} startIcon={<FileDownload />}>
+                        {t("groups.settings.exportGroupJson")}
                     </Button>
-                )}
+                </Stack>
             </Stack>
             <Dialog open={showLeaveModal} onClose={() => setShowLeaveModal(false)}>
                 <DialogTitle>{t("groups.settings.leaveGroup")}</DialogTitle>
@@ -160,7 +183,7 @@ const GroupActions: React.FC<{ group: Group }> = ({ group }) => {
                     </Button>
                 </DialogActions>
             </Dialog>
-        </>
+        </MobilePaper>
     );
 };
 
@@ -245,12 +268,7 @@ export const GroupSettingsPage: React.FC<Props> = ({ groupId }) => {
                         <SettingsForm group={group} />
                     </MobilePaper>
                     <OwnedAccountSettings group={group} />
-                    <MobilePaper>
-                        <Stack spacing={1}>
-                            <Alert severity="error">{t("groups.settings.dangerZone")}</Alert>
-                            <GroupActions group={group} />
-                        </Stack>
-                    </MobilePaper>
+                    <GroupActions group={group} />
                 </Stack>
             </TabPanel>
             <TabPanel value="members" sx={{ padding: 0 }}>

@@ -1,0 +1,141 @@
+{
+    "version": 1,
+    "metadata": {
+        "name": "24029d7b926833c4a7530855fdc402f3",
+        "description": "description",
+        "currency_identifier": "EUR",
+        "terms": "terms",
+        "add_user_account_on_join": false
+    },
+    "personal_accounts": [
+        {
+            "id": 1,
+            "name": "6d52e7dffdc2c8931a04f1d122e294f6",
+            "description": "account efe9c678656ed6f9fe3b307f895459b0 description"
+        },
+        {
+            "id": 2,
+            "name": "b8a987d483d2975088c193ae75f29153",
+            "description": "account b2b87b0ab94cfa1d2421e640340a4e4c description"
+        }
+    ],
+    "events": [
+        {
+            "id": 3,
+            "name": "6d60057f236ef3df6e4c90630a542e4a",
+            "description": "account b0db90211df97f972c0a5944556c32ca description",
+            "date_info": "2026-01-04",
+            "tags": [],
+            "clearing_shares": {
+                "1": 1.0,
+                "2": 1.0
+            }
+        }
+    ],
+    "transactions": [
+        {
+            "id": 1,
+            "type": "purchase",
+            "name": "2f1331b9712115bfb0b7aa623ea76ede",
+            "description": "transaction description",
+            "value": 10.0,
+            "currency_identifier": "EUR",
+            "currency_conversion_rate": 1.0,
+            "billed_at": "2026-01-04",
+            "tags": [],
+            "creditor_shares": {
+                "1": 1.0
+            },
+            "debitor_shares": {
+                "1": 1.0,
+                "2": 2.0
+            },
+            "positions": [],
+            "files": []
+        },
+        {
+            "id": 2,
+            "type": "purchase",
+            "name": "623f78afe7596cfd87d4dd215add28cd",
+            "description": "transaction description",
+            "value": 14.0,
+            "currency_identifier": "EUR",
+            "currency_conversion_rate": 1.0,
+            "billed_at": "2026-01-04",
+            "tags": [],
+            "creditor_shares": {
+                "2": 1.0
+            },
+            "debitor_shares": {
+                "3": 1.0
+            },
+            "positions": [],
+            "files": []
+        },
+        {
+            "id": 3,
+            "type": "purchase",
+            "name": "31955d564b22380e279928a01d8887d3",
+            "description": "transaction description",
+            "value": 22.0,
+            "currency_identifier": "EUR",
+            "currency_conversion_rate": 1.0,
+            "billed_at": "2026-01-04",
+            "tags": [],
+            "creditor_shares": {
+                "1": 1.0
+            },
+            "debitor_shares": {
+                "2": 1.0
+            },
+            "positions": [
+                {
+                    "id": 1,
+                    "name": "position1",
+                    "price": 2.0,
+                    "communist_shares": 1.0,
+                    "usages": {
+                        "1": 1.0,
+                        "3": 1.0
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "position2",
+                    "price": 3.0,
+                    "communist_shares": 0.0,
+                    "usages": {
+                        "1": 2.0,
+                        "2": 1.0
+                    }
+                }
+            ],
+            "files": [
+                {
+                    "filename": "file1",
+                    "mime_type": "image/jpeg",
+                    "content": "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAUDBAQEAwUEBAQFBQUGBwwIBwcHBw8LCwkMEQ8SEhEPERETFhwXExQaFRERGCEYGh0dHx8fExciJCIeJBweHx7/2wBDAQUFBQcGBw4ICA4eFBEUHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh7/wAARCAEsAZADASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD7LooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAoryD4z+M/iz4Vvr6/8ADXhTRrjwzY2yyzX17KpYtjLkKJ1bAyBjbkkHGcis/wCF3jb43+LLzRdQvvCfh218M3zCSW+TIcQ85KobgsCcYGVPUHGK92HD9eWE+t+0pqH+NXva9rfzW+zucjxkFU9nyu/o/v8ATzPb6Kx5PFXhiPVhpEniPR01EtsFo19GJi3ps3bs+2Kuaxq2laNa/a9X1Oy063zjzbqdYkz6ZYgV47oVU0nF3e2m/odPPHe5corGtfFfha60241O18SaNPY2wBnuY76Noogem5w2F/E1yHwq+K+meP8AxDren2i2tpDYuEs1e7Vri8ALb5Qg6IMLyM/e69q6YZbip0qlVQfLTtzeV/6+7XYh16ako31ex6RRXI/F3xHqnhbwRc6pog0g6l5scduuqXUdvAxLDcCzyRjO0MQNwOR3rQ0/xFZ21ppdn4k1XSLDXrmxSeaz+1IhLBMyFFLElAVfkEjCnk4zULBVXQVZaptq3XRJt27a7j9rFS5Wb1FY9p4q8MXlhc39p4j0e4tLUgXE8V7G0cJPTewbC/jVvR9X0rWbL7bpGp2Wo2uSvnWs6ypkdRuU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RQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFAH//2Q=="
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "type": "transfer",
+            "name": "176e7a8e8e204df340c020a5e307dc73",
+            "description": "transaction description",
+            "value": 10.0,
+            "currency_identifier": "EUR",
+            "currency_conversion_rate": 1.0,
+            "billed_at": "2026-01-04",
+            "tags": [],
+            "creditor_shares": {
+                "2": 1.0
+            },
+            "debitor_shares": {
+                "1": 1.0
+            },
+            "positions": [],
+            "files": []
+        }
+    ]
+}

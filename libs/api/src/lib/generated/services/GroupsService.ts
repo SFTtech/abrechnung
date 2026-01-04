@@ -6,11 +6,14 @@ import type { CreateInvitePayload } from "../models/CreateInvitePayload";
 import type { Group } from "../models/Group";
 import type { GroupCreatePayload } from "../models/GroupCreatePayload";
 import type { GroupInvite } from "../models/GroupInvite";
+import type { GroupJsonExportV1 } from "../models/GroupJsonExportV1";
 import type { GroupLog } from "../models/GroupLog";
 import type { GroupMember } from "../models/GroupMember";
 import type { GroupMessage } from "../models/GroupMessage";
 import type { GroupPreview } from "../models/GroupPreview";
 import type { GroupUpdatePayload } from "../models/GroupUpdatePayload";
+import type { ImportGroupPayload } from "../models/ImportGroupPayload";
+import type { ImportGroupResponse } from "../models/ImportGroupResponse";
 import type { PreviewGroupPayload } from "../models/PreviewGroupPayload";
 import type { UpdateGroupMemberOwnedAccountPayload } from "../models/UpdateGroupMemberOwnedAccountPayload";
 import type { UpdateGroupMemberPermissionsPayload } from "../models/UpdateGroupMemberPermissionsPayload";
@@ -410,6 +413,45 @@ export class GroupsService {
             path: {
                 group_id: groupId,
             },
+            errors: {
+                401: `unauthorized`,
+                403: `forbidden`,
+                404: `Not found`,
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * un-archive a group
+     * @returns GroupJsonExportV1 Successful Response
+     * @throws ApiError
+     */
+    public exportGroupJson({ groupId }: { groupId: number }): CancelablePromise<GroupJsonExportV1> {
+        return this.httpRequest.request({
+            method: "POST",
+            url: "/api/v1/groups/{group_id}/export-json",
+            path: {
+                group_id: groupId,
+            },
+            errors: {
+                401: `unauthorized`,
+                403: `forbidden`,
+                404: `Not found`,
+                422: `Validation Error`,
+            },
+        });
+    }
+    /**
+     * import a group from json
+     * @returns ImportGroupResponse Successful Response
+     * @throws ApiError
+     */
+    public importGroup({ requestBody }: { requestBody: ImportGroupPayload }): CancelablePromise<ImportGroupResponse> {
+        return this.httpRequest.request({
+            method: "POST",
+            url: "/api/v1/import-group",
+            body: requestBody,
+            mediaType: "application/json",
             errors: {
                 401: `unauthorized`,
                 403: `forbidden`,

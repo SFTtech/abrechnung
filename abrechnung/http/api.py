@@ -6,6 +6,7 @@ from sftkit.http import Server
 
 from abrechnung import __version__
 from abrechnung.application.accounts import AccountService
+from abrechnung.application.export_import import ExportImportService
 from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
@@ -55,12 +56,20 @@ class Api:
         self.transaction_service = TransactionService(db_pool=self.db_pool, config=self.cfg)
         self.account_service = AccountService(db_pool=self.db_pool, config=self.cfg)
         self.group_service = GroupService(db_pool=self.db_pool, config=self.cfg)
+        self.export_import_service = ExportImportService(
+            db_pool=self.db_pool,
+            config=self.cfg,
+            group_service=self.group_service,
+            account_service=self.account_service,
+            transaction_service=self.transaction_service,
+        )
         self.context = Context(
             config=self.cfg,
             user_service=self.user_service,
             transaction_service=self.transaction_service,
             account_service=self.account_service,
             group_service=self.group_service,
+            export_import_service=self.export_import_service,
         )
 
     async def _teardown(self):

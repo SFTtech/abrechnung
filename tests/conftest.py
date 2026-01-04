@@ -9,6 +9,7 @@ from asyncpg.pool import Pool
 from sftkit.database import DatabaseConfig
 
 from abrechnung.application.accounts import AccountService
+from abrechnung.application.export_import import ExportImportService
 from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
@@ -20,9 +21,10 @@ from abrechnung.config import (
     ServiceConfig,
 )
 from abrechnung.database.migrations import get_database, reset_schema
-from abrechnung.domain.accounts import Account, AccountType, NewAccount
+from abrechnung.domain.accounts import AccountType, ClearingAccount, ClearingShares, NewAccount, PersonalAccount
 from abrechnung.domain.groups import Group
 from abrechnung.domain.transactions import (
+    NewFile,
     NewTransaction,
     NewTransactionPosition,
     Transaction,
@@ -97,6 +99,19 @@ async def transaction_service(db_pool: Pool) -> TransactionService:
     return TransactionService(db_pool, config=TEST_CONFIG)
 
 
+@pytest.fixture
+async def export_import_service(
+    db_pool: Pool, group_service: GroupService, account_service: AccountService, transaction_service: TransactionService
+) -> ExportImportService:
+    return ExportImportService(
+        db_pool,
+        config=TEST_CONFIG,
+        group_service=group_service,
+        account_service=account_service,
+        transaction_service=transaction_service,
+    )
+
+
 class CreateTestUser(Protocol):
     def __call__(self) -> Awaitable[tuple[User, str]]: ...
 
@@ -140,12 +155,12 @@ async def dummy_group(group_service: GroupService, dummy_user: User) -> Group:
 
 
 class CreateTestAccount(Protocol):
-    def __call__(self, group_id: int) -> Awaitable[Account]: ...
+    def __call__(self, group_id: int) -> Awaitable[PersonalAccount]: ...
 
 
 @pytest.fixture
 async def create_test_account(account_service: AccountService, dummy_user: User) -> CreateTestAccount:
-    async def _create(group_id: int) -> Account:
+    async def _create(group_id: int) -> PersonalAccount:
         account_id: int = await account_service.create_account(
             user=dummy_user,
             group_id=group_id,
@@ -161,6 +176,30 @@ async def create_test_account(account_service: AccountService, dummy_user: User)
     return _create
 
 
+class CreateTestEvent(Protocol):
+    def __call__(self, group_id: int, clearing_shares: ClearingShares) -> Awaitable[ClearingAccount]: ...
+
+
+@pytest.fixture
+async def create_test_event(account_service: AccountService, dummy_user: User) -> CreateTestEvent:
+    async def _create(group_id: int, clearing_shares: ClearingShares) -> ClearingAccount:
+        account_id: int = await account_service.create_account(
+            user=dummy_user,
+            group_id=group_id,
+            account=NewAccount(
+                type=AccountType.clearing,
+                name=secrets.token_hex(16),
+                description=f"account {secrets.token_hex(16)} description",
+                date_info=date.today(),
+                clearing_shares=clearing_shares,
+            ),
+        )
+        account = await account_service.get_account(user=dummy_user, group_id=group_id, account_id=account_id)
+        return account
+
+    return _create
+
+
 class CreateTestPurchase(Protocol):
     def __call__(
         self,
@@ -168,7 +207,8 @@ class CreateTestPurchase(Protocol):
         value: float,
         creditor_id: int,
         debitor_shares: TransactionShares,
-        positions: list[NewTransactionPosition] = [],
+        positions: list[NewTransactionPosition] | None = None,
+        files: list[NewFile] | None = None,
     ) -> Awaitable[Transaction]: ...
 
 
@@ -179,8 +219,11 @@ async def create_test_purchase(transaction_service: TransactionService, dummy_us
         value: float,
         creditor_id: int,
         debitor_shares: TransactionShares,
-        positions: list[NewTransactionPosition] = [],
+        positions: list[NewTransactionPosition] | None = None,
+        files: list[NewFile] | None = None,
     ) -> Transaction:
+        files = files or []
+        positions = positions or []
         transaction_id: int = await transaction_service.create_transaction(
             user=dummy_user,
             group_id=group_id,
@@ -195,8 +238,50 @@ async def create_test_purchase(transaction_service: TransactionService, dummy_us
                 debitor_shares=debitor_shares,
                 billed_at=date.today(),
                 tags=[],
-                new_files=[],
+                new_files=files,
                 new_positions=positions,
+            ),
+        )
+        transaction = await transaction_service.get_transaction(user=dummy_user, transaction_id=transaction_id)
+        return transaction
+
+    return _create
+
+
+class CreateTestTransfer(Protocol):
+    def __call__(
+        self,
+        group_id: int,
+        value: float,
+        creditor_id: int,
+        debitor_id: int,
+    ) -> Awaitable[Transaction]: ...
+
+
+@pytest.fixture
+async def create_test_transfer(transaction_service: TransactionService, dummy_user: User) -> CreateTestTransfer:
+    async def _create(
+        group_id: int,
+        value: float,
+        creditor_id: int,
+        debitor_id: int,
+    ) -> Transaction:
+        transaction_id: int = await transaction_service.create_transaction(
+            user=dummy_user,
+            group_id=group_id,
+            transaction=NewTransaction(
+                type=TransactionType.transfer,
+                name=secrets.token_hex(16),
+                description="transaction description",
+                currency_identifier="EUR",
+                currency_conversion_rate=1.0,
+                value=value,
+                creditor_shares={creditor_id: 1.0},
+                debitor_shares={debitor_id: 1.0},
+                billed_at=date.today(),
+                tags=[],
+                new_files=[],
+                new_positions=[],
             ),
         )
         transaction = await transaction_service.get_transaction(user=dummy_user, transaction_id=transaction_id)

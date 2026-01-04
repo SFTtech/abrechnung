@@ -214,6 +214,21 @@ const injectedRtkApi = api
                 }),
                 invalidatesTags: ["groups"],
             }),
+            exportGroupJson: build.mutation<ExportGroupJsonApiResponse, ExportGroupJsonApiArg>({
+                query: (queryArg) => ({
+                    url: `/api/v1/groups/${queryArg.groupId}/export-json`,
+                    method: "POST",
+                }),
+                invalidatesTags: ["groups"],
+            }),
+            importGroup: build.mutation<ImportGroupApiResponse, ImportGroupApiArg>({
+                query: (queryArg) => ({
+                    url: `/api/v1/import-group`,
+                    method: "POST",
+                    body: queryArg.importGroupPayload,
+                }),
+                invalidatesTags: ["groups"],
+            }),
             getToken: build.mutation<GetTokenApiResponse, GetTokenApiArg>({
                 query: (queryArg) => ({
                     url: `/api/v1/auth/token`,
@@ -482,6 +497,14 @@ export type ArchiveGroupApiArg = {
 export type UnarchiveGroupApiResponse = /** status 200 Successful Response */ any;
 export type UnarchiveGroupApiArg = {
     groupId: number;
+};
+export type ExportGroupJsonApiResponse = /** status 200 Successful Response */ GroupJsonExportV1;
+export type ExportGroupJsonApiArg = {
+    groupId: number;
+};
+export type ImportGroupApiResponse = /** status 200 Successful Response */ ImportGroupResponse;
+export type ImportGroupApiArg = {
+    importGroupPayload: ImportGroupPayload;
 };
 export type GetTokenApiResponse = /** status 200 Successful Response */ Token;
 export type GetTokenApiArg = {
@@ -766,6 +789,74 @@ export type CreateInvitePayload = {
     join_as_editor: boolean;
     valid_until?: string | null;
 };
+export type GroupMetadataExportV1 = {
+    name: string;
+    description: string;
+    currency_identifier: string;
+    terms: string;
+    add_user_account_on_join: boolean;
+};
+export type PersonalAccountJsonExportV1 = {
+    id: number;
+    name: string;
+    description: string;
+};
+export type ClearingAccountJsonExportV1 = {
+    id: number;
+    name: string;
+    description: string;
+    date_info: string;
+    tags: string[];
+    clearing_shares: {
+        [key: string]: number;
+    };
+};
+export type TransactionPositionJsonExportV1 = {
+    id: number;
+    name: string;
+    price: number;
+    communist_shares: number;
+    usages: {
+        [key: string]: number;
+    };
+};
+export type FileAttachmentJsonExportV1 = {
+    filename: string;
+    mime_type: string;
+    content: string;
+};
+export type TransactionJsonExportV1 = {
+    id: number;
+    type: TransactionType;
+    name: string;
+    description: string;
+    value: number;
+    currency_identifier: string;
+    currency_conversion_rate: number;
+    billed_at: string;
+    tags: string[];
+    creditor_shares: {
+        [key: string]: number;
+    };
+    debitor_shares: {
+        [key: string]: number;
+    };
+    positions: TransactionPositionJsonExportV1[];
+    files: FileAttachmentJsonExportV1[];
+};
+export type GroupJsonExportV1 = {
+    version?: 1;
+    metadata: GroupMetadataExportV1;
+    personal_accounts: PersonalAccountJsonExportV1[];
+    events: ClearingAccountJsonExportV1[];
+    transactions: TransactionJsonExportV1[];
+};
+export type ImportGroupResponse = {
+    group_id: number;
+};
+export type ImportGroupPayload = {
+    group_json: string;
+};
 export type Token = {
     user_id: number;
     access_token: string;
@@ -927,6 +1018,8 @@ export const {
     useDeleteInviteMutation,
     useArchiveGroupMutation,
     useUnarchiveGroupMutation,
+    useExportGroupJsonMutation,
+    useImportGroupMutation,
     useGetTokenMutation,
     useLoginMutation,
     useLogoutMutation,

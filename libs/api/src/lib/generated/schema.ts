@@ -42,6 +42,16 @@ export const ClearingAccount = z.object({
     deleted: z.boolean(),
 });
 
+export type ClearingAccountJsonExportV1 = z.infer<typeof ClearingAccountJsonExportV1>;
+export const ClearingAccountJsonExportV1 = z.object({
+    id: z.number(),
+    name: z.string(),
+    description: z.string(),
+    date_info: z.string(),
+    tags: z.array(z.string()),
+    clearing_shares: z.record(z.string(), z.number()),
+});
+
 export type ConfirmEmailChangePayload = z.infer<typeof ConfirmEmailChangePayload>;
 export const ConfirmEmailChangePayload = z.object({
     token: z.string(),
@@ -85,6 +95,13 @@ export const FileAttachment = z.object({
     mime_type: z.union([z.string(), z.null()]),
     host_url: z.union([z.union([z.string(), z.null()]), z.undefined()]).optional(),
     deleted: z.boolean(),
+});
+
+export type FileAttachmentJsonExportV1 = z.infer<typeof FileAttachmentJsonExportV1>;
+export const FileAttachmentJsonExportV1 = z.object({
+    filename: z.string(),
+    mime_type: z.string(),
+    content: z.string(),
 });
 
 export type ServiceMessageType = z.infer<typeof ServiceMessageType>;
@@ -145,6 +162,60 @@ export const GroupInvite = z.object({
     join_as_editor: z.boolean(),
     description: z.string(),
     valid_until: z.union([z.string(), z.null()]),
+});
+
+export type GroupMetadataExportV1 = z.infer<typeof GroupMetadataExportV1>;
+export const GroupMetadataExportV1 = z.object({
+    name: z.string(),
+    description: z.string(),
+    currency_identifier: z.string(),
+    terms: z.string(),
+    add_user_account_on_join: z.boolean(),
+});
+
+export type PersonalAccountJsonExportV1 = z.infer<typeof PersonalAccountJsonExportV1>;
+export const PersonalAccountJsonExportV1 = z.object({
+    id: z.number(),
+    name: z.string(),
+    description: z.string(),
+});
+
+export type TransactionType = z.infer<typeof TransactionType>;
+export const TransactionType = z.union([z.literal("mimo"), z.literal("purchase"), z.literal("transfer")]);
+
+export type TransactionPositionJsonExportV1 = z.infer<typeof TransactionPositionJsonExportV1>;
+export const TransactionPositionJsonExportV1 = z.object({
+    id: z.number(),
+    name: z.string(),
+    price: z.number(),
+    communist_shares: z.number(),
+    usages: z.record(z.string(), z.number()),
+});
+
+export type TransactionJsonExportV1 = z.infer<typeof TransactionJsonExportV1>;
+export const TransactionJsonExportV1 = z.object({
+    id: z.number(),
+    type: TransactionType,
+    name: z.string(),
+    description: z.string(),
+    value: z.number(),
+    currency_identifier: z.string(),
+    currency_conversion_rate: z.number(),
+    billed_at: z.string(),
+    tags: z.array(z.string()),
+    creditor_shares: z.record(z.string(), z.number()),
+    debitor_shares: z.record(z.string(), z.number()),
+    positions: z.array(TransactionPositionJsonExportV1),
+    files: z.array(FileAttachmentJsonExportV1),
+});
+
+export type GroupJsonExportV1 = z.infer<typeof GroupJsonExportV1>;
+export const GroupJsonExportV1 = z.object({
+    version: z.union([z.number(), z.undefined()]).optional(),
+    metadata: GroupMetadataExportV1,
+    personal_accounts: z.array(PersonalAccountJsonExportV1),
+    events: z.array(ClearingAccountJsonExportV1),
+    transactions: z.array(TransactionJsonExportV1),
 });
 
 export type GroupLog = z.infer<typeof GroupLog>;
@@ -208,6 +279,16 @@ export const HTTPValidationError = z.object({
     detail: z.array(ValidationError).optional(),
 });
 
+export type ImportGroupPayload = z.infer<typeof ImportGroupPayload>;
+export const ImportGroupPayload = z.object({
+    group_json: z.string(),
+});
+
+export type ImportGroupResponse = z.infer<typeof ImportGroupResponse>;
+export const ImportGroupResponse = z.object({
+    group_id: z.number(),
+});
+
 export type LoginPayload = z.infer<typeof LoginPayload>;
 export const LoginPayload = z.object({
     username: z.string(),
@@ -232,9 +313,6 @@ export const NewFile = z.object({
     mime_type: z.string(),
     content: z.string(),
 });
-
-export type TransactionType = z.infer<typeof TransactionType>;
-export const TransactionType = z.union([z.literal("mimo"), z.literal("purchase"), z.literal("transfer")]);
 
 export type NewTransactionPosition = z.infer<typeof NewTransactionPosition>;
 export const NewTransactionPosition = z.object({

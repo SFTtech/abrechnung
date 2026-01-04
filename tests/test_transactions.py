@@ -20,7 +20,6 @@ from .conftest import CreateTestAccount, CreateTestPurchase
 
 
 async def test_list_transactions(
-    account_service: AccountService,
     transaction_service: TransactionService,
     dummy_group: Group,
     dummy_user: User,
@@ -70,7 +69,6 @@ async def test_list_transactions(
 
 
 async def test_update_transaction(
-    account_service: AccountService,
     transaction_service: TransactionService,
     dummy_group: Group,
     dummy_user: User,
@@ -226,7 +224,6 @@ async def test_account_deletion(
 
 
 async def test_purchase_items(
-    account_service: AccountService,
     transaction_service: TransactionService,
     dummy_group: Group,
     dummy_user: User,
