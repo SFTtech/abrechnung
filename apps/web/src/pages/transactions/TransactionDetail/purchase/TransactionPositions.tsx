@@ -222,7 +222,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                     </TableHead>
                     <TableBody>
                         {transaction.is_wip
-                            ? positions.map((position) => (
+                            ? positions.map((position, index) => (
                                   <EditablePositionTableRow
                                       key={position.id}
                                       position={position}
@@ -236,6 +236,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
                                       showAccountSelect={showAccountSelect}
                                       showAddAccount={showAddAccount}
                                       validationError={validationErrors?.[position.id]}
+                                      isLastRow={index === positions.length - 1}
                                   />
                               ))
                             : positions.map((position) => (

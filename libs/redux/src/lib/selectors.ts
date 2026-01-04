@@ -12,6 +12,7 @@ import {
     selectGroupTransactionsWithoutWip,
     selectGroupTransactionsWithWip,
     selectTransactionBalanceEffects,
+    selectWipTransactionBalanceEffects,
 } from "./transactions";
 import { AccountSliceState, AccountState, IRootState } from "./types";
 import { getGroupScopedState } from "./utils";
@@ -54,6 +55,7 @@ const emptyList: string[] = [];
 const selectSortedTransactions = createSelector(
     (state: IRootState, groupId: number) => selectGroupTransactionsWithWip(state, groupId),
     (state: IRootState, groupId: number) => selectTransactionBalanceEffects(state, groupId),
+    (state: IRootState, groupId: number) => selectWipTransactionBalanceEffects(state, groupId),
     (state: IRootState, groupId: number) =>
         getGroupScopedState<AccountState, AccountSliceState>(state.accounts, groupId).accounts.byId,
     (state: IRootState, groupId: number, sortMode: TransactionSortMode) => sortMode,
@@ -63,6 +65,7 @@ const selectSortedTransactions = createSelector(
     (
         transactions: Transaction[],
         balanceEffects: { [k: number]: TransactionBalanceEffect },
+        wipBalanceEffects: { [k: number]: TransactionBalanceEffect },
         accountsById: { [k: number]: Account },
         sortMode: TransactionSortMode,
         searchTerm: string | undefined,
@@ -89,7 +92,8 @@ const selectSortedTransactions = createSelector(
                 ) {
                     return true;
                 }
-                return Object.keys(balanceEffects[t.id]).reduce((acc: boolean, curr: string): boolean => {
+                const balanceEffect = wipBalanceEffects[t.id] ?? balanceEffects[t.id];
+                return Object.keys(balanceEffect).reduce((acc: boolean, curr: string): boolean => {
                     const account = accountsById[Number(curr)];
                     return acc || account.name.toLowerCase().includes(searchTerm.toLowerCase());
                 }, false);
@@ -97,7 +101,7 @@ const selectSortedTransactions = createSelector(
 
             return true;
         };
-
+        console.log(transactions.filter(filterFn));
         return transactions.filter(filterFn).sort(compareFunction);
     }
 );

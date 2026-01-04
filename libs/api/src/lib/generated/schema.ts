@@ -184,7 +184,7 @@ export const GroupPreview = z.object({
     terms: z.string(),
     created_at: z.string(),
     invite_single_use: z.boolean(),
-    invite_valid_until: z.string(),
+    invite_valid_until: z.union([z.string(), z.null()]),
     invite_description: z.string(),
 });
 

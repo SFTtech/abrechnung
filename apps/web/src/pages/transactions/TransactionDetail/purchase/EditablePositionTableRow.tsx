@@ -24,6 +24,7 @@ interface EditablePositionTableRowProps {
     showAddAccount: boolean;
     deletePosition: (position: TransactionPosition) => void;
     validationError?: PositionValidationError;
+    isLastRow: boolean;
 }
 
 export const EditablePositionTableRow: React.FC<EditablePositionTableRowProps> = ({
@@ -38,10 +39,14 @@ export const EditablePositionTableRow: React.FC<EditablePositionTableRowProps> =
     deletePosition,
     validationError,
     currencyIdentifier,
+    isLastRow,
 }) => {
     const theme = useTheme();
 
     const error = validationError !== undefined;
+
+    const showMissingShareError =
+        !isLastRow && Object.keys(position.usages).length === 0 && position.communist_shares === 0;
 
     return (
         <TableRow
@@ -100,7 +105,9 @@ export const EditablePositionTableRow: React.FC<EditablePositionTableRowProps> =
                         <NumericInput
                             sx={{ maxWidth: 50 }}
                             value={(position.usages[account.id] ?? 0) !== 0 ? position.usages[account.id] : 0}
-                            error={validationError && !!validationError.fieldErrors["usages"]}
+                            error={
+                                showMissingShareError || (validationError && !!validationError.fieldErrors["usages"])
+                            }
                             onChange={(value) => updatePositionUsage(position, account.id, value)}
                             slotProps={{ input: { tabIndex: -1 } }}
                         />
@@ -111,7 +118,8 @@ export const EditablePositionTableRow: React.FC<EditablePositionTableRowProps> =
                             onChange={(event) =>
                                 updatePositionUsage(position, account.id, event.target.checked ? 1 : 0)
                             }
-                            inputProps={{ tabIndex: -1 }}
+                            slotProps={{ input: { tabIndex: -1 } }}
+                            sx={{ color: (theme) => (showMissingShareError ? theme.palette.error.main : undefined) }}
                         />
                     )}
                 </TableCell>
@@ -124,7 +132,10 @@ export const EditablePositionTableRow: React.FC<EditablePositionTableRowProps> =
                         value={position.communist_shares}
                         sx={{ maxWidth: 50 }}
                         onChange={(value) => updatePosition(position, position.name, position.price, value)}
-                        error={validationError && !!validationError.fieldErrors["communist_shares"]}
+                        error={
+                            showMissingShareError ||
+                            (validationError && !!validationError.fieldErrors["communist_shares"])
+                        }
                         slotProps={{ input: { tabIndex: -1 } }}
                     />
                 ) : (
@@ -134,7 +145,8 @@ export const EditablePositionTableRow: React.FC<EditablePositionTableRowProps> =
                         onChange={(event) =>
                             updatePosition(position, position.name, position.price, event.target.checked ? 1 : 0)
                         }
-                        inputProps={{ tabIndex: -1 }}
+                        slotProps={{ input: { tabIndex: -1 } }}
+                        sx={{ color: (theme) => (showMissingShareError ? theme.palette.error.main : undefined) }}
                     />
                 )}
             </TableCell>
