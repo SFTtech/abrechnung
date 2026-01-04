@@ -188,6 +188,14 @@ export const selectTransactionBalanceEffects = (
     return s.transactions.balanceEffects;
 };
 
+export const selectWipTransactionBalanceEffects = (
+    state: IRootState,
+    groupId: number
+): { [k: number]: TransactionBalanceEffect } => {
+    const s = getGroupScopedState<TransactionState, TransactionSliceState>(state.transactions, groupId);
+    return s.wipTransactions.balanceEffects;
+};
+
 export const selectTransactionsInvolvingAccount = createSelector(
     selectGroupTransactionSlice,
     selectTransactionBalanceEffects,
