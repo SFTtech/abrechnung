@@ -17,3 +17,7 @@ override_dh_strip:
 
 override_dh_virtualenv:
 	./debian/build_virtualenv
+
+override_dh_installsystemd:
+	dh_installsystemd abrechnung-api.service
+	dh_installsystemd abrechnung-mailer.service
