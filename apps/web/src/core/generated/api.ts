@@ -688,7 +688,7 @@ export type GroupPreview = {
     terms: string;
     created_at: string;
     invite_single_use: boolean;
-    invite_valid_until: string;
+    invite_valid_until: string | null;
     invite_description: string;
 };
 export type PreviewGroupPayload = {

@@ -6,7 +6,7 @@ from asyncpg import Pool
 from sftkit.error import InvalidArgument
 
 from abrechnung.application.groups import GroupService
-from abrechnung.domain.groups import Group, GroupInvite
+from abrechnung.domain.groups import Group, GroupInvite, GroupPreview
 from abrechnung.domain.users import User
 
 
@@ -58,6 +58,28 @@ async def test_single_use_invite(
     user3, _ = await create_test_user()
     with pytest.raises(Exception):
         await group_service.join_group(user=user3, invite_token=invite.token)
+
+
+async def test_invite_link_preview(
+    group_service: GroupService,
+    dummy_group: Group,
+    dummy_user: User,
+    create_test_user,
+):
+    invite_id = await group_service.create_invite(
+        user=dummy_user,
+        group_id=dummy_group.id,
+        description="",
+        single_use=True,
+        join_as_editor=False,
+        valid_until=None,
+    )
+    invite: GroupInvite = await group_service.get_invite(user=dummy_user, group_id=dummy_group.id, invite_id=invite_id)
+    assert invite.single_use
+
+    user2, _ = await create_test_user()
+    preview: GroupPreview = await group_service.preview_group(user=user2, invite_token=invite.token)
+    assert preview.id == dummy_group.id
 
 
 async def test_archive_group(

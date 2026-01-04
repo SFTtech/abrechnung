@@ -58,5 +58,5 @@ class GroupPreview(BaseModel):
     terms: str
     created_at: datetime
     invite_single_use: bool
-    invite_valid_until: datetime
+    invite_valid_until: datetime | None
     invite_description: str
