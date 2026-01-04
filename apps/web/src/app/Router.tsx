@@ -18,11 +18,13 @@ import { SessionList } from "../pages/profile/SessionList";
 import { Settings } from "../pages/profile/Settings";
 import { AuthenticatedLayout } from "./authenticated-layout/AuthenticatedLayout";
 import { UnauthenticatedLayout } from "./unauthenticated-layout/UnauthenticatedLayout";
+import { ErrorBoundary } from "./ErrorBoundary";
 
 const router = createBrowserRouter([
     {
         path: "/",
         element: <AuthenticatedLayout />,
+        ErrorBoundary: ErrorBoundary,
         children: [
             {
                 index: true,
@@ -64,6 +66,7 @@ const router = createBrowserRouter([
     },
     {
         element: <UnauthenticatedLayout />,
+        ErrorBoundary: ErrorBoundary,
         children: [
             {
                 path: "/confirm-password-recovery/:token",
