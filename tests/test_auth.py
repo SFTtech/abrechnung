@@ -11,7 +11,7 @@ from abrechnung.application.users import UserService
 from abrechnung.domain.groups import Group
 from abrechnung.domain.users import User
 
-from .conftest import TEST_CONFIG
+from .conftest import TEST_CONFIG, CreateTestUser
 
 
 async def test_register_with_email_confirmation(user_service: UserService, db_pool: Pool):
@@ -116,7 +116,7 @@ async def test_register_guest_user(group_service: GroupService, db_pool: Pool, d
         )
 
 
-async def test_change_email(user_service: UserService, db_pool: Pool, create_test_user):
+async def test_change_email(user_service: UserService, db_pool: Pool, create_test_user: CreateTestUser):
     user, pw = await create_test_user()
     new_email = f"{secrets.token_hex(16)}@something.com"
     await user_service.request_email_change(user=user, email=new_email, password=pw)
@@ -129,7 +129,7 @@ async def test_change_email(user_service: UserService, db_pool: Pool, create_tes
     assert updated_user.email == new_email
 
 
-async def test_change_password(user_service: UserService, create_test_user):
+async def test_change_password(user_service: UserService, create_test_user: CreateTestUser):
     user, pw = await create_test_user()
     new_password = secrets.token_hex(16)
 
@@ -138,7 +138,7 @@ async def test_change_password(user_service: UserService, create_test_user):
     await user_service.login_user(username=user.username, password=new_password, session_name=secrets.token_hex(16))
 
 
-async def test_password_recovery(user_service: UserService, db_pool: Pool, create_test_user):
+async def test_password_recovery(user_service: UserService, db_pool: Pool, create_test_user: CreateTestUser):
     user, _ = await create_test_user()
     new_password = secrets.token_hex(16)
 

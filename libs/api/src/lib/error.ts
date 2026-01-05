@@ -8,7 +8,6 @@ const ErrorSchema = z.object({
 });
 
 export const stringifyError = (error: any): string => {
-    // console.log(typeof error,  error instanceof ApiError, error)
     if (typeof error === "string") {
         return error;
     }

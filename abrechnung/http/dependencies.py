@@ -1,7 +1,10 @@
+from typing import AsyncGenerator
+
 import asyncpg
 from fastapi import Depends, Request
 
 from abrechnung.application.accounts import AccountService
+from abrechnung.application.export_import import ExportImportService
 from abrechnung.application.groups import GroupService
 from abrechnung.application.transactions import TransactionService
 from abrechnung.application.users import UserService
@@ -18,14 +21,14 @@ def get_db_pool(request: Request) -> asyncpg.Pool:
 
 async def get_db_conn(
     db_pool: asyncpg.Pool = Depends(get_db_pool),
-) -> asyncpg.Connection:
+) -> AsyncGenerator[asyncpg.Connection, None]:
     async with db_pool.acquire() as conn:
         yield conn
 
 
 async def get_db_transaction(
     db_pool: asyncpg.Pool = Depends(get_db_pool),
-) -> asyncpg.Connection:
+) -> AsyncGenerator[asyncpg.Connection, None]:
     async with db_pool.acquire() as conn:
         async with conn.transaction():
             yield conn
@@ -45,3 +48,7 @@ def get_account_service(request: Request) -> AccountService:
 
 def get_transaction_service(request: Request) -> TransactionService:
     return request.state.context.transaction_service
+
+
+def get_export_import_service(request: Request) -> ExportImportService:
+    return request.state.context.export_import_service

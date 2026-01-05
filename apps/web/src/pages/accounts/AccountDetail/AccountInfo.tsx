@@ -76,7 +76,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
 
         const validated = AccountValidator.safeParse(account);
         if (!validated.success) {
-            setValidationErrors((validated as any).error.formErrors);
+            setValidationErrors(z.flattenError(validated.error));
             return;
         }
         setValidationErrors(emptyErrors);

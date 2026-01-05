@@ -3,7 +3,7 @@ import { TagSelector } from "@/components/TagSelector";
 import { MobilePaper } from "@/components/style";
 import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
 import { useTitle } from "@/core/utils";
-import { useIsSmallScreen, useQueryState } from "@/hooks";
+import { useDownloadFile, useIsSmallScreen, useQueryState } from "@/hooks";
 import { selectTransactionSortMode, updateTransactionSortMode, useAppDispatch, useAppSelector } from "@/store";
 import { TransactionSortMode, transactionCsvDump } from "@abrechnung/core";
 import {
@@ -48,24 +48,14 @@ interface Props {
 
 const MAX_ITEMS_PER_PAGE = 40;
 
-const downloadFile = (content: string, filename: string, mimetype: string) => {
-    const blob = new Blob([content], { type: `${mimetype};charset=utf-8` });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.download = filename;
-    link.href = url;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-};
-
 const useDownloadCsv = (groupId: number, transactions: Transaction[]) => {
     const accounts = useGroupAccounts(groupId);
     const balanceEffects = useAppSelector((state) => selectTransactionBalanceEffects(state, groupId));
+    const downloadFile = useDownloadFile();
 
     return React.useCallback(() => {
         const csv = transactionCsvDump(transactions, balanceEffects, accounts);
-        downloadFile(csv, "transactions.csv", "text/csv");
+        downloadFile({ content: csv, filename: "transactions.csv", mimetype: "text/csv" });
     }, [accounts, balanceEffects, transactions]);
 };
 

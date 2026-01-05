@@ -76,7 +76,9 @@
         "addGroup": "Add Group",
         "create": {
             "title": "Create Group",
-            "addUserAccountOnJoinDescription": "Automatically add accounts for newly joined group members"
+            "addUserAccountOnJoinDescription": "Automatically add accounts for newly joined group members",
+            "import": "Import Group",
+            "importError": "An error occurred during group import: {{error}}"
         },
         "delete": {
             "title": "Delete Group",
@@ -121,9 +123,10 @@
             "archiveGroupConfirm": "Are you sure you want to archive the group {{group.name}}. No modifications can be made to archived groups and they will be hidden in group lists. Only a group owner can reverse this action.",
             "unarchiveGroup": "Unarchive Group",
             "unarchiveGroupConfirm": "Are you sure you want to unarchive the group {{group.name}}. The group will no longer be read-only.",
-            "dangerZone": "Danger zone. The following are irreversible actions.",
+            "dangerZone": "Danger zone",
             "ownedAccount": "This account is you",
-            "ownedAccountHelp": "Account used as default for paying expenses and showing balance effects"
+            "ownedAccountHelp": "Account used as default for paying expenses and showing balance effects",
+            "exportGroupJson": "Export Group"
         },
         "join": {
             "tabTitle": "Abrechnung - Join Group",

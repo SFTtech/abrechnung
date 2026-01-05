@@ -37,7 +37,7 @@ class GroupService(Service[Config]):
         terms: str,
     ) -> int:
         if user.is_guest_user:
-            raise AccessDenied("guest users are not allowed to create group new groups")
+            raise AccessDenied("guest users are not allowed to create new groups")
 
         group_id = await conn.fetchval(
             "insert into grp (name, description, currency_identifier, terms, add_user_account_on_join, created_by) "

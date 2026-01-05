@@ -4,8 +4,10 @@ from typing import List
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 
+from abrechnung.application.export_import import ExportImportService
 from abrechnung.application.groups import GroupService
 from abrechnung.application.users import UserService
+from abrechnung.domain.export_import import GroupJsonExportV1
 from abrechnung.domain.groups import (
     Group,
     GroupInvite,
@@ -15,7 +17,7 @@ from abrechnung.domain.groups import (
 )
 from abrechnung.domain.users import User
 from abrechnung.http.auth import get_current_user
-from abrechnung.http.dependencies import get_group_service, get_user_service
+from abrechnung.http.dependencies import get_export_import_service, get_group_service, get_user_service
 
 router = APIRouter(
     prefix="/api",
@@ -406,3 +408,45 @@ async def unarchive_group(
         user=user,
         group_id=group_id,
     )
+
+
+@router.post(
+    r"/v1/groups/{group_id}/export-json",
+    summary="un-archive a group",
+    operation_id="export_group_json",
+    response_model=GroupJsonExportV1,
+    tags=["groups"],
+)
+async def export_group_json(
+    group_id: int,
+    user: User = Depends(get_current_user),
+    export_import_service: ExportImportService = Depends(get_export_import_service),
+):
+    return await export_import_service.export_group_as_json(
+        user=user,
+        group_id=group_id,
+    )
+
+
+class ImportGroupPayload(BaseModel):
+    group_json: str
+
+
+class ImportGroupResponse(BaseModel):
+    group_id: int
+
+
+@router.post(
+    r"/v1/import-group",
+    summary="import a group from json",
+    response_model=ImportGroupResponse,
+    operation_id="unarchive_group",
+    tags=["groups"],
+)
+async def import_group(
+    payload: ImportGroupPayload,
+    user: User = Depends(get_current_user),
+    export_import_service: ExportImportService = Depends(get_export_import_service),
+):
+    group_id, _ = await export_import_service.import_group_from_json(user=user, group_json_dump=payload.group_json)
+    return ImportGroupResponse(group_id=group_id)

@@ -101,7 +101,6 @@ const selectSortedTransactions = createSelector(
 
             return true;
         };
-        console.log(transactions.filter(filterFn));
         return transactions.filter(filterFn).sort(compareFunction);
     }
 );
