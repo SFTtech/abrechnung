@@ -2,7 +2,14 @@
 
 ## Unreleased
 
-[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.4.0...HEAD)
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.5.0...HEAD)
+
+## 1.5.0 (2026-01-05)
+
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.4.0...v1.5.0)
+
+- add group export and import via json dumps
+- allow empty valid until in group invite links
 
 ## 1.4.0 (2026-01-03)
 
