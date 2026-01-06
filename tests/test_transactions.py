@@ -9,6 +9,7 @@ from abrechnung.domain.groups import Group
 from abrechnung.domain.transactions import (
     NewTransaction,
     NewTransactionPosition,
+    SplitMode,
     Transaction,
     TransactionPosition,
     TransactionType,
@@ -90,6 +91,7 @@ async def test_update_transaction(
             value=122.22,
             creditor_shares={account1.id: 1.0},
             debitor_shares={account2.id: 1.0},
+            split_mode=SplitMode.shares,
         ),
     )
     await transaction_service.update_transaction(
@@ -107,6 +109,7 @@ async def test_update_transaction(
             tags=[],
             creditor_shares={account2.id: 1.0},
             debitor_shares={account1.id: 1.0},
+            split_mode=SplitMode.shares,
         ),
     )
 
@@ -134,6 +137,7 @@ async def test_update_transaction(
             tags=[],
             creditor_shares={account2.id: 1.0},
             debitor_shares={account1.id: 1.0},
+            split_mode=SplitMode.shares,
         ),
     )
     t = await transaction_service.get_transaction(user=dummy_user, transaction_id=transaction_id)
@@ -173,6 +177,7 @@ async def test_account_deletion(
             value=122.22,
             debitor_shares={account2.id: 1.0},
             creditor_shares={account3.id: 1.0},
+            split_mode=SplitMode.shares,
         ),
     )
 
@@ -196,6 +201,7 @@ async def test_account_deletion(
                 tags=[],
                 creditor_shares={account1.id: 1.0},
                 debitor_shares={account2.id: 1.0},
+                split_mode=SplitMode.shares,
             ),
         )
 
@@ -217,6 +223,7 @@ async def test_account_deletion(
             tags=[],
             creditor_shares={account3.id: 1.0},
             debitor_shares={account3.id: 1.0},
+            split_mode=SplitMode.shares,
         ),
     )
     # we should not be able to delete this account as changes depend on it
@@ -249,6 +256,7 @@ async def test_purchase_items(
             value=122.22,
             debitor_shares={account1.id: 1.0},
             creditor_shares={account2.id: 1.0},
+            split_mode=SplitMode.shares,
             new_positions=[
                 NewTransactionPosition(
                     name="carrots",
@@ -278,6 +286,7 @@ async def test_purchase_items(
             value=122.22,
             debitor_shares={account1.id: 1.0},
             creditor_shares={account2.id: 1.0},
+            split_mode=SplitMode.shares,
             changed_positions=[
                 TransactionPosition(
                     id=position_id,

@@ -6,9 +6,15 @@ import {
     TransactionPosition as BackendTransactionPosition,
     UpdateFile,
 } from "@abrechnung/api";
-import { computeTransactionBalanceEffect, getTransactionSortFunc, TransactionSortMode } from "@abrechnung/core";
+import {
+    computeTransactionBalanceEffect,
+    getDebitorSharesAfterSplitModeChange,
+    getTransactionSortFunc,
+    TransactionSortMode,
+} from "@abrechnung/core";
 import {
     FileAttachment,
+    FrontendSplitMode,
     Transaction,
     TransactionBalanceEffect,
     TransactionPosition,
@@ -279,6 +285,7 @@ export const createTransaction = createAsyncThunk<
         billed_at: toISODateString(new Date()),
         creditor_shares: {},
         debitor_shares: {},
+        split_mode: "shares" as const,
         tags: [],
         positions: {},
         position_ids: [],
@@ -439,6 +446,7 @@ const backendTransactionToTransaction = (t: BackendTransaction): Transaction => 
         currency_identifier: t.currency_identifier,
         currency_conversion_rate: t.currency_conversion_rate,
         billed_at: t.billed_at,
+        split_mode: t.split_mode,
         last_changed: t.last_changed,
         tags: t.tags,
         value: t.value,
@@ -568,7 +576,11 @@ const transactionSlice = createSlice({
         wipTransactionUpdated: (
             state,
             action: PayloadAction<
-                Partial<Omit<Transaction, "positions" | "files" | "is_wip" | "last_changed">> &
+                Partial<
+                    Omit<Transaction, "positions" | "files" | "is_wip" | "last_changed" | "split_mode"> & {
+                        split_mode: FrontendSplitMode;
+                    }
+                > &
                     Pick<Transaction, "id" | "group_id">
             >
         ) => {
@@ -581,9 +593,17 @@ const transactionSlice = createSlice({
             if (!wipTransaction) {
                 return;
             }
+            const { newDebitorShares, splitMode } = getDebitorSharesAfterSplitModeChange(
+                wipTransaction.split_mode,
+                transaction.split_mode ?? wipTransaction.split_mode,
+                transaction.debitor_shares ?? wipTransaction.debitor_shares,
+                transaction.value ?? wipTransaction.value
+            );
             s.wipTransactions.byId[transaction.id] = {
                 ...wipTransaction,
                 ...transaction,
+                debitor_shares: newDebitorShares,
+                split_mode: splitMode,
                 is_wip: true,
                 last_changed: new Date().toISOString(),
             };

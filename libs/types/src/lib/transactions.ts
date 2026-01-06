@@ -3,6 +3,7 @@ import {
     Transaction as BackendTransaction,
     TransactionPosition as BackendTransactionPosition,
     NewFile,
+    SplitMode,
     UpdateFile,
 } from "@abrechnung/api";
 import { CurrencyIdentifierSchema } from "@abrechnung/core";
@@ -11,6 +12,8 @@ import { z } from "zod";
 export type TransactionShare = { [k: number]: number };
 
 export type TransactionType = "purchase" | "transfer";
+
+export type FrontendSplitMode = "evenly" | SplitMode;
 
 const BaseTransactionValidator = z.object({
     name: z
@@ -26,6 +29,7 @@ const BaseTransactionValidator = z.object({
     currency_conversion_rate: z
         .number({ error: (issue) => (issue.input === undefined ? "Currency conversion rate is required" : null) })
         .positive("Currency conversion rate must be larger than 0"),
+    split_mode: z.enum(["shares", "absolute", "percent"]),
 });
 
 export const PurchaseValidator = z.looseObject({
@@ -58,11 +62,34 @@ export const TransferValidator = z.looseObject({
     ...BaseTransactionValidator.shape,
 });
 
-export const TransactionValidator = z.discriminatedUnion("type", [
-    z.looseObject({ type: z.literal("purchase"), ...PurchaseValidator.shape }),
-    z.looseObject({ type: z.literal("transfer"), ...TransferValidator.shape }),
-    z.object({ type: z.literal("mimo"), ...MimoValidator.shape }),
-]);
+export const TransactionValidator = z
+    .discriminatedUnion("type", [
+        z.looseObject({ type: z.literal("purchase"), ...PurchaseValidator.shape }),
+        z.looseObject({ type: z.literal("transfer"), ...TransferValidator.shape }),
+        z.object({ type: z.literal("mimo"), ...MimoValidator.shape }),
+    ])
+    .refine(
+        (data) => {
+            const splitMode = data.split_mode;
+            if (splitMode !== "percent") {
+                return true;
+            }
+            const totalPercent = Object.values(data.debitor_shares).reduce((acc, curr) => acc + curr, 0);
+            return Math.abs(totalPercent - 1) <= 0.00001;
+        },
+        { path: ["debitor_shares"], message: "shares must sum up to 100% in percentage split mode" }
+    )
+    .refine(
+        (data) => {
+            const splitMode = data.split_mode;
+            if (splitMode !== "absolute") {
+                return true;
+            }
+            const totalPercent = Object.values(data.debitor_shares).reduce((acc, curr) => acc + curr, 0);
+            return Math.abs(totalPercent - data.value) <= 0.00001;
+        },
+        { path: ["debitor_shares"], message: "shares must sum up to the transaction value in amount split mode" }
+    );
 
 export const PositionValidator = z
     .object({
@@ -83,7 +110,7 @@ export const PositionValidator = z
         { message: "a position must either be shared or assigned to an account" }
     );
 
-export type PositionValidationErrors = z.inferFlattenedErrors<typeof PositionValidator>;
+export type PositionValidationErrors = z.core.$ZodFlattenedError<z.infer<typeof PositionValidator>>;
 
 export interface TransactionAccountBalance {
     total: number;

@@ -54,7 +54,12 @@
         "selectedEvent_one": "{{count}} Event",
         "selectedEvent_other": "{{count}} Events",
         "accountSlashEvent": "Account / Event",
-        "showEvents": "Show Events"
+        "showEvents": "Show Events",
+        "splitMode": "Split mode",
+        "split_evenly": "Evenly",
+        "split_shares": "Unevenly - By shares",
+        "split_percent": "Unevenly - By percentage",
+        "split_absolute": "Unevenly - By amount"
     },
     "navbar": {
         "transactions": "Transactions",

@@ -1,11 +1,10 @@
-import { useIsSmallScreen } from "@/hooks";
+import { useFormatCurrency, useIsSmallScreen } from "@/hooks";
 import { NumericInput } from "@abrechnung/components";
-import { getAccountSortFunc } from "@abrechnung/core";
+import { getAccountSortFunc, getCurrencySymbolForIdentifier } from "@abrechnung/core";
 import { useGroupAccounts } from "@abrechnung/redux";
-import { Account, TransactionShare } from "@abrechnung/types";
+import { Account, FrontendSplitMode, TransactionShare } from "@abrechnung/types";
 import { Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import {
-    Box,
     Checkbox,
     Chip,
     Divider,
@@ -13,6 +12,8 @@ import {
     Grid,
     IconButton,
     InputAdornment,
+    MenuItem,
+    Stack,
     Table,
     TableBody,
     TableCell,
@@ -28,11 +29,13 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { getAccountLink } from "../utils";
 import { getAccountIcon } from "./style/AbrechnungIcons";
+import { SplitMode } from "@abrechnung/api";
 
 interface RowProps {
     account: Account;
-    showAdvanced: boolean;
+    splitMode: FrontendSplitMode;
     editable: boolean;
+    currencyIdentifier?: string;
     onChange: (accountId: number, newShareValue: number) => void;
     AdditionalShareInfo?: React.FC<{ account: Account }> | undefined;
     shareValue?: number | undefined;
@@ -41,13 +44,19 @@ interface RowProps {
 const ShareSelectRow: React.FC<RowProps> = ({
     account,
     editable,
-    showAdvanced,
+    splitMode,
     shareValue,
+    currencyIdentifier,
     onChange,
     AdditionalShareInfo,
 }) => {
+    const { i18n } = useTranslation();
     const theme = useTheme();
+    const formatCurrency = useFormatCurrency();
     const handleChange = (newValue: number) => {
+        if (splitMode === "percent") {
+            newValue = newValue / 100;
+        }
         onChange(account.id, newValue);
     };
 
@@ -58,6 +67,59 @@ const ShareSelectRow: React.FC<RowProps> = ({
             onChange(account.id, 0);
         }
     };
+
+    let inputAdornment;
+    let value;
+    switch (splitMode) {
+        case "evenly":
+            value = shareValue ?? 0;
+            break;
+        case "shares":
+            value = shareValue ?? 0;
+            break;
+        case "percent":
+            value = (shareValue ?? 0) * 100;
+            inputAdornment = <InputAdornment position="end">%</InputAdornment>;
+            break;
+        case "absolute":
+            value = shareValue ?? 0;
+            if (currencyIdentifier) {
+                inputAdornment = (
+                    <InputAdornment position="end">{getCurrencySymbolForIdentifier(currencyIdentifier)}</InputAdornment>
+                );
+            }
+            break;
+    }
+
+    let valueDisplay;
+    if (splitMode === "evenly") {
+        valueDisplay = <Checkbox checked={value > 0} disabled={!editable} onChange={handleToggleShare} />;
+    } else {
+        if (editable) {
+            valueDisplay = (
+                <NumericInput
+                    value={value}
+                    isCurrency={splitMode === "absolute"}
+                    onChange={handleChange}
+                    disabled={!editable}
+                    slotProps={{ input: { endAdornment: inputAdornment } }}
+                />
+            );
+        } else {
+            if (splitMode === "percent") {
+                const formatDef = new Intl.NumberFormat(i18n.language, {
+                    style: "decimal",
+                    maximumFractionDigits: 2,
+                });
+
+                valueDisplay = `${formatDef.format(value)}%`;
+            } else if (splitMode === "absolute") {
+                valueDisplay = formatCurrency(value, currencyIdentifier);
+            } else {
+                valueDisplay = value.toString();
+            }
+        }
+    }
 
     return (
         <TableRow hover>
@@ -87,13 +149,7 @@ const ShareSelectRow: React.FC<RowProps> = ({
                     </Grid>
                 </Link>
             </TableCell>
-            <TableCell width="100px">
-                {showAdvanced ? (
-                    <NumericInput value={shareValue ?? 0} onChange={handleChange} disabled={!editable} />
-                ) : (
-                    <Checkbox checked={(shareValue ?? 0) > 0} disabled={!editable} onChange={handleToggleShare} />
-                )}
-            </TableCell>
+            <TableCell width="100px">{valueDisplay}</TableCell>
             {AdditionalShareInfo ? <AdditionalShareInfo account={account} /> : null}
         </TableRow>
     );
@@ -104,12 +160,15 @@ interface ShareSelectProps {
     label: string;
     value: TransactionShare;
     onChange?: (newShares: TransactionShare) => void;
+    splitMode: SplitMode;
+    onChangeSplitMode?: (newMode: FrontendSplitMode) => void;
     error?: boolean | undefined;
     helperText?: React.ReactNode | undefined;
     shouldDisplayAccount?: (accountId: number) => boolean | undefined;
     additionalShareInfoHeader?: React.ReactNode | undefined;
     AdditionalShareInfo?: React.FC<{ account: Account }> | undefined;
     excludeAccounts?: number[] | undefined;
+    currencyIdentifier?: string;
     editable?: boolean | undefined;
 }
 
@@ -118,10 +177,13 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
     label,
     value,
     onChange,
+    splitMode,
+    onChangeSplitMode,
     shouldDisplayAccount,
     additionalShareInfoHeader,
     AdditionalShareInfo,
     excludeAccounts,
+    currencyIdentifier,
     error,
     helperText,
     editable = false,
@@ -131,8 +193,13 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
     const isSmallScreen = useIsSmallScreen();
 
     const [showEvents, setShowEvents] = React.useState(false);
-    const [showAdvanced, setShowAdvanced] = React.useState(false);
+    const [frontendSplitMode, setFrontendSplitMode] = React.useState<FrontendSplitMode>(splitMode);
     const [searchValue, setSearchValue] = React.useState("");
+
+    const handleSplitModeChange = (newMode: FrontendSplitMode) => {
+        setFrontendSplitMode(newMode);
+        onChangeSplitMode?.(newMode);
+    };
 
     const unfilteredAccounts = useGroupAccounts(groupId);
     const accounts = React.useMemo(() => {
@@ -171,10 +238,14 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
     }, [value, showEvents, editable, searchValue, unfilteredAccounts, excludeAccounts, shouldDisplayAccount]);
 
     React.useEffect(() => {
-        if (Object.values(value).reduce((showAdvanced, value) => showAdvanced || value !== 1, false)) {
-            setShowAdvanced(true);
+        // set displayed split mode to evenly if we have a "shares" split with non-even shares
+        if (
+            splitMode === "shares" &&
+            Object.values(value).reduce((onlyDefaultShares, value) => onlyDefaultShares && value === 1, true)
+        ) {
+            setFrontendSplitMode("evenly");
         }
-    }, [value, setShowAdvanced]);
+    }, [splitMode, value, setFrontendSplitMode]);
 
     const nSelectedPeople = React.useMemo(
         () =>
@@ -236,7 +307,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
     return (
         <div>
             <Grid container direction={isSmallScreen ? "column" : "row"} justifyContent="space-between">
-                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center", gap: "0.5em", marginY: 1 }}>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center", marginY: 1 }}>
                     <Typography variant="subtitle1">{label}</Typography>
                     {nSelectedPeople > 0 && (
                         <Chip
@@ -252,9 +323,9 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                             color="primary"
                         />
                     )}
-                </Box>
+                </Stack>
                 {editable && (
-                    <Box>
+                    <Stack direction="row" spacing={2} sx={{ paddingY: 1 }}>
                         <FormControlLabel
                             control={
                                 <Checkbox
@@ -267,19 +338,20 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                             checked={showEvents}
                             label={t("shareSelect.showEvents")}
                         />
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    name="show-advanced"
-                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                                        setShowAdvanced(event.target.checked)
-                                    }
-                                />
-                            }
-                            checked={showAdvanced}
-                            label={t("common.advanced")}
-                        />
-                    </Box>
+                        <TextField
+                            variant="standard"
+                            value={frontendSplitMode}
+                            sx={{ minWidth: 200 }}
+                            onChange={(e) => handleSplitModeChange(e.target.value as FrontendSplitMode)}
+                            label={t("shareSelect.splitMode")}
+                            select
+                        >
+                            <MenuItem value="evenly">{t("shareSelect.split_evenly")}</MenuItem>
+                            <MenuItem value="shares">{t("shareSelect.split_shares")}</MenuItem>
+                            <MenuItem value="percent">{t("shareSelect.split_percent")}</MenuItem>
+                            <MenuItem value="absolute">{t("shareSelect.split_absolute")}</MenuItem>
+                        </TextField>
+                    </Stack>
                 )}
             </Grid>
             <Divider variant="middle" sx={{ marginLeft: 0 }} />
@@ -353,9 +425,10 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                                 key={account.id}
                                 editable={editable}
                                 account={account}
+                                currencyIdentifier={currencyIdentifier}
                                 onChange={handleAccountShareChange}
                                 shareValue={value[account.id]}
-                                showAdvanced={showAdvanced}
+                                splitMode={frontendSplitMode}
                                 AdditionalShareInfo={AdditionalShareInfo}
                             />
                         ))}

@@ -584,6 +584,7 @@ export type GetVersionApiArg = void;
 export type GetFrontendConfigApiResponse = /** status 200 Successful Response */ FrontendConfig;
 export type GetFrontendConfigApiArg = void;
 export type TransactionType = "mimo" | "purchase" | "transfer";
+export type SplitMode = "shares" | "absolute" | "percent";
 export type TransactionPosition = {
     name: string;
     price: number;
@@ -620,6 +621,7 @@ export type Transaction = {
     debitor_shares: {
         [key: string]: number;
     };
+    split_mode: SplitMode;
     last_changed: string;
     positions: TransactionPosition[];
     files: FileAttachment[];
@@ -660,6 +662,7 @@ export type NewTransaction = {
     debitor_shares: {
         [key: string]: number;
     };
+    split_mode: SplitMode;
     new_files?: NewFile[];
     new_positions?: NewTransactionPosition[];
 };
@@ -683,6 +686,7 @@ export type UpdateTransaction = {
     debitor_shares: {
         [key: string]: number;
     };
+    split_mode: SplitMode;
     new_files?: NewFile[];
     new_positions?: NewTransactionPosition[];
     changed_files?: UpdateFile[];
@@ -835,6 +839,7 @@ export type TransactionJsonExportV1 = {
     currency_conversion_rate: number;
     billed_at: string;
     tags: string[];
+    split_mode?: SplitMode;
     creditor_shares: {
         [key: string]: number;
     };

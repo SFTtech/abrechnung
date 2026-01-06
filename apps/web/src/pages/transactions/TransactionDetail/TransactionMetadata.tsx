@@ -11,7 +11,7 @@ import {
     useGroupCurrencyIdentifier,
     wipTransactionUpdated,
 } from "@abrechnung/redux";
-import { Account, Transaction, TransactionShare, TransactionValidator } from "@abrechnung/types";
+import { Account, FrontendSplitMode, Transaction, TransactionShare, TransactionValidator } from "@abrechnung/types";
 import { Button, Grid, IconButton, InputAdornment, Stack, TableCell } from "@mui/material";
 import * as React from "react";
 import { z } from "zod";
@@ -102,7 +102,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                     | "tags"
                     | "currency_identifier"
                     | "currency_conversion_rate"
-                >
+                > & { split_mode: FrontendSplitMode }
             >
         ) => {
             if (!transaction.is_wip) {
@@ -139,8 +139,13 @@ export const TransactionMetadata: React.FC<Props> = ({
         pushChanges({ currency_identifier: currencyIdentifier, currency_conversion_rate: newCurrencyConversionRate });
     };
 
-    const updatedebitor_shares = React.useCallback(
+    const updateDebitorShares = React.useCallback(
         (shares: TransactionShare) => pushChanges({ debitor_shares: shares }),
+        [pushChanges]
+    );
+
+    const updateSplitMode = React.useCallback(
+        (splitMode: FrontendSplitMode) => pushChanges({ split_mode: splitMode }),
         [pushChanges]
     );
 
@@ -327,7 +332,10 @@ export const TransactionMetadata: React.FC<Props> = ({
                         value={transaction.debitor_shares}
                         error={!!validationErrors.fieldErrors.debitor_shares}
                         helperText={validationErrors.fieldErrors.debitor_shares}
-                        onChange={updatedebitor_shares}
+                        onChange={updateDebitorShares}
+                        splitMode={transaction.split_mode}
+                        onChangeSplitMode={updateSplitMode}
+                        currencyIdentifier={transaction.currency_identifier}
                         shouldDisplayAccount={shouldDisplayAccount}
                         additionalShareInfoHeader={
                             showPositions || hasPositions ? (

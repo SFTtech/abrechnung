@@ -183,6 +183,9 @@ export const PersonalAccountJsonExportV1 = z.object({
 export type TransactionType = z.infer<typeof TransactionType>;
 export const TransactionType = z.union([z.literal("mimo"), z.literal("purchase"), z.literal("transfer")]);
 
+export type SplitMode = z.infer<typeof SplitMode>;
+export const SplitMode = z.union([z.literal("shares"), z.literal("absolute"), z.literal("percent")]);
+
 export type TransactionPositionJsonExportV1 = z.infer<typeof TransactionPositionJsonExportV1>;
 export const TransactionPositionJsonExportV1 = z.object({
     id: z.number(),
@@ -203,6 +206,7 @@ export const TransactionJsonExportV1 = z.object({
     currency_conversion_rate: z.number(),
     billed_at: z.string(),
     tags: z.array(z.string()),
+    split_mode: z.union([SplitMode, z.undefined()]).optional(),
     creditor_shares: z.record(z.string(), z.number()),
     debitor_shares: z.record(z.string(), z.number()),
     positions: z.array(TransactionPositionJsonExportV1),
@@ -334,6 +338,7 @@ export const NewTransaction = z.object({
     tags: z.union([z.array(z.string()), z.undefined()]).optional(),
     creditor_shares: z.record(z.string(), z.number()),
     debitor_shares: z.record(z.string(), z.number()),
+    split_mode: SplitMode,
     new_files: z.union([z.array(NewFile), z.undefined()]).optional(),
     new_positions: z.union([z.array(NewTransactionPosition), z.undefined()]).optional(),
 });
@@ -418,6 +423,7 @@ export const Transaction = z.object({
     deleted: z.boolean(),
     creditor_shares: z.record(z.string(), z.number()),
     debitor_shares: z.record(z.string(), z.number()),
+    split_mode: SplitMode,
     last_changed: z.string(),
     positions: z.array(TransactionPosition),
     files: z.array(FileAttachment),
@@ -465,6 +471,7 @@ export const UpdateTransaction = z.object({
     tags: z.union([z.array(z.string()), z.undefined()]).optional(),
     creditor_shares: z.record(z.string(), z.number()),
     debitor_shares: z.record(z.string(), z.number()),
+    split_mode: SplitMode,
     new_files: z.union([z.array(NewFile), z.undefined()]).optional(),
     new_positions: z.union([z.array(NewTransactionPosition), z.undefined()]).optional(),
     changed_files: z.union([z.array(UpdateFile), z.undefined()]).optional(),

@@ -259,8 +259,8 @@ class TransactionService(Service[Config]):
         )
         await conn.execute(
             "insert into transaction_history "
-            "   (id, revision_id, currency_identifier, currency_conversion_rate, value, name, description, billed_at) "
-            "values ($1, $2, $3, $4, $5, $6, $7, $8)",
+            "   (id, revision_id, currency_identifier, currency_conversion_rate, value, name, description, billed_at, split_mode) "
+            "values ($1, $2, $3, $4, $5, $6, $7, $8, $9)",
             transaction_id,
             revision_id,
             transaction.currency_identifier,
@@ -269,6 +269,7 @@ class TransactionService(Service[Config]):
             transaction.name,
             transaction.description,
             transaction.billed_at,
+            transaction.split_mode.value,
         )
 
         tag_ids = await _get_or_create_tag_ids(conn=conn, group_id=group_id, tags=transaction.tags)
@@ -533,11 +534,11 @@ class TransactionService(Service[Config]):
         revision_id = await self._create_revision(conn=conn, user=user, transaction_id=transaction_id)
         await conn.execute(
             "insert into transaction_history (id, revision_id, currency_identifier, currency_conversion_rate, "
-            "   value, billed_at, name, description)"
-            "values ($1, $2, $3, $4, $5, $6, $7, $8) "
+            "   value, billed_at, name, description, split_mode)"
+            "values ($1, $2, $3, $4, $5, $6, $7, $8, $9) "
             "on conflict (id, revision_id) do update "
             "set currency_identifier = $3, currency_conversion_rate = $4, value = $5, "
-            "   billed_at = $6, name = $7, description = $8",
+            "   billed_at = $6, name = $7, description = $8, split_mode = $9",
             transaction_id,
             revision_id,
             transaction.currency_identifier,
@@ -546,6 +547,7 @@ class TransactionService(Service[Config]):
             transaction.billed_at,
             transaction.name,
             transaction.description,
+            transaction.split_mode.value,
         )
 
         tag_ids = await _get_or_create_tag_ids(conn=conn, group_id=group_id, tags=transaction.tags)
@@ -744,8 +746,8 @@ class TransactionService(Service[Config]):
 
         # copy all existing transaction data into a new history entry
         await conn.execute(
-            "insert into transaction_history (id, revision_id, currency_identifier, currency_conversion_rate, name, description, value, billed_at, deleted)"
-            "select id, $1, currency_identifier, currency_conversion_rate, name, description, value, billed_at, deleted "
+            "insert into transaction_history (id, revision_id, currency_identifier, currency_conversion_rate, name, description, value, billed_at, deleted, split_mode)"
+            "select id, $1, currency_identifier, currency_conversion_rate, name, description, value, billed_at, deleted, split_mode "
             "from transaction_history where id = $2 and revision_id = $3",
             revision_id,
             transaction_id,

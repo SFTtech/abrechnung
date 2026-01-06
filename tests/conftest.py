@@ -27,6 +27,7 @@ from abrechnung.domain.transactions import (
     NewFile,
     NewTransaction,
     NewTransactionPosition,
+    SplitMode,
     Transaction,
     TransactionShares,
     TransactionType,
@@ -240,6 +241,7 @@ async def create_test_purchase(transaction_service: TransactionService, dummy_us
                 tags=[],
                 new_files=files,
                 new_positions=positions,
+                split_mode=SplitMode.shares,
             ),
         )
         transaction = await transaction_service.get_transaction(user=dummy_user, transaction_id=transaction_id)
@@ -282,6 +284,7 @@ async def create_test_transfer(transaction_service: TransactionService, dummy_us
                 tags=[],
                 new_files=[],
                 new_positions=[],
+                split_mode=SplitMode.shares,
             ),
         )
         transaction = await transaction_service.get_transaction(user=dummy_user, transaction_id=transaction_id)

@@ -98,6 +98,7 @@ class ExportImportService(Service[Config]):
                     debitor_shares=transaction.debitor_shares,
                     positions=mapped_positions,
                     files=mapped_files,
+                    split_mode=transaction.split_mode,
                 )
             )
         return mapped
@@ -221,6 +222,7 @@ class ExportImportService(Service[Config]):
                     debitor_shares=remap_shares(transaction.debitor_shares),
                     new_files=mapped_files,
                     new_positions=mapped_positions,
+                    split_mode=transaction.split_mode,
                 ),
             )
         return group_id, account_mapping

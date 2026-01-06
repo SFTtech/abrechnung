@@ -15,6 +15,7 @@ from abrechnung.domain.accounts import AccountType, NewAccount
 from abrechnung.domain.transactions import (
     NewTransaction,
     NewTransactionPosition,
+    SplitMode,
     TransactionType,
 )
 
@@ -132,6 +133,7 @@ async def main(
                 creditor_shares=creditor_shares,
                 debitor_shares=debitor_shares,
                 new_positions=positions,
+                split_mode=SplitMode.shares,
             ),
         )
         transaction_ids.append(transaction_id)
@@ -156,6 +158,7 @@ async def main(
                 tags=[],
                 creditor_shares=creditor_shares,
                 debitor_shares=debitor_shares,
+                split_mode=SplitMode.shares,
             ),
         )
         transaction_ids.append(transaction_id)

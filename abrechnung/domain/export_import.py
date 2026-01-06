@@ -4,7 +4,7 @@ from typing import Literal
 from pydantic import BaseModel
 
 from abrechnung.domain.accounts import ClearingShares
-from abrechnung.domain.transactions import TransactionShares, TransactionType
+from abrechnung.domain.transactions import SplitMode, TransactionShares, TransactionType
 
 
 class PersonalAccountJsonExportV1(BaseModel):
@@ -48,6 +48,8 @@ class TransactionJsonExportV1(BaseModel):
     currency_conversion_rate: float
     billed_at: date
     tags: list[str]
+
+    split_mode: SplitMode = SplitMode.shares
 
     creditor_shares: TransactionShares
     debitor_shares: TransactionShares

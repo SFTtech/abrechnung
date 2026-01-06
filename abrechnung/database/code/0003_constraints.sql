@@ -109,6 +109,11 @@ $$
     n_debitor_shares    integer;
     transaction_type    text;
     transaction_deleted boolean;
+    transaction_value   double precision;
+    creditor_sum        double precision;
+    debitor_sum         double precision;
+    num_positions       integer;
+    split_mode          split_mode_t;
 begin
     -- the transaction is not yet fully committed
     if check_committed_transactions.created_at is null then
@@ -117,8 +122,10 @@ begin
 
     select
         t.type,
-        th.deleted
-    into locals.transaction_type, locals.transaction_deleted
+        th.deleted,
+        th.split_mode,
+        th.value
+    into locals.transaction_type, locals.transaction_deleted, locals.split_mode, locals.transaction_value
     from
         transaction_history th
         join transaction t on t.id = th.id
@@ -130,8 +137,9 @@ begin
     end if;
 
     select
-        count(cs.account_id)
-    into locals.n_creditor_shares
+        count(cs.account_id),
+        coalesce(sum(cs.shares), 0)
+    into locals.n_creditor_shares, locals.creditor_sum
     from
         creditor_share cs
     where
@@ -139,8 +147,9 @@ begin
         and cs.revision_id = check_committed_transactions.revision_id;
 
     select
-        count(ds.account_id)
-    into locals.n_debitor_shares
+        count(ds.account_id),
+        coalesce(sum(ds.shares), 0)
+    into locals.n_debitor_shares, locals.debitor_sum
     from
         debitor_share ds
     where
@@ -165,21 +174,57 @@ begin
         if locals.n_debitor_shares < 1 then
             raise '"purchase" type transactions must have at least one debitor share';
         end if;
+        if locals.split_mode = 'absolute' then
+            select
+                coalesce(count(*), 0)
+            into locals.num_positions
+            from
+                purchase_item pi
+                join purchase_item_history pih on pi.id = pih.id
+            where
+                pi.transaction_id = check_committed_transactions.transaction_id
+                and pih.revision_id = check_committed_transactions.revision_id
+                and not pih.deleted;
 
-        -- check that all purchase items have at least an item share or communist shares > 0
-        -- i.e. we look for a purchase item at the current revision that has sum(usages) + communist_shares <= 0
-        -- if such a one is found we raise an exception
-        perform from purchase_item pi
-        join purchase_item_history pih on pi.id = pih.id
-        left join purchase_item_usage piu on pih.revision_id = piu.revision_id and pi.id = piu.item_id
-        where pih.revision_id = check_committed_transactions.revision_id
-            and pi.transaction_id = check_committed_transactions.transaction_id
-            and not pih.deleted
-        group by pi.id
-        having sum(coalesce(piu.share_amount, 0) + pih.communist_shares) <= 0;
+            if locals.num_positions > 0 then
+                raise '"absolute" split mode cannot be used together with positions';
+            end if;
 
-        if found then
-            raise 'all transaction positions must have at least one account assigned or their common shares set greater than 0';
+            if abs(locals.transaction_value - locals.debitor_sum) > 0.0001 then
+                raise 'not all absolute shares sum up to the transaction value';
+            end if;
+        elseif locals.split_mode = 'percent' then
+            -- check that all purchase items have at least an item share or communist shares > 0
+            -- i.e. we look for a purchase item at the current revision that has sum(usages) + communist_shares <= 0
+            -- if such a one is found we raise an exception
+            perform from purchase_item pi
+            join purchase_item_history pih on pi.id = pih.id
+            left join purchase_item_usage piu on pih.revision_id = piu.revision_id and pi.id = piu.item_id
+            where pih.revision_id = check_committed_transactions.revision_id
+                and pi.transaction_id = check_committed_transactions.transaction_id
+                and not pih.deleted
+            group by pi.id
+            having sum(coalesce(piu.share_amount, 0) + pih.communist_shares) <= 0;
+
+            if abs(locals.debitor_sum - 1.0) > 0.0001 then
+                raise 'not all shares sum up to 100%%';
+            end if;
+        else
+            -- check that all purchase items have at least an item share or communist shares > 0
+            -- i.e. we look for a purchase item at the current revision that has sum(usages) + communist_shares <= 0
+            -- if such a one is found we raise an exception
+            perform from purchase_item pi
+            join purchase_item_history pih on pi.id = pih.id
+            left join purchase_item_usage piu on pih.revision_id = piu.revision_id and pi.id = piu.item_id
+            where pih.revision_id = check_committed_transactions.revision_id
+                and pi.transaction_id = check_committed_transactions.transaction_id
+                and not pih.deleted
+            group by pi.id
+            having sum(coalesce(piu.share_amount, 0) + pih.communist_shares) <= 0;
+
+            if found then
+                raise 'all transaction positions must have at least one account assigned or their common shares set greater than 0';
+            end if;
         end if;
     end if;
 
