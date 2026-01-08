@@ -5,7 +5,7 @@ import { useTitle } from "@/core/utils";
 import { useIsSmallScreen, useQueryState } from "@/hooks";
 import { selectPersonalAccountSortMode, updatePersonalAccountSortMode, useAppDispatch, useAppSelector } from "@/store";
 import { AccountSortMode } from "@abrechnung/core";
-import { createAccount, selectCurrentUserId, useGroup, useIsGroupWritable, useSortedAccounts } from "@abrechnung/redux";
+import { createAccount, useGroup, useIsGroupWritable, useSortedAccounts } from "@abrechnung/redux";
 import { Account } from "@abrechnung/types";
 import { Add as AddIcon, Clear as ClearIcon, Search as SearchIcon } from "@mui/icons-material";
 import {
@@ -55,7 +55,6 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
     const personalAccounts = useSortedAccounts(groupId, sortMode, "personal", searchValue);
 
     const isGroupWritable = useIsGroupWritable(groupId);
-    const currentUserId = useAppSelector(selectCurrentUserId);
 
     const [currentPage, setCurrentPage] = useState(0);
     const shouldShowPagination = personalAccounts.length > MAX_ITEMS_PER_PAGE;
@@ -86,7 +85,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
             });
     };
 
-    if (!group || currentUserId == null) {
+    if (!group) {
         return <Navigate to="/404" />;
     }
 
@@ -163,7 +162,6 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
                                     key={account.id}
                                     groupId={groupId}
                                     account={account}
-                                    currentUserId={currentUserId}
                                     setAccountToDelete={setAccountDelete}
                                 />
                             ))

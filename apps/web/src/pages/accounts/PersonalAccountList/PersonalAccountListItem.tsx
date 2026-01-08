@@ -11,12 +11,11 @@ import { Navigate, useNavigate } from "react-router";
 
 interface Props {
     groupId: number;
-    currentUserId: number;
     account: Account;
     setAccountToDelete: (account: Account) => void;
 }
 
-export const PersonalAccountListItem: React.FC<Props> = ({ groupId, currentUserId, account, setAccountToDelete }) => {
+export const PersonalAccountListItem: React.FC<Props> = ({ groupId, account, setAccountToDelete }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
