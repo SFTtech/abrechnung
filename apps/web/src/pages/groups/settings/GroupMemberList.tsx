@@ -116,7 +116,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
         {
             selectFromResult: ({ data, ...rest }) => ({
                 ...rest,
-                data: data ? data.sort((a, b) => a.username.localeCompare(b.username)) : undefined,
+                data: data ? [...data].sort((a, b) => a.username.localeCompare(b.username)) : undefined,
             }),
         }
     );
