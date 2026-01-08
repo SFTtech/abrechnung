@@ -10,6 +10,7 @@ const purchaseTemplate: Omit<Transaction, "id" | "debitor_shares" | "creditor_sh
     name: "foobar",
     description: "",
     value: 0,
+    split_mode: "shares",
     deleted: false,
     file_ids: [],
     files: {},

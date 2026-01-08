@@ -102,7 +102,13 @@ def remove_ids_from_transactions(transactions: list[dict]):
             del position["id"]
 
 
-@pytest.mark.parametrize("dump_file,dump_class", [(dump_assets_base_path / "basic.json", GroupJsonExportV1)])
+@pytest.mark.parametrize(
+    "dump_file,dump_class",
+    [
+        (dump_assets_base_path / "basic.json", GroupJsonExportV1),
+        (dump_assets_base_path / "basic_with_split_mode.json", GroupJsonExportV1),
+    ],
+)
 async def test_export_import_idempotence(
     export_import_service: ExportImportService, dummy_user: User, dump_file: Path, dump_class
 ):

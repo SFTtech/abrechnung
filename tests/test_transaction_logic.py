@@ -12,6 +12,7 @@ from abrechnung.domain.groups import Group
 from abrechnung.domain.transactions import (
     NewFile,
     NewTransaction,
+    SplitMode,
     Transaction,
     TransactionType,
     UpdateFile,
@@ -158,6 +159,7 @@ async def test_file_upload(
             value=33,
             debitor_shares={account1_id: 1.0},
             creditor_shares={account2_id: 1.0},
+            split_mode=SplitMode.shares,
             new_files=[
                 NewFile(
                     filename="test file",
@@ -196,6 +198,7 @@ async def test_file_upload(
             debitor_shares={account1_id: 1.0},
             creditor_shares={account2_id: 1.0},
             changed_files=[UpdateFile(id=file_id, filename="test file", deleted=True)],
+            split_mode=SplitMode.shares,
         ),
     )
     transaction = await transaction_service.get_transaction(user=dummy_user, transaction_id=transaction_id)

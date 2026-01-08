@@ -53,6 +53,7 @@ export type { RenameSessionPayload } from "./models/RenameSessionPayload";
 export type { ServiceMessage } from "./models/ServiceMessage";
 export type { ServiceMessageType } from "./models/ServiceMessageType";
 export type { Session } from "./models/Session";
+export type { SplitMode } from "./models/SplitMode";
 export type { Token } from "./models/Token";
 export type { Transaction } from "./models/Transaction";
 export type { TransactionHistory } from "./models/TransactionHistory";

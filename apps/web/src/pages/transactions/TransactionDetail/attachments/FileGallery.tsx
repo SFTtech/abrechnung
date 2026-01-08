@@ -1,102 +1,22 @@
-import { Loading } from "@abrechnung/components";
 import { api } from "@/core/api";
 import { useAppDispatch, useAppSelector } from "@/store";
-import { FileAttachment as BackendFileAttachment, NewFile } from "@abrechnung/api";
 import { selectTransactionFiles, wipFileDeleted } from "@abrechnung/redux";
-import { FileAttachment, Transaction, UpdatedFileAttachment } from "@abrechnung/types";
-import { AddCircle, ChevronLeft, ChevronRight, Delete, AddPhotoAlternate } from "@mui/icons-material";
+import { FileAttachment, Transaction } from "@abrechnung/types";
+import { Delete } from "@mui/icons-material";
 import {
     Button,
-    Chip,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
     Grid,
-    IconButton,
     ImageList,
     ImageListItem,
     ImageListItemBar,
 } from "@mui/material";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { Transition } from "react-transition-group";
-import { ImageUploadDialog } from "./ImageUploadDialog";
-import placeholderImg from "./PlaceholderImage.svg";
 import { useTranslation } from "react-i18next";
-
-const duration = 200;
-
-const defaultStyle = {
-    transition: `opacity ${duration}ms ease-in-out`,
-    margin: "10px",
-    opacity: 0,
-};
-
-const transitionStyles = {
-    entering: { opacity: 0, display: "none" },
-    entered: { opacity: 1, display: "block" },
-    exited: { opacity: 0, display: "none" },
-    exiting: {},
-    unmounted: {},
-} as const;
-
-interface ImageDisplayProps {
-    isActive: boolean;
-    objectUrl?: string;
-    file: FileAttachment;
-    onShowImage: () => void;
-}
-
-const ImageDisplay: React.FC<ImageDisplayProps> = ({ file, isActive, onShowImage, objectUrl }) => {
-    if (file.type === "backend") {
-        return (
-            <Transition in={isActive} timeout={duration}>
-                {(state) =>
-                    objectUrl === undefined ? (
-                        <Loading />
-                    ) : (
-                        <img
-                            height="100%"
-                            width="100%"
-                            style={{
-                                ...defaultStyle,
-                                ...transitionStyles[state],
-                            }}
-                            onClick={onShowImage}
-                            src={objectUrl}
-                            srcSet={objectUrl}
-                            alt={file.filename.split(".")[0]}
-                            loading="lazy"
-                        />
-                    )
-                }
-            </Transition>
-        );
-    }
-    if (file.type === "new") {
-        return (
-            <Transition in={isActive} timeout={duration}>
-                {(state) => (
-                    <img
-                        height="100%"
-                        width="100%"
-                        style={{
-                            ...defaultStyle,
-                            ...transitionStyles[state],
-                        }}
-                        onClick={onShowImage}
-                        src={file.content}
-                        alt={file.filename.split(".")[0]}
-                        loading="lazy"
-                    />
-                )}
-            </Transition>
-        );
-    }
-
-    return null;
-};
 
 type Attachment = {
     meta: FileAttachment;

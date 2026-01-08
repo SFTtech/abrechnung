@@ -4,6 +4,7 @@
 /* oxlint-disable */
 import type { NewFile } from "./NewFile";
 import type { NewTransactionPosition } from "./NewTransactionPosition";
+import type { SplitMode } from "./SplitMode";
 import type { TransactionType } from "./TransactionType";
 export type NewTransaction = {
     type: TransactionType;
@@ -16,6 +17,7 @@ export type NewTransaction = {
     tags?: Array<string>;
     creditor_shares: Record<string, number>;
     debitor_shares: Record<string, number>;
+    split_mode: SplitMode;
     new_files?: Array<NewFile>;
     new_positions?: Array<NewTransactionPosition>;
 };

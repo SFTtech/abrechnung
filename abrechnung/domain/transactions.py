@@ -12,6 +12,14 @@ class TransactionType(Enum):
     transfer = "transfer"
 
 
+class SplitMode(Enum):
+    # how to interpret the provided shares: either relative 'shares' (default)
+    # or absolute euro amounts per account ('absolute')
+    shares = "shares"
+    absolute = "absolute"
+    percent = "percent"
+
+
 TransactionShares = dict[int, float]
 
 
@@ -70,6 +78,8 @@ class NewTransaction(BaseModel):
     creditor_shares: TransactionShares
     debitor_shares: TransactionShares
 
+    split_mode: SplitMode
+
     new_files: list[NewFile] = []
     new_positions: list[NewTransactionPosition] = []
 
@@ -107,6 +117,7 @@ class Transaction(BaseModel):
     # creditor and debitor shares map account IDs to portions of the communist share pool
     creditor_shares: TransactionShares
     debitor_shares: TransactionShares
+    split_mode: SplitMode
     last_changed: datetime
 
     positions: list[TransactionPosition]

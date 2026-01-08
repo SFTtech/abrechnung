@@ -3,6 +3,7 @@
 /* tslint:disable */
 /* oxlint-disable */
 import type { FileAttachment } from "./FileAttachment";
+import type { SplitMode } from "./SplitMode";
 import type { TransactionPosition } from "./TransactionPosition";
 import type { TransactionType } from "./TransactionType";
 export type Transaction = {
@@ -19,6 +20,7 @@ export type Transaction = {
     deleted: boolean;
     creditor_shares: Record<string, number>;
     debitor_shares: Record<string, number>;
+    split_mode: SplitMode;
     last_changed: string;
     positions: Array<TransactionPosition>;
     files: Array<FileAttachment>;

@@ -27,6 +27,7 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, account }) => 
                 groupId={groupId}
                 label={t("accounts.participated")}
                 value={account.clearing_shares}
+                splitMode="shares"
                 additionalShareInfoHeader={
                     <TableCell width="100px" align="right">
                         {t("common.shared")}

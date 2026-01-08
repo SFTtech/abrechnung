@@ -213,6 +213,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                         <ShareSelect
                             groupId={groupId}
                             label={t("accounts.participated")}
+                            splitMode="shares"
                             value={account.clearing_shares}
                             additionalShareInfoHeader={
                                 <TableCell width="100px" align="right">
