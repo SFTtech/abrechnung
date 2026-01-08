@@ -15,7 +15,7 @@ import {
     useSortedTransactions,
 } from "@abrechnung/redux";
 import { Transaction } from "@abrechnung/types";
-import { Add, Clear, SaveAlt } from "@mui/icons-material";
+import { Clear, SaveAlt } from "@mui/icons-material";
 import SearchIcon from "@mui/icons-material/Search";
 import {
     Alert,
@@ -160,9 +160,6 @@ const TransactionListActions: React.FC<TransactionListActionsProps> = ({
                     </Tooltip>
                     {isGroupWritable && (
                         <>
-                            <div style={{ padding: "8px" }}>
-                                <Add color="primary" />
-                            </div>
                             <Tooltip title={t("transactions.createPurchase")}>
                                 <IconButton color="primary" onClick={handleClickCreatePurchase}>
                                     <PurchaseIcon />
