@@ -322,7 +322,12 @@
         "selectedEvent_one": "{{count}} Подія",
         "selectedEvent_few": "{{count}} Події",
         "selectedEvent_many": "{{count}} Подій",
-        "accountSlashEvent": "Обліковий запис / Подія"
+        "accountSlashEvent": "Обліковий запис / Подія",
+        "splitMode": "Розділений режим",
+        "split_evenly": "Рівномірно",
+        "split_shares": "Нерівномірно - За частками",
+        "split_percent": "Нерівномірно - у відсотках",
+        "split_absolute": "Нерівномірно - За сумою"
     },
     "app": {
         "name": "Abrechnung"
