@@ -1,6 +1,6 @@
 import { Api, Group, GroupCreatePayload, GroupUpdatePayload } from "@abrechnung/api";
 import { fromISOString } from "@abrechnung/utils";
-import { createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
+import { createSelector, createSlice } from "@reduxjs/toolkit";
 import { GroupSliceState, IRootState } from "../types";
 import { addEntity, createAsyncThunkWithErrorHandling } from "../utils";
 import { leaveGroup } from "./actions";
@@ -55,28 +55,17 @@ export const useGroupCurrencyIdentifier = (groupId: number): string | undefined 
 };
 
 // async thunks
-export const fetchGroups = createAsyncThunk<Group[], { api: Api }>(
-    "fetchGroups",
-    async ({ api }) => {
-        return await api.client.groups.listGroups();
-    }
-    // {
-    //     condition: ({ api }, { getState }): boolean => {
-    //         const state = getState();
-    //         if (state.groups.status === "initialized") {
-    //             return false;
-    //         }
-    //         return true;
-    //     },
-    // }
-);
+export const fetchGroups = createAsyncThunkWithErrorHandling<Group[], { api: Api }>("fetchGroups", async ({ api }) => {
+    return await api.client.groups.listGroups();
+});
 
-export const fetchGroup = createAsyncThunk<Group, { groupId: number; api: Api }, { state: IRootState }>(
-    "fetchGroup",
-    async ({ groupId, api }) => {
-        return await api.client.groups.getGroup({ groupId });
-    }
-);
+export const fetchGroup = createAsyncThunkWithErrorHandling<
+    Group,
+    { groupId: number; api: Api },
+    { state: IRootState }
+>("fetchGroup", async ({ groupId, api }) => {
+    return await api.client.groups.getGroup({ groupId });
+});
 
 export const createGroup = createAsyncThunkWithErrorHandling<Group, { group: GroupCreatePayload; api: Api }>(
     "createGroup",

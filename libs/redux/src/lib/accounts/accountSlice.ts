@@ -3,7 +3,7 @@ import { AccountType, Api } from "@abrechnung/api";
 import { AccountSortMode, getAccountSortFunc } from "@abrechnung/core";
 import { Account, BackendAccount, ClearingAccount, PersonalAccount } from "@abrechnung/types";
 import { fromISOString, toISODateString } from "@abrechnung/utils";
-import { Draft, PayloadAction, createAsyncThunk, createSelector, createSlice } from "@reduxjs/toolkit";
+import { Draft, PayloadAction, createSelector, createSlice } from "@reduxjs/toolkit";
 import { leaveGroup } from "../groups";
 import { AccountSliceState, AccountState, IRootState, StateStatus } from "../types";
 import { addEntity, createAsyncThunkWithErrorHandling, getGroupScopedState, removeEntity } from "../utils";
@@ -175,7 +175,7 @@ export const selectAccountIdToAccountMap = (state: IRootState, groupId: number):
 };
 
 // async thunks
-export const fetchAccounts = createAsyncThunk<
+export const fetchAccounts = createAsyncThunkWithErrorHandling<
     BackendAccount[],
     { groupId: number; api: Api; fetchAnyway?: boolean },
     { state: IRootState }
@@ -241,7 +241,7 @@ export const saveAccount = createAsyncThunkWithErrorHandling<
     };
 });
 
-export const createAccount = createAsyncThunk<
+export const createAccount = createAsyncThunkWithErrorHandling<
     { account: Account },
     { groupId: number; type: AccountType },
     { state: IRootState }

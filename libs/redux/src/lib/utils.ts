@@ -1,5 +1,6 @@
 import {
     AsyncThunkConfig,
+    AsyncThunkOptions,
     AsyncThunkPayloadCreator,
     AsyncThunkPayloadCreatorReturnValue,
     createAsyncThunk,
@@ -45,7 +46,11 @@ export function createAsyncThunkWithErrorHandling<
     Returned,
     ThunkArg = void,
     CurriedThunkApiConfig extends AsyncThunkConfig = {},
->(prefix: string, fn: AsyncThunkPayloadCreator<Returned, ThunkArg, CurriedThunkApiConfig>) {
+>(
+    prefix: string,
+    fn: AsyncThunkPayloadCreator<Returned, ThunkArg, CurriedThunkApiConfig>,
+    options?: AsyncThunkOptions<ThunkArg, CurriedThunkApiConfig>
+) {
     return createAsyncThunk<Returned, ThunkArg, CurriedThunkApiConfig>(
         prefix,
         (
@@ -62,6 +67,7 @@ export function createAsyncThunkWithErrorHandling<
             };
 
             return inner(arg, api);
-        }
+        },
+        options
     );
 }

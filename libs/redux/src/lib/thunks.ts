@@ -1,11 +1,11 @@
-import { createAsyncThunk } from "@reduxjs/toolkit";
 import { PURGE } from "redux-persist";
 import { Api } from "@abrechnung/api";
 import { fetchAccounts } from "./accounts";
 import { fetchTransactions } from "./transactions";
 import { IRootState } from "./types";
+import { createAsyncThunkWithErrorHandling } from "./utils";
 
-export const fetchGroupDependencies = createAsyncThunk<
+export const fetchGroupDependencies = createAsyncThunkWithErrorHandling<
     void,
     { groupId: number; api: Api; fetchAnyway?: boolean },
     { state: IRootState }
@@ -24,7 +24,7 @@ export const fetchGroupDependencies = createAsyncThunk<
     }
 );
 
-export const clearCache = createAsyncThunk<void, void>("clearCache", async (args, { dispatch }) => {
+export const clearCache = createAsyncThunkWithErrorHandling<void, void>("clearCache", async (args, { dispatch }) => {
     dispatch({
         type: PURGE,
         result: () => {
