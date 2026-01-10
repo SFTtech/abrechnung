@@ -184,7 +184,17 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                             disabled={!account.is_wip}
                         />
                     )}
-                    {account.type === "personal" && null}
+                    {account.type === "personal" && balances[account.id] != null && (
+                        <TextInput
+                            label={t("balanceTable.balance")}
+                            variant="standard"
+                            margin="dense"
+                            fullWidth
+                            value={formatCurrency(balances[account.id].balance, currencyIdentifier)}
+                            onChange={() => undefined}
+                            disabled={true}
+                        />
+                    )}
                     {account.type === "clearing" && (
                         <>
                             {!account.is_wip && (account.tags ?? []).length === 0 ? null : (
@@ -205,6 +215,20 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                                 helperText={validationErrors.fieldErrors.date_info}
                                 disabled={!account.is_wip}
                             />
+                            {balances[account.id] != null && (
+                                <TextInput
+                                    label={t("accounts.totalEventBalance")}
+                                    variant="standard"
+                                    margin="dense"
+                                    fullWidth
+                                    value={formatCurrency(
+                                        balances[account.id].totalConsumed - balances[account.id].totalPaid,
+                                        currencyIdentifier
+                                    )}
+                                    onChange={() => undefined}
+                                    disabled={true}
+                                />
+                            )}
                         </>
                     )}
                 </Grid>
