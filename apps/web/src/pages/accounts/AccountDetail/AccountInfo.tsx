@@ -214,6 +214,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                             groupId={groupId}
                             label={t("accounts.participated")}
                             splitMode="shares"
+                            allowedSplitModes={["evenly", "shares"]}
                             value={account.clearing_shares}
                             additionalShareInfoHeader={
                                 <TableCell width="100px" align="right">

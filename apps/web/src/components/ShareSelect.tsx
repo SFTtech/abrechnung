@@ -161,6 +161,7 @@ interface ShareSelectProps {
     value: TransactionShare;
     onChange?: (newShares: TransactionShare) => void;
     splitMode: SplitMode;
+    allowedSplitModes?: FrontendSplitMode[];
     onChangeSplitMode?: (newMode: FrontendSplitMode) => void;
     error?: boolean | undefined;
     helperText?: React.ReactNode | undefined;
@@ -178,6 +179,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
     value,
     onChange,
     splitMode,
+    allowedSplitModes = ["evenly", "shares", "percent", "absolute"],
     onChangeSplitMode,
     shouldDisplayAccount,
     additionalShareInfoHeader,
@@ -341,10 +343,9 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                             label={t("shareSelect.splitMode")}
                             select
                         >
-                            <MenuItem value="evenly">{t("shareSelect.split_evenly")}</MenuItem>
-                            <MenuItem value="shares">{t("shareSelect.split_shares")}</MenuItem>
-                            <MenuItem value="percent">{t("shareSelect.split_percent")}</MenuItem>
-                            <MenuItem value="absolute">{t("shareSelect.split_absolute")}</MenuItem>
+                            {allowedSplitModes.map((mode) => (
+                                <MenuItem value={mode}>{t(`shareSelect.split_${mode}`)}</MenuItem>
+                            ))}
                         </TextField>
                     </Stack>
                 )}
