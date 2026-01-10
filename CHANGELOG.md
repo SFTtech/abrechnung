@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.5.0...HEAD)
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.6.0...HEAD)
+
+## 1.6.0 (2026-01-10)
+
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.5.0...v1.6.0)
 
 - add alternative split modes: evenly, unevenly - by shares, unevenly - by percentage, unevenly - by amount
 
