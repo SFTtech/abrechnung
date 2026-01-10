@@ -2,7 +2,7 @@ import { MobilePaper } from "@/components/style";
 import { Loading } from "@abrechnung/components";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
-import { GroupPreview } from "@abrechnung/api";
+import { GroupPreview, stringifyError } from "@abrechnung/api";
 import { Alert, Button, Grid, List, ListItem, ListItemText, Typography } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -35,7 +35,7 @@ export const GroupInvite: React.FC = () => {
                 setError(null);
             })
             .catch((err) => {
-                setError(err);
+                setError(stringifyError(err));
                 setGroup(null);
             });
     }, [setGroup, setError, inviteToken]);
@@ -53,7 +53,7 @@ export const GroupInvite: React.FC = () => {
                 dispatch(fetchGroups({ api }));
             })
             .catch((err) => {
-                setError(err);
+                setError(stringifyError(err));
             });
     };
 
@@ -65,9 +65,7 @@ export const GroupInvite: React.FC = () => {
                 <Loading />
             ) : (
                 <>
-                    <Typography variant="h5">
-                        <h4>{t("groups.join.youHaveBeenInvited", "", { group })}</h4>
-                    </Typography>
+                    <Typography variant="h5">{t("groups.join.youHaveBeenInvited", "", { group })}</Typography>
                     <List>
                         <ListItem>
                             <ListItemText primary={t("common.name")} secondary={group.name} />

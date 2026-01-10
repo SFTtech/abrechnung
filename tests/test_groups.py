@@ -62,6 +62,28 @@ async def test_single_use_invite(
         await group_service.join_group(user=user3, invite_token=invite.token)
 
 
+async def test_invite_without_expiry_date(
+    group_service: GroupService,
+    dummy_group: Group,
+    dummy_user: User,
+    create_test_user: CreateTestUser,
+):
+    invite_id = await group_service.create_invite(
+        user=dummy_user,
+        group_id=dummy_group.id,
+        description="",
+        single_use=True,
+        join_as_editor=False,
+        valid_until=None,
+    )
+    invite: GroupInvite = await group_service.get_invite(user=dummy_user, group_id=dummy_group.id, invite_id=invite_id)
+    assert invite.valid_until is None
+
+    user2, _ = await create_test_user()
+    group_id = await group_service.join_group(user=user2, invite_token=invite.token)
+    assert group_id == dummy_group.id
+
+
 async def test_invite_link_preview(
     group_service: GroupService,
     dummy_group: Group,
