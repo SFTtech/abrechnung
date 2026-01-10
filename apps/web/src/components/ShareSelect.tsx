@@ -161,6 +161,7 @@ interface ShareSelectProps {
     value: TransactionShare;
     onChange?: (newShares: TransactionShare) => void;
     splitMode: SplitMode;
+    allowedSplitModes?: FrontendSplitMode[];
     onChangeSplitMode?: (newMode: FrontendSplitMode) => void;
     error?: boolean | undefined;
     helperText?: React.ReactNode | undefined;
@@ -178,6 +179,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
     value,
     onChange,
     splitMode,
+    allowedSplitModes = ["evenly", "shares", "percent", "absolute"],
     onChangeSplitMode,
     shouldDisplayAccount,
     additionalShareInfoHeader,
@@ -247,33 +249,28 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
         }
     }, [splitMode, value, setFrontendSplitMode]);
 
-    const nSelectedPeople = React.useMemo(
-        () =>
-            accounts.reduce((nAccs: number, acc: Account) => {
-                if (acc.type !== "personal") {
-                    return nAccs;
-                }
-                if ((shouldDisplayAccount && shouldDisplayAccount(acc.id)) || value[acc.id] > 0) {
-                    return nAccs + 1;
-                }
+    const { nSelectedPeople, nSelectedEvents } = React.useMemo(() => {
+        const nSelectedPeople = accounts.reduce((nAccs: number, acc: Account) => {
+            if (acc.type !== "personal") {
                 return nAccs;
-            }, 0),
-        [accounts, value, shouldDisplayAccount]
-    );
+            }
+            if (value[acc.id] > 0) {
+                return nAccs + 1;
+            }
+            return nAccs;
+        }, 0);
+        const nSelectedEvents = accounts.reduce((nAccs: number, acc: Account) => {
+            if (acc.type !== "clearing") {
+                return nAccs;
+            }
+            if (value[acc.id] > 0) {
+                return nAccs + 1;
+            }
+            return nAccs;
+        }, 0);
 
-    const nSelectedEvents = React.useMemo(
-        () =>
-            accounts.reduce((nAccs: number, acc: Account) => {
-                if (acc.type !== "clearing") {
-                    return nAccs;
-                }
-                if ((shouldDisplayAccount && shouldDisplayAccount(acc.id)) || value[acc.id] > 0) {
-                    return nAccs + 1;
-                }
-                return nAccs;
-            }, 0),
-        [accounts, value, shouldDisplayAccount]
-    );
+        return { nSelectedPeople, nSelectedEvents };
+    }, [unfilteredAccounts, value, shouldDisplayAccount]);
 
     const nSelected = React.useMemo(() => {
         return Object.values(value).reduce((nSelected, val) => nSelected + (val > 0 ? 1 : 0), 0);
@@ -346,10 +343,9 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                             label={t("shareSelect.splitMode")}
                             select
                         >
-                            <MenuItem value="evenly">{t("shareSelect.split_evenly")}</MenuItem>
-                            <MenuItem value="shares">{t("shareSelect.split_shares")}</MenuItem>
-                            <MenuItem value="percent">{t("shareSelect.split_percent")}</MenuItem>
-                            <MenuItem value="absolute">{t("shareSelect.split_absolute")}</MenuItem>
+                            {allowedSplitModes.map((mode) => (
+                                <MenuItem value={mode}>{t(`shareSelect.split_${mode}`)}</MenuItem>
+                            ))}
                         </TextField>
                     </Stack>
                 )}

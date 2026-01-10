@@ -21,7 +21,7 @@ import {
     TransactionType,
 } from "@abrechnung/types";
 import { toISODateString } from "@abrechnung/utils";
-import { createAsyncThunk, createSelector, createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
+import { createSelector, createSlice, Draft, PayloadAction } from "@reduxjs/toolkit";
 import { leaveGroup } from "../groups";
 import { IRootState, StateStatus, TransactionSliceState, TransactionState } from "../types";
 import { addEntity, createAsyncThunkWithErrorHandling, getGroupScopedState, removeEntity } from "../utils";
@@ -222,7 +222,7 @@ export const selectTransactionsInvolvingAccount = createSelector(
 );
 
 // async thunks
-export const fetchTransactions = createAsyncThunk<
+export const fetchTransactions = createAsyncThunkWithErrorHandling<
     BackendTransaction[],
     { groupId: number; api: Api; fetchAnyway?: boolean },
     { state: IRootState }
@@ -249,7 +249,7 @@ export const fetchTransactions = createAsyncThunk<
     }
 );
 
-export const fetchTransaction = createAsyncThunk<
+export const fetchTransaction = createAsyncThunkWithErrorHandling<
     BackendTransaction,
     { groupId: number; transactionId: number; api: Api },
     { state: IRootState }
@@ -257,7 +257,7 @@ export const fetchTransaction = createAsyncThunk<
     return await api.client.transactions.getTransaction({ groupId, transactionId });
 });
 
-export const createTransaction = createAsyncThunk<
+export const createTransaction = createAsyncThunkWithErrorHandling<
     { transaction: Transaction },
     {
         groupId: number;

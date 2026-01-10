@@ -3,7 +3,6 @@ import {
     selectTransactionsInvolvingAccount,
     useClearingAccountsInvolvingAccount,
 } from "@abrechnung/redux";
-import { Add as AddIcon } from "@mui/icons-material";
 import { Account, ClearingAccount, Transaction, TransactionType } from "@abrechnung/types";
 import { Alert, Box, IconButton, List, Tooltip, Typography } from "@mui/material";
 import { DateTime } from "luxon";
@@ -66,7 +65,6 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, account }) =>
             <Box display="grid" gridTemplateColumns="auto min-content" justifyContent="space-between">
                 <Typography variant="h6">{t("accounts.transactionsInvolving", "", { account })}</Typography>
                 <Box display="flex" flexDirection="row" alignItems="center">
-                    <AddIcon color="primary" />
                     <Tooltip
                         title={t("transactions.createPurchaseForAccount", "", {
                             accountName: account.name,

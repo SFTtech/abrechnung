@@ -1,7 +1,8 @@
 import { Api, Session, User } from "@abrechnung/api";
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 import { PURGE } from "redux-persist";
 import { AuthSliceState, IRootState } from "../types";
+import { createAsyncThunkWithErrorHandling } from "../utils";
 
 const initialState: AuthSliceState = {
     baseUrl: undefined,
@@ -46,11 +47,11 @@ export const selectLoginSessions = (state: IRootState): Session[] => {
 };
 
 // async thunks
-export const fetchProfile = createAsyncThunk<User, { api: Api }>("fetchProfile", async ({ api }) => {
+export const fetchProfile = createAsyncThunkWithErrorHandling<User, { api: Api }>("fetchProfile", async ({ api }) => {
     return await api.client.auth.getProfile();
 });
 
-export const login = createAsyncThunk<
+export const login = createAsyncThunkWithErrorHandling<
     { profile: User; accessToken: string; baseUrl: string },
     { username: string; password: string; sessionName: string; api: Api }
 >("login", async ({ username, password, sessionName, api }) => {
@@ -60,7 +61,7 @@ export const login = createAsyncThunk<
     return { profile: profile, accessToken: loginResp.access_token, baseUrl: api.getBaseApiUrl() };
 });
 
-export const logout = createAsyncThunk<void, { api: Api }>("logout", async ({ api }, { dispatch }) => {
+export const logout = createAsyncThunkWithErrorHandling<void, { api: Api }>("logout", async ({ api }, { dispatch }) => {
     if (await api.hasConnection()) {
         try {
             await api.client.auth.logout();

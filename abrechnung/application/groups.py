@@ -145,7 +145,7 @@ class GroupService(Service[Config]):
     async def join_group(self, *, conn: Connection, user: User, invite_token: str) -> int:
         invite = await conn.fetchrow(
             "select id, group_id, created_by, single_use, join_as_editor from group_invite gi "
-            "where gi.token = $1 and gi.valid_until > now()",
+            "where gi.token = $1 and (gi.valid_until is null or gi.valid_until > now())",
             invite_token,
         )
         if not invite:

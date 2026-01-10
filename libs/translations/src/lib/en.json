@@ -228,7 +228,8 @@
             "settleButton": "Settle"
         },
         "deleteConfirm": "Confirm delete {{accountType}}",
-        "deleteConfirmBody": "Are you sure you want to delete the {{accountType}} \"{{accountName}}\"?"
+        "deleteConfirmBody": "Are you sure you want to delete the {{accountType}} \"{{accountName}}\"?",
+        "totalEventBalance": "Total Event Sum"
     },
     "events": {
         "list": {
