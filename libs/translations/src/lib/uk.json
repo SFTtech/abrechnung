@@ -263,7 +263,8 @@
             "clearingAccountsRemainingBalances": "Деякі Події мають залишки коштів"
         },
         "clearingDistributionOf": "Учасники {{account.name}}",
-        "transactionsInvolving": "Транзакції за участю {{account.name}}"
+        "transactionsInvolving": "Транзакції за участю {{account.name}}",
+        "totalEventBalance": "Загальна сума подій"
     },
     "profile": {
         "sessions": {

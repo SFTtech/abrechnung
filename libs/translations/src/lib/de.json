@@ -54,7 +54,12 @@
         "selectedEvent_one": "{{count}} Veranstaltung",
         "selectedEvent_other": "{{count}} Veranstaltungen",
         "accountSlashEvent": "Konto / Veranstaltung",
-        "showEvents": "Veranstaltungen anzeigen"
+        "showEvents": "Veranstaltungen anzeigen",
+        "splitMode": "Aufteilungsart",
+        "split_evenly": "Gleichmäßig",
+        "split_shares": "Ungleichmäßig - Durch Anteile",
+        "split_percent": "Ungleichmäßig - Nach Prozenten",
+        "split_absolute": "Ungleichmäßig - Durch Betrag"
     },
     "navbar": {
         "transactions": "Transaktionen",
@@ -93,7 +98,7 @@
             "joined": "beigetreten am {{datetime}}",
             "editor": "Editor",
             "owner": "Besitzer",
-            "itsYou": "Du bist es",
+            "itsYou": "Das sind Sie",
             "canWrite": "Kann bearbeiten",
             "isOwner": "Ist Besitzer",
             "header": "Mitglieder",
@@ -109,11 +114,13 @@
             "leaveGroupConfirm": "Sind Sie sicher, dass Sie die Gruppe {{group.name}} verlassen möchten? Wenn Sie das letzte Mitglied sind, das diese Gruppe verlässt, wird sie gelöscht, und ihre Transaktion geht für immer verloren…",
             "archiveGroup": "Gruppe Archiv",
             "unarchiveGroup": "Gruppe \"Archivierung aufheben\"",
-            "archiveGroupConfirm": "Bist du sicher, dass du die Gruppe {{group.name}} archivieren möchtest? An archivierten Gruppen können keine Änderungen vorgenommen werden und sie werden in Gruppenlisten ausgeblendet. Nur ein Gruppenbesitzer kann diese Aktion rückgängig machen.",
+            "archiveGroupConfirm": "Sind Sie sicher, dass du die Gruppe {{group.name}} archivieren möchtest? An archivierten Gruppen können keine Änderungen vorgenommen werden und sie werden in Gruppenlisten ausgeblendet. Nur ein Gruppenbesitzer kann diese Aktion rückgängig machen.",
             "header": "Einstellungen",
-            "unarchiveGroupConfirm": "Bist du sicher, dass du die Gruppe {{group.name}} dearchivieren möchtest? Die Gruppe ist nicht mehr schreibgeschützt.",
-            "dangerZone": "Gefahrenzone. Die folgenden Aktionen sind irreversibel.",
-            "ownedAccount": "Das ist dein Account"
+            "unarchiveGroupConfirm": "Sind Sie sicher, dass Sie die Gruppe {{group.name}} aus dem Archiv wiederherstellen möchten? Die Gruppe ist dann nicht mehr schreibgeschützt.",
+            "dangerZone": "Gefahrenzone",
+            "ownedAccount": "Das ist ihr Konto",
+            "ownedAccountHelp": "Konto wird standardmäßig genutzt zur Zahlung von Ausgaben und Anzeige vom Kontostand",
+            "exportGroupJson": "Gruppe exportieren"
         },
         "join": {
             "tabTitle": "Abrechnung - Gruppe beitreten",
@@ -136,7 +143,9 @@
         "archivedDisclaimer": "Diese Gruppe ist archiviert und daher schreibgeschützt.",
         "create": {
             "title": "Gruppe erstellen",
-            "addUserAccountOnJoinDescription": "Konten für neu beigetretene Gruppenmitglieder automatisches hinzufügen"
+            "addUserAccountOnJoinDescription": "Konten für neu beigetretene Gruppenmitglieder automatisches hinzufügen",
+            "import": "Gruppe importieren",
+            "importError": "Fehler beim Importieren der Gruppe: {{error}}"
         },
         "delete": {
             "title": "Gruppe löschen",
@@ -170,7 +179,7 @@
         "list": {
             "tabTitle": "{{groupName}} - Transaktionen"
         },
-        "byFor": "Bezahlt von {{by}}, für {{for}}",
+        "byFor": "Bezahlt von <strong>{{by}}</strong>, für <strong>{{for}}</strong>",
         "positions": {
             "positions": "Positionen",
             "sharedPlusRest": "Geteilt + Rest",
@@ -189,7 +198,8 @@
         },
         "currencyConversionRate": "Geldumtauschrate",
         "conversionHint": "{{sourceValue}} = {{targetValue}}",
-        "refreshCurrencyConversionRate": "Aktualisieren"
+        "refreshCurrencyConversionRate": "Aktualisieren",
+        "yourBalance": "Ihr Kontostand:"
     },
     "accounts": {
         "noAccounts": "Keine Konten",
@@ -218,7 +228,8 @@
             "settleButton": "Lösen"
         },
         "deleteConfirm": "Löschen bestätigen {{accountType}}",
-        "deleteConfirmBody": "Sind Sie sicher, dass Sie {{accountType}} \"{{accountName}}\" löschen möchten?"
+        "deleteConfirmBody": "Sind Sie sicher, dass Sie {{accountType}} \"{{accountName}}\" löschen möchten?",
+        "totalEventBalance": "Gesamtsumme der Veranstaltungen"
     },
     "events": {
         "list": {
