@@ -3,7 +3,7 @@ import { fromISOString } from "@abrechnung/utils";
 import { createSelector, createSlice } from "@reduxjs/toolkit";
 import { GroupSliceState, IRootState } from "../types";
 import { addEntity, createAsyncThunkWithErrorHandling } from "../utils";
-import { leaveGroup } from "./actions";
+import { leaveGroup, archiveGroup, unarchiveGroup } from "./actions";
 import { useSelector } from "react-redux";
 
 const initialState: GroupSliceState = {
@@ -107,6 +107,14 @@ const groupSlice = createSlice({
             state.groups.byId[group.id] = group;
         });
         builder.addCase(updateGroup.fulfilled, (state, action) => {
+            const group = action.payload;
+            state.groups.byId[group.id] = group;
+        });
+        builder.addCase(archiveGroup.fulfilled, (state, action) => {
+            const group = action.payload;
+            state.groups.byId[group.id] = group;
+        });
+        builder.addCase(unarchiveGroup.fulfilled, (state, action) => {
             const group = action.payload;
             state.groups.byId[group.id] = group;
         });

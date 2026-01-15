@@ -295,7 +295,7 @@ export const createTransaction = createAsyncThunkWithErrorHandling<
         deleted: false,
         last_changed: new Date().toISOString(),
     };
-    if (group.owned_account_id != null) {
+    if (group.owned_account_id != null && Object.keys(transactionBase.creditor_shares).length === 0) {
         transactionBase.creditor_shares = {
             [group.owned_account_id]: 1.0,
         };
