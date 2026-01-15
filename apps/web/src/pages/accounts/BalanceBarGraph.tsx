@@ -1,14 +1,11 @@
-import { useFormatCurrency, useIsSmallScreen } from "@/hooks";
+import { useFormatCurrency } from "@/hooks";
 import { useAppSelector } from "@/store";
 import { Group } from "@abrechnung/api";
-import { getCurrencySymbolForIdentifier } from "@abrechnung/core";
 import { selectAccountBalances, useSortedAccounts } from "@abrechnung/redux";
-import { Theme } from "@mui/material";
+import { Box, Theme, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import * as React from "react";
 import { useNavigate } from "react-router";
-import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { CategoricalChartFunc } from "recharts/types/chart/types";
 
 export type BalanceBarGraphProps = {
     group: Group;
@@ -18,14 +15,11 @@ type Data = {
     name: string;
     id: number;
     balance: number;
-    totalPaid: number;
-    totalConsumed: number;
 };
 
 export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
     const formatCurrency = useFormatCurrency();
     const theme: Theme = useTheme();
-    const isSmallScreen = useIsSmallScreen();
     const navigate = useNavigate();
 
     const personalAccounts = useSortedAccounts(group.id, "name", "personal");
@@ -39,73 +33,108 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
     const chartData: Data[] = personalAccounts.map((account) => {
         const balance = balances[account.id];
         return {
+            id: account.id,
             name: account.name,
             balance: roundTwoDecimals(balance?.balance ?? 0),
-            totalPaid: roundTwoDecimals(balance?.totalPaid ?? 0),
-            totalConsumed: roundTwoDecimals(balance?.totalConsumed ?? 0),
-            id: account.id,
         };
     });
 
-    const chartHeight = Object.keys(balances).length * 30 + 100;
+    // Calculate min and max for scaling
+    const maxBalance = Math.max(...chartData.map((d) => d.balance), 0);
 
-    // TODO determine the rendered width of the account names and take the maximum
-    const yaxiswidth = isSmallScreen
-        ? Math.max(Math.max(...personalAccounts.map((account) => account.name.length)), 20)
-        : Math.max(...personalAccounts.map((account) => account.name.length)) * 7 + 5;
-
-    const handleBarClick: CategoricalChartFunc = (data) => {
-        const accountIndexInList = Number(data.activeTooltipIndex);
-        const acc = personalAccounts[accountIndexInList];
-        navigate(`/groups/${group.id}/accounts/${acc.id}`);
+    const handleBarClick = (accountId: number) => {
+        navigate(`/groups/${group.id}/accounts/${accountId}`);
     };
 
     return (
-        <div className="area-chart-wrapper" style={{ width: "100%", height: `${chartHeight}px` }}>
-            <ResponsiveContainer>
-                <BarChart
-                    data={chartData}
-                    margin={{
-                        top: 20,
-                        right: 20,
-                        bottom: 20,
-                        left: 30,
-                    }}
-                    layout="vertical"
-                    onClick={handleBarClick}
-                >
-                    <XAxis
-                        stroke={theme.palette.text.primary}
-                        type="number"
-                        unit={getCurrencySymbolForIdentifier(group.currency_identifier)}
-                    />
-                    <YAxis dataKey="name" stroke={theme.palette.text.primary} type="category" width={yaxiswidth} />
-                    <Tooltip
-                        formatter={(label) => formatCurrency(parseFloat(String(label)), group.currency_identifier)}
-                        labelStyle={{
-                            color: theme.palette.text.primary,
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gridAutoRows: "32px", rowGap: 1 }}>
+            {chartData.map((item, index) => {
+                const isPositive = item.balance >= 0;
+                const widthPercentage = Math.abs(item.balance / maxBalance) * 100;
+
+                return (
+                    <Box
+                        key={index}
+                        sx={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr",
+                            cursor: "pointer",
+                            "&:hover": {
+                                backgroundColor: theme.palette.action.hover,
+                            },
                         }}
-                        itemStyle={{
-                            color: theme.palette.text.primary,
-                        }}
-                        contentStyle={{
-                            backgroundColor: theme.palette.background.paper,
-                            borderColor: theme.palette.divider,
-                            borderRadius: theme.shape.borderRadius,
-                        }}
-                    />
-                    <Bar dataKey="balance">
-                        {chartData.map((entry, index) => {
-                            return <Cell key={`cell-${index}`} fill={entry["balance"] >= 0 ? colorGreen : colorRed} />;
-                        })}
-                        <LabelList
-                            dataKey={(entry) => formatCurrency((entry as Data).balance, group.currency_identifier)}
-                            position="insideLeft"
-                            fill={theme.palette.text.primary}
-                        />
-                    </Bar>
-                </BarChart>
-            </ResponsiveContainer>
-        </div>
+                        onClick={() => handleBarClick(item.id)}
+                    >
+                        {/* Left Section: Negative Bars & Positive Labels */}
+                        <Box
+                            sx={{
+                                flex: 1,
+                                display: "flex",
+                                justifyContent: "flex-end",
+                                alignItems: "center",
+                            }}
+                        >
+                            {isPositive ? (
+                                <Typography variant="body2" sx={{ mr: 1 }}>
+                                    {item.name}
+                                </Typography>
+                            ) : (
+                                <>
+                                    <Typography variant="body2" sx={{ mr: 1 }}>
+                                        {formatCurrency(item.balance, group.currency_identifier)}
+                                    </Typography>
+                                    <Box
+                                        sx={{
+                                            height: "100%",
+                                            width: `${widthPercentage}%`,
+                                            borderWidth: "1px",
+                                            borderStyle: "solid",
+                                            borderColor: colorRed,
+                                            backgroundColor: colorRed,
+                                            borderRight: 0,
+                                            borderRadius: "8px 0 0 8px",
+                                        }}
+                                    ></Box>
+                                </>
+                            )}
+                        </Box>
+
+                        {/* Right Section: Positive Bars & Negative Labels */}
+                        <Box
+                            sx={{
+                                flex: 1,
+                                display: "flex",
+                                justifyContent: "flex-start",
+                                alignItems: "center",
+                            }}
+                        >
+                            {isPositive ? (
+                                <>
+                                    <Box
+                                        sx={{
+                                            height: "100%",
+                                            width: `${widthPercentage}%`,
+                                            borderWidth: "1px",
+                                            borderStyle: "solid",
+                                            borderColor: colorGreen,
+                                            backgroundColor: colorGreen,
+                                            borderLeft: 0,
+                                            borderRadius: "0 8px 8px 0",
+                                        }}
+                                    />
+                                    <Typography variant="body2" sx={{ ml: 1 }}>
+                                        {formatCurrency(item.balance, group.currency_identifier)}
+                                    </Typography>
+                                </>
+                            ) : (
+                                <Typography variant="body2" sx={{ ml: 1 }}>
+                                    {item.name}
+                                </Typography>
+                            )}
+                        </Box>
+                    </Box>
+                );
+            })}
+        </Box>
     );
 };

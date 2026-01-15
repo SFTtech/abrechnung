@@ -1,8 +1,8 @@
 import { GroupArchivedDisclaimer } from "@/components";
 import { BalanceTable } from "@/components/accounts/BalanceTable";
-import { ListItemLink, MobilePaper } from "@/components/style";
+import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
-import { useFormatCurrency, useGetAmountColor, useIsSmallScreen } from "@/hooks";
+import { useFormatCurrency, useGetAmountColor } from "@/hooks";
 import { useAppSelector } from "@/store";
 import {
     selectAccountBalances,
@@ -12,7 +12,7 @@ import {
     useSortedAccounts,
 } from "@abrechnung/redux";
 import { TabContext, TabList, TabPanel } from "@mui/lab";
-import { Alert, AlertTitle, Box, Button, Divider, List, ListItemText, Tab, Typography } from "@mui/material";
+import { Alert, AlertTitle, Box, Button, Divider, Tab, Typography } from "@mui/material";
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, Link as RouterLink } from "react-router";
@@ -25,7 +25,6 @@ interface Props {
 export const Balances: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
-    const isSmallScreen = useIsSmallScreen();
 
     const group = useGroup(groupId);
     const personalAccounts = useSortedAccounts(groupId, "name", "personal");
@@ -84,29 +83,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                             ))}
                         </Alert>
                     )}
-                    {isSmallScreen ? (
-                        <List>
-                            {personalAccounts.map((account) => (
-                                <div key={account.id}>
-                                    <ListItemLink to={`/groups/${group.id}/accounts/${account.id}`}>
-                                        <ListItemText primary={account.name} />
-                                        <Typography
-                                            align="right"
-                                            variant="body2"
-                                            sx={{
-                                                color: getAmountColor(balances[account.id].balance),
-                                            }}
-                                        >
-                                            {formatCurrency(balances[account.id]?.balance, group.currency_identifier)}
-                                        </Typography>
-                                    </ListItemLink>
-                                    <Divider component="li" />
-                                </div>
-                            ))}
-                        </List>
-                    ) : (
-                        <BalanceBarGraph group={group} />
-                    )}
+                    <BalanceBarGraph group={group} />
                 </TabPanel>
                 <TabPanel value="2" sx={{ padding: { xs: 1, md: 2 } }}>
                     <BalanceTable group={group} />
