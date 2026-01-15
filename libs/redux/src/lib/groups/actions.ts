@@ -1,6 +1,7 @@
-import { Api } from "@abrechnung/api";
+import { Api, Group } from "@abrechnung/api";
 import { IRootState } from "../types";
 import { createAsyncThunkWithErrorHandling } from "../utils";
+import { fetchGroup } from "./groupSlice";
 
 export const leaveGroup = createAsyncThunkWithErrorHandling<void, { groupId: number; api: Api }, { state: IRootState }>(
     "leaveGroup",
@@ -10,17 +11,21 @@ export const leaveGroup = createAsyncThunkWithErrorHandling<void, { groupId: num
 );
 
 export const archiveGroup = createAsyncThunkWithErrorHandling<
-    void,
+    Group,
     { groupId: number; api: Api },
     { state: IRootState }
->("archiveGroup", async ({ groupId, api }) => {
+>("archiveGroup", async ({ groupId, api }, { dispatch }) => {
     await api.client.groups.archiveGroup({ groupId });
+    const group = await dispatch(fetchGroup({ groupId, api })).unwrap();
+    return group;
 });
 
 export const unarchiveGroup = createAsyncThunkWithErrorHandling<
-    void,
+    Group,
     { groupId: number; api: Api },
     { state: IRootState }
->("unarchiveGroup", async ({ groupId, api }) => {
+>("unarchiveGroup", async ({ groupId, api }, { dispatch }) => {
     await api.client.groups.unarchiveGroup({ groupId });
+    const group = await dispatch(fetchGroup({ groupId, api })).unwrap();
+    return group;
 });
