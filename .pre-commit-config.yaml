@@ -6,7 +6,7 @@ repos:
             entry: oxfmt
             args: ["--no-error-on-unmatched-pattern"]
             language: node
-            "types_or": [javascript, jsx, ts, tsx, json]
+            "types_or": [javascript, jsx, ts, tsx, json, yaml]
             require_serial: false
             additional_dependencies: ["oxfmt@latest"]
           - id: ty

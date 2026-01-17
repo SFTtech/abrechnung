@@ -3,5 +3,5 @@ FROM node:lts as frontend-dev
 COPY --chown=node:node ./ /abrechnung/
 USER node
 WORKDIR /abrechnung/
-RUN npm install
+RUN pnpm install
 CMD ["npx", "nx", "serve", "web", "--host", "0.0.0.0"]
