@@ -8,5 +8,5 @@ In case you encounter bugs or have ideas for new and useful features don't hesit
 ## As Developers
 
 Get started by setting up a local [development environment](./setup.md) and reading through the
-[architecture overview](./architecture.rst) and then start hacking.
+[architecture overview](./architecture.md) and then start hacking.
 [Pull requests](https://github.com/SFTtech/abrechnung/pulls) are always welcome!
