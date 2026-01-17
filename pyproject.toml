@@ -39,7 +39,7 @@ dev = [
     "pre-commit",
     "bump-my-version~=1.2.6",
 ]
-lint = ["ruff", "mypy==1.13.0", "types-PyYAML~=6.0", "pylint==3.3.2"]
+lint = ["ruff", "ty", "types-PyYAML~=6.0", "pylint==3.3.2"]
 test = ["aiosmtpd~=1.4", "pytest", "pytest-asyncio", "pytest-cov"]
 docs = ["sphinx", "myst-parser", "sphinx-autobuild", "sphinx-copybutton", "sphinx-rtd-theme", "sphinxcontrib-openapi"]
 
@@ -77,17 +77,14 @@ disable = ["C", "R", "fixme", "logging-fstring-interpolation", "broad-exception-
 [tool.ruff]
 line-length = 120
 target-version = "py311"
-exclude = [".git", ".idea", ".mypy_cache", ".venv*", "docs"]
+exclude = [".git", ".idea", ".venv*", "docs"]
 
 [tool.ruff.lint]
 select = ["E4", "E7", "E9", "F", "I", "PLE", "PLW"]
 ignore = ["E722"]
 
-[tool.mypy]
-ignore_missing_imports = true
-check_untyped_defs = true
-pretty = true
-plugins = ["pydantic.mypy"]
+[tool.ty.src]
+exclude = ["tools/demo_deploy_webhook.py"]
 
 [tool.coverage.run]
 source = ["abrechnung"]

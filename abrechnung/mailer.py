@@ -148,7 +148,7 @@ class Mailer:
         msg["From"] = from_addr
         msg["Date"] = email.utils.localtime()
         msg["Message-ID"] = email.utils.make_msgid(domain=from_addr.split("@")[-1])
-        mailer.send_message(msg)  # type: ignore
+        mailer.send_message(msg)
 
     def greeting_lines(self, name: str):
         return f"Beloved {name},", ""

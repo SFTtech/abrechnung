@@ -15,7 +15,7 @@ def _add_arg_to_signature(original_func, new_func, name: str, annotation):
         Parameter(name, kind=Parameter.KEYWORD_ONLY, annotation=annotation),
     )
     sig = sig.replace(parameters=new_parameters)
-    new_func.__signature__ = sig  # type: ignore
+    new_func.__signature__ = sig
 
 
 def requires_group_permissions(
