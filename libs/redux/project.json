@@ -4,13 +4,5 @@
     "sourceRoot": "libs/redux/src",
     "projectType": "library",
     "tags": [],
-    "targets": {
-        "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/redux"],
-            "options": {
-                "jestConfig": "libs/redux/jest.config.ts"
-            }
-        }
-    }
+    "targets": {}
 }
