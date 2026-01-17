@@ -127,7 +127,6 @@ and you are good to go!
 To build the documentation locally simply run
 
 ```shell
-pip install -r docs/requires.txt
 make docs
 ```
 

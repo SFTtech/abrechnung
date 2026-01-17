@@ -36,11 +36,11 @@ typecheck:
 
 .PHONY: docs
 docs:
-	$(MAKE) -C docs html
+	uv run sphinx-build docs docs/_build
 
 .PHONY: serve-docs
 serve-docs:
-	uv run -m http.server -d docs/_build/html 8888
+	uv run sphinx-autobuild docs docs/_build
 
 .PHONY: generate-openapi
 generate-openapi:
