@@ -1,7 +1,5 @@
 #!/usr/bin/python3
 
-# type: ignore  # mypy does not like aiohttp multipart for some reason
-
 import argparse
 import os
 import subprocess

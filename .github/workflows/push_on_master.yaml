@@ -56,15 +56,17 @@ jobs:
                   sudo apt-get update
                   sudo apt-get install -y qemu-user-static
 
-            - name: Set up Nodejs
-              uses: actions/setup-node@v6
+            - name: Install pnpm
+              uses: pnpm/action-setup@v4
               with:
-                  node-version: "24"
-                  cache: "npm"
-                  cache-dependency-path: package-lock.json
-
+                  version: 10
+            - name: Use Node.js
+              uses: actions/setup-node@v4
+              with:
+                  node-version: 24
+                  cache: "pnpm"
             - name: Install dependencies
-              run: npm ci --foreground-scripts
+              run: pnpm install
 
             - name: Build API Image
               id: build-api-image

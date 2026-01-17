@@ -10,7 +10,6 @@
     "python.testing.pytestEnabled": true,
 
     // javascript
-    "oxc.fmt.experimental": true,
     "[typescript]": {
         "editor.defaultFormatter": "oxc.oxc-vscode"
     },

@@ -6,9 +6,14 @@ repos:
             entry: oxfmt
             args: ["--no-error-on-unmatched-pattern"]
             language: node
-            "types_or": [javascript, jsx, ts, tsx]
+            "types_or": [javascript, jsx, ts, tsx, json, yaml]
             require_serial: false
             additional_dependencies: ["oxfmt@latest"]
+          - id: ty
+            name: ty check
+            entry: uv run ty check .
+            pass_filenames: false
+            language: python
     - repo: https://github.com/oxc-project/mirrors-oxlint
       rev: v1.36.0
       hooks:

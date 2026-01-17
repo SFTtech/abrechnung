@@ -1,6 +1,6 @@
 {
     "$schema": "./node_modules/nx/schemas/nx-schema.json",
-    "parallel": 1,
+    "parallel": 5,
     "pluginsConfig": {
         "@nx/js": {
             "analyzeSourceFiles": false
@@ -19,7 +19,7 @@
             "default",
             "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
             "!{projectRoot}/tsconfig.spec.json",
-            "!{projectRoot}/jest.config.[jt]s",
+            "!{projectRoot}/vite.config.[jt]s",
             "!{projectRoot}/src/test-setup.[jt]s"
         ],
         "sharedGlobals": ["{workspaceRoot}/babel.config.json"]
@@ -29,6 +29,7 @@
             "application": {
                 "babel": true,
                 "style": "css",
+                "linter": "none",
                 "bundler": "vite"
             },
             "component": {
@@ -36,23 +37,13 @@
             },
             "library": {
                 "style": "css",
-                "unitTestRunner": "jest"
+                "linter": "none",
+                "unitTestRunner": "vite"
             }
         }
     },
     "defaultProject": "web",
     "plugins": [
-        {
-            "plugin": "@nx/react/router-plugin",
-            "options": {
-                "buildTargetName": "build",
-                "devTargetName": "dev",
-                "startTargetName": "start",
-                "watchDepsTargetName": "watch-deps",
-                "buildDepsTargetName": "build-deps",
-                "typecheckTargetName": "typecheck"
-            }
-        },
         {
             "plugin": "@nx/vite/plugin",
             "options": {
@@ -66,9 +57,15 @@
                 "buildDepsTargetName": "build-deps",
                 "watchDepsTargetName": "watch-deps"
             }
+        },
+        {
+            "plugin": "@nx/playwright/plugin",
+            "options": {
+                "targetName": "e2e"
+            }
         }
     ],
     "tui": {
-        "enabled": false
+        "enabled": true
     }
 }

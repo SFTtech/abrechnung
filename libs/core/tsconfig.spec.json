@@ -3,18 +3,7 @@
     "compilerOptions": {
         "outDir": "../../dist/out-tsc",
         "module": "commonjs",
-        "types": ["jest", "node"]
+        "types": ["vitest/globals", "vitest/importMeta", "vite/client", "node", "vitest"]
     },
-    "include": [
-        "jest.config.ts",
-        "**/*.test.ts",
-        "**/*.spec.ts",
-        "**/*.test.tsx",
-        "**/*.spec.tsx",
-        "**/*.test.js",
-        "**/*.spec.js",
-        "**/*.test.jsx",
-        "**/*.spec.jsx",
-        "**/*.d.ts"
-    ]
+    "include": ["vite.config.ts", "**/*.spec.ts", "**/*.spec.tsx", "**/*.d.ts"]
 }

@@ -4,24 +4,5 @@
     "sourceRoot": "libs/utils/src",
     "projectType": "library",
     "tags": [],
-    "targets": {
-        "build": {
-            "executor": "@nx/js:tsc",
-            "outputs": ["{options.outputPath}"],
-            "options": {
-                "outputPath": "dist/libs/utils",
-                "main": "libs/utils/src/index.ts",
-                "tsConfig": "libs/utils/tsconfig.lib.json",
-                "assets": ["libs/utils/*.md"],
-                "updateBuildableProjectDepsInPackageJson": true
-            }
-        },
-        "test": {
-            "executor": "@nx/jest:jest",
-            "outputs": ["{workspaceRoot}/coverage/libs/utils"],
-            "options": {
-                "jestConfig": "libs/utils/jest.config.ts"
-            }
-        }
-    }
+    "targets": {}
 }

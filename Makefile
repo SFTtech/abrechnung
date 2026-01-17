@@ -16,7 +16,7 @@ check-format-frontend:
 	npx oxfmt --check
 
 .PHONY: lint
-lint: pylint mypy ruff
+lint: pylint typecheck ruff
 
 .PHONY: pylint
 pylint:
@@ -30,9 +30,9 @@ ruff:
 ruff-fix:
 	uv run ruff check --fix
 
-.PHONY: mypy
-mypy:
-	uv run mypy .
+.PHONY: typecheck
+typecheck:
+	uv run ty check
 
 .PHONY: docs
 docs:

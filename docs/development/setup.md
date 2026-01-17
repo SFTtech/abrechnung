@@ -108,10 +108,15 @@ make format
 
 ## Frontend Development
 
-Working on the frontend is quite easy, simply
+Requirements:
+
+- nodejs
+- pnpm
+
+Working on the frontend is quite easy, simply run
 
 ```shell
-npm install
+pnpm install
 npx nx serve web
 ```
 
