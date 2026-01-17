@@ -4,16 +4,8 @@
         "module": "commonjs",
         "outDir": "../../dist/out-tsc",
         "declaration": true,
-        "types": [
-            "node"
-        ]
+        "types": ["node"]
     },
-    "exclude": [
-        "vite.config.ts",
-        "**/*.spec.ts",
-        "**/*.spec.tsx"
-    ],
-    "include": [
-        "**/*.ts"
-    ]
+    "exclude": ["vite.config.ts", "**/*.spec.ts", "**/*.spec.tsx"],
+    "include": ["**/*.ts"]
 }
