@@ -1,1 +1,167 @@
-{}
+{
+    "app": {
+        "name": "Abrechnung"
+    },
+    "common": {
+        "username": "Nom d'utilisateur",
+        "server": "Serveur",
+        "email": "E-Mail",
+        "password": "Mot de passe",
+        "repeatPassword": "Répéter le mot de passe",
+        "passwordsDoNotMatch": "Les mots de passe ne correspondent pas",
+        "save": "Enregistrer",
+        "yes": "Oui",
+        "no": "Non",
+        "ok": "Ok",
+        "edit": "Modifier",
+        "delete": "Supprimer",
+        "confirm": "Confirmer",
+        "add": "Ajouter",
+        "cancel": "Annuler",
+        "search": "Rechercher…",
+        "name": "Nom",
+        "date": "Date",
+        "description": "Description",
+        "sortBy": "Trier par",
+        "filterByTags": "Filtrer par tags",
+        "tag_one": "Tag",
+        "tag_many": "Tags",
+        "tag_other": "Tags",
+        "total": "Total",
+        "totalWithColon": "Total :",
+        "shared": "Partagé",
+        "shares": "Partages",
+        "advanced": "Avancé",
+        "price": "Prix",
+        "createdAt": "Créé à",
+        "send": "Envoyer",
+        "currency": "Monnaie",
+        "addNewTag": "Ajouter un nouveau tag",
+        "tagNameRequiredError": "merci d'ajouter un nom au tag",
+        "exportAsCsv": "Exporter en CSV",
+        "copyToClipboard": "Copier dans le presse-papier",
+        "linkCopiedToClipboard": "Lien copié dans le presse-papier !",
+        "qrCode": "QR code",
+        "createdBy": "créé par {{username}}",
+        "changedBy": "modifié par {{username}}"
+    },
+    "shareSelect": {
+        "selectedPeople_one": "{{count}} personne",
+        "selectedPeople_many": "{{count}} personnes",
+        "selectedPeople_other": "{{coumt}} personnes",
+        "selectedEvent_one": "{{count}} événement",
+        "selectedEvent_many": "{{count}} événements",
+        "selectedEvent_other": "{{count}} événements",
+        "accountSlashEvent": "Compte / événements",
+        "showEvents": "Afficher les événements",
+        "splitMode": "Mode partagé",
+        "split_evenly": "De manière égale",
+        "split_shares": "De manière inégale - par parts",
+        "split_percent": "De manière inégale - par pourcentage",
+        "split_absolute": "De manière inégale - par montants"
+    },
+    "navbar": {
+        "transactions": "Transactions",
+        "events": "Evénements",
+        "balances": "Soldes",
+        "accounts": "Comptes",
+        "groupSettings": "Paramètres",
+        "activity": "Activité",
+        "profile": "Profile",
+        "settings": "Paramètres",
+        "sessions": "Sessions",
+        "changeEmail": "Changer l'email",
+        "changePassword": "Changer le mot de passe",
+        "login": "Se connecter",
+        "signOut": "Se déconnecter",
+        "imprint": "Mentions légales"
+    },
+    "groups": {
+        "addGroup": "Ajouter un groupe",
+        "create": {
+            "title": "Créer un groupe",
+            "import": "Ajouter automatiquement des comptes pour les nouveaux membres du groupe",
+            "importError": "Une erreur s'est produite lors de l'importation du groupe : {{error}}"
+        },
+        "delete": {
+            "title": "Supprimer le groupe",
+            "description": "Êtes-vous sûr de vouloir supprimer le groupe {{groupName}} ?"
+        },
+        "archivedDisclaimer": "Ce groupe est archivé et donc en lecture seule.",
+        "list": {
+            "tabTitle": "Abrechnung - Groupes",
+            "header": "Groupes",
+            "archivedGroups": "Archivé",
+            "guestUserDisclaimer": "Vous êtes un utilisateur invité sur cet Abrechnung et n'êtes donc pas autorisé à créer de nouveaux groupes.",
+            "noGroups": "Aucun groupe",
+            "lastUpdateAt": "dernière modification : {{datetime}}"
+        },
+        "log": {
+            "tabTitle": "{{groupName}} - Activité",
+            "header": "Activité du groupe",
+            "messageInfo": "par {{username}} le {{datetime}}"
+        },
+        "memberList": {
+            "header": "Membres",
+            "editGroupMember": "Modifier les membres du groupe",
+            "tabTitle": "{{groupName}} - membres",
+            "invitedBy": "invité par {{username}}, ",
+            "joined": "rejoint le {{datetime}}",
+            "editor": "Éditeur",
+            "owner": "Propriétaire",
+            "itsYou": "C'est toi",
+            "canWrite": "Peut écrire",
+            "isOwner": "Est propriétaire"
+        },
+        "settings": {
+            "tabTitle": "{{groupName}} - Paramètres",
+            "header": "Paramètres",
+            "ownerDisclaimer": "Vous êtes propriétaire de ce groupe",
+            "readAccessDisclaimer": "Vous n'avez qu'un accès en lecture à ce groupe",
+            "terms": "Conditions générales",
+            "autoAddAccounts": "Ajouter automatiquement des comptes pour les nouveaux membres du groupe",
+            "leaveGroup": "Quitter le groupe",
+            "leaveGroupConfirm": "Êtes-vous sûr de vouloir quitter le groupe « {{group.name}} » ? Si vous êtes le dernier membre à quitter ce groupe, il sera supprimé et ses transactions seront perdues à jamais…",
+            "archiveGroup": "Archived le groupe",
+            "archiveGroupConfirm": "Êtes-vous sûr de vouloir archiver le groupe {{group.name}} ? Aucune modification ne peut être apportée aux groupes archivés et ceux-ci seront masqués dans les listes de groupes. Seul le propriétaire du groupe peut annuler cette action.",
+            "unarchiveGroup": "Désarchiver le groupe",
+            "unarchiveGroupConfirm": "Êtes-vous sûr de vouloir désarchiver le groupe {{group.name}} ? Le groupe ne sera plus en lecture seule.",
+            "dangerZone": "Zone de danger",
+            "ownedAccount": "Ce compte, c'est toi",
+            "ownedAccountHelp": "Account used as default for paying expenses and showing balance effects",
+            "exportGroupJson": "Exporter le groupe"
+        },
+        "join": {
+            "tabTitle": "Abrechung - rejoindre un groupe",
+            "youHaveBeenInvited": "Vous avez été invité à rejoindre le groupe {{group.name}}",
+            "invitationDescription": "Description de l'invitation",
+            "invitationValidUntil": "Invitation valable jusqu'à",
+            "invitationSingleUse": "Invitation à usage unique",
+            "join": "Rejoindre"
+        },
+        "invites": {
+            "tabTitle": "{{groupName}} - Liens d'invitation",
+            "header": "Liens d'invitation",
+            "guestUserDisclaimer": "Vous êtes un utilisateur invité sur cet Abrechnung et n'êtes donc pas autorisé à créer des invitations de groupe.",
+            "tokenHidden": "jeton masqué, créé par un autre membre",
+            "singleUse": "À usage unique",
+            "validUntil": "Valable jusqu'au",
+            "newMembersJoinAsEditors": "De nouveaux membres rejoignent l'équipe en tant qu'éditeurs",
+            "createdSuccessfully": "Jeton d'invitation créé avec succès"
+        }
+    },
+    "images": {
+        "uploadImage": "Télécharger une image",
+        "chooseImage": "Choisir une image",
+        "compressing": "compression en cours...",
+        "filename": "Nom du fichier"
+    },
+    "balanceTable": {
+        "totalConsumed": "Reçu / Consommé",
+        "totalPaid": "Payé",
+        "balance": "Équilibre"
+    },
+    "transactions": {
+        "createTransaction": "Créer une transaction"
+    }
+}
