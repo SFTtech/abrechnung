@@ -2,9 +2,10 @@ import { useFormatCurrency } from "@/hooks";
 import { useAppSelector } from "@/store";
 import { Group } from "@abrechnung/api";
 import { selectAccountBalances, useSortedAccounts } from "@abrechnung/redux";
-import { Box, Theme, Typography } from "@mui/material";
+import { Box, Chip, Theme, Typography } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
 export type BalanceBarGraphProps = {
@@ -15,9 +16,11 @@ type Data = {
     name: string;
     id: number;
     balance: number;
+    isYou: boolean;
 };
 
 export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
+    const { t } = useTranslation();
     const formatCurrency = useFormatCurrency();
     const theme: Theme = useTheme();
     const navigate = useNavigate();
@@ -35,6 +38,7 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
         return {
             id: account.id,
             name: account.name,
+            isYou: group.owned_account_id === account.id,
             balance: roundTwoDecimals(balance?.balance ?? 0),
         };
     });
@@ -45,6 +49,10 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
     const handleBarClick = (accountId: number) => {
         navigate(`/groups/${group.id}/accounts/${accountId}`);
     };
+
+    const itsYouChip = (
+        <Chip sx={{ ml: 1 }} size="small" component="span" color="primary" label={t("groups.memberList.itsYou")} />
+    );
 
     return (
         <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gridAutoRows: "32px", rowGap: 1 }}>
@@ -77,6 +85,7 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
                             {isPositive ? (
                                 <Typography variant="body2" sx={{ mr: 1 }}>
                                     {item.name}
+                                    {item.isYou && itsYouChip}
                                 </Typography>
                             ) : (
                                 <>
@@ -129,6 +138,7 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
                             ) : (
                                 <Typography variant="body2" sx={{ ml: 1 }}>
                                     {item.name}
+                                    {item.isYou && itsYouChip}
                                 </Typography>
                             )}
                         </Box>
