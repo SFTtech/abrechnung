@@ -4,6 +4,9 @@
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.6.0...HEAD)
 
+- add French translation
+- remember selected language
+
 ## 1.6.0 (2026-01-10)
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.5.0...v1.6.0)
