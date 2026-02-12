@@ -6,6 +6,7 @@
 
 - add French translation
 - remember selected language
+- rework balance table into a basic statistics page with lifetime group statistics
 
 ## 1.6.0 (2026-01-10)
 

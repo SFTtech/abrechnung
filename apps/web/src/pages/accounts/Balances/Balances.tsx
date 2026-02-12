@@ -1,5 +1,4 @@
 import { GroupArchivedDisclaimer } from "@/components";
-import { BalanceTable } from "@/components/accounts/BalanceTable";
 import { MobilePaper } from "@/components/style";
 import { useTitle } from "@/core/utils";
 import { useFormatCurrency, useGetAmountColor } from "@/hooks";
@@ -17,6 +16,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, Link as RouterLink } from "react-router";
 import { BalanceBarGraph } from "./BalanceBarGraph";
+import { Statistics } from "./Statistics";
 
 interface Props {
     groupId: number;
@@ -58,8 +58,8 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
             <TabContext value={selectedTab}>
                 <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
                     <TabList onChange={(event, idx) => setSelectedTab(idx)} centered>
-                        <Tab label="Chart" value="1" />
-                        <Tab label="Table" value="2" />
+                        <Tab label={t("accounts.balances.chartTabTitle")} value="1" />
+                        <Tab label={t("accounts.balances.statisticsTabTitle")} value="2" />
                     </TabList>
                 </Box>
                 <TabPanel value="1" sx={{ padding: { xs: 1, md: 2 } }}>
@@ -84,21 +84,21 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                         </Alert>
                     )}
                     <BalanceBarGraph group={group} />
+                    {isGroupWritable && (
+                        <>
+                            <Divider sx={{ mt: 2 }} />
+                            <Box sx={{ display: "flex", justifyContent: "center" }}>
+                                <Button component={RouterLink} to={`/groups/${group.id}/settlement-plan`}>
+                                    {t("accounts.settleUp")}
+                                </Button>
+                            </Box>
+                        </>
+                    )}
                 </TabPanel>
                 <TabPanel value="2" sx={{ padding: { xs: 1, md: 2 } }}>
-                    <BalanceTable group={group} />
+                    <Statistics group={group} />
                 </TabPanel>
             </TabContext>
-            {isGroupWritable && (
-                <>
-                    <Divider />
-                    <Box sx={{ display: "flex", justifyContent: "center" }}>
-                        <Button component={RouterLink} to={`/groups/${group.id}/settlement-plan`}>
-                            {t("accounts.settleUp")}
-                        </Button>
-                    </Box>
-                </>
-            )}
         </MobilePaper>
     );
 };

@@ -36,8 +36,10 @@ export const AccountValidator = z.discriminatedUnion("type", [
 export interface AccountBalance {
     balance: number;
     beforeClearing: number;
-    totalConsumed: number;
-    totalPaid: number;
+    totalConsumedPurchases: number;
+    totalPaidPurchases: number;
+    totalReceivedTransfers: number;
+    totalPaidTransfers: number;
     clearingResolution: { [k: number]: number };
 }
 

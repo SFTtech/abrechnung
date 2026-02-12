@@ -208,7 +208,17 @@
         },
         "balances": {
             "tabTitle": "{{groupName}} - Balances",
-            "clearingAccountsRemainingBalances": "Some Events have remaining balances"
+            "clearingAccountsRemainingBalances": "Some Events have remaining balances",
+            "chartTabTitle": "Chart",
+            "statisticsTabTitle": "Statistics",
+            "totalGroupExpenses": "Total group expenses",
+            "totalGroupExpensesHelp": "Sum of all purchases",
+            "yourTotalDisbursements": "Your total disbursements",
+            "yourTotalDisbursementsHelp": "Sum of purchases paid by you",
+            "yourTotalExpenses": "Your contribution to group expenses",
+            "yourTotalExpensesHelp": "Sum of your share in group purchases",
+            "noOwnedAccountAlertTitle": "No account is assigned to you.",
+            "noOwnedAccountAlertBody": "Head over to the <1>group settings</1> to claim an account and have individualized statistics shown here."
         },
         "detail": {
             "tabTitleEvent": "{{group.name}} - Event {{account.name}}",
