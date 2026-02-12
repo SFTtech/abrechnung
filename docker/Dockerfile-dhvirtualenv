@@ -54,6 +54,8 @@ RUN apt-get update -y -o Acquire::Languages=none \
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
 RUN apt-get install -y nodejs
 
+RUN curl -fsSL https://get.pnpm.io/install.sh | bash -
+
 RUN mkdir -p /abrechnung/.cypress_cache && chmod 777 /abrechnung/.cypress_cache
 ENV CYPRESS_CACHE_FOLDER /abrechnung/.cypress_cache
 
