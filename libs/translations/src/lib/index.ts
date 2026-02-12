@@ -5,6 +5,7 @@ import ta from "./ta.json";
 import bg from "./bg.json";
 import uk from "./uk.json";
 import ru from "./ru.json";
+import fr from "./fr.json";
 
 export const defaultNS = "translations";
 
@@ -18,4 +19,5 @@ export const resources = {
     bg: { translations: bg },
     uk: { translations: uk },
     ru: { translations: ru },
+    fr: { translations: fr },
 };
