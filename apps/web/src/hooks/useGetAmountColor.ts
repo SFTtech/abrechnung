@@ -11,6 +11,10 @@ export const useGetAmountColor = () => {
             const colorRedInverted =
                 theme.palette.mode === "dark" ? theme.palette.error.light : theme.palette.error.dark;
 
+            if (Math.abs(amount) < Number.EPSILON) {
+                return undefined;
+            }
+
             return amount < 0 ? colorRedInverted : colorGreenInverted;
         },
         [theme]
