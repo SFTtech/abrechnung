@@ -64,7 +64,7 @@ interest dh-virtualenv-interpreter-update
 EOF
 
 export DESTDIR="debian/abrechnung"
-NODE_OPTIONS="--max_old_space_size=4096" && pnpm install --frozen-lockfile && npx nx build web
+NODE_OPTIONS="--max_old_space_size=4096" CI=true && pnpm install --force --frozen-lockfile && npx nx build web
 mkdir -p $DESTDIR/usr/share/
 mv dist/apps/web $DESTDIR/usr/share/abrechnung_web
 
