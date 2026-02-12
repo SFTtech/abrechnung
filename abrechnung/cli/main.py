@@ -32,7 +32,11 @@ def get_config(
     debug: Annotated[bool, typer.Option(help="enable asyncio debugging")] = False,
 ):
     log_setup(verbose - quiet)
-    asyncio.get_event_loop().set_debug(debug)
+
+    async def helper():
+        asyncio.get_event_loop().set_debug(debug)
+
+    asyncio.run(helper())
 
     if not config_path.exists():
         print(f"Config file does not exist: {config_path}")
