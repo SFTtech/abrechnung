@@ -222,7 +222,10 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                                     margin="dense"
                                     fullWidth
                                     value={formatCurrency(
-                                        balances[account.id].totalConsumed - balances[account.id].totalPaid,
+                                        balances[account.id].totalConsumedPurchases +
+                                            balances[account.id].totalReceivedTransfers -
+                                            balances[account.id].totalPaidPurchases -
+                                            balances[account.id].totalPaidTransfers,
                                         currencyIdentifier
                                     )}
                                     onChange={() => undefined}

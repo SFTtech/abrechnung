@@ -4,17 +4,16 @@ import * as React from "react";
 interface CurrencyValueProps {
     currencySymbol: string;
     value?: number;
-    signOverride?: number;
 }
 
-const CurrencyValue = React.memo(({ currencySymbol, value = 0, signOverride }: CurrencyValueProps) => {
+const CurrencyValue = React.memo(({ currencySymbol, value = 0 }: CurrencyValueProps) => {
     const formatCurrency = useFormatCurrency();
     const getAmountColor = useGetAmountColor();
 
     return (
         <div
             style={{
-                color: getAmountColor(signOverride ?? value),
+                color: getAmountColor(value),
                 width: "100%",
                 fontVariantNumeric: "tabular-nums",
                 textAlign: "end",
@@ -26,9 +25,9 @@ const CurrencyValue = React.memo(({ currencySymbol, value = 0, signOverride }: C
 });
 CurrencyValue.displayName = "CurrencyValue";
 
-export function renderCurrency(currencySymbol: string, signOverride?: number) {
+export function renderCurrency(currencySymbol: string) {
     const component = (params: { value?: number }) => {
-        return <CurrencyValue currencySymbol={currencySymbol} value={params.value} signOverride={signOverride} />;
+        return <CurrencyValue currencySymbol={currencySymbol} value={params.value} />;
     };
     component.displayName = "CurrencyValue";
     return component;

@@ -7,7 +7,7 @@ import {
 import React, { Suspense } from "react";
 import { Navigate, Route, Routes, useParams } from "react-router";
 import { toast } from "react-toastify";
-import { Balances } from "../accounts/Balances";
+import { Balances } from "../accounts/Balances/Balances";
 import { Loading } from "@abrechnung/components";
 import { api } from "@/core/api";
 import { useAppDispatch, useAppSelector } from "@/store";

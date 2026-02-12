@@ -55,14 +55,19 @@ export const computeAccountBalances = (accounts: Account[], transactions: Transa
         balances[account.id] = {
             balance: 0,
             beforeClearing: 0,
-            totalConsumed: 0,
-            totalPaid: 0,
+            totalConsumedPurchases: 0,
+            totalPaidPurchases: 0,
+            totalReceivedTransfers: 0,
+            totalPaidTransfers: 0,
             clearingResolution: {},
         };
         return balances;
     }, {});
 
-    const balanceEffects = transactions.map((t) => computeTransactionBalanceEffect(t));
+    const balanceEffects: Array<TransactionBalanceEffect & { transaction: Transaction }> = transactions.map((t) => ({
+        ...computeTransactionBalanceEffect(t),
+        transaction: t,
+    }));
 
     for (const balanceEffect of balanceEffects) {
         for (const accountIdStr in balanceEffect) {
@@ -70,9 +75,17 @@ export const computeAccountBalances = (accounts: Account[], transactions: Transa
             const balance = accountBalances[accountId];
             if (balance) {
                 balance.balance += balanceEffect[accountId].total;
-                balance.totalConsumed += balanceEffect[accountId].commonDebitors + balanceEffect[accountId].positions;
-                balance.totalPaid += balanceEffect[accountId].commonCreditors;
                 balance.beforeClearing = balance.balance;
+                if (balanceEffect.transaction.type === "transfer") {
+                    balance.totalReceivedTransfers +=
+                        balanceEffect[accountId].commonDebitors + balanceEffect[accountId].positions;
+                    balance.totalPaidTransfers += balanceEffect[accountId].commonCreditors;
+                } else {
+                    // mimo or purchase
+                    balance.totalConsumedPurchases +=
+                        balanceEffect[accountId].commonDebitors + balanceEffect[accountId].positions;
+                    balance.totalPaidPurchases += balanceEffect[accountId].commonCreditors;
+                }
             }
         }
     }
@@ -164,9 +177,11 @@ export const computeAccountBalances = (accounts: Account[], transactions: Transa
             if (accBalance) {
                 accBalance.balance += accShare;
                 if (accShare > 0) {
-                    accBalance.totalPaid += Math.abs(accShare);
+                    // TODO: this is not fully accurate since we assume here that no transfer was booked onto a clearing account
+                    accBalance.totalPaidPurchases += Math.abs(accShare);
                 } else {
-                    accBalance.totalConsumed += Math.abs(accShare);
+                    // TODO: this is not fully accurate since we assume here that no transfer was booked onto a clearing account
+                    accBalance.totalConsumedPurchases += Math.abs(accShare);
                 }
             }
         }
