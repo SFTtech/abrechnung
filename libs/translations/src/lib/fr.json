@@ -43,12 +43,16 @@
         "linkCopiedToClipboard": "Lien copié dans le presse-papier !",
         "qrCode": "QR code",
         "createdBy": "créé par {{username}}",
-        "changedBy": "modifié par {{username}}"
+        "changedBy": "modifié par {{username}}",
+        "lastChanged": "Dernière modification",
+        "lastChangedWithTime": "dernière modification : {{datetime}}",
+        "value": "Valeur",
+        "noneSoFar": "Aucun pour l'instant"
     },
     "shareSelect": {
         "selectedPeople_one": "{{count}} personne",
         "selectedPeople_many": "{{count}} personnes",
-        "selectedPeople_other": "{{coumt}} personnes",
+        "selectedPeople_other": "{{count}} personnes",
         "selectedEvent_one": "{{count}} événement",
         "selectedEvent_many": "{{count}} événements",
         "selectedEvent_other": "{{count}} événements",
@@ -80,8 +84,9 @@
         "addGroup": "Ajouter un groupe",
         "create": {
             "title": "Créer un groupe",
-            "import": "Ajouter automatiquement des comptes pour les nouveaux membres du groupe",
-            "importError": "Une erreur s'est produite lors de l'importation du groupe : {{error}}"
+            "import": "Importer un groupe",
+            "importError": "Une erreur s'est produite lors de l'importation du groupe : {{error}}",
+            "addUserAccountOnJoinDescription": "Ajouter automatiquement des comptes pour les nouveaux membres du groupe"
         },
         "delete": {
             "title": "Supprimer le groupe",
@@ -94,7 +99,7 @@
             "archivedGroups": "Archivé",
             "guestUserDisclaimer": "Vous êtes un utilisateur invité sur cet Abrechnung et n'êtes donc pas autorisé à créer de nouveaux groupes.",
             "noGroups": "Aucun groupe",
-            "lastUpdateAt": "dernière modification : {{datetime}}"
+            "lastUpdateAt": "dernière mise à jour : {{datetime}}"
         },
         "log": {
             "tabTitle": "{{groupName}} - Activité",
@@ -128,7 +133,7 @@
             "unarchiveGroupConfirm": "Êtes-vous sûr de vouloir désarchiver le groupe {{group.name}} ? Le groupe ne sera plus en lecture seule.",
             "dangerZone": "Zone de danger",
             "ownedAccount": "Ce compte, c'est toi",
-            "ownedAccountHelp": "Account used as default for paying expenses and showing balance effects",
+            "ownedAccountHelp": "Compte utilisé par défaut pour payer les dépenses et afficher les effets sur le solde",
             "exportGroupJson": "Exporter le groupe"
         },
         "join": {
@@ -162,6 +167,170 @@
         "balance": "Équilibre"
     },
     "transactions": {
-        "createTransaction": "Créer une transaction"
+        "createTransaction": "Créer une transaction",
+        "createPurchase": "Créer un achat",
+        "createPurchaseForAccount": "Créer un achat avec {{accountName}} comme participant",
+        "createTransfer": "Créer un transfert",
+        "createTransferForAccount": "Créer un transfert vers {{accountName}}",
+        "noTransactions": "Aucune transaction",
+        "purchase": "Achat",
+        "transfer": "Transfert",
+        "transferredFrom": "De",
+        "transferredTo": "À",
+        "paidBy": "Payé par",
+        "paidFor": "Pour qui",
+        "currencyConversionRate": "Taux de conversion",
+        "conversionHint": "{{sourceValue}} = {{targetValue}}",
+        "confirmDeleteTransaction": "Confirmer la suppression de la transaction",
+        "confirmDeleteTransactionInfo": "Êtes-vous sûr de vouloir supprimer la transaction \"{{transaction.name}}\" ?",
+        "list": {
+            "tabTitle": "{{groupName}} - Transactions"
+        },
+        "yourBalance": "Votre solde :",
+        "refreshCurrencyConversionRate": "Actualiser",
+        "type": {
+            "purchase": "achat",
+            "transfer": "transfert",
+            "mimo": "mimo"
+        },
+        "positions": {
+            "positions": "Positions",
+            "sharedPlusRest": "Partagé + reste",
+            "addPositions": "Ajouter des positions",
+            "remaining": "Restant :"
+        },
+        "history": {
+            "linkTo": "Historique"
+        },
+        "byFor": "Payé par <strong>{{by}}</strong> pour <strong>{{for}}</strong>"
+    },
+    "accounts": {
+        "noAccounts": "Aucun compte",
+        "list": {
+            "tabTitle": "{{groupName}} - Comptes"
+        },
+        "balances": {
+            "tabTitle": "{{groupName}} - Soldes",
+            "clearingAccountsRemainingBalances": "Certains événements ont des soldes restants"
+        },
+        "detail": {
+            "tabTitleEvent": "{{group.name}} - Événement {{account.name}}",
+            "tabTitleAccount": "{{group.name}} - Compte {{account.name}}"
+        },
+        "event": "Événement",
+        "account": "Compte",
+        "balanceOf": "Solde de {{account.name}}",
+        "clearingDistributionOf": "Participants de {{account.name}}",
+        "transactionsInvolving": "Transactions impliquant {{account.name}}",
+        "participated": "A participé",
+        "settleUp": "Régler",
+        "settlement": {
+            "transactionName": "Règlement",
+            "title": "Régler les soldes de ce groupe",
+            "whoPaysWhom": "{{from}} paie {{to}} {{money}}",
+            "settleButton": "Régler"
+        },
+        "deleteConfirm": "Confirmer la suppression de {{accountType}}",
+        "deleteConfirmBody": "Êtes-vous sûr de vouloir supprimer {{accountType}} \"{{accountName}}\" ?",
+        "totalEventBalance": "Total de l'événement"
+    },
+    "events": {
+        "list": {
+            "tabTitle": "{{groupName}} - Événements"
+        },
+        "createEvent": "Créer un événement",
+        "noEvents": "Aucun événement",
+        "participants": "Participants : <strong>{{participants}}</strong>"
+    },
+    "profile": {
+        "index": {
+            "tabTitle": "Abrechnung - Profil",
+            "pageTitle": "Profil",
+            "guestUserDisclaimer": "Vous êtes un utilisateur invité sur cet Abrechnung et n'êtes donc pas autorisé à créer de nouveaux groupes ou invitations de groupe.",
+            "registered": "Inscrit"
+        },
+        "settings": {
+            "tabTitle": "Abrechnung - Paramètres",
+            "pageTitle": "Paramètres",
+            "info": "Ces paramètres sont stockés localement sur votre appareil. Effacer le stockage local de votre navigateur les réinitialisera.",
+            "theme": "Thème",
+            "darkMode": "Mode sombre",
+            "themeSystemDefault": "Par défaut du système",
+            "themeDarkMode": "Mode sombre",
+            "themeLightMode": "Mode clair",
+            "clearCache": "Vider le cache",
+            "confirmClearCache": "Cette action effacera votre cache local. Tous vos paramètres (cette page) ne seront pas réinitialisés."
+        },
+        "changePassword": {
+            "tabTitle": "Abrechnung - Changer le mot de passe",
+            "pageTitle": "Changer le mot de passe",
+            "success": "Mot de passe modifié avec succès",
+            "newPassword": "Nouveau mot de passe"
+        },
+        "changeEmail": {
+            "tabTitle": "Abrechnung - Changer l'e-mail",
+            "pageTitle": "Changer l'e-mail",
+            "success": "Demande de changement d'e-mail envoyée, vous devriez recevoir bientôt un e-mail avec un lien de confirmation",
+            "newEmail": "Nouvel e-mail"
+        },
+        "sessions": {
+            "tabTitle": "Abrechnung - Sessions",
+            "header": "Sessions de connexion",
+            "confirmDeleteSession": "Supprimer la session ?",
+            "areYouSureToDelete": "Êtes-vous sûr de vouloir supprimer la session \"{{sessionName}}\" ?",
+            "validUntil": "Valable jusqu'au {{datetime}}, ",
+            "lastSeenOn": "Dernière activité le {{datetime}}"
+        }
+    },
+    "auth": {
+        "register": {
+            "title": "S'inscrire",
+            "tabTitle": "Abrechnung - Inscription",
+            "header": "Créer un nouveau compte",
+            "confirmButton": "S'inscrire",
+            "registrationSuccess": "Inscription réussie, veuillez confirmer votre e-mail avant de vous connecter…",
+            "alreadyHasAccount": "Vous avez déjà un compte ? Connectez-vous"
+        },
+        "login": {
+            "tabTitle": "Abrechnung - Connexion",
+            "header": "Se connecter",
+            "loginSuccess": "Connecté…",
+            "confirmButton": "Se connecter",
+            "noAccountRegister": "Pas de compte ? S'inscrire",
+            "forgotPassword": "Mot de passe oublié ?"
+        },
+        "recoverPassword": {
+            "tabTitle": "Abrechnung - Récupérer le mot de passe",
+            "header": "Récupérer le mot de passe",
+            "body": "Veuillez saisir votre e-mail. Un lien de récupération sera envoyé peu après.",
+            "emailSent": "Un lien de récupération vous a été envoyé par e-mail."
+        },
+        "confirmEmailChange": {
+            "tabTitle": "Abrechnung - Confirmer le changement d'e-mail",
+            "header": "Confirmez votre nouvel e-mail",
+            "confirmSuccessful": "Confirmation réussie",
+            "clickHereToConfirm": "Cliquez <1>ici</1> pour confirmer votre nouvel e-mail."
+        },
+        "confirmPasswordRecovery": {
+            "tabTitle": "Abrechnung - Confirmer la récupération du mot de passe",
+            "header": "Confirmer la récupération du mot de passe",
+            "successfulLinkToLogin": "Récupération du mot de passe réussie, veuillez <1>vous connecter</1> avec votre nouveau mot de passe."
+        },
+        "confirmRegistration": {
+            "tabTitle": "Abrechnung - Confirmer l'inscription",
+            "header": "Confirmer l'inscription",
+            "confirmSuccessful": "Confirmation réussie",
+            "successfulLinkToLogin": "Veuillez <1>vous connecter</1> avec vos identifiants.",
+            "clickHereToConfirm": "Cliquez <1>ici</1> pour confirmer votre inscription."
+        }
+    },
+    "languages": {
+        "en": "Anglais",
+        "de": "Allemand",
+        "es": "Espagnol",
+        "ta": "Tamoul",
+        "uk": "Ukrainien",
+        "bg": "Bulgare",
+        "ru": "Russe"
     }
 }
