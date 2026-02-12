@@ -1,3 +1,4 @@
+import { selectLanguage, updateLanguage, useAppDispatch, useAppSelector } from "@/store";
 import { MenuItem, Select, SelectChangeEvent, SelectProps } from "@mui/material";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -6,10 +7,19 @@ export type LanguageSelectProps = Omit<SelectProps, "value" | "onChange" | "vari
 
 export const LanguageSelect: React.FC<LanguageSelectProps> = (props) => {
     const { t, i18n } = useTranslation();
+    const language = useAppSelector(selectLanguage);
+    const dispatch = useAppDispatch();
+
+    React.useEffect(() => {
+        if (i18n.language != language && language != null) {
+            i18n.changeLanguage(language);
+        }
+    }, [language, i18n]);
 
     const handleSetLanguage = (event: SelectChangeEvent<unknown>) => {
         const lang = event.target.value as string;
         i18n.changeLanguage(lang);
+        dispatch(updateLanguage(lang));
     };
 
     return (

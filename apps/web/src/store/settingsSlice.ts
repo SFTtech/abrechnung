@@ -10,6 +10,7 @@ export interface SettingsSliceState {
     transactionSortMode: TransactionSortMode;
     personalAccountSortMode: AccountSortMode;
     clearingAccountSortMode: AccountSortMode;
+    language: string | null;
 }
 
 const initialState: SettingsSliceState = {
@@ -17,6 +18,7 @@ const initialState: SettingsSliceState = {
     transactionSortMode: "last_changed",
     personalAccountSortMode: "name",
     clearingAccountSortMode: "last_changed",
+    language: null,
 };
 
 // selectors
@@ -36,6 +38,10 @@ export const selectTransactionSortMode = (state: RootState) => {
     return state.settings.transactionSortMode;
 };
 
+export const selectLanguage = (state: RootState) => {
+    return state.settings.language;
+};
+
 const settingsSlice = createSlice({
     name: "settings",
     initialState,
@@ -52,10 +58,18 @@ const settingsSlice = createSlice({
         updateTransactionSortMode: (state, action: PayloadAction<TransactionSortMode>) => {
             state.transactionSortMode = action.payload;
         },
+        updateLanguage: (state, action: PayloadAction<string>) => {
+            state.language = action.payload;
+        },
     },
 });
 
-export const { themeChanged, updateClearingAccountSortMode, updatePersonalAccountSortMode, updateTransactionSortMode } =
-    settingsSlice.actions;
+export const {
+    themeChanged,
+    updateClearingAccountSortMode,
+    updatePersonalAccountSortMode,
+    updateTransactionSortMode,
+    updateLanguage,
+} = settingsSlice.actions;
 
 export const { reducer: settingsReducer } = settingsSlice;
