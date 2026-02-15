@@ -44,7 +44,7 @@
         "createdBy": "створено {{username}}",
         "changedBy": "змінено {{username}}",
         "linkCopiedToClipboard": "Посилання скопійовано в буфер обміну!",
-        "qrCode": "QR-код"
+        "qrCode": "QR Код"
     },
     "images": {
         "uploadImage": "Завантажити Зображення",
@@ -260,7 +260,17 @@
         },
         "balances": {
             "tabTitle": "{{groupName}} - Залишки",
-            "clearingAccountsRemainingBalances": "Деякі Події мають залишки коштів"
+            "clearingAccountsRemainingBalances": "Деякі Події мають залишки коштів",
+            "chartTabTitle": "Діаграма",
+            "statisticsTabTitle": "Статистика",
+            "totalGroupExpenses": "Загальні витрати групи",
+            "totalGroupExpensesHelp": "Сума всіх закупівель",
+            "yourTotalDisbursements": "Ваші загальні виплати",
+            "yourTotalDisbursementsHelp": "Сума закупівель оплачених вами",
+            "yourTotalExpenses": "Ваш внесок до групових витрат",
+            "yourTotalExpensesHelp": "Сума вашої частки в закупівлях групи",
+            "noOwnedAccountAlertTitle": "Немає облікового запису який призначений для вас.",
+            "noOwnedAccountAlertBody": "Перейдіть до <1>налаштувань групи</1> щоб підтвердити обліковий запис та мати відображення індивідуальної статистики тут."
         },
         "clearingDistributionOf": "Учасники {{account.name}}",
         "transactionsInvolving": "Транзакції за участю {{account.name}}",
@@ -313,7 +323,8 @@
         "de": "Німецька",
         "uk": "Українська",
         "bg": "Болгарська",
-        "ru": "Російська"
+        "ru": "Російська",
+        "fr": "Французька"
     },
     "shareSelect": {
         "showEvents": "Показати Події",
