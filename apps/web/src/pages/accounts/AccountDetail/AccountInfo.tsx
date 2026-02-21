@@ -90,7 +90,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                     // we saved a purely local account, i.e. we created a new account -> navigate to account list
                     navigate(getAccountListLink(groupId, "personal"));
                 } else if (oldAccountId !== newAccount.id) {
-                    navigate(getAccountLink(groupId, newAccount.type, newAccount.id) + "?no-redirect=true", {
+                    navigate(getAccountLink(groupId, newAccount.type, newAccount.id), {
                         replace: true,
                     });
                 }

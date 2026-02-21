@@ -1,7 +1,6 @@
 import { MobilePaper } from "@/components/style";
-import { Loading } from "@abrechnung/components";
 import { api } from "@/core/api";
-import { useQuery, useTitle } from "@/core/utils";
+import { useTitle } from "@/core/utils";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
     deleteTransaction,
@@ -38,7 +37,6 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
     const params = useParams();
     const dispatch = useAppDispatch();
-    const query = useQuery();
     const navigate = useNavigate();
     const transactionId = Number(params["id"]);
 
@@ -136,7 +134,7 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
             .then(({ oldTransactionId, transaction }) => {
                 setShowProgress(false);
                 if (oldTransactionId !== transaction.id) {
-                    navigate(`/groups/${groupId}/transactions/${transaction.id}?no-redirect=true`, { replace: true });
+                    navigate(`/groups/${groupId}/transactions/${transaction.id}`, { replace: true });
                 }
             })
             .catch((err) => {
@@ -146,11 +144,7 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
     }, [transaction, setPositionValidationErrors, dispatch, setShowProgress, navigate, groupId, transactionId]);
 
     if (transaction === undefined) {
-        if (query.get("no-redirect") === "true") {
-            return <Loading />;
-        } else {
-            return <Navigate to="/404" />;
-        }
+        return <Navigate to={`/groups/${groupId}`} />;
     }
 
     return (

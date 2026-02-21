@@ -84,7 +84,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
         dispatch(createAccount({ groupId, type: "clearing" }))
             .unwrap()
             .then(({ account }) => {
-                navigate(getAccountLink(groupId, account.type, account.id) + "?no-redirect=true");
+                navigate(getAccountLink(groupId, account.type, account.id));
             });
     };
 

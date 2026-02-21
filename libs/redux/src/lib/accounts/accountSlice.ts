@@ -407,14 +407,19 @@ const accountSlice = createSlice({
             const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
             removeEntity(s.wipAccounts, accountId);
         },
+        setAccountStatus: (state, action: PayloadAction<{ groupId: number; status: StateStatus }>) => {
+            const { groupId, status } = action.payload;
+            initializeGroupState(state, groupId);
+            const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
+            if (s) {
+                s.status = status;
+            }
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchAccounts.pending, (state, action) => {
             const groupId = action.meta.arg.groupId;
-            if (!state.byGroupId[groupId]) {
-                // TODO: add separate base action to do this
-                initializeGroupState(state, groupId);
-            }
+            initializeGroupState(state, groupId);
         });
         builder.addCase(fetchAccounts.rejected, (state, action) => {
             const s = getGroupScopedState<AccountState, AccountSliceState>(state, action.meta.arg.groupId);
@@ -423,10 +428,6 @@ const accountSlice = createSlice({
         builder.addCase(fetchAccounts.fulfilled, (state, action) => {
             const accounts = action.payload;
             const groupId = action.meta.arg.groupId;
-            if (!state.byGroupId[groupId]) {
-                // TODO: add separate base action to do this
-                initializeGroupState(state, groupId);
-            }
             const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
             // TODO: optimize such that we maybe only update those who have actually changed??
             const byId = accounts.reduce<{ [k: number]: Account }>((byId, account) => {
@@ -475,7 +476,13 @@ const accountSlice = createSlice({
 // local reducers
 const { advanceNextLocalAccountId } = accountSlice.actions;
 
-export const { wipAccountUpdated, accountAdded, accountEditStarted, copyAccount, discardAccountChange } =
-    accountSlice.actions;
+export const {
+    wipAccountUpdated,
+    accountAdded,
+    accountEditStarted,
+    copyAccount,
+    discardAccountChange,
+    setAccountStatus,
+} = accountSlice.actions;
 
 export const { reducer: accountReducer } = accountSlice;

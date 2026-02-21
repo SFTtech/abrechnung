@@ -1,7 +1,7 @@
 import { PURGE } from "redux-persist";
 import { Api } from "@abrechnung/api";
-import { fetchAccounts } from "./accounts";
-import { fetchTransactions } from "./transactions";
+import { fetchAccounts, setAccountStatus } from "./accounts";
+import { fetchTransactions, setTransactionStatus } from "./transactions";
 import { IRootState } from "./types";
 import { createAsyncThunkWithErrorHandling } from "./utils";
 
@@ -12,6 +12,8 @@ export const fetchGroupDependencies = createAsyncThunkWithErrorHandling<
 >(
     "fetchGroupDependencies",
     async ({ groupId, api, fetchAnyway = false }, { dispatch }) => {
+        dispatch(setTransactionStatus({ groupId, status: "loading" }));
+        dispatch(setAccountStatus({ groupId, status: "loading" }));
         await Promise.all([
             dispatch(fetchAccounts({ groupId, api, fetchAnyway })).unwrap(),
             dispatch(fetchTransactions({ groupId, api, fetchAnyway })).unwrap(),

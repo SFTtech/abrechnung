@@ -221,14 +221,14 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
         dispatch(createTransaction({ groupId, type: "purchase" }))
             .unwrap()
             .then(({ transaction }) => {
-                navigate(`/groups/${groupId}/transactions/${transaction.id}?no-redirect=true`);
+                navigate(`/groups/${groupId}/transactions/${transaction.id}`);
             });
     };
     const onCreateTransfer = () => {
         dispatch(createTransaction({ groupId, type: "transfer" }))
             .unwrap()
             .then(({ transaction }) => {
-                navigate(`/groups/${groupId}/transactions/${transaction.id}?no-redirect=true`);
+                navigate(`/groups/${groupId}/transactions/${transaction.id}`);
             });
     };
 

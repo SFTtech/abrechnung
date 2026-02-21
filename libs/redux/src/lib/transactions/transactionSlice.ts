@@ -708,14 +708,19 @@ const transactionSlice = createSlice({
             removeEntity(s.wipTransactions, transactionId);
             delete s.wipTransactions.balanceEffects[transactionId];
         },
+        setTransactionStatus: (state, action: PayloadAction<{ groupId: number; status: StateStatus }>) => {
+            const { groupId, status } = action.payload;
+            initializeGroupState(state, groupId);
+            const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, groupId);
+            if (s) {
+                s.status = status;
+            }
+        },
     },
     extraReducers: (builder) => {
         builder.addCase(fetchTransactions.pending, (state, action) => {
             const groupId = action.meta.arg.groupId;
-            if (!state.byGroupId[groupId]) {
-                // TODO: add separate base action to do this
-                initializeGroupState(state, groupId);
-            }
+            initializeGroupState(state, groupId);
         });
         builder.addCase(fetchTransactions.rejected, (state, action) => {
             const s = getGroupScopedState<TransactionState, TransactionSliceState>(state, action.meta.arg.groupId);
@@ -795,6 +800,7 @@ export const {
     wipPositionAdded,
     positionDeleted,
     discardTransactionChange,
+    setTransactionStatus,
 } = transactionSlice.actions;
 
 export const { reducer: transactionReducer } = transactionSlice;

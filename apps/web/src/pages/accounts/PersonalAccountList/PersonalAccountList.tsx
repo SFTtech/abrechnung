@@ -78,7 +78,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
         dispatch(createAccount({ groupId, type: "personal" }))
             .unwrap()
             .then(({ account }) => {
-                navigate(`/groups/${groupId}/accounts/${account.id}?no-redirect=true`);
+                navigate(`/groups/${groupId}/accounts/${account.id}`);
             })
             .catch((err) => {
                 toast.error(`Error while creating account: ${err}`);
