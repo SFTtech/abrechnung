@@ -93,7 +93,7 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
                                 </Typography>
                             ) : (
                                 <>
-                                    <Typography variant="body2" sx={{ mr: 1 }}>
+                                    <Typography variant="body2" sx={{ mr: 1, textWrap: "nowrap" }}>
                                         {formatCurrency(item.balance, group.currency_identifier)}
                                     </Typography>
                                     <Box
@@ -135,7 +135,7 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
                                             borderRadius: "0 8px 8px 0",
                                         }}
                                     />
-                                    <Typography variant="body2" sx={{ ml: 1 }}>
+                                    <Typography variant="body2" sx={{ ml: 1, textWrap: "nowrap" }}>
                                         {formatCurrency(item.balance, group.currency_identifier)}
                                     </Typography>
                                 </>
