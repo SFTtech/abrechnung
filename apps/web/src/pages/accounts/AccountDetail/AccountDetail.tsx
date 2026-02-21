@@ -2,8 +2,7 @@ import { AccountTransactionList } from "@/pages/accounts/AccountDetail/AccountTr
 import { BalanceHistoryGraph } from "@/pages/accounts/AccountDetail/BalanceHistoryGraph";
 import { ClearingAccountDetail } from "@/pages/accounts/AccountDetail/ClearingAccountDetail";
 import { MobilePaper } from "@/components/style";
-import { Loading } from "@abrechnung/components";
-import { useQuery, useTitle } from "@/core/utils";
+import { useTitle } from "@/core/utils";
 import { Grid, Typography } from "@mui/material";
 import * as React from "react";
 import { Navigate, useParams } from "react-router";
@@ -35,7 +34,6 @@ export const AccountDetail: React.FC<Props> = ({ groupId }) => {
 
     const group = useGroup(groupId);
     const account = useAccount(groupId, accountId);
-    const query = useQuery();
 
     useTitle(
         t(account?.type === "clearing" ? "accounts.detail.tabTitleEvent" : "accounts.detail.tabTitleAccount", "", {
@@ -45,11 +43,7 @@ export const AccountDetail: React.FC<Props> = ({ groupId }) => {
     );
 
     if (account === undefined) {
-        if (query.get("no-redirect") === "true") {
-            return <Loading />;
-        } else {
-            return <Navigate to="/404" />;
-        }
+        return <Navigate to={`/groups/${groupId}/accounts`} />;
     }
 
     if (account.is_wip) {

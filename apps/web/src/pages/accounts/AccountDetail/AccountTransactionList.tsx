@@ -55,7 +55,7 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, account }) =>
         )
             .unwrap()
             .then(({ transaction }) => {
-                navigate(`/groups/${groupId}/transactions/${transaction.id}?no-redirect=true`);
+                navigate(`/groups/${groupId}/transactions/${transaction.id}`);
             })
             .catch(() => toast.error("Creating a transaction failed"));
     };
