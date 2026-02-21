@@ -89,7 +89,7 @@ exclude = ["tools/demo_deploy_webhook.py"]
 source = ["abrechnung"]
 
 [tool.bumpversion]
-current_version = "1.7.0"
+current_version = "1.7.1"
 commit = false
 files = [
     { filename = "abrechnung/__init__.py" },
