@@ -191,7 +191,11 @@ const OwnedAccountSettings: React.FC<{ group: Group }> = ({ group }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
     const currentUserId = useAppSelector(selectCurrentUserId);
-    const personalAccounts = useSortedAccounts(group.id, "name", "personal");
+    const personalAccounts = useSortedAccounts(group.id, {
+        sortMode: "name",
+        type: "personal",
+        excludeLocalOnly: true,
+    });
     const [updateOwnedAccount] = useUpdateMemberOwnedAccountMutation();
 
     const onChange = (accountId: number | null) => {

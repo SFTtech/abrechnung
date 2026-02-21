@@ -99,10 +99,23 @@ const selectSortedAccounts = createSelector(
         wipAtTop?: boolean,
         tags?: string[]
     ) => tags ?? emptyList,
-    (accounts, sortMode, type, searchTerm, wipAtTop, tags) => {
+    (
+        state: IRootState,
+        groupId: number,
+        type: AccountType | undefined,
+        sortMode: AccountSortMode,
+        searchTerm?: string,
+        wipAtTop?: boolean,
+        tags?: string[],
+        excludeLocalOnly?: boolean
+    ) => excludeLocalOnly,
+    (accounts, sortMode, type, searchTerm, wipAtTop, tags, excludeLocalOnly) => {
         const compareFunction = getAccountSortFunc(sortMode, wipAtTop);
         // TODO: this has optimization potential
         const filterFn = (a: Account): boolean => {
+            if (excludeLocalOnly && isAccountOnlyLocal(a)) {
+                return false;
+            }
             if (a.type === "clearing" && tags.length > 0 && a.tags) {
                 for (const tag of tags) {
                     if (!a.tags.includes(tag)) {
@@ -136,14 +149,18 @@ const selectSortedAccounts = createSelector(
 
 export const useSortedAccounts = <T extends AccountType>(
     groupId: number,
-    sortMode: AccountSortMode,
-    type?: T,
-    searchTerm?: string,
-    wipAtTop?: boolean,
-    tags: string[] = []
+    config: {
+        type?: T;
+        sortMode: AccountSortMode;
+        searchTerm?: string;
+        wipAtTop?: boolean;
+        excludeLocalOnly?: boolean;
+        tags?: string[];
+    }
 ): T extends "personal" ? PersonalAccount[] : T extends "clearing" ? ClearingAccount[] : Account[] => {
+    const { sortMode, type, searchTerm, wipAtTop, excludeLocalOnly = false, tags = [] } = config;
     return useSelector((state: IRootState) =>
-        selectSortedAccounts(state, groupId, type, sortMode, searchTerm, wipAtTop, tags)
+        selectSortedAccounts(state, groupId, type, sortMode, searchTerm, wipAtTop, tags, excludeLocalOnly)
     ) as any;
 };
 

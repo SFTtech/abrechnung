@@ -25,7 +25,11 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
     const theme: Theme = useTheme();
     const navigate = useNavigate();
 
-    const personalAccounts = useSortedAccounts(group.id, "name", "personal");
+    const personalAccounts = useSortedAccounts(group.id, {
+        sortMode: "name",
+        type: "personal",
+        excludeLocalOnly: true,
+    });
     const balances = useAppSelector((state) => selectAccountBalances(state, group.id));
 
     const colorGreen = theme.palette.mode === "light" ? theme.palette.success.light : theme.palette.success.dark;

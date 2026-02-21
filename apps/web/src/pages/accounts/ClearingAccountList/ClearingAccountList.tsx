@@ -58,7 +58,13 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
         .trim()
         .split(",")
         .filter((tag) => !!tag);
-    const clearingAccounts = useSortedAccounts(groupId, sortMode, "clearing", searchValue, true, tagFilter);
+    const clearingAccounts = useSortedAccounts(groupId, {
+        sortMode,
+        type: "clearing",
+        searchTerm: searchValue,
+        wipAtTop: true,
+        tags: tagFilter,
+    });
 
     const [currentPage, setCurrentPage] = useState(0);
     const shouldShowPagination = clearingAccounts.length > MAX_ITEMS_PER_PAGE;

@@ -30,7 +30,7 @@ export const AccountSelect: React.FC<AccountSelectProps> = ({
     noDisabledStyling = false,
     ...props
 }) => {
-    const accounts = useSortedAccounts(groupId, "name");
+    const accounts = useSortedAccounts(groupId, { sortMode: "name", excludeLocalOnly: true });
 
     const filteredAccounts = React.useMemo<Account[]>(() => {
         return exclude ? accounts.filter((account) => exclude.indexOf(account.id) < 0) : accounts;
