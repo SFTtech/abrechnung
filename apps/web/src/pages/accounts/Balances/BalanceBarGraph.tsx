@@ -25,7 +25,11 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
     const theme: Theme = useTheme();
     const navigate = useNavigate();
 
-    const personalAccounts = useSortedAccounts(group.id, "name", "personal");
+    const personalAccounts = useSortedAccounts(group.id, {
+        sortMode: "name",
+        type: "personal",
+        excludeLocalOnly: true,
+    });
     const balances = useAppSelector((state) => selectAccountBalances(state, group.id));
 
     const colorGreen = theme.palette.mode === "light" ? theme.palette.success.light : theme.palette.success.dark;
@@ -89,7 +93,7 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
                                 </Typography>
                             ) : (
                                 <>
-                                    <Typography variant="body2" sx={{ mr: 1 }}>
+                                    <Typography variant="body2" sx={{ mr: 1, textWrap: "nowrap" }}>
                                         {formatCurrency(item.balance, group.currency_identifier)}
                                     </Typography>
                                     <Box
@@ -131,7 +135,7 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
                                             borderRadius: "0 8px 8px 0",
                                         }}
                                     />
-                                    <Typography variant="body2" sx={{ ml: 1 }}>
+                                    <Typography variant="body2" sx={{ ml: 1, textWrap: "nowrap" }}>
                                         {formatCurrency(item.balance, group.currency_identifier)}
                                     </Typography>
                                 </>

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- prevent accounts which are not yet saved to the server from being referenced in transactions
+
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.7.0...HEAD)
 
 ## 1.7.0 (2026-02-21)

@@ -52,7 +52,7 @@ export const PersonalAccountList: React.FC<Props> = ({ groupId }) => {
     const searchValue = filterState.searchValue.trim();
     const sortMode = useAppSelector(selectPersonalAccountSortMode);
 
-    const personalAccounts = useSortedAccounts(groupId, sortMode, "personal", searchValue);
+    const personalAccounts = useSortedAccounts(groupId, { sortMode, type: "personal", searchTerm: searchValue });
 
     const isGroupWritable = useIsGroupWritable(groupId);
 

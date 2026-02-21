@@ -27,7 +27,7 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
     const formatCurrency = useFormatCurrency();
 
     const group = useGroup(groupId);
-    const personalAccounts = useSortedAccounts(groupId, "name", "personal");
+    const personalAccounts = useSortedAccounts(groupId, { sortMode: "name", type: "personal", excludeLocalOnly: true });
     const clearingAccounts = useGroupAccounts(groupId, "clearing");
     const balances = useAppSelector((state) => selectAccountBalances(state, groupId));
     const isGroupWritable = useIsGroupWritable(groupId);
