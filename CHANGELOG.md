@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.6.0...HEAD)
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.7.0...HEAD)
+
+## 1.7.0 (2026-02-21)
+
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.6.0...v1.7.0)
 
 - add French translation
 - remember selected language
