@@ -23,6 +23,7 @@ It aims to be a feature-complete, free and open source alternative to Splitwise,
 - Create events to manage complex expenses, e.g. multiple people buying things for a multi-day event with different participants each day
 - Add tags to expenses and events to quickly filter the expense and event lists
 - Unsaved changes are stored locally to not get lost when your internet connection drops
+- Export / import groups via JSON
 - Export expenses to CSV
 - Archive groups to make them readonly
 
