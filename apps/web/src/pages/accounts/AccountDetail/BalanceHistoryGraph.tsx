@@ -1,4 +1,4 @@
-import { balanceColor } from "@/core/utils";
+import { CurrencyDisplay } from "@/components";
 import { useAppSelector } from "@/store";
 import { BalanceChangeOrigin } from "@abrechnung/core";
 import {
@@ -134,12 +134,15 @@ export const BalanceHistoryGraph: React.FC<Props> = ({ groupId, accountId }) => 
                     <Typography
                         component="span"
                         sx={{
-                            color: (theme) => balanceColor(point.data.y as number, theme),
                             ml: 2,
                             whiteSpace: "nowrap",
                         }}
                     >
-                        {formatCurrency(point.data.y as number, currencyIdentifier)}
+                        <CurrencyDisplay
+                            amount={point.data.y as number}
+                            currencyIdentifier={currencyIdentifier}
+                            useColor={true}
+                        />
                     </Typography>
                 </div>
                 <Divider />

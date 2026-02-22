@@ -1,4 +1,4 @@
-import { useFormatCurrency } from "@/hooks";
+import { CurrencyDisplay } from "@/components";
 import { Transaction, TransactionPosition } from "@abrechnung/types";
 import { Checkbox, TableCell, TableRow } from "@mui/material";
 import * as React from "react";
@@ -16,13 +16,11 @@ export const ReadonlyPositionTableRow: React.FC<ReadonlyPositionTableRowProps> =
     positionsHaveComplexShares,
     shownAccountIDs,
 }) => {
-    const formatCurrency = useFormatCurrency();
-
     return (
         <TableRow hover key={position.id}>
             <TableCell>{position.name}</TableCell>
             <TableCell align="right" style={{ minWidth: 80 }}>
-                {formatCurrency(position.price, transaction.currency_identifier)}
+                <CurrencyDisplay amount={position.price} currencyIdentifier={transaction.currency_identifier} />
             </TableCell>
             {shownAccountIDs.map((accountID) => (
                 <TableCell align="right" key={accountID}>

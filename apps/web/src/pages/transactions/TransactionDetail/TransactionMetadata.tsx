@@ -3,6 +3,7 @@ import { CurrencyIdentifierSelect, DateInput, NumericInput } from "@abrechnung/c
 import { ShareSelect } from "@/components/ShareSelect";
 import { TagSelector } from "@/components/TagSelector";
 import { TextInput } from "@/components/TextInput";
+import { CurrencyDisplay } from "@/components";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
     selectTransactionBalanceEffect,
@@ -49,20 +50,30 @@ export const TransactionMetadata: React.FC<Props> = ({
 
     const ShareInfo = React.useCallback(
         ({ account }: { account: Account }) => {
-            const total = formatCurrency(
-                (balanceEffect[account.id]?.commonDebitors ?? 0) + (balanceEffect[account.id]?.positions ?? 0),
-                groupCurrencyIdentifier
+            const total = (
+                <CurrencyDisplay
+                    amount={
+                        (balanceEffect[account.id]?.commonDebitors ?? 0) + (balanceEffect[account.id]?.positions ?? 0)
+                    }
+                    currencyIdentifier={groupCurrencyIdentifier}
+                />
             );
 
             if ((showPositions || hasPositions) && !isSmallScreen) {
                 return (
                     <>
                         <TableCell align="right">
-                            {formatCurrency(balanceEffect[account.id]?.positions ?? 0, groupCurrencyIdentifier)}
+                            <CurrencyDisplay
+                                amount={balanceEffect[account.id]?.positions ?? 0}
+                                currencyIdentifier={groupCurrencyIdentifier}
+                            />
                         </TableCell>
                         <TableCell></TableCell>
                         <TableCell align="right">
-                            {formatCurrency(balanceEffect[account.id]?.commonDebitors ?? 0, groupCurrencyIdentifier)}
+                            <CurrencyDisplay
+                                amount={balanceEffect[account.id]?.commonDebitors ?? 0}
+                                currencyIdentifier={groupCurrencyIdentifier}
+                            />
                         </TableCell>
                         <TableCell></TableCell>
                         <TableCell width="100px" align="right">
@@ -78,7 +89,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                 </TableCell>
             );
         },
-        [showPositions, hasPositions, transaction, balanceEffect, formatCurrency, isSmallScreen]
+        [showPositions, hasPositions, transaction, balanceEffect, groupCurrencyIdentifier, isSmallScreen]
     );
 
     const shouldDisplayAccount = React.useCallback(

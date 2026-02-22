@@ -1,11 +1,11 @@
 import { selectTransactionBalanceEffect, useGroupCurrencyIdentifier } from "@abrechnung/redux";
 import { Chip, Divider, ListItemAvatar, ListItemText, Stack, Typography } from "@mui/material";
 import * as React from "react";
-import { balanceColor } from "@/core/utils";
 import { useAppSelector } from "@/store";
 import { ListItemLink } from "@/components/style";
+import { CurrencyDisplay } from "@/components";
 import { Transaction } from "@abrechnung/types";
-import { useFormatCurrency, useFormatDatetime } from "@/hooks";
+import { useFormatDatetime } from "@/hooks";
 import { TransactionIcon, TransactionPaidBy } from "@/components";
 
 interface Props {
@@ -17,7 +17,6 @@ interface Props {
 export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transaction, accountId }) => {
     const balanceEffect = useAppSelector((state) => selectTransactionBalanceEffect(state, groupId, transaction.id));
     const formatDatetime = useFormatDatetime();
-    const formatCurrency = useFormatCurrency();
     const currencyIdentifier = useGroupCurrencyIdentifier(groupId);
 
     return (
@@ -52,14 +51,11 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transact
                 />
                 <ListItemText>
                     <Typography align="right" variant="body2">
-                        <Typography
-                            component="span"
-                            sx={{
-                                color: (theme) => balanceColor(balanceEffect[accountId].total, theme),
-                            }}
-                        >
-                            {formatCurrency(balanceEffect[accountId].total, currencyIdentifier)}
-                        </Typography>
+                        <CurrencyDisplay
+                            amount={balanceEffect[accountId].total}
+                            currencyIdentifier={currencyIdentifier}
+                            useColor={true}
+                        />
                     </Typography>
                 </ListItemText>
             </ListItemLink>

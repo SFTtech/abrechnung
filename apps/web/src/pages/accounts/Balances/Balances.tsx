@@ -1,7 +1,8 @@
 import { GroupArchivedDisclaimer } from "@/components";
 import { MobilePaper } from "@/components/style";
+import { CurrencyDisplay } from "@/components";
 import { useTitle } from "@/core/utils";
-import { useFormatCurrency, useGetAmountColor } from "@/hooks";
+import { useGetAmountColor } from "@/hooks";
 import { useAppSelector } from "@/store";
 import {
     selectAccountBalances,
@@ -24,7 +25,6 @@ interface Props {
 
 export const Balances: React.FC<Props> = ({ groupId }) => {
     const { t } = useTranslation();
-    const formatCurrency = useFormatCurrency();
 
     const group = useGroup(groupId);
     const personalAccounts = useSortedAccounts(groupId, { sortMode: "name", type: "personal", excludeLocalOnly: true });
@@ -77,7 +77,10 @@ export const Balances: React.FC<Props> = ({ groupId }) => {
                                             color: getAmountColor(account.balance),
                                         }}
                                     >
-                                        {formatCurrency(account.balance, group.currency_identifier)}
+                                        <CurrencyDisplay
+                                            amount={account.balance}
+                                            currencyIdentifier={group.currency_identifier}
+                                        />
                                     </Typography>
                                 </Typography>
                             ))}

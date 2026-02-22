@@ -1,5 +1,5 @@
 import { Group } from "@/core/generated/api";
-import { useFormatCurrency } from "@/hooks";
+import { CurrencyDisplay } from "@/components";
 import { useAppSelector } from "@/store";
 import { Help } from "@abrechnung/components";
 import { selectAccountBalances } from "@abrechnung/redux";
@@ -14,7 +14,6 @@ export type StatisticsProps = {
 
 export const Statistics: React.FC<StatisticsProps> = ({ group }) => {
     const { t } = useTranslation();
-    const formatCurrency = useFormatCurrency();
 
     const balances = useAppSelector((state) => selectAccountBalances(state, group.id));
 
@@ -34,7 +33,9 @@ export const Statistics: React.FC<StatisticsProps> = ({ group }) => {
                     {t("accounts.balances.totalGroupExpenses")}
                     <Help title={t("accounts.balances.totalGroupExpensesHelp")} />
                 </Typography>
-                <Typography fontSize={20}>{formatCurrency(totalSpendings, group.currency_identifier)}</Typography>
+                <Typography fontSize={20}>
+                    <CurrencyDisplay amount={totalSpendings} currencyIdentifier={group.currency_identifier} />
+                </Typography>
             </Box>
 
             {personalBalance != null ? (
@@ -45,17 +46,23 @@ export const Statistics: React.FC<StatisticsProps> = ({ group }) => {
                             <Help title={t("accounts.balances.yourTotalDisbursementsHelp")} />
                         </Typography>
                         <Typography fontSize={20}>
-                            {formatCurrency(personalBalance.totalPaidPurchases, group.currency_identifier)}
+                            <CurrencyDisplay
+                                amount={personalBalance.totalPaidPurchases}
+                                currencyIdentifier={group.currency_identifier}
+                            />
                         </Typography>
                     </Box>
 
                     <Box>
                         <Typography color="textSecondary" sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}>
                             {t("accounts.balances.yourTotalExpenses")}
-                            <Help title={t("accounts.balances.yourTotalExpenses")} />
+                            <Help title={t("accounts.balances.yourTotalExpensesHelp")} />
                         </Typography>
                         <Typography fontSize={20}>
-                            {formatCurrency(personalBalance.totalConsumedPurchases, group.currency_identifier)}
+                            <CurrencyDisplay
+                                amount={personalBalance.totalConsumedPurchases}
+                                currencyIdentifier={group.currency_identifier}
+                            />
                         </Typography>
                     </Box>
                 </>
