@@ -1,4 +1,4 @@
-import { useFormatCurrency } from "@/hooks";
+import { CurrencyDisplay } from "@/components";
 import { useAppSelector } from "@/store";
 import { Group } from "@abrechnung/api";
 import { selectAccountBalances, useSortedAccounts } from "@abrechnung/redux";
@@ -21,7 +21,6 @@ type Data = {
 
 export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
     const { t } = useTranslation();
-    const formatCurrency = useFormatCurrency();
     const theme: Theme = useTheme();
     const navigate = useNavigate();
 
@@ -93,8 +92,11 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
                                 </Typography>
                             ) : (
                                 <>
-                                    <Typography variant="body2" sx={{ mr: 1, textWrap: "nowrap" }}>
-                                        {formatCurrency(item.balance, group.currency_identifier)}
+                                    <Typography variant="body2" sx={{ mr: 1 }}>
+                                        <CurrencyDisplay
+                                            amount={item.balance}
+                                            currencyIdentifier={group.currency_identifier}
+                                        />
                                     </Typography>
                                     <Box
                                         sx={{
@@ -135,8 +137,11 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
                                             borderRadius: "0 8px 8px 0",
                                         }}
                                     />
-                                    <Typography variant="body2" sx={{ ml: 1, textWrap: "nowrap" }}>
-                                        {formatCurrency(item.balance, group.currency_identifier)}
+                                    <Typography variant="body2" sx={{ ml: 1 }}>
+                                        <CurrencyDisplay
+                                            amount={item.balance}
+                                            currencyIdentifier={group.currency_identifier}
+                                        />
                                     </Typography>
                                 </>
                             ) : (

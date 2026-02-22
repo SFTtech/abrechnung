@@ -1,10 +1,10 @@
 import { ListItemLink } from "@/components/style/ListItemLink";
-import { useFormatCurrency, useFormatDatetime } from "@/hooks";
+import { CurrencyDisplay } from "@/components";
+import { useFormatDatetime } from "@/hooks";
 import { useAppSelector } from "@/store";
 import { selectTransactionBalanceEffect, useGroupCurrencyIdentifier, useTransaction } from "@abrechnung/redux";
 import { Chip, Divider, ListItemAvatar, ListItemText, Stack, Typography } from "@mui/material";
 import * as React from "react";
-import { balanceColor } from "@/core/utils";
 import { useTranslation } from "react-i18next";
 import { TransactionIcon, TransactionPaidBy } from "@/components";
 
@@ -17,7 +17,6 @@ interface Props {
 
 export const TransactionListItem: React.FC<Props> = ({ groupId, ownedAccountId, transactionId, style }) => {
     const { t } = useTranslation();
-    const formatCurrency = useFormatCurrency();
     const transaction = useTransaction(groupId, transactionId);
     const balanceEffect = useAppSelector((state) => selectTransactionBalanceEffect(state, groupId, transactionId));
     const groupCurrencyIdentifier = useGroupCurrencyIdentifier(groupId);
@@ -90,14 +89,12 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, ownedAccountId, 
                             {ownAccountBalanceEffect != null && (
                                 <div>
                                     <span>{t("transactions.yourBalance")}&nbsp;</span>
-                                    <Typography
-                                        variant="body2"
-                                        component="span"
-                                        sx={{
-                                            color: (theme) => balanceColor(ownAccountBalanceEffect.total, theme),
-                                        }}
-                                    >
-                                        {formatCurrency(ownAccountBalanceEffect.total, groupCurrencyIdentifier)}
+                                    <Typography variant="body2" component="span">
+                                        <CurrencyDisplay
+                                            amount={ownAccountBalanceEffect.total}
+                                            currencyIdentifier={groupCurrencyIdentifier}
+                                            useColor={true}
+                                        />
                                     </Typography>
                                 </div>
                             )}
@@ -107,11 +104,17 @@ export const TransactionListItem: React.FC<Props> = ({ groupId, ownedAccountId, 
 
                 <ListItemText>
                     <Typography align="right" variant="body2">
-                        {formatCurrency(transaction.value, transaction.currency_identifier)}
+                        <CurrencyDisplay
+                            amount={transaction.value}
+                            currencyIdentifier={transaction.currency_identifier}
+                        />
                         {valueInGroupCurrency != null && (
                             <>
                                 &#32;&#40;
-                                {formatCurrency(valueInGroupCurrency, groupCurrencyIdentifier)}
+                                <CurrencyDisplay
+                                    amount={valueInGroupCurrency}
+                                    currencyIdentifier={groupCurrencyIdentifier}
+                                />
                                 &#41;
                             </>
                         )}

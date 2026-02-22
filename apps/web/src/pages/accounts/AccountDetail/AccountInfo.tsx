@@ -26,6 +26,7 @@ import { Navigate, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import { stringifyError } from "@abrechnung/api";
+import { CurrencyDisplay } from "@/components";
 
 interface Props {
     groupId: number;
@@ -253,10 +254,10 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                             excludeAccounts={[account.id]}
                             AdditionalShareInfo={({ account: participatingAccount }) => (
                                 <TableCell width="100px" align="right">
-                                    {formatCurrency(
-                                        balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0,
-                                        currencyIdentifier
-                                    )}
+                                    <CurrencyDisplay
+                                        amount={balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0}
+                                        currencyIdentifier={currencyIdentifier}
+                                    />
                                 </TableCell>
                             )}
                             onChange={(value) => pushChanges({ clearing_shares: value })}

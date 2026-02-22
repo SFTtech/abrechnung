@@ -4,7 +4,7 @@ import React from "react";
 import { useAppSelector } from "@/store";
 import { ShareSelect } from "../../../components/ShareSelect";
 import { useTranslation } from "react-i18next";
-import { useFormatCurrency } from "@/hooks";
+import { CurrencyDisplay } from "@/components";
 import { ClearingAccount } from "@abrechnung/types";
 
 interface Props {
@@ -14,7 +14,6 @@ interface Props {
 
 export const ClearingAccountDetail: React.FC<Props> = ({ groupId, account }) => {
     const { t } = useTranslation();
-    const formatCurrency = useFormatCurrency();
     const currencyIdentifier = useGroupCurrencyIdentifier(groupId);
     const balances = useAppSelector((state) => selectAccountBalances(state, groupId));
     if (!currencyIdentifier) {
@@ -37,10 +36,10 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, account }) => 
                 excludeAccounts={[account.id]}
                 AdditionalShareInfo={({ account: participatingAccount }) => (
                     <TableCell width="100px" align="right">
-                        {formatCurrency(
-                            balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0,
-                            currencyIdentifier
-                        )}
+                        <CurrencyDisplay
+                            amount={balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0}
+                            currencyIdentifier={currencyIdentifier}
+                        />
                     </TableCell>
                 )}
                 editable={false}

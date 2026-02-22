@@ -1,11 +1,11 @@
 import { selectAccountBalances, useGroupCurrencyIdentifier } from "@abrechnung/redux";
 import { Divider, ListItemAvatar, ListItemText, Stack, Tooltip, Typography } from "@mui/material";
-import React from "react";
-import { balanceColor } from "@/core/utils";
+import * as React from "react";
 import { useAppSelector } from "@/store";
 import { getAccountLink } from "@/utils";
 import { ListItemLink, ClearingAccountIcon } from "@/components/style";
-import { useFormatCurrency, useFormatDatetime } from "@/hooks";
+import { useFormatDatetime } from "@/hooks";
+import { CurrencyDisplay } from "@/components";
 import { ClearingAccount } from "@abrechnung/types";
 import { ClearingAccountParticipants } from "@/components/accounts";
 
@@ -16,7 +16,6 @@ interface Props {
 }
 
 export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, clearingAccount }) => {
-    const formatCurrency = useFormatCurrency();
     const formatDatetime = useFormatDatetime();
     const balances = useAppSelector((state) => selectAccountBalances(state, groupId));
     const currencyIdentifier = useGroupCurrencyIdentifier(groupId);
@@ -56,18 +55,11 @@ export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, 
                 />
                 <ListItemText>
                     <Typography align="right" variant="body2">
-                        <Typography
-                            component="span"
-                            sx={{
-                                color: (theme) =>
-                                    balanceColor(balances[clearingAccount.id]?.clearingResolution[accountId], theme),
-                            }}
-                        >
-                            {formatCurrency(
-                                balances[clearingAccount.id]?.clearingResolution[accountId],
-                                currencyIdentifier
-                            )}
-                        </Typography>
+                        <CurrencyDisplay
+                            amount={balances[clearingAccount.id]?.clearingResolution[accountId]}
+                            currencyIdentifier={currencyIdentifier}
+                            useColor={true}
+                        />
                     </Typography>
                 </ListItemText>
             </ListItemLink>
