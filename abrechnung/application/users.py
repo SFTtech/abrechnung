@@ -240,6 +240,7 @@ class UserService(Service[Config]):
             raise InvalidArgument("Registering new user failed")
 
         if requires_email_confirmation:
+            await conn.execute("delete from pending_registration where user_id = $1", user_id)
             await conn.execute("insert into pending_registration (user_id) values ($1)", user_id)
 
         return user_id
@@ -336,6 +337,7 @@ class UserService(Service[Config]):
         if not valid_pw:
             raise InvalidPassword
 
+        await conn.execute("delete from pending_email_change where user_id = $1", user.id)
         await conn.execute(
             "insert into pending_email_change (user_id, new_email) values ($1, $2)",
             user.id,
@@ -366,6 +368,7 @@ class UserService(Service[Config]):
         if not user_id:
             raise InvalidArgument("permission denied")
 
+        await conn.execute("delete from pending_password_recovery where user_id = $1", user_id)
         await conn.execute(
             "insert into pending_password_recovery (user_id) values ($1)",
             user_id,
