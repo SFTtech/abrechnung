@@ -7,6 +7,7 @@ import {
     positionDeleted,
     selectAccountIdToAccountMap,
     selectTransactionBalanceEffect,
+    selectTransactionPositionTotal,
     useGroupAccounts,
     useTransaction,
     useWipTransactionPositions,
@@ -102,7 +103,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
 
     const [showAccountSelect, setShowAccountSelect] = useState(false);
 
-    const totalPositionValue = positions.reduce((acc, curr) => acc + curr.price, 0);
+    const totalPositionValue = useAppSelector((state) => selectTransactionPositionTotal(state, groupId, transactionId));
     const totalPositionSharedValue = positions.reduce(
         (currTotal, position) => currTotal + position.price * position.communist_shares,
         0

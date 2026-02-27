@@ -97,6 +97,17 @@ export const useTransaction = (groupId: number, transactionId: number): Transact
 export const selectNextLocalPositionId = (state: TransactionSliceState): number => {
     return state.nextLocalPositionId;
 };
+const selectTransactionPositions = createSelector(selectTransactionById, (transaction: Transaction | undefined) => {
+    if (!transaction) {
+        return [];
+    }
+    const positions = transaction?.position_ids.map((id) => transaction.positions[id]).filter((p) => !p.deleted) ?? [];
+    return positions;
+});
+
+export const useTransactionPositions = (groupId: number, transactionId: number): TransactionPosition[] => {
+    return useSelector((state: IRootState) => selectTransactionPositions(state, groupId, transactionId));
+};
 
 const selectWipTransactionPositions = createSelector(
     selectTransactionById,
@@ -130,6 +141,27 @@ const selectWipTransactionPositions = createSelector(
 export const useWipTransactionPositions = (groupId: number, transactionId: number): TransactionPosition[] => {
     return useSelector((state: IRootState) => selectWipTransactionPositions(state, groupId, transactionId));
 };
+
+export const selectTransactionPositionById = createSelector(
+    selectTransactionById,
+    (state: IRootState, groupId: number, transactionId: number, positionId: number | undefined) => positionId,
+    (transaction: Transaction | undefined, positionId: number | undefined): TransactionPosition | undefined => {
+        if (!transaction || positionId == null) {
+            return undefined;
+        }
+        return transaction.positions[positionId];
+    }
+);
+
+export const selectTransactionPositionTotal = createSelector(
+    selectTransactionById,
+    (transaction: Transaction | undefined): number => {
+        if (!transaction) {
+            return 0;
+        }
+        return Object.values(transaction.positions).reduce((acc, curr) => acc + curr.price, 0);
+    }
+);
 
 export const selectTransactionHasPositions = createSelector(
     selectTransactionById,
@@ -426,6 +458,27 @@ export const deleteTransaction = createAsyncThunkWithErrorHandling<
     return { transaction: undefined };
 });
 
+export const wipPositionAdded = createAsyncThunkWithErrorHandling<
+    { position: TransactionPosition },
+    {
+        groupId: number;
+        transactionId: number;
+        position: Omit<TransactionPosition, "id" | "deleted" | "only_local" | "is_changed">;
+    },
+    { state: IRootState }
+>("wipPositionAdded", async ({ groupId, transactionId, position: data }, { getState, dispatch }) => {
+    const state = getState();
+    const position = {
+        ...data,
+        id: state.transactions.nextLocalPositionId,
+        deleted: false,
+        only_local: true,
+        is_changed: true,
+    };
+    dispatch(wipPositionAddedInternal({ groupId, position, transactionId }));
+    return { position };
+});
+
 const initialState: TransactionSliceState = {
     byGroupId: {},
     nextLocalTransactionId: -1,
@@ -609,12 +662,12 @@ const transactionSlice = createSlice({
             };
             updateTransactionBalanceEffect(s.wipTransactions, transaction.id);
         },
-        wipPositionAdded: (
+        wipPositionAddedInternal: (
             state,
             action: PayloadAction<{
                 groupId: number;
                 transactionId: number;
-                position: Omit<TransactionPosition, "id" | "deleted">;
+                position: TransactionPosition;
             }>
         ) => {
             const { groupId, transactionId, position } = action.payload;
@@ -624,12 +677,10 @@ const transactionSlice = createSlice({
                 return;
             }
 
-            const positionId = state.nextLocalPositionId;
-            state.nextLocalPositionId = positionId - 1;
-            wipTransaction.position_ids.push(positionId);
-            wipTransaction.positions[positionId] = {
+            state.nextLocalPositionId = state.nextLocalPositionId - 1;
+            wipTransaction.position_ids.push(position.id);
+            wipTransaction.positions[position.id] = {
                 ...position,
-                id: positionId,
                 deleted: false,
                 only_local: true,
                 is_changed: true,
@@ -797,10 +848,11 @@ export const {
     wipFileDeleted,
     wipFileUpdated,
     wipPositionUpdated,
-    wipPositionAdded,
     positionDeleted,
     discardTransactionChange,
     setTransactionStatus,
 } = transactionSlice.actions;
+
+const { wipPositionAddedInternal } = transactionSlice.actions;
 
 export const { reducer: transactionReducer } = transactionSlice;

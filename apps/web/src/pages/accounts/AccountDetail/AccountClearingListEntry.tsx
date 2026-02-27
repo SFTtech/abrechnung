@@ -37,6 +37,7 @@ export const AccountClearingListEntry: React.FC<Props> = ({ groupId, accountId, 
                             {clearingAccount.name}
                         </Typography>
                     }
+                    slots={{ secondary: "div" }}
                     secondary={
                         <Stack>
                             <div>

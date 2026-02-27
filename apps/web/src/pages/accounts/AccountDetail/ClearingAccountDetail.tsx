@@ -33,7 +33,6 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, account }) => 
                         {t("common.shared")}
                     </TableCell>
                 }
-                excludeAccounts={[account.id]}
                 AdditionalShareInfo={({ account: participatingAccount }) => (
                     <TableCell width="100px" align="right">
                         <CurrencyDisplay
