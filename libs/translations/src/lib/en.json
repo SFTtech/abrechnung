@@ -46,6 +46,7 @@
         "linkCopiedToClipboard": "Link copied to clipboard!",
         "qrCode": "Qr Code",
         "createdBy": "created by {{username}}",
+        "copy": "Copy",
         "changedBy": "changed by {{username}}"
     },
     "shareSelect": {
@@ -195,7 +196,11 @@
             "positions": "Positions",
             "sharedPlusRest": "Shared + Rest",
             "addPositions": "Add Positions",
-            "remaining": "Remaining:"
+            "editPosition": "Edit Position",
+            "addAccount": "Add Account",
+            "remaining": "Remaining:",
+            "shared": "Shared with all Purchase Participants",
+            "usagesFor": "For <strong>{{for}}</strong>"
         },
         "history": {
             "linkTo": "History"

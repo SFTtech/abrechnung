@@ -168,9 +168,11 @@ interface ShareSelectProps {
     shouldDisplayAccount?: (accountId: number) => boolean | undefined;
     additionalShareInfoHeader?: React.ReactNode | undefined;
     AdditionalShareInfo?: React.FC<{ account: Account }> | undefined;
-    excludeAccounts?: number[] | undefined;
+    communistShares?: number;
+    onChangeCommunistShares?: (value: number) => void;
     currencyIdentifier?: string;
     editable?: boolean | undefined;
+    hideShowEventsFilter?: boolean;
 }
 
 export const ShareSelect: React.FC<ShareSelectProps> = ({
@@ -184,11 +186,13 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
     shouldDisplayAccount,
     additionalShareInfoHeader,
     AdditionalShareInfo,
-    excludeAccounts,
+    communistShares,
+    onChangeCommunistShares,
     currencyIdentifier,
     error,
     helperText,
     editable = false,
+    hideShowEventsFilter = false,
 }) => {
     const { t } = useTranslation();
     const theme = useTheme();
@@ -213,17 +217,16 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                         return true;
                     }
 
-                    if (editable) {
-                        return !(!showEvents && a.type === "clearing");
+                    if (a.type === "clearing" && !showEvents && !hideShowEventsFilter) {
+                        return false;
                     }
+
                     if (shouldDisplayAccount) {
                         return shouldDisplayAccount(accountId);
                     }
-                    return false;
+
+                    return editable;
                 };
-                if (excludeAccounts && excludeAccounts.includes(a.id)) {
-                    return false;
-                }
                 if (!isAccountShown(a.id)) {
                     return false;
                 }
@@ -237,13 +240,14 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                 return true;
             })
             .sort(sortFn);
-    }, [value, showEvents, editable, searchValue, unfilteredAccounts, excludeAccounts, shouldDisplayAccount]);
+    }, [value, showEvents, editable, searchValue, unfilteredAccounts, shouldDisplayAccount]);
 
     React.useEffect(() => {
         // set displayed split mode to evenly if we have a "shares" split with non-even shares
         if (
             splitMode === "shares" &&
-            Object.values(value).reduce((onlyDefaultShares, value) => onlyDefaultShares && value === 1, true)
+            Object.values(value).reduce((onlyDefaultShares, value) => onlyDefaultShares && value === 1, true) &&
+            (communistShares == null || communistShares === 1 || communistShares === 0)
         ) {
             setFrontendSplitMode("evenly");
         }
@@ -323,22 +327,25 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                 </Stack>
                 {editable && (
                     <Stack direction="row" spacing={2} sx={{ paddingY: 1 }}>
-                        <FormControlLabel
-                            control={
-                                <Checkbox
-                                    name="show-events"
-                                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                                        setShowEvents(event.target.checked)
-                                    }
-                                />
-                            }
-                            checked={showEvents}
-                            label={t("shareSelect.showEvents")}
-                        />
+                        {!hideShowEventsFilter && (
+                            <FormControlLabel
+                                control={
+                                    <Checkbox
+                                        name="show-events"
+                                        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                                            setShowEvents(event.target.checked)
+                                        }
+                                    />
+                                }
+                                checked={showEvents}
+                                label={t("shareSelect.showEvents")}
+                            />
+                        )}
                         <TextField
                             variant="standard"
                             value={frontendSplitMode}
-                            sx={{ minWidth: 200 }}
+                            sx={{ minWidth: hideShowEventsFilter ? undefined : 200 }}
+                            fullWidth={hideShowEventsFilter}
                             onChange={(e) => handleSplitModeChange(e.target.value as FrontendSplitMode)}
                             label={t("shareSelect.splitMode")}
                             select
@@ -350,6 +357,29 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                     </Stack>
                 )}
             </Grid>
+            {communistShares != null &&
+                (frontendSplitMode === "evenly" ? (
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                name="communist-shares"
+                                onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                                    onChangeCommunistShares?.(event.target.checked ? 1.0 : 0.0)
+                                }
+                            />
+                        }
+                        checked={communistShares != null && communistShares > 0}
+                        label={t("transactions.positions.shared")}
+                    />
+                ) : (
+                    <NumericInput
+                        label={t("transactions.positions.shared")}
+                        value={communistShares}
+                        onChange={onChangeCommunistShares}
+                        fullWidth
+                        sx={{ mb: 1 }}
+                    />
+                ))}
             <Divider variant="middle" sx={{ marginLeft: 0 }} />
             <TableContainer
                 sx={{
@@ -401,7 +431,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                                     />
                                 )}
                             </TableCell>
-                            <TableCell width="100px">
+                            <TableCell>
                                 {editable ? (
                                     <FormControlLabel
                                         control={<Checkbox onChange={handleSelectAll} />}

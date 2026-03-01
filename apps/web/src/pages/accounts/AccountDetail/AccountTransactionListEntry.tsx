@@ -36,6 +36,7 @@ export const AccountTransactionListEntry: React.FC<Props> = ({ groupId, transact
                             </Typography>
                         </>
                     }
+                    slots={{ secondary: "div" }}
                     secondary={
                         <Stack>
                             <div>

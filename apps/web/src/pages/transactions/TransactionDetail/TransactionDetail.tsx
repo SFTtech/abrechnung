@@ -25,6 +25,8 @@ import { TransactionPositions } from "./purchase/TransactionPositions";
 import { ValidationErrors as PositionValidationErrors } from "./purchase/types";
 import { useTranslation } from "react-i18next";
 import { stringifyError } from "@abrechnung/api";
+import { useIsSmallScreen } from "@/hooks";
+import { TransactionPositionsMobile } from "./purchase/TransactionPositionsMobile";
 
 interface Props {
     groupId: number;
@@ -39,6 +41,7 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
     const dispatch = useAppDispatch();
     const navigate = useNavigate();
     const transactionId = Number(params["id"]);
+    const isSmallScreen = useIsSmallScreen();
 
     const [showPositions, setShowPositions] = React.useState(false);
     const group = useGroup(groupId);
@@ -170,11 +173,19 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
                     </Button>
                 </Grid>
             ) : (showPositions && transaction.is_wip) || hasPositions ? (
-                <TransactionPositions
-                    groupId={groupId}
-                    transactionId={transactionId}
-                    validationErrors={positionValidationErrors}
-                />
+                isSmallScreen ? (
+                    <TransactionPositionsMobile
+                        groupId={groupId}
+                        transactionId={transactionId}
+                        validationErrors={positionValidationErrors}
+                    />
+                ) : (
+                    <TransactionPositions
+                        groupId={groupId}
+                        transactionId={transactionId}
+                        validationErrors={positionValidationErrors}
+                    />
+                )
             ) : null}
         </>
     );

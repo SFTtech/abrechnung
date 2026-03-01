@@ -121,6 +121,10 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
         return <Navigate to="/404" />;
     }
 
+    const shouldDisplayAccount = (accountId: number) => {
+        return account.is_wip && accountId !== account.id;
+    };
+
     return (
         <>
             <Grid container justifyContent="space-between">
@@ -251,7 +255,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                             }
                             error={!!validationErrors.fieldErrors.clearing_shares}
                             helperText={validationErrors.fieldErrors.clearing_shares}
-                            excludeAccounts={[account.id]}
+                            shouldDisplayAccount={shouldDisplayAccount}
                             AdditionalShareInfo={({ account: participatingAccount }) => (
                                 <TableCell width="100px" align="right">
                                     <CurrencyDisplay
@@ -261,7 +265,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                                 </TableCell>
                             )}
                             onChange={(value) => pushChanges({ clearing_shares: value })}
-                            editable={account.is_wip}
+                            editable={true}
                         />
                     </Grid>
                 ) : null}

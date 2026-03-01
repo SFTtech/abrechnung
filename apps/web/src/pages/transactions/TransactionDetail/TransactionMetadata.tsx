@@ -76,27 +76,28 @@ export const TransactionMetadata: React.FC<Props> = ({
                             />
                         </TableCell>
                         <TableCell></TableCell>
-                        <TableCell width="100px" align="right">
-                            {total}
-                        </TableCell>
+                        <TableCell align="right">{total}</TableCell>
                     </>
                 );
             }
 
-            return (
-                <TableCell width="100px" align="right">
-                    {total}
-                </TableCell>
-            );
+            return <TableCell align="right">{total}</TableCell>;
         },
         [showPositions, hasPositions, transaction, balanceEffect, groupCurrencyIdentifier, isSmallScreen]
     );
 
     const shouldDisplayAccount = React.useCallback(
-        (accountId: number) =>
-            balanceEffect[accountId] !== undefined &&
-            (balanceEffect[accountId].commonDebitors !== 0 || balanceEffect[accountId].positions !== 0),
-        [balanceEffect]
+        (accountId: number) => {
+            if (transaction.is_wip) {
+                return true;
+            }
+
+            return (
+                balanceEffect[accountId] !== undefined &&
+                (balanceEffect[accountId].commonDebitors !== 0 || balanceEffect[accountId].positions !== 0)
+            );
+        },
+        [balanceEffect, transaction.is_wip]
     );
 
     const pushChanges = React.useCallback(
@@ -367,14 +368,10 @@ export const TransactionMetadata: React.FC<Props> = ({
                                             </TableCell>
                                         </>
                                     )}
-                                    <TableCell width="100px" align="right">
-                                        {t("common.total")}
-                                    </TableCell>
+                                    <TableCell align="right">{t("common.total")}</TableCell>
                                 </>
                             ) : (
-                                <TableCell width="100px" align="right">
-                                    {t("common.shared")}
-                                </TableCell>
+                                <TableCell align="right">{t("common.shared")}</TableCell>
                             )
                         }
                         AdditionalShareInfo={ShareInfo}

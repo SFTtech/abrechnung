@@ -5,7 +5,7 @@ import { evaluateExpression } from "./mathExpression";
 import { useTranslation } from "react-i18next";
 
 export type NumericInputProps = {
-    onChange: (value: number) => void;
+    onChange?: (value: number) => void;
     value?: number | undefined;
     isCurrency?: boolean | false;
 } & Omit<TextFieldProps, "value" | "onChange" | "onBlur" | "onKeyUp">;
@@ -70,7 +70,7 @@ export const NumericInput: React.FC<NumericInputProps> = ({
     const finalizeInput = () => {
         const updateValue = (value: number) => {
             setInternalValue(formatValue(value));
-            onChange(value);
+            onChange?.(value);
             setInternalError(false);
             setInternalHelperText(undefined);
         };
