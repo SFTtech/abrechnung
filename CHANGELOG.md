@@ -2,7 +2,13 @@
 
 ## Unreleased
 
-[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.7.1...HEAD)
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.8.0...HEAD)
+
+## 1.8.0 (2026-03-08)
+
+[Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.7.1...v1.8.0)
+
+- optimize the mobile view for position editing during transaction editing
 
 ## 1.7.1 (2026-02-21)
 
