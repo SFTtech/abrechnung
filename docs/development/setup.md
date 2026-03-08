@@ -117,7 +117,7 @@ Working on the frontend is quite easy, simply run
 
 ```shell
 pnpm install
-npx nx serve web
+make dev-web
 ```
 
 and you are good to go!

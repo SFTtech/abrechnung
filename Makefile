@@ -2,6 +2,10 @@
 test:
 	uv run pytest tests --doctest-modules --cov=abrechnung
 
+.PHONY: dev-web
+dev-web:
+	pnpm --filter web run dev
+
 .PHONY: format
 format:
 	uv run ruff format
@@ -46,4 +50,4 @@ serve-docs:
 generate-openapi:
 	mkdir -p api
 	uv run abrechnung -c config.yaml show-openapi > api/openapi.json
-	npx nx run-many --target generate-openapi
+	pnpm -w -r run generate-openapi

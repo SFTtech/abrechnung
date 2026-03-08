@@ -88,7 +88,7 @@ jobs:
                   password: ${{ secrets.DOCKERHUB_REGISTRY_PASSWORD }}
 
             - name: Build Frontend
-              run: npx nx build web
+              run: pnpm --filter web run build
 
             - name: Build Frontend Image
               id: build-frontend-image
