@@ -37,7 +37,7 @@ jobs:
             - name: Install dependencies
               run: pnpm install
             - name: Build web app
-              run: pnpm -w -r run test
+              run: pnpm -r run test
 
     lint:
         runs-on: ubuntu-latest
