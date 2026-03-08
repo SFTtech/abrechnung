@@ -8,9 +8,9 @@
         "libs/**"
     ],
     "scripts": {
-        "start": "pnpm -w -r --parallel run start",
-        "build": "pnpm -w -r --parallel run build",
-        "test": "pnpm -w -r --parallel run test"
+        "start": "pnpm -r --parallel run start",
+        "build": "pnpm -r --parallel run build",
+        "test": "pnpm -r --parallel run test"
     },
     "dependencies": {
         "@date-io/luxon": "^3.2.0",
