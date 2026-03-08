@@ -3,10 +3,14 @@
     "version": "0.0.0",
     "private": true,
     "license": "AGPL",
+    "workspaces": [
+        "apps/**",
+        "libs/**"
+    ],
     "scripts": {
-        "start": "nx serve",
-        "build": "nx build",
-        "test": "nx test"
+        "start": "pnpm -w -r --parallel run start",
+        "build": "pnpm -w -r --parallel run build",
+        "test": "pnpm -w -r --parallel run test"
     },
     "dependencies": {
         "@date-io/luxon": "^3.2.0",
@@ -47,13 +51,6 @@
     "devDependencies": {
         "@babel/core": "^7.28.5",
         "@babel/preset-react": "^7.28.5",
-        "@nx/js": "22.0.3",
-        "@nx/node": "22.0.3",
-        "@nx/playwright": "22.0.3",
-        "@nx/react": "22.0.3",
-        "@nx/vite": "22.0.3",
-        "@nx/web": "22.0.3",
-        "@nx/workspace": "22.0.3",
         "@playwright/test": "^1.36.0",
         "@rtk-query/codegen-openapi": "^2.2.0",
         "@testing-library/dom": "10.4.1",
@@ -66,7 +63,6 @@
         "@vitest/coverage-v8": "^4.0.16",
         "@vitest/ui": "^4.0.16",
         "jsdom": "~27.4.0",
-        "nx": "22.0.3",
         "openapi-typescript-codegen": "^0.30.0",
         "oxfmt": "^0.21.0",
         "oxlint": "^1.36.0",
@@ -76,6 +72,7 @@
         "typescript": "5.9.3",
         "vite": "npm:rolldown-vite@7.3.1",
         "vite-plugin-checker": "^0.12.0",
+        "vite-tsconfig-paths": "^6.1.1",
         "vitest": "^4.0.16"
     }
 }

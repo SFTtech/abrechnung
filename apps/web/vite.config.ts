@@ -2,8 +2,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import checker from "vite-plugin-checker";
-import { nxViteTsPaths } from "@nx/vite/plugins/nx-tsconfig-paths.plugin";
-import { nxCopyAssetsPlugin } from "@nx/vite/plugins/nx-copy-assets.plugin";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(() => ({
     root: __dirname,
@@ -21,16 +20,7 @@ export default defineConfig(() => ({
         port: 4200,
         host: "0.0.0.0",
     },
-    plugins: [
-        react(),
-        nxViteTsPaths(),
-        nxCopyAssetsPlugin(["*.md"]),
-        checker({ typescript: { tsconfigPath: "tsconfig.app.json" } }),
-    ],
-    // Uncomment this if you are using workers.
-    // worker: {
-    //  plugins: [ nxViteTsPaths() ],
-    // },
+    plugins: [react(), tsconfigPaths(), checker({ typescript: { tsconfigPath: "tsconfig.app.json" } })],
     build: {
         outDir: "../../dist/apps/web",
         emptyOutDir: true,

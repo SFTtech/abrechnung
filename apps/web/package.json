@@ -1,0 +1,12 @@
+{
+    "name": "web",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "dev": "vite",
+        "build": "vite build",
+        "preview": "vite preview --port 4200",
+        "generate-openapi": "pnpm exec @rtk-query/codegen-openapi openapi-config.ts",
+        "prebuild": "cp -rf ../../assets/* public/assets/ && cp ../../assets/logo.png public/favicon.png"
+    }
+}

@@ -37,7 +37,7 @@ jobs:
             - name: Install dependencies
               run: pnpm install
             - name: Build web app
-              run: npx nx run-many --target test
+              run: pnpm -w -r run test
 
     lint:
         runs-on: ubuntu-latest
@@ -55,7 +55,7 @@ jobs:
             - name: Install dependencies
               run: pnpm install
             - name: Build web app
-              run: npx oxlint
+              run: pnpm exec oxlint
 
     build:
         runs-on: ubuntu-latest
@@ -73,4 +73,4 @@ jobs:
             - name: Install dependencies
               run: pnpm install
             - name: Build web app
-              run: npx nx build web
+              run: pnpm --filter web run build
