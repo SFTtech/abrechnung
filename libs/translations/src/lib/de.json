@@ -46,7 +46,8 @@
         "createdBy": "erstellt von {{username}}",
         "changedBy": "geändert von {{username}}",
         "linkCopiedToClipboard": "Link in die Zwischenablage kopiert!",
-        "qrCode": "QR-Code"
+        "qrCode": "QR-Code",
+        "copy": "Kopie"
     },
     "shareSelect": {
         "selectedPeople_one": "{{count}} Person",
@@ -184,7 +185,10 @@
             "positions": "Positionen",
             "sharedPlusRest": "Geteilt + Rest",
             "addPositions": "Positionen hinzufügen",
-            "remaining": "Verbleibend:"
+            "remaining": "Verbleibend:",
+            "editPosition": "Position bearbeiten",
+            "addAccount": "Konto hinzufügen",
+            "shared": "Mit allen Kaufbeteiligten geteilt"
         },
         "createPurchaseForAccount": "Kauf mit {{accountName}} als Teilnehmer erstellen",
         "createTransferForAccount": "Übertragung an {{accountName}} erstellen",
@@ -208,7 +212,12 @@
         },
         "balances": {
             "tabTitle": "{{groupName}} - Salden",
-            "clearingAccountsRemainingBalances": "Einige Veranstaltungen haben noch offene Salden"
+            "clearingAccountsRemainingBalances": "Einige Veranstaltungen haben noch offene Salden",
+            "chartTabTitle": "Diagramm",
+            "statisticsTabTitle": "Statistiken",
+            "totalGroupExpensesHelp": "Summe aller Käufe",
+            "yourTotalDisbursementsHelp": "Summe der von dir bezahlten Käufe",
+            "yourTotalExpenses": "Dein Beitrag zu den Gruppenausgaben"
         },
         "detail": {
             "tabTitleEvent": "{{group.name}} - Veranstaltung {{account.name}}",

@@ -44,7 +44,8 @@
         "createdBy": "створено {{username}}",
         "changedBy": "змінено {{username}}",
         "linkCopiedToClipboard": "Посилання скопійовано в буфер обміну!",
-        "qrCode": "QR Код"
+        "qrCode": "QR Код",
+        "copy": "Копіювати"
     },
     "images": {
         "uploadImage": "Завантажити Зображення",
@@ -210,7 +211,11 @@
             "positions": "Позиції",
             "addPositions": "Додати Позиції",
             "remaining": "Залишилося:",
-            "sharedPlusRest": "Спільне + Відпочинок"
+            "sharedPlusRest": "Спільне + Відпочинок",
+            "editPosition": "Редагувати Позицію",
+            "addAccount": "Додати Обліковий Запис",
+            "shared": "Поширюється зі всіма Учасниками Закупівлі",
+            "usagesFor": "Для <strong>{{for}}</strong>"
         },
         "confirmDeleteTransaction": "Підтвердити видалення транзакції",
         "createPurchase": "Створити Покупку",
