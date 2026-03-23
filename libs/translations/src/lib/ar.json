@@ -50,12 +50,14 @@
             "join": "انضمام"
         },
         "create": {
-            "addUserAccountOnJoinDescription": "إضافة حسابات لأعضاء المجموعة الجددا تلقائيًا",
-            "title": "إنشاء مجموعة"
+            "addUserAccountOnJoinDescription": "إضافة حسابات تلقائيًا لأعضاء المجموعة المنضمين حديثًا",
+            "title": "إنشاء مجموعة",
+            "import": "استيراد مجموعة",
+            "importError": "حدث خطأ أثناء استيراد المجموعة: {{error}}"
         },
         "list": {
-            "guestUserDisclaimer": "أنت مستخدم ضيف في هذه ال‮‮تسوية وبالتالي لا يُسمح لك بإنشاء مجموعات جديدة.",
-            "tabTitle": "ال‮‮تسوية - مجموعات",
+            "guestUserDisclaimer": "أنت مستخدم ضيف في جلسة Abrechnung هذه وبالتالي لا يُسمح لك بإنشاء مجموعات جديدة.",
+            "tabTitle": "Abrechnung – مجموعات",
             "header": "مجموعات",
             "noGroups": "لا توجد مجموعات",
             "lastUpdateAt": "آخر تحديث: {{datetime}}",
@@ -242,25 +244,25 @@
     },
     "common": {
         "no": "لا",
-        "ok": "حسنا",
+        "ok": "حسنًا",
         "price": "السعر",
         "exportAsCsv": "استخراج كملف CSV",
         "delete": "حذف",
         "tagNameRequiredError": "الرجاء إدخال اسم للعلامة",
         "cancel": "إلغاء",
-        "passwordsDoNotMatch": "كلمات السرغير متوافقة",
+        "passwordsDoNotMatch": "كلمات المرور غير متطابقة",
         "noneSoFar": "لا يوجد إلى الآن",
         "username": "اسم المستخدم",
         "email": "البريد الإلكتروني",
-        "password": "كلمة السر",
-        "repeatPassword": "إعادة كلمة السر",
+        "password": "كلمة المرور",
+        "repeatPassword": "كرّر كلمة المرور",
         "save": "حفظ",
         "yes": "نعم",
         "edit": "تعديل",
         "confirm": "تأكيد",
         "add": "إضافة",
         "search": "بحث…",
-        "name": "الإسم",
+        "name": "الاسم",
         "lastChanged": "آخر تعديل",
         "lastChangedWithTime": "آخر تعديل: {{datetime}}",
         "value": "القيمة",
@@ -286,7 +288,10 @@
         "copyToClipboard": "نسخ في الحافظة",
         "createdBy": "تم الإنشاء من قبل {{username}}",
         "changedBy": "تم التعديل من قبل {{username}}",
-        "server": "الخادم"
+        "server": "الخادم",
+        "linkCopiedToClipboard": "تم نسخ الرابط إلى الحافظة!",
+        "qrCode": "رمز الاستجابة السريعة",
+        "copy": "نسخ"
     },
     "shareSelect": {
         "selectedPeople_zero": "{{count}} شخص",
@@ -302,7 +307,12 @@
         "selectedEvent_many": "{{count}} حدث",
         "selectedEvent_other": "{{count}} حدث",
         "accountSlashEvent": "حساب / حدث",
-        "showEvents": "عرض الأحداث"
+        "showEvents": "عرض الأحداث",
+        "splitMode": "وضع التقسيم",
+        "split_evenly": "بالتساوي",
+        "split_shares": "غير متساوٍ – بالحصص",
+        "split_percent": "غير متساوٍ – حسب النسبة المئوية",
+        "split_absolute": "غير متساوٍ - حسب الكمية"
     },
     "navbar": {
         "events": "أحداث",
@@ -316,7 +326,7 @@
         "profile": "الملف الشخصي",
         "sessions": "الجلسات",
         "changeEmail": "تعديل البريد الإلكتروني",
-        "changePassword": "تعديل كلمة السر",
+        "changePassword": "تعديل كلمة المرور",
         "login": "تسجيل الدخول",
         "signOut": "تسجيل الخروج"
     },
