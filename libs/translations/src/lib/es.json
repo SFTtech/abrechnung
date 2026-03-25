@@ -42,7 +42,10 @@
         "copyToClipboard": "Copiar al portapapeles",
         "tagNameRequiredError": "por favor, escribe un nombre para la etiqueta",
         "changedBy": "modificado por {{username}}",
-        "createdBy": "creado por {{username}}"
+        "createdBy": "creado por {{username}}",
+        "linkCopiedToClipboard": "Enlace copiado al portapapeles.",
+        "qrCode": "Código QR",
+        "copy": "Copiar"
     },
     "shareSelect": {
         "accountSlashEvent": "Cuenta / Evento",
@@ -52,7 +55,12 @@
         "selectedPeople_other": "{{count}} personas",
         "selectedEvent_one": "{{count}} evento",
         "selectedEvent_many": "{{count}} eventos",
-        "selectedEvent_other": "{{count}} eventos"
+        "selectedEvent_other": "{{count}} eventos",
+        "splitMode": "Modo desglose",
+        "split_evenly": "Equitativamente",
+        "split_shares": "Erráticamente - Por acciones",
+        "split_percent": "Desigualmente - Por porcentaje",
+        "split_absolute": "Desigualmente - Por cantidad"
     },
     "navbar": {
         "transactions": "Transacciones",
@@ -111,7 +119,10 @@
             "header": "Ajustes",
             "leaveGroup": "Salir del grupo",
             "archiveGroupConfirm": "¿Seguro que quieres archivar el grupo «{{group.name}}»? Los grupos archivados no admiten modificaciones y se ocultarán de listas de grupos. Solo un líder puede revertir esta acción.",
-            "dangerZone": "¡Cuidado! Las siguientes acciones son irreversibles."
+            "dangerZone": "Zona peligrosa",
+            "ownedAccount": "Esta cuenta eres tú",
+            "ownedAccountHelp": "Cuenta utilizada como predeterminada para pagar gastos y mostrar balances efectivos",
+            "exportGroupJson": "Exportar Grupo"
         },
         "join": {
             "tabTitle": "Abrechnung - Unirse a un grupo",
@@ -137,7 +148,9 @@
         },
         "create": {
             "addUserAccountOnJoinDescription": "Agregar cuentas automáticamente para los miembros recién incorporados al grupo",
-            "title": "Crear grupo"
+            "title": "Crear grupo",
+            "import": "Importar Grupo",
+            "importError": "Ocurrió un error durante importación de grupo: {{error}}"
         }
     },
     "images": {
@@ -165,12 +178,16 @@
         "list": {
             "tabTitle": "{{groupName}} - Transacciones"
         },
-        "byFor": "por {{by}}, para {{for}}",
+        "byFor": "pagado <strong>{{by}}</strong> para <strong>{{for}}</strong>",
         "positions": {
             "positions": "Desglose",
             "sharedPlusRest": "Compartido + Resto",
             "addPositions": "Añadir desglose",
-            "remaining": "Restante:"
+            "remaining": "Restante:",
+            "editPosition": "Editar Posición",
+            "addAccount": "Añadir Cuenta",
+            "shared": "Compartido con todos los Participantes de Compra",
+            "usagesFor": "Para <strong>{{for}}</strong>"
         },
         "createPurchaseForAccount": "Crear compra con {{accountName}} como participante",
         "noTransactions": "Sin transacciones",
@@ -183,7 +200,11 @@
         },
         "history": {
             "linkTo": "Historial"
-        }
+        },
+        "currencyConversionRate": "Tipo de conversión monetaria",
+        "conversionHint": "{{sourceValue}} = {{targetValue}}",
+        "yourBalance": "Su balance:",
+        "refreshCurrencyConversionRate": "Refrescar"
     },
     "accounts": {
         "list": {
@@ -191,7 +212,17 @@
         },
         "balances": {
             "tabTitle": "{{groupName}} - Saldos",
-            "clearingAccountsRemainingBalances": "Algunos eventos tienen saldo restante"
+            "clearingAccountsRemainingBalances": "Algunos eventos tienen saldo restante",
+            "chartTabTitle": "Gráfico",
+            "statisticsTabTitle": "Estadísticas",
+            "totalGroupExpenses": "Gastos totales del grupo",
+            "totalGroupExpensesHelp": "Suma de todas las compras",
+            "yourTotalDisbursements": "Su total de desembolsos",
+            "yourTotalDisbursementsHelp": "Suma de compras pagadas por ti",
+            "yourTotalExpenses": "Su contribución para gastos del grupo",
+            "yourTotalExpensesHelp": "Suma de su participación en las compras grupales",
+            "noOwnedAccountAlertTitle": "Ninguna cantidad está asignada a ti.",
+            "noOwnedAccountAlertBody": "Dirígete a los <1>ajustes del grupo</1> para reclamar una cuenta y tener aquí las estadísticas individualizadas mostradas."
         },
         "detail": {
             "tabTitleAccount": "{{group.name}} - Cuenta {{account.name}}",
@@ -212,14 +243,16 @@
         "event": "Evento",
         "noAccounts": "Sin cuentas",
         "account": "Cuenta",
-        "settleUp": "Saldar cuentas"
+        "settleUp": "Saldar cuentas",
+        "totalEventBalance": "Suma Total del Evento"
     },
     "events": {
         "list": {
             "tabTitle": "{{groupName}} - Eventos"
         },
         "createEvent": "Crear evento",
-        "noEvents": "Sin eventos"
+        "noEvents": "Sin eventos",
+        "participants": "Participantes: <strong>{{participants}}</strong>"
     },
     "profile": {
         "index": {
@@ -231,7 +264,7 @@
         "settings": {
             "tabTitle": "Abrechnung - Ajustes",
             "pageTitle": "Ajustes",
-            "info": "Estos ajustes se guardan de forma local en tu dispositivo. Borrar el almacenamiento de tu dispositivo los restablecerá.",
+            "info": "Estos ajustes son guardados localmente en tu dispositivo. Vacía su almacén local del Navegador los restablecerá.",
             "theme": "Tema",
             "themeLightMode": "Claro",
             "clearCache": "Borrar caché",
@@ -312,6 +345,8 @@
         "es": "Español",
         "ta": "Tamil",
         "uk": "Ucraniano",
-        "bg": "Búlgaro"
+        "bg": "Búlgaro",
+        "ru": "Ruso",
+        "fr": "Francés"
     }
 }
