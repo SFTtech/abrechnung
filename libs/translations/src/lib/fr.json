@@ -47,7 +47,8 @@
         "lastChanged": "Dernière modification",
         "lastChangedWithTime": "dernière modification : {{datetime}}",
         "value": "Valeur",
-        "noneSoFar": "Aucun pour l'instant"
+        "noneSoFar": "Aucun pour l'instant",
+        "copy": "Copier"
     },
     "shareSelect": {
         "selectedPeople_one": "{{count}} personne",
@@ -197,7 +198,10 @@
             "positions": "Positions",
             "sharedPlusRest": "Partagé + reste",
             "addPositions": "Ajouter des positions",
-            "remaining": "Restant :"
+            "remaining": "Restant :",
+            "editPosition": "Modifier la position",
+            "addAccount": "Ajouter un compte",
+            "shared": "Partagé avec tous les participants à l'achat"
         },
         "history": {
             "linkTo": "Historique"
@@ -211,7 +215,12 @@
         },
         "balances": {
             "tabTitle": "{{groupName}} - Soldes",
-            "clearingAccountsRemainingBalances": "Certains événements ont des soldes restants"
+            "clearingAccountsRemainingBalances": "Certains événements ont des soldes restants",
+            "statisticsTabTitle": "Statistiques",
+            "totalGroupExpenses": "Dépenses totales du groupe",
+            "totalGroupExpensesHelp": "Somme de tous les achats",
+            "yourTotalDisbursementsHelp": "Somme des achats que vous avez payés",
+            "chartTabTitle": "Graphique"
         },
         "detail": {
             "tabTitleEvent": "{{group.name}} - Événement {{account.name}}",
@@ -331,6 +340,7 @@
         "ta": "Tamoul",
         "uk": "Ukrainien",
         "bg": "Bulgare",
-        "ru": "Russe"
+        "ru": "Russe",
+        "fr": "Français"
     }
 }
