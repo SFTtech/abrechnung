@@ -57,8 +57,8 @@
         "selectedEvent_many": "{{count}} eventos",
         "selectedEvent_other": "{{count}} eventos",
         "splitMode": "Modo desglose",
-        "split_evenly": "Equitativamente",
-        "split_shares": "Erráticamente - Por acciones",
+        "split_evenly": "Igualmente",
+        "split_shares": "Desigualmente - Por acciones",
         "split_percent": "Desigualmente - Por porcentaje",
         "split_absolute": "Desigualmente - Por cantidad"
     },
