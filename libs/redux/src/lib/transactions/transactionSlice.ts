@@ -249,7 +249,7 @@ export const selectTransactionsInvolvingAccount = createSelector(
         return transactionIds
             .map((id) => s.wipTransactions.byId[id] ?? s.transactions.byId[id])
             .filter((t) => !t.deleted)
-            .sort(getTransactionSortFunc(sortMode ?? "last_changed"));
+            .toSorted(getTransactionSortFunc(sortMode ?? "last_changed"));
     }
 );
 

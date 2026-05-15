@@ -156,6 +156,15 @@ interface GroupInviteProps {
     group: Group;
 }
 
+const selectLink = (event: React.MouseEvent<HTMLLinkElement>) => {
+    const node = event.target;
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(node as HTMLElement);
+    selection?.removeAllRanges();
+    selection?.addRange(range);
+};
+
 export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
     const { t } = useTranslation();
     const [showModal, setShowModal] = React.useState(false);
@@ -173,15 +182,6 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
             return "unknown";
         }
         return member.username;
-    };
-
-    const selectLink = (event: React.MouseEvent<HTMLLinkElement>) => {
-        const node = event.target;
-        const selection = window.getSelection();
-        const range = document.createRange();
-        range.selectNodeContents(node as HTMLElement);
-        selection?.removeAllRanges();
-        selection?.addRange(range);
     };
 
     if (!group) {
@@ -232,7 +232,7 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
             )}
             {group.can_write && !isGuest && (
                 <>
-                    <Grid container justifyContent="center">
+                    <Grid container sx={{ justifyContent: "center" }}>
                         <IconButton color="primary" onClick={() => setShowModal(true)}>
                             <Add />
                         </IconButton>

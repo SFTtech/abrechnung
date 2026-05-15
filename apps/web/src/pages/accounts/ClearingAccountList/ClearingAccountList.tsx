@@ -105,10 +105,13 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                     <GroupArchivedDisclaimer group={group} />
                     <Stack
                         direction={{ sm: "column", md: "row" }}
-                        alignItems={{ md: "flex-end" }}
-                        justifyContent="space-between"
+                        sx={{ alignItems: { md: "flex-end" }, justifyContent: "space-between" }}
                     >
-                        <Stack direction={{ sm: "column", md: "row" }} justifyContent="space-between" spacing={1}>
+                        <Stack
+                            direction={{ sm: "column", md: "row" }}
+                            sx={{ justifyContent: "space-between" }}
+                            spacing={1}
+                        >
                             <Input
                                 value={searchValue}
                                 onChange={(e) => updateFilterState({ searchValue: e.target.value })}
@@ -191,7 +194,7 @@ export const ClearingAccountList: React.FC<Props> = ({ groupId }) => {
                     {shouldShowPagination && (
                         <>
                             <Divider />
-                            <Box justifyContent="center" display="flex">
+                            <Box sx={{ justifyContent: "center", display: "flex" }}>
                                 <Pagination
                                     count={numPages}
                                     page={currentPage + 1}

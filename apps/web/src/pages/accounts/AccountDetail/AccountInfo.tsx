@@ -127,8 +127,8 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
 
     return (
         <>
-            <Grid container justifyContent="space-between">
-                <Grid display="flex" alignItems="center">
+            <Grid container sx={{ justifyContent: "space-between" }}>
+                <Grid sx={{ display: "flex", alignItems: "center" }}>
                     <IconButton sx={{ display: { xs: "none", md: "inline-flex" } }} onClick={navigateBack}>
                         <ChevronLeft />
                     </IconButton>

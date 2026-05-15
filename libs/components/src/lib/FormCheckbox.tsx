@@ -1,14 +1,23 @@
 import * as React from "react";
-import { Control, Controller } from "react-hook-form";
+import { Control, Controller, FieldValues, Path } from "react-hook-form";
 import { Checkbox, FormControl, FormControlLabel, FormHelperText, CheckboxProps } from "@mui/material";
 
-export type FormCheckboxProps = Omit<CheckboxProps, "onChange" | "name"> & {
+export type FormCheckboxProps<TFieldValues extends FieldValues = FieldValues> = Omit<
+    CheckboxProps,
+    "onChange" | "name"
+> & {
     label?: string;
-    name: string;
-    control: Control<any, any>;
+    name: Path<TFieldValues>;
+    control: Control<TFieldValues>;
 };
 
-export const FormCheckbox = ({ name, label, control, sx, ...props }: FormCheckboxProps) => {
+export const FormCheckbox = <TFieldValues extends FieldValues = FieldValues>({
+    name,
+    label,
+    control,
+    sx,
+    ...props
+}: FormCheckboxProps<TFieldValues>) => {
     return (
         <Controller
             name={name}

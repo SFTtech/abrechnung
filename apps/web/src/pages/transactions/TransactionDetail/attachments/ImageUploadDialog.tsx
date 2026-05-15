@@ -47,9 +47,9 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
             const compressedImage = await imageCompression(file, options);
             setCompressionProgress(undefined);
             return compressedImage;
-        } catch (error) {
+        } catch (e) {
             setCompressionProgress(undefined);
-            setError(`Failed to compress image! ${(error as any).message}`);
+            setError(`Failed to compress image! ${(e as any).message}`);
             return undefined;
         }
     };
@@ -115,11 +115,11 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
                 </Box>
                 {compressionProgress !== undefined && (
                     <>
-                        <Box display="flex" alignItems="center">
-                            <Box width="100%" mr={1}>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                            <Box sx={{ width: "100%", mr: 1 }}>
                                 <LinearProgress variant="determinate" value={compressionProgress} />
                             </Box>
-                            <Box minWidth={35}>
+                            <Box sx={{ minWidth: 35 }}>
                                 <Typography
                                     variant="body2"
                                     color="textSecondary"

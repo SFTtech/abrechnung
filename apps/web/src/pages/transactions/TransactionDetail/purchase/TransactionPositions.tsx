@@ -72,8 +72,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     const [shownAccountIds, setShownAccountIds] = useState<number[]>([]);
     const shownAccountIdsFromTransaction = React.useMemo(() => {
         let accountIdsFromPositions: number[] = positions
-            .map((item) => Object.keys(item.usages))
-            .flat()
+            .flatMap((item) => Object.keys(item.usages))
             .map((id) => parseInt(id));
 
         let accountIdsFromDebitorShares: number[] = [];
@@ -87,7 +86,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
     React.useEffect(() => {
         setShownAccountIds((currAdditionalAccounts: number[]) => {
             const sortFunc = getAccountSortFunc("name");
-            const sortedShownAccounts = [...shownAccountIdsFromTransaction].sort((acc1Id: number, acc2Id: number) =>
+            const sortedShownAccounts = [...shownAccountIdsFromTransaction].toSorted((acc1Id: number, acc2Id: number) =>
                 sortFunc(accountIDMap[acc1Id], accountIDMap[acc2Id])
             );
             const allAccountIds = Array.from(new Set<number>([...currAdditionalAccounts, ...sortedShownAccounts]));
@@ -97,7 +96,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
 
     const shownAccounts = React.useMemo(() => {
         return shownAccountIds.map((id) => accountIDMap[id]);
-    }, [shownAccountIds]);
+    }, [shownAccountIds, accountIDMap]);
 
     const showAddAccount = shownAccounts.length < accounts.length;
 
@@ -163,7 +162,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
 
     return (
         <MobilePaper sx={{ marginTop: 2 }}>
-            <Grid container direction="row" justifyContent="space-between">
+            <Grid container direction="row" sx={{ justifyContent: "space-between" }}>
                 <Typography>{t("transactions.positions.positions")}</Typography>
                 {transaction.is_wip && (
                     <FormControlLabel

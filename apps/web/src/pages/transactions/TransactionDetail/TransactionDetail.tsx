@@ -167,7 +167,7 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
             </MobilePaper>
 
             {transaction.type === "purchase" && !showPositions && transaction.is_wip && !hasPositions ? (
-                <Grid container justifyContent="center" sx={{ marginTop: 2 }}>
+                <Grid container sx={{ justifyContent: "center", marginTop: 2 }}>
                     <Button startIcon={<AddIcon />} onClick={() => setShowPositions(true)}>
                         {t("transactions.positions.addPositions")}
                     </Button>

@@ -143,7 +143,7 @@ const selectSortedAccounts = createSelector(
             return true;
         };
 
-        return accounts.filter(filterFn).sort(compareFunction);
+        return accounts.filter(filterFn).toSorted(compareFunction);
     }
 );
 
@@ -447,9 +447,9 @@ const accountSlice = createSlice({
             const groupId = action.meta.arg.groupId;
             const s = getGroupScopedState<AccountState, AccountSliceState>(state, groupId);
             // TODO: optimize such that we maybe only update those who have actually changed??
-            const byId = accounts.reduce<{ [k: number]: Account }>((byId, account) => {
-                byId[account.id] = { ...account, is_wip: false };
-                return byId;
+            const byId = accounts.reduce<{ [k: number]: Account }>((byIdMap, account) => {
+                byIdMap[account.id] = { ...account, is_wip: false };
+                return byIdMap;
             }, {});
             s.accounts.byId = byId;
             s.accounts.ids = accounts.map((a) => a.id);

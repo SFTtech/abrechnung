@@ -125,9 +125,9 @@ export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transaction }
                 <DialogContent>
                     <Grid
                         container
-                        justifyContent="center"
-                        alignItems="center"
-                        style={{
+                        sx={{
+                            justifyContent: "center",
+                            alignItems: "center",
                             position: "relative",
                         }}
                     >

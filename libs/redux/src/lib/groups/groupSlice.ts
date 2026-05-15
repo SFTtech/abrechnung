@@ -27,7 +27,7 @@ export const selectGroups = createSelector(
         return state.groups.ids
             .map((id) => state.groups.byId[id])
             .filter((group) => group.archived === archived)
-            .sort(groupSortFn);
+            .toSorted(groupSortFn);
     }
 );
 
@@ -91,9 +91,9 @@ const groupSlice = createSlice({
         builder.addCase(fetchGroups.fulfilled, (state, action) => {
             const groups = action.payload;
             // TODO: optimize such that we maybe only update those who have actually changed??
-            const byId = groups.reduce<{ [k: number]: Group }>((byId, group) => {
-                byId[group.id] = group;
-                return byId;
+            const byId = groups.reduce<{ [k: number]: Group }>((byIdMap, group) => {
+                byIdMap[group.id] = group;
+                return byIdMap;
             }, {});
             state.groups.byId = byId;
             state.groups.ids = groups.map((g) => g.id);

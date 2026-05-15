@@ -42,9 +42,9 @@ export const selectTagsInGroup = createSelector(
     (state: IRootState, groupId: number) => selectGroupTransactionsWithWip(state, groupId),
     (state: IRootState, groupId: number) => selectGroupAccounts(state, groupId, "clearing"),
     (transactions, clearingAccounts) => {
-        const transactionTags = transactions.map((t) => t.tags).flat();
-        const accountTags = clearingAccounts.map((a) => (a.type === "clearing" ? a.tags : [])).flat();
-        return Array.from(new Set([...transactionTags, ...accountTags])).sort((a, b) =>
+        const transactionTags = transactions.flatMap((t) => t.tags);
+        const accountTags = clearingAccounts.flatMap((a) => (a.type === "clearing" ? a.tags : []));
+        return Array.from(new Set([...transactionTags, ...accountTags])).toSorted((a, b) =>
             a.toLowerCase().localeCompare(b.toLowerCase())
         );
     }
@@ -101,7 +101,7 @@ const selectSortedTransactions = createSelector(
 
             return true;
         };
-        return transactions.filter(filterFn).sort(compareFunction);
+        return transactions.filter(filterFn).toSorted(compareFunction);
     }
 );
 

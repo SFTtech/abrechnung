@@ -19,10 +19,10 @@ Enter the information into the config file in `/etc/abrechnung/abrechnung.yaml` 
 
 ```yaml
 database:
-  host: "localhost"
-  user: "abrechnung"
-  dbname: "abrechnung"
-  password: "<password>"
+    host: "localhost"
+    user: "abrechnung"
+    dbname: "abrechnung"
+    password: "<password>"
 ```
 
 Apply all database migrations with
@@ -35,7 +35,7 @@ abrechnung db migrate
 
 ```yaml
 service:
-  name: "Abrechnung"
+    name: "Abrechnung"
 ```
 
 The `name` is used to populate the email subjects as `[<name>] <subject>`.
@@ -54,11 +54,11 @@ delivery and proper api resource URLs. If `abrechnung.example.lol` is your domai
 
 ```yaml
 api:
-  id: "default"
-  secret_key: "<your secret key>"
-  host: "localhost"
-  port: 8080 # base url is given by the domain the abrechnung instance is hosted at
-  base_url: "https://abrechnung.example.lol"
+    id: "default"
+    secret_key: "<your secret key>"
+    host: "localhost"
+    port: 8080 # base url is given by the domain the abrechnung instance is hosted at
+    base_url: "https://abrechnung.example.lol"
 ```
 
 In most cases there is no need to adjust the `host`, `port` or `id` options.
@@ -69,13 +69,13 @@ To setup E-Mail delivery adjust the `email` config section to fit your use case.
 
 ```yaml
 email:
-  address: "abrechnung@example.lol"
-  host: "localhost"
-  port: 587
-  mode: "smtp-starttls"
-  auth:
-    username: "abrechnung"
-    password: "<verysecret>"
+    address: "abrechnung@example.lol"
+    host: "localhost"
+    port: 587
+    mode: "smtp-starttls"
+    auth:
+        username: "abrechnung"
+        password: "<verysecret>"
 ```
 
 Currently supported `mode` options are
@@ -100,8 +100,8 @@ E-mail confirmation can be turned of by setting the respective config variable t
 
 ```yaml
 registration:
-  enabled: true
-  require_email_confirmation: true
+    enabled: true
+    require_email_confirmation: true
 ```
 
 Additionally open registration can be restricted adding domains to the `valid_email_domains` config variable.
@@ -112,10 +112,10 @@ Guest users will not be able to create new groups themselves but can take part i
 
 ```yaml
 registration:
-  enabled: true
-  require_email_confirmation: true
-  valid_email_domains: ["some-domain.com"]
-  allow_guest_users: true
+    enabled: true
+    require_email_confirmation: true
+    valid_email_domains: ["some-domain.com"]
+    allow_guest_users: true
 ```
 
 ## Prometheus Metrics
@@ -137,8 +137,8 @@ To enable metrics under the api endpoint `/api/metrics` simply add the following
 
 ```yaml
 metrics:
-  enabled: true
-  expose_money_amounts: false # disabled by default
+    enabled: true
+    expose_money_amounts: false # disabled by default
 ```
 
 ## Configuration via Environment Variables
@@ -150,8 +150,8 @@ E.g. to set the email auth username from the config yaml as below we'd use the e
 
 ```yaml
 email:
-  auth:
-    username: "..."
+    auth:
+        username: "..."
 ```
 
 ## Frontend Configuration
@@ -163,9 +163,9 @@ Possible config options are
 
 ```yaml
 service: # ...
-  messages:
-    - type: "info" # "error" | "warning" | "success"
-      body: "This is an informational message which will be displayed at the top of the application"
-      title: "My optional title"
-      imprint_url: "https://my-imprint-for-my-abrechnung-instance.mydomain.com"
+    messages:
+        - type: "info" # "error" | "warning" | "success"
+          body: "This is an informational message which will be displayed at the top of the application"
+          title: "My optional title"
+          imprint_url: "https://my-imprint-for-my-abrechnung-instance.mydomain.com"
 ```

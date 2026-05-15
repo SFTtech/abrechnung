@@ -1,3 +1,4 @@
+// oxlint-disable-next-line import/no-unassigned-import
 import "i18next";
 import type { resources, defaultNS } from "@abrechnung/translations";
 

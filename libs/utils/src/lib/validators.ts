@@ -11,9 +11,9 @@ export const urlValidator = (url: string) => {
     if (!url || url.length <= 0) return "URL cannot be empty.";
 
     try {
-        new URL(url);
-    } catch (_) {
-        return "Invalid URL";
+        const _ = new URL(url);
+    } catch (e) {
+        return `Invalid URL: ${e}`;
     }
 
     return "";

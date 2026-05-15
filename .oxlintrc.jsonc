@@ -6,4 +6,12 @@
         "suspicious": "error",
         "perf": "error",
     },
+    "rules": {
+        "eslint/no-shadow": "off",
+        "react-perf/jsx-no-jsx-as-prop": "off",
+        "react-perf/jsx-no-new-object-as-prop": "off",
+        "react-perf/jsx-no-new-function-as-prop": "off",
+        "react-perf/jsx-no-new-array-as-prop": "off",
+        "unicorn/prefer-add-event-listener": "off",
+    },
 }

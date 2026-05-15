@@ -56,7 +56,7 @@ const useDownloadCsv = (groupId: number, transactions: Transaction[]) => {
     return React.useCallback(() => {
         const csv = transactionCsvDump(transactions, balanceEffects, accounts);
         downloadFile({ content: csv, filename: "transactions.csv", mimetype: "text/csv" });
-    }, [accounts, balanceEffects, transactions]);
+    }, [accounts, balanceEffects, transactions, downloadFile]);
 };
 
 type TransactionListActionsProps = {
@@ -94,11 +94,9 @@ const TransactionListActions: React.FC<TransactionListActionsProps> = ({
     return (
         <Stack
             direction={{ sm: "column", md: "row" }}
-            alignItems={{ md: "flex-end" }}
-            justifyContent="space-between"
-            spacing={1}
+            sx={{ alignItems: { md: "flex-end" }, justifyContent: "space-between", spacing: 1 }}
         >
-            <Stack direction={{ sm: "column", md: "row" }} justifyContent="space-between" spacing={1}>
+            <Stack direction={{ sm: "column", md: "row" }} sx={{ justifyContent: "space-between", spacing: 1 }}>
                 <Input
                     value={searchValue}
                     onChange={(e) => setSearchValue(e.target.value)}
@@ -271,7 +269,7 @@ export const TransactionList: React.FC<Props> = ({ groupId }) => {
                     {shouldShowPagination && (
                         <>
                             <Divider />
-                            <Box justifyContent="center" display="flex">
+                            <Box sx={{ justifyContent: "center", display: "flex" }}>
                                 <Pagination
                                     count={numPages}
                                     page={currentPage + 1}
