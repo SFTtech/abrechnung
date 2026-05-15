@@ -69,7 +69,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({ groupId 
     };
     return (
         <MobilePaper>
-            <Stack direction="row" spacing={1} alignItems="center">
+            <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
                 <IconButton sx={{ display: { xs: "none", md: "inline-flex" } }} onClick={navigateBack}>
                     <ChevronLeft />
                 </IconButton>

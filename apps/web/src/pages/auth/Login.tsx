@@ -59,7 +59,7 @@ export const Login: React.FC = () => {
     return (
         <Container component="main" maxWidth="xs">
             <CssBaseline />
-            <Box display="flex" flexDirection="column" alignItems="center">
+            <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                 <Avatar sx={{ margin: 1, backgroundColor: "primary.main" }}>
                     <LockOutlined />
                 </Avatar>
@@ -94,14 +94,14 @@ export const Login: React.FC = () => {
                     <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 1 }}>
                         {t("auth.login.confirmButton")}
                     </Button>
-                    <Grid container justifyContent="flex-end">
+                    <Grid container sx={{ justifyContent: "flex-end" }}>
                         <Grid>
                             <Link to={`/register${queryArgsForward}`} component={RouterLink} variant="body2">
                                 {t("auth.login.noAccountRegister")}
                             </Link>
                         </Grid>
                     </Grid>
-                    <Grid container justifyContent="flex-end">
+                    <Grid container sx={{ justifyContent: "flex-end" }}>
                         <Grid>
                             <Link to="/recover-password" component={RouterLink} variant="body2">
                                 {t("auth.login.forgotPassword")}

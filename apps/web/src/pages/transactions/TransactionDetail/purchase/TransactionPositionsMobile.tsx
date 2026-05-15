@@ -99,7 +99,7 @@ export const TransactionPositionsMobile: React.FC<TransactionPositionsMobileProp
 
     return (
         <MobilePaper sx={{ marginTop: 2 }}>
-            <Grid container direction="row" justifyContent="space-between">
+            <Grid container direction="row" sx={{ justifyContent: "space-between" }}>
                 <Typography>{t("transactions.positions.positions")}</Typography>
             </Grid>
             <TableContainer>

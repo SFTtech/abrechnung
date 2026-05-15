@@ -62,9 +62,9 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, account }) =>
 
     return (
         <>
-            <Box display="grid" gridTemplateColumns="auto min-content" justifyContent="space-between">
+            <Box sx={{ display: "grid", gridTemplateColumns: "auto min-content", justifyContent: "space-between" }}>
                 <Typography variant="h6">{t("accounts.transactionsInvolving", "", { account })}</Typography>
-                <Box display="flex" flexDirection="row" alignItems="center">
+                <Box sx={{ display: "flex", flexDirection: "row", alignItems: "center" }}>
                     <Tooltip
                         title={t("transactions.createPurchaseForAccount", "", {
                             accountName: account.name,

@@ -78,7 +78,7 @@ export const GroupList: React.FC = () => {
                 <GList groups={groups} />
                 {!isGuest && (
                     <>
-                        <Grid container justifyContent="center">
+                        <Grid container sx={{ justifyContent: "center" }}>
                             <IconButton color="primary" onClick={openGroupCreateModal}>
                                 <Add />
                             </IconButton>

@@ -134,9 +134,9 @@ const ShareSelectRow: React.FC<RowProps> = ({
                     }}
                     to={getAccountLink(account.group_id, account.type, account.id)}
                 >
-                    <Grid container direction="row" alignItems="center">
+                    <Grid container direction="row" sx={{ alignItems: "center" }}>
                         <Grid>{getAccountIcon(account.type)}</Grid>
-                        <Grid display="flex" flexDirection="column" sx={{ ml: 1 }}>
+                        <Grid sx={{ display: "flex", flexDirection: "column", ml: 1 }}>
                             <Typography variant="body2" component="span">
                                 {account.name}
                             </Typography>
@@ -307,7 +307,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
 
     return (
         <div>
-            <Grid container direction={isSmallScreen ? "column" : "row"} justifyContent="space-between">
+            <Stack direction={isSmallScreen ? "column" : "row"} sx={{ justifyContent: "space-between" }}>
                 <Stack direction="row" spacing={1} sx={{ alignItems: "center", marginY: 1 }}>
                     <Typography variant="subtitle1">{label}</Typography>
                     {nSelectedPeople > 0 && (
@@ -356,7 +356,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                         </TextField>
                     </Stack>
                 )}
-            </Grid>
+            </Stack>
             {communistShares != null &&
                 (frontendSplitMode === "evenly" ? (
                     <FormControlLabel

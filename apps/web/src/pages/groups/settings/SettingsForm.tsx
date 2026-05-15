@@ -143,7 +143,7 @@ export const SettingsForm: React.FC<SettingsFormProps> = ({ group }) => {
                     label={t("groups.settings.autoAddAccounts")}
                 />
             </FormGroup>
-            <Grid container justifyContent="space-between" style={{ marginTop: 10 }}>
+            <Grid container sx={{ justifyContent: "space-between", marginTop: 10 }}>
                 <div>
                     {group.is_owner && isEditing && (
                         <Stack spacing={1} direction="row">

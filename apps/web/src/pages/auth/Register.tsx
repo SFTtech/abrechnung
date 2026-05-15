@@ -156,7 +156,7 @@ export const Register: React.FC = () => {
                     <Button type="submit" fullWidth variant="contained" color="primary" sx={{ mt: 1 }}>
                         {t("auth.register.confirmButton")}
                     </Button>
-                    <Grid container justifyContent="flex-end">
+                    <Grid container sx={{ justifyContent: "flex-end" }}>
                         <Grid>
                             <Link to={`/login${queryArgsForward}`} component={RouterLink} variant="body2">
                                 {t("auth.register.alreadyHasAccount")}

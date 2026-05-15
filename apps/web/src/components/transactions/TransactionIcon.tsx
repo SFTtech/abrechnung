@@ -3,7 +3,7 @@ import { PurchaseIcon, TransferIcon } from "@/components/style/AbrechnungIcons";
 import { Tooltip } from "@mui/material";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { HelpOutline } from "@mui/icons-material";
+import { HelpOutlined } from "@mui/icons-material";
 
 export const TransactionIcon: React.FC<{ type: TransactionType }> = ({ type }) => {
     const { t } = useTranslation();
@@ -25,7 +25,7 @@ export const TransactionIcon: React.FC<{ type: TransactionType }> = ({ type }) =
 
     return (
         <Tooltip title="Unknown Transaction Type">
-            <HelpOutline color="primary" />
+            <HelpOutlined color="primary" />
         </Tooltip>
     );
 };

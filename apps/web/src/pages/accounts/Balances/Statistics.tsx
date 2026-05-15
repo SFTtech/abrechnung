@@ -33,7 +33,7 @@ export const Statistics: React.FC<StatisticsProps> = ({ group }) => {
                     {t("accounts.balances.totalGroupExpenses")}
                     <Help title={t("accounts.balances.totalGroupExpensesHelp")} />
                 </Typography>
-                <Typography fontSize={20}>
+                <Typography sx={{ fontSize: 20 }}>
                     <CurrencyDisplay amount={totalSpendings} currencyIdentifier={group.currency_identifier} />
                 </Typography>
             </Box>
@@ -45,7 +45,7 @@ export const Statistics: React.FC<StatisticsProps> = ({ group }) => {
                             {t("accounts.balances.yourTotalDisbursements")}
                             <Help title={t("accounts.balances.yourTotalDisbursementsHelp")} />
                         </Typography>
-                        <Typography fontSize={20}>
+                        <Typography sx={{ fontSize: 20 }}>
                             <CurrencyDisplay
                                 amount={personalBalance.totalPaidPurchases}
                                 currencyIdentifier={group.currency_identifier}
@@ -58,7 +58,7 @@ export const Statistics: React.FC<StatisticsProps> = ({ group }) => {
                             {t("accounts.balances.yourTotalExpenses")}
                             <Help title={t("accounts.balances.yourTotalExpensesHelp")} />
                         </Typography>
-                        <Typography fontSize={20}>
+                        <Typography sx={{ fontSize: 20 }}>
                             <CurrencyDisplay
                                 amount={personalBalance.totalConsumedPurchases}
                                 currencyIdentifier={group.currency_identifier}

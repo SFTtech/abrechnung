@@ -232,7 +232,7 @@ export const GroupInvites: React.FC<GroupInviteProps> = ({ group }) => {
             )}
             {group.can_write && !isGuest && (
                 <>
-                    <Grid container justifyContent="center">
+                    <Grid container sx={{ justifyContent: "center" }}>
                         <IconButton color="primary" onClick={() => setShowModal(true)}>
                             <Add />
                         </IconButton>

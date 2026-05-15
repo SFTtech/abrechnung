@@ -163,7 +163,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
 
     return (
         <MobilePaper sx={{ marginTop: 2 }}>
-            <Grid container direction="row" justifyContent="space-between">
+            <Grid container direction="row" sx={{ justifyContent: "space-between" }}>
                 <Typography>{t("transactions.positions.positions")}</Typography>
                 {transaction.is_wip && (
                     <FormControlLabel

@@ -282,8 +282,7 @@ export const AuthenticatedLayout: React.FC = () => {
             </Box>
             <Box
                 component="main"
-                flexGrow={1}
-                width={{ sm: `calc(100vw - ${drawerWidth}px)`, md: "100vw", overflow: "auto" }}
+                sx={{ flexGrow: 1, width: { sm: `calc(100vw - ${drawerWidth}px)`, md: "100vw", overflow: "auto" } }}
             >
                 <Toolbar />
                 <Banner />
