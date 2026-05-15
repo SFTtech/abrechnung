@@ -19,6 +19,8 @@ type Data = {
     isYou: boolean;
 };
 
+const roundTwoDecimals = (val: number) => +val.toFixed(2);
+
 export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
     const { t } = useTranslation();
     const theme: Theme = useTheme();
@@ -33,8 +35,6 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
 
     const colorGreen = theme.palette.mode === "light" ? theme.palette.success.light : theme.palette.success.dark;
     const colorRed = theme.palette.mode === "light" ? theme.palette.error.light : theme.palette.error.dark;
-
-    const roundTwoDecimals = (val: number) => +val.toFixed(2);
 
     const chartData: Data[] = personalAccounts.map((account) => {
         const balance = balances[account.id];
@@ -65,6 +65,7 @@ export const BalanceBarGraph: React.FC<BalanceBarGraphProps> = ({ group }) => {
 
                 return (
                     <Box
+                        // oxlint-disable-next-line react/no-array-index-key
                         key={index}
                         sx={{
                             display: "grid",

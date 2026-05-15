@@ -5,6 +5,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterLuxon } from "@mui/x-date-pickers/AdapterLuxon";
 import * as React from "react";
 import { ToastContainer } from "react-toastify";
+// oxlint-disable-next-line import/no-unassigned-import
 import "react-toastify/dist/ReactToastify.css";
 import { Loading } from "@abrechnung/components";
 import { api } from "../core/api";

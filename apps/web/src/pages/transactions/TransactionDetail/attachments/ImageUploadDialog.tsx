@@ -47,9 +47,9 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
             const compressedImage = await imageCompression(file, options);
             setCompressionProgress(undefined);
             return compressedImage;
-        } catch (error) {
+        } catch (e) {
             setCompressionProgress(undefined);
-            setError(`Failed to compress image! ${(error as any).message}`);
+            setError(`Failed to compress image! ${(e as any).message}`);
             return undefined;
         }
     };

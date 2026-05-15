@@ -60,7 +60,7 @@ export function Select<
             }
             onChange(newValue as OptionType<Option, Multiple, Nullable>);
         },
-        [onChange]
+        [onChange, nullable]
     );
 
     const optionToString = React.useCallback(

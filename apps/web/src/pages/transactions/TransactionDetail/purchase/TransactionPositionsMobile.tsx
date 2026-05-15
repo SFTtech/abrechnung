@@ -51,8 +51,7 @@ export const TransactionPositionsMobile: React.FC<TransactionPositionsMobileProp
     const [shownAccountIds, setShownAccountIds] = useState<number[]>([]);
     const shownAccountIdsFromTransaction = React.useMemo(() => {
         let accountIdsFromPositions: number[] = positions
-            .map((item) => Object.keys(item.usages))
-            .flat()
+            .flatMap((item) => Object.keys(item.usages))
             .map((id) => parseInt(id));
 
         let accountIdsFromDebitorShares: number[] = [];
@@ -66,7 +65,7 @@ export const TransactionPositionsMobile: React.FC<TransactionPositionsMobileProp
     React.useEffect(() => {
         setShownAccountIds((currAdditionalAccounts: number[]) => {
             const sortFunc = getAccountSortFunc("name");
-            const sortedShownAccounts = [...shownAccountIdsFromTransaction].sort((acc1Id: number, acc2Id: number) =>
+            const sortedShownAccounts = [...shownAccountIdsFromTransaction].toSorted((acc1Id: number, acc2Id: number) =>
                 sortFunc(accountIDMap[acc1Id], accountIDMap[acc2Id])
             );
             const allAccountIds = Array.from(new Set<number>([...currAdditionalAccounts, ...sortedShownAccounts]));

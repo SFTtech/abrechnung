@@ -215,7 +215,7 @@ export const transactionCsvDump = (
 ): string => {
     const transactionsSorted = [...transactions]
         .filter((t) => !t.is_wip)
-        .sort((t1, t2) => t1.billed_at.localeCompare(t2.billed_at));
+        .toSorted((t1, t2) => t1.billed_at.localeCompare(t2.billed_at));
 
     const accountMap = Object.fromEntries(
         accounts.filter((acc) => !acc.deleted).map((acc) => [`account-${acc.id}`, acc.name])

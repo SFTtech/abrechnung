@@ -116,7 +116,7 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
         {
             selectFromResult: ({ data, ...rest }) => ({
                 ...rest,
-                data: data ? [...data].sort((a, b) => a.username.localeCompare(b.username)) : undefined,
+                data: data ? [...data].toSorted((a, b) => a.username.localeCompare(b.username)) : undefined,
             }),
         }
     );
@@ -151,8 +151,8 @@ export const GroupMemberList: React.FC<GroupMemberListProps> = ({ group }) => {
                         <ListItemText primary="No Members" />
                     </ListItem>
                 ) : (
-                    members.map((member, index) => (
-                        <div key={index}>
+                    members.map((member) => (
+                        <div key={member.user_id}>
                             <ListItem
                                 secondaryAction={
                                     (group.is_owner || group.can_write) && (

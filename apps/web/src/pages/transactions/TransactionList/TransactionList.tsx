@@ -56,7 +56,7 @@ const useDownloadCsv = (groupId: number, transactions: Transaction[]) => {
     return React.useCallback(() => {
         const csv = transactionCsvDump(transactions, balanceEffects, accounts);
         downloadFile({ content: csv, filename: "transactions.csv", mimetype: "text/csv" });
-    }, [accounts, balanceEffects, transactions]);
+    }, [accounts, balanceEffects, transactions, downloadFile]);
 };
 
 type TransactionListActionsProps = {

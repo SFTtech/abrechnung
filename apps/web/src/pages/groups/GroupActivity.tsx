@@ -22,11 +22,11 @@ export const GroupActivity: React.FC<Props> = ({ groupId }) => {
     useTitle(t("groups.log.tabTitle", { groupName: group?.name }));
 
     const getMemberUsername = (member_id: number) => {
-        const member = members?.find((member) => member.user_id === member_id);
-        if (member === undefined) {
+        const foundMember = members?.find((member) => member.user_id === member_id);
+        if (foundMember === undefined) {
             return "unknown";
         }
-        return member.username;
+        return foundMember.username;
     };
 
     return (

@@ -239,22 +239,22 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                 }
                 return true;
             })
-            .sort(sortFn);
-    }, [value, showEvents, editable, searchValue, unfilteredAccounts, shouldDisplayAccount]);
+            .toSorted(sortFn);
+    }, [value, showEvents, editable, searchValue, unfilteredAccounts, shouldDisplayAccount, hideShowEventsFilter]);
 
     React.useEffect(() => {
         // set displayed split mode to evenly if we have a "shares" split with non-even shares
         if (
             splitMode === "shares" &&
-            Object.values(value).reduce((onlyDefaultShares, value) => onlyDefaultShares && value === 1, true) &&
+            Object.values(value).reduce((onlyDefaultShares, val) => onlyDefaultShares && val === 1, true) &&
             (communistShares == null || communistShares === 1 || communistShares === 0)
         ) {
             setFrontendSplitMode("evenly");
         }
-    }, [splitMode, value, setFrontendSplitMode]);
+    }, [splitMode, value, setFrontendSplitMode, communistShares]);
 
     const { nSelectedPeople, nSelectedEvents } = React.useMemo(() => {
-        const nSelectedPeople = accounts.reduce((nAccs: number, acc: Account) => {
+        const selectedPeople = accounts.reduce((nAccs: number, acc: Account) => {
             if (acc.type !== "personal") {
                 return nAccs;
             }
@@ -263,7 +263,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
             }
             return nAccs;
         }, 0);
-        const nSelectedEvents = accounts.reduce((nAccs: number, acc: Account) => {
+        const selectedEvents = accounts.reduce((nAccs: number, acc: Account) => {
             if (acc.type !== "clearing") {
                 return nAccs;
             }
@@ -273,11 +273,11 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
             return nAccs;
         }, 0);
 
-        return { nSelectedPeople, nSelectedEvents };
-    }, [unfilteredAccounts, value, shouldDisplayAccount]);
+        return { nSelectedPeople: selectedPeople, nSelectedEvents: selectedEvents };
+    }, [value, accounts]);
 
     const nSelected = React.useMemo(() => {
-        return Object.values(value).reduce((nSelected, val) => nSelected + (val > 0 ? 1 : 0), 0);
+        return Object.values(value).reduce((selected, val) => selected + (val > 0 ? 1 : 0), 0);
     }, [value]);
     const isAllSelected = nSelected === accounts.length;
     const showSearch = !isSmallScreen && unfilteredAccounts.length > 5;
@@ -351,7 +351,9 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                             select
                         >
                             {allowedSplitModes.map((mode) => (
-                                <MenuItem value={mode}>{t(`shareSelect.split_${mode}`)}</MenuItem>
+                                <MenuItem key={mode} value={mode}>
+                                    {t(`shareSelect.split_${mode}`)}
+                                </MenuItem>
                             ))}
                         </TextField>
                     </Stack>

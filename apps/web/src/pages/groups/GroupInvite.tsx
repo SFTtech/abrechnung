@@ -38,7 +38,7 @@ export const GroupInvite: React.FC = () => {
                 setError(stringifyError(err));
                 setGroup(null);
             });
-    }, [setGroup, setError, inviteToken]);
+    }, [setGroup, setError, inviteToken, navigate]);
 
     const join = () => {
         if (!inviteToken) {

@@ -39,7 +39,7 @@ export const AccountTransactionList: React.FC<Props> = ({ groupId, account }) =>
 
     const combinedList: ArrayAccountsAndTransactions = (transactions as ArrayAccountsAndTransactions)
         .concat(clearingAccounts)
-        .sort((f1, f2) => DateTime.fromISO(getDate(f2)).toMillis() - DateTime.fromISO(getDate(f1)).toMillis());
+        .toSorted((f1, f2) => DateTime.fromISO(getDate(f2)).toMillis() - DateTime.fromISO(getDate(f1)).toMillis());
 
     const createTransactionForAccount = (type: TransactionType) => {
         dispatch(

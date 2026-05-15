@@ -83,7 +83,7 @@ export const TransactionMetadata: React.FC<Props> = ({
 
             return <TableCell align="right">{total}</TableCell>;
         },
-        [showPositions, hasPositions, transaction, balanceEffect, groupCurrencyIdentifier, isSmallScreen]
+        [showPositions, hasPositions, balanceEffect, groupCurrencyIdentifier, isSmallScreen]
     );
 
     const shouldDisplayAccount = React.useCallback(

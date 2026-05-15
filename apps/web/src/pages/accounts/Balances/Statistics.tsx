@@ -24,7 +24,7 @@ export const Statistics: React.FC<StatisticsProps> = ({ group }) => {
             (totalSpendings, balance) => totalSpendings + balance.totalConsumedPurchases,
             0
         );
-    }, []);
+    }, [balances]);
 
     return (
         <Stack direction="column" spacing={1}>
