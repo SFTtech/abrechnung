@@ -188,7 +188,8 @@
             "remaining": "Verbleibend:",
             "editPosition": "Position bearbeiten",
             "addAccount": "Konto hinzufügen",
-            "shared": "Mit allen Kaufbeteiligten geteilt"
+            "shared": "Mit allen Kaufbeteiligten geteilt",
+            "usagesFor": "Für <strong>{{for}}</strong>"
         },
         "createPurchaseForAccount": "Kauf mit {{accountName}} als Teilnehmer erstellen",
         "createTransferForAccount": "Übertragung an {{accountName}} erstellen",
@@ -217,7 +218,12 @@
             "statisticsTabTitle": "Statistiken",
             "totalGroupExpensesHelp": "Summe aller Käufe",
             "yourTotalDisbursementsHelp": "Summe der von dir bezahlten Käufe",
-            "yourTotalExpenses": "Dein Beitrag zu den Gruppenausgaben"
+            "yourTotalExpenses": "Dein Beitrag zu den Gruppenausgaben",
+            "totalGroupExpenses": "Gesamt Gruppen Ausgaben",
+            "yourTotalDisbursements": "Ihre Gesamtzahlungen",
+            "yourTotalExpensesHelp": "Summe Ihres Anteils an Gruppenkäufen",
+            "noOwnedAccountAlertTitle": "Ihnen wurde kein Konto zugewiesen.",
+            "noOwnedAccountAlertBody": "Gehe zu den <1>Gruppeneinstellungen</1>, um ein Konto zu beanspruchen und hier personalisierte Statistiken anzuzeigen."
         },
         "detail": {
             "tabTitleEvent": "{{group.name}} - Veranstaltung {{account.name}}",
@@ -337,6 +343,7 @@
         "ta": "Tamil",
         "uk": "Ukrainisch",
         "bg": "Bulgarisch",
-        "ru": "Russisch"
+        "ru": "Russisch",
+        "fr": "Französisch"
     }
 }
