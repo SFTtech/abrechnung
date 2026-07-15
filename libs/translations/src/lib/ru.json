@@ -45,7 +45,10 @@
         "noneSoFar": "Пока нет",
         "copyToClipboard": "Скопировать в буфер обмена",
         "createdBy": "создано {{username}}",
-        "changedBy": "изменено {{username}}"
+        "changedBy": "изменено {{username}}",
+        "linkCopiedToClipboard": "Ссылка скопирована в буфер обмена!",
+        "qrCode": "QR код",
+        "copy": "Скопировать"
     },
     "shareSelect": {
         "selectedPeople_one": "{{count}} человек",
@@ -55,7 +58,12 @@
         "selectedEvent_few": "{{count}} события",
         "selectedEvent_many": "{{count}} событий",
         "accountSlashEvent": "Счёт / Событие",
-        "showEvents": "Показать событие"
+        "showEvents": "Показать событие",
+        "splitMode": "Режим разделения",
+        "split_evenly": "Поровну",
+        "split_shares": "Неравномерно: по долям",
+        "split_percent": "Неравномерно: в процентах",
+        "split_absolute": "Неравномерно: по сумме"
     },
     "navbar": {
         "transactions": "Транзакции",
@@ -77,7 +85,9 @@
         "addGroup": "Добавить группу",
         "create": {
             "title": "Создать группу",
-            "addUserAccountOnJoinDescription": "Автоматически создавать учетные записи для новых членов группы"
+            "addUserAccountOnJoinDescription": "Автоматически создавать учетные записи для новых членов группы",
+            "import": "Импортировать группу",
+            "importError": "Произошла ошибка при импорте группы: {{error}}"
         },
         "delete": {
             "title": "Удалить группу",
@@ -122,7 +132,10 @@
             "archiveGroupConfirm": "Вы уверены, что хотите архивировать группу {{group.name}}? Архивированные группы не могут быть изменены и они будут скрыты из списков групп. Только владелец группы может обратить это изменение.",
             "unarchiveGroup": "Разархивировать группу",
             "unarchiveGroupConfirm": "Вы уверены, что хотите разархивировать группу {{group.name}}? Группа перестанет быть \"только для чтения\".",
-            "dangerZone": "Опасная зона. Следующие действия необратимы."
+            "dangerZone": "Опасная зона",
+            "ownedAccount": "Это ваш аккаунт",
+            "ownedAccountHelp": "Аккаунт используется по умолчанию для оплаты расходов и отображения баланса",
+            "exportGroupJson": "Экспортировать группу"
         },
         "join": {
             "tabTitle": "Abrechnung - Присоединиться к группе",
@@ -173,21 +186,28 @@
         "list": {
             "tabTitle": "{{groupName}} - Транзакции"
         },
-        "byFor": "от {{by}}, для {{for}}",
+        "byFor": "Оплачено <strong>{{by}}</strong> за <strong>{{for}}</strong>",
         "transferredTo": "Для",
         "type": {
             "purchase": "покупка",
-            "transfer": "трансфер"
+            "transfer": "трансфер",
+            "mimo": "mimo"
         },
         "positions": {
             "positions": "Позиции",
             "sharedPlusRest": "Поделено + Остальное",
             "addPositions": "Добавить позиции",
-            "remaining": "Осталось:"
+            "remaining": "Осталось:",
+            "editPosition": "Редактировать позицию",
+            "addAccount": "Добавить аккаунт",
+            "shared": "Разделено со всеми участниками покупки",
+            "usagesFor": "Для <strong>{{for}}</strong>"
         },
         "history": {
             "linkTo": "История"
-        }
+        },
+        "yourBalance": "Ваш баланс:",
+        "refreshCurrencyConversionRate": "Обновить"
     },
     "accounts": {
         "noAccounts": "Нет учетных записей",
@@ -196,7 +216,17 @@
         },
         "balances": {
             "tabTitle": "{{groupName}} - Балансы",
-            "clearingAccountsRemainingBalances": "Некоторые события имеют оставшиеся балансы"
+            "clearingAccountsRemainingBalances": "Некоторые события имеют оставшиеся балансы",
+            "chartTabTitle": "График",
+            "statisticsTabTitle": "Статистика",
+            "totalGroupExpenses": "Общие расходы группы",
+            "totalGroupExpensesHelp": "Сумма всех покупок",
+            "yourTotalDisbursements": "Ваши общие выплаты",
+            "yourTotalDisbursementsHelp": "Сумма покупок, оплаченных вами",
+            "yourTotalExpenses": "Ваш вклад в расходы группы",
+            "yourTotalExpensesHelp": "Сумма вашей доли в покупках группы",
+            "noOwnedAccountAlertTitle": "К вам не привязан ни один аккаунт.",
+            "noOwnedAccountAlertBody": "Перейдите в <1>настройки группы</1>, чтобы выбрать аккаунт и увидеть здесь индивидуальную статистику."
         },
         "detail": {
             "tabTitleEvent": "{{group.name}} - Событие {{account.name}}",
@@ -216,14 +246,16 @@
             "settleButton": "Погасить"
         },
         "deleteConfirm": "Подтвердите удаление {{accountType}}",
-        "deleteConfirmBody": "Вы уверены, что хотите удалить {{accountType}} \"{{accountName}}\"?"
+        "deleteConfirmBody": "Вы уверены, что хотите удалить {{accountType}} \"{{accountName}}\"?",
+        "totalEventBalance": "Общая сумма события"
     },
     "events": {
         "list": {
             "tabTitle": "{{groupName}} - События"
         },
         "createEvent": "Создать событие",
-        "noEvents": "Нет событий"
+        "noEvents": "Нет событий",
+        "participants": "Участники: <strong>{{participants}}</strong>"
     },
     "profile": {
         "index": {
@@ -235,7 +267,7 @@
         "settings": {
             "tabTitle": "Abrechnung - Настройки",
             "pageTitle": "Настройки",
-            "info": "Эти настройки хранятся локально на вашем устройстве. Очистка хранилища вашего Браузера сбросит их.",
+            "info": "Эти настройки хранятся локально на вашем устройстве. Очистка локального хранилища браузера сбросит их.",
             "theme": "Тема",
             "darkMode": "Тёмный режим",
             "themeSystemDefault": "Системная по умолчанию",
@@ -313,6 +345,8 @@
         "es": "Испанский",
         "ta": "Тамильский",
         "uk": "Украинский",
-        "bg": "Болгарский"
+        "bg": "Болгарский",
+        "ru": "Русский",
+        "fr": "Французский"
     }
 }
