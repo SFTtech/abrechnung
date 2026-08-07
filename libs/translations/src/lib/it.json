@@ -1,1 +1,22 @@
-{}
+{
+    "app": {
+        "name": "Abrechnung"
+    },
+    "common": {
+        "price": "Importo",
+        "currency": "Valuta",
+        "exportAsCsv": "Esporta come CSV",
+        "qrCode": "Codice QR",
+        "copy": "Copia"
+    },
+    "shareSelect": {
+        "selectedEvent_one": "{{count}} Evento",
+        "selectedEvent_many": "{{count}} Eventi",
+        "selectedEvent_other": "{{count}} Eventi"
+    },
+    "groups": {
+        "create": {
+            "import": "Importa Gruppo"
+        }
+    }
+}
