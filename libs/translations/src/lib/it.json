@@ -7,16 +7,120 @@
         "currency": "Valuta",
         "exportAsCsv": "Esporta come CSV",
         "qrCode": "Codice QR",
-        "copy": "Copia"
+        "copy": "Copia",
+        "username": "Nome utente",
+        "server": "Server",
+        "email": "Email",
+        "password": "Password",
+        "repeatPassword": "Conferma password",
+        "passwordsDoNotMatch": "Le password non corrispondono",
+        "save": "Salva",
+        "yes": "Sì",
+        "no": "No",
+        "ok": "Ok",
+        "edit": "Modifica",
+        "delete": "Elimina",
+        "confirm": "Conferma",
+        "add": "Aggiungi",
+        "cancel": "Annulla",
+        "search": "Cerca…",
+        "name": "Nome",
+        "value": "Valore",
+        "date": "Data",
+        "description": "Descrizione",
+        "sortBy": "Ordina per",
+        "total": "Totale",
+        "totalWithColon": "Totale:"
     },
     "shareSelect": {
-        "selectedEvent_one": "{{count}} Evento",
-        "selectedEvent_many": "{{count}} Eventi",
-        "selectedEvent_other": "{{count}} Eventi"
+        "selectedEvent_one": "{{count}} evento",
+        "selectedEvent_many": "{{count}} eventi",
+        "selectedEvent_other": "{{count}} eventi",
+        "showEvents": "Mostra eventi",
+        "split_evenly": "Equamente"
     },
     "groups": {
         "create": {
-            "import": "Importa Gruppo"
+            "import": "Importa gruppo",
+            "title": "Crea gruppo",
+            "addUserAccountOnJoinDescription": "Crea automaticamente un partecipante per ogni nuovo iscritto al gruppo"
+        },
+        "list": {
+            "tabTitle": "Abrechnung - Gruppi",
+            "header": "Gruppi",
+            "archivedGroups": "Archiviati",
+            "noGroups": "Nessun gruppo",
+            "lastUpdateAt": "ultimo aggiornamento: {{datetime}}"
+        },
+        "addGroup": "Aggiungi gruppo",
+        "delete": {
+            "title": "Elimina gruppo"
+        },
+        "log": {
+            "tabTitle": "{{groupName}} - Attività",
+            "header": "Attività gruppo",
+            "messageInfo": "da {{username}} il {{datetime}}"
+        },
+        "memberList": {
+            "header": "Membri",
+            "tabTitle": "{{groupName}} - Membri"
+        },
+        "settings": {
+            "tabTitle": "{{groupName}} - Impostazioni",
+            "header": "Impostazioni"
         }
+    },
+    "navbar": {
+        "transactions": "Transazioni",
+        "events": "Eventi",
+        "balances": "Bilanci",
+        "accounts": "Partecipanti",
+        "groupSettings": "Impostazioni",
+        "activity": "Attività",
+        "profile": "Profilo",
+        "settings": "Impostazioni",
+        "sessions": "Sessioni",
+        "changeEmail": "Cambia email",
+        "changePassword": "Cambia password",
+        "login": "Accedi",
+        "signOut": "Esci"
+    },
+    "languages": {
+        "en": "English",
+        "de": "Deutsch",
+        "es": "Español",
+        "ta": "தமிழ்",
+        "uk": "Українська",
+        "bg": "Български",
+        "ru": "Русский",
+        "fr": "Français"
+    },
+    "profile": {
+        "changeEmail": {
+            "tabTitle": "Abrechnung - Cambia email",
+            "pageTitle": "Cambia email",
+            "newEmail": "Nuova email"
+        },
+        "sessions": {
+            "tabTitle": "Abrechnung - Sessioni",
+            "header": "Sessioni attive",
+            "lastSeenOn": "Ultimo accesso il {{datetime}}"
+        },
+        "changePassword": {
+            "tabTitle": "Abrechnung - Cambia password",
+            "pageTitle": "Cambia password"
+        }
+    },
+    "images": {
+        "uploadImage": "Carica immagine",
+        "chooseImage": "Scegli immagine"
+    },
+    "transactions": {
+        "createTransaction": "Crea transazione",
+        "noTransactions": "Nessuna transazione",
+        "transferredFrom": "Da",
+        "transferredTo": "a",
+        "paidBy": "Pagato da",
+        "conversionHint": "{{sourceValue}} = {{targetValue}}"
     }
 }
