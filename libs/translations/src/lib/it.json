@@ -30,14 +30,33 @@
         "description": "Descrizione",
         "sortBy": "Ordina per",
         "total": "Totale",
-        "totalWithColon": "Totale:"
+        "totalWithColon": "Totale:",
+        "tag_one": "Tag",
+        "tag_many": "Tag",
+        "tag_other": "Tag",
+        "lastChanged": "Ultima modifica",
+        "lastChangedWithTime": "Ultima modifica: {{datetime}}",
+        "filterByTags": "Filtra per tag",
+        "shared": "Condiviso",
+        "shares": "Parti",
+        "send": "Invia",
+        "addNewTag": "Aggiungi nuovo tag",
+        "tagNameRequiredError": "inserisci il nome del tag",
+        "copyToClipboard": "Copia negli appunti",
+        "linkCopiedToClipboard": "Link copiato negli appunti!"
     },
     "shareSelect": {
         "selectedEvent_one": "{{count}} evento",
         "selectedEvent_many": "{{count}} eventi",
         "selectedEvent_other": "{{count}} eventi",
         "showEvents": "Mostra eventi",
-        "split_evenly": "Equamente"
+        "split_evenly": "Equamente",
+        "selectedPeople_one": "{{count}} persona",
+        "selectedPeople_many": "{{count}} persone",
+        "selectedPeople_other": "{{count}} persone",
+        "split_shares": "Per parti",
+        "split_percent": "Per percentuale",
+        "split_absolute": "Per importo"
     },
     "groups": {
         "create": {
@@ -50,7 +69,8 @@
             "header": "Gruppi",
             "archivedGroups": "Archiviati",
             "noGroups": "Nessun gruppo",
-            "lastUpdateAt": "ultimo aggiornamento: {{datetime}}"
+            "lastUpdateAt": "ultimo aggiornamento: {{datetime}}",
+            "guestUserDisclaimer": "Sei un utente ospite su questo Abrechnung e quindi non puoi creare nuovi gruppi."
         },
         "addGroup": "Aggiungi gruppo",
         "delete": {
@@ -63,11 +83,40 @@
         },
         "memberList": {
             "header": "Membri",
-            "tabTitle": "{{groupName}} - Membri"
+            "tabTitle": "{{groupName}} - Membri",
+            "editGroupMember": "Modifica membro del gruppo",
+            "invitedBy": "invitato da {{username}}, ",
+            "editor": "Collaboratore",
+            "owner": "Proprietario",
+            "itsYou": "Tu",
+            "canWrite": "Può scrivere",
+            "isOwner": "Proprietario"
         },
         "settings": {
             "tabTitle": "{{groupName}} - Impostazioni",
-            "header": "Impostazioni"
+            "header": "Impostazioni",
+            "ownerDisclaimer": "Sei un proprietario di questo gruppo",
+            "readAccessDisclaimer": "Hai accesso di sola lettura a questo gruppo",
+            "leaveGroup": "Lascia gruppo",
+            "archiveGroup": "Archivia gruppo",
+            "unarchiveGroup": "Ripristina gruppo",
+            "exportGroupJson": "Esporta gruppo"
+        },
+        "archivedDisclaimer": "Questo gruppo è archiviato, quindi in sola lettura.",
+        "join": {
+            "invitationValidUntil": "Invito valido fino al",
+            "invitationSingleUse": "Invito ad uso singolo",
+            "join": "Unisciti",
+            "invitationDescription": "Descrizione invito",
+            "youHaveBeenInvited": "Invito al gruppo {{group.name}}",
+            "tabTitle": "Abrechnung - Unisciti al gruppo"
+        },
+        "invites": {
+            "tabTitle": "{{groupName}} - Link di invito",
+            "header": "Link di invito",
+            "guestUserDisclaimer": "Sei un utente ospite su questo Abrechnung e quindi non puoi creare inviti per il gruppo.",
+            "singleUse": "Uso singolo",
+            "validUntil": "Valido fino al"
         }
     },
     "navbar": {
@@ -113,7 +162,9 @@
     },
     "images": {
         "uploadImage": "Carica immagine",
-        "chooseImage": "Scegli immagine"
+        "chooseImage": "Scegli immagine",
+        "compressing": "compressione...",
+        "filename": "Nome file"
     },
     "transactions": {
         "createTransaction": "Crea transazione",
@@ -121,6 +172,28 @@
         "transferredFrom": "Da",
         "transferredTo": "a",
         "paidBy": "Pagato da",
-        "conversionHint": "{{sourceValue}} = {{targetValue}}"
+        "conversionHint": "{{sourceValue}} = {{targetValue}}",
+        "list": {
+            "tabTitle": "{{groupName}} - Transazioni"
+        },
+        "yourBalance": "Il tuo bilancio:",
+        "byFor": "Pagato da <strong>{{by}}</strong> per <strong>{{for}}</strong>",
+        "refreshCurrencyConversionRate": "Aggiorna"
+    },
+    "balanceTable": {
+        "totalPaid": "Pagato",
+        "balance": "Bilancio"
+    },
+    "accounts": {
+        "balances": {
+            "tabTitle": "{{groupName}} - Bilanci",
+            "statisticsTabTitle": "Statistiche",
+            "totalGroupExpenses": "Spese totali del gruppo"
+        },
+        "detail": {
+            "tabTitleEvent": "{{group.name}} - Evento {{account.name}}"
+        },
+        "event": "Evento",
+        "balanceOf": "Bilancio di {{account.name}}"
     }
 }
