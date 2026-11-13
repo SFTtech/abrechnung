@@ -43,7 +43,10 @@
         "addNewTag": "Aggiungi nuovo tag",
         "tagNameRequiredError": "inserisci il nome del tag",
         "copyToClipboard": "Copia negli appunti",
-        "linkCopiedToClipboard": "Link copiato negli appunti!"
+        "linkCopiedToClipboard": "Link copiato negli appunti!",
+        "advanced": "Avanzato",
+        "createdAt": "At creato",
+        "noneSoFar": "Nessuno fin'ora"
     },
     "shareSelect": {
         "selectedEvent_one": "{{count}} evento",
