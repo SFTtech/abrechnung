@@ -25,8 +25,8 @@ jobs:
         name: "Calculate list of debian distros and docker image tags"
         runs-on: ubuntu-latest
         steps:
-            - uses: actions/checkout@v5
-            - uses: actions/setup-python@v6
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
             - id: set-distros
               run: |
                   # if we're running from a tag, get the full list of distros; otherwise just use debian:sid
@@ -36,8 +36,8 @@ jobs:
                       dists='["debian:trixie", "ubuntu:noble"]'
                       tags="master $GITHUB_SHA latest latest-release $GITHUB_REF_NAME"
                   fi
-                  echo "::set-output name=distros::$dists"
-                  echo "::set-output name=tags::$tags"
+                  echo "distros=$dists" >> "$GITHUB_OUTPUT"
+                  echo "tags=$tags" >> "$GITHUB_OUTPUT"
         # map the step outputs to job outputs
         outputs:
             distros: ${{ steps.set-distros.outputs.distros }}
@@ -49,7 +49,7 @@ jobs:
         needs:
             - get-distros
         steps:
-            - uses: actions/checkout@v5
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - name: Install qemu dependency
               run: |
@@ -57,11 +57,11 @@ jobs:
                   sudo apt-get install -y qemu-user-static
 
             - name: Install pnpm
-              uses: pnpm/action-setup@v4
+              uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
               with:
                   version: 12
             - name: Use Node.js
-              uses: actions/setup-node@v4
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
               with:
                   node-version: 24
                   cache: "pnpm"
@@ -70,8 +70,9 @@ jobs:
 
             - name: Build API Image
               id: build-api-image
-              uses: redhat-actions/buildah-build@v2
+              uses: redhat-actions/buildah-build@719e3c40d8af9790c23eca13f7daa339f2867034 # v3.1.0
               with:
+                  squash: false
                   image: ${{ env.DOCKER_IMAGE_NAME_API }}
                   tags: ${{ needs.get-distros.outputs.tags }}
                   platforms: linux/arm64/v8, linux/amd64
@@ -79,7 +80,7 @@ jobs:
 
             - name: Push API Image To quay.io
               id: push-to-quay-api
-              uses: redhat-actions/push-to-registry@v2
+              uses: redhat-actions/push-to-registry@94ade333c38ecc0e60e94785125d9a52ca423b37 # v3.0.0
               with:
                   image: ${{ steps.build-api-image.outputs.image }}
                   tags: ${{ steps.build-api-image.outputs.tags }}
@@ -92,8 +93,9 @@ jobs:
 
             - name: Build Frontend Image
               id: build-frontend-image
-              uses: redhat-actions/buildah-build@v2
+              uses: redhat-actions/buildah-build@719e3c40d8af9790c23eca13f7daa339f2867034 # v3.1.0
               with:
+                  squash: false
                   image: ${{ env.DOCKER_IMAGE_NAME_FRONTEND }}
                   tags: ${{ needs.get-distros.outputs.tags }}
                   platforms: linux/arm64/v8, linux/amd64
@@ -101,7 +103,7 @@ jobs:
 
             - name: Push Frontend Image To quay.io
               id: push-to-quay-frontend
-              uses: redhat-actions/push-to-registry@v2
+              uses: redhat-actions/push-to-registry@94ade333c38ecc0e60e94785125d9a52ca423b37 # v3.0.0
               with:
                   image: ${{ steps.build-frontend-image.outputs.image }}
                   tags: ${{ steps.build-frontend-image.outputs.tags }}
@@ -122,18 +124,18 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v5
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
               with:
                   path: src
 
             - name: Download web dist
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
               with:
                   name: web-dist
                   path: src/dist/apps/web
 
             - name: Install uv
-              uses: astral-sh/setup-uv@v6
+              uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
 
             - name: Build the packages
               working-directory: src
@@ -147,7 +149,7 @@ jobs:
                   echo "ARTIFACT_NAME=${DISTRO//:}" >> $GITHUB_ENV
 
             - name: Upload debs as artifacts
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
               with:
                   name: debs-${{ env.ARTIFACT_NAME }}
                   path: debs/*.deb
@@ -163,7 +165,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Download all workflow run artifacts
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
             - name: Trigger demo deployment via webhook
               run: curl ${{ secrets.DEMO_DEPLOY_WEBHOOK_URL }} -F "archive=@$(find -name 'abrechnung_*trixie*_amd64.deb')" --fail
 
@@ -178,7 +180,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Download all workflow run artifacts
-              uses: actions/download-artifact@v4
+              uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
               with:
                   path: artifacts
                   merge-multiple: true
@@ -186,7 +188,7 @@ jobs:
               run: |
                   ls -lah artifacts
             - name: Attach to release
-              uses: softprops/action-gh-release@v2
+              uses: softprops/action-gh-release@8a0cd651e5b2365bd640854a3fa5dfc70e4875f3 # v3.0.4
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
               with:
