@@ -1,0 +1,14 @@
+{
+    "name": "e2e",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "test": "playwright test",
+        "test:ui": "playwright test --ui",
+        "install-browsers": "playwright install chromium"
+    },
+    "devDependencies": {
+        "@playwright/test": "1.59.1",
+        "@types/node": "26.6.6"
+    }
+}

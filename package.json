@@ -3,10 +3,6 @@
     "version": "0.0.0",
     "private": true,
     "license": "AGPL",
-    "workspaces": [
-        "apps/**",
-        "libs/**"
-    ],
     "scripts": {
         "start": "pnpm -r --parallel run start",
         "build": "pnpm -r --parallel run build",

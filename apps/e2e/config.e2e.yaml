@@ -1,0 +1,30 @@
+# Backend configuration used by the e2e test suite.
+# The database credentials match the postgres service container used in CI,
+# see apps/e2e/README.md for how to start a matching database locally.
+service:
+    name: "Abrechnung E2E"
+
+database:
+    host: "localhost"
+    user: "abrechnung"
+    dbname: "abrechnung"
+    password: "password"
+
+api:
+    base_url: "http://localhost:14200"
+    secret_key: "e2e-secret"
+    host: "127.0.0.1"
+    port: 18080
+    id: e2e
+
+registration:
+    enabled: true
+
+email:
+    address: "abrechnung@example.lol"
+    host: "localhost"
+    port: 587
+    mode: "smtp-starttls"
+    auth:
+        username: "abrechnung"
+        password: "unused"

@@ -15,3 +15,7 @@ jobs:
     backend:
         uses: ./.github/workflows/backend.yaml
         secrets: inherit
+
+    e2e:
+        uses: ./.github/workflows/e2e.yaml
+        secrets: inherit
