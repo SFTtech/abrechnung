@@ -1,4 +1,9 @@
 import { Client } from "./generated";
+import { ApiError } from "./generated/core/ApiError";
+import { BaseHttpRequest } from "./generated/core/BaseHttpRequest";
+import type { ApiRequestOptions } from "./generated/core/ApiRequestOptions";
+import { CancelablePromise } from "./generated/core/CancelablePromise";
+import { request as __request } from "./generated/core/request";
 import { IConnectionStatusProvider, IHttpError } from "./types";
 
 export class HttpError implements IHttpError {
@@ -14,6 +19,8 @@ export class Api {
 
     public client: Client;
 
+    private unauthorizedHandler?: () => void;
+
     private authenticatedResolveCallbacks: Array<() => void> = [];
 
     constructor(
@@ -25,7 +32,42 @@ export class Api {
     }
 
     private makeClient = () => {
-        return new Client({ BASE: this.baseApiUrl, TOKEN: this.accessToken });
+        // eslint-disable-next-line @typescript-eslint/no-this-alias
+        const self = this;
+        class UnauthorizedAwareHttpRequest extends BaseHttpRequest {
+            public override request<T>(options: ApiRequestOptions): CancelablePromise<T> {
+                return new CancelablePromise<T>((resolve, reject, onCancel) => {
+                    const req = __request<T>(this.config, options);
+                    onCancel(() => req.cancel());
+                    req.then(resolve).catch((err) => {
+                        if (err instanceof ApiError && err.status === 401) {
+                            self.notifyUnauthorized();
+                        }
+                        reject(err);
+                    });
+                });
+            }
+        }
+        return new Client({ BASE: this.baseApiUrl, TOKEN: this.accessToken }, UnauthorizedAwareHttpRequest);
+    };
+
+    /**
+     * Register a callback which is invoked when the backend answers an authenticated request with 401 Unauthorized,
+     * e.g. because the session was revoked or the database was reset.
+     */
+    public setUnauthorizedHandler = (handler?: () => void) => {
+        this.unauthorizedHandler = handler;
+    };
+
+    /**
+     * Must be called for every 401 response received. Only triggers the handler if we currently hold an access token,
+     * so failed login attempts do not cause a logout.
+     */
+    public notifyUnauthorized = () => {
+        if (this.accessToken === undefined) {
+            return;
+        }
+        this.unauthorizedHandler?.();
     };
 
     public resetAuthState = () => {

@@ -1,0 +1,61 @@
+name: e2e
+on:
+    workflow_call:
+
+jobs:
+    e2e:
+        # playwright only supports specific ubuntu releases, ubuntu-latest moved on to 26.04 which it does not know yet
+        runs-on: ubuntu-24.04
+        services:
+            postgres:
+                image: postgres
+                env:
+                    POSTGRES_PASSWORD: "password"
+                    POSTGRES_USER: "abrechnung"
+                    POSTGRES_DB: "abrechnung"
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+                ports:
+                    - 5432:5432
+        steps:
+            - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+            - name: Set up Python
+              uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+              with:
+                  python-version: "3.12"
+            - name: Install uv
+              uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+              with:
+                  enable-cache: true
+            - name: Install the project
+              run: uv sync --locked --all-extras --dev
+            - name: Install pnpm
+              uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
+              with:
+                  version: 12
+            - name: Use Node.js
+              uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+              with:
+                  node-version: 24
+                  cache: "pnpm"
+            - name: Install dependencies
+              run: pnpm install
+            - name: Install playwright browsers
+              run: pnpm --filter e2e exec playwright install --with-deps chromium
+            - name: Build web app
+              run: pnpm --filter web run build
+            - name: Run e2e tests
+              run: pnpm --filter e2e run test
+            - name: Upload playwright report
+              if: ${{ !cancelled() }}
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+              with:
+                  name: playwright-report
+                  path: |
+                      apps/e2e/playwright-report
+                      apps/e2e/test-results
+                  if-no-files-found: ignore
+                  retention-days: 7

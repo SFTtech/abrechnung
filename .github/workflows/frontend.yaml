@@ -4,7 +4,7 @@ on:
 
 jobs:
     format:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - name: Install pnpm
@@ -22,7 +22,7 @@ jobs:
               run: pnpm exec vp fmt --check
 
     test:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - name: Install pnpm
@@ -36,11 +36,22 @@ jobs:
                   cache: "pnpm"
             - name: Install dependencies
               run: pnpm install
-            - name: Build web app
-              run: pnpm -r run test
+            - name: Run tests
+              run: pnpm -r --filter '!e2e' run test --coverage
+            - name: Add coverage to the job summary
+              if: ${{ !cancelled() }}
+              run: node tools/vitest_coverage_summary.mjs coverage >> "$GITHUB_STEP_SUMMARY"
+            - name: Upload coverage report
+              if: ${{ !cancelled() }}
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+              with:
+                  name: frontend-coverage
+                  path: coverage
+                  if-no-files-found: ignore
+                  retention-days: 7
 
     lint:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - name: Install pnpm
@@ -58,7 +69,7 @@ jobs:
               run: pnpm exec vp lint
 
     build:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - name: Install pnpm

@@ -133,3 +133,9 @@ vitest.config.*.timestamp*
 .nx/workspace-data
 dist/
 .vitest/
+
+# playwright
+test-results/
+playwright-report/
+/coverage/
+/junit/

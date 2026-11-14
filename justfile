@@ -7,6 +7,10 @@ test:
 dev-web:
     pnpm --filter web run dev
 
+e2e:
+    pnpm --filter web run build
+    pnpm --filter e2e run test
+
 format:
     uv run ruff format
     pnpm exec vp fmt

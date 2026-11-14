@@ -344,6 +344,9 @@
         "uk": "Ukrainian",
         "bg": "Bulgarian",
         "ru": "Russian",
-        "fr": "French"
+        "fr": "French",
+        "ar": "Arabic",
+        "it": "Italian",
+        "nl": "Dutch"
     }
 }

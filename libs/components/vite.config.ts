@@ -16,8 +16,10 @@ export default defineConfig(() => ({
         include: ["src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}"],
         reporters: ["default"],
         coverage: {
-            reportsDirectory: "../../coverage/libs/commponents",
+            reportsDirectory: "../../coverage/libs/components",
             provider: "v8" as const,
+            reporter: ["text-summary", "json-summary", "html"],
+            include: ["src/**"],
         },
     },
 }));

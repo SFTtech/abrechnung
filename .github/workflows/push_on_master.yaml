@@ -23,7 +23,7 @@ jobs:
 
     get-distros:
         name: "Calculate list of debian distros and docker image tags"
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         steps:
             - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
             - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -45,7 +45,7 @@ jobs:
 
     build-and-publish-docker:
         name: Build and publish ready made docker containers
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         needs:
             - get-distros
         steps:
@@ -54,7 +54,7 @@ jobs:
             - name: Install qemu dependency
               run: |
                   sudo apt-get update
-                  sudo apt-get install -y qemu-user-static
+                  sudo apt-get install -y qemu-user-binfmt
 
             - name: Install pnpm
               uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
@@ -117,7 +117,7 @@ jobs:
             - get-distros
             - frontend
         name: "Build .deb packages"
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         strategy:
             matrix:
                 distro: ${{ fromJson(needs.get-distros.outputs.distros) }}
@@ -142,10 +142,15 @@ jobs:
               run: |
                   DISTRO="${{ matrix.distro }}"
                   CODENAME="${DISTRO#*:}"
-                  uvx debmagic@0.0.1a9 build binary \
+                  uv run --locked --only-group debian debmagic build binary \
                     --driver docker \
                     --distro "$CODENAME" \
                     --output-dir "$GITHUB_WORKSPACE/debs"
+                  # debmagic names packages without the distro, so add the codename to keep
+                  # the debs of different distros distinguishable (e.g. when attaching them to a release)
+                  for deb in "$GITHUB_WORKSPACE"/debs/*.deb; do
+                      mv "$deb" "${deb%_*.deb}+${CODENAME}_${deb##*_}"
+                  done
                   echo "ARTIFACT_NAME=${DISTRO//:}" >> $GITHUB_ENV
 
             - name: Upload debs as artifacts
@@ -162,12 +167,19 @@ jobs:
             - frontend
             - backend
             - build-debs
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         steps:
             - name: Download all workflow run artifacts
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
             - name: Trigger demo deployment via webhook
-              run: curl ${{ secrets.DEMO_DEPLOY_WEBHOOK_URL }} -F "archive=@$(find -name 'abrechnung_*trixie*_amd64.deb')" --fail
+              run: |
+                  ls -R debs-debiantrixie
+                  DEB="$(find debs-debiantrixie -name 'abrechnung_*_amd64.deb' | head -n1)"
+                  if [ -z "$DEB" ]; then
+                      echo "no abrechnung amd64 deb found for debian trixie" >&2
+                      exit 1
+                  fi
+                  curl ${{ secrets.DEMO_DEPLOY_WEBHOOK_URL }} -F "archive=@$DEB" --fail
 
     # if it's a tag, create a release and attach the artifacts to it
     attach-assets:
@@ -177,7 +189,7 @@ jobs:
             - frontend
             - backend
             - build-debs
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-26.04
         steps:
             - name: Download all workflow run artifacts
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2

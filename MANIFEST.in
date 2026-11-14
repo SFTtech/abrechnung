@@ -1,2 +1,3 @@
 include abrechnung/database/code/*.sql
 include abrechnung/database/revisions/*.sql
+include abrechnung/templates/mail/*/*.mako

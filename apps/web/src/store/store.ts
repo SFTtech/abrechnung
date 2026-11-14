@@ -1,10 +1,11 @@
 import { configureStore } from "@reduxjs/toolkit";
 import { createMigrate, persistReducer, persistStore } from "redux-persist";
-import { getAbrechnungReducer } from "@abrechnung/redux";
+import { getAbrechnungReducer, logout } from "@abrechnung/redux";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { settingsReducer } from "./settingsSlice";
 import localForage from "localforage";
 import { api } from "@/core/generated/api";
+import { api as abrechnungApi } from "@/core/api";
 
 /**
  * Persist you redux state using IndexedDB
@@ -38,6 +39,13 @@ export const store = configureStore({
             immutableCheck: false,
         }).concat(api.middleware),
 });
+// automatically log out when the backend tells us our session is no longer valid
+abrechnungApi.setUnauthorizedHandler(() => {
+    // drop the token first so the logout request itself cannot retrigger this handler
+    abrechnungApi.resetAuthState();
+    store.dispatch(logout({ api: abrechnungApi }));
+});
+
 export const persistor = persistStore(store);
 
 export type RootState = ReturnType<typeof store.getState>;

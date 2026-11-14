@@ -18,6 +18,8 @@ export default defineConfig(() => ({
         coverage: {
             reportsDirectory: "../../coverage/libs/redux",
             provider: "v8" as const,
+            reporter: ["text-summary", "json-summary", "html"],
+            include: ["src/**"],
         },
     },
 }));
