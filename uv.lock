@@ -21,6 +21,7 @@ dependencies = [
 dev = [
     { name = "aiosmtpd" },
     { name = "bump-my-version" },
+    { name = "debmagic" },
     { name = "myst-parser" },
     { name = "pre-commit" },
     { name = "pylint" },
@@ -74,6 +75,7 @@ requires-dist = [
 dev = [
     { name = "aiosmtpd", specifier = "~=1.4" },
     { name = "bump-my-version", specifier = "~=1.2.6" },
+    { name = "debmagic", specifier = "==0.0.1a9" },
     { name = "myst-parser" },
     { name = "pre-commit" },
     { name = "pylint", specifier = "==4.0.5" },
@@ -638,6 +640,14 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/1e/75/a2e55f99c16fcac7b5d6c1eb19ad8e00799854d6be5ca845f9259eae1681/cryptography-48.0.0-cp39-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:a5da777e32ffed6f85a7b2b3f7c5cbc88c146bfcd0a1d7baf5fcc6c52ee35dd4", size = 4960575, upload-time = "2026-05-04T22:59:09.851Z" },
     { url = "https://files.pythonhosted.org/packages/b8/23/6e6f32143ab5d8b36ca848a502c4bcd477ae75b9e1677e3530d669062578/cryptography-48.0.0-cp39-abi3-win32.whl", hash = "sha256:77a2ccbbe917f6710e05ba9adaa25fb5075620bf3ea6fb751997875aff4ae4bd", size = 3279117, upload-time = "2026-05-04T22:59:12.019Z" },
     { url = "https://files.pythonhosted.org/packages/9d/9a/0fea98a70cf1749d41d738836f6349d97945f7c89433a259a6c2642eefeb/cryptography-48.0.0-cp39-abi3-win_amd64.whl", hash = "sha256:16cd65b9330583e4619939b3a3843eec1e6e789744bb01e7c7e2e62e33c239c8", size = 3792100, upload-time = "2026-05-04T22:59:14.884Z" },
+]
+
+[[package]]
+name = "debmagic"
+version = "0.0.1a9"
+source = { registry = "https://pypi.org/simple" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a5/eb/c52ba0d7841a1c88bc67fe01f2cb64c0c54520d80c4b75e6628227c59942/debmagic-0.0.1a9-py3-none-manylinux_2_39_x86_64.whl", hash = "sha256:19e32bcd74ac837cac80686d61afb5a00b0359a588273b8d6ef103fe929f8839", size = 7036363, upload-time = "2026-11-14T11:44:55.486Z" },
 ]
 
 [[package]]

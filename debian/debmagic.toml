@@ -1,0 +1,4 @@
+source_sync_mode = "everything"
+
+[driver]
+default = "docker"
