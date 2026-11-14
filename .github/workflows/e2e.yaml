@@ -4,7 +4,8 @@ on:
 
 jobs:
     e2e:
-        runs-on: ubuntu-latest
+        # playwright only supports specific ubuntu releases, ubuntu-latest moved on to 26.04 which it does not know yet
+        runs-on: ubuntu-24.04
         services:
             postgres:
                 image: postgres
