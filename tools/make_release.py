@@ -8,7 +8,7 @@ from pydantic import BaseModel
 
 repo_root = Path(__file__).parent.parent
 
-debian_changelog_template = """abrechnung ({new_version}) stable; urgency=medium
+debian_changelog_template = """abrechnung ({new_version}) trixie noble; urgency=medium
 
   * Abrechnung release {new_version}
 
@@ -52,7 +52,7 @@ def _read_pyproject_toml():
 def _update_debian_changelog(pyproject: dict, config: Config, dry_run: bool):
     formatted_debian_changelog = debian_changelog_template.format(
         new_version=config.new_version,
-        now=datetime.now(),
+        now=datetime.now().astimezone(),
         author_name=pyproject["project"]["authors"][0]["name"],
         author_email=pyproject["project"]["authors"][0]["email"],
     )

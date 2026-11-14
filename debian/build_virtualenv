@@ -64,16 +64,6 @@ interest dh-virtualenv-interpreter-update
 EOF
 
 export DESTDIR="debian/abrechnung"
-NODE_OPTIONS="--max_old_space_size=4096" CI=true && pnpm install --force --frozen-lockfile && pnpm --filter web run build
 mkdir -p $DESTDIR/usr/share/
-mv dist/apps/web $DESTDIR/usr/share/abrechnung_web
-
-#mkdir -p $DESTDIR/etc/abrechnung
-#mkdir -p $DESTDIR/etc/nginx/sites-available
-#mkdir -p $DESTDIR/lib/systemd/system
-#install -m644 config/config.yaml $DESTDIR/etc/abrechnung/abrechnung.yaml
-#install -m644 config/nginx-site $DESTDIR/etc/nginx/sites-available/abrechnung
-#install -m644 debian/abrechnung-api.service $DESTDIR/lib/systemd/system
-#install -m644 debian/abrechnung-mailer.service $DESTDIR/lib/systemd/system
-#install -m644 debian/abrechnung-db-clean.service $DESTDIR/lib/systemd/system
-#install -m644 debian/abrechnung-db-clean.timer $DESTDIR/lib/systemd/system
+# the prebuilt frontend is expected in dist/apps/web (see docs/development/packaging.md)
+cp -a dist/apps/web $DESTDIR/usr/share/abrechnung_web

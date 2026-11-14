@@ -74,3 +74,10 @@ jobs:
               run: pnpm install
             - name: Build web app
               run: pnpm --filter web run build
+            - name: Upload web dist
+              uses: actions/upload-artifact@v4
+              with:
+                  name: web-dist
+                  path: dist/apps/web
+                  if-no-files-found: error
+                  retention-days: 1
