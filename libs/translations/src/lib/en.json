@@ -102,7 +102,42 @@
         "log": {
             "tabTitle": "{{groupName}} - Activity",
             "header": "Group Activity",
-            "messageInfo": "by {{username}} on {{datetime}}"
+            "today": "Today",
+            "yesterday": "Yesterday",
+            "empty": "No activity yet",
+            "loadMore": "Load more",
+            "retry": "Retry",
+            "loadingFailed": "Failed to load the activity",
+            "categories": {
+                "transactions": "Transactions",
+                "accounts": "Accounts",
+                "events": "Events",
+                "members": "Members",
+                "group": "Group"
+            },
+            "entries": {
+                "group-created": "<actor>{{actor}}</actor> created the group",
+                "group-updated": "<actor>{{actor}}</actor> updated the group settings",
+                "invite-created": "<actor>{{actor}}</actor> created an invite link",
+                "invite-deleted": "<actor>{{actor}}</actor> deleted an invite link",
+                "member-joined": "<actor>{{actor}}</actor> joined the group",
+                "member-left": "<actor>{{actor}}</actor> left the group",
+                "owner-granted": "<actor>{{actor}}</actor> made <affected>{{affected}}</affected> an owner",
+                "owner-revoked": "<actor>{{actor}}</actor> revoked owner permissions from <affected>{{affected}}</affected>",
+                "write-granted": "<actor>{{actor}}</actor> gave <affected>{{affected}}</affected> write permissions",
+                "write-revoked": "<actor>{{actor}}</actor> revoked write permissions from <affected>{{affected}}</affected>",
+                "transaction-created": "<actor>{{actor}}</actor> created the transaction <target>{{target}}</target>",
+                "transaction-updated": "<actor>{{actor}}</actor> updated the transaction <target>{{target}}</target>",
+                "transaction-deleted": "<actor>{{actor}}</actor> deleted the transaction <target>{{target}}</target>",
+                "account-created": "<actor>{{actor}}</actor> created the account <target>{{target}}</target>",
+                "account-updated": "<actor>{{actor}}</actor> updated the account <target>{{target}}</target>",
+                "account-deleted": "<actor>{{actor}}</actor> deleted the account <target>{{target}}</target>",
+                "event-created": "<actor>{{actor}}</actor> created the event <target>{{target}}</target>",
+                "event-updated": "<actor>{{actor}}</actor> updated the event <target>{{target}}</target>",
+                "event-deleted": "<actor>{{actor}}</actor> deleted the event <target>{{target}}</target>",
+                "legacy": "<actor>{{actor}}</actor>"
+            },
+            "resetFilter": "Reset filter"
         },
         "memberList": {
             "header": "Members",

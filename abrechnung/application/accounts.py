@@ -24,6 +24,11 @@ from abrechnung.domain.users import User
 from .common import _get_or_create_tag_ids
 
 
+def _account_log_type(action: str, account_type: str) -> str:
+    """accounts and events (clearing accounts) are logged as separate types"""
+    return f"{'event' if account_type == AccountType.clearing.value else 'account'}-{action}"
+
+
 class AccountService(Service[Config]):
     @staticmethod
     async def _commit_revision(conn: asyncpg.Connection, revision_id: int):
@@ -184,8 +189,9 @@ class AccountService(Service[Config]):
             conn=conn,
             group_id=group_id,
             user=user,
-            type="account-committed",
-            message=f"created account {account.name}",
+            type=_account_log_type("created", account.type.value),
+            account_id=account_id,
+            data={"name": account.name, "type": account.type.value},
         )
         await self._commit_revision(conn=conn, revision_id=revision_id)
         return account_id
@@ -238,8 +244,9 @@ class AccountService(Service[Config]):
             conn=conn,
             group_id=group_id,
             user=user,
-            type="account-committed",
-            message=f"updated account {account.name}",
+            type=_account_log_type("updated", account_type),
+            account_id=account_id,
+            data={"name": account.name, "type": account_type},
         )
         await self._commit_revision(conn=conn, revision_id=revision_id)
 
@@ -252,7 +259,9 @@ class AccountService(Service[Config]):
         user: User,
         account_id: int,
     ):
-        group_id, _ = await self._check_account_permissions(conn=conn, user=user, account_id=account_id, can_write=True)
+        group_id, account_type = await self._check_account_permissions(
+            conn=conn, user=user, account_id=account_id, can_write=True
+        )
         row = await conn.fetchrow(
             "select id from account where id = $1",
             account_id,
@@ -325,7 +334,8 @@ class AccountService(Service[Config]):
             conn=conn,
             group_id=group_id,
             user=user,
-            type="account-deleted",
-            message=f"deleted account account {row['name']}",
+            type=_account_log_type("deleted", account_type),
+            account_id=account_id,
+            data={"name": row["name"]},
         )
         await self._commit_revision(conn=conn, revision_id=revision_id)

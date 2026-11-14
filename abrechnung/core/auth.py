@@ -1,3 +1,5 @@
+from typing import Any
+
 from sftkit.database import Connection
 from sftkit.error import AccessDenied, InvalidArgument
 
@@ -39,12 +41,19 @@ async def create_group_log(
     type: str,
     message: str | None = None,
     affected_user_id: int | None = None,
+    transaction_id: int | None = None,
+    account_id: int | None = None,
+    data: dict[str, Any] | None = None,
 ):
     await conn.execute(
-        "insert into group_log (group_id, user_id, type, message, affected) values ($1, $2, $3, $4, $5)",
+        "insert into group_log (group_id, user_id, type, message, affected, transaction_id, account_id, data) "
+        "values ($1, $2, $3, $4, $5, $6, $7, $8)",
         group_id,
         user.id,
         type,
         "" if message is None else message,
         affected_user_id,
+        transaction_id,
+        account_id,
+        data or {},
     )

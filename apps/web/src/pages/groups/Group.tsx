@@ -62,7 +62,7 @@ export const Group: React.FC = () => {
     return (
         <Suspense fallback={<Loading />}>
             <Routes>
-                <Route path="log" element={<GroupActivity groupId={groupId} />} />
+                <Route path="log" element={<GroupActivity key={groupId} groupId={groupId} />} />
                 <Route path="accounts" element={<PersonalAccountList groupId={groupId} />} />
                 <Route path="events" element={<ClearingAccountList groupId={groupId} />} />
                 <Route path="detail" element={<GroupSettingsPage groupId={groupId} />} />

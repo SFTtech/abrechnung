@@ -91,7 +91,42 @@
         "log": {
             "tabTitle": "{{groupName}} - Aktivität",
             "header": "Gruppenaktivität",
-            "messageInfo": "von {{username}} am {{datetime}}"
+            "today": "Heute",
+            "yesterday": "Gestern",
+            "empty": "Noch keine Aktivität",
+            "loadMore": "Mehr laden",
+            "retry": "Erneut versuchen",
+            "loadingFailed": "Aktivität konnte nicht geladen werden",
+            "categories": {
+                "transactions": "Transaktionen",
+                "accounts": "Konten",
+                "events": "Events",
+                "members": "Mitglieder",
+                "group": "Gruppe"
+            },
+            "entries": {
+                "group-created": "<actor>{{actor}}</actor> hat die Gruppe erstellt",
+                "group-updated": "<actor>{{actor}}</actor> hat die Gruppeneinstellungen geändert",
+                "invite-created": "<actor>{{actor}}</actor> hat einen Einladungslink erstellt",
+                "invite-deleted": "<actor>{{actor}}</actor> hat einen Einladungslink gelöscht",
+                "member-joined": "<actor>{{actor}}</actor> ist der Gruppe beigetreten",
+                "member-left": "<actor>{{actor}}</actor> hat die Gruppe verlassen",
+                "owner-granted": "<actor>{{actor}}</actor> hat <affected>{{affected}}</affected> zum Besitzer gemacht",
+                "owner-revoked": "<actor>{{actor}}</actor> hat <affected>{{affected}}</affected> die Besitzerrechte entzogen",
+                "write-granted": "<actor>{{actor}}</actor> hat <affected>{{affected}}</affected> Schreibrechte gegeben",
+                "write-revoked": "<actor>{{actor}}</actor> hat <affected>{{affected}}</affected> die Schreibrechte entzogen",
+                "transaction-created": "<actor>{{actor}}</actor> hat die Transaktion <target>{{target}}</target> erstellt",
+                "transaction-updated": "<actor>{{actor}}</actor> hat die Transaktion <target>{{target}}</target> geändert",
+                "transaction-deleted": "<actor>{{actor}}</actor> hat die Transaktion <target>{{target}}</target> gelöscht",
+                "account-created": "<actor>{{actor}}</actor> hat das Konto <target>{{target}}</target> erstellt",
+                "account-updated": "<actor>{{actor}}</actor> hat das Konto <target>{{target}}</target> geändert",
+                "account-deleted": "<actor>{{actor}}</actor> hat das Konto <target>{{target}}</target> gelöscht",
+                "event-created": "<actor>{{actor}}</actor> hat das Event <target>{{target}}</target> erstellt",
+                "event-updated": "<actor>{{actor}}</actor> hat das Event <target>{{target}}</target> geändert",
+                "event-deleted": "<actor>{{actor}}</actor> hat das Event <target>{{target}}</target> gelöscht",
+                "legacy": "<actor>{{actor}}</actor>"
+            },
+            "resetFilter": "Filter zurücksetzen"
         },
         "memberList": {
             "tabTitle": "{{groupName}} - Mitglieder",

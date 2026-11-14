@@ -5,6 +5,7 @@
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.8.0...HEAD)
 
 - add Arabic, Italian and Dutch translations
+- rework the group activity log: entries are grouped by day, readable sentences with links to the affected transactions, accounts and events, filtering by category and paging
 
 ## 1.8.0 (2026-03-08)
 
