@@ -70,6 +70,16 @@ export interface FileGalleryProps {
     transaction: Transaction;
 }
 
+// keep the aspect ratio of the image, but never grow beyond the dialog / viewport
+const previewImageStyle: React.CSSProperties = {
+    display: "block",
+    maxWidth: "100%",
+    maxHeight: "70vh",
+    width: "auto",
+    height: "auto",
+    objectFit: "contain",
+};
+
 export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transaction }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
@@ -134,16 +144,14 @@ export const FileGallery: React.FC<FileGalleryProps> = ({ groupId, transaction }
                         {shownImage &&
                             (shownImage.meta.type === "new" ? (
                                 <img
-                                    height="100%"
-                                    width="100%"
+                                    style={previewImageStyle}
                                     src={shownImage.meta.content}
                                     alt={shownImage.meta.filename}
                                     loading="lazy"
                                 />
                             ) : (
                                 <img
-                                    height="100%"
-                                    width="100%"
+                                    style={previewImageStyle}
                                     src={shownImage.objectUrl}
                                     srcSet={shownImage.objectUrl}
                                     alt={shownImage.meta.filename}
