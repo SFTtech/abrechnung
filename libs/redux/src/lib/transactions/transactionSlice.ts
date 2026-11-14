@@ -241,7 +241,7 @@ export const selectTransactionsInvolvingAccount = createSelector(
     (state: IRootState, groupId: number, accountId: number, sortMode?: TransactionSortMode) => sortMode,
     (s: TransactionState, balanceEffects, accountId: number, sortMode?: TransactionSortMode): Transaction[] => {
         const transactionIds = Object.entries(balanceEffects)
-            .filter(([_, balanceEffect]) => {
+            .filter(([, balanceEffect]) => {
                 return balanceEffect[accountId] !== undefined;
             })
             .map(([transactionId]) => Number(transactionId));

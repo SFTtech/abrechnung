@@ -1,6 +1,7 @@
 import { MobilePaper } from "@/components/style";
 import { api } from "@/core/api";
 import { useTitle } from "@/core/utils";
+import { useOnChange } from "@abrechnung/components";
 import { useAppDispatch, useAppSelector } from "@/store";
 import {
     deleteTransaction,
@@ -57,10 +58,10 @@ export const TransactionDetail: React.FC<Props> = ({ groupId }) => {
     const [positionValidationErrors, setPositionValidationErrors] =
         React.useState<PositionValidationErrors>(emptyPositionErrors);
 
-    React.useEffect(() => {
+    useOnChange([transaction], () => {
         setValidationErrors(emptyErrors);
         setPositionValidationErrors(emptyPositionErrors);
-    }, [transaction, setValidationErrors]);
+    });
 
     const edit = React.useCallback(() => {
         if (!transaction) {

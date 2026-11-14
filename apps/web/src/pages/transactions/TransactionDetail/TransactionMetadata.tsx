@@ -49,7 +49,7 @@ export const TransactionMetadata: React.FC<Props> = ({
     const balanceEffect = useAppSelector((state) => selectTransactionBalanceEffect(state, groupId, transaction.id));
 
     const ShareInfo = React.useCallback(
-        ({ account }: { account: Account }) => {
+        (account: Account) => {
             const total = (
                 <CurrencyDisplay
                     amount={
@@ -374,7 +374,7 @@ export const TransactionMetadata: React.FC<Props> = ({
                                 <TableCell align="right">{t("common.shared")}</TableCell>
                             )
                         }
-                        AdditionalShareInfo={ShareInfo}
+                        renderAdditionalShareInfo={ShareInfo}
                         editable={transaction.is_wip}
                     />
                 </Grid>

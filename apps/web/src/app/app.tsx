@@ -16,8 +16,9 @@ export const App = () => {
     const darkModeSystem = useMediaQuery("(prefers-color-scheme: dark)");
     const dispatch = useAppDispatch();
     const groupStoreStatus = useAppSelector((state) => state.groups.status);
-    const [apiInitialized, setApiInitialized] = React.useState(false);
     const accessToken = useAppSelector(selectAccessToken);
+    // without an access token there is nothing to initialize the api with
+    const [apiInitialized, setApiInitialized] = React.useState(accessToken === undefined);
     const themeMode = useAppSelector(selectTheme);
     const isAuthenticated = accessToken !== undefined;
 
@@ -40,8 +41,6 @@ export const App = () => {
                 setApiInitialized(true);
                 dispatch(fetchGroups({ api }));
             });
-        } else {
-            setApiInitialized(true);
         }
     }, [accessToken, dispatch]);
 

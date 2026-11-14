@@ -1,5 +1,5 @@
 import { ApiError } from "@abrechnung/api";
-import z from "zod";
+import { z } from "zod";
 
 const ErrorSchema = z.object({
     type: z.string(),

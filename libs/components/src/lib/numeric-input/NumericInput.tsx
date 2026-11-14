@@ -3,6 +3,7 @@ import { TextFieldProps } from "@mui/material";
 import { DisabledTextField } from "../DisabledTextField";
 import { evaluateExpression } from "./mathExpression";
 import { useTranslation } from "react-i18next";
+import { useOnChange } from "../useOnChange";
 
 export type NumericInputProps = {
     onChange?: (value: number) => void;
@@ -57,24 +58,24 @@ export const NumericInput: React.FC<NumericInputProps> = ({
         [i18n.language, isCurrency]
     );
 
-    React.useEffect(() => {
+    useOnChange([value, formatValue], () => {
         if (value != null) {
             setInternalValue(formatValue(value));
         }
-    }, [value, setInternalValue, formatValue]);
+    });
 
     const onInternalChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         setInternalValue(event.target.value);
     };
 
-    const finalizeInput = () => {
-        const updateValue = (value: number) => {
-            setInternalValue(formatValue(value));
-            onChange?.(value);
-            setInternalError(false);
-            setInternalHelperText(undefined);
-        };
+    const updateValue = (value: number) => {
+        setInternalValue(formatValue(value));
+        onChange?.(value);
+        setInternalError(false);
+        setInternalHelperText(undefined);
+    };
 
+    const finalizeInput = () => {
         // first, preprocess the input to have commas / dots adhere to the current locale
         const cleanedValue = adjustLocaleDecimalSeparators(internalValue, i18n.language);
 

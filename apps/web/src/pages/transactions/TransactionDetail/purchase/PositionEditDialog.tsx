@@ -1,5 +1,6 @@
 import { useAppDispatch, useAppSelector } from "@/store";
 import { selectTransactionPositionById, wipPositionUpdated } from "@abrechnung/redux";
+import { useOnChange } from "@abrechnung/components";
 import { Account, PositionValidator, Transaction, TransactionShare } from "@abrechnung/types";
 import {
     AppBar,
@@ -22,7 +23,7 @@ import { NumericInput } from "@abrechnung/components";
 import { getCurrencySymbolForIdentifier } from "@abrechnung/core";
 import { TransitionProps } from "@mui/material/transitions";
 import { useState } from "react";
-import z from "zod";
+import { z } from "zod";
 
 export type PositionEditDialogProps = {
     transaction: Transaction;
@@ -65,9 +66,9 @@ export const PositionEditDialog: React.FC<PositionEditDialogProps> = ({
 
     const [showAddAccountModal, setShowAddAccountModal] = useState(false);
 
-    React.useEffect(() => {
+    useOnChange([outerValidationError], () => {
         setLocalValidationError(outerValidationError);
-    }, [outerValidationError]);
+    });
 
     const updatePositionUsage = (shares: TransactionShare) => {
         if (!position) {
@@ -100,7 +101,7 @@ export const PositionEditDialog: React.FC<PositionEditDialogProps> = ({
         updateShownAccountIds(Array.from(new Set<number>([...shownAccountIds, account.id])));
     };
 
-    React.useEffect(() => {
+    useOnChange([position], () => {
         if (!position) {
             setLocalValidationError(undefined);
         }
@@ -110,7 +111,7 @@ export const PositionEditDialog: React.FC<PositionEditDialogProps> = ({
             return;
         }
         setLocalValidationError(undefined);
-    }, [position, setLocalValidationError]);
+    });
 
     const handleClose = () => {
         const validated = PositionValidator.safeParse(position);

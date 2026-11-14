@@ -51,21 +51,21 @@ export function createAsyncThunkWithErrorHandling<
     fn: AsyncThunkPayloadCreator<Returned, ThunkArg, CurriedThunkApiConfig>,
     options?: AsyncThunkOptions<ThunkArg, CurriedThunkApiConfig>
 ) {
+    const inner = async (arg: any, api: any) => {
+        try {
+            return await fn(arg, api);
+        } catch (error: any) {
+            const message = stringifyError(error);
+            return api.rejectWithValue(message as any, {} as any);
+        }
+    };
+
     return createAsyncThunk<Returned, ThunkArg, CurriedThunkApiConfig>(
         prefix,
         (
             arg: ThunkArg,
             api: GetThunkAPI<CurriedThunkApiConfig>
         ): AsyncThunkPayloadCreatorReturnValue<Returned, CurriedThunkApiConfig> => {
-            const inner = async (arg: any, api: any) => {
-                try {
-                    return await fn(arg, api);
-                } catch (error: any) {
-                    const message = stringifyError(error);
-                    return api.rejectWithValue(message as any, {} as any);
-                }
-            };
-
             return inner(arg, api);
         },
         options

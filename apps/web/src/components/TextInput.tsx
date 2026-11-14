@@ -1,6 +1,6 @@
 import * as React from "react";
 import { TextFieldProps } from "@mui/material";
-import { DisabledTextField } from "@abrechnung/components";
+import { DisabledTextField, useOnChange } from "@abrechnung/components";
 
 export type TextInputProps = {
     onChange: (value: string) => void;
@@ -10,9 +10,9 @@ export type TextInputProps = {
 export const TextInput: React.FC<TextInputProps> = ({ value, onChange, ...props }) => {
     const [internalValue, setInternalValue] = React.useState("");
 
-    React.useEffect(() => {
+    useOnChange([value], () => {
         setInternalValue(String(value));
-    }, [value, setInternalValue]);
+    });
 
     const onInternalChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setInternalValue(event.target.value);

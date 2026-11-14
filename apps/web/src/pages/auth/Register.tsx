@@ -1,7 +1,7 @@
 import { selectIsAuthenticated } from "@abrechnung/redux";
 import { LockOutlined } from "@mui/icons-material";
 import { Avatar, Box, Button, Container, CssBaseline, Grid, Link, Typography } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Link as RouterLink, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import { z } from "zod";
@@ -31,7 +31,6 @@ type FormValues = z.infer<typeof validationSchema>;
 export const Register: React.FC = () => {
     const { t } = useTranslation();
     const loggedIn = useAppSelector(selectIsAuthenticated);
-    const [loading, setLoading] = useState(true);
     const query = useQuery();
     const navigate = useNavigate();
 
@@ -41,11 +40,8 @@ export const Register: React.FC = () => {
 
     useEffect(() => {
         if (loggedIn) {
-            setLoading(false);
             const next = query.get("next");
             navigate(next ?? "/");
-        } else {
-            setLoading(false);
         }
     }, [loggedIn, navigate, query]);
 
@@ -88,7 +84,8 @@ export const Register: React.FC = () => {
             .catch(handleApiError);
     };
 
-    if (loading) {
+    if (loggedIn) {
+        // redirecting
         return <Loading />;
     }
 

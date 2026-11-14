@@ -8,3 +8,4 @@ export * from "./FormCheckbox";
 export * from "./CurrencyIdentifierSelect";
 export * from "./Select";
 export * from "./Help";
+export * from "./useOnChange";
