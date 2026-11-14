@@ -234,7 +234,7 @@ class GroupService(Service[Config]):
             terms,
             add_user_account_on_join,
         )
-        await create_group_log(conn=conn, group_id=group_id, user=user, type="group-updated")
+        await create_group_log(conn=conn, group_id=group_id, user=user, type="group-updated", data={"name": name})
 
     @with_db_transaction
     @requires_group_permissions(requires_write=True)
@@ -382,6 +382,9 @@ class GroupService(Service[Config]):
                 group_id,
                 user.id,
             )
+            await create_group_log(
+                conn=conn, group_id=group_id, user=user, type="member-left", affected_user_id=user.id
+            )
 
     @with_db_transaction
     async def preview_group(self, *, conn: Connection, user: User | None, invite_token: str) -> GroupPreview:
@@ -463,22 +466,44 @@ class GroupService(Service[Config]):
 
     @with_db_transaction
     @requires_group_permissions()
-    async def list_log(self, *, conn: Connection, user: User, group_id: int) -> list[GroupLog]:
+    async def list_log(
+        self,
+        *,
+        conn: Connection,
+        user: User,
+        group_id: int,
+        before_id: int | None = None,
+        limit: int = 50,
+        types: list[str] | None = None,
+    ) -> list[GroupLog]:
+        """Returns the group log, newest entries first. Use the id of the last returned entry as `before_id` to fetch the next page."""
         return await conn.fetch_many(
             GroupLog,
-            "select id, user_id, logged_at, type, message, affected from group_log where group_id = $1",
+            "select gl.id, gl.user_id, u.username, gl.logged_at, gl.type, gl.message, gl.affected, "
+            "   au.username as affected_username, gl.transaction_id, gl.account_id, gl.data, "
+            "   coalesce(th.deleted, false) as transaction_deleted, coalesce(ah.deleted, false) as account_deleted "
+            "from group_log gl "
+            "join usr u on u.id = gl.user_id "
+            "left join usr au on au.id = gl.affected "
+            "left join lateral ("
+            "   select h.deleted from transaction_history h "
+            "   join transaction_revision r on r.id = h.revision_id "
+            "   where h.id = gl.transaction_id order by r.created_at desc, r.id desc limit 1"
+            ") th on true "
+            "left join lateral ("
+            "   select h.deleted from account_history h "
+            "   join account_revision r on r.id = h.revision_id "
+            "   where h.id = gl.account_id order by r.created_at desc, r.id desc limit 1"
+            ") ah on true "
+            "where gl.group_id = $1 "
+            "   and ($2::bigint is null or gl.id < $2) "
+            "   and ($3::text[] is null or gl.type = any($3)) "
+            "order by gl.id desc "
+            "limit $4",
             group_id,
-        )
-
-    @with_db_transaction
-    @requires_group_permissions(requires_write=True)
-    @with_group_last_changed_update
-    async def send_group_message(self, *, conn: Connection, user: User, group_id: int, message: str):
-        await conn.execute(
-            "insert into group_log (group_id, user_id, type, message) values ($1, $2, 'text-message', $3)",
-            group_id,
-            user.id,
-            message,
+            before_id,
+            types,
+            limit,
         )
 
     @with_db_transaction

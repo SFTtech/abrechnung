@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from pydantic import BaseModel
 
 from abrechnung.application.export_import import ExportImportService
@@ -215,34 +215,13 @@ async def list_members(
 )
 async def list_log(
     group_id: int,
+    before_id: int | None = Query(default=None, description="only return entries older than the entry with this id"),
+    limit: int = Query(default=50, ge=1, le=200),
+    types: list[str] | None = Query(default=None, description="only return entries of these types"),
     user: User = Depends(get_current_user),
     group_service: GroupService = Depends(get_group_service),
 ):
-    return await group_service.list_log(user=user, group_id=group_id)
-
-
-class GroupMessage(BaseModel):
-    message: str
-
-
-@router.post(
-    r"/v1/groups/{group_id}/send_message",
-    summary="post a message to the group log",
-    status_code=status.HTTP_204_NO_CONTENT,
-    operation_id="send_group_message",
-    tags=["groups", "group_logs"],
-)
-async def send_group_message(
-    group_id: int,
-    payload: GroupMessage,
-    user: User = Depends(get_current_user),
-    group_service: GroupService = Depends(get_group_service),
-):
-    await group_service.send_group_message(
-        user=user,
-        group_id=group_id,
-        message=payload.message,
-    )
+    return await group_service.list_log(user=user, group_id=group_id, before_id=before_id, limit=limit, types=types)
 
 
 class UpdateGroupMemberPermissionsPayload(BaseModel):

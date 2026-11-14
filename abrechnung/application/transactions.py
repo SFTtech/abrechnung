@@ -59,6 +59,15 @@ class CurrencyConversionApi:
         return resulting_conversion_rate
 
 
+def _transaction_log_data(transaction: NewTransaction) -> dict:
+    return {
+        "name": transaction.name,
+        "type": transaction.type.value,
+        "value": transaction.value,
+        "currency_identifier": transaction.currency_identifier,
+    }
+
+
 class TransactionService(Service[Config]):
     def __init__(self, db_pool: Pool, config: Config, transaction_retries: int | None = None):
         super().__init__(db_pool, config, transaction_retries)
@@ -328,7 +337,18 @@ class TransactionService(Service[Config]):
         group_id: int,
         transaction: NewTransaction,
     ) -> int:
-        return await self._create_transaction(conn=conn, user=user, group_id=group_id, transaction=transaction)
+        transaction_id = await self._create_transaction(
+            conn=conn, user=user, group_id=group_id, transaction=transaction
+        )
+        await create_group_log(
+            conn=conn,
+            group_id=group_id,
+            user=user,
+            type="transaction-created",
+            transaction_id=transaction_id,
+            data=_transaction_log_data(transaction),
+        )
+        return transaction_id
 
     @staticmethod
     async def _put_transaction_debitor_shares(
@@ -629,6 +649,7 @@ class TransactionService(Service[Config]):
         *,
         conn: Connection,
         user: User,
+        group_id: int,
         transaction_id: int,
         transaction: UpdateTransaction,
     ):
@@ -637,6 +658,14 @@ class TransactionService(Service[Config]):
             user=user,
             transaction_id=transaction_id,
             transaction=transaction,
+        )
+        await create_group_log(
+            conn=conn,
+            group_id=group_id,
+            user=user,
+            type="transaction-updated",
+            transaction_id=transaction_id,
+            data=_transaction_log_data(transaction),
         )
 
     @with_db_transaction
@@ -696,7 +725,8 @@ class TransactionService(Service[Config]):
             group_id=group_id,
             user=user,
             type="transaction-deleted",
-            message=f"deleted transaction with id {transaction_id}",
+            transaction_id=transaction_id,
+            data={"name": row["name"]},
         )
 
         revision_id = await self._create_pending_transaction_change(conn=conn, user=user, transaction_id=transaction_id)

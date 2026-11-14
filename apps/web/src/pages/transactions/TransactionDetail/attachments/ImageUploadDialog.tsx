@@ -28,6 +28,15 @@ interface Props {
 
 const MAX_FILESIZE_MB = 1;
 
+// keep the aspect ratio of the selected image, but never grow beyond the dialog / viewport
+const previewImageStyle: React.CSSProperties = {
+    maxWidth: "100%",
+    maxHeight: "60vh",
+    width: "auto",
+    height: "auto",
+    objectFit: "contain",
+};
+
 export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, show, onClose }) => {
     const { t } = useTranslation();
     const dispatch = useAppDispatch();
@@ -106,11 +115,11 @@ export const ImageUploadDialog: React.FC<Props> = ({ groupId, transactionId, sho
         <Dialog open={show} onClose={onClose} scroll="body">
             <DialogTitle>{t("images.uploadImage")}</DialogTitle>
             <DialogContent>
-                <Box sx={{ padding: 1 }}>
+                <Box sx={{ padding: 1, display: "flex", justifyContent: "center" }}>
                     {selectedFile ? (
-                        <img width="100%" src={selectedFile.content} alt="" />
+                        <img style={previewImageStyle} src={selectedFile.content} alt="" />
                     ) : (
-                        <img width="100%" src={placeholderImg} alt="placeholder" />
+                        <img style={{ ...previewImageStyle, width: "100%" }} src={placeholderImg} alt="placeholder" />
                     )}
                 </Box>
                 {compressionProgress !== undefined && (

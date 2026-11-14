@@ -149,16 +149,13 @@ const injectedRtkApi = api
             listLog: build.query<ListLogApiResponse, ListLogApiArg>({
                 query: (queryArg) => ({
                     url: `/api/v1/groups/${queryArg.groupId}/logs`,
+                    params: {
+                        before_id: queryArg.beforeId,
+                        limit: queryArg.limit,
+                        types: queryArg.types,
+                    },
                 }),
                 providesTags: ["groups", "group_logs"],
-            }),
-            sendGroupMessage: build.mutation<SendGroupMessageApiResponse, SendGroupMessageApiArg>({
-                query: (queryArg) => ({
-                    url: `/api/v1/groups/${queryArg.groupId}/send_message`,
-                    method: "POST",
-                    body: queryArg.groupMessage,
-                }),
-                invalidatesTags: ["groups", "group_logs"],
             }),
             updateMemberPermissions: build.mutation<UpdateMemberPermissionsApiResponse, UpdateMemberPermissionsApiArg>({
                 query: (queryArg) => ({
@@ -458,11 +455,11 @@ export type ListMembersApiArg = {
 export type ListLogApiResponse = /** status 200 Successful Response */ GroupLog[];
 export type ListLogApiArg = {
     groupId: number;
-};
-export type SendGroupMessageApiResponse = unknown;
-export type SendGroupMessageApiArg = {
-    groupId: number;
-    groupMessage: GroupMessage;
+    /** only return entries older than the entry with this id */
+    beforeId?: number | null;
+    limit?: number;
+    /** only return entries of these types */
+    types?: string[] | null;
 };
 export type UpdateMemberPermissionsApiResponse = /** status 200 Successful Response */ GroupMember;
 export type UpdateMemberPermissionsApiArg = {
@@ -765,13 +762,19 @@ export type GroupMember = {
 export type GroupLog = {
     id: number;
     user_id: number;
+    username: string;
     logged_at: string;
     type: string;
     message: string;
     affected: number | null;
-};
-export type GroupMessage = {
-    message: string;
+    affected_username: string | null;
+    transaction_id: number | null;
+    account_id: number | null;
+    transaction_deleted: boolean;
+    account_deleted: boolean;
+    data: {
+        [key: string]: any;
+    };
 };
 export type UpdateGroupMemberPermissionsPayload = {
     can_write: boolean;
@@ -1016,7 +1019,6 @@ export const {
     useLazyListMembersQuery,
     useListLogQuery,
     useLazyListLogQuery,
-    useSendGroupMessageMutation,
     useUpdateMemberPermissionsMutation,
     useUpdateMemberOwnedAccountMutation,
     useListInvitesQuery,

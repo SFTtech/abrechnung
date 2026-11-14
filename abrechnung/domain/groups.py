@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -43,10 +44,20 @@ class Group(BaseModel):
 class GroupLog(BaseModel):
     id: int
     user_id: int
+    username: str
     logged_at: datetime
     type: str
+    # only used as a fallback for entries created before log entries became structured
     message: str
     affected: int | None
+    affected_username: str | None
+    transaction_id: int | None
+    account_id: int | None
+    # whether the referenced transaction / account is currently deleted (false if there is no reference)
+    transaction_deleted: bool
+    account_deleted: bool
+    # snapshot of relevant data of the logged item (e.g. name, value, currency_identifier)
+    data: dict[str, Any]
 
 
 class GroupPreview(BaseModel):
