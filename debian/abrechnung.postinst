@@ -4,4 +4,6 @@ set -e
 
 adduser --system --group --home /var/lib/abrechnung abrechnung
 
+#DEBHELPER#
+
 exit 0
