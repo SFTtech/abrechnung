@@ -1,6 +1,5 @@
 {
     "editor.defaultFormatter": "oxc.oxc-vscode",
-
     // python
     "[python]": {
         "editor.defaultFormatter": "charliermarsh.ruff"
@@ -8,7 +7,6 @@
     "python.testing.pytestArgs": ["tests"],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-
     // javascript
     "[typescript]": {
         "editor.defaultFormatter": "oxc.oxc-vscode"
@@ -17,6 +15,9 @@
         "editor.defaultFormatter": "vscode.json-language-features"
     },
     "[typescriptreact]": {
+        "editor.defaultFormatter": "oxc.oxc-vscode"
+    },
+    "[jsonc]": {
         "editor.defaultFormatter": "oxc.oxc-vscode"
     }
 }

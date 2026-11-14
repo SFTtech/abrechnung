@@ -62,9 +62,8 @@ async def test_basic_clearing_account_workflow(account_service: AccountService, 
         ),
     )
 
-    account: ClearingAccount = await account_service.get_account(
-        user=dummy_user, group_id=dummy_group.id, account_id=account_id
-    )
+    account = await account_service.get_account(user=dummy_user, group_id=dummy_group.id, account_id=account_id)
+    assert isinstance(account, ClearingAccount)
     assert account.id == account_id
     assert account.clearing_shares[basic_account_id2] == 2.0
     assert account.clearing_shares[basic_account_id1] == 1.0
@@ -82,6 +81,7 @@ async def test_basic_clearing_account_workflow(account_service: AccountService, 
         ),
     )
     account = await account_service.get_account(user=dummy_user, group_id=dummy_group.id, account_id=account_id)
+    assert isinstance(account, ClearingAccount)
     assert basic_account_id2 not in account.clearing_shares
 
 

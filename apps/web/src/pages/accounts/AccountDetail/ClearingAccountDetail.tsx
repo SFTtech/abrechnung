@@ -33,7 +33,7 @@ export const ClearingAccountDetail: React.FC<Props> = ({ groupId, account }) => 
                         {t("common.shared")}
                     </TableCell>
                 }
-                AdditionalShareInfo={({ account: participatingAccount }) => (
+                renderAdditionalShareInfo={(participatingAccount) => (
                     <TableCell width="100px" align="right">
                         <CurrencyDisplay
                             amount={balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0}

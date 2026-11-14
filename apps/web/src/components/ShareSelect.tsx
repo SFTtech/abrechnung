@@ -1,5 +1,5 @@
 import { useFormatCurrency, useIsSmallScreen } from "@/hooks";
-import { NumericInput } from "@abrechnung/components";
+import { NumericInput, useOnChange } from "@abrechnung/components";
 import { getAccountSortFunc, getCurrencySymbolForIdentifier } from "@abrechnung/core";
 import { useGroupAccounts } from "@abrechnung/redux";
 import { Account, FrontendSplitMode, TransactionShare } from "@abrechnung/types";
@@ -37,7 +37,7 @@ interface RowProps {
     editable: boolean;
     currencyIdentifier?: string;
     onChange: (accountId: number, newShareValue: number) => void;
-    AdditionalShareInfo?: React.FC<{ account: Account }> | undefined;
+    renderAdditionalShareInfo?: ((account: Account) => React.ReactNode) | undefined;
     shareValue?: number | undefined;
 }
 
@@ -48,7 +48,7 @@ const ShareSelectRow: React.FC<RowProps> = ({
     shareValue,
     currencyIdentifier,
     onChange,
-    AdditionalShareInfo,
+    renderAdditionalShareInfo,
 }) => {
     const { i18n } = useTranslation();
     const theme = useTheme();
@@ -150,7 +150,7 @@ const ShareSelectRow: React.FC<RowProps> = ({
                 </Link>
             </TableCell>
             <TableCell width="100px">{valueDisplay}</TableCell>
-            {AdditionalShareInfo ? <AdditionalShareInfo account={account} /> : null}
+            {renderAdditionalShareInfo ? renderAdditionalShareInfo(account) : null}
         </TableRow>
     );
 };
@@ -167,7 +167,7 @@ interface ShareSelectProps {
     helperText?: React.ReactNode | undefined;
     shouldDisplayAccount?: (accountId: number) => boolean | undefined;
     additionalShareInfoHeader?: React.ReactNode | undefined;
-    AdditionalShareInfo?: React.FC<{ account: Account }> | undefined;
+    renderAdditionalShareInfo?: ((account: Account) => React.ReactNode) | undefined;
     communistShares?: number;
     onChangeCommunistShares?: (value: number) => void;
     currencyIdentifier?: string;
@@ -175,17 +175,19 @@ interface ShareSelectProps {
     hideShowEventsFilter?: boolean;
 }
 
+const defaultAllowedSplitModes: FrontendSplitMode[] = ["evenly", "shares", "percent", "absolute"];
+
 export const ShareSelect: React.FC<ShareSelectProps> = ({
     groupId,
     label,
     value,
     onChange,
     splitMode,
-    allowedSplitModes = ["evenly", "shares", "percent", "absolute"],
+    allowedSplitModes = defaultAllowedSplitModes,
     onChangeSplitMode,
     shouldDisplayAccount,
     additionalShareInfoHeader,
-    AdditionalShareInfo,
+    renderAdditionalShareInfo,
     communistShares,
     onChangeCommunistShares,
     currencyIdentifier,
@@ -242,7 +244,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
             .toSorted(sortFn);
     }, [value, showEvents, editable, searchValue, unfilteredAccounts, shouldDisplayAccount, hideShowEventsFilter]);
 
-    React.useEffect(() => {
+    useOnChange([splitMode, value, communistShares], () => {
         // set displayed split mode to evenly if we have a "shares" split with non-even shares
         if (
             splitMode === "shares" &&
@@ -251,7 +253,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
         ) {
             setFrontendSplitMode("evenly");
         }
-    }, [splitMode, value, setFrontendSplitMode, communistShares]);
+    });
 
     const { nSelectedPeople, nSelectedEvents } = React.useMemo(() => {
         const selectedPeople = accounts.reduce((nAccs: number, acc: Account) => {
@@ -457,7 +459,7 @@ export const ShareSelect: React.FC<ShareSelectProps> = ({
                                 onChange={handleAccountShareChange}
                                 shareValue={value[account.id]}
                                 splitMode={frontendSplitMode}
-                                AdditionalShareInfo={AdditionalShareInfo}
+                                renderAdditionalShareInfo={renderAdditionalShareInfo}
                             />
                         ))}
                     </TableBody>

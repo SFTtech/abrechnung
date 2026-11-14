@@ -11,6 +11,10 @@ import { computeTransactionBalanceEffect } from "./transactions";
 
 export type AccountSortMode = "last_changed" | "name" | "description" | "dateInfo";
 
+const lastChangeComparer = (a1: Account, a2: Account) => {
+    return fromISOString(a2.last_changed).getTime() - fromISOString(a1.last_changed).getTime();
+};
+
 export const getAccountSortFunc = (
     sortMode: AccountSortMode,
     wipAtTop = false
@@ -24,9 +28,6 @@ export const getAccountSortFunc = (
             return sortingLookup[a1.type] - sortingLookup[a2.type] || +a2.is_wip - +a1.is_wip;
         }
         return sortingLookup[a1.type] - sortingLookup[a2.type];
-    };
-    const lastChangeComparer = (a1: Account, a2: Account) => {
-        return fromISOString(a2.last_changed).getTime() - fromISOString(a1.last_changed).getTime();
     };
     switch (sortMode) {
         case "last_changed":

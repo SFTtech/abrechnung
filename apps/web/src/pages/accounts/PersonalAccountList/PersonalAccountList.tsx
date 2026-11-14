@@ -30,7 +30,7 @@ import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
 import { toast } from "react-toastify";
 import { PersonalAccountListItem } from "./PersonalAccountListItem";
-import z from "zod";
+import { z } from "zod";
 
 interface Props {
     groupId: number;

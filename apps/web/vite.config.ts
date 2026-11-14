@@ -1,8 +1,7 @@
-/// <reference types='vitest' />
-import { defineConfig } from "vite";
+/// <reference types='vite-plus/test' />
+import { defineConfig, lazyPlugins } from "vite-plus";
 import react from "@vitejs/plugin-react";
 import { checker } from "vite-plugin-checker";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(() => ({
     root: __dirname,
@@ -20,7 +19,10 @@ export default defineConfig(() => ({
         port: 4200,
         host: "0.0.0.0",
     },
-    plugins: [react(), tsconfigPaths(), checker({ typescript: { tsconfigPath: "tsconfig.app.json" } })],
+    resolve: {
+        tsconfigPaths: true,
+    },
+    plugins: lazyPlugins(() => [react(), checker({ typescript: { tsconfigPath: "tsconfig.app.json" } })]),
     build: {
         outDir: "../../dist/apps/web",
         emptyOutDir: true,

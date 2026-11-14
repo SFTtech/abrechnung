@@ -1,24 +1,25 @@
 repos:
     - repo: local
       hooks:
-          - id: oxfmt
-            name: oxfmt
-            entry: oxfmt
-            args: ["--no-error-on-unmatched-pattern"]
-            language: node
+          - id: vp-fmt
+            name: vp fmt
+            # uses the fmt settings from the root vite.config.ts
+            entry: pnpm exec vp fmt --no-error-on-unmatched-pattern
+            language: system
             "types_or": [javascript, jsx, ts, tsx, json, yaml]
             require_serial: false
-            additional_dependencies: ["oxfmt@latest"]
+          - id: vp-lint
+            name: vp lint
+            # uses the lint settings from the root vite.config.ts
+            entry: pnpm exec vp lint
+            language: system
+            "types_or": [javascript, jsx, ts, tsx]
+            verbose: true
           - id: ty
             name: ty check
             entry: uv run ty check .
             pass_filenames: false
             language: python
-    - repo: https://github.com/oxc-project/mirrors-oxlint
-      rev: v1.36.0
-      hooks:
-          - id: oxlint
-            verbose: true
     - repo: https://github.com/pre-commit/pre-commit-hooks
       rev: v6.0.0
       hooks:

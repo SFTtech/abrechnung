@@ -91,19 +91,19 @@ alter schema public owner to "<your user>"
 Finally run the tests via
 
 ```shell
-make test
+just test
 ```
 
 Run the linters via
 
 ```shell
-make lint
+just lint
 ```
 
 Run the formatters via
 
 ```shell
-make format
+just format
 ```
 
 ## Frontend Development
@@ -117,21 +117,35 @@ Working on the frontend is quite easy, simply run
 
 ```shell
 pnpm install
-make dev-web
+just dev-web
 ```
 
 and you are good to go!
+
+The frontend toolchain (dev server, build, tests, linting and formatting) is provided by [Vite+](https://viteplus.dev).
+Its `vp` CLI is installed as a project dependency, so run it through pnpm from the repository root:
+
+```shell
+pnpm exec vp fmt          # format the frontend code (use --check to only verify)
+pnpm exec vp lint         # lint the frontend code
+pnpm -r run test          # run the tests of all frontend packages
+pnpm --filter web run build  # production build of the web app
+```
+
+Tool configuration (linting, formatting) lives in the root `vite.config.ts`, the dev server, build and test
+configuration in the `vite.config.ts` of each package. Note that `vp test` and `vp build` run the built-in tools,
+whereas `pnpm run test` / `pnpm run build` run the scripts of the respective package.
 
 ## Documentation
 
 To build the documentation locally simply run
 
 ```shell
-make docs
+just docs
 ```
 
 The html docs can then be found in `docs/_build` or served locally with
 
 ```shell
-make serve-docs
+just serve-docs
 ```

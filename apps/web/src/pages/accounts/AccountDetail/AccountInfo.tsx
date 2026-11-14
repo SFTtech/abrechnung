@@ -256,7 +256,7 @@ export const AccountInfo: React.FC<Props> = ({ groupId, account }) => {
                             error={!!validationErrors.fieldErrors.clearing_shares}
                             helperText={validationErrors.fieldErrors.clearing_shares}
                             shouldDisplayAccount={shouldDisplayAccount}
-                            AdditionalShareInfo={({ account: participatingAccount }) => (
+                            renderAdditionalShareInfo={(participatingAccount) => (
                                 <TableCell width="100px" align="right">
                                     <CurrencyDisplay
                                         amount={balances[account.id]?.clearingResolution[participatingAccount.id] ?? 0}

@@ -1,11 +1,13 @@
-import { defineConfig } from "vite";
+import { defineConfig, lazyPlugins } from "vite-plus";
 import react from "@vitejs/plugin-react";
-import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig(() => ({
     root: __dirname,
     cacheDir: "../../node_modules/.vite/libs/redux",
-    plugins: [react(), tsconfigPaths()],
+    plugins: lazyPlugins(() => [react()]),
+    resolve: {
+        tsconfigPaths: true,
+    },
     test: {
         name: "test",
         watch: false,

@@ -4,6 +4,9 @@
     "private": true,
     "main": "src/index.ts",
     "scripts": {
-        "test": "vitest"
+        "test": "vp test"
+    },
+    "devDependencies": {
+        "vitest": "catalog:"
     }
 }

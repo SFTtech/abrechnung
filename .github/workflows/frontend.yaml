@@ -10,7 +10,7 @@ jobs:
             - name: Install pnpm
               uses: pnpm/action-setup@v4
               with:
-                  version: 10
+                  version: 12
             - name: Use Node.js
               uses: actions/setup-node@v4
               with:
@@ -19,7 +19,7 @@ jobs:
             - name: Install dependencies
               run: pnpm install
             - name: Check JavaScript formatting
-              run: npx oxfmt --check .
+              run: pnpm exec vp fmt --check
 
     test:
         runs-on: ubuntu-latest
@@ -28,7 +28,7 @@ jobs:
             - name: Install pnpm
               uses: pnpm/action-setup@v4
               with:
-                  version: 10
+                  version: 12
             - name: Use Node.js
               uses: actions/setup-node@v4
               with:
@@ -46,7 +46,7 @@ jobs:
             - name: Install pnpm
               uses: pnpm/action-setup@v4
               with:
-                  version: 10
+                  version: 12
             - name: Use Node.js
               uses: actions/setup-node@v4
               with:
@@ -55,7 +55,7 @@ jobs:
             - name: Install dependencies
               run: pnpm install
             - name: Build web app
-              run: pnpm exec oxlint
+              run: pnpm exec vp lint
 
     build:
         runs-on: ubuntu-latest
@@ -64,7 +64,7 @@ jobs:
             - name: Install pnpm
               uses: pnpm/action-setup@v4
               with:
-                  version: 10
+                  version: 12
             - name: Use Node.js
               uses: actions/setup-node@v4
               with:

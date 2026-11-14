@@ -2,6 +2,7 @@ import { AccountSelect } from "@/components/AccountSelect";
 import { MobilePaper } from "@/components/style";
 import { CurrencyDisplay } from "@/components";
 import { useAppDispatch, useAppSelector } from "@/store";
+import { useOnChange } from "@abrechnung/components";
 import { getAccountSortFunc } from "@abrechnung/core";
 import {
     positionDeleted,
@@ -83,7 +84,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
         return Array.from(new Set<number>([...accountIdsFromPositions, ...accountIdsFromDebitorShares]));
     }, [transaction, positions]);
 
-    React.useEffect(() => {
+    useOnChange([shownAccountIdsFromTransaction, accountIDMap], () => {
         setShownAccountIds((currAdditionalAccounts: number[]) => {
             const sortFunc = getAccountSortFunc("name");
             const sortedShownAccounts = [...shownAccountIdsFromTransaction].toSorted((acc1Id: number, acc2Id: number) =>
@@ -92,7 +93,7 @@ export const TransactionPositions: React.FC<TransactionPositionsProps> = ({
             const allAccountIds = Array.from(new Set<number>([...currAdditionalAccounts, ...sortedShownAccounts]));
             return allAccountIds;
         });
-    }, [shownAccountIdsFromTransaction, accountIDMap]);
+    });
 
     const shownAccounts = React.useMemo(() => {
         return shownAccountIds.map((id) => accountIDMap[id]);

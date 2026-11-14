@@ -17,8 +17,9 @@ jobs:
                   enable-cache: true
             - name: Install the project
               run: uv sync --locked --all-extras --dev
+            - uses: extractions/setup-just@v3
             - name: Check formatting
-              run: make check-format
+              run: just check-format
 
     pylint:
         runs-on: ubuntu-latest
@@ -34,8 +35,9 @@ jobs:
                   enable-cache: true
             - name: Install the project
               run: uv sync --locked --all-extras --dev
+            - uses: extractions/setup-just@v3
             - name: Analysing the code with pylint
-              run: make pylint
+              run: just pylint
 
     typecheck:
         runs-on: ubuntu-latest
@@ -51,8 +53,9 @@ jobs:
                   enable-cache: true
             - name: Install the project
               run: uv sync --locked --all-extras --dev
+            - uses: extractions/setup-just@v3
             - name: Run the typechecker on the code
-              run: make typecheck
+              run: just typecheck
 
     ruff:
         runs-on: ubuntu-latest
@@ -68,8 +71,9 @@ jobs:
                   enable-cache: true
             - name: Install the project
               run: uv sync --locked --all-extras --dev
+            - uses: extractions/setup-just@v3
             - name: Analysing the code with ruff
-              run: make ruff
+              run: just ruff
 
     test:
         runs-on: ${{ matrix.os }}

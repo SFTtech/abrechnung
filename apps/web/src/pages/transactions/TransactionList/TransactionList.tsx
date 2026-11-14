@@ -40,7 +40,7 @@ import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useNavigate } from "react-router";
 import { TransactionListItem } from "./TransactionListItem";
-import z from "zod";
+import { z } from "zod";
 
 interface Props {
     groupId: number;

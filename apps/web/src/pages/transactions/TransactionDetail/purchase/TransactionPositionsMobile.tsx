@@ -27,6 +27,7 @@ import { Add } from "@mui/icons-material";
 import { useAppDispatch, useAppSelector } from "@/store";
 import { TransactionPosition } from "@abrechnung/types";
 import { PositionEditDialog } from "./PositionEditDialog";
+import { useOnChange } from "@abrechnung/components";
 import { getAccountSortFunc } from "@abrechnung/core";
 
 interface TransactionPositionsMobileProps {
@@ -62,7 +63,7 @@ export const TransactionPositionsMobile: React.FC<TransactionPositionsMobileProp
         return Array.from(new Set<number>([...accountIdsFromPositions, ...accountIdsFromDebitorShares]));
     }, [transaction, positions]);
 
-    React.useEffect(() => {
+    useOnChange([shownAccountIdsFromTransaction, accountIDMap], () => {
         setShownAccountIds((currAdditionalAccounts: number[]) => {
             const sortFunc = getAccountSortFunc("name");
             const sortedShownAccounts = [...shownAccountIdsFromTransaction].toSorted((acc1Id: number, acc2Id: number) =>
@@ -71,7 +72,7 @@ export const TransactionPositionsMobile: React.FC<TransactionPositionsMobileProp
             const allAccountIds = Array.from(new Set<number>([...currAdditionalAccounts, ...sortedShownAccounts]));
             return allAccountIds;
         });
-    }, [shownAccountIdsFromTransaction, accountIDMap]);
+    });
 
     const totalPositionValue = useAppSelector((state) => selectTransactionPositionTotal(state, groupId, transactionId));
     const remainingPositionValue = transaction.value - totalPositionValue;

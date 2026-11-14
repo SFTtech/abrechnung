@@ -3,11 +3,14 @@
     "version": "0.0.0",
     "private": true,
     "scripts": {
-        "dev": "vite",
-        "build": "vite build",
-        "preview": "vite preview --port 4200",
-        "test": "vitest",
-        "generate-openapi": "pnpm exec @rtk-query/codegen-openapi openapi-config.ts",
+        "dev": "vp dev",
+        "build": "vp build",
+        "preview": "vp preview --port 4200",
+        "test": "vp test",
+        "generate-openapi": "pnpm exec rtk-query-codegen-openapi openapi-config.json",
         "prebuild": "cp -rf ../../assets/* public/assets/ && cp ../../assets/logo.png public/favicon.png"
+    },
+    "devDependencies": {
+        "vitest": "catalog:"
     }
 }
