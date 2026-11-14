@@ -172,6 +172,7 @@ async def create_test_account(account_service: AccountService, dummy_user: User)
             ),
         )
         account = await account_service.get_account(user=dummy_user, group_id=group_id, account_id=account_id)
+        assert isinstance(account, PersonalAccount)
         return account
 
     return _create
@@ -196,6 +197,7 @@ async def create_test_event(account_service: AccountService, dummy_user: User) -
             ),
         )
         account = await account_service.get_account(user=dummy_user, group_id=group_id, account_id=account_id)
+        assert isinstance(account, ClearingAccount)
         return account
 
     return _create

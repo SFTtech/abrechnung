@@ -440,7 +440,7 @@ class ImportGroupResponse(BaseModel):
     r"/v1/import-group",
     summary="import a group from json",
     response_model=ImportGroupResponse,
-    operation_id="unarchive_group",
+    operation_id="import_group",
     tags=["groups"],
 )
 async def import_group(

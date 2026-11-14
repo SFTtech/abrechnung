@@ -1,0 +1,9 @@
+{
+    "schemaFile": "../../api/openapi.json",
+    "apiFile": "./src/core/generated/emptyApi.ts",
+    "apiImport": "emptySplitApi",
+    "outputFile": "./src/core/generated/api.ts",
+    "exportName": "api",
+    "tag": true,
+    "hooks": { "queries": true, "lazyQueries": true, "mutations": true }
+}

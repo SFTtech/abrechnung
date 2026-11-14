@@ -45,7 +45,7 @@ class FrontendConfig(BaseModel):
     issue_tracker_url: str
 
 
-@router.get("/config", response_model=FrontendConfig, operation_id="get_config")
+@router.get("/config", response_model=FrontendConfig, operation_id="get_frontend_config")
 async def get_frontend_config(config: Config = Depends(get_config)):
     cfg = FrontendConfig(
         messages=config.service.messages,

@@ -40,4 +40,5 @@ serve-docs:
 generate-openapi:
     mkdir -p api
     uv run abrechnung -c config.yaml show-openapi > api/openapi.json
-    pnpm -w -r run generate-openapi
+    pnpm --filter web run generate-openapi
+    pnpm exec vp fmt apps/web/src/core/generated/api.ts
