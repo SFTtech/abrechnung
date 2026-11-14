@@ -122,6 +122,20 @@ make dev-web
 
 and you are good to go!
 
+The frontend toolchain (dev server, build, tests, linting and formatting) is provided by [Vite+](https://viteplus.dev).
+Its `vp` CLI is installed as a project dependency, so run it through pnpm from the repository root:
+
+```shell
+pnpm exec vp fmt          # format the frontend code (use --check to only verify)
+pnpm exec vp lint         # lint the frontend code
+pnpm -r run test          # run the tests of all frontend packages
+pnpm --filter web run build  # production build of the web app
+```
+
+Tool configuration (linting, formatting) lives in the root `vite.config.ts`, the dev server, build and test
+configuration in the `vite.config.ts` of each package. Note that `vp test` and `vp build` run the built-in tools,
+whereas `pnpm run test` / `pnpm run build` run the scripts of the respective package.
+
 ## Documentation
 
 To build the documentation locally simply run

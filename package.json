@@ -59,19 +59,17 @@
         "@types/react": "19.2.14",
         "@types/react-dom": "19.2.3",
         "@vitejs/plugin-react": "^6.0.2",
-        "@vitest/coverage-v8": "^4.1.6",
-        "@vitest/ui": "^4.1.6",
+        "@vitest/coverage-v8": "catalog:",
+        "@vitest/ui": "catalog:",
         "jsdom": "~29.1.1",
         "openapi-typescript-codegen": "^0.30.0",
-        "oxfmt": "^0.49.0",
-        "oxlint": "^1.64.0",
         "react-test-renderer": "19.2.6",
         "ts-node": "10.9.2",
         "typed-openapi": "^2.2.6",
         "typescript": "6.0.3",
-        "vite": "8.0.13",
+        "vite": "catalog:",
         "vite-plugin-checker": "^0.13.0",
-        "vite-tsconfig-paths": "^6.1.1",
-        "vitest": "^4.1.6"
+        "vite-plus": "catalog:",
+        "vitest": "catalog:"
     }
 }

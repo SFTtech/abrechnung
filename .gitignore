@@ -132,3 +132,4 @@ vitest.config.*.timestamp*
 .nx/cache
 .nx/workspace-data
 dist/
+.vitest/

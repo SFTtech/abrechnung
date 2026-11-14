@@ -9,7 +9,7 @@ dev-web:
 .PHONY: format
 format:
 	uv run ruff format
-	npx oxfmt
+	pnpm exec vp fmt
 
 .PHONY: check-format
 check-format:
@@ -17,7 +17,7 @@ check-format:
 
 .PHONY: check-format-frontend
 check-format-frontend:
-	npx oxfmt --check
+	pnpm exec vp fmt --check
 
 .PHONY: lint
 lint: pylint typecheck ruff
