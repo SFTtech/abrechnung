@@ -17,3 +17,7 @@ peerDependencyRules:
     allowedVersions:
         vite: "*"
         vitest: "*"
+allowBuilds:
+    "@parcel/watcher": false
+    esbuild: false
+    less: false
