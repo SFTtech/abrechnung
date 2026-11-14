@@ -137,3 +137,5 @@ dist/
 # playwright
 test-results/
 playwright-report/
+/coverage/
+/junit/

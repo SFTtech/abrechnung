@@ -115,4 +115,21 @@ jobs:
             - name: Install the project
               run: uv sync --locked --all-extras --dev
             - name: Run all tests
-              run: uv run pytest tests --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+              run: uv run pytest tests --doctest-modules --junitxml=junit/test-results.xml --cov=abrechnung --cov-report=xml --cov-report=html
+            - name: Add coverage to the job summary
+              if: ${{ !cancelled() && matrix.python-version == '3.13' }}
+              run: |
+                  echo "## Backend coverage (pytest)" >> "$GITHUB_STEP_SUMMARY"
+                  echo "" >> "$GITHUB_STEP_SUMMARY"
+                  uv run coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
+            - name: Upload coverage report
+              if: ${{ !cancelled() && matrix.python-version == '3.13' }}
+              uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+              with:
+                  name: backend-coverage
+                  path: |
+                      htmlcov
+                      coverage.xml
+                      junit
+                  if-no-files-found: ignore
+                  retention-days: 7

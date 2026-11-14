@@ -40,6 +40,8 @@ export default defineConfig(() => ({
         coverage: {
             reportsDirectory: "../../coverage/apps/web",
             provider: "v8" as const,
+            reporter: ["text-summary", "json-summary", "html"],
+            include: ["src/**"],
         },
     },
 }));
