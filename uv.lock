@@ -22,6 +22,9 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+debian = [
+    { name = "debmagic" },
+]
 dev = [
     { name = "aiosmtpd" },
     { name = "bump-my-version" },
@@ -78,6 +81,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+debian = [{ name = "debmagic", specifier = "==0.0.1a9" }]
 dev = [
     { name = "aiosmtpd", specifier = "~=1.4" },
     { name = "bump-my-version", specifier = "~=1.8.1" },

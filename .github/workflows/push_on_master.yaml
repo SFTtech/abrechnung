@@ -142,10 +142,15 @@ jobs:
               run: |
                   DISTRO="${{ matrix.distro }}"
                   CODENAME="${DISTRO#*:}"
-                  uvx debmagic@0.0.1a9 build binary \
+                  uv run --locked --only-group debian debmagic build binary \
                     --driver docker \
                     --distro "$CODENAME" \
                     --output-dir "$GITHUB_WORKSPACE/debs"
+                  # debmagic names packages without the distro, so add the codename to keep
+                  # the debs of different distros distinguishable (e.g. when attaching them to a release)
+                  for deb in "$GITHUB_WORKSPACE"/debs/*.deb; do
+                      mv "$deb" "${deb%_*.deb}+${CODENAME}_${deb##*_}"
+                  done
                   echo "ARTIFACT_NAME=${DISTRO//:}" >> $GITHUB_ENV
 
             - name: Upload debs as artifacts
