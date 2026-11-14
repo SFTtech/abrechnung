@@ -1,16 +1,16 @@
 import asyncio
 import email.message
 import email.utils
-import itertools
 import logging
 import smtplib
-from typing import Optional, Type
+from typing import Any, Optional, Type
 
 import asyncpg
 from sftkit.database import Connection
 
 from .config import Config
 from .database.migrations import get_database
+from .mail_templates import MailTemplates
 
 
 class Mailer:
@@ -21,6 +21,7 @@ class Mailer:
         self.database = get_database(config.database)
         self.mailer = None
         self.logger = logging.getLogger(__name__)
+        self.templates = MailTemplates()
 
         self.event_handlers = {
             (
@@ -126,35 +127,33 @@ class Mailer:
         del connection  # unused
         self.logger.info(f"psql log message: {message}")
 
-    def send_email(self, *text_lines: str, subject: str, dest_address: str, dest_name: str):
-        self.logger.info(f"sending email to {dest_address}, subject: {subject}")
+    def send_email(self, template: str, *, dest_address: str, dest_name: str, **context: Any):
+        """Render the mail template with the given name and send it to the recipient."""
+        mail = self.templates.render(
+            template,
+            username=dest_name,
+            service_name=self.config.service.name,
+            base_url=self.base_url,
+            **context,
+        )
+        self.logger.info(f"sending email to {dest_address}, subject: {mail.subject}")
 
         # we do this to not have one long hanging open connection with the mail server
         mailer = self.get_mailer_instance()
 
         from_addr = self.config.email.address
         msg = email.message.EmailMessage()
-        msg.set_content(
-            "\n".join(
-                itertools.chain(
-                    self.greeting_lines(dest_name),
-                    text_lines,
-                    self.closing_lines(),
-                )
-            )
-        )
-        msg["Subject"] = f"[{self.config.service.name}] {subject}"
+        msg.set_content(mail.body)
+        msg["Subject"] = f"[{self.config.service.name}] {mail.subject}"
         msg["To"] = dest_address
         msg["From"] = from_addr
         msg["Date"] = email.utils.localtime()
         msg["Message-ID"] = email.utils.make_msgid(domain=from_addr.split("@")[-1])
         mailer.send_message(msg)
 
-    def greeting_lines(self, name: str):
-        return f"Beloved {name},", ""
-
-    def closing_lines(self):
-        return "", "Thoughtfully yours", "", f"    {self.config.service.name}"
+    @property
+    def base_url(self) -> str:
+        return self.config.api.base_url.rstrip("/")
 
     async def on_pending_registration_notification(self):
         assert self.db_connection is not None
@@ -170,17 +169,11 @@ class Mailer:
         for row in unsent_mails:
             try:
                 self.send_email(
-                    "it looks like you are attempting to create a user account.",
-                    "",
-                    "To complete your registration, visit",
-                    "",
-                    f"{self.config.api.base_url}/confirm-registration/{row['token']}",
-                    "",
-                    f"Your request will time out {row['valid_until']}.",
-                    "If you do not want to create a user account, just ignore this email.",
-                    subject="Confirm user account",
+                    "confirm_registration",
                     dest_address=row["email"],
                     dest_name=row["username"],
+                    token=row["token"],
+                    valid_until=row["valid_until"],
                 )
 
                 await self.db_connection.execute(
@@ -204,17 +197,11 @@ class Mailer:
         for row in unsent_mails:
             try:
                 self.send_email(
-                    "it looks like you forgot your password; how embarrasing.",
-                    "",
-                    "To set a new one, visit",
-                    "",
-                    f"{self.config.api.base_url}/confirm-password-recovery/{row['token']}",
-                    "",
-                    f"Your request will time out {row['valid_until']}.",
-                    "If you do not want to reset your password, just ignore this email.",
-                    subject="Reset password",
+                    "password_recovery",
                     dest_address=row["email"],
                     dest_name=row["username"],
+                    token=row["token"],
+                    valid_until=row["valid_until"],
                 )
 
                 await self.db_connection.execute(
@@ -239,35 +226,22 @@ class Mailer:
         for row in unsent_mails:
             try:
                 self.send_email(
-                    "you want to change your email address",
-                    "",
-                    f"Your current email is: {row['old_email']}",
-                    f"You want to change it to: {row['new_email']}",
-                    "",
-                    "To confirm, see the mail that was sent to the new address.",
-                    "",
-                    f"Your request will time out {row['valid_until']}.",
-                    "If you do not want to change your email, just ignore this email.",
-                    subject="Change email",
+                    "email_change_notice",
                     dest_address=row["old_email"],
                     dest_name=row["username"],
+                    old_email=row["old_email"],
+                    new_email=row["new_email"],
+                    valid_until=row["valid_until"],
                 )
 
                 self.send_email(
-                    "you want to change your email address",
-                    "",
-                    f"Your current email is: {row['old_email']}",
-                    f"You want to change it to: {row['new_email']}",
-                    "",
-                    "To confirm, visit",
-                    "",
-                    f"{self.config.api.base_url}/confirm-email-change/{row['token']}",
-                    "",
-                    f"Your request will time out {row['valid_until']}.",
-                    "If you do not want to change your email, just ignore this email.",
-                    subject="Change email",
+                    "email_change_confirm",
                     dest_address=row["new_email"],
                     dest_name=row["username"],
+                    old_email=row["old_email"],
+                    new_email=row["new_email"],
+                    token=row["token"],
+                    valid_until=row["valid_until"],
                 )
 
                 await self.db_connection.execute(
@@ -275,4 +249,6 @@ class Mailer:
                     row["token"],
                 )
             except smtplib.SMTPException as e:
-                self.logger.warning(f"Failed to send email to user {row['username']} with email {row['email']}: {e}")
+                self.logger.warning(
+                    f"Failed to send email to user {row['username']} with email {row['old_email']}: {e}"
+                )

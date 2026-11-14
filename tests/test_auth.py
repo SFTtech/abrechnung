@@ -1,5 +1,6 @@
 # pylint: disable=attribute-defined-outside-init,missing-kwoa
 import secrets
+import uuid
 from datetime import datetime, timedelta
 
 import pytest
@@ -150,3 +151,13 @@ async def test_password_recovery(user_service: UserService, db_pool: Pool, creat
     await user_service.confirm_password_recovery(token=str(confirmation_token), new_password=new_password)
 
     await user_service.login_user(username=user.username, password=new_password, session_name=secrets.token_hex(16))
+
+
+async def test_confirm_unknown_tokens_are_rejected(user_service: UserService):
+    unknown_token = str(uuid.uuid4())
+    with pytest.raises(AccessDenied):
+        await user_service.confirm_registration(token=unknown_token)
+    with pytest.raises(AccessDenied):
+        await user_service.confirm_email_change(token=unknown_token)
+    with pytest.raises(AccessDenied):
+        await user_service.confirm_password_recovery(token=unknown_token, new_password="new-password")

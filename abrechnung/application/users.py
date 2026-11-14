@@ -352,6 +352,8 @@ class UserService(Service[Config]):
             "select user_id, new_email, valid_until from pending_email_change where token = $1",
             token,
         )
+        if row is None:
+            raise AccessDenied("Invalid confirmation token")
         user_id = row["user_id"]
         valid_until = row["valid_until"]
         if valid_until is None or valid_until < datetime.now(tz=timezone.utc):
@@ -382,6 +384,8 @@ class UserService(Service[Config]):
             "select user_id, valid_until from pending_password_recovery where token = $1",
             token,
         )
+        if row is None:
+            raise AccessDenied("Invalid confirmation token")
         user_id = row["user_id"]
         valid_until = row["valid_until"]
         if valid_until is None or valid_until < datetime.now(tz=timezone.utc):

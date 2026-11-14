@@ -28,6 +28,7 @@ dependencies = [
     "python-multipart~=0.0.33",
     "PyYAML~=6.0.3",
     "httpx>=0.28.1",
+    "mako~=1.3",
 ]
 
 [dependency-groups]
