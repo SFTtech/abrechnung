@@ -4,6 +4,8 @@
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.8.0...HEAD)
 
+- add Arabic, Italian and Dutch translations
+
 ## 1.8.0 (2026-03-08)
 
 [Compare the full difference.](https://github.com/SFTtech/abrechnung/compare/v1.7.1...v1.8.0)
