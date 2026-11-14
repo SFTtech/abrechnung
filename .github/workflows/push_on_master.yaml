@@ -167,7 +167,14 @@ jobs:
             - name: Download all workflow run artifacts
               uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
             - name: Trigger demo deployment via webhook
-              run: curl ${{ secrets.DEMO_DEPLOY_WEBHOOK_URL }} -F "archive=@$(find -name 'abrechnung_*trixie*_amd64.deb')" --fail
+              run: |
+                  ls -R debs-debiantrixie
+                  DEB="$(find debs-debiantrixie -name 'abrechnung_*_amd64.deb' | head -n1)"
+                  if [ -z "$DEB" ]; then
+                      echo "no abrechnung amd64 deb found for debian trixie" >&2
+                      exit 1
+                  fi
+                  curl ${{ secrets.DEMO_DEPLOY_WEBHOOK_URL }} -F "archive=@$DEB" --fail
 
     # if it's a tag, create a release and attach the artifacts to it
     attach-assets:
